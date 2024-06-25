@@ -7,3 +7,7 @@ A web app for those who love hanging out in the forest but always forget to brin
 - [ ] List of gear you have
 - [ ] Lists of gear you want to bring on your adventure (adventure lists)
 - [ ] Ability to share adventure lists with friends (or strangers)
+
+# Similar applications
+
+* https://lighterpack.com
