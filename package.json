@@ -1,0 +1,20 @@
+{
+  "name": "perd",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.4.0",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@nuxthub/core": "0.6.17",
+    "nuxt": "npm:nuxt-nightly@4.0.0-28656825.8f95cac3"
+  },
+  "devDependencies": {
+    "wrangler": "3.62.0"
+  }
+}
