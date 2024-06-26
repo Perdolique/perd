@@ -11,3 +11,7 @@ A web app for those who love hanging out in the forest but always forget to brin
 # Similar applications
 
 * https://lighterpack.com
+
+# Stack
+
+* [Nuxt](https://nuxt.com/)
