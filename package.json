@@ -12,6 +12,7 @@
     "preview": "pnpm run build && wrangler pages dev"
   },
   "dependencies": {
+    "@nuxthub/core": "0.7.0",
     "nuxt": "npm:nuxt-nightly@4.0.0-28658435.3415241a",
     "vue": "3.4.30"
   },

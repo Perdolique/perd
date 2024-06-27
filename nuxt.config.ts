@@ -5,10 +5,15 @@ export default defineNuxtConfig({
   },
 
   nitro: {
-    preset: "cloudflare-pages"
+    preset: 'cloudflare-pages',
+    compatibilityDate: '2024-06-27'
   },
 
   features: {
     compatibilityVersion: 4
-  }
+  },
+
+  modules: [
+    '@nuxthub/core'
+  ]
 })
