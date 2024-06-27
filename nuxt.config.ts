@@ -14,11 +14,11 @@ export default defineNuxtConfig({
   },
 
   modules: [
-    '@nuxthub/core'
+    //'@nuxthub/core'
   ],
 
-  hub: {
-    database: true,
-    remote: true
-  }
+  // hub: {
+  //   database: true,
+  //   remote: true
+  // }
 })
