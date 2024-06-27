@@ -5,13 +5,15 @@
   "packageManager": "pnpm@9.4.0",
   "scripts": {
     "build": "nuxt build",
+    "deploy": "pnpm run build && wrangler pages deploy",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
-    "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "preview": "pnpm run build && wrangler pages dev"
   },
   "dependencies": {
-    "nuxt": "3.12.2"
+    "nuxt": "3.12.2",
+    "vue": "3.4.30"
   },
   "devDependencies": {
     "wrangler": "3.62.0"

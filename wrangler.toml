@@ -1,0 +1,3 @@
+name = "perd"
+compatibility_date = "2024-06-20"
+pages_build_output_dir = "./dist"
