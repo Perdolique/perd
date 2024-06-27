@@ -6,5 +6,9 @@ export default defineNuxtConfig({
 
   nitro: {
     preset: "cloudflare-pages"
+  },
+
+  features: {
+    compatibilityVersion: 4
   }
 })
