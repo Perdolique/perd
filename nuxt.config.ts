@@ -4,15 +4,7 @@ export default defineNuxtConfig({
     enabled: true 
   },
 
-  modules: [
-    // '@nuxthub/core'
-  ],
-
-  feature: {
-    compatibilityVersion: 4
-  },
-
-  hub: {
-    database: true
+  nitro: {
+    preset: "cloudflare-pages"
   }
 })
