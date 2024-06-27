@@ -1,3 +1,8 @@
 name = "perd"
 compatibility_date = "2024-06-20"
 pages_build_output_dir = "./dist"
+
+[[d1_databases]]
+binding = "DB" # i.e. available in your Worker on env.DB
+database_name = "perd-prod"
+database_id = "cfcbc336-9542-42ac-ae24-9574b4a91432"
