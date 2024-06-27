@@ -15,5 +15,10 @@ export default defineNuxtConfig({
 
   modules: [
     '@nuxthub/core'
-  ]
+  ],
+
+  hub: {
+    database: true,
+    remote: true
+  }
 })
