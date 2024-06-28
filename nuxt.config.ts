@@ -13,11 +13,5 @@ export default defineNuxtConfig({
     compatibilityVersion: 4
   },
 
-  modules: [
-    '@nuxthub/core'
-  ],
-
-  hub: {
-    database: true
-  }
+  modules: []
 })
