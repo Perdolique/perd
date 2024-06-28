@@ -9,14 +9,18 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "postinstall": "nuxt prepare",
-    "preview": "pnpm run build && wrangler pages dev"
+    "preview": "pnpm run build && wrangler pages dev",
+    "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
     "@nuxthub/core": "0.7.0",
-    "nuxt": "npm:nuxt-nightly@4.0.0-28658435.3415241a",
+    "drizzle-orm": "0.31.2",
+    "nuxt": "3.12.2",
+    "ulid": "2.3.0",
     "vue": "3.4.30"
   },
   "devDependencies": {
+    "drizzle-kit": "0.22.7",
     "wrangler": "3.62.0"
   }
 }
