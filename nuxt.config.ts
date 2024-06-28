@@ -1,7 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   devtools: { 
-    enabled: true 
+    enabled: true
   },
 
   nitro: {
@@ -9,16 +9,15 @@ export default defineNuxtConfig({
     compatibilityDate: '2024-06-27'
   },
 
-  features: {
+  future: {
     compatibilityVersion: 4
   },
 
   modules: [
-    //'@nuxthub/core'
+    '@nuxthub/core'
   ],
 
-  // hub: {
-  //   database: true,
-  //   remote: true
-  // }
+  hub: {
+    database: true
+  }
 })
