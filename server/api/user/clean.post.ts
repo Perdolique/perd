@@ -1,3 +1,3 @@
-export default defineEventHandler(async () => {
-  await useDrizzle().delete(tables.users);
+export default defineEventHandler(async ({ context }) => {
+  await context.db.delete(tables.users);
 })

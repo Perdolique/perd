@@ -1,19 +1,19 @@
 <template>
   <div :class="$style.container">
     <button
-      :class="$style.button" 
+      :class="$style.button"
       @click="handlePostClick"
     >
       POST
     </button>
     <button
-      :class="$style.button" 
+      :class="$style.button"
       @click="handleGetClick"
     >
       GET
     </button>
     <button
-      :class="$style.button" 
+      :class="$style.button"
       @click="handleCleanClick"
     >
       Clean

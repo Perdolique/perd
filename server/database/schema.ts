@@ -3,11 +3,13 @@ import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
 import { ulid } from 'ulid'
 
 export const users = sqliteTable('users', {
-  id: 
+  id:
     text('id')
     .$defaultFn(() => ulid()),
 
-  createdAt: 
+  name: text('name'),
+
+  createdAt:
     integer('created_at', {
       mode: 'timestamp'
     })

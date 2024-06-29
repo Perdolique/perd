@@ -1,17 +1,18 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  devtools: { 
+  devtools: {
     enabled: true
   },
 
   nitro: {
-    preset: 'cloudflare-pages',
-    compatibilityDate: '2024-06-27'
+    preset: 'cloudflare-pages'
   },
 
   future: {
     compatibilityVersion: 4
   },
 
-  modules: []
+  modules: [
+    'nitro-cloudflare-dev'
+  ]
 })
