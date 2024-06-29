@@ -13,13 +13,15 @@
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
+    "db0": "0.1.4",
     "drizzle-orm": "0.31.2",
     "nuxt": "3.12.2",
     "ulid": "2.3.0",
-    "vue": "3.4.30"
+    "vue": "3.4.31"
   },
   "devDependencies": {
-    "drizzle-kit": "0.22.7",
+    "better-sqlite3": "11.1.1",
+    "drizzle-kit": "0.22.8",
     "wrangler": "3.62.0"
   }
 }
