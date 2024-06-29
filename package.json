@@ -10,7 +10,7 @@
     "generate": "nuxt generate",
     "postinstall": "nuxt prepare",
     "preview": "pnpm run build && wrangler pages dev",
-    "dev:cf": "wrangler dev",
+    "dev:cf": "wrangler pages dev",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio"
