@@ -1,3 +1,6 @@
-export default defineEventHandler(async () => {
-  return await useDrizzle().insert(tables.users).values({}).returning();
+export default defineEventHandler(async ({ context }) => {
+  return await context.db
+    .insert(tables.users)
+    .values({})
+    .returning();
 })

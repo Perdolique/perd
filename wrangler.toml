@@ -6,4 +6,5 @@ pages_build_output_dir = "./dist"
 binding = "DB" # i.e. available in your Worker on env.DB
 database_name = "perd-prod"
 database_id = "cfcbc336-9542-42ac-ae24-9574b4a91432"
-preview_database_id = "05c1bee3-55df-4bab-bfcd-673236ac06c9"
+preview_database_id = "cd3a6b20-807c-4957-a924-8dee5d2a64f2"
+migrations_dir = "server/database/migrations"
