@@ -2,9 +2,14 @@ name = "perd"
 compatibility_date = "2024-06-29"
 pages_build_output_dir = "./dist"
 
-[[d1_databases]]
-binding = "DB" # i.e. available in your Worker on env.DB
+[[env.production.d1_databases]]
+binding = "DB"
 database_name = "perd-prod"
 database_id = "cfcbc336-9542-42ac-ae24-9574b4a91432"
-preview_database_id = "cd3a6b20-807c-4957-a924-8dee5d2a64f2"
+migrations_dir = "server/database/migrations"
+
+[[env.preview.d1_databases]]
+binding = "DB"
+database_name = "perd-stage"
+database_id = "cd3a6b20-807c-4957-a924-8dee5d2a64f2"
 migrations_dir = "server/database/migrations"
