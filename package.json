@@ -2,21 +2,28 @@
   "name": "perd",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@9.4.0",
   "scripts": {
     "build": "nuxt build",
-    "deploy": "pnpm run build && wrangler pages deploy",
+    "deploy": "npm run build && wrangler pages deploy",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "postinstall": "nuxt prepare",
-    "preview": "pnpm run build && wrangler pages dev"
+    "preview": "npm run build && wrangler pages dev",
+    "dev:cf": "wrangler pages dev",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@nuxthub/core": "0.7.0",
-    "nuxt": "npm:nuxt-nightly@4.0.0-28658435.3415241a",
-    "vue": "3.4.30"
+    "drizzle-orm": "0.31.2",
+    "nuxt": "3.12.2",
+    "ulid": "2.3.0",
+    "vue": "3.4.31"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "4.20240620.0",
+    "drizzle-kit": "0.22.8",
+    "nitro-cloudflare-dev": "file:nitro-cloudflare-dev",
     "wrangler": "3.62.0"
   }
 }
