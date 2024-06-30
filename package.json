@@ -2,14 +2,13 @@
   "name": "perd",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@9.4.0",
   "scripts": {
     "build": "nuxt build",
-    "deploy": "pnpm run build && wrangler pages deploy",
+    "deploy": "npm run build && wrangler pages deploy",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "postinstall": "nuxt prepare",
-    "preview": "pnpm run build && wrangler pages dev",
+    "preview": "npm run build && wrangler pages dev",
     "dev:cf": "wrangler pages dev",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
@@ -24,7 +23,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "4.20240620.0",
     "drizzle-kit": "0.22.8",
-    "nitro-cloudflare-dev": "0.1.4",
+    "nitro-cloudflare-dev": "file:nitro-cloudflare-dev",
     "wrangler": "3.62.0"
   }
 }
