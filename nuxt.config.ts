@@ -5,7 +5,11 @@ export default defineNuxtConfig({
   },
 
   nitro: {
-    preset: 'cloudflare-pages'
+    preset: 'cloudflare-pages',
+
+    cloudflareDev: {
+      environmnet: 'preview'
+    }
   },
 
   future: {
@@ -14,5 +18,5 @@ export default defineNuxtConfig({
 
   modules: [
     'nitro-cloudflare-dev'
-  ]
+  ],
 })
