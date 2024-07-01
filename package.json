@@ -8,22 +8,24 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "postinstall": "nuxt prepare",
-    "preview": "npm run build && wrangler pages dev",
-    "dev:cf": "wrangler pages dev",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "dev:cf": "wrangler pages dev --d1 DB=57811910-c52c-4a47-a48a-d0e7ac4c08fd",
+    "preview": "npm run build && npm run dev:cf",
+    "db:generate": "npx drizzle-kit generate",
+    "db:migrate:dev": "wrangler d1 migrations apply perd-stage --env preview",
+    "db:migrate:prod": "wrangler d1 migrations apply perd-prod --env production --remote",
+    "db:studio": "npx drizzle-kit studio"
   },
   "dependencies": {
+    "better-sqlite3": "11.1.2",
     "drizzle-orm": "0.31.2",
-    "nuxt": "3.12.2",
+    "nuxt": "3.12.3",
     "ulid": "2.3.0",
     "vue": "3.4.31"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "4.20240620.0",
     "drizzle-kit": "0.22.8",
-    "nitro-cloudflare-dev": "file:nitro-cloudflare-dev",
-    "wrangler": "3.62.0"
+    "nitro-cloudflare-dev": "0.1.5",
+    "wrangler": "3.63.1"
   }
 }

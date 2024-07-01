@@ -1,6 +1,10 @@
 name = "perd"
-compatibility_date = "2024-06-29"
+compatibility_date = "2024-06-20"
 pages_build_output_dir = "./dist"
+upload_source_maps = true
+
+[dev]
+port = 8888
 
 [[env.production.d1_databases]]
 binding = "DB"
