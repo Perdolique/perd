@@ -4,11 +4,13 @@ export default defineNuxtConfig({
     enabled: true
   },
 
+  compatibilityDate: '2024-07-03',
+
   nitro: {
     preset: 'cloudflare-pages',
 
     cloudflareDev: {
-      environmnet: 'preview'
+      environment: 'preview'
     }
   },
 

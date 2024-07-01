@@ -1,59 +1,48 @@
 <template>
-  <div :class="$style.container">
+  <div :class="$style.component">
     <button
-      :class="$style.button"
-      @click="handlePostClick"
+      v-if="isAuthorized"
+      @click="removeAuthSession"
     >
-      POST
+      Log out
     </button>
+
     <button
-      :class="$style.button"
-      @click="handleGetClick"
+      v-else
+      @click="handleClick"
     >
-      GET
-    </button>
-    <button
-      :class="$style.button"
-      @click="handleCleanClick"
-    >
-      Clean
+      Sign in anonymously
     </button>
   </div>
 </template>
 
 <script lang="ts" setup>
-  async function handlePostClick() {
-    const response = await $fetch('/api/user', {
+  const isAuthorized = useState('isAuthorized')
+
+  async function handleClick() {
+    const response = await $fetch('/api/auth/create-session', {
       method: 'post'
     })
 
-    console.log('POST', response);
+    if (typeof response.userId === 'string') {
+      isAuthorized.value = true
+    }
   }
 
-  async function handleGetClick() {
-    const response = await $fetch('/api/user', {
-      method: 'get'
-    })
-
-    console.log('GET', response);
-  }
-
-  async function handleCleanClick() {
-    const response = await $fetch('/api/user/clean', {
+  async function removeAuthSession() {
+    await $fetch('/api/auth/logout', {
       method: 'post'
     })
 
-    console.log('Cleaned', response);
+    isAuthorized.value = false
   }
 </script>
 
 <style module>
-  .container {
+  .component {
+    height: 100vh;
+    width: 100vw;
     display: grid;
-    grid-auto-flow: column;
-  }
-
-  .button {
-    padding: 0.5rem 1rem;
+    place-items: center;
   }
 </style>

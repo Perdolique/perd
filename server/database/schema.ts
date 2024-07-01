@@ -5,12 +5,14 @@ import { ulid } from 'ulid'
 export const users = sqliteTable('users', {
   id:
     text('id')
-    .$defaultFn(() => ulid()),
+    .$defaultFn(() => ulid())
+    .notNull()
+    .primaryKey(),
 
   name: text('name'),
 
   createdAt:
-    integer('created_at', {
+    integer('createdAt', {
       mode: 'timestamp'
     })
     .notNull()
