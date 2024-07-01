@@ -1,59 +1,26 @@
 <template>
-  <div :class="$style.container">
-    <button
-      :class="$style.button"
-      @click="handlePostClick"
-    >
-      POST
-    </button>
-    <button
-      :class="$style.button"
-      @click="handleGetClick"
-    >
-      GET
-    </button>
-    <button
-      :class="$style.button"
-      @click="handleCleanClick"
-    >
-      Clean
+  <div :class="$style.component">
+    <button @click="handleClick">
+      Sign in anonymously
     </button>
   </div>
 </template>
 
 <script lang="ts" setup>
-  async function handlePostClick() {
-    const response = await $fetch('/api/user', {
+  async function handleClick() {
+    const result = await $fetch('/api/auth/create-session', {
       method: 'post'
     })
 
-    console.log('POST', response);
-  }
-
-  async function handleGetClick() {
-    const response = await $fetch('/api/user', {
-      method: 'get'
-    })
-
-    console.log('GET', response);
-  }
-
-  async function handleCleanClick() {
-    const response = await $fetch('/api/user/clean', {
-      method: 'post'
-    })
-
-    console.log('Cleaned', response);
+    console.log(result);
   }
 </script>
 
 <style module>
-  .container {
+  .component {
+    height: 100vh;
+    width: 100vw;
     display: grid;
-    grid-auto-flow: column;
-  }
-
-  .button {
-    padding: 0.5rem 1rem;
+    place-items: center;
   }
 </style>

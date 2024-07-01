@@ -11,10 +11,11 @@
     "preview": "npm run build && wrangler pages dev",
     "dev:cf": "wrangler pages dev",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate:dev": "wrangler d1 migrations apply perd-stage --env preview",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "better-sqlite3": "11.1.1",
     "drizzle-orm": "0.31.2",
     "nuxt": "3.12.2",
     "ulid": "2.3.0",
@@ -23,7 +24,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "4.20240620.0",
     "drizzle-kit": "0.22.8",
-    "nitro-cloudflare-dev": "file:nitro-cloudflare-dev",
+    "nitro-cloudflare-dev": "0.1.5",
     "wrangler": "3.62.0"
   }
 }

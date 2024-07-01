@@ -5,7 +5,10 @@ import * as schema from '../database/schema'
 export const tables = schema
 
 export function createDrizzle(db: D1Database) {
-  const drizzleDb = drizzle(db)
+  const drizzleDb = drizzle(db, {
+    schema,
+    logger: true
+  })
 
   return drizzleDb
 }
