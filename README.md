@@ -1,6 +1,6 @@
 # Gear list
 
-A web app for those who love hanging out in the forest but always forget to bring something important. With this app, you can easily create a checklist of things you need to take on your adventure.
+A web app for those who love hanging out in the forest but always forget to bring something important. With this app, you can easily create a checklist of things you must take on your adventure.
 
 # Planning features
 
@@ -15,3 +15,5 @@ A web app for those who love hanging out in the forest but always forget to brin
 # Stack
 
 * [Nuxt](https://nuxt.com/)
+* [Cloudflare Pages](https://developers.cloudflare.com/pages/) / [Cloudflare Workers](https://developers.cloudflare.com/workers/)
+* [Cloudflare D1](https://developers.cloudflare.com/d1/) (Postgres / separate API server in the future)
