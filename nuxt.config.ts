@@ -1,5 +1,10 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  modules: [
+    'nitro-cloudflare-dev',
+    '@nuxt/fonts'
+  ],
+
   devtools: {
     enabled: true
   },
@@ -16,9 +21,5 @@ export default defineNuxtConfig({
 
   future: {
     compatibilityVersion: 4
-  },
-
-  modules: [
-    'nitro-cloudflare-dev'
-  ],
+  }
 })

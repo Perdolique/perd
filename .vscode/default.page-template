@@ -1,0 +1,15 @@
+<template>
+  <div :class="$style.component">
+    {{ message }}
+  </div>
+</template>
+
+<script lang="ts" setup>
+  const message = 'Woof';
+</script>
+
+<style module>
+  .component {
+    color: magenta;
+  }
+</style>

@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, } from 'drizzle-orm/sqlite-core'
 import { ulid } from 'ulid'
 
 export const users = sqliteTable('users', {
@@ -16,5 +16,12 @@ export const users = sqliteTable('users', {
       mode: 'timestamp'
     })
     .notNull()
-    .default(sql`(unixepoch())`)
+    .default(sql`(unixepoch())`),
+
+  isAdmin:
+    integer('isAdmin', {
+      mode: 'boolean'
+    })
+    .notNull()
+    .default(false)
 })

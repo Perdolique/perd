@@ -15,6 +15,13 @@
       "when": 1720116319288,
       "tag": "0001_slow_kabuki",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1720294053820,
+      "tag": "0002_friendly_la_nuit",
+      "breakpoints": true
     }
   ]
 }
