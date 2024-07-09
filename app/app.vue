@@ -14,9 +14,12 @@
   }
 </script>
 
-<style>
+<style lang="scss">
+  @import "~/assets/styles/base";
+
   body {
     margin: 0;
-    background-color: darkgray;
+    background-color: lavender;
+    color: var(--color-blue-900);
   }
 </style>

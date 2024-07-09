@@ -1,0 +1,43 @@
+@import "./variables";
+@import "modern-normalize";
+
+:root {
+  color-scheme: only light;
+
+  font-family: "Inter", sans-serif;
+
+  // Screen sizes
+  --screen-mobile-s: #{$screen-mobile-s};
+  --screen-mobile-m: #{$screen-mobile-m};
+  --screen-mobile-l: #{$screen-mobile-l};
+  --screen-tablet: #{$screen-tablet};
+  --screen-desktop-s: #{$screen-desktop-s};
+  --screen-desktop-m: #{$screen-desktop-m};
+  --screen-desktop-l: #{$screen-desktop-l};
+
+  // Colors
+  --color-blue-50: #f0fafb;
+  --color-blue-100: #d8f2f5;
+  --color-blue-200: #b5e3ec;
+  --color-blue-300: #82cede;
+  --color-blue-400: #5ab8cd;
+  --color-blue-500: #2d95ad;
+  --color-blue-600: #287892;
+  --color-blue-700: #266278;
+  --color-blue-800: #275263;
+  --color-blue-900: #244555;
+  --color-blue-950: #132c39;
+  --color-white: #fff;
+
+  // Borders
+  --border-radius-1: 8px;
+  --border-radius-2: 16px;
+
+  // Inputs
+  --input-height: 48px;
+  --input-spacing-horizontal: 16px;
+  --input-color-main: #287892;
+  --input-color-focus: #266278;
+  --input-color-text: #244555;
+  --input-color-placeholder: rgb(140, 140, 140);
+}
