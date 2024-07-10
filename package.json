@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "better-sqlite3": "11.1.2",
-    "drizzle-orm": "0.31.2",
+    "drizzle-orm": "0.32.0",
     "modern-normalize": "2.0.0",
     "nuxt": "3.12.3",
     "ulid": "2.3.0",
@@ -26,9 +26,9 @@
   "devDependencies": {
     "@cloudflare/workers-types": "4.20240620.0",
     "@nuxt/fonts": "0.7.1",
-    "drizzle-kit": "0.22.8",
+    "drizzle-kit": "0.23.0",
     "nitro-cloudflare-dev": "0.1.5",
-    "sass": "1.77.6",
-    "wrangler": "3.63.1"
+    "sass": "1.77.7",
+    "wrangler": "3.63.2"
   }
 }
