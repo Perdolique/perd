@@ -1,5 +1,11 @@
 export default defineNuxtRouteMiddleware(async (to, from) => {
+  const nuxtApp = useNuxtApp()
   let isAdmin = false;
+
+  // https://nuxt.com/docs/guide/directory-structure/middleware#when-middleware-runs
+  if (import.meta.client && nuxtApp.isHydrating && nuxtApp.payload.serverRendered) {
+    return
+  }
 
   // We need to pass cookies to the server.
   // It's possible only with useFetch during SSR, but useFetch on the client produces warning
