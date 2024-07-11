@@ -22,6 +22,13 @@
       "when": 1720294053820,
       "tag": "0002_friendly_la_nuit",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1720638812850,
+      "tag": "0003_fresh_arclight",
+      "breakpoints": true
     }
   ]
 }

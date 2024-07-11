@@ -1,5 +1,8 @@
+import { sessionCookieName } from "~~/constants";
+
 export default defineNuxtRouteMiddleware(async (to, from) => {
   const nuxtApp = useNuxtApp()
+  const ssrEvent = useRequestEvent()
   let isAdmin = false;
 
   // https://nuxt.com/docs/guide/directory-structure/middleware#when-middleware-runs
@@ -14,7 +17,21 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
     isAdmin = response.isAdmin
   } else {
-    const result = await useFetch('/api/auth/check-admin')
+    const result = await useFetch('/api/auth/check-admin', {
+      // FIXME: This glans is overcomplicated and shouldn't exist
+      onResponse(event) {
+        if (ssrEvent !== undefined) {
+          const foundCookie = event.response.headers
+            .get('set-cookie')
+            ?.split(',')
+            .find(cookie => cookie.startsWith(`${sessionCookieName}=`))
+
+          if (foundCookie !== undefined) {
+            ssrEvent.node.res.setHeader('set-cookie', foundCookie)
+          }
+        }
+      }
+    })
 
     isAdmin = result.data.value?.isAdmin === true;
   }

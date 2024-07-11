@@ -1,27 +1,24 @@
 <template>
   <div :class="$style.root">
-    <label
-      :for="id"
-      :class="[$style.label, {
-        focused: isFocused,
-        withValue: hasValue
-      }]"
-    >
-      {{ label }}
-    </label>
-
     <input
       v-model="model"
       :class="$style.input"
+      :autocomplete="autocomplete"
+      :autofocus="autofocus"
       :id="id"
       :inputmode="inputmode"
       :pattern="pattern"
       :placeholder="placeholder"
       :required="required"
       :type="type"
-      @focus="handleFocus"
-      @blur="handleBlur"
     >
+
+    <label
+      :for="id"
+      :class="[$style.label, { withValue: hasValue }]"
+    >
+      {{ label }}
+    </label>
   </div>
 </template>
 
@@ -30,6 +27,8 @@
 
   interface Props {
     readonly label: string;
+    readonly autocomplete?: InputHTMLAttributes['autocomplete'];
+    readonly autofocus?: InputHTMLAttributes['autofocus'];
     readonly inputmode?: InputHTMLAttributes['inputmode'];
     readonly pattern?: InputHTMLAttributes['pattern'];
     readonly placeholder?: InputHTMLAttributes['placeholder'];
@@ -46,16 +45,7 @@
   })
 
   const id = useId();
-  const isFocused = ref(false);
   const hasValue = computed(() => model.value !== '');
-
-  function handleFocus() : void {
-    isFocused.value = true;
-  }
-
-  function handleBlur() : void {
-    isFocused.value = false;
-  }
 </script>
 
 <style module>
@@ -94,7 +84,7 @@
       translate 0.15s linear;
 
     &:global(.withValue),
-    &:global(.focused) {
+    .input:focus-visible + & {
       scale: 0.70;
       translate: 0 -5px;
     }
