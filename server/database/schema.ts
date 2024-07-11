@@ -25,3 +25,21 @@ export const users = sqliteTable('users', {
     .notNull()
     .default(false)
 })
+
+export const gears = sqliteTable('gears', {
+  id:
+    text('id')
+    .$defaultFn(() => ulid())
+    .notNull()
+    .primaryKey(),
+
+  name: text('name'),
+  weight: integer('weight'),
+
+  createdAt:
+    integer('createdAt', {
+      mode: 'timestamp'
+    })
+    .notNull()
+    .default(sql`(unixepoch())`)
+})

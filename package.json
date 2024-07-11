@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "better-sqlite3": "11.1.2",
+    "date-fns": "3.6.0",
     "drizzle-orm": "0.32.0",
     "modern-normalize": "2.0.0",
     "nuxt": "3.12.3",

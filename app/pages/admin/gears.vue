@@ -6,12 +6,15 @@
     >
       <PerdInput
         required
+        autofocus
+        autocomplete="off"
         label="Gear name"
         placeholder="MGS Bubba Hubba UL2"
         v-model="name"
       />
 
       <PerdInput
+        autocomplete="off"
         label="Weight"
         inputmode="numeric"
         pattern="\d*"
@@ -34,8 +37,26 @@
   const name = ref('')
   const weight = ref('')
 
-  function handleSubmit() {
-    console.log('woof', name.value, weight.value);
+  function clearForm() {
+    name.value = ''
+    weight.value = ''
+  }
+
+  async function handleSubmit() {
+    try {
+      await $fetch('/api/admin/create-gear', {
+        method: 'POST',
+
+        body: {
+          name: name.value,
+          weight: weight.value
+        }
+      })
+
+      clearForm()
+    } catch (error) {
+      console.error(error)
+    }
   }
 </script>
 
