@@ -1,9 +1,13 @@
 export default defineEventHandler(async (event) => {
   const { db } = event.context
+  const body = await readBody(event)
+  const isAdmin = body?.isAdmin === true
 
   const [{ userId }] = await db
     .insert(tables.users)
-    .values({})
+    .values({
+      isAdmin
+    })
     .returning({
       userId: tables.users.id
     })

@@ -1,14 +1,16 @@
 import type { H3Event, EventHandlerRequest } from 'h3'
-import { sessionCookieName } from '~~/constants';
+import { sessionCookieName, sessionSecret } from '~~/constants';
 
 interface SessionData {
   userId?: string;
+  isAdmin?: boolean;
+  lastAdminCheck?: string;
 }
 
 export async function useAppSession(event: H3Event<EventHandlerRequest>) {
   return useSession<SessionData>(event, {
     // TODO: use environment variables
-    password: 'e2353edd-0a91-4d60-bf3a-715fab5f6c00',
+    password: sessionSecret,
     name: sessionCookieName,
 
     cookie: {
