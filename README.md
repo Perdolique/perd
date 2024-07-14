@@ -1,11 +1,11 @@
-# Gear list
+# Equipment list
 
 A web app for those who love hanging out in the forest but always forget to bring something important. With this app, you can easily create a checklist of things you must take on your adventure.
 
 # Planning features
 
-- [ ] List of gear you have
-- [ ] Lists of gear you want to bring on your adventure (adventure lists)
+- [ ] List of equipment you have
+- [ ] Lists of equipment you want to bring on your adventure (adventure lists)
 - [ ] Ability to share adventure lists with friends (or strangers)
 
 # Similar applications
