@@ -7,17 +7,16 @@ export default defineEventHandler(async (event) => {
 
   // Check if the user in database
   if (userId !== undefined) {
-    const users = await event.context.db
-      .select({
-        userId: tables.users.id
-      })
-      .from(tables.users)
-      .where(
-        eq(tables.users.id, userId)
-      )
-      .limit(1)
+    const users = await event.context.db.query.users
+      .findFirst({
+        columns: {
+          id: true
+        },
 
-    if (users.length > 0) {
+        where: eq(tables.users.id, userId)
+      })
+
+    if (users?.id !== undefined) {
       userIdToReturn = userId
     }
   }

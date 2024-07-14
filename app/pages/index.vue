@@ -1,6 +1,6 @@
 <template>
   <div :class="$style.component">
-    <NuxtLink to="/admin/gears">Gears admin</NuxtLink>
+    <NuxtLink to="/manager/equipment">Equipment manager</NuxtLink>
 
     <button
       v-if="isAuthorized"
