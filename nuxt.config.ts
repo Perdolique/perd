@@ -5,6 +5,10 @@ export default defineNuxtConfig({
     '@nuxt/fonts'
   ],
 
+  experimental: {
+    viewTransition: true
+  },
+
   devtools: {
     enabled: true
   },

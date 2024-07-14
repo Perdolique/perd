@@ -10,17 +10,17 @@ export default defineEventHandler(async (event) => {
     return
   }
 
-  const [{ gearId }] = await db
-    .insert(tables.gears)
+  const [{ itemId }] = await db
+    .insert(tables.equipment)
     .values({
       name,
       weight
     })
     .returning({
-      gearId: tables.gears.id
+      itemId: tables.equipment.id
     })
 
   return {
-    gearId
+    itemId
   }
 })

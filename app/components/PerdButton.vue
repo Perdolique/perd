@@ -14,6 +14,7 @@
     color: var(--color-white);
     cursor: pointer;
     outline: none;
+    user-select: none;
     transition:
       background-color 0.15s ease-out,
       color 0.15s ease-out;
