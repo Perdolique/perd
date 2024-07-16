@@ -8,7 +8,7 @@
         required
         autofocus
         autocomplete="off"
-        label="Gear name"
+        label="Item name"
         placeholder="MGS Bubba Hubba UL2"
         v-model="name"
       />
@@ -23,7 +23,7 @@
       />
 
       <PerdButton type="submit">
-        Add gear
+        Add item
       </PerdButton>
     </form>
   </div>
@@ -44,12 +44,12 @@
 
   async function handleSubmit() {
     try {
-      await $fetch('/api/admin/create-gear', {
+      await $fetch('/api/admin/create-equipment', {
         method: 'POST',
 
         body: {
           name: name.value,
-          weight: weight.value
+          weight: Number(weight.value)
         }
       })
 

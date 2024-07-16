@@ -26,7 +26,7 @@ export const users = sqliteTable('users', {
     .default(false)
 })
 
-export const gears = sqliteTable('gears', {
+export const equipment = sqliteTable('equipment', {
   id:
     text('id')
     .$defaultFn(() => ulid())
