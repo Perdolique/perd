@@ -6,9 +6,9 @@ export default defineEventHandler(async (event) => {
 
   if (userId === undefined) {
     // TODO: replace to createError
-    setResponseStatus(event, 401, 'Haha, you are not authorized')
-
-    return
+    throw createError({
+      statusCode: 401
+    })
   }
 
   const { searchString } = getQuery(event)
