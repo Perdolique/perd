@@ -1,5 +1,7 @@
 # Equipment list
 
+https://perd.pages.dev/
+
 A web app for those who love hanging out in the forest but always forget to bring something important. With this app, you can easily create a checklist of things you must take on your adventure.
 
 # Planning features
