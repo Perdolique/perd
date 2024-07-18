@@ -5,8 +5,13 @@
 
 version: 2
 updates:
-  - package-ecosystem: "npm" # See documentation for possible values
+  - package-ecosystem: "npm"
     directory: "/" # Location of package manifests
     schedule:
       interval: "daily"
-    
+    groups:
+      all-updates:
+        applies-to: version-updates
+        patterns:
+          - "*"
+          
