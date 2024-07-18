@@ -20,6 +20,8 @@ export default defineEventHandler(async (event) => {
       itemId: tables.equipment.id
     })
 
+  setResponseStatus(event, 201)
+
   return {
     itemId
   }
