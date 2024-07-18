@@ -29,8 +29,8 @@
     "@nuxt/fonts": "0.7.1",
     "@vueuse/core": "10.11.0",
     "drizzle-kit": "0.23.0",
-    "nitro-cloudflare-dev": "0.1.5",
+    "nitro-cloudflare-dev": "0.1.6",
     "sass": "1.77.8",
-    "wrangler": "3.63.0"
+    "wrangler": "3.65.0"
   }
 }
