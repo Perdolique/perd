@@ -26,7 +26,7 @@
   })
 
   const searchString = ref('')
-  const { equipment, isFetching } = useEquipmentSearch(searchString)
+  const { equipment } = useEquipmentSearch(searchString)
 </script>
 
 <style module>

@@ -1,15 +1,16 @@
 export default defineEventHandler(async (event) => {
   const { db } = event.context
   const body = await readBody(event)
-  const isAdmin = body?.isAdmin === true
+  const isRequestAdmin = body?.isAdmin === true
 
-  const [{ userId }] = await db
+  const [{ userId, isAdmin }] = await db
     .insert(tables.users)
     .values({
-      isAdmin
+      isAdmin: isRequestAdmin
     })
     .returning({
-      userId: tables.users.id
+      userId: tables.users.id,
+      isAdmin: tables.users.isAdmin
     })
 
   const session = await useAppSession(event)
@@ -19,6 +20,7 @@ export default defineEventHandler(async (event) => {
   })
 
   return {
-    userId
+    userId,
+    isAdmin
   }
 })

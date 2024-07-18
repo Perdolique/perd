@@ -1,16 +1,20 @@
 <template>
-  <div>
+  <NuxtLayout>
     <NuxtRouteAnnouncer />
     <NuxtPage />
-  </div>
+  </NuxtLayout>
 </template>
 
 <script lang="ts" setup>
-  const isAuthorized = useState('isAuthorized', () => false)
+  const { userState } = useUserState()
   const { data } = await useFetch('/api/user')
 
   if (data.value?.userId !== undefined) {
-    isAuthorized.value = true
+    userState.value.userId = data.value.userId
+  }
+
+  if (data.value?.isAdmin === true) {
+    userState.value.isAdmin = true
   }
 </script>
 

@@ -1,43 +1,44 @@
 <template>
   <div :class="$style.component">
-    <NuxtLink to="/manager/equipment">Equipment manager</NuxtLink>
-
-    <button
-      v-if="isAuthorized"
-      @click="removeAuthSession"
-    >
-      Log out
-    </button>
-
-    <div
-      v-else
-      :class="$style.buttons"
-    >
-      <button @click="handleSignInClick">
-        Sign in anonymously
-      </button>
-
-      <button @click="handleSignInAdminClick">
-        Sign in as admin
-      </button>
+    <div v-if="isAuthorized">
+      Hello, {{ userState.userId }}
+      <br />
+      Your admin status is: {{ userState.isAdmin }}
     </div>
+
+    <template v-else>
+      <PerdButton @click="handleSignInClick">
+        Sign in anonymously
+      </PerdButton>
+
+      <PerdButton @click="handleSignInAdminClick">
+        Sign in as admin
+      </PerdButton>
+    </template>
   </div>
 </template>
 
 <script lang="ts" setup>
-  const isAuthorized = useState('isAuthorized')
+  const { userState, isAuthorized } = useUserState()
 
   async function handleSignInClick() {
+    // TODO: add types for response
     const response = await $fetch('/api/auth/create-session', {
       method: 'post'
     })
 
     if (typeof response.userId === 'string') {
-      isAuthorized.value = true
+      userState.value.userId = response.userId
+    }
+
+    // TODO: unify userState update
+    if (response.isAdmin === true) {
+      userState.value.isAdmin = true
     }
   }
 
   async function handleSignInAdminClick() {
+    // TODO: add types for response
     const response = await $fetch('/api/auth/create-session', {
       method: 'post',
 
@@ -47,32 +48,19 @@
     })
 
     if (typeof response.userId === 'string') {
-      isAuthorized.value = true
+      userState.value.userId = response.userId
     }
-  }
 
-  async function removeAuthSession() {
-    await $fetch('/api/auth/logout', {
-      method: 'post'
-    })
-
-    isAuthorized.value = false
+    if (response.isAdmin === true) {
+      userState.value.isAdmin = true
+    }
   }
 </script>
 
 <style module>
   .component {
-    height: 100vh;
-    width: 100vw;
-    display: grid;
-    place-items: center;
-    grid-auto-rows: min-content;
-    row-gap: 16px;
-    padding: 50px 0;
-  }
-
-  .buttons {
     display: flex;
-    column-gap: 16px;
+    justify-content: center;
+    gap: var(--spacing-16);
   }
 </style>
