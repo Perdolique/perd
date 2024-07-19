@@ -23,7 +23,7 @@
 
   body {
     margin: 0;
-    background-color: lavender;
+    background-color: ghostwhite;
     color: var(--color-blue-900);
   }
 </style>
