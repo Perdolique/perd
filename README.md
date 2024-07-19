@@ -27,6 +27,19 @@ A web app for those who love hanging out in the forest but always forget to brin
 * [Cloudflare Workers](https://developers.cloudflare.com/workers/)
 * [Cloudflare D1](https://developers.cloudflare.com/d1/)
 
+### Details
+
+* Authentication
+  * [H3 built-in sessions](https://h3.unjs.io/examples/handle-session)
+  * User/Admin separation
+  * Anonymous users
+* UI
+  * Evergreen browsers only
+  * Native [CSS Nesting](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_nesting)
+  * Custom UI components
+* Misc
+  * [Drizzle ORM](https://orm.drizzle.team/)
+
 ## MVP Release
 
 * [Nuxt](https://nuxt.com/)
