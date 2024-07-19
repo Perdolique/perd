@@ -34,7 +34,7 @@ A web app for those who love hanging out in the forest but always forget to brin
   * User/Admin separation
   * Anonymous users
 * UI
-  * Evergreen browsers only
+  * "Evergreen"/[Baseline](https://web.dev/baseline) browsers only
   * Native [CSS Nesting](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_nesting)
   * Custom UI components
 * Misc
