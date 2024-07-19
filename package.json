@@ -20,12 +20,12 @@
     "date-fns": "3.6.0",
     "drizzle-orm": "0.32.0",
     "modern-normalize": "2.0.0",
-    "nuxt": "3.12.3",
+    "nuxt": "3.12.4",
     "ulid": "2.3.0",
-    "vue": "3.4.32"
+    "vue": "3.4.33"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "4.20240712.0",
+    "@cloudflare/workers-types": "4.20240718.0",
     "@nuxt/fonts": "0.7.1",
     "@vueuse/core": "10.11.0",
     "drizzle-kit": "0.23.0",
