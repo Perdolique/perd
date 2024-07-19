@@ -20,7 +20,17 @@ A web app for those who love hanging out in the forest but always forget to brin
 
 # Stack
 
+## Current (playground)
+
 * [Nuxt](https://nuxt.com/)
 * [Cloudflare Pages](https://developers.cloudflare.com/pages/)
 * [Cloudflare Workers](https://developers.cloudflare.com/workers/)
-* [Cloudflare D1](https://developers.cloudflare.com/d1/) (Postgres / separate API server in the future)
+* [Cloudflare D1](https://developers.cloudflare.com/d1/)
+
+## MVP Release
+
+* [Nuxt](https://nuxt.com/)
+* [Cloudflare Pages](https://developers.cloudflare.com/pages/)
+* [Cloudflare Workers](https://developers.cloudflare.com/workers/)
+* PostgreSQL
+* Separate API backend (... [Feathers.js](https://feathersjs.com/)? 🤔)
