@@ -31,6 +31,6 @@
     "drizzle-kit": "0.23.0",
     "nitro-cloudflare-dev": "0.1.6",
     "sass": "1.77.8",
-    "wrangler": "3.65.0"
+    "wrangler": "3.65.1"
   }
 }
