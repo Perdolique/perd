@@ -8,7 +8,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/" # Location of package manifests
     schedule:
-      interval: "daily"
+      interval: "hourly"
     groups:
       all-updates:
         applies-to: version-updates
