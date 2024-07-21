@@ -16,14 +16,14 @@
   --screen-desktop-l: #{$screen-desktop-l};
 
   // Spacings
-  --spacing-2: 2px;
-  --spacing-4: 4px;
-  --spacing-8: 8px;
-  --spacing-12: 12px;
-  --spacing-16: 16px;
-  --spacing-24: 24px;
-  --spacing-32: 32px;
-  --spacing-48: 48px;
+  --spacing-2: 0.125rem;
+  --spacing-4: 0.25rem;
+  --spacing-8: 0.5rem;
+  --spacing-12: 0.75rem;
+  --spacing-16: 1rem;
+  --spacing-24: 1.5rem;
+  --spacing-32: 2rem;
+  --spacing-48: 3rem;
 
   // Colors
   --color-blue-50: #f0fafb;
@@ -38,16 +38,40 @@
   --color-blue-900: #244555;
   --color-blue-950: #132c39;
   --color-white: #fff;
+  --color-primary: #244555;
+  --color-secondary: #666;
+
+  // Font sizes
+  --font-size-12: 0.75rem;
+  --font-size-14: 0.875rem;
+  --font-size-16: 1rem;
+  --font-size-24: 1.5rem;
+
+  // Font weights
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
 
   // Borders
-  --border-radius-1: 8px;
-  --border-radius-2: 16px;
+  --border-radius-1: 0.5rem;
+  --border-radius-2: 1rem;
 
   // Inputs
-  --input-height: 48px;
-  --input-spacing-horizontal: 16px;
+  --input-height: 3rem;
+  --input-spacing-horizontal: 1rem;
+  --input-color-hover-bg: rgb(0 0 0 / 10%);
   --input-color-main: #287892;
-  --input-color-focus: #266278;
-  --input-color-text: #244555;
-  --input-color-placeholder: rgb(140, 140, 140);
+  --input-color-focus: #a26830;
+  --input-color-active: #7a4f24;
+  --input-color-text: #f0fafb;
+  --input-color-placeholder: #8c8c8c;
+
+  // Secondary inputs
+  --input-secondary-color-main: #f0fafb;
+  --input-secondary-color-text: #244555;
+  --input-secondary-color-focus: #d8f2f5;
+  --input-secondary-color-active: #b5e3ec;
+  --input-secondary-color-disabled: #2d95ad;
+
+  // Small inputs
+  --input-small-spacing: 1.5rem;
 }

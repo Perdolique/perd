@@ -33,8 +33,13 @@ export const equipment = sqliteTable('equipment', {
     .notNull()
     .primaryKey(),
 
-  name: text('name'),
-  weight: integer('weight'),
+  name:
+    text('name')
+    .notNull(),
+
+  weight:
+    integer('weight')
+    .notNull(),
 
   createdAt:
     integer('createdAt', {

@@ -2,7 +2,8 @@
 export default defineNuxtConfig({
   modules: [
     'nitro-cloudflare-dev',
-    '@nuxt/fonts'
+    '@nuxt/fonts',
+    '@nuxt/icon'
   ],
 
   experimental: {
@@ -11,6 +12,15 @@ export default defineNuxtConfig({
 
   devtools: {
     enabled: true
+  },
+
+  components: {
+    dirs: []
+  },
+
+  icon: {
+    fallbackToApi: false,
+    size: '32px'
   },
 
   compatibilityDate: '2024-07-03',
@@ -25,5 +35,15 @@ export default defineNuxtConfig({
 
   future: {
     compatibilityVersion: 4
+  },
+
+  vite: {
+    css: {
+      preprocessorOptions: {
+        scss: {
+          additionalData: '@use "~/assets/styles/media" as *;'
+        }
+      }
+    }
   }
 })

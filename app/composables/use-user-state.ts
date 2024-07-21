@@ -1,24 +1,38 @@
-interface UserState {
-  userId: string | null
-  isAdmin: boolean
+interface User {
+  userId: string | null;
+  isAdmin: boolean;
+  hasData: boolean;
 }
 
-export function useUserState() {
-  const userState = useState<UserState>('userState',  () => ({
+export function useUserStore() {
+  const user = useState<User>('user',  () => ({
     userId: null,
-    isAdmin: false
+    isAdmin: false,
+    hasData: false
   }))
 
-  const isAuthorized = computed(() => userState.value.userId !== null)
+  const isAuthenticated = computed(() => user.value.userId !== null)
 
-  function resetUserState() {
-    userState.value.userId = null
-    userState.value.isAdmin = false
+  async function getUser() {
+    const { data } = await useFetch('/api/user')
+
+    if (data.value?.userId !== undefined) {
+      user.value.userId = data.value.userId
+      user.value.isAdmin = data.value.isAdmin
+    }
+
+    user.value.hasData = true
+  }
+
+  function resetAuthentication() {
+    user.value.userId = null
+    user.value.isAdmin = false
   }
 
   return {
-    isAuthorized,
-    resetUserState,
-    userState
+    getUser,
+    isAuthenticated,
+    resetAuthentication,
+    user
   }
 }

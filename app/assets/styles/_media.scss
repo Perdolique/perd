@@ -1,13 +1,13 @@
 @import "./variables";
 
-@mixin mobileSmall() {
-  @media screen and (max-width: $screen-mobile-s) {
+@mixin mobileLarge() {
+  @media screen and (min-width: $screen-mobile-l) {
     @content;
   }
 }
 
 @mixin tablet() {
-  @media screen and (max-width: $screen-tablet) {
+  @media screen and (min-width: $screen-tablet) {
     @content;
   }
 }
