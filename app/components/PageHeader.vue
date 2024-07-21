@@ -9,7 +9,14 @@
 
     <section :class="$style.links">
       <PerdLink
-        v-if="userState.isAdmin"
+        v-if="isAuthenticated"
+        to="/inventory"
+      >
+        Inventory
+      </PerdLink>
+
+      <PerdLink
+        v-if="user.isAdmin"
         to="/manager/equipment"
       >
         Equipment manager
@@ -18,7 +25,7 @@
 
     <section :class="$style.buttons">
       <PerdButton
-        v-if="isAuthorized"
+        v-if="isAuthenticated"
         @click="removeAuthSession"
       >
         Log out
@@ -28,16 +35,21 @@
 </template>
 
 <script lang="ts" setup>
-  const { userState, isAuthorized, resetUserState } = useUserState()
+  import PerdLink from '~/components/PerdLink.vue';
+  import PerdButton from '~/components/PerdButton.vue';
+
+  const { user, isAuthenticated, resetAuthentication } = useUserStore()
 
   async function removeAuthSession() {
     await $fetch('/api/auth/logout', {
-      method: 'post'
+      method: 'POST'
     })
 
-    resetUserState()
+    resetAuthentication()
 
-    navigateTo('/')
+    await navigateTo({
+      path: '/login'
+    })
   }
 </script>
 

@@ -55,13 +55,9 @@
     background-color: var(--color-white);
     border: 1px solid var(--input-color-main);
     border-radius: var(--border-radius-2);
-    outline: 1px solid transparent;
-    transition:
-      outline-color 0.15s ease-out,
-      border-color 0.15s ease-out;
+    transition: border-color 0.15s ease-out;
 
     &:has(.input:focus-visible) {
-      outline-color: var(--input-color-focus);
       border-color: var(--input-color-focus);
     }
   }
@@ -80,6 +76,7 @@
     transform-origin: top left;
     user-select: none;
     transition:
+      color 0.15s linear,
       scale 0.15s linear,
       translate 0.15s linear;
 
@@ -87,6 +84,10 @@
     .input:focus-visible + & {
       scale: 0.70;
       translate: 0 -5px;
+    }
+
+    .input:focus-visible + & {
+      color: var(--input-color-focus);
     }
   }
 
@@ -101,7 +102,7 @@
     border: none;
     background: none;
     outline: none;
-    color: var(--input-color-text);
+    color: var(--input-secondary-color-text);
   }
 
   .input::placeholder {
