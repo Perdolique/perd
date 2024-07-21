@@ -1,23 +1,28 @@
 <template>
-  <div :class="$style.component">
-    <NavigationBar />
+  <PageLayout>
+    <div :class="$style.layout">
+      <PerdHeading
+        v-if="route.meta.title"
+        :level="1"
+      >
+        {{ route.meta.title }}
+      </PerdHeading>
 
-    <div :class="$style.content">
       <slot />
     </div>
-  </div>
+  </PageLayout>
 </template>
 
-<style module>
-  .component {
-    display: grid;
-    grid-template-rows: auto 1fr;
-    row-gap: var(--spacing-16);
-  }
+<script lang="ts" setup>
+  import PageLayout from '~/layouts/page.vue';
+  import PerdHeading from '~/components/PerdHeading.vue';
 
-  .content {
+  const route = useRoute();
+</script>
+
+<style module>
+  .layout {
     display: grid;
-    width: 100%;
-    padding: var(--spacing-16);
+    row-gap: var(--spacing-32);
   }
 </style>

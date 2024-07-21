@@ -6,8 +6,6 @@
       </PerdLink>
     </nav>
 
-    <hr :class="$style.divider" />
-
     <PerdInput
       v-model="searchString"
       autofocus
@@ -15,14 +13,25 @@
       label="Search"
       autocomplete="off"
     />
-
-    <EquipmentTable :equipment="equipment" />
   </div>
+
+  <ol>
+    <li
+      v-for="item in equipment"
+      :key="item.id"
+    >
+      {{ item.name }}
+    </li>
+  </ol>
 </template>
 
 <script lang="ts" setup>
+  import PerdInput from '~/components/PerdInput.vue';
+  import PerdLink from '~/components/PerdLink.vue';
+
   definePageMeta({
-    middleware: ['admin']
+    middleware: ['admin'],
+    title: 'Equipment manager'
   })
 
   const searchString = ref('')
@@ -32,22 +41,12 @@
 <style module>
   .component {
     display: grid;
-    row-gap: var(--spacing-24);
-    padding: var(--spacing-16);
+    row-gap: var(--spacing-16);
   }
 
   .header {
     display: flex;
     justify-content: space-between;
     width: 100%;
-  }
-
-  .divider {
-    margin: 0;
-    width: 100%;
-    height: 1px;
-    border: none;
-    background-color: var(--color-blue-900);
-    opacity: 0.5;;
   }
 </style>

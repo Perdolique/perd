@@ -1,72 +1,159 @@
 <template>
-  <div :class="$style.table">
-      <div :class="$style.tableHead">
-        <div :class="[$style.cell, 'id']">
-          ID
-        </div>
-
-        <div :class="[$style.cell, 'name']">
-          Name
-        </div>
-
-        <div :class="[$style.cell, 'weight']">
-          Weight
-        </div>
-
-        <div :class="[$style.cell, 'created']">
-          Created
-        </div>
-      </div>
-
-      <template v-if="hasEquipment">
-        <EquipmentRow
-          v-for="item in equipment"
-          :key="item.id"
-          :id="item.id"
-          :name="item.name"
-          :weight="item.weight"
-          :createdAt="item.createdAt"
-        />
-      </template>
-
-      <div
-        v-else
-        :class="$style.emptyMessage"
+  <div :class="$style.component">
+    <table :class="$style.table">
+      <thead
+        v-if="hasItems"
+        :class="$style.header"
       >
-        Start typing or relax filters
-      </div>
-    </div>
+        <tr :class="$style.row">
+          <th :class="[$style.cell, 'name']">
+            Name
+          </th>
+
+          <th :class="[$style.cell, 'weight']">
+            Weight
+          </th>
+
+          <th :class="[$style.cell, 'actions']" />
+        </tr>
+      </thead>
+
+      <tbody :class="$style.body">
+        <template v-if="hasItems">
+          <tr
+            v-for="item in props.equipment"
+            :key="item.id"
+            :class="$style.row"
+          >
+            <td :class="[$style.cell, 'name']">
+              {{ item.name }}
+            </td>
+
+            <td :class="[$style.cell, 'weight']">
+              {{ item.weight }}
+            </td>
+
+            <td :class="[$style.cell, 'actions']">
+              <div :class="$style.action">
+                <PerdButton
+                  :class="$style.button"
+                  small
+                  secondary
+                  @click="removeItem(item)"
+                >
+                  <Icon
+                    name="tabler:trash"
+                    size="16px"
+                  />
+
+                  Retire
+                </PerdButton>
+              </div>
+            </td>
+          </tr>
+        </template>
+
+        <template v-else>
+          <tr>
+            <td colspan="3">
+              <EmptyContent />
+            </td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+  </div>
 </template>
 
-<script lang="ts" setup>
+<script lang="ts" setup generic="Item extends EquipmentItem">
+  import PerdButton from '~/components/PerdButton.vue';
+  import EmptyContent from './EmptyContent.vue';
+
   export interface EquipmentItem {
     readonly id: string;
     readonly name: string;
-    readonly weight: number | null;
-    readonly createdAt: string;
+    readonly weight: number;
   }
 
   interface Props {
-    readonly equipment: EquipmentItem[]
+    readonly equipment: Item[]
   }
 
+  type Emits = (event: 'remove', item: Item) => void
+
   const props = defineProps<Props>()
-  const hasEquipment = computed(() => props.equipment.length > 0)
+  const emit = defineEmits<Emits>()
+  const hasItems = computed(() => props.equipment.length > 0)
+
+  async function removeItem(item: Item) {
+    emit('remove', item)
+  }
 </script>
 
 <style module>
+  .component {
+    border: 1px solid var(--input-color-main);
+    border-radius: var(--border-radius-2);
+    overflow: hidden;
+  }
+
   .table {
-    display: grid;
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    overflow: hidden;
   }
 
-  .tableHead {
-    display: grid;
-    grid-template-columns: 1fr 2fr 1fr 1fr;
-    font-weight: bold;
+  .header {
+    background-color: var(--input-color-main);
+    color: var(--color-white);
   }
 
-  .emptyMessage {
-    padding: var(--spacing-24);
-    text-align: center;
+  .row {
+    height: 48px;
+
+    .body > & {
+      transition: background-color 0.2s ease-out;
+
+      &:hover {
+        background-color: #e5e5e5;
+      }
+    }
+  }
+
+  .cell {
+    text-align: left;
+    padding: 0 var(--spacing-16);
+
+    .header & {
+      font-weight: var(--font-weight-medium);
+    }
+
+    &:global(.actions) {
+      width: 8rem;
+    }
+  }
+
+  .action {
+    display: none;
+    opacity: 0;
+    transition:
+      opacity 0.2s ease-out,
+      display 0.2s ease-out allow-discrete;
+
+    .row:hover & {
+      display: inherit;
+      opacity: 1;
+
+      @starting-style {
+        opacity: 0;
+      }
+    }
+  }
+
+  .button {
+    display: flex;
+    align-items: center;
+    column-gap: var(--spacing-4);
   }
 </style>

@@ -15,6 +15,8 @@ export default defineEventHandler(async (event) => {
 
   const session = await useAppSession(event)
 
+  setResponseStatus(event, 201)
+
   await session.update({
     userId
   })

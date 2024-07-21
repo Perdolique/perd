@@ -18,8 +18,13 @@
     color: var(--color-blue-700);
     transition: color 0.15s ease-out;
 
-    &:hover {
-      color: var(--color-blue-950);
+    &:hover,
+    &:focus-visible {
+      color: var(--input-color-focus);
+    }
+
+    &:active {
+      color: var(--input-color-active);
     }
   }
 </style>
