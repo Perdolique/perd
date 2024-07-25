@@ -22,10 +22,10 @@
     "modern-normalize": "2.0.0",
     "nuxt": "3.12.4",
     "ulid": "2.3.0",
-    "vue": "3.4.33"
+    "vue": "3.4.34"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "4.20240722.0",
+    "@cloudflare/workers-types": "4.20240725.0",
     "@nuxt/fonts": "0.7.1",
     "@vueuse/core": "10.11.0",
     "drizzle-kit": "0.23.0",
