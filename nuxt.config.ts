@@ -18,11 +18,6 @@ export default defineNuxtConfig({
     dirs: []
   },
 
-  icon: {
-    fallbackToApi: false,
-    size: '32px'
-  },
-
   compatibilityDate: '2024-07-03',
 
   nitro: {
