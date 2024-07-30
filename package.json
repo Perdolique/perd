@@ -28,7 +28,7 @@
     "@cloudflare/workers-types": "4.20240725.0",
     "@iconify-json/tabler": "1.1.118",
     "@nuxt/fonts": "0.7.1",
-    "@nuxt/icon": "1.4.0",
+    "@nuxt/icon": "1.4.3",
     "@vueuse/core": "10.11.0",
     "drizzle-kit": "0.23.1",
     "nitro-cloudflare-dev": "0.1.6",
