@@ -28,13 +28,13 @@
     "@cloudflare/workers-types": "4.20240725.0",
     "@iconify-json/tabler": "1.1.118",
     "@nuxt/fonts": "0.7.1",
-    "@nuxt/icon": "1.4.3",
+    "@nuxt/icon": "1.4.4",
     "@vueuse/core": "10.11.0",
     "drizzle-kit": "0.23.1",
     "nitro-cloudflare-dev": "0.1.6",
     "sass": "1.77.8",
     "ufo": "1.5.4",
     "valibot": "0.37.0",
-    "wrangler": "3.67.1"
+    "wrangler": "3.68.0"
   }
 }
