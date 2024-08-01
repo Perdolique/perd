@@ -36,16 +36,11 @@
             <td :class="[$style.cell, 'actions']">
               <div :class="$style.action">
                 <PerdButton
-                  :class="$style.button"
                   small
                   secondary
+                  icon-name="tabler:trash"
                   @click="removeItem(item)"
                 >
-                  <Icon
-                    name="tabler:trash"
-                    size="16px"
-                  />
-
                   Retire
                 </PerdButton>
               </div>
@@ -93,7 +88,7 @@
 <style module>
   .component {
     border: 1px solid var(--input-color-main);
-    border-radius: var(--border-radius-2);
+    border-radius: var(--border-radius-16);
     overflow: hidden;
   }
 
@@ -149,11 +144,5 @@
         opacity: 0;
       }
     }
-  }
-
-  .button {
-    display: flex;
-    align-items: center;
-    column-gap: var(--spacing-4);
   }
 </style>

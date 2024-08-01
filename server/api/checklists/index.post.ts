@@ -1,7 +1,12 @@
 import * as v from 'valibot'
+import { limits } from '~~/constants'
 
 const bodySchema = v.object({
-  equipmentId: v.pipe(v.string(), v.nonEmpty()),
+  name: v.pipe(
+    v.string(),
+    v.nonEmpty(),
+    v.maxLength(limits.maxChecklistNameLength)
+  )
 })
 
 type BodyData = v.InferOutput<typeof bodySchema>
@@ -14,21 +19,21 @@ export default defineEventHandler(async (event) => {
   const { db } = event.context
   const userId = await getSessionUser(event)
   const body = await readValidatedBody(event, validateBody)
-  const { equipmentId } = body
+  const { name } = body
 
   try {
     await db
-      .insert(tables.userEquipment)
+      .insert(tables.checklists)
       .values({
         userId,
-        equipmentId
+        name
       })
 
     setResponseStatus(event, 201)
   } catch {
     throw createError({
       statusCode: 400,
-      message: 'Cannot assign equipment to user'
+      message: 'Failed to create checklist'
     })
   }
 })

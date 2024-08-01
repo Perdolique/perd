@@ -21,6 +21,13 @@
       >
         Equipment manager
       </PerdLink>
+
+      <PerdLink
+        v-if="isAuthenticated"
+        to="/checklists"
+      >
+        Checklists
+      </PerdLink>
     </section>
 
     <section :class="$style.buttons">

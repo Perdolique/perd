@@ -1,14 +1,7 @@
 import { and, asc, eq, isNotNull } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
-  const session = await useAppSession(event)
-  const { userId } = session.data
-
-  if (userId === undefined) {
-    throw createError({
-      statusCode: 401
-    })
-  }
+  const userId = await getSessionUser(event)
 
   const result = await event.context.db
     .select({

@@ -8,11 +8,10 @@ interface ReturnData {
 }
 
 export default defineEventHandler(async (event) : Promise<ReturnData[]> => {
-  const session = await useAppSession(event)
-  const { userId } = session.data
+  const userId = await getSessionUser(event)
   const { searchString, filterOwned } = getQuery(event)
 
-  if (userId === undefined || typeof searchString !== 'string' || searchString === '') {
+  if (typeof searchString !== 'string' || searchString === '') {
     return []
   }
 

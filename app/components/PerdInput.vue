@@ -54,7 +54,7 @@
     height: var(--input-height);
     background-color: var(--color-white);
     border: 1px solid var(--input-color-main);
-    border-radius: var(--border-radius-2);
+    border-radius: var(--border-radius-16);
     transition: border-color 0.15s ease-out;
 
     &:has(.input:focus-visible) {
