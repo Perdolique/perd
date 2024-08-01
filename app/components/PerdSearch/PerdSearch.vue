@@ -143,7 +143,7 @@
     height: var(--input-height);
     background-color: var(--color-white);
     border: 1px solid var(--input-color-main);
-    border-radius: var(--border-radius-2);
+    border-radius: var(--input-border-radius);
     transition:
       border-color 0.15s ease-out,
       border-radius 0.1s ease-out var(--dropdown-animation-time);
@@ -199,7 +199,7 @@
     padding: 12px var(--input-spacing-horizontal) 0;
     border: none;
     background: none;
-    color: var(--input-secondary-color-text);
+    color: var(--input-color-text);
     outline: none;
   }
 
@@ -251,7 +251,7 @@
     background-color: var(--color-white);
     border: 1px solid var(--input-color-main);
     border-top: none;
-    border-radius: 0 0 var(--border-radius-2) var(--border-radius-2);
+    border-radius: 0 0 var(--input-border-radius) var(--input-border-radius);
     overflow: hidden auto;
     user-select: none;
     transition:
@@ -261,7 +261,7 @@
     &:global(.visible) {
       display: block;
       height: calc(v-bind(visibleOptionsCount) * var(--input-height));
-      color: var(--input-secondary-color-text);
+      color: var(--input-color-text);
 
       @starting-style {
         height: 0;

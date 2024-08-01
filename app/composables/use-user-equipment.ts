@@ -1,5 +1,13 @@
+interface EquipmentItem {
+  readonly id: string;
+  readonly name: string;
+  readonly weight: number;
+  readonly createdAt: string;
+}
+
 export async function useUserEquipment() {
-  const equipment = useUserEquipmentState()
+  const equipment = useState<EquipmentItem[]>('userEquipment', () => [])
+
   const { data } = await useFetch('/api/user/equipment')
 
   async function updateEquipment() {

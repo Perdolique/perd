@@ -1,28 +1,18 @@
 <template>
   <PageLayout>
-    <div :class="$style.layout">
-      <PerdHeading
-        v-if="route.meta.title"
-        :level="1"
-      >
-        {{ route.meta.title }}
-      </PerdHeading>
-
+    <PageContent :page-title="title">
       <slot />
-    </div>
+    </PageContent>
   </PageLayout>
 </template>
 
 <script lang="ts" setup>
-  import PageLayout from '~/layouts/page.vue';
-  import PerdHeading from '~/components/PerdHeading.vue';
+  import PageLayout from '~/layouts/page.vue'
+  import PageContent from '~/components/layout/page-content.vue'
 
-  const route = useRoute();
+  const route = useRoute()
+
+  const title = computed(
+    () => typeof route.meta.title === 'string' ? route.meta.title : ''
+  )
 </script>
-
-<style module>
-  .layout {
-    display: grid;
-    row-gap: var(--spacing-32);
-  }
-</style>

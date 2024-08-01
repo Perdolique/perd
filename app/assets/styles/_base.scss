@@ -45,6 +45,7 @@
   --font-size-12: 0.75rem;
   --font-size-14: 0.875rem;
   --font-size-16: 1rem;
+  --font-size-20: 1.25rem;
   --font-size-24: 1.5rem;
 
   // Font weights
@@ -52,26 +53,38 @@
   --font-weight-bold: 700;
 
   // Borders
-  --border-radius-1: 0.5rem;
-  --border-radius-2: 1rem;
+  --border-radius-8: 0.5rem;
+  --border-radius-12: 0.75rem;
+  --border-radius-16: 1rem;
+  --border-radius-24: 1.5rem;
+
+  // Transitions
+  --transition-time-quick: 0.15s;
+  --transition-time-medium: 0.3s;
+
+  // Buttons
+  --button-color-text: #f0fafb;
 
   // Inputs
   --input-height: 3rem;
   --input-spacing-horizontal: 1rem;
-  --input-color-hover-bg: rgb(0 0 0 / 10%);
+  --input-border-radius: 1rem;
+  --input-color-hover-bg: rgba(151, 136, 136, 0.1);
   --input-color-main: #287892;
   --input-color-focus: #a26830;
   --input-color-active: #7a4f24;
-  --input-color-text: #f0fafb;
+  --input-color-text: #244555;
   --input-color-placeholder: #8c8c8c;
 
   // Secondary inputs
   --input-secondary-color-main: #f0fafb;
-  --input-secondary-color-text: #244555;
+  --input-secondary-color-text: #287892;
+  --input-secondary-color-border: #287892;
   --input-secondary-color-focus: #d8f2f5;
   --input-secondary-color-active: #b5e3ec;
   --input-secondary-color-disabled: #2d95ad;
 
   // Small inputs
-  --input-small-spacing: 1.5rem;
+  --input-small-height: 2rem;
+  --input-small-border-radius: 0.75rem;
 }
