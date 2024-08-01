@@ -4,19 +4,16 @@
     secondary
   }]">
     <Icon
-      v-if="iconName"
       class="icon"
       :name="iconName"
-      size="1.25em"
+      size="1em"
     />
-
-    <slot />
   </button>
 </template>
 
 <script lang="ts" setup>
-  interface Props {
-    readonly iconName?: string;
+   interface Props {
+    readonly iconName: string;
     readonly secondary?: boolean;
     readonly small?: boolean;
   }
@@ -29,25 +26,19 @@
 
 <style module>
   .button {
-    height: var(--input-height);
-    padding: 0 var(--input-spacing-horizontal);
-    background-color: var(--input-color-main);
+    padding: 0;
     border: none;
-    border-radius: var(--input-border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--input-height);
+    height: var(--input-height);
+    background-color: var(--input-color-main);
+    border-radius: var(--border-radius-16);
     color: var(--color-white);
+    font-size: 1.375rem;
     cursor: pointer;
     outline: none;
-    user-select: none;
-    white-space: nowrap;
-    transition:
-      background-color 0.15s ease-out,
-      color 0.15s ease-out;
-
-    &:has(:global(.icon)) {
-      display: flex;
-      align-items: center;
-      column-gap: var(--spacing-8);
-    }
 
     &:global(.secondary) {
       background-color: var(--input-secondary-color-main);
@@ -57,12 +48,9 @@
 
     &:global(.small) {
       height: var(--input-small-height);
-      font-size: var(--font-size-12);
+      width: var(--input-small-height);
       border-radius: var(--input-small-border-radius);
-
-      &:has(:global(.icon)) {
-        column-gap: var(--spacing-4);
-      }
+      font-size: 1.125rem;
     }
 
     &:focus-visible,
@@ -79,18 +67,6 @@
 
       &:global(.secondary) {
         background-color: var(--input-secondary-color-active);
-      }
-    }
-
-    &:disabled {
-      color: var(--color-blue-700);
-      background-color: var(--color-blue-100);
-      cursor: not-allowed;
-
-      &:global(.secondary) {
-        color: var(--input-secondary-color-disabled);
-        background-color: var(--input-secondary-color-main);
-        border-color: var(--input-secondary-color-disabled);
       }
     }
   }

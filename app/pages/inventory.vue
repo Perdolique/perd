@@ -52,8 +52,6 @@
     try {
       isSearching.value = true;
 
-      const delayPromise = delay(250)
-
       const resultPromise = $fetch('/api/equipment', {
         params: {
           searchString,
@@ -61,16 +59,16 @@
         }
       })
 
-      const [result] = await Promise.allSettled([resultPromise, delayPromise])
+      const result = await withMinimumDelay(resultPromise)
 
-      if (result.status === 'fulfilled') {
-        options.value = result.value.map((equipment) => ({
-          id: equipment.id,
-          name: equipment.name,
-          weight: equipment.weight,
-          createdAt: equipment.createdAt
-        }));
-      }
+      options.value = result.map((equipment) => ({
+        id: equipment.id,
+        name: equipment.name,
+        weight: equipment.weight,
+        createdAt: equipment.createdAt
+      }));
+    } catch (error) {
+      console.error(error);
     } finally {
       isSearching.value = false
     }

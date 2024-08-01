@@ -6,3 +6,7 @@ export const startPagePath = '/'
 export const publicApiPaths = [
   '/auth/create-session'
 ]
+
+export const limits = {
+  maxChecklistNameLength: 32,
+}

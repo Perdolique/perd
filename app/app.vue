@@ -22,4 +22,17 @@
     background-color: ghostwhite;
     color: var(--color-primary);
   }
+
+  // Reset default dialog styles
+  dialog {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--color-primary);
+  }
+
+  // Apply global styles
+  input::placeholder {
+    color: var(--input-color-placeholder);
+  }
 </style>
