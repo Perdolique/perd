@@ -6,7 +6,7 @@ A web app for those who love hanging out in the forest but always forget to brin
 
 # Planning features
 
-- [ ] List of equipment you have
+- [x] List of equipment you have
 - [ ] Lists of equipment you want to bring on your adventure (adventure lists)
 - [ ] Ability to share adventure lists with friends (or strangers)
 - [ ] Crosschecks
@@ -48,6 +48,7 @@ A web app for those who love hanging out in the forest but always forget to brin
   * Custom UI components
 * Misc
   * [Drizzle ORM](https://orm.drizzle.team/)
+  * [Valibot](https://github.com/fabian-hiller/valibot) (type-safe schema validation)
 
 ## MVP Release
 
