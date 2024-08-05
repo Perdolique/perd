@@ -1,6 +1,27 @@
 import { sql } from 'drizzle-orm'
-import { sqliteTable, text, integer, primaryKey, index } from 'drizzle-orm/sqlite-core'
 import { ulid } from 'ulid'
+
+import {
+  sqliteTable,
+  text,
+  integer,
+  unique,
+  primaryKey,
+  index,
+  customType
+} from 'drizzle-orm/sqlite-core'
+
+/**
+ * Custom types
+ */
+
+// https://sqlite.org/datatype3.html#collating_sequences
+// https://github.com/drizzle-team/drizzle-orm/issues/638
+const textNoCase = customType<{ data: string }>({
+  dataType() {
+    return 'text COLLATE NOCASE'
+  }
+})
 
 /**
  * Users table
@@ -42,7 +63,7 @@ export const equipment = sqliteTable('equipment', {
     .primaryKey(),
 
   name:
-    text('name')
+    textNoCase('name')
     .notNull(),
 
   weight:
@@ -124,3 +145,41 @@ export const checklists = sqliteTable('checklists', {
     createdAtIndex: index('createdAtIndex').on(table.createdAt)
   }
 })
+
+/**
+ * Checklist items table
+ */
+
+export const checklistItems = sqliteTable('checklistItems', {
+  id:
+    text('id')
+    .$defaultFn(() => ulid())
+    .notNull()
+    .primaryKey(),
+
+  checklistId:
+    text('checklistId')
+    .notNull()
+    .references(() => checklists.id, {
+      onDelete: 'cascade',
+      onUpdate: 'cascade'
+    }),
+
+  equipmentId:
+    text('equipmentId')
+    .notNull()
+    .references(() => equipment.id, {
+      onDelete: 'cascade',
+      onUpdate: 'cascade'
+    }),
+
+  isChecked:
+    integer('isChecked', {
+      mode: 'boolean'
+    })
+    .notNull()
+    .default(false)
+
+}, (table) => ({
+  checklistIdEquipmentIdKey: unique().on(table.checklistId, table.equipmentId)
+}))

@@ -13,6 +13,7 @@
     "db:generate": "npx drizzle-kit generate",
     "db:migrate:dev": "wrangler d1 migrations apply perd-stage --env preview",
     "db:migrate:prod": "wrangler d1 migrations apply perd-prod --env production --remote",
+    "db:migrate": "CI=true npm run db:migrate:dev && CI=true npm run db:migrate:dev -- --remote && CI=true npm run db:migrate:prod",
     "db:studio": "npx drizzle-kit studio"
   },
   "dependencies": {

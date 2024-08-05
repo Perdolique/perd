@@ -1,11 +1,11 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "79b93f6a-4991-431b-ab4a-855acc0bd42e",
+  "id": "f961da9d-0fbb-4a4b-bd1b-7911a4ce808e",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
-    "user_sessions": {
-      "name": "user_sessions",
+    "checklistItems": {
+      "name": "checklistItems",
       "columns": {
         "id": {
           "name": "id",
@@ -14,10 +14,77 @@
           "notNull": true,
           "autoincrement": false
         },
-        "session": {
-          "name": "session",
+        "checklistId": {
+          "name": "checklistId",
           "type": "text",
           "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "equipmentId": {
+          "name": "equipmentId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "isChecked": {
+          "name": "isChecked",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        }
+      },
+      "indexes": {
+        "checklistItems_checklistId_equipmentId_unique": {
+          "name": "checklistItems_checklistId_equipmentId_unique",
+          "columns": [
+            "checklistId",
+            "equipmentId"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "checklistItems_checklistId_checklists_id_fk": {
+          "name": "checklistItems_checklistId_checklists_id_fk",
+          "tableFrom": "checklistItems",
+          "tableTo": "checklists",
+          "columnsFrom": [
+            "checklistId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "checklistItems_equipmentId_equipment_id_fk": {
+          "name": "checklistItems_equipmentId_equipment_id_fk",
+          "tableFrom": "checklistItems",
+          "tableTo": "equipment",
+          "columnsFrom": [
+            "equipmentId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "checklists": {
+      "name": "checklists",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
           "notNull": true,
           "autoincrement": false
         },
@@ -25,7 +92,105 @@
           "name": "userId",
           "type": "text",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {
+        "createdAtIndex": {
+          "name": "createdAtIndex",
+          "columns": [
+            "createdAt"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "checklists_userId_users_id_fk": {
+          "name": "checklists_userId_users_id_fk",
+          "tableFrom": "checklists",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "equipment": {
+      "name": "equipment",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text COLLATE NOCASE",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "weight": {
+          "name": "weight",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "userEquipment": {
+      "name": "userEquipment",
+      "columns": {
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "equipmentId": {
+          "name": "equipmentId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
           "autoincrement": false
         },
         "createdAt": {
@@ -39,9 +204,9 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "user_sessions_userId_users_id_fk": {
-          "name": "user_sessions_userId_users_id_fk",
-          "tableFrom": "user_sessions",
+        "userEquipment_userId_users_id_fk": {
+          "name": "userEquipment_userId_users_id_fk",
+          "tableFrom": "userEquipment",
           "tableTo": "users",
           "columnsFrom": [
             "userId"
@@ -51,9 +216,30 @@
           ],
           "onDelete": "cascade",
           "onUpdate": "cascade"
+        },
+        "userEquipment_equipmentId_equipment_id_fk": {
+          "name": "userEquipment_equipmentId_equipment_id_fk",
+          "tableFrom": "userEquipment",
+          "tableTo": "equipment",
+          "columnsFrom": [
+            "equipmentId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         }
       },
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "userEquipment_userId_equipmentId_pk": {
+          "columns": [
+            "equipmentId",
+            "userId"
+          ],
+          "name": "userEquipment_userId_equipmentId_pk"
+        }
+      },
       "uniqueConstraints": {}
     },
     "users": {
@@ -80,6 +266,14 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(unixepoch())"
+        },
+        "isAdmin": {
+          "name": "isAdmin",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
         }
       },
       "indexes": {},

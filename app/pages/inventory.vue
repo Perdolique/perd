@@ -10,9 +10,9 @@
       @search="search"
     >
       <template #option="{ option }">
-        <SearchOption @click="addItem(option)">
+        <SearchOptionAdd @click="addItem(option)">
           {{ option.name }}
-        </SearchOption>
+        </SearchOptionAdd>
       </template>
     </PerdSearch>
 
@@ -25,7 +25,7 @@
 
 <script lang="ts" setup>
   import EquipmentTable from '~/components/equipment/EquipmentTable.vue';
-  import SearchOption from '~/components/inventory/SearchOption.vue';
+  import SearchOptionAdd from '~/components/PerdSearch/SearchOptionAdd.vue';
   import PerdSearch from '~/components/PerdSearch/PerdSearch.vue';
 
   interface EquipmentItem {
@@ -41,14 +41,9 @@
 
   const isSearching = ref(false);
   const options = ref<EquipmentItem[]>([]);
-  const timer = ref(0);
   const { equipment, updateEquipment } = await useUserEquipment()
 
   async function search(searchString: string) {
-    if (isSearching.value) {
-      clearTimeout(timer.value);
-    }
-
     try {
       isSearching.value = true;
 

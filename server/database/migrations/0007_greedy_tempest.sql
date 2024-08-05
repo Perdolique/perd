@@ -1,1 +1,0 @@
-CREATE INDEX `createdAtIndex` ON `checklists` (`createdAt`);

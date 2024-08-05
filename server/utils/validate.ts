@@ -1,7 +1,7 @@
 import * as v from 'valibot'
 import type { H3Event, EventHandlerRequest } from 'h3'
 
-export async function getSessionUser(event: H3Event<EventHandlerRequest>) {
+export async function validateSessionUser(event: H3Event<EventHandlerRequest>) {
   const session = await useAppSession(event)
   const { userId } = session.data
 
@@ -13,7 +13,6 @@ export async function getSessionUser(event: H3Event<EventHandlerRequest>) {
 
   return userId
 }
-
 
 export function validateId(id: unknown) {
   const schema = v.pipe(v.string(), v.nonEmpty())
