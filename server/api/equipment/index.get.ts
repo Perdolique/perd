@@ -8,7 +8,7 @@ interface ReturnData {
 }
 
 export default defineEventHandler(async (event) : Promise<ReturnData[]> => {
-  const userId = await getSessionUser(event)
+  const userId = await validateSessionUser(event)
   const { searchString, filterOwned } = getQuery(event)
 
   if (typeof searchString !== 'string' || searchString === '') {

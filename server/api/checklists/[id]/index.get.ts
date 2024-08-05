@@ -7,7 +7,7 @@ interface ReturnData {
 }
 
 export default defineEventHandler(async (event) : Promise<ReturnData> => {
-  const userId = await getSessionUser(event)
+  const userId = await validateSessionUser(event)
   const id = getRouterParam(event, 'id')
   const checklistId = validateId(id)
 
