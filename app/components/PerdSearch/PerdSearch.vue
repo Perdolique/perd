@@ -140,6 +140,7 @@
 
     position: relative;
     z-index: 1;
+    min-width: 160px;
     height: var(--input-height);
     background-color: var(--color-white);
     border: 1px solid var(--input-color-main);
@@ -252,6 +253,7 @@
     border: 1px solid var(--input-color-main);
     border-top: none;
     border-radius: 0 0 var(--input-border-radius) var(--input-border-radius);
+    scrollbar-width: none;
     overflow: hidden auto;
     user-select: none;
     transition:

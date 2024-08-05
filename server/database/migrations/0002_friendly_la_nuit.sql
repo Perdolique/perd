@@ -1,1 +1,0 @@
-ALTER TABLE `users` ADD `isAdmin` integer DEFAULT false NOT NULL;

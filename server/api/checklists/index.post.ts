@@ -17,7 +17,7 @@ function validateBody(body: unknown) {
 
 export default defineEventHandler(async (event) => {
   const { db } = event.context
-  const userId = await getSessionUser(event)
+  const userId = await validateSessionUser(event)
   const body = await readValidatedBody(event, validateBody)
   const { name } = body
 

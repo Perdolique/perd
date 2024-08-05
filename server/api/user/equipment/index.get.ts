@@ -1,7 +1,7 @@
-import { and, asc, eq, isNotNull } from 'drizzle-orm'
+import { and, asc, eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
-  const userId = await getSessionUser(event)
+  const userId = await validateSessionUser(event)
 
   const result = await event.context.db
     .select({
@@ -11,15 +11,12 @@ export default defineEventHandler(async (event) => {
       createdAt: tables.equipment.createdAt
     })
     .from(tables.equipment)
-    .leftJoin(
+    .innerJoin(
       tables.userEquipment,
       and(
         eq(tables.userEquipment.userId, userId),
         eq(tables.userEquipment.equipmentId, tables.equipment.id)
       )
-    )
-    .where(
-      isNotNull(tables.userEquipment.userId)
     )
     .orderBy(asc(tables.equipment.name))
     .limit(100)
