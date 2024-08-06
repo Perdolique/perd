@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 import { ulid } from 'ulid'
 
 import {
@@ -182,4 +182,51 @@ export const checklistItems = sqliteTable('checklistItems', {
 
 }, (table) => ({
   checklistIdEquipmentIdKey: unique().on(table.checklistId, table.equipmentId)
+}))
+
+/**
+ * Relations
+ */
+
+export const usersRelations = relations(users, ({ many }) => ({
+  userEquipment: many(userEquipment),
+  checklists: many(checklists)
+}))
+
+export const equipmentRelations = relations(equipment, ({ many }) => ({
+  userEquipment: many(userEquipment),
+  checklistItems: many(checklistItems)
+}))
+
+export const userEquipmentRelations = relations(userEquipment, ({ one }) => ({
+  user: one(users, {
+    fields: [userEquipment.userId],
+    references: [users.id]
+  }),
+
+  equipment: one(equipment, {
+    fields: [userEquipment.equipmentId],
+    references: [equipment.id]
+  })
+}))
+
+export const checklistsRelations = relations(checklists, ({ many, one }) => ({
+  checklistItems: many(checklistItems),
+
+  user: one(users, {
+    fields: [checklists.userId],
+    references: [users.id]
+  })
+}))
+
+export const checklistItemsRelations = relations(checklistItems, ({ one }) => ({
+  checklists: one(checklists, {
+    fields: [checklistItems.checklistId],
+    references: [checklists.id]
+  }),
+
+  equipment: one(equipment, {
+    fields: [checklistItems.equipmentId],
+    references: [equipment.id]
+  })
 }))
