@@ -23,6 +23,8 @@
           </SearchOptionAdd>
         </template>
       </PerdSearch>
+
+      <ChecklistItemsList :items="items" />
     </div>
   </PageContent>
 </template>
@@ -32,6 +34,7 @@
   import PerdButton from '~/components/PerdButton.vue';
   import SearchOptionAdd from '~/components/PerdSearch/SearchOptionAdd.vue';
   import PerdSearch from '~/components/PerdSearch/PerdSearch.vue';
+  import ChecklistItemsList from '~/components/checklists/ChecklistItemsList.vue';
 
   interface InventoryItem {
     readonly id: string;
@@ -45,7 +48,7 @@
   const options = ref<InventoryItem[]>([]);
   const isSearching = ref(false);
   const { data: checklistData } = await useFetch(`/api/checklists/${checklistId}`)
-  const { items, updateItems } = await useChecklistItemsData(checklistId)
+  const items = await useChecklistItemsData(checklistId)
 
   if (checklistData.value !== undefined) {
     name.value = checklistData.value.name
@@ -99,7 +102,7 @@
 
   async function addItem(item: InventoryItem) {
     try {
-      await $fetch(`/api/checklists/${checklistId}/items`, {
+      const insertedItem = await $fetch(`/api/checklists/${checklistId}/items`, {
         method: 'POST',
 
         body: {
@@ -109,9 +112,12 @@
 
       options.value = options.value.filter(({ id }) => id !== item.id)
 
-      await updateItems()
-
-      console.log('items', items.value);
+      if (insertedItem !== undefined) {
+        items.value.push({
+          id: insertedItem.id,
+          equipment: insertedItem.equipment
+        })
+      }
     } catch (error) {
       console.error(error)
     }
