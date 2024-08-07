@@ -26,7 +26,7 @@
     "vue": "3.4.36"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "4.20240729.0",
+    "@cloudflare/workers-types": "4.20240806.0",
     "@iconify-json/tabler": "1.1.119",
     "@nuxt/fonts": "0.7.1",
     "@nuxt/icon": "1.4.5",
@@ -36,6 +36,6 @@
     "sass": "1.77.8",
     "ufo": "1.5.4",
     "valibot": "0.37.0",
-    "wrangler": "3.68.0"
+    "wrangler": "3.69.1"
   }
 }
