@@ -3,8 +3,8 @@ import { validateId } from '~~/server/utils/validate'
 
 export default defineEventHandler(async (event) => {
   const userId = await validateSessionUser(event)
-  const id = getRouterParam(event, 'id')
-  const checklistId = validateId(id)
+  const checklistIdParam = getRouterParam(event, 'checklistId')
+  const checklistId = validateId(checklistIdParam)
 
   const deleted = await event.context.db
     .delete(tables.checklists)

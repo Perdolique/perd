@@ -102,7 +102,7 @@
     border: none;
     background: none;
     outline: none;
-    color: var(--input-secondary-color-text);
+    color: var(--input-color-text);
   }
 
   .input::placeholder {

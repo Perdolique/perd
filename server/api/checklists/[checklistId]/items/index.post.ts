@@ -2,10 +2,7 @@ import { eq } from 'drizzle-orm'
 import * as v from 'valibot'
 
 const bodySchema = v.object({
-  equipmentId: v.pipe(
-    v.string(),
-    v.nonEmpty()
-  )
+  equipmentId: idValidator
 })
 
 type BodyData = v.InferOutput<typeof bodySchema>
@@ -19,7 +16,7 @@ export default defineEventHandler(async (event) => {
 
   await validateSessionUser(event)
 
-  const checklistIdParam = getRouterParam(event, 'id')
+  const checklistIdParam = getRouterParam(event, 'checklistId')
   const checklistId = validateId(checklistIdParam)
   const { equipmentId } = await readValidatedBody(event, validateBody)
 

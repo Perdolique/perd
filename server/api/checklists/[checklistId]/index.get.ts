@@ -8,8 +8,8 @@ interface ReturnData {
 
 export default defineEventHandler(async (event) : Promise<ReturnData> => {
   const userId = await validateSessionUser(event)
-  const id = getRouterParam(event, 'id')
-  const checklistId = validateId(id)
+  const checklistIdParam = getRouterParam(event, 'checklistId')
+  const checklistId = validateId(checklistIdParam)
 
   const result = await event.context.db.query.checklists
     .findFirst({
