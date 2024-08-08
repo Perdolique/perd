@@ -85,7 +85,7 @@
   }
 </script>
 
-<style module>
+<style lang="scss" module>
   .component {
     border: 1px solid var(--input-color-main);
     border-radius: var(--border-radius-16);
@@ -122,6 +122,10 @@
 
     .header & {
       font-weight: var(--font-weight-medium);
+    }
+
+    &:global(.name) {
+      @include overflow-ellipsis();
     }
 
     &:global(.actions) {
