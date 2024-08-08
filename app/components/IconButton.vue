@@ -1,6 +1,6 @@
 <template>
   <button :class="[$style.button, {
-    small,
+    [size]: true,
     secondary
   }]">
     <Icon
@@ -15,12 +15,12 @@
    interface Props {
     readonly iconName: string;
     readonly secondary?: boolean;
-    readonly small?: boolean;
+    readonly size: 'm' | 's' | 'xs';
   }
 
   withDefaults(defineProps<Props>(), {
     secondary: false,
-    small: false
+    size: 'm'
   });
 </script>
 
@@ -46,11 +46,18 @@
       border: 1px solid var(--input-secondary-color-border);
     }
 
-    &:global(.small) {
+    &:global(.s) {
       height: var(--input-small-height);
       width: var(--input-small-height);
       border-radius: var(--input-small-border-radius);
       font-size: 1.125rem;
+    }
+
+    &:global(.xs) {
+      height: var(--input-extra-small-height);
+      width: var(--input-extra-small-height);
+      border-radius: var(--input-extra-small-border-radius);
+      font-size: 1rem;
     }
 
     &:focus-visible,

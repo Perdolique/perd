@@ -1,6 +1,8 @@
 <template>
   <div :class="$style.component">
-    <slot />
+    <div :class="$style.name">
+      <slot />
+    </div>
 
     <div :class="$style.add">
       <Icon
@@ -13,10 +15,11 @@
   </div>
 </template>
 
-<style module>
+<style lang="scss" module>
   .component {
     height: 100%;
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto;
     align-items: center;
     column-gap: var(--spacing-16);
     justify-content: space-between;
@@ -29,10 +32,14 @@
     }
   }
 
+  .name {
+    @include overflow-ellipsis();
+  }
+
   .add {
-    display: none;
-    opacity: 0;
+    display: flex;
     align-items: center;
+    opacity: 0;
     column-gap: var(--spacing-4);
     font-size: var(--font-size-14);
     transition:
@@ -40,12 +47,7 @@
       display 0.15s ease-out allow-discrete;
 
     .component:hover & {
-      display: flex;
       opacity: 1;
-
-      @starting-style {
-        opacity: 0;
-      }
     }
   }
 </style>

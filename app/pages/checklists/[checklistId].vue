@@ -18,7 +18,7 @@
         @search="search"
       >
         <template #option="{ option }">
-          <SearchOptionAdd @click="addItem(option)">
+          <SearchOptionAdd @click="handleOptionClick(option.id)">
             {{ option.name }}
           </SearchOptionAdd>
         </template>
@@ -42,13 +42,15 @@
   }
 
   const route = useRoute()
+  const { items, addItem } = useChecklistStore()
   const name = ref('')
-  const checklistId = route.params.id?.toString() ?? ''
+  const checklistId = route.params.checklistId?.toString() ?? ''
   const isDeleting = ref(false)
-  const options = ref<InventoryItem[]>([]);
-  const isSearching = ref(false);
+  const options = ref<InventoryItem[]>([])
+  const isSearching = ref(false)
   const { data: checklistData } = await useFetch(`/api/checklists/${checklistId}`)
-  const items = await useChecklistItemsData(checklistId)
+
+  await useChecklistItemsData(checklistId)
 
   if (checklistData.value !== undefined) {
     name.value = checklistData.value.name
@@ -100,27 +102,10 @@
     }
   }
 
-  async function addItem(item: InventoryItem) {
-    try {
-      const insertedItem = await $fetch(`/api/checklists/${checklistId}/items`, {
-        method: 'POST',
+  async function handleOptionClick(equipmentId: string) {
+    await addItem(checklistId, equipmentId)
 
-        body: {
-          equipmentId: item.id
-        }
-      })
-
-      options.value = options.value.filter(({ id }) => id !== item.id)
-
-      if (insertedItem !== undefined) {
-        items.value.push({
-          id: insertedItem.id,
-          equipment: insertedItem.equipment
-        })
-      }
-    } catch (error) {
-      console.error(error)
-    }
+    options.value = options.value.filter(({ id }) => id !== equipmentId)
   }
 </script>
 

@@ -9,14 +9,9 @@
 </template>
 
 <script lang="ts" setup>
-  import type { ChecklistItemModel } from '~/models/checklist';
   import ChecklistItem from './ChecklistItem.vue';
 
-  interface Props {
-    readonly items: ChecklistItemModel[];
-  }
-
-  defineProps<Props>();
+  const { items } = useChecklistStore();
 </script>
 
 <style module>

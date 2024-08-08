@@ -19,7 +19,7 @@
   const path = computed(() => `/checklists/${props.checklistId}`)
 </script>
 
-<style module>
+<style lang="scss" module>
   .component {
     display: flex;
     align-items: center;
@@ -51,8 +51,6 @@
   }
 
   .name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    @include overflow-ellipsis();
   }
 </style>

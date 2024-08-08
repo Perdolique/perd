@@ -24,15 +24,13 @@
   defineProps<Props>()
 </script>
 
-<style module>
+<style lang="scss" module>
   .layout {
     display: grid;
     row-gap: var(--spacing-32);
   }
 
   .heading {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-wrap: nowrap;
+    @include overflow-ellipsis();
   }
 </style>

@@ -1,6 +1,8 @@
 import * as v from 'valibot'
 import type { H3Event, EventHandlerRequest } from 'h3'
 
+export const idValidator = v.pipe(v.string(), v.nonEmpty())
+
 export async function validateSessionUser(event: H3Event<EventHandlerRequest>) {
   const session = await useAppSession(event)
   const { userId } = session.data
@@ -15,8 +17,7 @@ export async function validateSessionUser(event: H3Event<EventHandlerRequest>) {
 }
 
 export function validateId(id: unknown) {
-  const schema = v.pipe(v.string(), v.nonEmpty())
-  const { issues, output, success } = v.safeParse(schema, id)
+  const { issues, output, success } = v.safeParse(idValidator, id)
 
   if (success) {
     return output
