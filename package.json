@@ -30,12 +30,12 @@
     "@iconify-json/tabler": "1.1.119",
     "@nuxt/fonts": "0.7.1",
     "@nuxt/icon": "1.4.5",
-    "@vueuse/core": "10.11.0",
+    "@vueuse/core": "10.11.1",
     "drizzle-kit": "0.24.0",
     "nitro-cloudflare-dev": "0.1.6",
     "sass": "1.77.8",
     "ufo": "1.5.4",
     "valibot": "0.37.0",
-    "wrangler": "3.69.1"
+    "wrangler": "3.70.0"
   }
 }
