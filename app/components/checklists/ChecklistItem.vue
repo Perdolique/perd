@@ -42,6 +42,7 @@
     height: 40px;
     display: grid;
     grid-template-columns: minmax(100px, 30%) auto auto;
+    column-gap: var(--spacing-12);
     align-items: center;
     padding: 0 var(--spacing-12);
     background-color: var(--color-blue-100);

@@ -171,15 +171,7 @@ export const checklistItems = sqliteTable('checklistItems', {
     .references(() => equipment.id, {
       onDelete: 'cascade',
       onUpdate: 'cascade'
-    }),
-
-  isChecked:
-    integer('isChecked', {
-      mode: 'boolean'
     })
-    .notNull()
-    .default(false)
-
 }, (table) => ({
   checklistIdEquipmentIdKey: unique().on(table.checklistId, table.equipmentId)
 }))
