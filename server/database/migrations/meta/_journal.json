@@ -8,6 +8,13 @@
       "when": 1722789951109,
       "tag": "0000_deep_skrulls",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1723316487779,
+      "tag": "0001_bitter_titanium_man",
+      "breakpoints": true
     }
   ]
 }
