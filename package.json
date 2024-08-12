@@ -27,7 +27,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "4.20240806.0",
-    "@iconify-json/tabler": "1.1.119",
+    "@iconify-json/tabler": "1.1.120",
     "@nuxt/fonts": "0.7.1",
     "@nuxt/icon": "1.4.5",
     "@vueuse/core": "10.11.1",
