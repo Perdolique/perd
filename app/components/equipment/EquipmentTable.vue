@@ -38,7 +38,7 @@
                 <PerdButton
                   small
                   secondary
-                  icon-name="tabler:trash"
+                  icon="tabler:trash"
                   @click="removeItem(item)"
                 >
                   Retire
@@ -101,7 +101,7 @@
 
   .header {
     background-color: var(--input-color-main);
-    color: var(--color-white);
+    color: var(--color-background);
   }
 
   .row {

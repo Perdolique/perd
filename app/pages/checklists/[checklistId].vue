@@ -1,13 +1,25 @@
 <template>
   <PageContent :page-title="name">
-    <div :class="$style.content">
-      <PerdButton
-        :disabled="isDeleting"
-        @click="deleteChecklist"
-      >
-        Delete
-      </PerdButton>
+    <template #actions>
+      <div :class="$style.actions">
+        <PerdButton
+          small
+          icon="tabler:toggle-left"
+        >
+          Toggle mode
+        </PerdButton>
 
+        <PerdMenu
+          icon="tabler:settings"
+          :items="menuItems"
+          @item-click="handleMenuItemClick"
+        >
+          Options
+        </PerdMenu>
+      </div>
+    </template>
+
+    <div :class="$style.content">
       <PerdSearch
         label="Search"
         placeholder="MGS Bubba Hubba UL2"
@@ -30,16 +42,27 @@
 </template>
 
 <script lang="ts" setup>
-  import PageContent from '~/components/layout/page-content.vue'
+  import PageContent from '~/components/layout/PageContent.vue'
   import PerdButton from '~/components/PerdButton.vue';
   import SearchOptionAdd from '~/components/PerdSearch/SearchOptionAdd.vue';
   import PerdSearch from '~/components/PerdSearch/PerdSearch.vue';
   import ChecklistItemsList from '~/components/checklists/ChecklistItemsList.vue';
+  import PerdMenu, { type MenuItem } from '~/components/PerdMenu.vue';
+
+  definePageMeta({
+    layout: 'page'
+  })
 
   interface InventoryItem {
     readonly id: string;
     readonly name: string;
   }
+
+  const menuItems = [{
+    icon: 'tabler:trash',
+    text: 'Delete',
+    event: 'delete'
+  }] as const satisfies MenuItem[]
 
   const route = useRoute()
   const { items, addItem } = useChecklistStore()
@@ -107,6 +130,12 @@
 
     options.value = options.value.filter(({ id }) => id !== equipmentId)
   }
+
+  async function handleMenuItemClick(item: typeof menuItems[number]) {
+    if (item.event === 'delete') {
+      await deleteChecklist()
+    }
+  }
 </script>
 
 <style module>
@@ -114,6 +143,12 @@
     display: grid;
     justify-items: start;
     gap: var(--spacing-32);
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    column-gap: var(--spacing-8);
   }
 
   .search {

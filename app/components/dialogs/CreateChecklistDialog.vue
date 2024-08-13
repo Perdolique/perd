@@ -80,7 +80,7 @@
   .content {
     display: grid;
     row-gap: var(--spacing-24);
-    background-color: var(--color-white);
+    background-color: var(--color-background);
     padding: var(--spacing-16) var(--spacing-32);
     border-radius: var(--border-radius-24);
     border: 1px solid var(--color-blue-700);
@@ -93,14 +93,7 @@
   }
 
   .input {
-    width: 100%;
-    border: 1px solid color-mix(in srgb, var(--color-primary), transparent 75%);
-    outline: none;
-    padding: var(--spacing-12);
     text-align: center;
-    border-radius: var(--border-radius-16);
-    font-size: var(--font-size-16);
-    color: var(--color-primary);
   }
 
   .input::placeholder {

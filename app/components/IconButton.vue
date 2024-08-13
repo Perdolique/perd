@@ -35,7 +35,7 @@
     height: var(--input-height);
     background-color: var(--input-color-main);
     border-radius: var(--border-radius-16);
-    color: var(--color-white);
+    color: var(--button-color-text);
     font-size: 1.375rem;
     cursor: pointer;
     outline: none;

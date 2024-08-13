@@ -142,7 +142,7 @@
     z-index: 1;
     min-width: 160px;
     height: var(--input-height);
-    background-color: var(--color-white);
+    background-color: var(--input-color-background);
     border: 1px solid var(--input-color-main);
     border-radius: var(--input-border-radius);
     transition:
@@ -249,7 +249,7 @@
     top: 100%;
     left: -1px;
     right: -1px;
-    background-color: var(--color-white);
+    background-color: var(--input-color-background);
     border: 1px solid var(--input-color-main);
     border-top: none;
     border-radius: 0 0 var(--input-border-radius) var(--input-border-radius);
