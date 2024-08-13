@@ -37,9 +37,12 @@
   --color-blue-800: #275263;
   --color-blue-900: #244555;
   --color-blue-950: #132c39;
-  --color-white: #fff;
+  --color-background: #f0fafb;
   --color-primary: #244555;
   --color-secondary: #666;
+
+  // Shadows
+  --shadow-2: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
 
   // Font sizes
   --font-size-12: 0.75rem;
@@ -63,7 +66,7 @@
   --transition-time-medium: 0.3s;
 
   // Buttons
-  --button-color-text: #f0fafb;
+  --button-color-text: ghostwhite;
 
   // Inputs
   --input-height: 3rem;
@@ -75,9 +78,10 @@
   --input-color-active: #7a4f24;
   --input-color-text: #244555;
   --input-color-placeholder: #8c8c8c;
+  --input-color-background: ghostwhite;
 
   // Secondary inputs
-  --input-secondary-color-main: #f0fafb;
+  --input-secondary-color-main: ghostwhite;
   --input-secondary-color-text: #287892;
   --input-secondary-color-border: #287892;
   --input-secondary-color-focus: #d8f2f5;

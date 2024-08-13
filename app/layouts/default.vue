@@ -8,7 +8,7 @@
 
 <script lang="ts" setup>
   import PageLayout from '~/layouts/page.vue'
-  import PageContent from '~/components/layout/page-content.vue'
+  import PageContent from '~/components/layout/PageContent.vue'
 
   const route = useRoute()
 

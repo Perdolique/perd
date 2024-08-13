@@ -19,7 +19,7 @@
 
   body {
     margin: 0;
-    background-color: ghostwhite;
+    background-color: var(--color-background);
     color: var(--color-primary);
   }
 
@@ -32,6 +32,17 @@
   }
 
   // Apply global styles
+  input {
+    width: 100%;
+    outline: none;
+    border: 1px solid color-mix(in srgb, var(--color-primary), transparent 75%);
+    padding: var(--spacing-12);
+    border-radius: var(--border-radius-16);
+    font-size: var(--font-size-16);
+    color: var(--color-primary);
+    background-color: var(--input-color-background);
+  }
+
   input::placeholder {
     color: var(--input-color-placeholder);
   }
