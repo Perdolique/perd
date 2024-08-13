@@ -20,7 +20,7 @@
     "better-sqlite3": "11.1.2",
     "date-fns": "3.6.0",
     "drizzle-orm": "0.33.0",
-    "modern-normalize": "2.0.0",
+    "modern-normalize": "3.0.0",
     "nuxt": "3.12.4",
     "ulid": "2.3.0",
     "vue": "3.4.37"
@@ -28,7 +28,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "4.20240806.0",
     "@iconify-json/tabler": "1.1.120",
-    "@nuxt/fonts": "0.7.1",
+    "@nuxt/fonts": "0.7.2",
     "@nuxt/icon": "1.4.5",
     "@vueuse/core": "10.11.1",
     "drizzle-kit": "0.24.0",
