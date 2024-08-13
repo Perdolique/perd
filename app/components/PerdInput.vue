@@ -52,7 +52,7 @@
   .root {
     position: relative;
     height: var(--input-height);
-    background-color: var(--color-white);
+    background-color: var(--input-color-background);
     border: 1px solid var(--input-color-main);
     border-radius: var(--border-radius-16);
     transition: border-color 0.15s ease-out;
@@ -97,7 +97,6 @@
     right: 0;
     top: 0;
     bottom: 0;
-    width: 100%;
     padding: 12px var(--input-spacing-horizontal) 0;
     border: none;
     background: none;

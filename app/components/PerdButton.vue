@@ -4,9 +4,9 @@
     secondary
   }]">
     <Icon
-      v-if="iconName"
+      v-if="icon"
       class="icon"
-      :name="iconName"
+      :name="icon"
       size="1.25em"
     />
 
@@ -16,7 +16,7 @@
 
 <script lang="ts" setup>
   interface Props {
-    readonly iconName?: string;
+    readonly icon?: string;
     readonly secondary?: boolean;
     readonly small?: boolean;
   }
@@ -34,7 +34,7 @@
     background-color: var(--input-color-main);
     border: none;
     border-radius: var(--input-border-radius);
-    color: var(--color-white);
+    color: var(--button-color-text);
     cursor: pointer;
     outline: none;
     user-select: none;

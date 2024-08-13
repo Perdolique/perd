@@ -1,12 +1,16 @@
 <template>
   <div :class="$style.layout">
-    <PerdHeading
-      v-if="pageTitle"
-      :class="$style.heading"
-      :level="1"
-    >
-      {{ pageTitle }}
-    </PerdHeading>
+    <div :class="$style.header">
+      <PerdHeading
+        v-if="pageTitle"
+        :class="$style.heading"
+        :level="1"
+      >
+        {{ pageTitle }}
+      </PerdHeading>
+
+      <slot name="actions" />
+    </div>
 
     <div>
       <slot />
@@ -28,6 +32,11 @@
   .layout {
     display: grid;
     row-gap: var(--spacing-32);
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
   }
 
   .heading {

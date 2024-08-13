@@ -19,5 +19,6 @@
     width: 100%;
     display: grid;
     row-gap: var(--spacing-4);
+    background-color: var(--color-background);
   }
 </style>
