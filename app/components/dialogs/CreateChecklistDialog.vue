@@ -14,6 +14,7 @@
         v-model="checklistName"
         :class="$style.input"
         :maxlength="limits.maxChecklistNameLength"
+        type="text"
       />
 
       <div :class="$style.buttons">
