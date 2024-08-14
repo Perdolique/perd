@@ -9,7 +9,7 @@
       :icon="icon"
       @click.passive="toggleMenu"
     >
-      <slot />
+      {{ text }}
     </PerdButton>
 
     <div
@@ -17,43 +17,22 @@
         visible: isMenuVisible
       }]"
     >
-      <button
-        v-for="(item, index) in items"
-        :key="index"
-        :class="$style.item"
-        @click="handleItemClick(item)"
-      >
-        <Icon
-          :name="item.icon"
-          size="1.125em"
-        />
-
-        <span>{{ item.text }}</span>
-      </button>
+      <slot />
     </div>
   </div>
 </template>
 
-<script lang="ts" setup generic="Item extends MenuItem">
+<script lang="ts" setup>
   import { onClickOutside } from '@vueuse/core';
   import PerdButton from './PerdButton.vue';
 
-  export interface MenuItem {
+  interface Props {
     readonly icon: string;
     readonly text: string;
-    readonly event: string;
   }
-
-  interface Props {
-    readonly items: Item[];
-    readonly icon: string;
-  }
-
-  type Emits = (event: 'itemClick', item: Item) => void;
 
   defineProps<Props>()
 
-  const emit = defineEmits<Emits>()
   const isMenuVisible = ref(false)
   const rootRef = ref<HTMLDivElement | null>(null)
 
@@ -64,12 +43,6 @@
   onClickOutside(rootRef, () => {
     isMenuVisible.value = false
   });
-
-  function handleItemClick(item: Item) {
-    emit('itemClick', item)
-
-    isMenuVisible.value = false
-  }
 </script>
 
 <style module>
@@ -106,30 +79,6 @@
         opacity: 0;
         transform: translateY(calc(-1 * var(--spacing)));
       }
-    }
-  }
-
-  .item {
-    /* reset button style */
-    border: none;
-    outline: none;
-    text-align: inherit;
-    width: 100%;
-
-    /* item style */
-    display: flex;
-    align-items: center;
-    column-gap: var(--spacing-8);
-    padding: var(--spacing-8) var(--spacing-48) var(--spacing-8) var(--spacing-12);
-    background-color: var(--color-background);
-    color: var(--color-blue-600);
-    cursor: pointer;
-    transition: background-color 0.2s ease-out;
-    font-size: var(--font-size-14);
-
-    &:hover,
-    &:focus-visible {
-      background-color: var(--color-blue-100);
     }
   }
 </style>

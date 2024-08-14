@@ -1,14 +1,29 @@
 <template>
-  <div :class="$style.component">
+  <div
+    :class="[$style.component, { checkMode }]"
+    @click="onItemClick"
+  >
+    <PerdToggle
+      v-if="checkMode"
+      :model-value="isToggled"
+      inert
+    />
+
     <div :class="$style.name">
       {{ item.equipment.name}}
     </div>
 
-    <div :class="$style.weight">
+    <div
+      v-if="isViewMode"
+      :class="$style.weight"
+    >
       {{ item.equipment.weight }}
     </div>
 
-    <div :class="$style.actions">
+    <div
+      v-if="isViewMode"
+      :class="$style.actions"
+    >
       <IconButton
         size="xs"
         icon-name="tabler:x"
@@ -19,20 +34,29 @@
 </template>
 
 <script lang="ts" setup>
-  import type { ChecklistItemModel } from '~/models/checklist';
-  import IconButton from '@/components/IconButton.vue';
+  import type { ChecklistItemModel } from '~/models/checklist'
+  import IconButton from '@/components/IconButton.vue'
+  import PerdToggle from '@/components/PerdToggle.vue'
 
   interface Props {
     readonly item: ChecklistItemModel;
+    readonly checkMode: boolean;
+    readonly checklistId: string;
   }
 
-  const props = defineProps<Props>();
-  const route = useRoute();
-  const { removeItem } = useChecklistStore();
+  const props = defineProps<Props>()
+  const { removeItem } = useChecklistStore()
+  const isViewMode = computed(() => props.checkMode === false)
+  const { state: toggledState } = useChecklistToggle(props.checklistId)
+  const isToggled = computed(() => toggledState.value[props.item.id] ?? false)
 
   async function handleRemoveClick() {
-    if (typeof route.params.checklistId === 'string' && typeof props.item.id === 'string') {
-      await removeItem(route.params.checklistId, props.item.id);
+    await removeItem(props.checklistId, props.item.id)
+  }
+
+  function onItemClick() {
+    if (props.checkMode) {
+      toggledState.value[props.item.id] = !isToggled.value
     }
   }
 </script>
@@ -50,6 +74,16 @@
     border-radius: var(--border-radius-12);
     font-size: var(--font-size-16);
     color: var(--color-blue-800);
+
+    &:global(.checkMode) {
+      grid-template-columns: auto 1fr;
+      cursor: pointer;
+      transition: background-color var(--transition-time-quick) ease-out;
+
+      &:hover {
+        background-color: var(--color-blue-200);
+      }
+    }
   }
 
   .name {

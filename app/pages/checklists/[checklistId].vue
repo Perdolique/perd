@@ -3,18 +3,29 @@
     <template #actions>
       <div :class="$style.actions">
         <PerdButton
+          v-if="isCheckMode"
           small
-          icon="tabler:toggle-left"
+          secondary
+          icon="tabler:plus"
+          @click="resetAllToggles"
         >
-          Toggle mode
+          Reset
         </PerdButton>
 
         <PerdMenu
           icon="tabler:settings"
-          :items="menuItems"
-          @item-click="handleMenuItemClick"
+          text="Options"
         >
-          Options
+          <OptionButton
+            icon="tabler:trash"
+            @click="deleteChecklist"
+          >
+            Delete
+          </OptionButton>
+
+          <OptionToggle v-model="isCheckMode">
+            Check mode
+          </OptionToggle>
         </PerdMenu>
       </div>
     </template>
@@ -36,18 +47,24 @@
         </template>
       </PerdSearch>
 
-      <ChecklistItemsList :items="items" />
+      <ChecklistItemsList
+        :items="items"
+        :check-mode="isCheckMode"
+        :checklist-id="checklistId"
+      />
     </div>
   </PageContent>
 </template>
 
 <script lang="ts" setup>
   import PageContent from '~/components/layout/PageContent.vue'
-  import PerdButton from '~/components/PerdButton.vue';
   import SearchOptionAdd from '~/components/PerdSearch/SearchOptionAdd.vue';
   import PerdSearch from '~/components/PerdSearch/PerdSearch.vue';
   import ChecklistItemsList from '~/components/checklists/ChecklistItemsList.vue';
-  import PerdMenu, { type MenuItem } from '~/components/PerdMenu.vue';
+  import PerdMenu from '~/components/PerdMenu.vue';
+  import OptionButton from '~/components/PerdMenu/OptionButton.vue';
+  import OptionToggle from '~/components/PerdMenu/OptionToggle.vue';
+  import PerdButton from '~/components/PerdButton.vue';
 
   definePageMeta({
     layout: 'page'
@@ -58,12 +75,6 @@
     readonly name: string;
   }
 
-  const menuItems = [{
-    icon: 'tabler:trash',
-    text: 'Delete',
-    event: 'delete'
-  }] as const satisfies MenuItem[]
-
   const route = useRoute()
   const { items, addItem } = useChecklistStore()
   const name = ref('')
@@ -71,6 +82,8 @@
   const isDeleting = ref(false)
   const options = ref<InventoryItem[]>([])
   const isSearching = ref(false)
+  const isCheckMode = ref(false)
+  const { resetAll: resetAllToggles } = useChecklistToggle(checklistId)
   const { data: checklistData } = await useFetch(`/api/checklists/${checklistId}`)
 
   await useChecklistItemsData(checklistId)
@@ -130,12 +143,6 @@
 
     options.value = options.value.filter(({ id }) => id !== equipmentId)
   }
-
-  async function handleMenuItemClick(item: typeof menuItems[number]) {
-    if (item.event === 'delete') {
-      await deleteChecklist()
-    }
-  }
 </script>
 
 <style module>
@@ -149,10 +156,14 @@
     display: flex;
     align-items: center;
     column-gap: var(--spacing-8);
+    isolation: isolate;
+    z-index: 2;
   }
 
   .search {
     width: 100%;
     max-width: 400px;
+    isolation: isolate;
+    z-index: 1;
   }
 </style>
