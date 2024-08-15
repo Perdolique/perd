@@ -23,7 +23,7 @@
     "modern-normalize": "3.0.0",
     "nuxt": "3.12.4",
     "ulid": "2.3.0",
-    "vue": "3.4.37"
+    "vue": "3.4.38"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "4.20240806.0",
