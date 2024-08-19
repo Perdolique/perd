@@ -5,15 +5,3 @@ upload_source_maps = true
 
 [dev]
 port = 8888
-
-[[env.production.d1_databases]]
-binding = "DB"
-database_name = "perd-prod"
-database_id = "313b89d7-745e-4adf-94d6-3c982743ed41"
-migrations_dir = "server/database/migrations"
-
-[[env.preview.d1_databases]]
-binding = "DB"
-database_name = "perd-stage"
-database_id = "57811910-c52c-4a47-a48a-d0e7ac4c08fd"
-migrations_dir = "server/database/migrations"

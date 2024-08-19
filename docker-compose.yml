@@ -1,0 +1,15 @@
+services:
+  postgres:
+    build: .
+    container_name: postgres
+    environment:
+      POSTGRES_PASSWORD: perd
+      POSTGRES_USER: perd
+      POSTGRES_DB: perd
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
