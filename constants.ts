@@ -8,5 +8,7 @@ export const publicApiPaths = [
 ]
 
 export const limits = {
+  maxUserNameLength: 32,
+  maxEquipmentItemNameLength: 64,
   maxChecklistNameLength: 32,
 }

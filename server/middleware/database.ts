@@ -1,8 +1,9 @@
-import { DrizzleD1Database } from 'drizzle-orm/d1'
+import { NeonHttpDatabase } from 'drizzle-orm/neon-http'
+import { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 
 export default defineEventHandler(async ({ context }) => {
   if (context.db === undefined) {
-    const drizzleDb = createDrizzle(context.cloudflare.env.DB)
+    const drizzleDb = await createDrizzle()
 
     context.db = drizzleDb
   }
@@ -10,6 +11,6 @@ export default defineEventHandler(async ({ context }) => {
 
 declare module 'h3' {
   interface H3EventContext {
-    db: DrizzleD1Database<typeof tables>
+    db: NeonHttpDatabase<typeof tables> | PostgresJsDatabase<typeof tables>
   }
 }

@@ -1,7 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: [
-    'nitro-cloudflare-dev',
     '@nuxt/fonts',
     '@nuxt/icon'
   ],
@@ -21,11 +20,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2024-07-03',
 
   nitro: {
-    preset: 'cloudflare-pages',
-
-    cloudflareDev: {
-      environment: 'preview'
-    }
+    preset: 'cloudflare-pages'
   },
 
   future: {
