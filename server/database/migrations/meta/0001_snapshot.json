@@ -1,44 +1,34 @@
 {
-  "version": "6",
-  "dialect": "sqlite",
-  "id": "739ff8ef-f458-4d66-b6d4-a407b74c3a76",
-  "prevId": "f961da9d-0fbb-4a4b-bd1b-7911a4ce808e",
+  "id": "753077c6-adb2-4a1c-b4d4-34de92430719",
+  "prevId": "ab106675-c2f9-45b3-97dd-2560bade641d",
+  "version": "7",
+  "dialect": "postgresql",
   "tables": {
-    "checklistItems": {
+    "public.checklistItems": {
       "name": "checklistItems",
+      "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "text",
+          "type": "ulid",
           "primaryKey": true,
           "notNull": true,
-          "autoincrement": false
+          "default": "gen_ulid()"
         },
         "checklistId": {
           "name": "checklistId",
-          "type": "text",
+          "type": "ulid",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "notNull": true
         },
         "equipmentId": {
           "name": "equipmentId",
-          "type": "text",
+          "type": "ulid",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "notNull": true
         }
       },
-      "indexes": {
-        "checklistItems_checklistId_equipmentId_unique": {
-          "name": "checklistItems_checklistId_equipmentId_unique",
-          "columns": [
-            "checklistId",
-            "equipmentId"
-          ],
-          "isUnique": true
-        }
-      },
+      "indexes": {},
       "foreignKeys": {
         "checklistItems_checklistId_checklists_id_fk": {
           "name": "checklistItems_checklistId_checklists_id_fk",
@@ -68,48 +58,63 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {
+        "checklistItems_checklistId_equipmentId_unique": {
+          "name": "checklistItems_checklistId_equipmentId_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "checklistId",
+            "equipmentId"
+          ]
+        }
+      }
     },
-    "checklists": {
+    "public.checklists": {
       "name": "checklists",
+      "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "text",
+          "type": "ulid",
           "primaryKey": true,
           "notNull": true,
-          "autoincrement": false
+          "default": "gen_ulid()"
         },
         "userId": {
           "name": "userId",
-          "type": "text",
+          "type": "ulid",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "notNull": true
         },
         "name": {
           "name": "name",
-          "type": "text",
+          "type": "varchar(32)",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "notNull": true
         },
         "createdAt": {
           "name": "createdAt",
-          "type": "integer",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "default": "now()"
         }
       },
       "indexes": {
         "createdAtIndex": {
           "name": "createdAtIndex",
           "columns": [
-            "createdAt"
+            {
+              "expression": "createdAt",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -130,37 +135,35 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "equipment": {
+    "public.equipment": {
       "name": "equipment",
+      "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "text",
+          "type": "ulid",
           "primaryKey": true,
           "notNull": true,
-          "autoincrement": false
+          "default": "gen_ulid()"
         },
         "name": {
           "name": "name",
-          "type": "text COLLATE NOCASE",
+          "type": "varchar(64)",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "notNull": true
         },
         "weight": {
           "name": "weight",
           "type": "integer",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "notNull": true
         },
         "createdAt": {
           "name": "createdAt",
-          "type": "integer",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "default": "now()"
         }
       },
       "indexes": {},
@@ -168,30 +171,28 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "userEquipment": {
+    "public.userEquipment": {
       "name": "userEquipment",
+      "schema": "",
       "columns": {
         "userId": {
           "name": "userId",
-          "type": "text",
+          "type": "ulid",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "notNull": true
         },
         "equipmentId": {
           "name": "equipmentId",
-          "type": "text",
+          "type": "ulid",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "notNull": true
         },
         "createdAt": {
           "name": "createdAt",
-          "type": "integer",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "default": "now()"
         }
       },
       "indexes": {},
@@ -225,46 +226,44 @@
       },
       "compositePrimaryKeys": {
         "userEquipment_userId_equipmentId_pk": {
+          "name": "userEquipment_userId_equipmentId_pk",
           "columns": [
             "userId",
             "equipmentId"
-          ],
-          "name": "userEquipment_userId_equipmentId_pk"
+          ]
         }
       },
       "uniqueConstraints": {}
     },
-    "users": {
+    "public.users": {
       "name": "users",
+      "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "text",
+          "type": "ulid",
           "primaryKey": true,
           "notNull": true,
-          "autoincrement": false
+          "default": "gen_ulid()"
         },
         "name": {
           "name": "name",
-          "type": "text",
+          "type": "varchar(32)",
           "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
+          "notNull": false
         },
         "createdAt": {
           "name": "createdAt",
-          "type": "integer",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "(unixepoch())"
+          "default": "now()"
         },
         "isAdmin": {
           "name": "isAdmin",
-          "type": "integer",
+          "type": "boolean",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
           "default": false
         }
       },
@@ -275,12 +274,11 @@
     }
   },
   "enums": {},
+  "schemas": {},
+  "sequences": {},
   "_meta": {
+    "columns": {},
     "schemas": {},
-    "tables": {},
-    "columns": {}
-  },
-  "internal": {
-    "indexes": {}
+    "tables": {}
   }
 }

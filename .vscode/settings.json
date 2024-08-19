@@ -2,10 +2,12 @@
   "sqltools.connections": [
     {
       "previewLimit": 50,
-      "driver": "SQLite",
-      "database": ".data/hub/d1/miniflare-D1DatabaseObject/7b8799eb95f0bb5448e259812996a461ce40142dacbdea254ea597e307767f45.sqlite",
+      "server": "localhost",
+      "port": 5432,
+      "driver": "PostgreSQL",
       "name": "perd",
-      "group": "perd"
+      "database": "perd",
+      "username": "perd"
     }
   ]
 }

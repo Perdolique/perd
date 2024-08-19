@@ -1,25 +1,27 @@
 import { relations, sql } from 'drizzle-orm'
-import { ulid } from 'ulid'
+import { limits } from '../../constants'
 
 import {
-  sqliteTable,
-  text,
+  pgTable,
   integer,
-  unique,
+  customType,
+  timestamp,
+  boolean,
+  varchar,
   primaryKey,
   index,
-  customType
-} from 'drizzle-orm/sqlite-core'
+  unique
+} from 'drizzle-orm/pg-core'
 
 /**
  * Custom types
  */
 
-// https://sqlite.org/datatype3.html#collating_sequences
-// https://github.com/drizzle-team/drizzle-orm/issues/638
-const textNoCase = customType<{ data: string }>({
+// Neon ulid type
+// https://github.com/pksunkara/pgx_ulid
+const ulid = customType<{ data: string }>({
   dataType() {
-    return 'text COLLATE NOCASE'
+    return 'ulid'
   }
 })
 
@@ -27,26 +29,26 @@ const textNoCase = customType<{ data: string }>({
  * Users table
  */
 
-export const users = sqliteTable('users', {
+export const users = pgTable('users', {
   id:
-    text('id')
-    .$defaultFn(() => ulid())
+    ulid('id')
     .notNull()
+    .default(sql`gen_ulid()`)
     .primaryKey(),
 
-  name: text('name'),
+  name: varchar('name', {
+    length: limits.maxUserNameLength
+  }),
 
   createdAt:
-    integer('createdAt', {
-      mode: 'timestamp'
+    timestamp('createdAt', {
+      withTimezone: true
     })
     .notNull()
-    .default(sql`(unixepoch())`),
+    .defaultNow(),
 
   isAdmin:
-    integer('isAdmin', {
-      mode: 'boolean'
-    })
+    boolean('isAdmin')
     .notNull()
     .default(false)
 })
@@ -55,15 +57,17 @@ export const users = sqliteTable('users', {
  * Equipment table
  */
 
-export const equipment = sqliteTable('equipment', {
+export const equipment = pgTable('equipment', {
   id:
-    text('id')
-    .$defaultFn(() => ulid())
+    ulid('id')
     .notNull()
+    .default(sql`gen_ulid()`)
     .primaryKey(),
 
   name:
-    textNoCase('name')
+    varchar('name', {
+      length: limits.maxEquipmentItemNameLength
+    })
     .notNull(),
 
   weight:
@@ -71,20 +75,20 @@ export const equipment = sqliteTable('equipment', {
     .notNull(),
 
   createdAt:
-    integer('createdAt', {
-      mode: 'timestamp'
+    timestamp('createdAt', {
+      withTimezone: true
     })
     .notNull()
-    .default(sql`(unixepoch())`)
+    .defaultNow()
 })
 
 /**
  * User's equipment table
  */
 
-export const userEquipment = sqliteTable('userEquipment', {
+export const userEquipment = pgTable('userEquipment', {
   userId:
-    text('userId')
+    ulid('userId')
     .notNull()
     .references(() => users.id, {
       onDelete: 'cascade',
@@ -92,7 +96,7 @@ export const userEquipment = sqliteTable('userEquipment', {
     }),
 
   equipmentId:
-    text('equipmentId')
+    ulid('equipmentId')
     .notNull()
     .references(() => equipment.id, {
       onDelete: 'cascade',
@@ -100,11 +104,11 @@ export const userEquipment = sqliteTable('userEquipment', {
     }),
 
   createdAt:
-    integer('createdAt', {
-      mode: 'timestamp'
+    timestamp('createdAt', {
+      withTimezone: true
     })
     .notNull()
-    .default(sql`(unixepoch())`)
+    .defaultNow()
 }, (table) => ({
   primaryKey: primaryKey({
     columns: [table.userId, table.equipmentId]
@@ -115,15 +119,15 @@ export const userEquipment = sqliteTable('userEquipment', {
  * User's checklists table
  */
 
-export const checklists = sqliteTable('checklists', {
+export const checklists = pgTable('checklists', {
   id:
-    text('id')
-    .$defaultFn(() => ulid())
+    ulid('id')
     .notNull()
+    .default(sql`gen_ulid()`)
     .primaryKey(),
 
   userId:
-    text('userId')
+    ulid('userId')
     .notNull()
     .references(() => users.id, {
       onDelete: 'cascade',
@@ -131,15 +135,17 @@ export const checklists = sqliteTable('checklists', {
     }),
 
   name:
-    text('name')
+    varchar('name', {
+      length: limits.maxChecklistNameLength
+    })
     .notNull(),
 
   createdAt:
-    integer('createdAt', {
-      mode: 'timestamp'
+    timestamp('createdAt', {
+      withTimezone: true
     })
     .notNull()
-    .default(sql`(unixepoch())`)
+    .defaultNow()
 }, (table) => {
   return {
     createdAtIndex: index('createdAtIndex').on(table.createdAt)
@@ -150,15 +156,15 @@ export const checklists = sqliteTable('checklists', {
  * Checklist items table
  */
 
-export const checklistItems = sqliteTable('checklistItems', {
+export const checklistItems = pgTable('checklistItems', {
   id:
-    text('id')
-    .$defaultFn(() => ulid())
+    ulid('id')
     .notNull()
+    .default(sql`gen_ulid()`)
     .primaryKey(),
 
   checklistId:
-    text('checklistId')
+    ulid('checklistId')
     .notNull()
     .references(() => checklists.id, {
       onDelete: 'cascade',
@@ -166,7 +172,7 @@ export const checklistItems = sqliteTable('checklistItems', {
     }),
 
   equipmentId:
-    text('equipmentId')
+    ulid('equipmentId')
     .notNull()
     .references(() => equipment.id, {
       onDelete: 'cascade',
