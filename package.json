@@ -30,7 +30,7 @@
     "@iconify-json/tabler": "1.1.120",
     "@nuxt/fonts": "0.7.2",
     "@nuxt/icon": "1.4.5",
-    "@vueuse/core": "11.0.0",
+    "@vueuse/core": "11.0.1",
     "drizzle-kit": "0.24.0",
     "nitro-cloudflare-dev": "0.1.6",
     "sass": "1.77.8",
