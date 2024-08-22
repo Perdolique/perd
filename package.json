@@ -21,7 +21,7 @@
     "date-fns": "3.6.0",
     "drizzle-orm": "0.33.0",
     "modern-normalize": "3.0.0",
-    "nuxt": "3.12.4",
+    "nuxt": "3.13.0",
     "ulid": "2.3.0",
     "vue": "3.4.38"
   },
@@ -29,13 +29,13 @@
     "@cloudflare/workers-types": "4.20240821.1",
     "@iconify-json/tabler": "1.1.120",
     "@nuxt/fonts": "0.7.2",
-    "@nuxt/icon": "1.4.7",
+    "@nuxt/icon": "1.4.8",
     "@vueuse/core": "11.0.1",
     "drizzle-kit": "0.24.1",
     "nitro-cloudflare-dev": "0.1.6",
     "sass": "1.77.8",
     "ufo": "1.5.4",
     "valibot": "0.38.0",
-    "wrangler": "3.72.1"
+    "wrangler": "3.72.2"
   }
 }
