@@ -4,8 +4,8 @@ on:
   pull_request:
     branches:
       - master
-    # paths:
-    #   - 'server/database/migrations/**'
+    paths:
+      - 'server/database/migrations/**'
 
 jobs:
   migration:
