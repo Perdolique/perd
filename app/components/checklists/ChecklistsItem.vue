@@ -24,6 +24,7 @@
     display: flex;
     align-items: center;
     height: 60px;
+    background-color: var(--element-color-background);
     padding: 0 var(--spacing-16);
     border: 1px solid var(--input-color-main);
     border-radius: var(--border-radius-16);

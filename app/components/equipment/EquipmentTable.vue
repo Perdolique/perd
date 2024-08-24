@@ -108,10 +108,11 @@
     height: 48px;
 
     .body > & {
+      background-color: var(--element-color-background);
       transition: background-color 0.2s ease-out;
 
       &:hover {
-        background-color: #e5e5e5;
+        background-color: var(--element-color-background-hover);
       }
     }
   }
