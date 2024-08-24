@@ -37,20 +37,5 @@
     align-items: center;
     height: var(--input-height);
     padding: 0 var(--input-spacing-horizontal);
-    transition: background-color 0.15s ease-out;
-    cursor: pointer;
-
-    &:hover {
-      background-color: color-mix(in srgb, var(--input-color-main) 15%, transparent)
-    }
-
-    &:global(.empty) {
-      color: var(--input-color-placeholder);
-
-      &:hover {
-        background-color: initial;
-        cursor: initial;
-      }
-    }
   }
 </style>

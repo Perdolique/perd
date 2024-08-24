@@ -19,5 +19,6 @@
     column-gap: var(--spacing-8);
     padding: var(--spacing-32);
     color: var(--input-color-main);
+    background-color: var(--element-color-background);
   }
 </style>
