@@ -35,6 +35,7 @@
           v-for="(option, index) in options"
           :key="index"
           @click="handleOptionClick"
+          :class="$style.option"
         >
           <slot name="option" :option="option">
             <DefaultOption
@@ -272,6 +273,16 @@
 
     .input:focus-visible ~ & {
       border-color: var(--input-color-focus);
+    }
+  }
+
+  .option {
+    background-color: var(--element-color-background);
+    cursor: pointer;
+    transition: background-color 0.15s ease-out;
+
+    &:hover {
+      background-color: var(--element-color-background-hover);
     }
   }
 </style>

@@ -24,12 +24,6 @@
     column-gap: var(--spacing-16);
     justify-content: space-between;
     padding: 0 var(--input-spacing-horizontal);
-    cursor: pointer;
-    transition: background-color 0.15s ease-out;
-
-    &:hover {
-      background-color: var(--input-color-hover-bg);
-    }
   }
 
   .name {

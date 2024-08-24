@@ -1,6 +1,6 @@
 <template>
   <div
-    :class="[$style.component, { checkMode }]"
+    :class="[$style.component, { checkMode, toggled: isToggled }]"
     @click="onItemClick"
   >
     <PerdToggle
@@ -48,7 +48,14 @@
   const { removeItem } = useChecklistStore()
   const isViewMode = computed(() => props.checkMode === false)
   const { state: toggledState } = useChecklistToggle(props.checklistId)
-  const isToggled = computed(() => toggledState.value[props.item.id] ?? false)
+
+  const isToggled = computed(() => {
+    if (props.checkMode) {
+      return toggledState.value[props.item.id] ?? false
+    }
+
+    return false
+  })
 
   async function handleRemoveClick() {
     await removeItem(props.checklistId, props.item.id)
@@ -69,7 +76,7 @@
     column-gap: var(--spacing-12);
     align-items: center;
     padding: 0 var(--spacing-12);
-    background-color: var(--color-blue-100);
+    background-color: var(--element-color-background);
     border: 1px solid var(--color-blue-300);
     border-radius: var(--border-radius-12);
     font-size: var(--font-size-16);
@@ -81,7 +88,15 @@
       transition: background-color var(--transition-time-quick) ease-out;
 
       &:hover {
-        background-color: var(--color-blue-200);
+        background-color: var(--element-color-background-hover);
+      }
+    }
+
+    &:global(.toggled) {
+      background-color: var(--element-color-background-active);
+
+      &:hover {
+        background-color: var(--element-color-background-active);
       }
     }
   }
