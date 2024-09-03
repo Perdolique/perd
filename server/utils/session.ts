@@ -7,29 +7,39 @@ interface SessionData {
   lastAdminCheck?: string;
 }
 
-const sessionConfig : SessionConfig = {
-  password: process.env.SESSION_SECRET ?? '',
-  name: sessionCookieName,
+function getSessionConfig() : SessionConfig {
+  return {
+    password: process.env.SESSION_SECRET ?? '',
+    name: sessionCookieName,
 
-  cookie: {
-    sameSite: 'strict',
-    httpOnly: true,
-    secure: true
+    cookie: {
+      sameSite: 'strict',
+      httpOnly: true,
+      secure: true
+    }
   }
 }
 
 export async function useAppSession(event: H3Event<EventHandlerRequest>) {
-  return useSession<SessionData>(event, sessionConfig)
+  const config = getSessionConfig()
+
+  return useSession<SessionData>(event, config)
 }
 
 export async function getAppSession(event: H3Event<EventHandlerRequest>) {
-  return getSession<SessionData>(event, sessionConfig)
+  const config = getSessionConfig()
+
+  return getSession<SessionData>(event, config)
 }
 
 export async function updateAppSession(event: H3Event<EventHandlerRequest>, data: SessionData) {
-  return updateSession(event, sessionConfig, data)
+  const config = getSessionConfig()
+
+  return updateSession(event, config, data)
 }
 
 export async function clearAppSession(event: H3Event<EventHandlerRequest>) {
-  return clearSession(event, sessionConfig)
+  const config = getSessionConfig()
+
+  return clearSession(event, config)
 }
