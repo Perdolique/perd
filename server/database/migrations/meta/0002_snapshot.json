@@ -1,0 +1,406 @@
+{
+  "id": "9e2102ae-52eb-4dff-b112-83e4759eded4",
+  "prevId": "753077c6-adb2-4a1c-b4d4-34de92430719",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.checklistItems": {
+      "name": "checklistItems",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "ulid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_ulid()"
+        },
+        "checklistId": {
+          "name": "checklistId",
+          "type": "ulid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "equipmentId": {
+          "name": "equipmentId",
+          "type": "ulid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "checklistItems_checklistId_checklists_id_fk": {
+          "name": "checklistItems_checklistId_checklists_id_fk",
+          "tableFrom": "checklistItems",
+          "tableTo": "checklists",
+          "columnsFrom": [
+            "checklistId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "checklistItems_equipmentId_equipment_id_fk": {
+          "name": "checklistItems_equipmentId_equipment_id_fk",
+          "tableFrom": "checklistItems",
+          "tableTo": "equipment",
+          "columnsFrom": [
+            "equipmentId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "checklistItems_checklistId_equipmentId_unique": {
+          "name": "checklistItems_checklistId_equipmentId_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "checklistId",
+            "equipmentId"
+          ]
+        }
+      }
+    },
+    "public.checklists": {
+      "name": "checklists",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "ulid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_ulid()"
+        },
+        "userId": {
+          "name": "userId",
+          "type": "ulid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "createdAtIndex": {
+          "name": "createdAtIndex",
+          "columns": [
+            {
+              "expression": "createdAt",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "checklists_userId_users_id_fk": {
+          "name": "checklists_userId_users_id_fk",
+          "tableFrom": "checklists",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.equipment": {
+      "name": "equipment",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "ulid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_ulid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "weight": {
+          "name": "weight",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.oauthAccounts": {
+      "name": "oauthAccounts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "ulid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_ulid()"
+        },
+        "userId": {
+          "name": "userId",
+          "type": "ulid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "providerId": {
+          "name": "providerId",
+          "type": "ulid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "accountId": {
+          "name": "accountId",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "oauthAccounts_userId_users_id_fk": {
+          "name": "oauthAccounts_userId_users_id_fk",
+          "tableFrom": "oauthAccounts",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "oauthAccounts_providerId_oauthProviders_id_fk": {
+          "name": "oauthAccounts_providerId_oauthProviders_id_fk",
+          "tableFrom": "oauthAccounts",
+          "tableTo": "oauthProviders",
+          "columnsFrom": [
+            "providerId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "oauthAccounts_providerId_accountId_unique": {
+          "name": "oauthAccounts_providerId_accountId_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "providerId",
+            "accountId"
+          ]
+        }
+      }
+    },
+    "public.oauthProviders": {
+      "name": "oauthProviders",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "ulid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_ulid()"
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "oauthProviders_type_unique": {
+          "name": "oauthProviders_type_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "type"
+          ]
+        }
+      }
+    },
+    "public.userEquipment": {
+      "name": "userEquipment",
+      "schema": "",
+      "columns": {
+        "userId": {
+          "name": "userId",
+          "type": "ulid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "equipmentId": {
+          "name": "equipmentId",
+          "type": "ulid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "userEquipment_userId_users_id_fk": {
+          "name": "userEquipment_userId_users_id_fk",
+          "tableFrom": "userEquipment",
+          "tableTo": "users",
+          "columnsFrom": [
+            "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "userEquipment_equipmentId_equipment_id_fk": {
+          "name": "userEquipment_equipmentId_equipment_id_fk",
+          "tableFrom": "userEquipment",
+          "tableTo": "equipment",
+          "columnsFrom": [
+            "equipmentId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "userEquipment_userId_equipmentId_pk": {
+          "name": "userEquipment_userId_equipmentId_pk",
+          "columns": [
+            "userId",
+            "equipmentId"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "ulid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_ulid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "isAdmin": {
+          "name": "isAdmin",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

@@ -1,12 +1,12 @@
 export default defineEventHandler(async (event) => {
   const { db } = event.context
-  const body = await readBody(event)
-  const isRequestAdmin = body?.isAdmin === true
 
-  const [{ userId, isAdmin }] = await db
+  // TODO (#101): check if user is already logged in
+
+  const [{ userId }] = await db
     .insert(tables.users)
     .values({
-      isAdmin: isRequestAdmin
+      isAdmin: false
     })
     .returning({
       userId: tables.users.id,
@@ -22,7 +22,6 @@ export default defineEventHandler(async (event) => {
   })
 
   return {
-    userId,
-    isAdmin
+    userId
   }
 })

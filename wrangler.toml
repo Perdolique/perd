@@ -5,3 +5,6 @@ upload_source_maps = true
 
 [dev]
 port = 8888
+
+[vars]
+OAUTH_TWITCH_CLIENT_ID = "58vwcqcpjpf7iz530v11z3sovtgfc5"

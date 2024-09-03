@@ -1,17 +1,21 @@
 <template>
   <div :class="$style.component">
-    <PerdButton @click="handleSignInClick">
-      Sign in anonymously
+    <PerdButton @click="signUp">
+      Sign up anonymously
     </PerdButton>
 
-    <PerdButton @click="handleSignInAdminClick">
-      Sign in as admin
-    </PerdButton>
+    <PerdLink
+      to="/api/oauth/twitch"
+      external
+    >
+      Sign in with Twitch
+    </PerdLink>
   </div>
 </template>
 
 <script lang="ts" setup>
   import PerdButton from '~/components/PerdButton.vue';
+  import PerdLink from '~/components/PerdLink.vue';
 
   definePageMeta({
     layout: 'page'
@@ -20,21 +24,13 @@
   const { user } = useUserStore()
   const route = useRoute()
 
-  async function signIn(isAdmin: boolean) {
+  async function signUp() {
     const response = await $fetch('/api/auth/create-session', {
-      method: 'POST',
-
-      body: {
-        isAdmin
-      }
+      method: 'POST'
     })
 
     if (typeof response.userId === 'string') {
       user.value.userId = response.userId
-    }
-
-    if (response.isAdmin === true) {
-      user.value.isAdmin = true
     }
 
     const redirectPath =
@@ -46,20 +42,13 @@
       replace: true
     })
   }
-
-  async function handleSignInClick() {
-    await signIn(false)
-  }
-
-  async function handleSignInAdminClick() {
-    await signIn(true)
-  }
 </script>
 
 <style module>
   .component {
-    display: flex;
+    display: grid;
     justify-content: center;
+    text-align: center;
     gap: var(--spacing-16);
     padding-top: var(--spacing-32);
   }
