@@ -35,14 +35,14 @@
 <script lang="ts" setup>
   import { startPagePath } from '~~/constants'
   import CircleSpinner from '~/components/CircleSpinner.vue'
-import PerdLink from '~/components/PerdLink.vue';
+  import PerdLink from '~/components/PerdLink.vue';
 
   definePageMeta({
     layout: false,
     skipAuth: true
   })
 
-  const isFailed = useState(() => false)
+  const isFailed = ref(false)
   const route = useRoute()
   const { user } = useUserStore()
 
