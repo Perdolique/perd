@@ -19,19 +19,19 @@
     "modern-normalize": "3.0.0",
     "nuxt": "3.13.0",
     "ulid": "2.3.0",
-    "vue": "3.4.38"
+    "vue": "3.5.0"
   },
   "devDependencies": {
-    "@iconify-json/tabler": "1.1.120",
+    "@iconify-json/tabler": "1.2.0",
     "@neondatabase/serverless": "0.9.4",
     "@nuxt/fonts": "0.7.2",
-    "@nuxt/icon": "1.4.10",
+    "@nuxt/icon": "1.5.0",
     "@vueuse/core": "11.0.3",
-    "drizzle-kit": "0.24.1",
+    "drizzle-kit": "0.24.2",
     "postgres": "3.4.4",
     "sass": "1.77.8",
     "ufo": "1.5.4",
-    "valibot": "0.39.0",
-    "wrangler": "3.72.2"
+    "valibot": "0.41.0",
+    "wrangler": "3.74.0"
   }
 }
