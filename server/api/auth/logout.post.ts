@@ -1,7 +1,5 @@
 export default defineEventHandler(async (event) => {
-  const session = await useAppSession(event)
-
-  session.clear()
+  await clearAppSession(event)
 
   sendNoContent(event)
 })
