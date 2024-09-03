@@ -1,6 +1,10 @@
 import { startPagePath } from '~~/constants';
 
 export default defineNuxtRouteMiddleware(async (to) => {
+  if (shouldSkipAuth(to)) {
+    return
+  }
+
   const { isAuthenticated } = useUserStore()
 
   if (isAuthenticated.value && to.path === '/login') {

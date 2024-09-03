@@ -4,7 +4,7 @@ import type { EquipmentItem } from '~/components/equipment/EquipmentTable.vue';
 interface EquipmentData {
   readonly id: string;
   readonly name: string | null;
-  readonly weight: number | null;
+  readonly weight: number;
   readonly createdAt: string;
 }
 

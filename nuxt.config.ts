@@ -9,6 +9,10 @@ export default defineNuxtConfig({
     viewTransition: true
   },
 
+  typescript: {
+    strict: true
+  },
+
   devtools: {
     enabled: true
   },
