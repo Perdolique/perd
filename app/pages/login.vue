@@ -14,6 +14,7 @@
 </template>
 
 <script lang="ts" setup>
+  import { startPagePath } from '~~/constants';
   import PerdButton from '~/components/PerdButton.vue';
   import PerdLink from '~/components/PerdLink.vue';
 
@@ -36,7 +37,7 @@
     const redirectPath =
       typeof route.query.redirectTo === 'string'
         ? route.query.redirectTo
-        : '/'
+        : startPagePath
 
     await navigateTo(redirectPath, {
       replace: true

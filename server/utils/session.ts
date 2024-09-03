@@ -1,5 +1,5 @@
 import type { H3Event, EventHandlerRequest, SessionConfig } from 'h3'
-import { sessionCookieName, sessionSecret } from '~~/constants';
+import { sessionCookieName } from '~~/constants';
 
 interface SessionData {
   userId?: string;
@@ -8,8 +8,7 @@ interface SessionData {
 }
 
 const sessionConfig : SessionConfig = {
-  // TODO (#105): use environment variables
-  password: sessionSecret,
+  password: process.env.SESSION_SECRET ?? '',
   name: sessionCookieName,
 
   cookie: {
