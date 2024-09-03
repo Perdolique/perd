@@ -6,11 +6,44 @@ services:
       POSTGRES_PASSWORD: perd
       POSTGRES_USER: perd
       POSTGRES_DB: perd
-    command: postgres -c max_connections=1000
+    command: -c max_connections=1000
+    restart: unless-stopped
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ 'CMD-SHELL', 'pg_isready -U perd' ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # https://github.com/neondatabase/neon/issues/4989
+  # https://github.com/neondatabase/serverless/issues/33#issuecomment-1634853042
+  # https://github.com/TimoWilhelm/local-neon-http-proxy/tree/main
+  # https://readme.localtest.me/
+  neon-proxy:
+    image: ghcr.io/timowilhelm/local-neon-http-proxy:main
+    environment:
+      - PG_CONNECTION_STRING=postgres://perd:perd@postgres:5432/perd
+    restart: unless-stopped
+    ports:
+      - '4444:4444'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  neon-wsproxy:
+    image: ghcr.io/neondatabase/wsproxy:latest
+    environment:
+      APPEND_PORT: postgres:5432
+      ALLOW_ADDR_REGEX: .*
+      LOG_TRAFFIC: true
+    ports:
+      - "5433:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   postgres_data:

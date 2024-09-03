@@ -1,0 +1,22 @@
+{
+  "recommendations": [
+    "aaron-bond.better-comments",
+    "antfu.iconify",
+    "dbaeumer.vscode-eslint",
+    "editorconfig.editorconfig",
+    "github.copilot",
+    "github.copilot-chat",
+    "github.vscode-github-actions",
+    "ms-azuretools.vscode-docker",
+    "mtxr.sqltools",
+    "mtxr.sqltools-driver-pg",
+    "pflannery.vscode-versionlens",
+    "ritwickdey.liveserver",
+    "tamasfe.even-better-toml",
+    "visualstudioexptteam.intellicode-api-usage-examples",
+    "visualstudioexptteam.vscodeintellicode",
+    "vue.volar",
+    "vunguyentuan.vscode-css-variables",
+    "yoavbls.pretty-ts-errors"
+  ]
+}

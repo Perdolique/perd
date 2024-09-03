@@ -15,6 +15,13 @@
       "when": 1724101985802,
       "tag": "0001_magenta_mordo",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1724876180185,
+      "tag": "0002_thin_jimmy_woo",
+      "breakpoints": true
     }
   ]
 }
