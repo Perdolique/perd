@@ -1,7 +1,7 @@
 import type { H3Event, EventHandlerRequest, SessionConfig } from 'h3'
 import { sessionCookieName, sessionSecret } from '~~/constants';
 
-export interface SessionData {
+interface SessionData {
   userId?: string;
   isAdmin?: boolean;
   lastAdminCheck?: string;
@@ -29,4 +29,8 @@ export async function getAppSession(event: H3Event<EventHandlerRequest>) {
 
 export async function updateAppSession(event: H3Event<EventHandlerRequest>, data: SessionData) {
   return updateSession(event, sessionConfig, data)
+}
+
+export async function clearAppSession(event: H3Event<EventHandlerRequest>) {
+  return clearSession(event, sessionConfig)
 }
