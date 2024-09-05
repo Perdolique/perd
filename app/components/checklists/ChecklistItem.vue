@@ -44,26 +44,26 @@
     readonly checklistId: string;
   }
 
-  const props = defineProps<Props>()
+  const { checkMode, item, checklistId } = defineProps<Props>()
   const { removeItem } = useChecklistStore()
-  const isViewMode = computed(() => props.checkMode === false)
-  const { state: toggledState } = useChecklistToggle(props.checklistId)
+  const isViewMode = computed(() => checkMode === false)
+  const { state: toggledState } = useChecklistToggle(checklistId)
 
   const isToggled = computed(() => {
-    if (props.checkMode) {
-      return toggledState.value[props.item.id] ?? false
+    if (checkMode) {
+      return toggledState.value[item.id] ?? false
     }
 
     return false
   })
 
   async function handleRemoveClick() {
-    await removeItem(props.checklistId, props.item.id)
+    await removeItem(checklistId, item.id)
   }
 
   function onItemClick() {
-    if (props.checkMode) {
-      toggledState.value[props.item.id] = !isToggled.value
+    if (checkMode) {
+      toggledState.value[item.id] = !isToggled.value
     }
   }
 </script>

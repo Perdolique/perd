@@ -29,13 +29,6 @@ A web app for those who love hanging out in the forest but always forget to brin
 
 # Stack
 
-## Current (playground)
-
-* [Nuxt](https://nuxt.com/)
-* [Cloudflare Pages](https://developers.cloudflare.com/pages/)
-* [Cloudflare Workers](https://developers.cloudflare.com/workers/)
-* [Neon database](https://neon.tech)
-
 ### Details
 
 * Authentication
@@ -55,3 +48,8 @@ A web app for those who love hanging out in the forest but always forget to brin
 * [Nuxt](https://nuxt.com/)
 * [Cloudflare Pages](https://developers.cloudflare.com/pages/)
 * [Cloudflare Workers](https://developers.cloudflare.com/workers/)
+* [Neon database](https://neon.tech)
+
+# Development
+
+Check our [Wiki](https://github.com/Perdolique/perd/wiki/Development) for details.

@@ -21,7 +21,7 @@
       <tbody :class="$style.body">
         <template v-if="hasItems">
           <tr
-            v-for="item in props.equipment"
+            v-for="item in equipment"
             :key="item.id"
             :class="$style.row"
           >
@@ -76,9 +76,9 @@
 
   type Emits = (event: 'remove', item: Item) => void
 
-  const props = defineProps<Props>()
+  const { equipment } = defineProps<Props>()
   const emit = defineEmits<Emits>()
-  const hasItems = computed(() => props.equipment.length > 0)
+  const hasItems = computed(() => equipment.length > 0)
 
   async function removeItem(item: Item) {
     emit('remove', item)

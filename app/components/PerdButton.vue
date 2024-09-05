@@ -21,10 +21,7 @@
     readonly small?: boolean;
   }
 
-  withDefaults(defineProps<Props>(), {
-    secondary: false,
-    small: false
-  });
+  defineProps<Props>();
 </script>
 
 <style module>

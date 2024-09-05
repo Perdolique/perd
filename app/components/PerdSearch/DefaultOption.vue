@@ -15,19 +15,19 @@
 
   type Emits = (event: 'click', value: Option) => void
 
-  const props = defineProps<Props>();
+  const { option, displayField } = defineProps<Props>();
   const emit = defineEmits<Emits>();
 
   const displayValue = computed(() => {
-    if (isRecord(props.option)) {
-      return props.option[props.displayField] ?? 'N/A';
+    if (isRecord(option)) {
+      return option[displayField] ?? 'N/A';
     }
 
     return 'N/A';
   })
 
   function handleClick() {
-    emit('click', props.option);
+    emit('click', option);
   }
 </script>
 

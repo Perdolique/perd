@@ -17,9 +17,9 @@
     readonly as?: string;
   }
 
-  withDefaults(defineProps<Props>(), {
-    as: 'span'
-  })
+  const {
+    as = 'span'
+  } = defineProps<Props>()
 </script>
 
 <style module>
