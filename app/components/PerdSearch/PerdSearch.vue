@@ -81,21 +81,24 @@
     (event: 'select', option: Option): void;
   }
 
-  const props = withDefaults(defineProps<Props>(), {
-    maxItems: 4
-  })
+  const {
+    options,
+    searching,
+    debounce,
+    maxItems = 4
+  } = defineProps<Props>()
 
   const emit = defineEmits<Emits>()
   const id = useId()
-  const rootRef = ref<HTMLDivElement | null>(null)
-  const inputRef = ref<HTMLInputElement | null>(null)
+  const rootRef = useTemplateRef('rootRef')
+  const inputRef = useTemplateRef('inputRef')
   const searchString = ref('')
   const hasValue = computed(() => searchString.value !== '')
   const isActive = ref(false)
-  const hasOptions = computed(() => props.options.length > 0)
+  const hasOptions = computed(() => options.length > 0)
 
   const emptyOptionText = computed(() => {
-    if (props.searching === true) {
+    if (searching === true) {
       return 'Searching...'
     }
 
@@ -103,7 +106,7 @@
   })
 
   const visibleOptionsCount = computed(
-    () => Math.max(Math.min(props.options.length, props.maxItems), 1)
+    () => Math.max(Math.min(options.length, maxItems), 1)
   )
 
   function emitSelect(option: Option) {
@@ -127,7 +130,7 @@
   watchDebounced(searchString, () => {
     emit('search', searchString.value)
   }, {
-    debounce: props.debounce
+    debounce: debounce
   })
 
   onClickOutside(rootRef, () => {

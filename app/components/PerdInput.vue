@@ -36,9 +36,9 @@
     readonly type?: 'text';
   }
 
-  withDefaults(defineProps<Props>(), {
-    type: 'text'
-  });
+  const {
+    type = 'text'
+  } = defineProps<Props>();
 
   const model = defineModel<string>({
     required: true

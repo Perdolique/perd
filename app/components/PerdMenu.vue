@@ -34,7 +34,7 @@
   defineProps<Props>()
 
   const isMenuVisible = ref(false)
-  const rootRef = ref<HTMLDivElement | null>(null)
+  const rootRef = useTemplateRef('rootRef')
 
   function toggleMenu() {
     isMenuVisible.value = !isMenuVisible.value

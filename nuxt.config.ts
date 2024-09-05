@@ -13,6 +13,11 @@ export default defineNuxtConfig({
     strict: true
   },
 
+  vue: {
+    // TODO: remove when new Nuxt version is released
+    propsDestructure: true
+  },
+
   devtools: {
     enabled: true
   },
@@ -29,6 +34,12 @@ export default defineNuxtConfig({
 
   future: {
     compatibilityVersion: 4
+  },
+
+  icon: {
+    clientBundle: {
+      scan: true
+    }
   },
 
   vite: {
