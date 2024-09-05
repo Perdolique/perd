@@ -10,7 +10,7 @@
 <script lang="ts" setup>
   import { useEventListener } from '@vueuse/core';
 
-  const dialogRef = ref<HTMLDialogElement | null>(null);
+  const dialogRef = useTemplateRef('dialogRef')
 
   const isOpened = defineModel<boolean>({
     required: true

@@ -15,8 +15,8 @@
     readonly checklistName: string;
   }
 
-  const props = defineProps<Props>()
-  const path = computed(() => `/checklists/${props.checklistId}`)
+  const { checklistId } = defineProps<Props>()
+  const path = computed(() => `/checklists/${checklistId}`)
 </script>
 
 <style lang="scss" module>

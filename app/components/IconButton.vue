@@ -15,13 +15,12 @@
    interface Props {
     readonly iconName: string;
     readonly secondary?: boolean;
-    readonly size: 'm' | 's' | 'xs';
+    readonly size?: 'm' | 's' | 'xs';
   }
 
-  withDefaults(defineProps<Props>(), {
-    secondary: false,
-    size: 'm'
-  });
+  const {
+    size = 'm'
+  } = defineProps<Props>();
 </script>
 
 <style module>

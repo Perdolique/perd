@@ -12,10 +12,10 @@
     readonly level: 1;
   }
 
-  const props = defineProps<Props>();
+  const { level } = defineProps<Props>();
 
   const element = computed(() => {
-    switch (props.level) {
+    switch (level) {
       case 1: {
         return {
           name: 'h1',
