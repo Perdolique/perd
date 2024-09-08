@@ -9,5 +9,6 @@
       "database": "perd",
       "username": "perd"
     }
-  ]
+  ],
+  "typescript.tsdk": "node_modules/typescript/lib"
 }

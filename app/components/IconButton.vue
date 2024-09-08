@@ -26,7 +26,6 @@
 <style module>
   .button {
     padding: 0;
-    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
