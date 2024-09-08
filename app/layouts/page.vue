@@ -1,31 +1,34 @@
 <template>
-  <div :class="$style.component">
-    <PageHeader />
+  <div :class="$style.layout">
+    <PerdSidebar />
 
-    <div :class="$style.content">
-      <slot />
+    <div :class="$style.main">
+      <PageHeader />
+
+      <div :class="$style.content">
+        <slot />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+  import PerdSidebar from '~/components/PerdSidebar/PerdSidebar.vue';
   import PageHeader from '~/components/PageHeader.vue';
 </script>
 
 <style lang="scss" module>
-  .component {
-    display: grid;
-    grid-template-rows: auto 1fr;
-    row-gap: var(--spacing-16);
+  .layout {
+    height: 100%;
+    display: flex;
+  }
+
+  .main {
+    flex: 1;
+    overflow: auto;
   }
 
   .content {
-    width: 100%;
-    padding: 0 var(--spacing-16) var(--spacing-16);
-
-    @include tablet() {
-      justify-self: center;
-      max-width: var(--screen-tablet);
-    }
+    padding: var(--spacing-16);
   }
 </style>

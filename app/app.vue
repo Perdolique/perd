@@ -18,10 +18,27 @@
   @import "~/assets/styles/base";
 
   @layer {
+    html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+
     body {
       margin: 0;
+      padding: 0;
+      height: 100%;
       background-color: var(--color-background);
       color: var(--color-primary);
+    }
+
+    .perd-root {
+      height: 100%;
+    }
+
+    // Disable tap highlight color
+    * {
+      -webkit-tap-highlight-color: transparent;
     }
 
     // Reset default dialog styles
@@ -46,6 +63,11 @@
 
     input::placeholder {
       color: var(--input-color-placeholder);
+    }
+
+    // Reset default button styles
+    button {
+      border: none;
     }
   }
 </style>

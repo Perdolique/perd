@@ -11,7 +11,6 @@
 <style module>
   .option {
     /* Reset button default style */
-    border: none;
     outline: none;
     text-align: inherit;
     width: 100%;

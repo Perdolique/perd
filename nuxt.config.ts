@@ -13,6 +13,12 @@ export default defineNuxtConfig({
     strict: true
   },
 
+  app: {
+    rootAttrs: {
+      class: 'perd-root'
+    }
+  },
+
   vue: {
     // TODO: remove when new Nuxt version is released
     propsDestructure: true
