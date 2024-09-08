@@ -19,7 +19,7 @@
   import PerdLink from '~/components/PerdLink.vue';
 
   definePageMeta({
-    layout: 'page'
+    layout: false
   })
 
   const { user } = useUserStore()

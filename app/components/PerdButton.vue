@@ -29,7 +29,6 @@
     height: var(--input-height);
     padding: 0 var(--input-spacing-horizontal);
     background-color: var(--input-color-main);
-    border: none;
     border-radius: var(--input-border-radius);
     color: var(--button-color-text);
     cursor: pointer;
