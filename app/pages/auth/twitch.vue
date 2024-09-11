@@ -9,8 +9,9 @@
           💀
         </div>
 
-        <CircleSpinner
+        <FidgetSpinner
           v-else
+          size="32px"
         />
       </div>
 
@@ -34,7 +35,7 @@
 
 <script lang="ts" setup>
   import { startPagePath } from '~~/constants'
-  import CircleSpinner from '~/components/CircleSpinner.vue'
+  import FidgetSpinner from '~/components/FidgetSpinner.vue'
   import PerdLink from '~/components/PerdLink.vue';
 
   definePageMeta({
