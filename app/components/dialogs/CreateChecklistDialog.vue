@@ -33,7 +33,7 @@
     </form>
 
     <div :class="[$style.loader, { visible: loading }]">
-      <CircleSpinner />
+      <FidgetSpinner size="36px" />
     </div>
   </ModalDialog>
 </template>
@@ -41,7 +41,7 @@
 <script lang="ts" setup>
   import { limits } from '~~/constants';
   import PerdButton from '~/components/PerdButton.vue'
-  import CircleSpinner from '~/components/CircleSpinner.vue'
+  import FidgetSpinner from '~/components/FidgetSpinner.vue'
   import ModalDialog from './ModalDialog.vue'
 
   interface Props {
@@ -114,7 +114,7 @@
     inset: 0;
     justify-content: center;
     align-items: center;
-    background-color: rgb(0 0 0 / 25%);
+    background-color: rgb(0 0 0 / 35%);
     border-radius: var(--border-radius-24);
     transition:
       opacity 0.3s ease-out,
