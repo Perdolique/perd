@@ -1,22 +1,43 @@
 <template>
   <div :class="$style.component">
-    <PerdButton @click="signUp">
-      Sign up anonymously
-    </PerdButton>
+    <div :class="$style.header">
+      <div :class="$style.logo">
+        🐕💨
+      </div>
 
-    <PerdLink
-      to="/api/oauth/twitch"
-      external
-    >
-      Sign in with Twitch
-    </PerdLink>
+      <div :class="$style.title">
+        Welcome to Perd*!
+      </div>
+
+      <div :class="$style.note">
+        *technical name
+      </div>
+    </div>
+
+    <div :class="$style.buttons">
+      <IconButton
+        icon-name="tabler:brand-among-us"
+        :class="$style.button"
+        class="amogus"
+        :loading="isAuthenticating"
+        @click="signUp"
+      />
+
+      <IconButton
+        :class="$style.button"
+        class="twitch"
+        icon-name="tabler:brand-twitch"
+        :loading="isAuthenticating"
+        @click="redirectToTwitch"
+      />
+    </div>
   </div>
 </template>
 
 <script lang="ts" setup>
   import { startPagePath } from '~~/constants';
-  import PerdButton from '~/components/PerdButton.vue';
-  import PerdLink from '~/components/PerdLink.vue';
+  import { startViewTransition } from '~/utils/dom';
+  import IconButton from '~/components/IconButton.vue';
 
   definePageMeta({
     layout: false
@@ -24,24 +45,52 @@
 
   const { user } = useUserStore()
   const route = useRoute()
+  const isAuthenticating = ref(false)
+
+  function startAuthenticating() {
+    startViewTransition(() => {
+      isAuthenticating.value = true
+    })
+  }
 
   async function signUp() {
-    const response = await $fetch('/api/auth/create-session', {
-      method: 'POST'
-    })
-
-    if (typeof response.userId === 'string') {
-      user.value.userId = response.userId
+    if (isAuthenticating.value) {
+      return
     }
 
-    const redirectPath =
-      typeof route.query.redirectTo === 'string'
-        ? route.query.redirectTo
-        : startPagePath
+    startAuthenticating()
 
-    await navigateTo(redirectPath, {
-      replace: true
-    })
+    try {
+      const responsePromise = $fetch('/api/auth/create-session', {
+        method: 'POST'
+      })
+
+      const response = await withMinimumDelay(responsePromise, 500)
+
+      if (typeof response.userId === 'string') {
+        user.value.userId = response.userId
+      }
+
+      const redirectPath =
+        typeof route.query.redirectTo === 'string'
+          ? route.query.redirectTo
+          : startPagePath
+
+      await navigateTo(redirectPath, {
+        replace: true
+      })
+    } catch (error) {
+      // TODO: Handle error properly
+      console.error(error)
+    } finally {
+      isAuthenticating.value = false
+    }
+  }
+
+  function redirectToTwitch() {
+    startAuthenticating()
+
+    window.location.href = '/api/oauth/twitch'
   }
 </script>
 
@@ -50,7 +99,64 @@
     display: grid;
     justify-content: center;
     text-align: center;
-    gap: var(--spacing-16);
-    padding-top: var(--spacing-32);
+    row-gap: var(--spacing-16);
+    padding: var(--spacing-32);
+  }
+
+  .logo {
+    font-size: 4rem;
+    white-space: nowrap;
+  }
+
+  .header {
+    display: grid;
+    gap: var(--spacing-32);
+  }
+
+  .title {
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+
+  .note {
+    font-size: 0.75rem;
+    margin-top: calc(-1 * var(--spacing-24));
+  }
+
+  .buttons {
+    display: flex;
+    gap: var(--spacing-8);
+    justify-content: center;
+  }
+
+  .button {
+    color: #fff;
+    transition: background-color 0.2s;
+
+    &:global(.twitch):not(:disabled) {
+      background-color: #9146FF;
+
+      &:focus-visible,
+      &:hover {
+        background-color: #772ce8;
+      }
+
+      &:active {
+        background-color: #5b21b6;
+      }
+    }
+
+    &:global(.amogus):not(:disabled) {
+      background-color: #4CAF50;
+
+      &:focus-visible,
+      &:hover {
+        background-color: #45a049;
+      }
+
+      &:active {
+        background-color: #388e3c;
+      }
+    }
   }
 </style>
