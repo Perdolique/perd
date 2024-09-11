@@ -23,7 +23,12 @@
       {{ label }}
     </label>
 
-    <CircleSpinner :class="[$style.spinner, { visible: searching }]" />
+    <FidgetSpinner
+      :class="[$style.spinner, {
+        visible: searching
+      }]"
+      size="1.5em"
+    />
 
     <div
       :class="[$style.dropdown, {
@@ -61,7 +66,7 @@
 <script lang="ts" setup generic="Option">
   import type { InputHTMLAttributes } from 'vue';
   import { watchDebounced, onClickOutside } from '@vueuse/core';
-  import CircleSpinner from '~/components/CircleSpinner.vue';
+  import FidgetSpinner from '~/components/FidgetSpinner.vue';
   import SearchOption from './SearchOption.vue';
   import EmptyOption from './EmptyOption.vue';
   import DefaultOption from './DefaultOption.vue';

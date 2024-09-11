@@ -1,10 +1,15 @@
 <template>
-  <button :class="[$style.button, {
-    [size]: true,
-    secondary
-  }]">
+  <button
+    :class="[$style.button, {
+      [size]: true,
+      secondary
+    }]"
+    :disabled="isButtonDisabled"
+  >
+    <FidgetSpinner v-if="loading" />
+
     <Icon
-      class="icon"
+      v-else
       :name="iconName"
       size="1em"
     />
@@ -12,15 +17,25 @@
 </template>
 
 <script lang="ts" setup>
-   interface Props {
+  import FidgetSpinner from './FidgetSpinner.vue';
+
+  interface Props {
     readonly iconName: string;
+    readonly loading?: boolean;
+    readonly disabled?: boolean;
     readonly secondary?: boolean;
     readonly size?: 'm' | 's' | 'xs';
   }
 
   const {
-    size = 'm'
-  } = defineProps<Props>();
+    size = 'm',
+    loading = false,
+    disabled = false
+  } = defineProps<Props>()
+
+  const isButtonDisabled = computed(() => {
+    return disabled || loading
+  });
 </script>
 
 <style module>
@@ -73,6 +88,12 @@
       &:global(.secondary) {
         background-color: var(--input-secondary-color-active);
       }
+    }
+
+    &:disabled {
+      background-color: var(--button-color-disabled);
+      color: var(--button-color-disabled-text);
+      cursor: not-allowed;
     }
   }
 </style>
