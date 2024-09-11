@@ -22,7 +22,7 @@
     "vue": "3.5.4"
   },
   "devDependencies": {
-    "@iconify-json/tabler": "1.2.1",
+    "@iconify-json/tabler": "1.2.2",
     "@neondatabase/serverless": "0.9.5",
     "@nuxt/fonts": "0.7.2",
     "@nuxt/icon": "1.5.1",
