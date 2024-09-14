@@ -70,6 +70,7 @@
   --button-color-text: ghostwhite;
   --button-color-disabled: #ccc;
   --button-color-disabled-text: #666;
+
   // Inputs
   --input-height: 3rem;
   --input-spacing-horizontal: 1rem;
@@ -81,7 +82,6 @@
   --input-color-text: #244555;
   --input-color-placeholder: #8c8c8c;
   --input-color-background: ghostwhite;
-
 
   // Secondary inputs
   --input-secondary-color-main: ghostwhite;
@@ -103,4 +103,10 @@
    --element-color-background: ghostwhite;
    --element-color-background-hover: #f0fafb;
    --element-color-background-active: #d8f2f5;
+
+  // Dialogs
+  --dialog-color-background: #f0fafb;
+  --dialog-color-border: #266278;
+  --dialog-padding: 1.5rem;
+  --dialog-border-radius: 1.5rem;
 }

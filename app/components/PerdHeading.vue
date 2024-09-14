@@ -9,7 +9,7 @@
 
 <script lang="ts" setup>
   interface Props {
-    readonly level: 1;
+    readonly level: 1 | 2;
   }
 
   const { level } = defineProps<Props>();
@@ -20,6 +20,13 @@
         return {
           name: 'h1',
           className: 'h1'
+        };
+      }
+
+      case 2: {
+        return {
+          name: 'h2',
+          className: 'h2'
         };
       }
     }
@@ -33,6 +40,11 @@
 
     &:global(.h1) {
       font-size: var(--font-size-24);
+      font-weight: var(--font-weight-bold);
+    }
+
+    &:global(.h2) {
+      font-size: var(--font-size-20);
       font-weight: var(--font-weight-bold);
     }
   }
