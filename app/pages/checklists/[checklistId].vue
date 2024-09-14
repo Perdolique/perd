@@ -18,9 +18,15 @@
         >
           <OptionButton
             icon="tabler:trash"
-            @click="deleteChecklist"
+            @click="showDeleteConfirmation"
           >
-            Delete
+            <template v-if="isDeleting">
+              Deleting...
+            </template>
+
+            <template v-else>
+              Delete
+            </template>
           </OptionButton>
 
           <OptionToggle v-model="isCheckMode">
@@ -54,6 +60,15 @@
       />
     </div>
   </PageContent>
+
+  <ConfirmationDialog
+    v-model="isDeleteDialogOpened"
+    header-text="Delete checklist"
+    :confirm-button-text="deleteButtonText"
+    @confirm="deleteChecklist"
+  >
+    Cheklist <strong>{{ name }}</strong> will be deleted
+  </ConfirmationDialog>
 </template>
 
 <script lang="ts" setup>
@@ -65,6 +80,7 @@
   import OptionButton from '~/components/PerdMenu/OptionButton.vue';
   import OptionToggle from '~/components/PerdMenu/OptionToggle.vue';
   import PerdButton from '~/components/PerdButton.vue';
+  import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue'
 
   definePageMeta({
     layout: 'page'
@@ -83,8 +99,10 @@
   const options = ref<InventoryItem[]>([])
   const isSearching = ref(false)
   const isCheckMode = ref(false)
+  const isDeleteDialogOpened = ref(false)
   const { resetAll: resetAllToggles } = useChecklistToggle(checklistId)
   const { data: checklistData } = await useFetch(`/api/checklists/${checklistId}`)
+  const deleteButtonText = computed(() => `Delete ${name.value}`)
 
   await useChecklistItemsData(checklistId)
 
@@ -97,6 +115,10 @@
   }
 
   async function deleteChecklist() {
+    if (isDeleting.value) {
+      return
+    }
+
     try {
       isDeleting.value = true
 
@@ -142,6 +164,10 @@
     await addItem(checklistId, equipmentId)
 
     options.value = options.value.filter(({ id }) => id !== equipmentId)
+  }
+
+  function showDeleteConfirmation() {
+    isDeleteDialogOpened.value = true
   }
 </script>
 

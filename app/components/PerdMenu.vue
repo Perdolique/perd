@@ -42,6 +42,8 @@
 
   onClickOutside(rootRef, () => {
     isMenuVisible.value = false
+  }, {
+    ignore: ['dialog']
   });
 </script>
 
