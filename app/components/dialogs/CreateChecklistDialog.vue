@@ -81,10 +81,10 @@
   .content {
     display: grid;
     row-gap: var(--spacing-24);
-    background-color: var(--color-background);
-    padding: var(--spacing-16) var(--spacing-32);
-    border-radius: var(--border-radius-24);
-    border: 1px solid var(--color-blue-700);
+    background-color: var(--dialog-color-background);
+    padding: var(--dialog-padding);
+    border-radius: var(--dialog-border-radius);
+    border: 1px solid var(--dialog-color-border);
   }
 
   .header {

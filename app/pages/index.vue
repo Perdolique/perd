@@ -1,8 +1,12 @@
 <template>
   <div :class="$style.component">
-    Hello, {{ user.userId }}
-    <br />
-    Your admin status is: {{ user.isAdmin }}
+    <div>
+      Hello, {{ user.userId }}
+    </div>
+
+    <div>
+      Your admin status is: {{ user.isAdmin }}
+    </div>
   </div>
 </template>
 
@@ -16,7 +20,7 @@
 
 <style module>
   .component {
-    display: flex;
+    display: grid;
     justify-content: center;
     gap: var(--spacing-16);
     padding-top: var(--spacing-32);

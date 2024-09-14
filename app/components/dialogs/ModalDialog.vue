@@ -24,7 +24,7 @@
     }
   });
 
-  useEventListener(dialogRef, 'close', (event) => {
+  useEventListener(dialogRef, 'close', () => {
     isOpened.value = false
   })
 
