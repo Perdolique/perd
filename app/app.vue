@@ -2,9 +2,13 @@
   <NuxtLayout>
     <NuxtPage />
   </NuxtLayout>
+
+  <PerdToaster />
 </template>
 
 <script lang="ts" setup>
+  import PerdToaster from '~/components/PerdToaster.vue';
+
   useHead({
     link: [{
       rel: 'icon',

@@ -26,7 +26,7 @@
     >
       <IconButton
         size="xs"
-        icon-name="tabler:x"
+        icon="tabler:x"
         @click="handleRemoveClick"
       />
     </div>

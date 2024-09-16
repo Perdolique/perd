@@ -19,11 +19,6 @@ export default defineNuxtConfig({
     }
   },
 
-  vue: {
-    // TODO: remove when new Nuxt version is released
-    propsDestructure: true
-  },
-
   devtools: {
     enabled: true
   },
