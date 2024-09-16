@@ -14,27 +14,27 @@
     "db:studio": "npx drizzle-kit studio"
   },
   "dependencies": {
-    "date-fns": "3.6.0",
+    "date-fns": "4.0.0",
     "drizzle-orm": "0.33.0",
     "modern-normalize": "3.0.1",
-    "nuxt": "3.13.1",
+    "nuxt": "3.13.2",
     "ulid": "2.3.0",
-    "vue": "3.5.5"
+    "vue": "3.5.6"
   },
   "devDependencies": {
-    "@iconify-json/tabler": "1.2.2",
+    "@iconify-json/tabler": "1.2.3",
     "@neondatabase/serverless": "0.9.5",
     "@nuxt/fonts": "0.8.0",
     "@nuxt/icon": "1.5.1",
     "@types/ws": "8.5.12",
-    "@vueuse/core": "11.0.3",
+    "@vueuse/core": "11.1.0",
     "consola": "3.2.3",
     "drizzle-kit": "0.24.2",
     "sass": "1.78.0",
     "typescript": "5.6.2",
     "ufo": "1.5.4",
-    "valibot": "0.41.0",
-    "wrangler": "3.77.0",
+    "valibot": "0.42.0",
+    "wrangler": "3.78.2",
     "ws": "8.18.0"
   }
 }
