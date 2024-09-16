@@ -16,7 +16,7 @@
 
     <div :class="$style.buttons">
       <IconButton
-        icon-name="tabler:brand-among-us"
+        icon="tabler:brand-among-us"
         :class="$style.button"
         class="amogus"
         :loading="isAuthenticating"
@@ -26,7 +26,7 @@
       <IconButton
         :class="$style.button"
         class="twitch"
-        icon-name="tabler:brand-twitch"
+        icon="tabler:brand-twitch"
         :loading="isAuthenticating"
         @click="redirectToTwitch"
       />

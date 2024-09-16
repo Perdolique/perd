@@ -10,7 +10,7 @@
 
     <Icon
       v-else
-      :name="iconName"
+      :name="icon"
       size="1em"
     />
   </button>
@@ -20,7 +20,7 @@
   import FidgetSpinner from './FidgetSpinner.vue';
 
   interface Props {
-    readonly iconName: string;
+    readonly icon: string;
     readonly loading?: boolean;
     readonly disabled?: boolean;
     readonly secondary?: boolean;
