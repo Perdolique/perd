@@ -93,6 +93,7 @@
 
   const route = useRoute()
   const { items, addItem } = useChecklistStore()
+  const { addToast } = useToaster()
   const name = ref('')
   const checklistId = route.params.checklistId?.toString() ?? ''
   const isDeleting = ref(false)
@@ -124,6 +125,11 @@
 
       await $fetch(`/api/checklists/${checklistId}`, {
         method: 'DELETE'
+      })
+
+      addToast({
+        title: 'Checklist deleted',
+        message: `Checklist ${name.value} has been deleted`
       })
 
       await navigateTo('/checklists', {
