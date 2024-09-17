@@ -14,7 +14,7 @@
     "db:studio": "npx drizzle-kit studio"
   },
   "dependencies": {
-    "date-fns": "4.0.0",
+    "date-fns": "4.1.0",
     "drizzle-orm": "0.33.0",
     "modern-normalize": "3.0.1",
     "nuxt": "3.13.2",
@@ -34,7 +34,7 @@
     "typescript": "5.6.2",
     "ufo": "1.5.4",
     "valibot": "0.42.0",
-    "wrangler": "3.78.2",
+    "wrangler": "3.78.3",
     "ws": "8.18.0"
   }
 }
