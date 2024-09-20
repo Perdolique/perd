@@ -30,11 +30,11 @@
     "@vueuse/core": "11.1.0",
     "consola": "3.2.3",
     "drizzle-kit": "0.24.2",
-    "sass": "1.79.1",
+    "sass": "1.79.2",
     "typescript": "5.6.2",
     "ufo": "1.5.4",
     "valibot": "0.42.0",
-    "wrangler": "3.78.5",
+    "wrangler": "3.78.6",
     "ws": "8.18.0"
   }
 }
