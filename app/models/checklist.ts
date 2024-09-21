@@ -1,10 +1,10 @@
 interface ChecklistEquipment {
-  readonly id: string;
+  readonly id: number;
   readonly name: string;
   readonly weight: number;
 }
 
 export interface ChecklistItemModel {
-  readonly id: string;
+  readonly id: number;
   readonly equipment: ChecklistEquipment;
 }

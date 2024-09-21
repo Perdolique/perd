@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { and, eq } from 'drizzle-orm'
-import { OAuthProvider } from '~/models/oauth';
+import type { OAuthProvider } from '~/models/oauth';
 
 interface ReturnUser {
   readonly userId: string | null;
@@ -94,7 +94,7 @@ export async function createOAuthUser(
     }
 
     // Create a new user
-    const [{ userId, isAdmin }] = await transaction
+    const [foundUser] = await transaction
       .insert(tables.users)
       .values({
         isAdmin: false
@@ -104,7 +104,7 @@ export async function createOAuthUser(
         isAdmin: tables.users.isAdmin
       })
 
-    if (userId === undefined) {
+    if (foundUser?.userId === undefined) {
       throw createError({
         message: 'Failed to create user',
         statusCode: 500
@@ -115,14 +115,14 @@ export async function createOAuthUser(
     await transaction
       .insert(tables.oauthAccounts)
       .values({
-        userId,
+        userId: foundUser.userId,
         accountId,
         providerId: providerData.id
       })
 
     return {
-      userId,
-      isAdmin
+      userId: foundUser.userId,
+      isAdmin: foundUser.isAdmin
     }
   })
 

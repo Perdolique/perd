@@ -9,9 +9,11 @@
     "generate": "nuxt generate",
     "postinstall": "nuxt prepare",
     "preview": "wrangler pages dev",
-    "db:generate": "npx drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:studio": "npx drizzle-kit studio"
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx ./tools/migrate.ts",
+    "db:migrate:local": "tsx --env-file=.env ./tools/migrate.ts",
+    "db:studio": "drizzle-kit studio",
+    "typecheck": "nuxi typecheck"
   },
   "dependencies": {
     "date-fns": "4.1.0",
@@ -31,9 +33,11 @@
     "consola": "3.2.3",
     "drizzle-kit": "0.24.2",
     "sass": "1.79.2",
+    "tsx": "4.19.1",
     "typescript": "5.6.2",
     "ufo": "1.5.4",
     "valibot": "0.42.0",
+    "vue-tsc": "2.1.6",
     "wrangler": "3.78.6",
     "ws": "8.18.0"
   }

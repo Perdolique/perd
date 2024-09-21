@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1724100830555,
-      "tag": "0000_dry_wasp",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1724101985802,
-      "tag": "0001_magenta_mordo",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1724876180185,
-      "tag": "0002_thin_jimmy_woo",
+      "when": 1726954431056,
+      "tag": "0000_furry_mystique",
       "breakpoints": true
     }
   ]

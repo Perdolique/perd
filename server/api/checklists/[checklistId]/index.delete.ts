@@ -1,10 +1,9 @@
 import { and, eq } from 'drizzle-orm'
-import { validateId } from '~~/server/utils/validate'
 
 export default defineEventHandler(async (event) => {
   const userId = await validateSessionUser(event)
   const checklistIdParam = getRouterParam(event, 'checklistId')
-  const checklistId = validateId(checklistIdParam)
+  const checklistId = validateIdString(checklistIdParam)
 
   const deleted = await event.context.db
     .delete(tables.checklists)

@@ -1,5 +1,4 @@
 import { and, eq } from 'drizzle-orm'
-import { validateId } from '~~/server/utils/validate';
 
 interface ReturnData {
   readonly id: string;
@@ -9,7 +8,7 @@ interface ReturnData {
 export default defineEventHandler(async (event) : Promise<ReturnData> => {
   const userId = await validateSessionUser(event)
   const checklistIdParam = getRouterParam(event, 'checklistId')
-  const checklistId = validateId(checklistIdParam)
+  const checklistId = validateIdString(checklistIdParam)
 
   const result = await event.context.db.query.checklists
     .findFirst({

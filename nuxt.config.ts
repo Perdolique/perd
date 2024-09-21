@@ -10,7 +10,8 @@ export default defineNuxtConfig({
   },
 
   typescript: {
-    strict: true
+    strict: true,
+    typeCheck: true
   },
 
   app: {

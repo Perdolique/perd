@@ -2,7 +2,7 @@ import { useDebounceFn } from '@vueuse/core';
 import type { EquipmentItem } from '~/components/equipment/EquipmentTable.vue';
 
 interface EquipmentData {
-  readonly id: string;
+  readonly id: number;
   readonly name: string | null;
   readonly weight: number;
   readonly createdAt: string;

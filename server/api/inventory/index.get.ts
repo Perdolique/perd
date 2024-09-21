@@ -1,7 +1,7 @@
 import { and, asc, eq, isNull, like } from 'drizzle-orm'
 
 interface ReturnData {
-  readonly id: string;
+  readonly id: number;
   readonly name: string;
 }
 
