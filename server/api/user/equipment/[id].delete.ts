@@ -1,10 +1,9 @@
 import { and, eq } from 'drizzle-orm'
-import { validateId } from '~~/server/utils/validate'
 
 export default defineEventHandler(async (event) => {
   const userId = await validateSessionUser(event)
   const id = getRouterParam(event, 'id')
-  const equipmentId = validateId(id)
+  const equipmentId = validateStringToInteger(id)
 
   await event.context.db
     .delete(tables.userEquipment)

@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const [{ itemId }] = await db
+  const [foundItem] = await db
     .insert(tables.equipment)
     .values({
       name,
@@ -33,9 +33,16 @@ export default defineEventHandler(async (event) => {
       itemId: tables.equipment.id
     })
 
+  if (foundItem === undefined) {
+    throw createError({
+      statusCode: 500,
+      message: 'Failed to create equipment'
+    })
+  }
+
   setResponseStatus(event, 201)
 
   return {
-    itemId
+    itemId: foundItem.itemId
   }
 })

@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm'
 import * as v from 'valibot'
 
 const bodySchema = v.object({
-  equipmentId: idValidator
+  equipmentId: idValidatorNumber
 })
 
 type BodyData = v.InferOutput<typeof bodySchema>
@@ -17,11 +17,11 @@ export default defineEventHandler(async (event) => {
   await validateSessionUser(event)
 
   const checklistIdParam = getRouterParam(event, 'checklistId')
-  const checklistId = validateId(checklistIdParam)
+  const checklistId = validateIdString(checklistIdParam)
   const { equipmentId } = await readValidatedBody(event, validateBody)
 
   try {
-    const [{ itemId }] = await db
+    const [foundItem] = await db
       .insert(tables.checklistItems)
       .values({
         checklistId,
@@ -31,8 +31,15 @@ export default defineEventHandler(async (event) => {
         itemId: tables.checklistItems.id
       })
 
+    if (foundItem === undefined) {
+      throw createError({
+        statusCode: 500,
+        message: 'Failed to create checklist item'
+      })
+    }
+
     const insertedItem = await db.query.checklistItems.findFirst({
-      where: eq(tables.checklistItems.id, itemId),
+      where: eq(tables.checklistItems.id, foundItem.itemId),
 
       columns: {
         id: true

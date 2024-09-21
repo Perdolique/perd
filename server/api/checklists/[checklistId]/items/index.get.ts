@@ -3,7 +3,7 @@ import { and, asc, eq } from 'drizzle-orm'
 export default defineEventHandler(async (event) => {
   const userId = await validateSessionUser(event)
   const checklistIdParam = getRouterParam(event, 'checklistId')
-  const checklistId = validateId(checklistIdParam)
+  const checklistId = validateIdString(checklistIdParam)
 
   const result = await event.context.db
     .select({
