@@ -65,7 +65,7 @@
   import EmptyContent from './EmptyContent.vue';
 
   export interface EquipmentItem {
-    readonly id: string;
+    readonly id: number;
     readonly name: string;
     readonly weight: number;
   }

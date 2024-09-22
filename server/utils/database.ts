@@ -12,7 +12,7 @@ export function createDrizzle() {
     throw new Error('DATABASE_URL is not defined')
   }
 
-  if (import.meta.dev === true || process.env.WRANGLER_DEV) {
+  if (import.meta.dev === true || process.env.WRANGLER_DEV || process.env.LOCAL_DATABASE) {
     // Check docker-compose.yml for the details
     neonConfig.fetchEndpoint = 'http://db.localtest.me:4444/sql'
   }
@@ -37,7 +37,7 @@ export function createDrizzle() {
 export function createDrizzleWebsocket() {
   neonConfig.webSocketConstructor = ws
 
-  if (import.meta.dev === true) {
+  if (import.meta.dev === true || process.env.LOCAL_DATABASE) {
     neonConfig.wsProxy = (host) => `${host}:5433/v1`
     neonConfig.useSecureWebSocket = false;
     neonConfig.pipelineTLS = false;

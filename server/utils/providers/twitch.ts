@@ -2,7 +2,7 @@ import { H3Event } from 'h3'
 import consola from 'consola'
 import { joinURL } from 'ufo'
 
-import {
+import type {
   TwitchOAuthTokenResponse,
   TwitchUser,
   TwitchUsersResponse

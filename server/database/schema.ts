@@ -10,7 +10,10 @@ import {
   varchar,
   primaryKey,
   index,
-  unique
+  unique,
+  serial,
+  text,
+  pgEnum
 } from 'drizzle-orm/pg-core'
 
 /**
@@ -66,21 +69,19 @@ export const users = pgTable('users', {
 
 export const oauthProviders = pgTable('oauthProviders', {
   id:
-    ulid('id')
-    .notNull()
-    .default(sql`gen_ulid()`)
+    serial('id')
     .primaryKey(),
 
   type:
     varchar('type', {
-      length: 32
+      length: limits.maxOAuthProviderTypeLength
     })
     .notNull()
     .unique(),
 
   name:
     varchar('name', {
-      length: 255
+      length: limits.maxOAuthProviderNameLength
     })
     .notNull(),
 
@@ -115,7 +116,7 @@ export const oauthAccounts = pgTable('oauthAccounts', {
     }),
 
   providerId:
-    ulid('providerId')
+    integer('providerId')
     .notNull()
     .references(() => oauthProviders.id, {
       onDelete: 'cascade',
@@ -137,6 +138,42 @@ export const oauthAccounts = pgTable('oauthAccounts', {
 }))
 
 /**
+ * Equipment types table
+ *
+ * This table is used to store equipment types
+ */
+
+export const equipmentTypes = pgTable('equipmentTypes', {
+  id:
+    serial('id')
+    .primaryKey(),
+
+  name:
+    varchar('name', {
+      length: limits.maxEquipmentTypeNameLength
+    })
+    .notNull()
+})
+
+/**
+ * Equipment groups table
+ *
+ * This table is used to store equipment groups
+ */
+
+export const equipmentGroups = pgTable('equipmentGroups', {
+  id:
+    serial('id')
+    .primaryKey(),
+
+  name:
+    varchar('name', {
+      length: limits.maxEquipmentGroupNameLength
+    })
+    .notNull()
+})
+
+/**
  * Equipment table
  *
  * This table is used to store equipment items
@@ -144,9 +181,7 @@ export const oauthAccounts = pgTable('oauthAccounts', {
 
 export const equipment = pgTable('equipment', {
   id:
-    ulid('id')
-    .notNull()
-    .default(sql`gen_ulid()`)
+    serial('id')
     .primaryKey(),
 
   name:
@@ -155,17 +190,147 @@ export const equipment = pgTable('equipment', {
     })
     .notNull(),
 
+  description: text('description'),
+
   weight:
     integer('weight')
-    .notNull(),
+    .notNull()
+    .default(0),
+
+  equipmentTypeId:
+    integer('equipmentTypeId')
+    .references(() => equipmentTypes.id, {
+      onDelete: 'set null',
+      onUpdate: 'cascade'
+    }),
+
+  equipmentGroupId:
+    integer('equipmentGroupId')
+    .references(() => equipmentGroups.id, {
+      onDelete: 'set null',
+      onUpdate: 'cascade'
+    }),
 
   createdAt:
     timestamp('createdAt', {
       withTimezone: true
     })
     .notNull()
+    .defaultNow(),
+
+  updatedAt:
+    timestamp('updatedAt', {
+      withTimezone: true
+    })
+    .notNull()
     .defaultNow()
+    .$onUpdate(() => sql`now()`)
+}, (table) => {
+  return {
+    typeIdIndex: index().on(table.equipmentTypeId),
+    groupIdIndex: index().on(table.equipmentGroupId)
+  }
 })
+
+/**
+ * Equipment attributes data types
+ *
+ * Types of data that can be stored in the attribute
+ */
+
+export const equipmentAttributeDataType = pgEnum('equipmentAttributeDataType', [
+  'boolean',
+  'string',
+  'integer',
+  'decimal'
+])
+
+/**
+ * Equipment attributes table
+ *
+ * This table is used to store equipment attributes
+ */
+
+export const equipmentAttributes = pgTable('equipmentAttributes', {
+  id:
+    serial('id')
+    .primaryKey(),
+
+  name:
+    varchar('name', {
+      length: limits.maxEquipmentAttributeNameLength
+    })
+    .notNull(),
+
+  dataType:
+    equipmentAttributeDataType('dataType')
+    .notNull()
+})
+
+/**
+ * Equipment type attributes table
+ *
+ * This table is used to store the attributes of the equipment type
+ */
+
+export const equipmentTypeAttributes = pgTable('equipmentTypeAttributes', {
+  equipmentTypeId:
+    integer('equipmentTypeId')
+    .references(() => equipmentTypes.id, {
+      onDelete: 'cascade',
+      onUpdate: 'cascade'
+    }),
+
+  equipmentAttributeId:
+    integer('equipmentAttributeId')
+    .references(() => equipmentAttributes.id, {
+      onDelete: 'cascade',
+      onUpdate: 'cascade'
+    })
+}, (table) => ({
+  primaryKey: primaryKey({
+    columns: [table.equipmentTypeId, table.equipmentAttributeId]
+  }),
+
+  equipmentTypeIdIndex: index().on(table.equipmentTypeId),
+  attributeIdIndex: index().on(table.equipmentAttributeId)
+}))
+
+/**
+ * Equipment attribute values table
+ *
+ * This table is used to store the values of the equipment attributes
+ */
+
+export const equipmentAttributeValues = pgTable('equipmentAttributeValues', {
+  id:
+    serial('id')
+    .primaryKey(),
+
+  equipmentId:
+    integer('equipmentId')
+    .notNull()
+    .references(() => equipment.id, {
+      onDelete: 'cascade',
+      onUpdate: 'cascade'
+    }),
+
+  equipmentAttributeId:
+    integer('equipmentAttributeId')
+    .notNull()
+    .references(() => equipmentAttributes.id, {
+      onDelete: 'cascade',
+      onUpdate: 'cascade'
+    }),
+
+  value:
+    varchar('value')
+    .notNull()
+}, (table) => ({
+  uniqueEquipmentIdAttributeId: unique().on(table.equipmentId, table.equipmentAttributeId),
+  equipmentIdIndex: index().on(table.equipmentId),
+  attributeIdIndex: index().on(table.equipmentAttributeId)
+}))
 
 /**
  * User's equipment table
@@ -176,15 +341,13 @@ export const equipment = pgTable('equipment', {
 export const userEquipment = pgTable('userEquipment', {
   userId:
     ulid('userId')
-    .notNull()
     .references(() => users.id, {
       onDelete: 'cascade',
       onUpdate: 'cascade'
     }),
 
   equipmentId:
-    ulid('equipmentId')
-    .notNull()
+    integer('equipmentId')
     .references(() => equipment.id, {
       onDelete: 'cascade',
       onUpdate: 'cascade'
@@ -249,9 +412,7 @@ export const checklists = pgTable('checklists', {
 
 export const checklistItems = pgTable('checklistItems', {
   id:
-    ulid('id')
-    .notNull()
-    .default(sql`gen_ulid()`)
+    serial('id')
     .primaryKey(),
 
   checklistId:
@@ -263,7 +424,7 @@ export const checklistItems = pgTable('checklistItems', {
     }),
 
   equipmentId:
-    ulid('equipmentId')
+    integer('equipmentId')
     .notNull()
     .references(() => equipment.id, {
       onDelete: 'cascade',
@@ -287,9 +448,59 @@ export const oauthProvidersRelations = relations(oauthProviders, ({ many }) => (
   oauthAccounts: many(oauthAccounts)
 }))
 
-export const equipmentRelations = relations(equipment, ({ many }) => ({
+export const equipmentTypesRelations = relations(equipmentTypes, ({ many }) => ({
+  equipment: many(equipment),
+  equipmentTypeAttributes: many(equipmentTypeAttributes)
+}))
+
+export const equipmentGroupsRelations = relations(equipmentGroups, ({ many }) => ({
+  equipment: many(equipment)
+}))
+
+export const equipmentRelations = relations(equipment, ({ many, one }) => ({
   userEquipment: many(userEquipment),
-  checklistItems: many(checklistItems)
+  checklistItems: many(checklistItems),
+
+  equipmentType: one(equipmentTypes, {
+    fields: [equipment.equipmentTypeId],
+    references: [equipmentTypes.id]
+  }),
+
+  equipmentGroup: one(equipmentGroups, {
+    fields: [equipment.equipmentGroupId],
+    references: [equipmentGroups.id]
+  }),
+
+  equipmentAttributeValues: many(equipmentAttributeValues)
+}))
+
+export const equipmentAttributesRelations = relations(equipmentAttributes, ({ many }) => ({
+  equipmentTypeAttributes: many(equipmentTypeAttributes),
+  equipmentAttributeValues: many(equipmentAttributeValues)
+}))
+
+export const equipmentTypeAttributesRelations = relations(equipmentTypeAttributes, ({ one }) => ({
+  equipmentType: one(equipmentTypes, {
+    fields: [equipmentTypeAttributes.equipmentTypeId],
+    references: [equipmentTypes.id]
+  }),
+
+  equipmentAttribute: one(equipmentAttributes, {
+    fields: [equipmentTypeAttributes.equipmentAttributeId],
+    references: [equipmentAttributes.id]
+  })
+}))
+
+export const equipmentAttributeValuesRelations = relations(equipmentAttributeValues, ({ one }) => ({
+  equipment: one(equipment, {
+    fields: [equipmentAttributeValues.equipmentId],
+    references: [equipment.id]
+  }),
+
+  equipmentAttribute: one(equipmentAttributes, {
+    fields: [equipmentAttributeValues.equipmentAttributeId],
+    references: [equipmentAttributes.id]
+  })
 }))
 
 export const oauthAccountsRelations = relations(oauthAccounts, ({ one }) => ({

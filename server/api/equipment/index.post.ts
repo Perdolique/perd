@@ -1,7 +1,7 @@
 import * as v from 'valibot'
 
 const bodySchema = v.object({
-  equipmentId: v.pipe(v.string(), v.nonEmpty()),
+  equipmentId: idValidatorNumber
 })
 
 type BodyData = v.InferOutput<typeof bodySchema>

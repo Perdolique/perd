@@ -87,7 +87,7 @@
   })
 
   interface InventoryItem {
-    readonly id: string;
+    readonly id: number;
     readonly name: string;
   }
 
@@ -166,7 +166,7 @@
     }
   }
 
-  async function handleOptionClick(equipmentId: string) {
+  async function handleOptionClick(equipmentId: number) {
     await addItem(checklistId, equipmentId)
 
     options.value = options.value.filter(({ id }) => id !== equipmentId)

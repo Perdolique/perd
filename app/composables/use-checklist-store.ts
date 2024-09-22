@@ -3,7 +3,7 @@ import type { ChecklistItemModel } from "~/models/checklist";
 export function useChecklistStore() {
   const items = useState<ChecklistItemModel[]>('checklistItems', () => [])
 
-  async function removeItem(checklistId: string, itemId: string) {
+  async function removeItem(checklistId: string, itemId: number) {
     try {
       const deletedItem = await $fetch(`/api/checklists/${checklistId}/items/${itemId}`, {
         method: 'DELETE'
@@ -15,7 +15,7 @@ export function useChecklistStore() {
     }
   }
 
-  async function addItem(checklistId: string, equipmentId: string) {
+  async function addItem(checklistId: string, equipmentId: number) {
     try {
       const insertedItem = await $fetch(`/api/checklists/${checklistId}/items`, {
         method: 'POST',
