@@ -31,6 +31,18 @@ async function isUserAdmin(event: H3Event<EventHandlerRequest>, userId: string) 
   return result?.id !== undefined
 }
 
+/**
+ * Check if the user is an admin.
+ *
+ * @param event The event object.
+ * @param options The options object.
+ * @param options.force Ignore the last check time and force a new check.
+ * @returns Whether the user is an admin.
+ * @example
+ * ```ts
+ * const isAdmin = await checkAdmin(event)
+ * ```
+ */
 export async function checkAdmin(
   event: H3Event<EventHandlerRequest>,
   { force = false } : CheckAdminOption = {}
@@ -58,4 +70,18 @@ export async function checkAdmin(
   }
 
   return isAdmin
+}
+
+export async function validateAdmin(
+  event: H3Event<EventHandlerRequest>,
+  options: CheckAdminOption = {}
+) {
+  const isAdmin = await checkAdmin(event, options)
+
+  if (isAdmin === false) {
+    throw createError({
+      statusCode: 403,
+      message: 'You do not have permission to perform this action'
+    })
+  }
 }

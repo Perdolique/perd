@@ -1,9 +1,9 @@
 <template>
+  <PerdToaster />
+
   <NuxtLayout>
     <NuxtPage />
   </NuxtLayout>
-
-  <PerdToaster />
 </template>
 
 <script lang="ts" setup>

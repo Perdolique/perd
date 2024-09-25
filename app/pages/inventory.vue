@@ -17,9 +17,17 @@
     </PerdSearch>
 
     <EquipmentTable
+      v-if="hasItems"
       :equipment="equipment"
       @remove="removeItem"
     />
+
+    <EmptyState
+      v-else
+      icon="tabler:backpack"
+    >
+      Inventory is empty
+    </EmptyState>
   </div>
 </template>
 
@@ -27,6 +35,7 @@
   import EquipmentTable from '~/components/equipment/EquipmentTable.vue';
   import SearchOptionAdd from '~/components/PerdSearch/SearchOptionAdd.vue';
   import PerdSearch from '~/components/PerdSearch/PerdSearch.vue';
+  import EmptyState from '~/components/EmptyState.vue';
 
   interface EquipmentItem {
     readonly id: number;
@@ -42,6 +51,7 @@
   const isSearching = ref(false);
   const options = ref<EquipmentItem[]>([]);
   const { equipment, updateEquipment } = await useUserEquipment()
+  const hasItems = computed(() => equipment.value.length > 0)
 
   async function search(searchString: string) {
     try {

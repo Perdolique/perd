@@ -8,6 +8,13 @@
       "when": 1726954431056,
       "tag": "0000_furry_mystique",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1727206294447,
+      "tag": "0001_abandoned_redwing",
+      "breakpoints": true
     }
   ]
 }

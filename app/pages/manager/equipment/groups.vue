@@ -1,6 +1,6 @@
 <template>
-  <PageContent page-title="Add new equipment">
-    Add page
+  <PageContent page-title="Equipment types">
+    Groups page
   </PageContent>
 </template>
 
