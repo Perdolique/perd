@@ -51,5 +51,6 @@
     top: 0;
     right: 0;
     padding: var(--spacing-24);
+    z-index: 3;
   }
 </style>

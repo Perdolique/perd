@@ -3,17 +3,19 @@
     <form
       method="dialog"
       :class="$style.content"
-      @submit.prevent="handleSubmit"
+      @submit="handleSubmit"
     >
-      <div :class="$style.header">Create new checklist</div>
+      <div :class="$style.header">
+        {{ headerText }}
+      </div>
 
       <input
         required
         autofocus
-        placeholder="Checklist name"
-        v-model="checklistName"
+        v-model="input"
+        :placeholder="placeholder"
         :class="$style.input"
-        :maxlength="limits.maxChecklistNameLength"
+        :maxlength="maxlength"
         type="text"
       />
 
@@ -27,33 +29,30 @@
         </PerdButton>
 
         <PerdButton>
-          Create
+          {{ addButtonText }}
         </PerdButton>
       </div>
     </form>
-
-    <div :class="[$style.loader, { visible: loading }]">
-      <FidgetSpinner size="36px" />
-    </div>
   </ModalDialog>
 </template>
 
 <script lang="ts" setup>
-  import { limits } from '~~/constants';
   import PerdButton from '~/components/PerdButton.vue'
-  import FidgetSpinner from '~/components/FidgetSpinner.vue'
   import ModalDialog from './ModalDialog.vue'
 
   interface Props {
-    readonly loading: boolean;
+    readonly headerText: string
+    readonly placeholder: string
+    readonly addButtonText: string
+    readonly maxlength: number
   }
 
-  type Emits = (event: 'submit', checklistName: string) => void
+  type Emits = (event: 'submit', input: string) => void
 
   defineProps<Props>()
 
   const emit = defineEmits<Emits>()
-  const checklistName = ref('')
+  const input = ref('')
 
   const isOpened = defineModel<boolean>({
     required: true
@@ -64,15 +63,15 @@
   }
 
   function handleSubmit(event: Event) {
-    if (checklistName.value !== '') {
-      emit('submit', checklistName.value)
+    if (input.value !== '') {
+      emit('submit', input.value)
     }
   }
 
-  // Reset checklist name when dialog is opened
+  // Reset form when dialog is opened
   watch(isOpened, (value) => {
     if (value) {
-      checklistName.value = ''
+      input.value = ''
     }
   })
 </script>
@@ -105,28 +104,5 @@
     display: grid;
     grid-auto-flow: column;
     column-gap: var(--spacing-16);
-  }
-
-  .loader {
-    display: none;
-    opacity: 0;
-    position: fixed;
-    inset: 0;
-    justify-content: center;
-    align-items: center;
-    background-color: rgb(0 0 0 / 35%);
-    border-radius: var(--border-radius-24);
-    transition:
-      opacity 0.3s ease-out,
-      display 0.3s ease-out allow-discrete;
-
-    &:global(.visible) {
-      opacity: 1;
-      display: flex;
-
-      @starting-style {
-        opacity: 0;
-      }
-    }
   }
 </style>

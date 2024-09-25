@@ -5,8 +5,6 @@ const bodySchema = v.object({
   weight: v.number()
 })
 
-type BodyData = v.InferOutput<typeof bodySchema>
-
 function validateBody(body: unknown) {
   return v.parse(bodySchema, body)
 }
@@ -15,13 +13,10 @@ export default defineEventHandler(async (event) => {
   const { db } = event.context
   const body = await readValidatedBody(event, validateBody)
   const { name, weight } = body
-  const isAdmin = await checkAdmin(event, { force: true })
 
-  if (isAdmin === false) {
-    throw createError({
-      statusCode: 403
-    })
-  }
+  await validateAdmin(event, {
+    force: true
+  })
 
   const [foundItem] = await db
     .insert(tables.equipment)
