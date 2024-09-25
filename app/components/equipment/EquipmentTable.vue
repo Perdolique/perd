@@ -1,10 +1,7 @@
 <template>
   <div :class="$style.component">
     <table :class="$style.table">
-      <thead
-        v-if="hasItems"
-        :class="$style.header"
-      >
+      <thead :class="$style.header">
         <tr :class="$style.row">
           <th :class="[$style.cell, 'name']">
             Name
@@ -19,42 +16,32 @@
       </thead>
 
       <tbody :class="$style.body">
-        <template v-if="hasItems">
-          <tr
-            v-for="item in equipment"
-            :key="item.id"
-            :class="$style.row"
-          >
-            <td :class="[$style.cell, 'name']">
-              {{ item.name }}
-            </td>
+        <tr
+          v-for="item in equipment"
+          :key="item.id"
+          :class="$style.row"
+        >
+          <td :class="[$style.cell, 'name']">
+            {{ item.name }}
+          </td>
 
-            <td :class="[$style.cell, 'weight']">
-              {{ item.weight }}
-            </td>
+          <td :class="[$style.cell, 'weight']">
+            {{ item.weight }}
+          </td>
 
-            <td :class="[$style.cell, 'actions']">
-              <div :class="$style.action">
-                <PerdButton
-                  small
-                  secondary
-                  icon="tabler:trash"
-                  @click="removeItem(item)"
-                >
-                  Retire
-                </PerdButton>
-              </div>
-            </td>
-          </tr>
-        </template>
-
-        <template v-else>
-          <tr>
-            <td colspan="3">
-              <EmptyContent />
-            </td>
-          </tr>
-        </template>
+          <td :class="[$style.cell, 'actions']">
+            <div :class="$style.action">
+              <PerdButton
+                small
+                secondary
+                icon="tabler:trash"
+                @click="removeItem(item)"
+              >
+                Retire
+              </PerdButton>
+            </div>
+          </td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -62,7 +49,6 @@
 
 <script lang="ts" setup generic="Item extends EquipmentItem">
   import PerdButton from '~/components/PerdButton.vue';
-  import EmptyContent from './EmptyContent.vue';
 
   export interface EquipmentItem {
     readonly id: number;
@@ -78,7 +64,6 @@
 
   const { equipment } = defineProps<Props>()
   const emit = defineEmits<Emits>()
-  const hasItems = computed(() => equipment.length > 0)
 
   async function removeItem(item: Item) {
     emit('remove', item)

@@ -152,8 +152,26 @@ export const equipmentTypes = pgTable('equipmentTypes', {
     varchar('name', {
       length: limits.maxEquipmentTypeNameLength
     })
+    .notNull(),
+
+  createdAt:
+    timestamp('createdAt', {
+      withTimezone: true
+    })
     .notNull()
-})
+    .defaultNow(),
+
+  updatedAt:
+    timestamp('updatedAt', {
+      withTimezone: true
+    })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => sql`now()`)
+}, (table) => ({
+  nameIndex: index().on(table.name)
+}))
+
 
 /**
  * Equipment groups table
@@ -170,7 +188,22 @@ export const equipmentGroups = pgTable('equipmentGroups', {
     varchar('name', {
       length: limits.maxEquipmentGroupNameLength
     })
+    .notNull(),
+
+  createdAt:
+    timestamp('createdAt', {
+      withTimezone: true
+    })
     .notNull()
+    .defaultNow(),
+
+  updatedAt:
+    timestamp('updatedAt', {
+      withTimezone: true
+    })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => sql`now()`)
 })
 
 /**

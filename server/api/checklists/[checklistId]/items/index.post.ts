@@ -5,8 +5,6 @@ const bodySchema = v.object({
   equipmentId: idValidatorNumber
 })
 
-type BodyData = v.InferOutput<typeof bodySchema>
-
 function validateBody(body: unknown) {
   return v.parse(bodySchema, body)
 }

@@ -1,52 +1,88 @@
 <template>
-  <div :class="$style.component">
-    <nav :class="$style.header">
-      <PerdLink to="/manager/equipment/add">
-        Add Item
-      </PerdLink>
-    </nav>
+  <PageContent page-title="Equipment management">
+    <template #actions>
+      <PerdMenu
+        icon="tabler:link"
+        text="Manage"
+      >
+        <OptionButton
+          icon="tabler:plus"
+          @click="handleAddItemClick"
+        >
+          Add item
+        </OptionButton>
 
-    <PerdInput
-      v-model="searchString"
-      autofocus
-      placeholder="MGS Bubba Hubba UL2"
-      label="Search"
-      autocomplete="off"
-    />
-  </div>
+        <OptionButton
+          icon="tabler:filters"
+          @click="handleTypesClick"
+        >
+          Types
+        </OptionButton>
 
-  <ol>
-    <li
-      v-for="item in equipment"
-      :key="item.id"
-    >
-      {{ item.name }}
-    </li>
-  </ol>
+        <OptionButton
+          icon="tabler:category"
+          @click="handleGroupsClick"
+        >
+          Groups
+        </OptionButton>
+
+        <OptionButton
+          icon="tabler:wheelchair"
+          @click="handleOldFormClick"
+        >
+          Old form
+        </OptionButton>
+      </PerdMenu>
+    </template>
+
+    <ol>
+      <li v-for="item in equipment" :key="item.id">
+        {{ item.name }}
+      </li>
+    </ol>
+  </PageContent>
 </template>
 
 <script lang="ts" setup>
-  import PerdInput from '~/components/PerdInput.vue';
-  import PerdLink from '~/components/PerdLink.vue';
+  import PageContent from '~/components/layout/PageContent.vue'
+  import PerdMenu from '~/components/PerdMenu.vue'
+  import OptionButton from '~/components/PerdMenu/OptionButton.vue'
 
   definePageMeta({
-    middleware: ['admin'],
-    title: 'Equipment manager'
+    layout: 'page',
+    middleware: ['admin']
   })
 
-  const searchString = ref('')
-  const { equipment } = useEquipmentSearch(searchString)
+  const router = useRouter()
+
+  const { data: equipment } = await useFetch('/api/equipment', {
+    params: {
+      searchString: '_'
+    },
+
+    transform: (data) => {
+      return data.map((item) => {
+        return {
+          id: item.id,
+          name: item.name
+        }
+      })
+    }
+  })
+
+  function handleAddItemClick() {
+    router.push('/manager/equipment/add')
+  }
+
+  function handleOldFormClick() {
+    router.push('/manager/equipment/_add')
+  }
+
+  function handleTypesClick() {
+    router.push('/manager/equipment/types')
+  }
+
+  function handleGroupsClick() {
+    router.push('/manager/equipment/groups')
+  }
 </script>
-
-<style module>
-  .component {
-    display: grid;
-    row-gap: var(--spacing-16);
-  }
-
-  .header {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-  }
-</style>

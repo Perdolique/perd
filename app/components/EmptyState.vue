@@ -1,15 +1,21 @@
 <template>
   <div :class="$style.component">
     <Icon
-      name="tabler:backpack"
+      :name="icon"
       size="1.5em"
     />
 
-    <span>
-      Inventory is empty
-    </span>
+    <slot />
   </div>
 </template>
+
+<script lang="ts" setup>
+  interface Props {
+    readonly icon: string;
+  }
+
+  defineProps<Props>();
+</script>
 
 <style module>
   .component {
@@ -20,5 +26,7 @@
     padding: var(--spacing-32);
     color: var(--input-color-main);
     background-color: var(--element-color-background);
+    border: 1px solid var(--input-color-main);
+    border-radius: var(--border-radius-16);
   }
 </style>

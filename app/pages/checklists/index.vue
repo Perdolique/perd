@@ -9,28 +9,30 @@
       </PerdButton>
     </div>
 
-    <CreateChecklistDialog
+    <InputDialog
       v-model="isDialogOpened"
-      :loading="isLoading"
+      header-text="Create checklist"
+      placeholder="Checklist name"
+      add-button-text="Create"
+      :maxlength="limits.maxChecklistNameLength"
       @submit="createChecklist"
-    >
-    </CreateChecklistDialog>
+    />
 
     <ChecklistsContainer :checklists="checklists" />
   </div>
 </template>
 
 <script lang="ts" setup>
+  import { limits } from '~~/constants';
   import PerdButton from '~/components/PerdButton.vue'
-  import CreateChecklistDialog from '~/components/dialogs/CreateChecklistDialog.vue'
   import ChecklistsContainer from '~/components/checklists/ChecklistsContainer.vue';
+  import InputDialog from '~/components/dialogs/InputDialog.vue';
 
   definePageMeta({
     title: 'Checklists'
   })
 
   const isDialogOpened = ref(false)
-  const isLoading = ref(false)
   const { checklists, fetchChecklists } = await useChecklistsData()
 
   function openDialog() {
@@ -38,8 +40,6 @@
   }
 
   async function createChecklist(name: string) {
-    isLoading.value = true
-
     try {
       const resultPromise = $fetch('/api/checklists', {
         method: 'POST',
@@ -56,8 +56,6 @@
       isDialogOpened.value = false
     } catch (error) {
       console.error(error)
-    } finally {
-      isLoading.value = false
     }
   }
 </script>
