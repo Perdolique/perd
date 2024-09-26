@@ -21,13 +21,13 @@
     "modern-normalize": "3.0.1",
     "nuxt": "3.13.2",
     "ulid": "2.3.0",
-    "vue": "3.5.8"
+    "vue": "3.5.9"
   },
   "devDependencies": {
     "@iconify-json/tabler": "1.2.3",
     "@neondatabase/serverless": "0.9.5",
-    "@nuxt/fonts": "0.9.1",
-    "@nuxt/icon": "1.5.1",
+    "@nuxt/fonts": "0.9.2",
+    "@nuxt/icon": "1.5.2",
     "@types/ws": "8.5.12",
     "@vueuse/core": "11.1.0",
     "consola": "3.2.3",
@@ -38,7 +38,7 @@
     "ufo": "1.5.4",
     "valibot": "0.42.1",
     "vue-tsc": "2.1.6",
-    "wrangler": "3.78.8",
+    "wrangler": "3.78.10",
     "ws": "8.18.0"
   }
 }
