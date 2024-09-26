@@ -63,7 +63,7 @@
 
   async function onAddDialogSubmit(typeName: string) {
     try {
-      const newType = await $fetch('/api/equipment/type', {
+      const newType = await $fetch('/api/equipment/types', {
         method: 'POST',
 
         body: {
