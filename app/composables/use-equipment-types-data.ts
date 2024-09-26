@@ -10,7 +10,7 @@ export default async function useEquipmentTypesData() {
     () => types.value.sort((typeA, typeB) => typeA.name.localeCompare(typeB.name))
   )
 
-  const { data } = await useFetch('/api/equipment/type')
+  const { data } = await useFetch('/api/equipment/types')
 
   if (data.value !== undefined) {
     types.value = data.value
