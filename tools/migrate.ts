@@ -30,6 +30,9 @@ async function afterMigration() {
 
 /**
  * Migrate the database
+ *
+ * @todo Move to custom migrations
+ * @see {@link https://orm.drizzle.team/docs/kit-custom-migrations}
  */
 
 await beforeMigration()

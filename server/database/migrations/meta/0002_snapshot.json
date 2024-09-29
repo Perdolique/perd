@@ -1,0 +1,804 @@
+{
+  "id": "20b1130e-84b3-46e2-a4a4-491ea813a057",
+  "prevId": "cae70a06-cd81-4810-bf4d-d6393003a156",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.checklistItems": {
+      "name": "checklistItems",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "checklistId": {
+          "name": "checklistId",
+          "type": "ulid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "equipmentId": {
+          "name": "equipmentId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "checklistItems_checklistId_checklists_id_fk": {
+          "name": "checklistItems_checklistId_checklists_id_fk",
+          "tableFrom": "checklistItems",
+          "columnsFrom": [
+            "checklistId"
+          ],
+          "tableTo": "checklists",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "cascade",
+          "onDelete": "cascade"
+        },
+        "checklistItems_equipmentId_equipment_id_fk": {
+          "name": "checklistItems_equipmentId_equipment_id_fk",
+          "tableFrom": "checklistItems",
+          "columnsFrom": [
+            "equipmentId"
+          ],
+          "tableTo": "equipment",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "cascade",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "checklistItems_checklistId_equipmentId_unique": {
+          "name": "checklistItems_checklistId_equipmentId_unique",
+          "columns": [
+            "checklistId",
+            "equipmentId"
+          ],
+          "nullsNotDistinct": false
+        }
+      }
+    },
+    "public.checklists": {
+      "name": "checklists",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "ulid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_ulid()"
+        },
+        "userId": {
+          "name": "userId",
+          "type": "ulid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "createdAtIndex": {
+          "name": "createdAtIndex",
+          "columns": [
+            {
+              "expression": "createdAt",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "checklists_userId_users_id_fk": {
+          "name": "checklists_userId_users_id_fk",
+          "tableFrom": "checklists",
+          "columnsFrom": [
+            "userId"
+          ],
+          "tableTo": "users",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "cascade",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.equipment": {
+      "name": "equipment",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "weight": {
+          "name": "weight",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "equipmentTypeId": {
+          "name": "equipmentTypeId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "equipmentGroupId": {
+          "name": "equipmentGroupId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "equipment_equipmentTypeId_index": {
+          "name": "equipment_equipmentTypeId_index",
+          "columns": [
+            {
+              "expression": "equipmentTypeId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "equipment_equipmentGroupId_index": {
+          "name": "equipment_equipmentGroupId_index",
+          "columns": [
+            {
+              "expression": "equipmentGroupId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "equipment_equipmentTypeId_equipmentTypes_id_fk": {
+          "name": "equipment_equipmentTypeId_equipmentTypes_id_fk",
+          "tableFrom": "equipment",
+          "columnsFrom": [
+            "equipmentTypeId"
+          ],
+          "tableTo": "equipmentTypes",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "cascade",
+          "onDelete": "set null"
+        },
+        "equipment_equipmentGroupId_equipmentGroups_id_fk": {
+          "name": "equipment_equipmentGroupId_equipmentGroups_id_fk",
+          "tableFrom": "equipment",
+          "columnsFrom": [
+            "equipmentGroupId"
+          ],
+          "tableTo": "equipmentGroups",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "cascade",
+          "onDelete": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.equipmentAttributeValues": {
+      "name": "equipmentAttributeValues",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "equipmentId": {
+          "name": "equipmentId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "equipmentAttributeId": {
+          "name": "equipmentAttributeId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "equipmentAttributeValues_equipmentId_index": {
+          "name": "equipmentAttributeValues_equipmentId_index",
+          "columns": [
+            {
+              "expression": "equipmentId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "equipmentAttributeValues_equipmentAttributeId_index": {
+          "name": "equipmentAttributeValues_equipmentAttributeId_index",
+          "columns": [
+            {
+              "expression": "equipmentAttributeId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "equipmentAttributeValues_equipmentId_equipment_id_fk": {
+          "name": "equipmentAttributeValues_equipmentId_equipment_id_fk",
+          "tableFrom": "equipmentAttributeValues",
+          "columnsFrom": [
+            "equipmentId"
+          ],
+          "tableTo": "equipment",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "cascade",
+          "onDelete": "cascade"
+        },
+        "equipmentAttributeValues_equipmentAttributeId_equipmentAttributes_id_fk": {
+          "name": "equipmentAttributeValues_equipmentAttributeId_equipmentAttributes_id_fk",
+          "tableFrom": "equipmentAttributeValues",
+          "columnsFrom": [
+            "equipmentAttributeId"
+          ],
+          "tableTo": "equipmentAttributes",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "cascade",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "equipmentAttributeValues_equipmentId_equipmentAttributeId_unique": {
+          "name": "equipmentAttributeValues_equipmentId_equipmentAttributeId_unique",
+          "columns": [
+            "equipmentId",
+            "equipmentAttributeId"
+          ],
+          "nullsNotDistinct": false
+        }
+      }
+    },
+    "public.equipmentAttributes": {
+      "name": "equipmentAttributes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dataType": {
+          "name": "dataType",
+          "type": "equipmentAttributeDataType",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.equipmentGroups": {
+      "name": "equipmentGroups",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.equipmentTypeAttributes": {
+      "name": "equipmentTypeAttributes",
+      "schema": "",
+      "columns": {
+        "equipmentTypeId": {
+          "name": "equipmentTypeId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "equipmentAttributeId": {
+          "name": "equipmentAttributeId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "equipmentTypeAttributes_equipmentTypeId_index": {
+          "name": "equipmentTypeAttributes_equipmentTypeId_index",
+          "columns": [
+            {
+              "expression": "equipmentTypeId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "equipmentTypeAttributes_equipmentAttributeId_index": {
+          "name": "equipmentTypeAttributes_equipmentAttributeId_index",
+          "columns": [
+            {
+              "expression": "equipmentAttributeId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "equipmentTypeAttributes_equipmentTypeId_equipmentTypes_id_fk": {
+          "name": "equipmentTypeAttributes_equipmentTypeId_equipmentTypes_id_fk",
+          "tableFrom": "equipmentTypeAttributes",
+          "columnsFrom": [
+            "equipmentTypeId"
+          ],
+          "tableTo": "equipmentTypes",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "cascade",
+          "onDelete": "cascade"
+        },
+        "equipmentTypeAttributes_equipmentAttributeId_equipmentAttributes_id_fk": {
+          "name": "equipmentTypeAttributes_equipmentAttributeId_equipmentAttributes_id_fk",
+          "tableFrom": "equipmentTypeAttributes",
+          "columnsFrom": [
+            "equipmentAttributeId"
+          ],
+          "tableTo": "equipmentAttributes",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "cascade",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "equipmentTypeAttributes_equipmentTypeId_equipmentAttributeId_pk": {
+          "name": "equipmentTypeAttributes_equipmentTypeId_equipmentAttributeId_pk",
+          "columns": [
+            "equipmentTypeId",
+            "equipmentAttributeId"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.equipmentTypes": {
+      "name": "equipmentTypes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "equipmentTypes_name_index": {
+          "name": "equipmentTypes_name_index",
+          "columns": [
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.oauthAccounts": {
+      "name": "oauthAccounts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "ulid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_ulid()"
+        },
+        "userId": {
+          "name": "userId",
+          "type": "ulid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "providerId": {
+          "name": "providerId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "accountId": {
+          "name": "accountId",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "oauthAccounts_userId_users_id_fk": {
+          "name": "oauthAccounts_userId_users_id_fk",
+          "tableFrom": "oauthAccounts",
+          "columnsFrom": [
+            "userId"
+          ],
+          "tableTo": "users",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "cascade",
+          "onDelete": "cascade"
+        },
+        "oauthAccounts_providerId_oauthProviders_id_fk": {
+          "name": "oauthAccounts_providerId_oauthProviders_id_fk",
+          "tableFrom": "oauthAccounts",
+          "columnsFrom": [
+            "providerId"
+          ],
+          "tableTo": "oauthProviders",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "cascade",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "oauthAccounts_providerId_accountId_unique": {
+          "name": "oauthAccounts_providerId_accountId_unique",
+          "columns": [
+            "providerId",
+            "accountId"
+          ],
+          "nullsNotDistinct": false
+        }
+      }
+    },
+    "public.oauthProviders": {
+      "name": "oauthProviders",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "oauthProviders_type_unique": {
+          "name": "oauthProviders_type_unique",
+          "columns": [
+            "type"
+          ],
+          "nullsNotDistinct": false
+        }
+      }
+    },
+    "public.userEquipment": {
+      "name": "userEquipment",
+      "schema": "",
+      "columns": {
+        "userId": {
+          "name": "userId",
+          "type": "ulid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "equipmentId": {
+          "name": "equipmentId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "userEquipment_userId_users_id_fk": {
+          "name": "userEquipment_userId_users_id_fk",
+          "tableFrom": "userEquipment",
+          "columnsFrom": [
+            "userId"
+          ],
+          "tableTo": "users",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "cascade",
+          "onDelete": "cascade"
+        },
+        "userEquipment_equipmentId_equipment_id_fk": {
+          "name": "userEquipment_equipmentId_equipment_id_fk",
+          "tableFrom": "userEquipment",
+          "columnsFrom": [
+            "equipmentId"
+          ],
+          "tableTo": "equipment",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "cascade",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "userEquipment_userId_equipmentId_pk": {
+          "name": "userEquipment_userId_equipmentId_pk",
+          "columns": [
+            "userId",
+            "equipmentId"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "ulid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_ulid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "isAdmin": {
+          "name": "isAdmin",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {
+    "public.equipmentAttributeDataType": {
+      "name": "equipmentAttributeDataType",
+      "schema": "public",
+      "values": [
+        "boolean",
+        "string",
+        "integer",
+        "decimal"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

@@ -38,24 +38,24 @@ const ulid = customType<{ data: string }>({
 
 export const users = pgTable('users', {
   id:
-    ulid('id')
+    ulid()
     .notNull()
     .default(sql`gen_ulid()`)
     .primaryKey(),
 
-  name: varchar('name', {
+  name: varchar({
     length: limits.maxUserNameLength
   }),
 
   createdAt:
-    timestamp('createdAt', {
+    timestamp({
       withTimezone: true
     })
     .notNull()
     .defaultNow(),
 
   isAdmin:
-    boolean('isAdmin')
+    boolean()
     .notNull()
     .default(false)
 })
@@ -69,24 +69,24 @@ export const users = pgTable('users', {
 
 export const oauthProviders = pgTable('oauthProviders', {
   id:
-    serial('id')
+    serial()
     .primaryKey(),
 
   type:
-    varchar('type', {
+    varchar({
       length: limits.maxOAuthProviderTypeLength
     })
     .notNull()
     .unique(),
 
   name:
-    varchar('name', {
+    varchar({
       length: limits.maxOAuthProviderNameLength
     })
     .notNull(),
 
   createdAt:
-    timestamp('createdAt', {
+    timestamp({
       withTimezone: true
     })
     .notNull()
@@ -102,13 +102,13 @@ export const oauthProviders = pgTable('oauthProviders', {
 
 export const oauthAccounts = pgTable('oauthAccounts', {
   id:
-    ulid('id')
+    ulid()
     .notNull()
     .default(sql`gen_ulid()`)
     .primaryKey(),
 
   userId:
-    ulid('userId')
+    ulid()
     .notNull()
     .references(() => users.id, {
       onDelete: 'cascade',
@@ -116,7 +116,7 @@ export const oauthAccounts = pgTable('oauthAccounts', {
     }),
 
   providerId:
-    integer('providerId')
+    integer()
     .notNull()
     .references(() => oauthProviders.id, {
       onDelete: 'cascade',
@@ -124,11 +124,11 @@ export const oauthAccounts = pgTable('oauthAccounts', {
     }),
 
   accountId:
-    varchar('accountId')
+    varchar()
     .notNull(),
 
   createdAt:
-    timestamp('createdAt', {
+    timestamp({
       withTimezone: true
     })
     .notNull()
@@ -145,24 +145,24 @@ export const oauthAccounts = pgTable('oauthAccounts', {
 
 export const equipmentTypes = pgTable('equipmentTypes', {
   id:
-    serial('id')
+    serial()
     .primaryKey(),
 
   name:
-    varchar('name', {
+    varchar({
       length: limits.maxEquipmentTypeNameLength
     })
     .notNull(),
 
   createdAt:
-    timestamp('createdAt', {
+    timestamp({
       withTimezone: true
     })
     .notNull()
     .defaultNow(),
 
   updatedAt:
-    timestamp('updatedAt', {
+    timestamp({
       withTimezone: true
     })
     .notNull()
@@ -181,24 +181,24 @@ export const equipmentTypes = pgTable('equipmentTypes', {
 
 export const equipmentGroups = pgTable('equipmentGroups', {
   id:
-    serial('id')
+    serial()
     .primaryKey(),
 
   name:
-    varchar('name', {
+    varchar({
       length: limits.maxEquipmentGroupNameLength
     })
     .notNull(),
 
   createdAt:
-    timestamp('createdAt', {
+    timestamp({
       withTimezone: true
     })
     .notNull()
     .defaultNow(),
 
   updatedAt:
-    timestamp('updatedAt', {
+    timestamp({
       withTimezone: true
     })
     .notNull()
@@ -214,45 +214,58 @@ export const equipmentGroups = pgTable('equipmentGroups', {
 
 export const equipment = pgTable('equipment', {
   id:
-    serial('id')
+    serial()
     .primaryKey(),
 
+  creatorId:
+    ulid()
+    .references(() => users.id, {
+      onDelete: 'set null',
+      onUpdate: 'cascade'
+    }),
+
+  status:
+    varchar({
+      length: limits.maxEquipmentItemStatusLength
+    })
+    .notNull(),
+
   name:
-    varchar('name', {
+    varchar({
       length: limits.maxEquipmentItemNameLength
     })
     .notNull(),
 
-  description: text('description'),
+  description: text(),
 
   weight:
-    integer('weight')
+    integer()
     .notNull()
     .default(0),
 
   equipmentTypeId:
-    integer('equipmentTypeId')
+    integer()
     .references(() => equipmentTypes.id, {
       onDelete: 'set null',
       onUpdate: 'cascade'
     }),
 
   equipmentGroupId:
-    integer('equipmentGroupId')
+    integer()
     .references(() => equipmentGroups.id, {
       onDelete: 'set null',
       onUpdate: 'cascade'
     }),
 
   createdAt:
-    timestamp('createdAt', {
+    timestamp({
       withTimezone: true
     })
     .notNull()
     .defaultNow(),
 
   updatedAt:
-    timestamp('updatedAt', {
+    timestamp({
       withTimezone: true
     })
     .notNull()
@@ -286,17 +299,17 @@ export const equipmentAttributeDataType = pgEnum('equipmentAttributeDataType', [
 
 export const equipmentAttributes = pgTable('equipmentAttributes', {
   id:
-    serial('id')
+    serial()
     .primaryKey(),
 
   name:
-    varchar('name', {
+    varchar({
       length: limits.maxEquipmentAttributeNameLength
     })
     .notNull(),
 
   dataType:
-    equipmentAttributeDataType('dataType')
+    equipmentAttributeDataType()
     .notNull()
 })
 
@@ -308,14 +321,14 @@ export const equipmentAttributes = pgTable('equipmentAttributes', {
 
 export const equipmentTypeAttributes = pgTable('equipmentTypeAttributes', {
   equipmentTypeId:
-    integer('equipmentTypeId')
+    integer()
     .references(() => equipmentTypes.id, {
       onDelete: 'cascade',
       onUpdate: 'cascade'
     }),
 
   equipmentAttributeId:
-    integer('equipmentAttributeId')
+    integer()
     .references(() => equipmentAttributes.id, {
       onDelete: 'cascade',
       onUpdate: 'cascade'
@@ -337,11 +350,11 @@ export const equipmentTypeAttributes = pgTable('equipmentTypeAttributes', {
 
 export const equipmentAttributeValues = pgTable('equipmentAttributeValues', {
   id:
-    serial('id')
+    serial()
     .primaryKey(),
 
   equipmentId:
-    integer('equipmentId')
+    integer()
     .notNull()
     .references(() => equipment.id, {
       onDelete: 'cascade',
@@ -349,7 +362,7 @@ export const equipmentAttributeValues = pgTable('equipmentAttributeValues', {
     }),
 
   equipmentAttributeId:
-    integer('equipmentAttributeId')
+    integer()
     .notNull()
     .references(() => equipmentAttributes.id, {
       onDelete: 'cascade',
@@ -357,7 +370,7 @@ export const equipmentAttributeValues = pgTable('equipmentAttributeValues', {
     }),
 
   value:
-    varchar('value')
+    varchar()
     .notNull()
 }, (table) => ({
   uniqueEquipmentIdAttributeId: unique().on(table.equipmentId, table.equipmentAttributeId),
@@ -373,21 +386,21 @@ export const equipmentAttributeValues = pgTable('equipmentAttributeValues', {
 
 export const userEquipment = pgTable('userEquipment', {
   userId:
-    ulid('userId')
+    ulid()
     .references(() => users.id, {
       onDelete: 'cascade',
       onUpdate: 'cascade'
     }),
 
   equipmentId:
-    integer('equipmentId')
+    integer()
     .references(() => equipment.id, {
       onDelete: 'cascade',
       onUpdate: 'cascade'
     }),
 
   createdAt:
-    timestamp('createdAt', {
+    timestamp({
       withTimezone: true
     })
     .notNull()
@@ -406,13 +419,13 @@ export const userEquipment = pgTable('userEquipment', {
 
 export const checklists = pgTable('checklists', {
   id:
-    ulid('id')
+    ulid()
     .notNull()
     .default(sql`gen_ulid()`)
     .primaryKey(),
 
   userId:
-    ulid('userId')
+    ulid()
     .notNull()
     .references(() => users.id, {
       onDelete: 'cascade',
@@ -420,13 +433,13 @@ export const checklists = pgTable('checklists', {
     }),
 
   name:
-    varchar('name', {
+    varchar({
       length: limits.maxChecklistNameLength
     })
     .notNull(),
 
   createdAt:
-    timestamp('createdAt', {
+    timestamp({
       withTimezone: true
     })
     .notNull()
@@ -445,11 +458,11 @@ export const checklists = pgTable('checklists', {
 
 export const checklistItems = pgTable('checklistItems', {
   id:
-    serial('id')
+    serial()
     .primaryKey(),
 
   checklistId:
-    ulid('checklistId')
+    ulid()
     .notNull()
     .references(() => checklists.id, {
       onDelete: 'cascade',
@@ -457,7 +470,7 @@ export const checklistItems = pgTable('checklistItems', {
     }),
 
   equipmentId:
-    integer('equipmentId')
+    integer()
     .notNull()
     .references(() => equipment.id, {
       onDelete: 'cascade',
@@ -472,6 +485,7 @@ export const checklistItems = pgTable('checklistItems', {
  */
 
 export const usersRelations = relations(users, ({ many }) => ({
+  equipment: many(equipment),
   userEquipment: many(userEquipment),
   checklists: many(checklists),
   oauthAccounts: many(oauthAccounts)
@@ -493,6 +507,7 @@ export const equipmentGroupsRelations = relations(equipmentGroups, ({ many }) =>
 export const equipmentRelations = relations(equipment, ({ many, one }) => ({
   userEquipment: many(userEquipment),
   checklistItems: many(checklistItems),
+  equipmentAttributeValues: many(equipmentAttributeValues),
 
   equipmentType: one(equipmentTypes, {
     fields: [equipment.equipmentTypeId],
@@ -504,7 +519,10 @@ export const equipmentRelations = relations(equipment, ({ many, one }) => ({
     references: [equipmentGroups.id]
   }),
 
-  equipmentAttributeValues: many(equipmentAttributeValues)
+  creatorId: one(users, {
+    fields: [equipment.creatorId],
+    references: [users.id]
+  })
 }))
 
 export const equipmentAttributesRelations = relations(equipmentAttributes, ({ many }) => ({

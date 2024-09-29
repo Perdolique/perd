@@ -30,5 +30,7 @@
 
   .content {
     padding: var(--spacing-16);
+    max-width: var(--screen-laptop);
+    margin: 0 auto;
   }
 </style>

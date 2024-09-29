@@ -44,6 +44,17 @@ export default defineNuxtConfig({
     }
   },
 
+  vue: {
+    compilerOptions: {
+      /**
+       * We're using new `<select>` customizations
+       *
+       * @see [RFC Customizable Select](https://developer.chrome.com/blog/rfc-customizable-select?hl=en)
+       */
+      isCustomElement: (tag) => tag === 'selectedoption'
+    }
+  },
+
   vite: {
     css: {
       preprocessorOptions: {

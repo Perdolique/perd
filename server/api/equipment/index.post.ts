@@ -1,7 +1,42 @@
 import * as v from 'valibot'
+import { limits } from '~~/constants'
+
+type EquipmentStatus = 'draft' | 'active'
 
 const bodySchema = v.object({
-  equipmentId: idValidatorNumber
+  name: v.pipe(
+    v.string(),
+    v.nonEmpty(),
+    v.maxLength(limits.maxEquipmentItemNameLength)
+  ),
+
+  description: v.union([
+    v.undefined(),
+
+    v.pipe(
+      v.string(),
+      v.nonEmpty(),
+      v.maxLength(limits.maxEquipmentDescriptionLength)
+    )
+  ]),
+
+  weight: v.pipe(
+    v.number(),
+    v.integer(),
+    v.minValue(0)
+  ),
+
+  typeId: v.pipe(
+    v.number(),
+    v.integer(),
+    v.minValue(1)
+  ),
+
+  groupId: v.pipe(
+    v.number(),
+    v.integer(),
+    v.minValue(1)
+  )
 })
 
 function validateBody(body: unknown) {
@@ -12,21 +47,30 @@ export default defineEventHandler(async (event) => {
   const { db } = event.context
   const userId = await validateSessionUser(event)
   const body = await readValidatedBody(event, validateBody)
-  const { equipmentId } = body
+  const status: EquipmentStatus = 'draft'
+  const description = body.description ?? null
 
-  try {
-    await db
-      .insert(tables.userEquipment)
-      .values({
-        userId,
-        equipmentId
-      })
+  const [inserted] = await db
+    .insert(tables.equipment)
+    .values({
+      description,
+      status,
+      creatorId: userId,
+      name: body.name,
+      weight: body.weight,
+      equipmentTypeId: body.typeId,
+      equipmentGroupId: body.groupId
+    })
+    .returning({
+      id: tables.equipment.id
+    })
 
-    setResponseStatus(event, 201)
-  } catch {
+  if (inserted?.id === undefined) {
     throw createError({
-      statusCode: 400,
-      message: 'Cannot assign equipment to user'
+      statusCode: 500,
+      message: 'Failed to create equipment item'
     })
   }
+
+  setResponseStatus(event, 201)
 })

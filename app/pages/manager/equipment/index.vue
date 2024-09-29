@@ -1,50 +1,41 @@
 <template>
   <PageContent page-title="Equipment management">
     <template #actions>
-      <PerdMenu
-        icon="tabler:link"
-        text="Manage"
-      >
-        <OptionButton
+      <div :class="$style.actions">
+        <PerdButton
+          small
           icon="tabler:plus"
           @click="handleAddItemClick"
         >
           Add item
-        </OptionButton>
+        </PerdButton>
 
-        <OptionButton
-          icon="tabler:filters"
-          @click="handleTypesClick"
+        <PerdMenu
+          icon="tabler:link"
+          text="Manage"
         >
-          Types
-        </OptionButton>
+          <OptionButton
+            icon="tabler:filters"
+            @click="handleTypesClick"
+          >
+            Types
+          </OptionButton>
 
-        <OptionButton
-          icon="tabler:category"
-          @click="handleGroupsClick"
-        >
-          Groups
-        </OptionButton>
-
-        <OptionButton
-          icon="tabler:wheelchair"
-          @click="handleOldFormClick"
-        >
-          Old form
-        </OptionButton>
-      </PerdMenu>
+          <OptionButton
+            icon="tabler:category"
+            @click="handleGroupsClick"
+          >
+            Groups
+          </OptionButton>
+        </PerdMenu>
+      </div>
     </template>
-
-    <ol>
-      <li v-for="item in equipment" :key="item.id">
-        {{ item.name }}
-      </li>
-    </ol>
   </PageContent>
 </template>
 
 <script lang="ts" setup>
   import PageContent from '~/components/layout/PageContent.vue'
+  import PerdButton from '~/components/PerdButton.vue';
   import PerdMenu from '~/components/PerdMenu.vue'
   import OptionButton from '~/components/PerdMenu/OptionButton.vue'
 
@@ -55,27 +46,8 @@
 
   const router = useRouter()
 
-  const { data: equipment } = await useFetch('/api/equipment', {
-    params: {
-      searchString: '_'
-    },
-
-    transform: (data) => {
-      return data.map((item) => {
-        return {
-          id: item.id,
-          name: item.name
-        }
-      })
-    }
-  })
-
   function handleAddItemClick() {
     router.push('/manager/equipment/add')
-  }
-
-  function handleOldFormClick() {
-    router.push('/manager/equipment/_add')
   }
 
   function handleTypesClick() {
@@ -86,3 +58,10 @@
     router.push('/manager/equipment/groups')
   }
 </script>
+
+<style module>
+  .actions {
+    display: flex;
+    column-gap: var(--spacing-8);
+  }
+</style>

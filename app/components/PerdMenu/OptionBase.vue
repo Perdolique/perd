@@ -25,7 +25,7 @@
     background-color: var(--color-background);
     color: var(--color-blue-600);
     cursor: pointer;
-    transition: background-color 0.2s ease-out;
+    transition: background-color var(--transition-time-quick) ease-out;
     font-size: var(--font-size-14);
     white-space: nowrap;
 
