@@ -8,14 +8,15 @@ interface EquipmentItem {
 export async function useUserEquipment() {
   const equipment = useState<EquipmentItem[]>('userEquipment', () => [])
 
-  const { data } = await useFetch('/api/user/equipment')
+  const { data } = await useFetch('/api/inventory')
 
-  async function updateEquipment() {
+  async function refetchEquipment() {
     try {
-      const response = await $fetch('/api/user/equipment')
+      const response = await $fetch('/api/inventory')
 
       equipment.value = response
     } catch {
+      // TODO: Handle error
       console.error('Failed to update equipment')
     }
   }
@@ -26,6 +27,6 @@ export async function useUserEquipment() {
 
   return {
     equipment,
-    updateEquipment
+    refetchEquipment
   }
 }

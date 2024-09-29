@@ -1,5 +1,5 @@
 export interface Toast {
-  readonly id: number;
+  readonly id: string;
   readonly message: string;
   readonly title?: string;
   readonly duration?: number | null;
@@ -17,7 +17,12 @@ export default function useToaster() {
     duration = defaultDuration,
     title
   } : ToastParams) {
-    const id = Date.now();
+    // Skip SSR rendering
+    if (import.meta.server) {
+      return;
+    }
+
+    const id = crypto.randomUUID();
 
     toasts.value.unshift({
       id,
@@ -27,7 +32,7 @@ export default function useToaster() {
     });
   }
 
-  function removeToast(id: number) {
+  function removeToast(id: string) {
     const foundIndex = toasts.value.findIndex(toast => toast.id === id);
 
     if (foundIndex >= 0) {

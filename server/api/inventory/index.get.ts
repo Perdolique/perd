@@ -1,22 +1,14 @@
-import { and, asc, eq, isNull, like } from 'drizzle-orm'
+import { and, asc, eq } from 'drizzle-orm'
 
-interface ReturnData {
-  readonly id: number;
-  readonly name: string;
-}
-
-export default defineEventHandler(async (event) : Promise<ReturnData[]> => {
+export default defineEventHandler(async (event) => {
   const userId = await validateSessionUser(event)
-  const { search, checklistId } = getQuery(event)
-
-  if (typeof search !== 'string' || typeof checklistId !== 'string') {
-    return []
-  }
 
   const result = await event.context.db
     .select({
       id: tables.equipment.id,
-      name: tables.equipment.name
+      name: tables.equipment.name,
+      weight: tables.equipment.weight,
+      createdAt: tables.equipment.createdAt
     })
     .from(tables.equipment)
     .innerJoin(
@@ -26,22 +18,7 @@ export default defineEventHandler(async (event) : Promise<ReturnData[]> => {
         eq(tables.userEquipment.equipmentId, tables.equipment.id)
       )
     )
-    .leftJoin(
-      tables.checklistItems,
-      and(
-        eq(tables.checklistItems.equipmentId, tables.equipment.id),
-        eq(tables.checklistItems.checklistId, checklistId)
-      )
-    )
-    .where(
-      and(
-        isNull(tables.checklistItems.id),
-        like(tables.equipment.name, `%${search}%`)
-      )
-    )
-    .orderBy(
-      asc(tables.equipment.name)
-    )
+    .orderBy(asc(tables.equipment.name))
     .limit(100)
 
   return result

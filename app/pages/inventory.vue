@@ -50,14 +50,14 @@
 
   const isSearching = ref(false);
   const options = ref<EquipmentItem[]>([]);
-  const { equipment, updateEquipment } = await useUserEquipment()
+  const { equipment, refetchEquipment } = await useUserEquipment()
   const hasItems = computed(() => equipment.value.length > 0)
 
   async function search(searchString: string) {
     try {
       isSearching.value = true;
 
-      const resultPromise = $fetch('/api/equipment', {
+      const resultPromise = $fetch('/api/search/equipment', {
         params: {
           searchString,
           filterOwned: true
@@ -81,7 +81,7 @@
 
   async function addItem(item: EquipmentItem) {
     try {
-      await $fetch('/api/equipment', {
+      await $fetch('/api/inventory', {
         method: 'POST',
 
         body: {
@@ -91,7 +91,7 @@
 
       options.value = options.value.filter(({ id }) => id !== item.id)
 
-      await updateEquipment()
+      await refetchEquipment()
     } catch (error) {
       console.error(error)
     }
@@ -99,11 +99,11 @@
 
   async function removeItem(item: EquipmentItem) {
     try {
-      await $fetch(`/api/user/equipment/${item.id}`, {
+      await $fetch(`/api/inventory/${item.id}`, {
         method: 'DELETE'
       })
 
-      await updateEquipment()
+      await refetchEquipment()
     } catch (error) {
       console.error(error)
     }
