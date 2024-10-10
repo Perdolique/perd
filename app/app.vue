@@ -72,6 +72,7 @@
     // Reset default button styles
     button {
       border: none;
+      padding: 0;
     }
   }
 </style>

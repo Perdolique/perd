@@ -146,7 +146,7 @@
     try {
       isSearching.value = true;
 
-      const resultPromise = $fetch('/api/inventory', {
+      const resultPromise = $fetch('/api/search/checklist-inventory', {
         params: {
           search: searchString,
           checklistId: checklistId

@@ -1,17 +1,17 @@
 <template>
-  <div :class="$style.root">
-    <input
+  <div
+    :class="$style.root"
+    @click.passive="onRootClick"
+  >
+    <textarea
+      ref="textarea"
       v-model="model"
-      :class="$style.input"
-      :autocomplete="autocomplete"
+      :class="$style.textarea"
       :autofocus="autofocus"
       :id="id"
-      :inputmode="inputmode"
-      :pattern="pattern"
       :placeholder="placeholder"
       :required="required"
-      :type="type"
-    >
+    />
 
     <label
       :for="id"
@@ -23,22 +23,16 @@
 </template>
 
 <script lang="ts" setup>
-  import type { InputHTMLAttributes } from 'vue';
+  import type { TextareaHTMLAttributes } from 'vue';
 
   interface Props {
     readonly label: string;
-    readonly autocomplete?: InputHTMLAttributes['autocomplete'];
-    readonly autofocus?: InputHTMLAttributes['autofocus'];
-    readonly inputmode?: InputHTMLAttributes['inputmode'];
-    readonly pattern?: InputHTMLAttributes['pattern'];
-    readonly placeholder?: InputHTMLAttributes['placeholder'];
-    readonly required?: InputHTMLAttributes['required'];
-    readonly type?: 'text';
+    readonly autofocus?: TextareaHTMLAttributes['autofocus'];
+    readonly placeholder?: TextareaHTMLAttributes['placeholder'];
+    readonly required?: TextareaHTMLAttributes['required'];
   }
 
-  const {
-    type = 'text'
-  } = defineProps<Props>();
+  defineProps<Props>();
 
   const model = defineModel<string>({
     required: true
@@ -46,30 +40,30 @@
 
   const id = useId();
   const hasValue = computed(() => model.value !== '');
+  const textAreaRef = useTemplateRef('textarea');
+
+  function onRootClick() {
+    textAreaRef.value?.focus();
+  }
 </script>
 
 <style module>
   .root {
     position: relative;
-    height: var(--input-height);
     background-color: var(--input-color-background);
     border: 1px solid var(--input-color-main);
     border-radius: var(--border-radius-16);
     transition: border-color 0.15s ease-out;
 
-    &:has(.input:focus-visible) {
+    &:has(.textarea:focus-visible) {
       border-color: var(--input-color-focus);
     }
   }
 
   .label {
     position: absolute;
+    top: 12px;
     left: var(--input-spacing-horizontal);
-    top: 0;
-    bottom: 0;
-    right: 0;
-    display: flex;
-    align-items: center;
     pointer-events: none;
     color: var(--input-color-main);
     transform-origin: top left;
@@ -80,36 +74,35 @@
       translate 0.15s linear;
 
     &:global(.withValue),
-    .input:focus-visible + & {
+    .textarea:focus-visible + & {
       scale: 0.70;
-      translate: 0 -5px;
+      translate: 0 -7px;
     }
 
-    .input:focus-visible + & {
+    .textarea:focus-visible + & {
       color: var(--input-color-focus);
     }
   }
 
-  .input {
+  .textarea {
     position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    padding: 12px var(--input-spacing-horizontal) 0;
+    inset: 0;
+    padding: 0 var(--input-spacing-horizontal);
+    margin-top: 20px;
     border: none;
     background: none;
     outline: none;
     color: var(--input-color-text);
+    resize: none;
   }
 
-  .input::placeholder {
+  .textarea::placeholder {
     transition: color 0.15s ease-out;
     color: transparent;
     user-select: none;
   }
 
-  .input:focus-visible::placeholder {
+  .textarea:focus-visible::placeholder {
     color: var(--input-color-placeholder);
   }
 </style>
