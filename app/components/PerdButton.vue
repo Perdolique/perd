@@ -26,12 +26,11 @@
 
 <style module>
   .button {
-    height: var(--input-height);
-    padding: 0 var(--input-spacing-horizontal);
-    background-color: var(--input-color-main);
-    border-radius: var(--input-border-radius);
+    height: var(--button-height);
+    padding: var(--button-padding);
+    border-radius: var(--button-border-radius);
+    background-color: var(--button-color-background);
     color: var(--button-color-text);
-    cursor: pointer;
     outline: none;
     user-select: none;
     white-space: nowrap;
@@ -42,51 +41,49 @@
     &:has(:global(.icon)) {
       display: flex;
       align-items: center;
-      column-gap: var(--spacing-8);
+      column-gap: var(--button-gap);
     }
 
     &:global(.secondary) {
-      background-color: var(--input-secondary-color-main);
-      color: var(--input-secondary-color-text);
-      border: 1px solid var(--input-secondary-color-border);
+      background-color: var(--button-secondary-color-background);
+      color: var(--button-secondary-color-text);
     }
 
     &:global(.small) {
-      height: var(--input-small-height);
-      font-size: var(--font-size-12);
-      border-radius: var(--input-small-border-radius);
+      height: var(--button-small-height);
+      border-radius: var(--button-small-border-radius);
+      font-size: var(--button-small-font-size);
+      padding: var(--button-small-padding);
 
       &:has(:global(.icon)) {
-        column-gap: var(--spacing-4);
+        column-gap: var(--button-small-gap);
       }
     }
 
     &:focus-visible,
     &:hover {
-      background-color: var(--input-color-focus);
+      background-color: var(--button-color-background-hover);
 
       &:global(.secondary) {
-        background-color: var(--input-secondary-color-focus);
+        background-color: var(--button-secondary-color-background-hover);
       }
     }
 
     &:active {
-      background-color: var(--input-color-active);
+      background-color: var(--button-color-background-active);
 
       &:global(.secondary) {
-        background-color: var(--input-secondary-color-active);
+        background-color: var(--button-secondary-color-background-active);
       }
     }
 
     &:disabled {
-      color: var(--color-blue-700);
-      background-color: var(--color-blue-100);
-      cursor: not-allowed;
+      color: var(--button-color-text-disabled);
+      background-color: var(--button-color-background-disabled);
 
       &:global(.secondary) {
-        color: var(--input-secondary-color-disabled);
-        background-color: var(--input-secondary-color-main);
-        border-color: var(--input-secondary-color-disabled);
+        color: var(--button-secondary-color-text-disabled);
+        background-color: var(--button-secondary-color-background-disabled);
       }
     }
   }

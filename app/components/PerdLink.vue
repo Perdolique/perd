@@ -14,17 +14,24 @@
 
 <style module>
   .root {
-    font-size: 0.9rem;
-    color: var(--color-blue-700);
-    transition: color 0.15s ease-out;
+    outline: none;
+    color: var(--primary-700);
+    border-bottom: 1px solid transparent;
+    text-decoration: none;
+
+    transition:
+      border-color var(--transition-time-quick),
+      color var(--transition-time-quick);
 
     &:hover,
     &:focus-visible {
-      color: var(--input-color-focus);
+      color: var(--primary-600);
+      border-color: var(--primary-600);
     }
 
     &:active {
-      color: var(--input-color-active);
+      color: var(--primary-500);
+      border-color: var(--primary-500);
     }
   }
 </style>

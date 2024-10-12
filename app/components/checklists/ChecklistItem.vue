@@ -25,7 +25,7 @@
       :class="$style.actions"
     >
       <IconButton
-        size="xs"
+        small
         icon="tabler:x"
         @click="handleRemoveClick"
       />
@@ -76,11 +76,10 @@
     column-gap: var(--spacing-12);
     align-items: center;
     padding: 0 var(--spacing-12);
-    background-color: var(--element-color-background);
-    border: 1px solid var(--color-blue-300);
+    background-color: var(--secondary-100);
+    border: 1px solid var(--secondary-200);
     border-radius: var(--border-radius-12);
-    font-size: var(--font-size-16);
-    color: var(--color-blue-800);
+    color: var(--text-800);
 
     &:global(.checkMode) {
       grid-template-columns: auto 1fr;
@@ -88,15 +87,15 @@
       transition: background-color var(--transition-time-quick) ease-out;
 
       &:hover {
-        background-color: var(--element-color-background-hover);
+        background-color: var(--secondary-200);
       }
     }
 
     &:global(.toggled) {
-      background-color: var(--element-color-background-active);
+      background-color: var(--secondary-300);
 
       &:hover {
-        background-color: var(--element-color-background-active);
+        background-color: var(--secondary-400);
       }
     }
   }
@@ -106,7 +105,7 @@
   }
 
   .weight {
-    color: var(--color-blue-700);
+    color: var(--text-600);
     font-size: var(--font-size-14);
   }
 

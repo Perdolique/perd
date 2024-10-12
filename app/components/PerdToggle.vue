@@ -34,8 +34,8 @@
     appearance: none;
     width: 20px;
     height: 20px;
-    background-color: var(--input-color-background);
-    border: 1px solid var(--input-color-main);
+    background-color: var(--primary-50);
+    border: 1px solid var(--primary-300);
     border-radius: 6px;
     outline-offset: 2px;
     outline: 2px solid transparent;
@@ -44,16 +44,16 @@
       background-color var(--transition-time-quick) ease-out;
 
     &:focus-visible {
-      outline: 2px solid var(--input-color-focus);
+      outline: 2px solid var(--primary-400);
     }
 
     &:checked {
-      background-color: var(--input-color-main);
+      background-color: var(--primary-500);
     }
   }
 
   .mark {
     position: absolute;
-    color: var(--input-color-background);
+    color: var(--primary-50);
   }
 </style>

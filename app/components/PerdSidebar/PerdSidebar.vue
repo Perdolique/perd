@@ -74,7 +74,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgb(0 0 0 / 20%);
+    background-color: var(--overlay-color-background);
     backdrop-filter: blur(0);
     opacity: 0;
     display: none;
@@ -83,15 +83,15 @@
       opacity var(--transition-time-quick) ease-out,
       display var(--transition-time-quick) allow-discrete;
 
-    @starting-style {
-      opacity: 0;
-      backdrop-filter: blur(0);
-    }
-
     &:global(.shown) {
       opacity: 1;
-      backdrop-filter: blur(2px);
+      backdrop-filter: var(--overlay-backdrop-filter);
       display: block;
+
+      @starting-style {
+        opacity: 0;
+        backdrop-filter: blur(0);
+      }
 
       @include tablet() {
         display: none;
@@ -109,7 +109,7 @@
     width: 200px;
     display: grid;
     align-content: space-between;
-    background-color: var(--color-blue-700);
+    background-color: var(--background-200);
     overflow: hidden;
     translate: -100% 0;
     transition: translate var(--transition-time-quick) ease-out;
@@ -132,9 +132,7 @@
   .toggle {
     display: none;
     padding: var(--spacing-12);
-    color: var(--color-background);
-    background-color: var(--color-blue-700);
-    cursor: pointer;
+    background-color: var(--background-200);
     outline: none;
     text-align: left;
     transition: background-color var(--transition-time-quick) ease-out;
@@ -145,7 +143,7 @@
 
     &:focus-visible,
     &:hover {
-      background-color: var(--color-blue-900);
+      background-color: var(--background-300);
     }
   }
 </style>

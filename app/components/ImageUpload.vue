@@ -72,22 +72,16 @@
 <style module>
   .component {
     align-content: center;
-    outline: 2px solid transparent;
-    border: 1px solid var(--color-blue-500);
-    border-radius: var(--border-radius-24);
-    background-color: var(--color-blue-100);
-    cursor: pointer;
+    outline: none;
+    border: 1px solid var(--input-color-border);
+    border-radius: var(--input-border-radius);
+    background-color: var(--input-color-background);
     overflow: hidden;
-    transition:
-      background-color 0.2s,
-      border-color 0.2s,
-      outline-color 0.2s;
+    transition: border-color var(--transition-time-quick);
 
     &:hover,
     &:focus-visible{
-      background-color: var(--color-blue-200);
-      border-color: var(--color-blue-600);
-      outline-color: var(--color-blue-600);
+      border-color: var(--input-color-focus);
     }
   }
 
@@ -100,14 +94,11 @@
   .icon {
     display: block;
     margin: 0 auto;
-    color: var(--color-blue-500);
-    transition:
-      color 0.2s,
-      scale 0.2s;
+    color: var(--input-color-focus);
+    transition: scale var(--transition-time-quick);
 
     .component:hover &,
     .component:focus-visible & {
-      color: var(--color-blue-600);
       scale: 1.3;
     }
   }

@@ -131,7 +131,6 @@
 
   .button {
     color: #fff;
-    transition: background-color 0.2s;
 
     &:global(.twitch):not(:disabled) {
       background-color: #9146FF;

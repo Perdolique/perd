@@ -44,8 +44,13 @@
   .component {
     display: flex;
     column-gap: var(--spacing-24);
-    padding: var(--spacing-16) var(--spacing-32);
-    box-shadow: 0 2px 10px rgb(0 0 0 / 15%);
+    padding: var(--spacing-16) var(--spacing-32) var(--spacing-16) var(--spacing-24);
+    background-color: var(--background-100);
+    align-items: center;
+
+    @include tablet() {
+      padding: var(--spacing-16);
+    }
   }
 
   .sidebarToggle {
@@ -53,18 +58,18 @@
     padding: var(--spacing-8);
     align-items: center;
     justify-content: center;
-    border-radius: var(--border-radius-8);
-    cursor: pointer;
+    border-radius: var(--border-radius-12);
     outline: none;
     transition: background-color var(--transition-time-quick);
+    background-color: var(--background-100);
 
     &:focus-visible,
     &:hover {
-      background-color: color-mix(in srgb, var(--color-secondary) 20%, transparent);
+      background-color: var(--background-200);
     }
 
     &:active {
-      background-color: color-mix(in srgb, var(--color-secondary) 40%, transparent);
+      background-color: var(--background-300);
     }
 
     @include tablet() {

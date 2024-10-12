@@ -24,30 +24,29 @@
     display: flex;
     align-items: center;
     height: 60px;
-    background-color: var(--element-color-background);
+    background-color: var(--secondary-100);
     padding: 0 var(--spacing-16);
-    border: 1px solid var(--input-color-main);
+    border: 1px solid var(--secondary-200);
     border-radius: var(--border-radius-16);
     font-size: var(--font-size-20);
-    color: var(--input-color-main);
+    color: var(--text);
     user-select: none;
     cursor: pointer;
     outline: none;
     text-decoration: none;
     transition:
-      background-color 0.2s,
-      border-color 0.2s,
-      color 0.2s;
+      background-color var(--transition-time-quick),
+      border-color var(--transition-time-quick),
+      color var(--transition-time-quick);
 
     &:hover,
-    &:focus {
-      background-color: var(--input-color-focus);
-      color: var(--button-color-text);
-      border-color: var(--input-color-focus);
+    &:focus-visible {
+      background-color: var(--secondary-200);
+      border-color: var(--secondary-300);
     }
 
     &:active {
-      background-color: var(--input-color-active);
+      background-color: var(--secondary-300);
     }
   }
 

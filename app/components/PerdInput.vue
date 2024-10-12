@@ -53,7 +53,7 @@
     position: relative;
     height: var(--input-height);
     background-color: var(--input-color-background);
-    border: 1px solid var(--input-color-main);
+    border: 1px solid var(--input-color-border);
     border-radius: var(--border-radius-16);
     transition: border-color 0.15s ease-out;
 
@@ -64,14 +64,12 @@
 
   .label {
     position: absolute;
-    left: var(--input-spacing-horizontal);
-    top: 0;
-    bottom: 0;
-    right: 0;
+    inset: 0;
+    left: var(--input-padding-horizontal);
     display: flex;
     align-items: center;
     pointer-events: none;
-    color: var(--input-color-main);
+    color: var(--input-color-label);
     transform-origin: top left;
     user-select: none;
     transition:
@@ -84,10 +82,6 @@
       scale: 0.70;
       translate: 0 -5px;
     }
-
-    .input:focus-visible + & {
-      color: var(--input-color-focus);
-    }
   }
 
   .input {
@@ -96,7 +90,7 @@
     right: 0;
     top: 0;
     bottom: 0;
-    padding: 12px var(--input-spacing-horizontal) 0;
+    padding: 12px var(--input-padding-horizontal) 0;
     border: none;
     background: none;
     outline: none;

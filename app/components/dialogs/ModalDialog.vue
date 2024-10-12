@@ -62,7 +62,7 @@
   }
 
   .dialog::backdrop {
-    background-color: rgba(0 0 0 / 0%);
+    background-color: transparent;
     backdrop-filter: blur(0);
     transition:
       background-color var(--transition-duration) ease,
@@ -71,13 +71,13 @@
   }
 
   .dialog[open]::backdrop {
-    background-color: rgba(0 0 0 / 50%);
-    backdrop-filter: blur(3px);
+    background-color: var(--overlay-color-background);
+    backdrop-filter: var(--overlay-backdrop-filter);
   }
 
   @starting-style {
     .dialog[open]::backdrop {
-      background-color: rgba(0 0 0 / 0);
+      background-color: transparent;
       backdrop-filter: blur(0);
     }
   }

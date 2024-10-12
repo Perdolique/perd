@@ -33,9 +33,8 @@
 
 <style module>
   .component {
-    display: flex;
-    align-items: center;
-    height: var(--input-height);
-    padding: 0 var(--input-spacing-horizontal);
+    height: 100%;
+    align-content: center;
+    padding: var(--dropdown-option-padding);
   }
 </style>
