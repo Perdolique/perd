@@ -98,8 +98,8 @@
     height: 48px;
     align-content: center;
     padding: 0 var(--spacing-16);
-    background-color: var(--element-color-background);
-    border: 1px solid var(--color-blue-300);
+    background-color: var(--accent-100);
+    border: 1px solid var(--accent-200);
     border-radius: var(--border-radius-16);
   }
 </style>

@@ -72,7 +72,7 @@
 
 <style lang="scss" module>
   .component {
-    border: 1px solid var(--input-color-main);
+    border: 1px solid var(--secondary-200);
     border-radius: var(--border-radius-16);
     overflow: hidden;
   }
@@ -85,19 +85,18 @@
   }
 
   .header {
-    background-color: var(--input-color-main);
-    color: var(--color-background);
+    background-color: var(--secondary-200);
   }
 
   .row {
-    height: 48px;
+    height: var(--spacing-48);
 
     .body > & {
-      background-color: var(--element-color-background);
-      transition: background-color 0.2s ease-out;
+      background-color: var(--secondary-50);
+      transition: background-color var(--transition-time-quick) ease-out;
 
       &:hover {
-        background-color: var(--element-color-background-hover);
+        background-color: var(--secondary-100);
       }
     }
   }

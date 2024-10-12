@@ -6,10 +6,9 @@
 
 <style module>
   .component {
-    display: flex;
     height: 100%;
-    align-items: center;
-    color: var(--input-color-placeholder);
-    padding: 0 var(--input-spacing-horizontal);
+    align-content: center;
+    color: var(--dropdown-option-color-placeholder);
+    padding: var(--dropdown-option-padding);
   }
 </style>

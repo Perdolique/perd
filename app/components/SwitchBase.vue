@@ -32,11 +32,7 @@
     width: 40px;
     height: 22px;
     border-radius: 11px;
-    background-color: color-mix(
-      in srgb,
-      var(--input-color-placeholder),
-      transparent 50%
-    );
+    background-color: var(--primary-300);
     cursor: pointer;
     outline: 2px solid transparent;
     outline-offset: 2px;
@@ -51,11 +47,11 @@
     }
 
     &:focus-visible {
-      outline-color: var(--input-color-focus);
+      outline-color: var(--primary-300);
     }
 
     &:global(.checked) {
-      background-color: var(--color-success);
+      background-color: var(--primary-500);
     }
   }
 
@@ -66,7 +62,7 @@
     height: 14px;
     left: 4px;
     top: 4px;
-    background-color: var(--button-color-text);
+    background-color: var(--primary-50);
     border-radius: 50%;
     transition: left var(--transition-time-quick) ease-out;
 

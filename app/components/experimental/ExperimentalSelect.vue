@@ -70,7 +70,6 @@
     height: var(--input-height);
     padding: 0 var(--input-spacing-horizontal);
     border-radius: var(--input-border-radius);
-    cursor: pointer;
     background-color: var(--input-secondary-color-main);
     color: var(--input-secondary-color-text);
     border: 1px solid var(--input-secondary-color-border);

@@ -24,9 +24,9 @@
     justify-content: center;
     column-gap: var(--spacing-8);
     padding: var(--spacing-32);
-    color: var(--input-color-main);
-    background-color: var(--element-color-background);
-    border: 1px solid var(--input-color-main);
+    color: var(--text-700);
+    background-color: var(--accent-50);
+    border: 1px solid var(--accent-200);
     border-radius: var(--border-radius-16);
   }
 </style>
