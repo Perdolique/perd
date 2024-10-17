@@ -1,4 +1,4 @@
-@import "./variables";
+@use "./variables" as *;
 
 @mixin mobileLarge() {
   @media screen and (min-width: $screen-mobile-l) {
