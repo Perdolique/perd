@@ -8,7 +8,7 @@
       <IconButton
         icon="tabler:x"
         secondary
-        size="s"
+        small
         @click="removeToast(toastId)"
       />
     </div>
@@ -66,8 +66,8 @@
     row-gap: var(--spacing-12);
     align-items: center;
     overflow: hidden;
-    border: 1px solid var(--color-blue-600);
-    background-color: var(--color-blue-50);
+    border: 1px solid var(--secondary-200);
+    background-color: var(--background-50);
     border-radius: var(--border-radius-16);
     padding: var(--spacing-16);
 
@@ -92,7 +92,7 @@
     left: 0;
     height: var(--size);
     border-radius: var(--size);
-    background-color: var(--color-blue-500);
+    background-color: var(--accent-300);
     width: 0;
     transition: width v-bind(progressDuration) linear;
     box-shadow: var(--shadow-2);

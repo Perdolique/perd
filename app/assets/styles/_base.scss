@@ -2,8 +2,7 @@
 @import "modern-normalize";
 
 :root {
-  color-scheme: only light;
-
+  color-scheme: light dark;
   font-family: "Inter", sans-serif;
 
   // Screen sizes
@@ -25,23 +24,6 @@
   --spacing-24: 1.5rem;
   --spacing-32: 2rem;
   --spacing-48: 3rem;
-
-  // Colors
-  --color-blue-50: #f0fafb;
-  --color-blue-100: #d8f2f5;
-  --color-blue-200: #b5e3ec;
-  --color-blue-300: #82cede;
-  --color-blue-400: #5ab8cd;
-  --color-blue-500: #2d95ad;
-  --color-blue-600: #287892;
-  --color-blue-700: #266278;
-  --color-blue-800: #275263;
-  --color-blue-900: #244555;
-  --color-blue-950: #132c39;
-  --color-background: #f0fafb;
-  --color-primary: #244555;
-  --color-secondary: #666;
-  --color-success: #4caf50;
 
   // Shadows
   --shadow-2: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
@@ -66,48 +48,204 @@
   // Transitions
   --transition-time-quick: 0.15s;
   --transition-time-medium: 0.3s;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --text: oklch(13.77% 0.016 253.54);
+    --background: oklch(98.37% 0.005 247.88);
+    --primary: oklch(54.72% 0.144 258.46);
+    --secondary: oklch(75.08% 0.075 258.11);
+    --accent: oklch(72.60% 0.103 258.29);
+
+    --text-50: oklch(95.67% 0.012 259.82);
+    --text-100: oklch(91.27% 0.023 258.36);
+    --text-200: oklch(82.47% 0.049 259.10);
+    --text-300: oklch(73.49% 0.075 258.10);
+    --text-400: oklch(64.55% 0.103 258.12);
+    --text-500: oklch(55.73% 0.131 258.24);
+    --text-600: oklch(47.58% 0.109 258.20);
+    --text-700: oklch(39.07% 0.087 258.13);
+    --text-800: oklch(30.06% 0.063 258.01);
+    --text-900: oklch(20.34% 0.034 258.28);
+    --text-950: oklch(14.81% 0.020 257.28);
+
+    --background-50: oklch(95.82% 0.013 251.56);
+    --background-100: oklch(91.55% 0.027 249.86);
+    --background-200: oklch(83.28% 0.055 248.49);
+    --background-300: oklch(74.84% 0.082 249.52);
+    --background-400: oklch(66.73% 0.111 249.82);
+    --background-500: oklch(58.72% 0.140 251.71);
+    --background-600: oklch(50.14% 0.116 251.28);
+    --background-700: oklch(40.93% 0.092 251.50);
+    --background-800: oklch(31.47% 0.067 250.78);
+    --background-900: oklch(20.93% 0.038 251.48);
+    --background-950: oklch(15.41% 0.020 243.01);
+
+    --primary-50: oklch(95.59% 0.013 255.51);
+    --primary-100: oklch(91.19% 0.027 257.03);
+    --primary-200: oklch(82.10% 0.055 258.68);
+    --primary-300: oklch(73.19% 0.083 258.32);
+    --primary-400: oklch(64.31% 0.114 258.00);
+    --primary-500: oklch(55.46% 0.147 258.55);
+    --primary-600: oklch(47.47% 0.121 258.20);
+    --primary-700: oklch(38.89% 0.096 258.39);
+    --primary-800: oklch(29.84% 0.070 258.59);
+    --primary-900: oklch(20.33% 0.038 257.21);
+    --primary-950: oklch(14.88% 0.022 259.63);
+
+    --secondary-50: oklch(95.59% 0.013 255.51);
+    --secondary-100: oklch(91.23% 0.025 257.65);
+    --secondary-200: oklch(82.13% 0.054 259.02);
+    --secondary-300: oklch(73.21% 0.082 258.53);
+    --secondary-400: oklch(64.31% 0.111 258.28);
+    --secondary-500: oklch(55.61% 0.140 258.32);
+    --secondary-600: oklch(47.42% 0.118 258.39);
+    --secondary-700: oklch(38.87% 0.094 258.53);
+    --secondary-800: oklch(29.83% 0.068 258.83);
+    --secondary-900: oklch(20.33% 0.036 257.69);
+    --secondary-950: oklch(14.88% 0.022 259.63);
+
+    --accent-50: oklch(95.31% 0.017 259.42);
+    --accent-100: oklch(90.87% 0.032 258.37);
+    --accent-200: oklch(81.71% 0.067 258.36);
+    --accent-300: oklch(72.60% 0.103 258.29);
+    --accent-400: oklch(63.72% 0.140 258.31);
+    --accent-500: oklch(55.38% 0.176 258.87);
+    --accent-600: oklch(47.24% 0.147 258.80);
+    --accent-700: oklch(38.74% 0.116 258.70);
+    --accent-800: oklch(29.76% 0.083 258.56);
+    --accent-900: oklch(20.07% 0.047 258.19);
+    --accent-950: oklch(14.79% 0.027 255.17);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: oklch(96.58% 0.009 258.34);
+    --background: oklch(11.10% 0.013 239.32);
+    --primary: oklch(56.34% 0.143 258.42);
+    --secondary: oklch(37.26% 0.088 258.17);
+    --accent: oklch(38.74% 0.116 258.70);
+
+    --text-50: oklch(14.81% 0.020 257.28);
+    --text-100: oklch(20.34% 0.034 258.28);
+    --text-200: oklch(30.06% 0.063 258.01);
+    --text-300: oklch(39.07% 0.087 258.13);
+    --text-400: oklch(47.58% 0.109 258.20);
+    --text-500: oklch(55.73% 0.131 258.24);
+    --text-600: oklch(64.55% 0.103 258.12);
+    --text-700: oklch(73.49% 0.075 258.10);
+    --text-800: oklch(82.47% 0.049 259.10);
+    --text-900: oklch(91.27% 0.023 258.36);
+    --text-950: oklch(95.67% 0.012 259.82);
+
+    --background-50: oklch(15.41% 0.020 243.01);
+    --background-100: oklch(20.93% 0.038 251.48);
+    --background-200: oklch(31.47% 0.067 250.78);
+    --background-300: oklch(40.93% 0.092 251.50);
+    --background-400: oklch(50.14% 0.116 251.28);
+    --background-500: oklch(58.72% 0.140 251.71);
+    --background-600: oklch(66.73% 0.111 249.82);
+    --background-700: oklch(74.84% 0.082 249.52);
+    --background-800: oklch(83.28% 0.055 248.49);
+    --background-900: oklch(91.55% 0.027 249.86);
+    --background-950: oklch(95.82% 0.013 251.56);
+
+    --primary-50: oklch(14.88% 0.022 259.63);
+    --primary-100: oklch(20.33% 0.038 257.21);
+    --primary-200: oklch(29.84% 0.070 258.59);
+    --primary-300: oklch(38.89% 0.096 258.39);
+    --primary-400: oklch(47.47% 0.121 258.20);
+    --primary-500: oklch(55.46% 0.147 258.55);
+    --primary-600: oklch(64.31% 0.114 258.00);
+    --primary-700: oklch(73.19% 0.083 258.32);
+    --primary-800: oklch(82.10% 0.055 258.68);
+    --primary-900: oklch(91.19% 0.027 257.03);
+    --primary-950: oklch(95.59% 0.013 255.51);
+
+    --secondary-50: oklch(14.88% 0.022 259.63);
+    --secondary-100: oklch(20.33% 0.036 257.69);
+    --secondary-200: oklch(29.83% 0.068 258.83);
+    --secondary-300: oklch(38.87% 0.094 258.53);
+    --secondary-400: oklch(47.42% 0.118 258.39);
+    --secondary-500: oklch(55.61% 0.140 258.32);
+    --secondary-600: oklch(64.31% 0.111 258.28);
+    --secondary-700: oklch(73.21% 0.082 258.53);
+    --secondary-800: oklch(82.13% 0.054 259.02);
+    --secondary-900: oklch(91.23% 0.025 257.65);
+    --secondary-950: oklch(95.59% 0.013 255.51);
+
+    --accent-50: oklch(14.79% 0.027 255.17);
+    --accent-100: oklch(20.07% 0.047 258.19);
+    --accent-200: oklch(29.76% 0.083 258.56);
+    --accent-300: oklch(38.74% 0.116 258.70);
+    --accent-400: oklch(47.24% 0.147 258.80);
+    --accent-500: oklch(55.38% 0.176 258.87);
+    --accent-600: oklch(63.72% 0.140 258.31);
+    --accent-700: oklch(72.60% 0.103 258.29);
+    --accent-800: oklch(81.71% 0.067 258.36);
+    --accent-900: oklch(90.87% 0.032 258.37);
+    --accent-950: oklch(95.31% 0.017 259.42);
+  }
+}
+
+:root {
+  // Overlay
+  --overlay-color-background: oklch(0 0 0 / 50%);
+  --overlay-backdrop-filter: blur(4px);
+
+  // Inputs (Text, Textarea, etc.)
+  --input-height: var(--spacing-48);
+  --input-padding-horizontal: var(--spacing-16);
+  --input-font-size: var(--font-size-16);
+  --input-border-radius: var(--border-radius-16);
+  --input-color-background: var(--primary-50);
+  --input-color-border: var(--primary-200);
+  --input-color-placeholder: var(--primary-400);
+  --input-color-text: var(--primary-800);
+  --input-color-focus: var(--primary-400);
+  --input-color-label: var(--primary-600);
+
+  // Selects
+  --select-color-hover: var(--primary-100);
+  --select-color-active: var(--primary-200);
+
+  // Dialogues
+  --dialog-padding: var(--spacing-24);
+  --dialog-border-radius: var(--border-radius-24);
+  --dialog-color-background: var(--background);
+  --dialog-color-border: var(--background-100);
 
   // Buttons
-  --button-color-text: ghostwhite;
-  --button-color-disabled: #ccc;
-  --button-color-disabled-text: #666;
+  --button-height: var(--spacing-48);
+  --button-padding: 0 var(--spacing-24);
+  --button-border-radius: var(--border-radius-16);
+  --button-color-background: var(--primary);
+  --button-color-background-hover: var(--primary-600);
+  --button-color-background-active: var(--primary-700);
+  --button-color-background-disabled: var(--primary-300);
+  --button-color-text: var(--primary-50);
+  --button-color-text-disabled: var(--primary-100);
+  --button-gap: var(--spacing-8);
 
-  // Inputs
-  --input-height: 3rem;
-  --input-spacing-horizontal: 1rem;
-  --input-border-radius: 1rem;
-  --input-color-hover-bg: rgba(151, 136, 136, 0.1);
-  --input-color-main: #287892;
-  --input-color-focus: #a26830;
-  --input-color-active: #7a4f24;
-  --input-color-text: #244555;
-  --input-color-placeholder: #8c8c8c;
-  --input-color-background: ghostwhite;
+  // Secondary buttons
+  --button-secondary-color-background: var(--accent-200);
+  --button-secondary-color-background-hover: var(--accent-300);
+  --button-secondary-color-background-active: var(--accent-400);
+  --button-secondary-color-background-disabled: var(--accent-100);
+  --button-secondary-color-text: var(--accent-800);
+  --button-secondary-color-text-disabled: var(--accent-600);
 
-  // Secondary inputs
-  --input-secondary-color-main: ghostwhite;
-  --input-secondary-color-text: #287892;
-  --input-secondary-color-border: #287892;
-  --input-secondary-color-focus: #d8f2f5;
-  --input-secondary-color-active: #b5e3ec;
-  --input-secondary-color-disabled: #2d95ad;
+  // Small buttons
+  --button-small-height: var(--spacing-32);
+  --button-small-padding: 0 var(--spacing-16);
+  --button-small-border-radius: var(--border-radius-12);
+  --button-small-font-size: var(--font-size-14);
+  --button-small-gap: var(--spacing-4);
 
-  // Small inputs
-  --input-small-height: 2rem;
-  --input-small-border-radius: 0.75rem;
-
-  // Extra small inputs
-  --input-extra-small-height: 1.5rem;
-  --input-extra-small-border-radius: 0.5rem;
-
-   // Other elements
-   --element-color-background: ghostwhite;
-   --element-color-background-hover: #f0fafb;
-   --element-color-background-active: #d8f2f5;
-
-  // Dialogs
-  --dialog-color-background: #f0fafb;
-  --dialog-color-border: #266278;
-  --dialog-padding: 1.5rem;
-  --dialog-border-radius: 1.5rem;
+  // Dropdowns
+  --dropdown-option-height: var(--spacing-48);
+  --dropdown-option-padding: 0 var(--spacing-16);
+  --dropdown-option-color-placeholder: var(--text-400);
 }

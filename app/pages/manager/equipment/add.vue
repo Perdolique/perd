@@ -276,7 +276,7 @@
       display: block;
       height: 1px;
       border: none;
-      background-color: color-mix(in srgb, var(--color-blue-600), transparent 50%);
+      background-color: var(--accent-200);
       margin: 0 var(--spacing-16);
     }
   }

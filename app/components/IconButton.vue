@@ -1,7 +1,7 @@
 <template>
   <button
     :class="[$style.button, {
-      [size]: true,
+      small,
       secondary
     }]"
     :disabled="isButtonDisabled"
@@ -24,11 +24,11 @@
     readonly loading?: boolean;
     readonly disabled?: boolean;
     readonly secondary?: boolean;
-    readonly size?: 'm' | 's' | 'xs';
+    readonly small?: boolean;
   }
 
   const {
-    size = 'm',
+    small = false,
     loading = false,
     disabled = false
   } = defineProps<Props>()
@@ -44,56 +44,52 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: var(--input-height);
-    height: var(--input-height);
-    background-color: var(--input-color-main);
-    border-radius: var(--border-radius-16);
+    width: var(--button-height);
+    height: var(--button-height);
+    background-color: var(--button-color-background);
+    border-radius: var(--button-border-radius);
     color: var(--button-color-text);
     font-size: 1.375rem;
-    cursor: pointer;
     outline: none;
+    transition: background-color 0.2s;
 
     &:global(.secondary) {
-      background-color: var(--input-secondary-color-main);
-      color: var(--input-secondary-color-text);
-      border: 1px solid var(--input-secondary-color-border);
+      background-color: var(--button-secondary-color-background);
+      color: var(--button-secondary-color-text);
     }
 
-    &:global(.s) {
-      height: var(--input-small-height);
-      width: var(--input-small-height);
-      border-radius: var(--input-small-border-radius);
+    &:global(.small) {
+      height: var(--button-small-height);
+      width: var(--button-small-height);
+      border-radius: var(--button-small-border-radius);
       font-size: 1.125rem;
-    }
-
-    &:global(.xs) {
-      height: var(--input-extra-small-height);
-      width: var(--input-extra-small-height);
-      border-radius: var(--input-extra-small-border-radius);
-      font-size: 1rem;
     }
 
     &:focus-visible,
     &:hover {
-      background-color: var(--input-color-focus);
+      background-color: var(--button-color-background-hover);
 
       &:global(.secondary) {
-        background-color: var(--input-secondary-color-focus);
+        background-color: var(--button-secondary-color-background-hover);
       }
     }
 
     &:active {
-      background-color: var(--input-color-active);
+      background-color: var(--button-color-background-active);
 
       &:global(.secondary) {
-        background-color: var(--input-secondary-color-active);
+        background-color: var(--button-secondary-color-background-active);
       }
     }
 
     &:disabled {
-      background-color: var(--button-color-disabled);
-      color: var(--button-color-disabled-text);
-      cursor: not-allowed;
+      background-color: var(--button-color-background-disabled);
+      color: var(--button-color-text-disabled);
+
+      &:global(.secondary) {
+        background-color: var(--button-secondary-color-background-disabled);
+        color: var(--button-secondary-color-text-disabled);
+      }
     }
   }
 </style>

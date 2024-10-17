@@ -31,21 +31,23 @@
     grid-template-columns: auto 1fr;
     column-gap: var(--spacing-8);
     padding: 0 var(--spacing-16);
-    color: var(--color-background);;
+    color: var(--text);
     text-decoration: none;
     outline: none;
     container-type: inline-size;
+    background-color: transparent;
     transition:
-      column-gap var(--transition-time-quick),
-      background-color var(--transition-time-quick);
-
-    &:global(.active) {
-      background-color: var(--color-blue-600);
-    }
+      column-gap var(--transition-time-quick) ease-out,
+      background-color var(--transition-time-quick) ease-out;
 
     &:focus-visible,
     &:hover {
-      background-color: var(--color-blue-500);
+      background-color: var(--background-300);
+    }
+
+    &:global(.active) {
+      background-color: var(--background-400);
+      cursor: default;
     }
   }
 

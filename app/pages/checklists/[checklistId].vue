@@ -54,10 +54,18 @@
       </PerdSearch>
 
       <ChecklistItemsList
+        v-if="hasItems"
         :items="items"
         :check-mode="isCheckMode"
         :checklist-id="checklistId"
       />
+
+      <EmptyState
+        v-else
+        icon="tabler:clipboard-list"
+      >
+        No items yet
+      </EmptyState>
     </div>
   </PageContent>
 
@@ -81,6 +89,7 @@
   import OptionToggle from '~/components/PerdMenu/OptionToggle.vue';
   import PerdButton from '~/components/PerdButton.vue';
   import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue'
+  import EmptyState from '~/components/EmptyState.vue';
 
   definePageMeta({
     layout: 'page'
@@ -93,6 +102,7 @@
 
   const route = useRoute()
   const { items, addItem } = useChecklistStore()
+  const hasItems = computed(() => items.value.length > 0)
   const { addToast } = useToaster()
   const name = ref('')
   const checklistId = route.params.checklistId?.toString() ?? ''
@@ -180,7 +190,6 @@
 <style module>
   .content {
     display: grid;
-    justify-items: start;
     gap: var(--spacing-32);
   }
 

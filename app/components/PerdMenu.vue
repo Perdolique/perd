@@ -54,7 +54,6 @@
 
   .menu {
     --spacing: var(--spacing-4);
-    --transition-duration: 0.15s;
 
     display: none;
     position: absolute;
@@ -63,14 +62,14 @@
     top: calc(100% + var(--spacing));
     right: 0;
     overflow: hidden;
-    background-color: var(--color-background);
-    border: 1px solid var(--color-blue-400);;
+    background-color: var(--secondary-50);
+    border: 1px solid var(--secondary-200);
     border-radius: var(--border-radius-12);
     box-shadow: var(--shadow-2);
     transition:
-      transform var(--transition-duration) ease-out,
-      opacity var(--transition-duration) ease-out,
-      display var(--transition-duration) allow-discrete;
+      transform var(--transition-time-quick) ease-out,
+      opacity var(--transition-time-quick) ease-out,
+      display var(--transition-time-quick) allow-discrete;
 
     &:global(.visible) {
       display: block;

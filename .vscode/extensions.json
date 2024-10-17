@@ -1,15 +1,15 @@
 {
   "recommendations": [
-    "aaron-bond.better-comments",
     "antfu.iconify",
     "dbaeumer.vscode-eslint",
     "editorconfig.editorconfig",
-    "github.copilot",
     "github.copilot-chat",
+    "github.copilot",
     "github.vscode-github-actions",
+    "Gruntfuggly.todo-tree",
     "ms-azuretools.vscode-docker",
-    "mtxr.sqltools",
     "mtxr.sqltools-driver-pg",
+    "mtxr.sqltools",
     "pflannery.vscode-versionlens",
     "ritwickdey.liveserver",
     "tamasfe.even-better-toml",
@@ -17,6 +17,8 @@
     "visualstudioexptteam.vscodeintellicode",
     "vue.volar",
     "vunguyentuan.vscode-css-variables",
-    "yoavbls.pretty-ts-errors"
+    "yoavbls.pretty-ts-errors",
+    "jeronimoekerdt.color-picker-universal",
+    "waderyan.gitblame"
   ]
 }

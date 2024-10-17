@@ -23,7 +23,7 @@
     align-items: center;
     column-gap: var(--spacing-16);
     justify-content: space-between;
-    padding: 0 var(--input-spacing-horizontal);
+    padding: var(--dropdown-option-padding)
   }
 
   .name {

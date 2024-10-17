@@ -22,16 +22,15 @@
     column-gap: var(--spacing-8);
     align-items: center;
     padding: 0 var(--spacing-32) 0 var(--spacing-12);
-    background-color: var(--color-background);
-    color: var(--color-blue-600);
-    cursor: pointer;
+    background-color: transparent;
+    color: var(--text-600);
     transition: background-color var(--transition-time-quick) ease-out;
     font-size: var(--font-size-14);
     white-space: nowrap;
 
     &:hover,
     &:focus-visible {
-      background-color: var(--color-blue-100);
+      background-color: var(--secondary-100);
     }
   }
 

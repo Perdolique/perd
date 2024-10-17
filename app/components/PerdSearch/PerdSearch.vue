@@ -36,11 +36,11 @@
       }]"
     >
       <template v-if="hasOptions">
-        <SearchOption
+        <div
           v-for="(option, index) in options"
           :key="index"
-          @click="handleOptionClick"
-          :class="$style.option"
+          :class="[$style.option, 'active']"
+          @click="handleOptionClick(option)"
         >
           <slot name="option" :option="option">
             <DefaultOption
@@ -49,16 +49,19 @@
               @click="emitSelect"
             />
           </slot>
-        </SearchOption>
+        </div>
       </template>
 
-      <SearchOption v-else>
+      <div
+        v-else
+        :class="$style.option"
+      >
         <slot name="empty">
           <EmptyOption>
             {{ emptyOptionText }}
           </EmptyOption>
         </slot>
-      </SearchOption>
+      </div>
     </div>
   </div>
 </template>
@@ -67,7 +70,6 @@
   import type { InputHTMLAttributes } from 'vue';
   import { watchDebounced, onClickOutside } from '@vueuse/core';
   import FidgetSpinner from '~/components/FidgetSpinner.vue';
-  import SearchOption from './SearchOption.vue';
   import EmptyOption from './EmptyOption.vue';
   import DefaultOption from './DefaultOption.vue';
 
@@ -145,24 +147,22 @@
 
 <style module>
   .component {
-    --dropdown-animation-time: 0.2s;
-
     position: relative;
-    z-index: 1;
     min-width: 160px;
     height: var(--input-height);
     background-color: var(--input-color-background);
-    border: 1px solid var(--input-color-main);
+    border: 1px solid var(--input-color-border);
     border-radius: var(--input-border-radius);
     transition:
       border-color 0.15s ease-out,
-      border-radius 0.1s ease-out var(--dropdown-animation-time);
+      border-radius 0.1s ease-out var(--transition-time-quick);
 
     &:has(.input:focus-visible) {
       border-color: var(--input-color-focus);
     }
 
     &:has(.dropdown:global(.visible)) {
+      border-color: var(--input-color-focus);
       border-bottom-left-radius: 0;
       border-bottom-right-radius: 0;
       border-bottom-color: transparent;
@@ -172,15 +172,12 @@
 
   .label {
     position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    right: 0;
+    inset: 0;
     display: flex;
     align-items: center;
     pointer-events: none;
-    color: var(--input-color-main);
-    left: var(--input-spacing-horizontal);
+    color: var(--input-color-label);
+    left: var(--input-padding-horizontal);
     transform-origin: top left;
     user-select: none;
     transition:
@@ -193,20 +190,14 @@
       scale: 0.70;
       translate: 0 -5px;
     }
-
-    .input:focus-visible + & {
-      color: var(--input-color-focus);
-    }
   }
 
   .input {
     position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
+    inset: 0;
+    top: 14px;
     width: 100%;
-    padding: 12px var(--input-spacing-horizontal) 0;
+    padding: 0 var(--input-padding-horizontal);
     border: none;
     background: none;
     color: var(--input-color-text);
@@ -226,10 +217,10 @@
   .spinner {
     position: absolute;
     top: 50%;
-    right: var(--input-spacing-horizontal);
+    right: var(--input-padding-horizontal);
     display: none;
     opacity: 0;
-    color: var(--input-secondary-color-text);
+    color: var(--input-color-label);
     translate: 0 -50%;
     transition:
       color 0.15s ease-out,
@@ -254,25 +245,26 @@
     display: none;
     height: 0;
     position: absolute;
+    z-index: 1;
     box-sizing: content-box;
     top: 100%;
     left: -1px;
     right: -1px;
     background-color: var(--input-color-background);
-    border: 1px solid var(--input-color-main);
+    border: 1px solid var(--input-color-focus);
     border-top: none;
     border-radius: 0 0 var(--input-border-radius) var(--input-border-radius);
     scrollbar-width: none;
     overflow: hidden auto;
     user-select: none;
     transition:
-      display var(--dropdown-animation-time) ease-out allow-discrete,
-      height var(--dropdown-animation-time) ease-out;
+      display var(--transition-time-quick) ease-out allow-discrete,
+      height var(--transition-time-quick) ease-out;
 
     &:global(.visible) {
       display: block;
-      height: calc(v-bind(visibleOptionsCount) * var(--input-height));
-      color: var(--input-color-text);
+      height: calc(v-bind(visibleOptionsCount) * var(--dropdown-option-height));
+      color: var(--text-700);
 
       @starting-style {
         height: 0;
@@ -285,12 +277,16 @@
   }
 
   .option {
-    background-color: var(--element-color-background);
-    cursor: pointer;
-    transition: background-color 0.15s ease-out;
+    height: var(--dropdown-option-height);
 
-    &:hover {
-      background-color: var(--element-color-background-hover);
+    &:global(.active) {
+      background-color: var(--input-color-background);
+      cursor: pointer;
+      transition: background-color 0.15s ease-out;
+
+      &:hover {
+        background-color: var(--select-color-hover);
+      }
     }
   }
 </style>

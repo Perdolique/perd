@@ -51,7 +51,7 @@
   .root {
     position: relative;
     background-color: var(--input-color-background);
-    border: 1px solid var(--input-color-main);
+    border: 1px solid var(--input-color-border);
     border-radius: var(--border-radius-16);
     transition: border-color 0.15s ease-out;
 
@@ -63,9 +63,9 @@
   .label {
     position: absolute;
     top: 12px;
-    left: var(--input-spacing-horizontal);
+    left: var(--input-padding-horizontal);
     pointer-events: none;
-    color: var(--input-color-main);
+    color: var(--input-color-label);
     transform-origin: top left;
     user-select: none;
     transition:
@@ -78,16 +78,12 @@
       scale: 0.70;
       translate: 0 -7px;
     }
-
-    .textarea:focus-visible + & {
-      color: var(--input-color-focus);
-    }
   }
 
   .textarea {
     position: absolute;
     inset: 0;
-    padding: 0 var(--input-spacing-horizontal);
+    padding: 0 var(--input-padding-horizontal);
     margin-top: 20px;
     border: none;
     background: none;
