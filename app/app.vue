@@ -19,7 +19,7 @@
 </script>
 
 <style lang="scss">
-  @import "~/assets/styles/base";
+  @use "~/assets/styles/base";
 
   @layer {
     html {
