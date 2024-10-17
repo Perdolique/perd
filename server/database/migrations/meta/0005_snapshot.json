@@ -1,6 +1,6 @@
 {
-  "id": "20b1130e-84b3-46e2-a4a4-491ea813a057",
-  "prevId": "cae70a06-cd81-4810-bf4d-d6393003a156",
+  "id": "24983446-d578-422d-b938-bb45cee89a4a",
+  "prevId": "4ba59159-5a11-4967-a8cb-1d97e736f7e9",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -32,41 +32,42 @@
         "checklistItems_checklistId_checklists_id_fk": {
           "name": "checklistItems_checklistId_checklists_id_fk",
           "tableFrom": "checklistItems",
+          "tableTo": "checklists",
           "columnsFrom": [
             "checklistId"
           ],
-          "tableTo": "checklists",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "cascade",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         },
         "checklistItems_equipmentId_equipment_id_fk": {
           "name": "checklistItems_equipmentId_equipment_id_fk",
           "tableFrom": "checklistItems",
+          "tableTo": "equipment",
           "columnsFrom": [
             "equipmentId"
           ],
-          "tableTo": "equipment",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "cascade",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "checklistItems_checklistId_equipmentId_unique": {
           "name": "checklistItems_checklistId_equipmentId_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "checklistId",
             "equipmentId"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
-      }
+      },
+      "checkConstraints": {}
     },
     "public.checklists": {
       "name": "checklists",
@@ -111,28 +112,29 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "checklists_userId_users_id_fk": {
           "name": "checklists_userId_users_id_fk",
           "tableFrom": "checklists",
+          "tableTo": "users",
           "columnsFrom": [
             "userId"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "cascade",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     },
     "public.equipment": {
       "name": "equipment",
@@ -142,6 +144,18 @@
           "name": "id",
           "type": "serial",
           "primaryKey": true,
+          "notNull": true
+        },
+        "creatorId": {
+          "name": "creatorId",
+          "type": "ulid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(16)",
+          "primaryKey": false,
           "notNull": true
         },
         "name": {
@@ -202,9 +216,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "equipment_equipmentGroupId_index": {
           "name": "equipment_equipmentGroupId_index",
@@ -217,41 +231,60 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
-        "equipment_equipmentTypeId_equipmentTypes_id_fk": {
-          "name": "equipment_equipmentTypeId_equipmentTypes_id_fk",
+        "equipment_creatorId_users_id_fk": {
+          "name": "equipment_creatorId_users_id_fk",
           "tableFrom": "equipment",
+          "tableTo": "users",
           "columnsFrom": [
-            "equipmentTypeId"
+            "creatorId"
           ],
-          "tableTo": "equipmentTypes",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "cascade",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "cascade"
+        },
+        "equipment_equipmentTypeId_equipmentTypes_id_fk": {
+          "name": "equipment_equipmentTypeId_equipmentTypes_id_fk",
+          "tableFrom": "equipment",
+          "tableTo": "equipmentTypes",
+          "columnsFrom": [
+            "equipmentTypeId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "cascade"
         },
         "equipment_equipmentGroupId_equipmentGroups_id_fk": {
           "name": "equipment_equipmentGroupId_equipmentGroups_id_fk",
           "tableFrom": "equipment",
+          "tableTo": "equipmentGroups",
           "columnsFrom": [
             "equipmentGroupId"
           ],
-          "tableTo": "equipmentGroups",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "cascade",
-          "onDelete": "set null"
+          "onDelete": "set null",
+          "onUpdate": "cascade"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "equipment_description_check": {
+          "name": "equipment_description_check",
+          "value": "char_length(description) <= 1024"
+        }
+      }
     },
     "public.equipmentAttributeValues": {
       "name": "equipmentAttributeValues",
@@ -294,9 +327,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "equipmentAttributeValues_equipmentAttributeId_index": {
           "name": "equipmentAttributeValues_equipmentAttributeId_index",
@@ -309,50 +342,51 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "equipmentAttributeValues_equipmentId_equipment_id_fk": {
           "name": "equipmentAttributeValues_equipmentId_equipment_id_fk",
           "tableFrom": "equipmentAttributeValues",
+          "tableTo": "equipment",
           "columnsFrom": [
             "equipmentId"
           ],
-          "tableTo": "equipment",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "cascade",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         },
         "equipmentAttributeValues_equipmentAttributeId_equipmentAttributes_id_fk": {
           "name": "equipmentAttributeValues_equipmentAttributeId_equipmentAttributes_id_fk",
           "tableFrom": "equipmentAttributeValues",
+          "tableTo": "equipmentAttributes",
           "columnsFrom": [
             "equipmentAttributeId"
           ],
-          "tableTo": "equipmentAttributes",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "cascade",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "equipmentAttributeValues_equipmentId_equipmentAttributeId_unique": {
           "name": "equipmentAttributeValues_equipmentId_equipmentAttributeId_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "equipmentId",
             "equipmentAttributeId"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
-      }
+      },
+      "checkConstraints": {}
     },
     "public.equipmentAttributes": {
       "name": "equipmentAttributes",
@@ -381,7 +415,8 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     },
     "public.equipmentGroups": {
       "name": "equipmentGroups",
@@ -417,7 +452,8 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     },
     "public.equipmentTypeAttributes": {
       "name": "equipmentTypeAttributes",
@@ -448,9 +484,9 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         },
         "equipmentTypeAttributes_equipmentAttributeId_index": {
           "name": "equipmentTypeAttributes_equipmentAttributeId_index",
@@ -463,37 +499,37 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {
         "equipmentTypeAttributes_equipmentTypeId_equipmentTypes_id_fk": {
           "name": "equipmentTypeAttributes_equipmentTypeId_equipmentTypes_id_fk",
           "tableFrom": "equipmentTypeAttributes",
+          "tableTo": "equipmentTypes",
           "columnsFrom": [
             "equipmentTypeId"
           ],
-          "tableTo": "equipmentTypes",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "cascade",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         },
         "equipmentTypeAttributes_equipmentAttributeId_equipmentAttributes_id_fk": {
           "name": "equipmentTypeAttributes_equipmentAttributeId_equipmentAttributes_id_fk",
           "tableFrom": "equipmentTypeAttributes",
+          "tableTo": "equipmentAttributes",
           "columnsFrom": [
             "equipmentAttributeId"
           ],
-          "tableTo": "equipmentAttributes",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "cascade",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -505,7 +541,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     },
     "public.equipmentTypes": {
       "name": "equipmentTypes",
@@ -550,14 +587,15 @@
             }
           ],
           "isUnique": false,
-          "with": {},
+          "concurrently": false,
           "method": "btree",
-          "concurrently": false
+          "with": {}
         }
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     },
     "public.oauthAccounts": {
       "name": "oauthAccounts",
@@ -601,41 +639,42 @@
         "oauthAccounts_userId_users_id_fk": {
           "name": "oauthAccounts_userId_users_id_fk",
           "tableFrom": "oauthAccounts",
+          "tableTo": "users",
           "columnsFrom": [
             "userId"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "cascade",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         },
         "oauthAccounts_providerId_oauthProviders_id_fk": {
           "name": "oauthAccounts_providerId_oauthProviders_id_fk",
           "tableFrom": "oauthAccounts",
+          "tableTo": "oauthProviders",
           "columnsFrom": [
             "providerId"
           ],
-          "tableTo": "oauthProviders",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "cascade",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "oauthAccounts_providerId_accountId_unique": {
           "name": "oauthAccounts_providerId_accountId_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "providerId",
             "accountId"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
-      }
+      },
+      "checkConstraints": {}
     },
     "public.oauthProviders": {
       "name": "oauthProviders",
@@ -673,12 +712,13 @@
       "uniqueConstraints": {
         "oauthProviders_type_unique": {
           "name": "oauthProviders_type_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "type"
-          ],
-          "nullsNotDistinct": false
+          ]
         }
-      }
+      },
+      "checkConstraints": {}
     },
     "public.userEquipment": {
       "name": "userEquipment",
@@ -709,28 +749,28 @@
         "userEquipment_userId_users_id_fk": {
           "name": "userEquipment_userId_users_id_fk",
           "tableFrom": "userEquipment",
+          "tableTo": "users",
           "columnsFrom": [
             "userId"
           ],
-          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "cascade",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         },
         "userEquipment_equipmentId_equipment_id_fk": {
           "name": "userEquipment_equipmentId_equipment_id_fk",
           "tableFrom": "userEquipment",
+          "tableTo": "equipment",
           "columnsFrom": [
             "equipmentId"
           ],
-          "tableTo": "equipment",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "cascade",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -742,7 +782,8 @@
           ]
         }
       },
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     },
     "public.users": {
       "name": "users",
@@ -779,7 +820,8 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     }
   },
   "enums": {
@@ -796,6 +838,7 @@
   },
   "schemas": {},
   "sequences": {},
+  "views": {},
   "_meta": {
     "columns": {},
     "schemas": {},
