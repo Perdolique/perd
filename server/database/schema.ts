@@ -13,7 +13,8 @@ import {
   unique,
   serial,
   text,
-  pgEnum
+  pgEnum,
+  check
 } from 'drizzle-orm/pg-core'
 
 /**
@@ -274,7 +275,12 @@ export const equipment = pgTable('equipment', {
 }, (table) => {
   return {
     typeIdIndex: index().on(table.equipmentTypeId),
-    groupIdIndex: index().on(table.equipmentGroupId)
+    groupIdIndex: index().on(table.equipmentGroupId),
+
+    descriptionCheck: check(
+      'equipment_description_check',
+      sql.raw(`char_length(description) <= ${limits.maxEquipmentDescriptionLength}`)
+    )
   }
 })
 

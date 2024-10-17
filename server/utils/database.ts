@@ -19,7 +19,8 @@ export function createDrizzle() {
 
   const db = neon(process.env.DATABASE_URL)
 
-  const drizzleDb = drizzleNeon(db, {
+  const drizzleDb = drizzleNeon({
+    client: db,
     schema,
     logger: true
   })
@@ -48,7 +49,8 @@ export function createDrizzleWebsocket() {
     connectionString: process.env.DATABASE_URL
   })
 
-  const drizzleDb = drizzleServerless(pool, {
+  const drizzleDb = drizzleServerless({
+    client: pool,
     schema,
     logger: true
   })
