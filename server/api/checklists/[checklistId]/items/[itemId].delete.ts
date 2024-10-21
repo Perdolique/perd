@@ -6,8 +6,6 @@ const paramsSchema = v.object({
   itemId: stringToIntegerValidator
 })
 
-type ParamsData = v.InferOutput<typeof paramsSchema>
-
 function validateParams(params: unknown) {
   return v.parse(paramsSchema, params)
 }
