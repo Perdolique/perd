@@ -5,7 +5,7 @@ export const startPagePath = '/'
 export const publicApiPaths = [
   '/auth/create-session',
   '/oauth/twitch'
-]
+] as const
 
 export const limits = {
   maxChecklistNameLength: 32,
@@ -18,4 +18,4 @@ export const limits = {
   maxOAuthProviderNameLength: 32,
   maxOAuthProviderTypeLength: 32,
   maxUserNameLength: 32
-}
+} as const

@@ -1,32 +1,30 @@
 interface EquipmentItem {
   readonly id: number;
+  readonly key: string;
   readonly name: string;
   readonly weight: number;
   readonly createdAt: string;
 }
 
 export async function useUserEquipment() {
-  const equipment = useState<EquipmentItem[]>('userEquipment', () => [])
+  const { data, refresh } = await useFetch('/api/inventory', {
+    default() {
+      return []
+    },
 
-  const { data } = await useFetch('/api/inventory')
-
-  async function refetchEquipment() {
-    try {
-      const response = await $fetch('/api/inventory')
-
-      equipment.value = response
-    } catch {
-      // TODO: Handle error
-      console.error('Failed to update equipment')
+    transform(data) {
+      return data.map((item) => ({
+        id: item.id,
+        key: item.id.toString(),
+        name: item.name,
+        weight: item.weight,
+        createdAt: item.createdAt
+      }))
     }
-  }
-
-  if (data.value !== undefined) {
-    equipment.value = data.value
-  }
+  })
 
   return {
-    equipment,
-    refetchEquipment
+    equipment: data,
+    refetchEquipment: refresh
   }
 }

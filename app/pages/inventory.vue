@@ -16,11 +16,34 @@
       </template>
     </PerdSearch>
 
-    <EquipmentTable
+    <PerdTable
       v-if="hasItems"
-      :equipment="equipment"
-      @remove="removeItem"
-    />
+      :data="equipment"
+      :columns="columns"
+    >
+      <template #name="{ rowData }">
+        <span :class="$style.name">
+          {{ rowData.name }}
+        </span>
+      </template>
+
+      <template #weight="{ rowData }">
+        {{ rowData.weight }}
+      </template>
+
+      <template #actions="{ rowData }">
+        <div :class="$style.actions">
+          <PerdButton
+            small
+            secondary
+            icon="tabler:trash"
+            @click="removeItem(rowData)"
+          >
+            Retire
+          </PerdButton>
+        </div>
+      </template>
+    </PerdTable>
 
     <EmptyState
       v-else
@@ -32,13 +55,15 @@
 </template>
 
 <script lang="ts" setup>
-  import EquipmentTable from '~/components/equipment/EquipmentTable.vue';
   import SearchOptionAdd from '~/components/PerdSearch/SearchOptionAdd.vue';
   import PerdSearch from '~/components/PerdSearch/PerdSearch.vue';
   import EmptyState from '~/components/EmptyState.vue';
+  import PerdTable from '~/components/PerdTable/PerdTable.vue';
+  import PerdButton from '~/components/PerdButton.vue';
 
   interface EquipmentItem {
     readonly id: number;
+    readonly key: string;
     readonly name: string;
     readonly weight: number;
     readonly createdAt: string;
@@ -47,6 +72,12 @@
   definePageMeta({
     title: 'Inventory'
   })
+
+  const columns = [
+    { key: 'name',   label: 'Name' },
+    { key: 'weight', label: 'Weight' },
+    { key: 'actions' }
+  ]
 
   const isSearching = ref(false);
   const options = ref<EquipmentItem[]>([]);
@@ -68,6 +99,7 @@
 
       options.value = result.map((equipment) => ({
         id: equipment.id,
+        key: equipment.id.toString(),
         name: equipment.name,
         weight: equipment.weight,
         createdAt: equipment.createdAt
@@ -120,5 +152,14 @@
     @include mobileLarge() {
       max-width: var(--screen-mobile-s);
     }
+  }
+
+  .name {
+    font-weight: var(--font-weight-medium);
+  }
+
+  .actions {
+    display: flex;
+    justify-content: end;
   }
 </style>

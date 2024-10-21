@@ -53,7 +53,7 @@
     background-color: var(--input-color-background);
     border: 1px solid var(--input-color-border);
     border-radius: var(--border-radius-16);
-    transition: border-color 0.15s ease-out;
+    transition: border-color var(--transition-time-quick) ease-out;
 
     &:has(.textarea:focus-visible) {
       border-color: var(--input-color-focus);
@@ -62,21 +62,22 @@
 
   .label {
     position: absolute;
-    top: 12px;
+    inset: 0;
     left: var(--input-padding-horizontal);
+    padding-top: var(--input-padding-top);
     pointer-events: none;
     color: var(--input-color-label);
     transform-origin: top left;
     user-select: none;
     transition:
-      color 0.15s linear,
-      scale 0.15s linear,
-      translate 0.15s linear;
+      color var(--transition-time-quick) linear,
+      scale var(--transition-time-quick) linear,
+      translate var(--transition-time-quick) linear;
 
     &:global(.withValue),
     .textarea:focus-visible + & {
       scale: 0.70;
-      translate: 0 -7px;
+      translate: 0 -5px;
     }
   }
 
@@ -93,7 +94,7 @@
   }
 
   .textarea::placeholder {
-    transition: color 0.15s ease-out;
+    transition: color var(--transition-time-quick) ease-out;
     color: transparent;
     user-select: none;
   }

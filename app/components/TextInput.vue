@@ -26,8 +26,13 @@
     border: 1px solid var(--input-color-border);
     transition: border-color var(--transition-time-quick) ease-out;
 
+    &:hover:not(:disabled),
     &:focus-visible {
       border-color: var(--input-color-focus);
+    }
+
+    &:disabled {
+      opacity: var(--input-opacity-disabled);
     }
   }
 
