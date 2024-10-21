@@ -3,19 +3,22 @@
     <Icon
       name="tabler:chevron-down"
       size="1.5rem"
-      :class="$style.arrow"
+      :class="[$style.arrow, { disabled }]"
     />
 
     <select
       :class="[$style.select, { selected: hasSelectedOption }]"
       v-model="selectedOption"
       :required="required"
+      :disabled="disabled"
     >
       <option
+        v-if="placeholder"
         disabled
         value=""
         class="placeholder"
         :class="$style.option"
+        :selected="isOptionSelected('')"
       >
         {{ placeholder }}
       </option>
@@ -34,15 +37,18 @@
 </template>
 
 <script lang="ts" setup>
+  import type { SelectHTMLAttributes } from 'vue';
+
   interface Option {
     readonly value: string;
     readonly label: string;
   }
 
   interface Props {
-    readonly placeholder: string;
     readonly options: readonly Option[];
-    readonly required: HTMLSelectElement['required'];
+    readonly placeholder?: string;
+    readonly required?: SelectHTMLAttributes['required'];
+    readonly disabled?: SelectHTMLAttributes['disabled'];
   }
 
   defineProps<Props>();
@@ -58,6 +64,10 @@
 <style module>
   .component {
     position: relative;
+
+    &:has(.select:disabled) {
+      opacity: var(--input-opacity-disabled);
+    }
   }
 
   .arrow {
@@ -94,9 +104,15 @@
       color: var(--input-color-text);
     }
 
-    &:hover,
+    &:hover:not(:disabled),
     &:focus-visible {
       border-color: var(--input-color-focus);
+    }
+
+    &:disabled {
+      /* Reset default browser's style for disabled elements */
+      opacity: 1;
+      cursor: not-allowed;
     }
   }
 

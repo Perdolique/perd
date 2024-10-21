@@ -1,7 +1,6 @@
 import * as v from 'valibot'
 import { limits } from '~~/constants'
-
-type EquipmentStatus = 'draft' | 'active'
+import type { EquipmentStatus } from '~~/server/models'
 
 const bodySchema = v.object({
   name: v.pipe(
@@ -10,15 +9,13 @@ const bodySchema = v.object({
     v.maxLength(limits.maxEquipmentItemNameLength)
   ),
 
-  description: v.union([
-    v.undefined(),
-
+  description: v.optional(
     v.pipe(
       v.string(),
       v.nonEmpty(),
       v.maxLength(limits.maxEquipmentDescriptionLength)
     )
-  ]),
+  ),
 
   weight: v.pipe(
     v.number(),

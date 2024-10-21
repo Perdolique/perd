@@ -36,7 +36,11 @@
 
   .header {
     display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-16);
     justify-content: space-between;
+    align-items: center;
+    overflow: hidden;
   }
 
   .heading {
