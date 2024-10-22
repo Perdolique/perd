@@ -1,7 +1,6 @@
 import * as v from 'valibot'
 import { limits } from '~~/constants'
-
-type EquipmentStatus = 'draft' | 'active'
+import type { EquipmentStatus } from '~~/server/models'
 
 const bodySchema = v.object({
   name: v.pipe(
