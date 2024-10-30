@@ -134,9 +134,9 @@ export const oauthAccounts = pgTable('oauthAccounts', {
     })
     .notNull()
     .defaultNow()
-}, (table) => ({
-  uniqueProviderIdAccountId: unique().on(table.providerId, table.accountId)
-}))
+}, (table) => [
+  unique().on(table.providerId, table.accountId)
+])
 
 /**
  * Equipment types table
@@ -169,9 +169,9 @@ export const equipmentTypes = pgTable('equipmentTypes', {
     .notNull()
     .defaultNow()
     .$onUpdate(() => sql`now()`)
-}, (table) => ({
-  nameIndex: index().on(table.name)
-}))
+}, (table) => [
+  index().on(table.name)
+])
 
 
 /**
@@ -272,24 +272,21 @@ export const equipment = pgTable('equipment', {
     .notNull()
     .defaultNow()
     .$onUpdate(() => sql`now()`)
-}, (table) => {
-  return {
-    typeIdIndex: index().on(table.equipmentTypeId),
-    groupIdIndex: index().on(table.equipmentGroupId),
+}, (table) => [
+  index().on(table.equipmentTypeId),
+  index().on(table.equipmentGroupId),
 
-    descriptionCheck: check(
-      'equipment_description_check',
-      sql.raw(`char_length(description) <= ${limits.maxEquipmentDescriptionLength}`)
-    )
-  }
-})
+  check(
+    'equipment_description_check',
+    sql.raw(`char_length(description) <= ${limits.maxEquipmentDescriptionLength}`)
+  ),
+])
 
 /**
  * Equipment attributes data types
  *
  * Types of data that can be stored in the attribute
  */
-
 export const equipmentAttributeDataType = pgEnum('equipmentAttributeDataType', [
   'boolean',
   'string',
@@ -339,14 +336,14 @@ export const equipmentTypeAttributes = pgTable('equipmentTypeAttributes', {
       onDelete: 'cascade',
       onUpdate: 'cascade'
     })
-}, (table) => ({
-  primaryKey: primaryKey({
+}, (table) => [
+  primaryKey({
     columns: [table.equipmentTypeId, table.equipmentAttributeId]
   }),
 
-  equipmentTypeIdIndex: index().on(table.equipmentTypeId),
-  attributeIdIndex: index().on(table.equipmentAttributeId)
-}))
+  index().on(table.equipmentTypeId),
+  index().on(table.equipmentAttributeId)
+])
 
 /**
  * Equipment attribute values table
@@ -378,11 +375,11 @@ export const equipmentAttributeValues = pgTable('equipmentAttributeValues', {
   value:
     varchar()
     .notNull()
-}, (table) => ({
-  uniqueEquipmentIdAttributeId: unique().on(table.equipmentId, table.equipmentAttributeId),
-  equipmentIdIndex: index().on(table.equipmentId),
-  attributeIdIndex: index().on(table.equipmentAttributeId)
-}))
+}, (table) => [
+  unique().on(table.equipmentId, table.equipmentAttributeId),
+  index().on(table.equipmentId),
+  index().on(table.equipmentAttributeId)
+])
 
 /**
  * User's equipment table
@@ -411,11 +408,11 @@ export const userEquipment = pgTable('userEquipment', {
     })
     .notNull()
     .defaultNow()
-}, (table) => ({
-  primaryKey: primaryKey({
+}, (table) => [
+  primaryKey({
     columns: [table.userId, table.equipmentId]
   })
-}))
+])
 
 /**
  * User's checklists table
@@ -450,11 +447,9 @@ export const checklists = pgTable('checklists', {
     })
     .notNull()
     .defaultNow()
-}, (table) => {
-  return {
-    createdAtIndex: index('createdAtIndex').on(table.createdAt)
-  }
-})
+}, (table) => [
+  index('createdAtIndex').on(table.createdAt)
+])
 
 /**
  * Checklist items table
@@ -482,9 +477,9 @@ export const checklistItems = pgTable('checklistItems', {
       onDelete: 'cascade',
       onUpdate: 'cascade'
     })
-}, (table) => ({
-  checklistIdEquipmentIdKey: unique().on(table.checklistId, table.equipmentId)
-}))
+}, (table) => [
+  unique().on(table.checklistId, table.equipmentId)
+])
 
 /**
  * Relations
