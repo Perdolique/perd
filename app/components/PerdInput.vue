@@ -11,6 +11,7 @@
       :placeholder="placeholder"
       :required="required"
       :type="type"
+      :disabled="disabled"
     >
 
     <label
@@ -19,6 +20,14 @@
     >
       {{ label }}
     </label>
+
+    <button
+      :class="[$style.clearAction, { visible: hasValue }]"
+      @click="clearValue"
+      type="button"
+    >
+      <Icon name="tabler:x" />
+    </button>
   </div>
 </template>
 
@@ -34,7 +43,10 @@
     readonly placeholder?: InputHTMLAttributes['placeholder'];
     readonly required?: InputHTMLAttributes['required'];
     readonly type?: 'text';
+    readonly disabled?: InputHTMLAttributes['disabled'];
   }
+
+  type Emits = (event: 'clear') => void;
 
   const {
     type = 'text'
@@ -44,8 +56,15 @@
     required: true
   })
 
+  const emit = defineEmits<Emits>();
   const id = useId();
   const hasValue = computed(() => model.value !== '');
+
+  function clearValue() {
+    model.value = '';
+
+    emit('clear');
+  }
 </script>
 
 <style module>
@@ -55,11 +74,41 @@
     background-color: var(--input-color-background);
     border: 1px solid var(--input-color-border);
     border-radius: var(--border-radius-16);
-    transition: border-color 0.15s ease-out;
+    transition: border-color var(--transition-time-quick);
 
+    &:has(.input:hover:not(:disabled)),
     &:has(.input:focus-visible) {
       border-color: var(--input-color-focus);
     }
+
+    &:has(.input:disabled) {
+      opacity: var(--input-opacity-disabled);
+    }
+  }
+
+  .input {
+    position: absolute;
+    inset: 0;
+    padding: var(--input-padding-top) var(--input-padding-horizontal) 0;
+    border: none;
+    background: none;
+    outline: none;
+    color: var(--input-color-text);
+    transition: var(--transition-time-quick);
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+
+  .input::placeholder {
+    color: transparent;
+    user-select: none;
+    transition: color var(--transition-time-quick);
+  }
+
+  .input:focus-visible::placeholder {
+    color: var(--input-color-placeholder);
   }
 
   .label {
@@ -73,9 +122,9 @@
     transform-origin: top left;
     user-select: none;
     transition:
-      color 0.15s linear,
-      scale 0.15s linear,
-      translate 0.15s linear;
+      color var(--transition-time-quick) linear,
+      scale var(--transition-time-quick) linear,
+      translate var(--transition-time-quick) linear;
 
     &:global(.withValue),
     .input:focus-visible + & {
@@ -84,26 +133,43 @@
     }
   }
 
-  .input {
+  .clearAction {
+    /* Reset button styles */
+    appearance: none;
+    background: none;
+    outline: none;
+
+    /* Rest of the styles */
+    display: none;
     position: absolute;
-    left: 0;
     right: 0;
     top: 0;
     bottom: 0;
-    padding: 12px var(--input-padding-horizontal) 0;
-    border: none;
-    background: none;
-    outline: none;
+    aspect-ratio: 1;
+    line-height: 1;
+    align-content: center;
+    cursor: pointer;
     color: var(--input-color-text);
-  }
+    font-size: var(--font-size-20);
+    opacity: 0;
+    border-radius: var(--input-border-radius);
+    transition:
+      background-color var(--transition-time-quick),
+      opacity var(--transition-time-quick),
+      display var(--transition-time-quick) allow-discrete;
 
-  .input::placeholder {
-    transition: color 0.15s ease-out;
-    color: transparent;
-    user-select: none;
-  }
+    &:global(.visible) {
+      display: block;
+      opacity: 1;
 
-  .input:focus-visible::placeholder {
-    color: var(--input-color-placeholder);
+      @starting-style {
+        opacity: 0;
+      }
+    }
+
+    &:focus-visible,
+    &:hover {
+      background-color: color-mix(in oklch, var(--input-color-focus), transparent 70%)
+    }
   }
 </style>

@@ -1,4 +1,6 @@
 @use "./variables" as *;
+
+// TODO: import to @layer to have correct cascade
 @use "modern-normalize";
 
 :root {
@@ -198,6 +200,7 @@
   // Inputs (Text, Textarea, etc.)
   --input-height: var(--spacing-48);
   --input-padding-horizontal: var(--spacing-16);
+  --input-padding-top: var(--spacing-12);
   --input-font-size: var(--font-size-16);
   --input-border-radius: var(--border-radius-16);
   --input-color-background: var(--primary-50);
@@ -206,6 +209,7 @@
   --input-color-text: var(--primary-800);
   --input-color-focus: var(--primary-400);
   --input-color-label: var(--primary-600);
+  --input-opacity-disabled: 0.7;
 
   // Selects
   --select-color-hover: var(--primary-100);
@@ -248,4 +252,8 @@
   --dropdown-option-height: var(--spacing-48);
   --dropdown-option-padding: 0 var(--spacing-16);
   --dropdown-option-color-placeholder: var(--text-400);
+
+  // Tables
+  --table-row-height: var(--spacing-48);
+  --table-cell-padding: 0 var(--spacing-16);
 }

@@ -1,13 +1,20 @@
 <template>
-  <button :class="[$style.button, {
-    small,
-    secondary
-  }]">
+  <button
+    :disabled="isButtonDisabled"
+    :class="[$style.button, {
+      small,
+      secondary
+    }]"
+  >
+    <FidgetSpinner
+      v-if="loading"
+      :class="[$style.icon, { small }]"
+    />
+
     <Icon
-      v-if="icon"
-      class="icon"
+      v-else-if="icon"
       :name="icon"
-      size="1.25em"
+      :class="[$style.icon, { small }]"
     />
 
     <slot />
@@ -15,17 +22,29 @@
 </template>
 
 <script lang="ts" setup>
+  import FidgetSpinner from '@/components/FidgetSpinner.vue';
+
   interface Props {
     readonly icon?: string;
     readonly secondary?: boolean;
     readonly small?: boolean;
+    readonly loading?: boolean;
+    readonly disabled?: boolean;
   }
 
-  defineProps<Props>();
+  const { disabled, loading } = defineProps<Props>();
+
+  const isButtonDisabled = computed(() => {
+    return disabled || loading
+  });
 </script>
 
 <style module>
   .button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    column-gap: var(--button-gap);
     height: var(--button-height);
     padding: var(--button-padding);
     border-radius: var(--button-border-radius);
@@ -38,12 +57,6 @@
       background-color 0.15s ease-out,
       color 0.15s ease-out;
 
-    &:has(:global(.icon)) {
-      display: flex;
-      align-items: center;
-      column-gap: var(--button-gap);
-    }
-
     &:global(.secondary) {
       background-color: var(--button-secondary-color-background);
       color: var(--button-secondary-color-text);
@@ -54,10 +67,7 @@
       border-radius: var(--button-small-border-radius);
       font-size: var(--button-small-font-size);
       padding: var(--button-small-padding);
-
-      &:has(:global(.icon)) {
-        column-gap: var(--button-small-gap);
-      }
+      column-gap: var(--button-small-gap);
     }
 
     &:focus-visible,
@@ -85,6 +95,14 @@
         color: var(--button-secondary-color-text-disabled);
         background-color: var(--button-secondary-color-background-disabled);
       }
+    }
+  }
+
+  .icon {
+    font-size: 1.25em;
+
+    &:global(.small) {
+      font-size: 1.15em;
     }
   }
 </style>
