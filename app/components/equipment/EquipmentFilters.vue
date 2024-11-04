@@ -65,7 +65,7 @@
 </template>
 
 <script lang="ts" setup>
-  import type { EquipmentStatus } from '~~/server/models'
+  import type { EquipmentStatus } from '#shared/models/equipment';
   import PerdButton from '@/components/PerdButton.vue'
   import SearchInput from './SearchInput.vue';
   import StatusSelect from './StatusSelect.vue';

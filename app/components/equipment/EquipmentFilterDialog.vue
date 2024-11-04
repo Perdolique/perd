@@ -32,7 +32,7 @@
 </template>
 
 <script lang="ts" setup>
-  import type { EquipmentStatus } from '~~/server/models';
+  import type { EquipmentStatus } from '#shared/models/equipment';
   import ModalDialog from '~/components/dialogs/ModalDialog.vue'
   import PerdButton from '~/components/PerdButton.vue';
   import SearchInput from './SearchInput.vue';
