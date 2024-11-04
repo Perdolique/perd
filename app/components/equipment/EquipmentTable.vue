@@ -15,14 +15,14 @@
     </template>
 
     <template #status="{ rowData }">
-      <EquipmentStatus :status="rowData.status" />
+      <EquipmentStatusTag :status="rowData.status" />
     </template>
   </PerdTable>
 </template>
 
 <script lang="ts" setup>
   import PerdTable from '@/components/PerdTable/PerdTable.vue';
-  import EquipmentStatus from './EquipmentStatus.vue';
+  import EquipmentStatusTag from './EquipmentStatusTag.vue';
 
   interface Item {
     readonly id: string;

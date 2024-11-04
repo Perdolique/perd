@@ -75,7 +75,7 @@
 </template>
 
 <script lang="ts" setup>
-  import type { EquipmentStatus } from '~~/server/models'
+  import type { EquipmentStatus } from '#shared/models/equipment';
   import EmptyState from '~/components/EmptyState.vue'
   import PageContent from '~/components/layout/PageContent.vue'
   import PerdButton from '~/components/PerdButton.vue'
