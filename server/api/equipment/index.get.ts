@@ -1,6 +1,6 @@
 import * as v from 'valibot'
 import { and, asc, count, eq, ilike } from 'drizzle-orm'
-import type { EquipmentStatus } from '~~/server/models';
+import type { EquipmentStatus } from '#shared/models/equipment';
 
 interface Meta {
   readonly limit: number;

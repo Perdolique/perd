@@ -8,7 +8,7 @@
       {{ formattedWeight }}
     </div>
 
-    <EquipmentStatus
+    <EquipmentStatusTag
       :class="$style.status"
       :status="status"
     />
@@ -16,7 +16,7 @@
 </template>
 
 <script lang="ts" setup>
-  import EquipmentStatus from './EquipmentStatus.vue';
+  import EquipmentStatusTag from './EquipmentStatusTag.vue';
 
   interface Props {
     readonly id: string;

@@ -9,7 +9,7 @@
 </template>
 
 <script lang="ts" setup>
-  import type { EquipmentStatus } from '~~/server/models';
+  import type { EquipmentStatus } from '#shared/models/equipment';
   import PerdSelect from '@/components/PerdSelect.vue'
 
   interface Props {

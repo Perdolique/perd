@@ -6,7 +6,8 @@ export default defineNuxtConfig({
   ],
 
   experimental: {
-    viewTransition: true
+    viewTransition: true,
+    scanPageMeta: true
   },
 
   typescript: {
