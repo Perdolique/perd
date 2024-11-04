@@ -1,5 +1,5 @@
 import * as v from 'valibot'
-import { and, asc, count, ilike } from 'drizzle-orm'
+import { and, asc, count, eq, ilike } from 'drizzle-orm'
 
 interface Meta {
   readonly limit: number;
@@ -34,7 +34,9 @@ function validateQuery(query: unknown) {
 }
 
 function generateFilter({ search } : ReturnType<typeof validateQuery>) {
-  const filters = [];
+  const filters = [
+    eq(tables.equipment.status, 'active')
+  ];
 
   if (search !== undefined) {
     filters.push(
