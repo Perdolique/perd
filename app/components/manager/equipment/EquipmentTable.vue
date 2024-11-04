@@ -9,10 +9,6 @@
         {{ rowData.name }}
       </span>
     </template>
-
-    <template #weight="{ rowData }">
-      {{ formatWeight(rowData.weight) }}
-    </template>
   </PerdTable>
 </template>
 
@@ -23,7 +19,6 @@
     readonly id: string;
     readonly key: string;
     readonly name: string;
-    readonly weight: number;
   }
 
   interface Props {
@@ -33,8 +28,7 @@
   defineProps<Props>();
 
   const columns = [
-    { key: 'name',   label: 'Name' },
-    { key: 'weight', label: 'Weight' }
+    { key: 'name', label: 'Name' }
   ]
 </script>
 

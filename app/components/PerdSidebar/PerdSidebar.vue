@@ -30,6 +30,13 @@
         </SidebarItem>
 
         <SidebarItem
+          to="/equipment"
+          icon="tabler:database"
+        >
+          Equipment database
+        </SidebarItem>
+
+        <SidebarItem
           v-if="user.isAdmin"
           to="/manager/equipment"
           icon="tabler:building-warehouse"
