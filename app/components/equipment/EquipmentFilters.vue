@@ -9,12 +9,6 @@
       @clear="onSearchClear"
     />
 
-    <StatusSelect
-      :model-value="statusModel"
-      :loading="loading"
-      @update:model-value="onStatusChange"
-    />
-
     <PerdButton
       type="submit"
       :loading="loading"
@@ -59,16 +53,13 @@
   <EquipmentFilterDialog
     v-model="isDialogOpened"
     v-model:search="searchModel"
-    v-model:status="statusModel"
     @submit="handleSubmit"
   />
 </template>
 
 <script lang="ts" setup>
-  import type { EquipmentStatus } from '#shared/models/equipment';
   import PerdButton from '@/components/PerdButton.vue'
   import SearchInput from './SearchInput.vue';
-  import StatusSelect from './StatusSelect.vue';
   import EquipmentFilterDialog from './EquipmentFilterDialog.vue';
 
   interface Props {
@@ -88,11 +79,6 @@
     required: true
   })
 
-  const statusModel = defineModel<string>('status', {
-    required: true,
-    default: '' satisfies EquipmentStatus | ''
-  })
-
   function showDialog() {
     isDialogOpened.value = true;
   }
@@ -101,15 +87,8 @@
     emit('submit')
   }
 
-  function onStatusChange(value: string) {
-    statusModel.value = value
-
-    emit('submit')
-  }
-
   function onResetClick() {
     searchModel.value = ''
-    statusModel.value = ''
 
     emit('submit')
   }

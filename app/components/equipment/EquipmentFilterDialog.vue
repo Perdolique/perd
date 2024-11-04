@@ -11,7 +11,6 @@
 
       <div :class="$style.inputs">
         <SearchInput v-model="searchModel" />
-        <StatusSelect v-model="statusModel" />
       </div>
 
       <div :class="$style.buttons">
@@ -32,11 +31,9 @@
 </template>
 
 <script lang="ts" setup>
-  import type { EquipmentStatus } from '#shared/models/equipment';
   import ModalDialog from '~/components/dialogs/ModalDialog.vue'
   import PerdButton from '~/components/PerdButton.vue';
   import SearchInput from './SearchInput.vue';
-  import StatusSelect from './StatusSelect.vue';
 
   type Emits = (event: 'submit') => void
 
@@ -44,11 +41,6 @@
 
   const searchModel = defineModel<string>('search', {
     required: true
-  })
-
-  const statusModel = defineModel<string>('status', {
-    required: true,
-    default: '' satisfies EquipmentStatus | ''
   })
 
   const isOpened = defineModel<boolean>({

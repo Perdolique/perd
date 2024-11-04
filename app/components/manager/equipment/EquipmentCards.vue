@@ -5,7 +5,6 @@
       :id="item.id"
       :key="item.id"
       :name="item.name"
-      :weight="item.weight"
     />
   </div>
 </template>
@@ -16,7 +15,6 @@
   interface Item {
     readonly id: string;
     readonly name: string;
-    readonly weight: number;
   }
 
   interface Props {

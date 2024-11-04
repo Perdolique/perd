@@ -4,24 +4,16 @@
       {{ name }}
     </div>
 
-    <div :class="$style.id">
+    <div :class="$style.weight">
       {{ formattedWeight }}
     </div>
-
-    <EquipmentStatusTag
-      :class="$style.status"
-      :status="status"
-    />
   </div>
 </template>
 
 <script lang="ts" setup>
-  import EquipmentStatusTag from './EquipmentStatusTag.vue';
-
   interface Props {
     readonly id: string;
     readonly name: string;
-    readonly status: string;
     readonly weight: number;
   }
 
@@ -45,14 +37,9 @@
     font-weight: var(--font-weight-medium);
   }
 
-  .id {
+  .weight {
     grid-area: 2 / 1 / 3 / 2;
     font-size: var(--font-size-12);
     color: var(--text-400);
-  }
-
-  .status {
-    grid-area: 1 / 2 / 3 / 3;
-    align-self: start;
   }
 </style>

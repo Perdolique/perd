@@ -1,5 +1,5 @@
 <template>
-  <PageContent page-title="Equipment management">
+  <PageContent page-title="Equipment manager">
     <template #actions>
       <div :class="$style.actions">
         <PerdButton
@@ -42,22 +42,13 @@
       :class="$style.content"
       v-else-if="data"
     >
-      <div :class="$style.filtersContainer">
-        <EquipmentFilters
-          v-model:search="searchValue"
-          v-model:status="equipmentStatus"
-          :loading="isFiltering"
-          @submit="applyFilters"
-        />
-
-        <PerdPaginator
-          :limit="data.meta.limit"
-          :offset="data.meta.offset"
-          :total="data.meta.total"
-          :class="$style.paginator"
-          @page-change="handlePageChange"
-        />
-      </div>
+      <PerdPaginator
+        :limit="data.meta.limit"
+        :offset="data.meta.offset"
+        :total="data.meta.total"
+        :class="$style.paginator"
+        @page-change="handlePageChange"
+      />
 
       <EmptyState
         v-if="noResults"
@@ -75,16 +66,14 @@
 </template>
 
 <script lang="ts" setup>
-  import type { EquipmentStatus } from '#shared/models/equipment';
   import EmptyState from '~/components/EmptyState.vue'
   import PageContent from '~/components/layout/PageContent.vue'
   import PerdButton from '~/components/PerdButton.vue'
   import PerdMenu from '~/components/PerdMenu.vue'
   import OptionButton from '~/components/PerdMenu/OptionButton.vue'
   import PerdPaginator from '~/components/PerdPaginator.vue'
-  import EquipmentTable from '~/components/equipment/EquipmentTable.vue'
-  import EquipmentCards from '~/components/equipment/EquipmentCards.vue'
-  import EquipmentFilters from '~/components/equipment/EquipmentFilters.vue'
+  import EquipmentTable from '~/components/manager/equipment/EquipmentTable.vue'
+  import EquipmentCards from '~/components/manager/equipment/EquipmentCards.vue'
 
   definePageMeta({
     layout: 'page',
@@ -92,20 +81,11 @@
   })
 
   const router = useRouter()
-  const isFiltering = ref(false)
   const page = ref(1)
-  const searchValue = ref('')
-  const equipmentStatus = ref<EquipmentStatus | ''>('')
-  const searchQuery = computed(() => searchValue.value === '' ? undefined : searchValue.value)
-  const equipmentStatusQuery = computed(() => equipmentStatus.value === '' ? undefined : equipmentStatus.value)
 
-  const { data, error, status, refresh } = await useFetch('/api/equipment', {
-    watch: false,
-
+  const { data, error } = await useFetch('/api/equipment/drafts', {
     query: {
-      page,
-      search: searchQuery,
-      status: equipmentStatusQuery
+      page
     },
 
     transform: ({ data, meta }) => {
@@ -115,9 +95,7 @@
         return {
           id: idString,
           key: idString,
-          name: item.name,
-          status: item.status,
-          weight: item.weight
+          name: item.name
         }
       })
 
@@ -144,22 +122,7 @@
 
   function handlePageChange(newPage: number) {
     page.value = newPage
-
-    refresh()
   }
-
-  function applyFilters() {
-    page.value = 1
-    isFiltering.value = true
-
-    refresh()
-  }
-
-  watch(status, () => {
-    if (status.value !== 'pending') {
-      isFiltering.value = false
-    }
-  })
 </script>
 
 <style module>
@@ -171,12 +134,6 @@
   .content {
     display: grid;
     row-gap: var(--spacing-12);
-  }
-
-  .filtersContainer {
-    display: grid;
-    align-items: center;
-    row-gap: var(--spacing-24);
   }
 
   .paginator {
