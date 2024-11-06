@@ -10,7 +10,14 @@
     </template>
 
     <EmptyState
-      v-if="isEmpty"
+      v-if="hasTypesError"
+      icon="streamline-emojis:face-screaming-in-fear"
+    >
+      Can't load equipment types
+    </EmptyState>
+
+    <EmptyState
+      v-else-if="isEmpty"
       icon="tabler:filters"
     >
       No types added
@@ -54,8 +61,10 @@
 
   const isAddDialogOpen = ref(false)
   const { addToast } = useToaster()
-  const { types, addType } = await useEquipmentTypesData()
+  const { types, addType, fetchTypes, hasError: hasTypesError } = useEquipmentTypesState()
   const isEmpty = computed(() => types.value.length === 0)
+
+  await fetchTypes()
 
   function onAddClick() {
     isAddDialogOpen.value = true

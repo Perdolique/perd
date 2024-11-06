@@ -39,13 +39,13 @@
 <script lang="ts" setup>
   import type { SelectHTMLAttributes } from 'vue';
 
-  interface Option {
+  export interface SelectOption {
     readonly value: string;
     readonly label: string;
   }
 
   interface Props {
-    readonly options: readonly Option[];
+    readonly options: readonly SelectOption[];
     readonly placeholder?: string;
     readonly required?: SelectHTMLAttributes['required'];
     readonly disabled?: SelectHTMLAttributes['disabled'];

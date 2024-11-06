@@ -10,7 +10,14 @@
     </template>
 
     <EmptyState
-      v-if="isEmpty"
+      v-if="hasGroupsError"
+      icon="streamline-emojis:face-screaming-in-fear"
+    >
+      Can't load equipment groups
+    </EmptyState>
+
+    <EmptyState
+      v-else-if="isEmpty"
       icon="tabler:category"
     >
       No groups added
@@ -54,8 +61,10 @@
 
   const isAddDialogOpen = ref(false)
   const { addToast } = useToaster()
-  const { groups, addGroup } = await useEquipmentGroupsData()
+  const { groups, addGroup, fetchGroups, hasError: hasGroupsError } = useEquipmentGroupsState()
   const isEmpty = computed(() => groups.value.length === 0)
+
+  await fetchGroups()
 
   function onAddClick() {
     isAddDialogOpen.value = true
