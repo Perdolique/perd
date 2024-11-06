@@ -38,7 +38,6 @@
     display: grid;
     gap: var(--spacing-16);
     justify-content: space-between;
-    align-items: center;
 
     @include mobileLarge {
       grid-template-columns: 1fr auto;

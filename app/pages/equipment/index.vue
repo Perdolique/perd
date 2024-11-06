@@ -1,5 +1,15 @@
 <template>
   <PageContent page-title="Equipment database">
+    <template #actions>
+      <PerdButton
+        small
+        icon="tabler:plus"
+        @click="onAddItemClick"
+      >
+        Add item
+      </PerdButton>
+    </template>
+
     <EmptyState
       v-if="error"
       icon="streamline-emojis:face-screaming-in-fear"
@@ -49,11 +59,13 @@
   import EquipmentTable from '~/components/equipment/EquipmentTable.vue'
   import EquipmentCards from '~/components/equipment/EquipmentCards.vue'
   import EquipmentFilters from '~/components/equipment/EquipmentFilters.vue'
+  import PerdButton from '~/components/PerdButton.vue'
 
   definePageMeta({
     layout: 'page'
   })
 
+  const router = useRouter()
   const isFiltering = ref(false)
   const page = ref(1)
   const searchValue = ref('')
@@ -99,6 +111,10 @@
     isFiltering.value = true
 
     refresh()
+  }
+
+  function onAddItemClick() {
+    router.push('/equipment/add')
   }
 
   watch(status, () => {
