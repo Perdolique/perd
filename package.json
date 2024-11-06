@@ -19,7 +19,7 @@
     "date-fns": "4.1.0",
     "drizzle-orm": "0.36.0",
     "modern-normalize": "3.0.1",
-    "nuxt": "3.14.0",
+    "nuxt": "3.14.159",
     "ulid": "2.3.0",
     "vue": "3.5.12"
   },
@@ -31,7 +31,7 @@
     "@types/ws": "8.5.13",
     "@vueuse/core": "11.2.0",
     "consola": "3.2.3",
-    "drizzle-kit": "0.27.1",
+    "drizzle-kit": "0.27.2",
     "sass": "1.80.6",
     "tsx": "4.19.2",
     "typescript": "5.6.3",
