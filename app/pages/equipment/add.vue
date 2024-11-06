@@ -9,7 +9,6 @@
   import AddEquipmentForm from '~/components/equipment/AddEquipmentForm.vue';
 
   definePageMeta({
-    layout: 'page',
-    middleware: ['admin']
+    layout: 'page'
   })
 </script>
