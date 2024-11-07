@@ -64,5 +64,22 @@
         cursor: not-allowed;
       }
     }
+
+    // Reset default p styles
+    p {
+      margin: 0;
+    }
+
+    // Reset default ul styles
+    ul {
+      margin: 0;
+      padding: 0;
+      margin-left: 2rem;
+    }
+
+    // Reset default li styles
+    li {
+      line-height: 1.5em;
+    }
   }
 </style>

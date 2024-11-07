@@ -1,5 +1,8 @@
 <template>
-  <div :class="$style.component">
+  <NuxtLink
+    :to="`/equipment/item/${id}`"
+    :class="$style.component"
+  >
     <div :class="$style.name">
       {{ name }}
     </div>
@@ -7,7 +10,7 @@
     <div :class="$style.weight">
       {{ formattedWeight }}
     </div>
-  </div>
+  </NuxtLink>
 </template>
 
 <script lang="ts" setup>
@@ -23,6 +26,8 @@
 
 <style module>
   .component {
+    text-decoration: none;
+    color: inherit;
     display: grid;
     justify-content: space-between;
     row-gap: var(--spacing-8);

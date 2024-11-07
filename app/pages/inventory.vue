@@ -22,9 +22,12 @@
       :columns="columns"
     >
       <template #name="{ rowData }">
-        <span :class="$style.name">
+        <PerdLink
+          :class="$style.nameLink"
+          :to="`/equipment/item/${rowData.id}`"
+        >
           {{ rowData.name }}
-        </span>
+        </PerdLink>
       </template>
 
       <template #weight="{ rowData }">
@@ -60,6 +63,7 @@
   import EmptyState from '~/components/EmptyState.vue';
   import PerdTable from '~/components/PerdTable/PerdTable.vue';
   import PerdButton from '~/components/PerdButton.vue';
+  import PerdLink from '~/components/PerdLink.vue';
 
   interface EquipmentItem {
     readonly id: number;
@@ -154,7 +158,7 @@
     }
   }
 
-  .name {
+  .nameLink {
     font-weight: var(--font-weight-medium);
   }
 
