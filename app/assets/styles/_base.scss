@@ -193,6 +193,9 @@
 }
 
 :root {
+  // Text
+  --text-color-secondary: color-mix(in oklch, var(--text), transparent 30%);
+
   // Overlay
   --overlay-color-background: oklch(0 0 0 / 50%);
   --overlay-backdrop-filter: blur(4px);

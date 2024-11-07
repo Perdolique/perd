@@ -125,7 +125,7 @@
 
       const descriptionValue = description.value === '' ? undefined : description.value
 
-      await $fetch('/api/equipment', {
+      await $fetch('/api/equipment/items', {
         method: 'POST',
 
         body: {

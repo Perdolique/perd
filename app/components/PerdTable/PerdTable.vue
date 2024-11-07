@@ -42,7 +42,7 @@
   defineProps<Props>();
 </script>
 
-<style module>
+<style lang="scss" module>
   .component {
     width: 100%;
     table-layout: fixed;
@@ -70,6 +70,8 @@
   }
 
   .cell {
+    @include overflow-ellipsis();
+
     padding: var(--table-cell-padding);
   }
 </style>

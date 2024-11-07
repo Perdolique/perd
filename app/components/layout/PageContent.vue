@@ -9,7 +9,9 @@
         {{ pageTitle }}
       </PerdHeading>
 
-      <slot name="actions" />
+      <div :class="$style.actions">
+        <slot name="actions" />
+      </div>
     </div>
 
     <div>
@@ -22,7 +24,7 @@
   import PerdHeading from '~/components/PerdHeading.vue'
 
   interface Props {
-    readonly pageTitle: string;
+    readonly pageTitle?: string;
   }
 
   defineProps<Props>()
@@ -46,5 +48,9 @@
 
   .heading {
     @include overflow-ellipsis();
+  }
+
+  .actions {
+    justify-self: start;
   }
 </style>

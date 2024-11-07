@@ -83,7 +83,7 @@
   const router = useRouter()
   const page = ref(1)
 
-  const { data, error } = await useFetch('/api/equipment/drafts', {
+  const { data, error } = await useFetch('/api/search/equipment-drafts', {
     query: {
       page
     },

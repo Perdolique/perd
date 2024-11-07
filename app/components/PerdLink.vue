@@ -1,5 +1,5 @@
 <template>
-  <NuxtLink :class="$style.root">
+  <NuxtLink :class="$style.component">
     <slot />
   </NuxtLink>
 </template>
@@ -13,25 +13,22 @@
 </script>
 
 <style module>
-  .root {
+  .component {
     outline: none;
     color: var(--primary-700);
-    border-bottom: 1px solid transparent;
+    position: relative;
     text-decoration: none;
-
-    transition:
-      border-color var(--transition-time-quick),
-      color var(--transition-time-quick);
+    transition: color var(--transition-time-quick);
+    cursor: pointer;
 
     &:hover,
     &:focus-visible {
+      text-decoration: underline;
       color: var(--primary-600);
-      border-color: var(--primary-600);
     }
 
     &:active {
       color: var(--primary-500);
-      border-color: var(--primary-500);
     }
   }
 </style>
