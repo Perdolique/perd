@@ -1,3 +1,26 @@
+import { createHash, type BinaryLike } from 'crypto'
+import { basename } from 'path'
+
+type ComponentType = 'page' | 'layout' | 'component';
+
+function getComponentType(filePath: string) : ComponentType {
+  if (filePath.includes('/app/pages/')) {
+    return 'page';
+  } else if (filePath.includes('/app/layouts/')) {
+    return 'layout';
+  } else {
+    return 'component';
+  }
+}
+
+function getComponentName(componentName: string, componentType: ComponentType) : string {
+  if (componentType === 'component') {
+    return componentName;
+  }
+
+  return `${componentType}-${componentName}`;
+}
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: [
@@ -58,6 +81,25 @@ export default defineNuxtConfig({
 
   vite: {
     css: {
+      modules: {
+        generateScopedName(className: string, filename: string, data: BinaryLike) : string {
+          const hash = createHash('sha256')
+            .update(data)
+            .digest('hex')
+            .slice(0, 6);
+
+          const filePath = filename
+            .replace(/\.vue\?.+?$/u, '')
+            .replace(/\[|\]/gu, '');
+
+          const baseName = basename(filePath);
+          const componentType = getComponentType(filePath);
+          const componentName = getComponentName(baseName, componentType);
+
+          return `${componentName}_${className}_${hash}`;
+        }
+      },
+
       preprocessorOptions: {
         scss: {
           api: 'modern-compiler',
