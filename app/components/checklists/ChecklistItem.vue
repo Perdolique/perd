@@ -10,7 +10,16 @@
     />
 
     <div :class="$style.name">
-      {{ item.equipment.name}}
+      <temlplate v-if="checkMode">
+        {{ item.equipment.name }}
+      </temlplate>
+
+      <PerdLink
+        v-else
+        :to="`/equipment/item/${item.equipment.id}`"
+      >
+        {{ item.equipment.name}}
+      </PerdLink>
     </div>
 
     <div
@@ -37,6 +46,7 @@
   import type { ChecklistItemModel } from '~/models/checklist'
   import IconButton from '@/components/IconButton.vue'
   import PerdToggle from '@/components/PerdToggle.vue'
+  import PerdLink from '@/components/PerdLink.vue';
 
   interface Props {
     readonly item: ChecklistItemModel;

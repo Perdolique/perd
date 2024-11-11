@@ -71,7 +71,7 @@
   const searchValue = ref('')
   const searchQuery = computed(() => searchValue.value === '' ? undefined : searchValue.value)
 
-  const { data, error, status, refresh } = await useFetch('/api/equipment', {
+  const { data, error, status, refresh } = await useFetch('/api/equipment/items', {
     watch: false,
 
     query: {

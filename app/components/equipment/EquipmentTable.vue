@@ -5,9 +5,12 @@
     :class="$style.table"
   >
     <template #name="{ rowData }">
-      <span :class="$style.nameCell">
+      <PerdLink
+        :class="$style.nameLink"
+        :to="`/equipment/item/${rowData.id}`"
+      >
         {{ rowData.name }}
-      </span>
+      </PerdLink>
     </template>
 
     <template #weight="{ rowData }">
@@ -18,6 +21,7 @@
 
 <script lang="ts" setup>
   import PerdTable from '@/components/PerdTable/PerdTable.vue';
+  import PerdLink from '@/components/PerdLink.vue';
 
   interface Item {
     readonly id: string;
@@ -47,7 +51,7 @@
     }
   }
 
-  .nameCell {
+  .nameLink {
     font-weight: var(--font-weight-medium);
   }
 </style>

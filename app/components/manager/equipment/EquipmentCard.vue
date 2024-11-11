@@ -1,7 +1,10 @@
 <template>
-  <div :class="$style.component">
+  <NuxtLink
+    :to="`/equipment/item/${id}`"
+    :class="$style.component"
+  >
     {{ name }}
-  </div>
+  </NuxtLink>
 </template>
 
 <script lang="ts" setup>
@@ -15,6 +18,8 @@
 
 <style module>
   .component {
+    text-decoration: none;
+    color: inherit;
     background-color: var(--accent-50);
     border: 1px solid var(--accent-200);
     border-radius: var(--border-radius-8);
