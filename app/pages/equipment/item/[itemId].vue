@@ -17,10 +17,7 @@
         :class="$style.image"
       />
 
-      <div
-        v-if="description"
-        :class="$style.tags"
-      >
+      <div :class="$style.tags">
         <PerdTag
           icon="tabler:weight"
           color="gray"

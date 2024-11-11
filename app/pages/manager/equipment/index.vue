@@ -15,14 +15,14 @@
           text="Manage"
         >
           <OptionButton
-            icon="tabler:filters"
+            icon="tabler:tag"
             @click="handleTypesClick"
           >
             Types
           </OptionButton>
 
           <OptionButton
-            icon="tabler:category"
+            icon="tabler:cube"
             @click="handleGroupsClick"
           >
             Groups
