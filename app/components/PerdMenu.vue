@@ -61,6 +61,7 @@
     transform: translateY(calc(-1 * var(--spacing)));
     top: calc(100% + var(--spacing));
     right: 0;
+    z-index: 1;
     overflow: hidden;
     background-color: var(--secondary-50);
     border: 1px solid var(--secondary-200);

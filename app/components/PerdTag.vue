@@ -47,5 +47,10 @@
     border-radius: var(--border-radius-8);
     font-weight: var(--font-weight-medium);
     border: 1px solid color-mix(in oklch, v-bind(tagColor), black 5%);
+
+    @media (prefers-color-scheme: dark) {
+      background-color: color-mix(in oklch, v-bind(tagColor), black 50%);
+      border: 1px solid color-mix(in oklch, v-bind(tagColor), black 45%);
+    }
   }
 </style>
