@@ -1,5 +1,28 @@
 <template>
   <PageContent :page-title="itemName">
+    <template #actions>
+      <div :class="$style.actions">
+        <PerdMenu
+          icon="tabler:adjustments"
+          text="Manage"
+        >
+          <OptionButton
+            icon="tabler:pencil"
+            @click="onEdit"
+          >
+            Edit
+          </OptionButton>
+
+          <OptionButton
+            icon="tabler:trash"
+            @click="onDelete"
+          >
+            Delete
+          </OptionButton>
+        </PerdMenu>
+      </div>
+    </template>
+
     <EmptyState
       v-if="error"
       :icon="errorIcon"
@@ -86,12 +109,24 @@
   import EmptyState from '~/components/EmptyState.vue';
   import PageContent from '~/components/layout/PageContent.vue'
   import PerdHeading from '~/components/PerdHeading.vue';
+  import PerdMenu from '~/components/PerdMenu.vue';
+  import OptionButton from '~/components/PerdMenu/OptionButton.vue';
   import PerdTag from '~/components/PerdTag.vue';
 
+  definePageMeta({
+    layout: 'page'
+  })
+
   const route = useRoute()
+  const router = useRouter()
+  const { addToast } = useToaster()
   const itemId = computed(() => route.params.itemId)
+  const itemName = ref('')
+  const description = ref('')
   const { data, error } = await useFetch(`/api/equipment/items/${itemId.value}`)
-  const itemName = computed(() => data.value?.equipment.name ?? '¯\\_(ツ)_/¯')
+
+  itemName.value = data.value?.equipment.name ?? '¯\\_(ツ)_/¯'
+  description.value = data.value?.equipment.description ?? ''
 
   const errorIcon = computed(() => {
     if (error.value?.statusCode === 404) {
@@ -109,15 +144,32 @@
     return 'Something went wrong'
   })
 
-  const description = computed(() => data.value?.equipment.description ?? null)
   const weight = computed(() => data.value?.equipment.weight ?? 0)
   const formattedWeight = computed(() => formatWeight(weight.value))
+
+  function onEdit() {
+    router.push(`/equipment/item/${itemId.value}/edit`)
+  }
+
+  function onDelete() {
+    // TODO: Implement deletion
+    addToast({
+      title: '¯\\(ツ)/¯',
+      message: 'This feature is not implemented yet'
+    })
+  }
 </script>
 
 <style lang="scss" module>
   @mixin section() {
     display: grid;
     row-gap: var(--spacing-16);
+  }
+
+  .actions {
+    display: flex;
+    gap: var(--spacing-8);
+    justify-content: flex-end;
   }
 
   .content {
@@ -167,6 +219,9 @@
     line-height: 1.5;
     text-wrap: balance;
     overflow: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   .tags {

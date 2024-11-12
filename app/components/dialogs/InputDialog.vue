@@ -12,6 +12,7 @@
       <TextInput
         required
         autofocus
+        ref="textInputRef"
         v-model="input"
         :placeholder="placeholder"
         :class="$style.input"
@@ -41,18 +42,19 @@
   import ModalDialog from './ModalDialog.vue'
 
   interface Props {
-    readonly headerText: string
-    readonly placeholder: string
-    readonly addButtonText: string
-    readonly maxlength: number
+    readonly headerText: string;
+    readonly placeholder: string;
+    readonly addButtonText: string;
+    readonly maxlength: number;
+    readonly initialValue?: string;
   }
 
   type Emits = (event: 'submit', input: string) => void
 
-  defineProps<Props>()
-
+  const { initialValue = '' } = defineProps<Props>()
+  const textInputRef = useTemplateRef('textInputRef')
   const emit = defineEmits<Emits>()
-  const input = ref('')
+  const input = ref(initialValue)
 
   const isOpened = defineModel<boolean>({
     required: true
@@ -69,9 +71,17 @@
   }
 
   // Reset form when dialog is opened
-  watch(isOpened, (value) => {
-    if (value) {
-      input.value = ''
+  watch(isOpened, (opened) => {
+    if (opened) {
+      // Reset input field to initial value
+      if (input.value !== initialValue) {
+        input.value = initialValue
+      }
+
+      // Select text in input field if it's not empty
+      if (input.value !== '') {
+        textInputRef.value?.$el.select()
+      }
     }
   })
 </script>

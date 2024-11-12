@@ -267,7 +267,9 @@ export const equipment = pgTable('equipment', {
 
   updatedAt:
     timestamp({
-      withTimezone: true
+      withTimezone: true,
+      // TODO: https://github.com/drizzle-team/drizzle-orm/issues/2388
+      mode: 'string'
     })
     .notNull()
     .defaultNow()

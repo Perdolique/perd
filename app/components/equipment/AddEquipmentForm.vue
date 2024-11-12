@@ -6,84 +6,30 @@
     Can't load required data
   </EmptyState>
 
-  <form
+  <EditEquipmentForm
     v-else
-    :class="$style.form"
-    :disabled="isSubmitting"
-    @submit.prevent="onSubmit"
-  >
-    <div :class="$style.inputs">
-      <ImageUpload :class="$style.image" />
-
-      <PerdInput
-        required
-        autocomplete="off"
-        label="Name"
-        placeholder="Ultralight Tent"
-        :class="$style.name"
-        v-model.trim="name"
-      />
-
-      <PerdTextArea
-        label="Description"
-        placeholder="A lightweight tent for backpacking."
-        v-model.trim="description"
-        :class="$style.description"
-      />
-
-      <PerdInput
-        required
-        autocomplete="off"
-        label="Weight"
-        placeholder="1488"
-        inputmode="numeric"
-        pattern="\d*"
-        :class="$style.weight"
-        v-model.trim="weight"
-      />
-
-      <PerdSelect
-        required
-        placeholder="Equipment type"
-        :options="typeOptions"
-        :class="$style.type"
-        v-model="selectedType"
-      />
-
-      <PerdSelect
-        required
-        placeholder="Equipment group"
-        :options="groupOptions"
-        :class="$style.group"
-        v-model="selectedGroup"
-      />
-    </div>
-
-    <hr :class="$style.divider">
-
-    <PerdButton
-      type="submit"
-      :class="$style.button"
-    >
-      Add equipment
-    </PerdButton>
-  </form>
+    v-model:name="name"
+    v-model:description="description"
+    v-model:weight="weight"
+    v-model:type-id="typeId"
+    v-model:group-id="groupId"
+    :groups="groupOptions"
+    :types="typeOptions"
+    :submitting="isSubmitting"
+    @submit="onSubmit"
+  />
 </template>
 
 <script lang="ts" setup>
   import { FetchError } from 'ofetch';
-  import ImageUpload from '~/components/ImageUpload.vue';
-  import PerdButton from '~/components/PerdButton.vue';
-  import PerdInput from '~/components/PerdInput.vue';
-  import PerdSelect from '~/components/PerdSelect.vue';
-  import PerdTextArea from '~/components/PerdTextArea.vue';
   import EmptyState from '~/components/EmptyState.vue';
+  import EditEquipmentForm from '~/components/equipment/EditEquipmentForm.vue';
 
   const name = ref('')
   const description = ref('')
   const weight = ref('')
-  const selectedType = ref('')
-  const selectedGroup = ref('')
+  const typeId = ref('')
+  const groupId = ref('')
   const isSubmitting = ref(false)
   const { addToast } = useToaster()
   const { groups, fetchGroups, hasError: hasGroupsError } = useEquipmentGroupsState()
@@ -111,8 +57,8 @@
     name.value = ''
     description.value = ''
     weight.value = ''
-    selectedType.value = ''
-    selectedGroup.value = ''
+    typeId.value = ''
+    groupId.value = ''
   }
 
   async function onSubmit() {
@@ -132,8 +78,8 @@
           name: name.value,
           description: descriptionValue,
           weight: parseInt(weight.value),
-          typeId: parseInt(selectedType.value),
-          groupId: parseInt(selectedGroup.value)
+          typeId: parseInt(typeId.value),
+          groupId: parseInt(groupId.value)
         }
       })
 
@@ -155,115 +101,3 @@
     }
   }
 </script>
-
-<style lang="scss" module>
-  .form {
-    display: grid;
-    row-gap: var(--spacing-16);
-
-    @include mobileLarge() {
-      row-gap: var(--spacing-32);
-    }
-  }
-
-  .inputs {
-    display: grid;
-    gap: var(--spacing-16);
-
-    grid-template-areas:
-      "image"
-      "name"
-      "description"
-      "weight"
-      "type"
-      "group";
-
-    @include mobileLarge() {
-      grid-template-columns: repeat(3, 1fr);
-      grid-template-rows: auto 1fr auto;
-      grid-template-areas:
-        "image name name"
-        "image description description"
-        "weight type group";
-    }
-
-    @include tablet() {
-      grid-template-columns: repeat(4, 1fr);
-      grid-template-rows: auto 1fr;
-      grid-template-areas:
-        "image name name name"
-        "image description description description"
-        "image weight type group"
-    }
-
-    @include laptop() {
-      grid-template-columns: auto 1fr 1fr;
-      grid-template-rows: auto auto auto auto;
-      grid-template-areas:
-        "image name description"
-        "image weight description"
-        "image type description"
-        "image group description";
-    }
-  }
-
-  .image {
-    grid-area: image;
-    aspect-ratio: 1 / 1;
-    min-width: 200px;
-    justify-self: center;
-
-    @include mobileLarge() {
-      width: 100%;
-    }
-
-    @include laptop() {
-      max-width: 200px;
-      width: 100%;
-      justify-self: end;
-    }
-  }
-
-  .name {
-    grid-area: name;
-  }
-
-  .description {
-    grid-area: description;
-    height: 100%;
-    min-height: 100px;
-  }
-
-  .weight {
-    grid-area: weight;
-  }
-
-  .type {
-    grid-area: type;
-  }
-
-  .group {
-    grid-area: group;
-  }
-
-  .divider {
-    display: none;
-
-    @include mobileLarge() {
-      display: block;
-      height: 1px;
-      border: none;
-      background-color: var(--accent-200);
-      margin: 0 var(--spacing-16);
-    }
-  }
-
-  .button {
-    width: 100%;
-
-    @include mobileLarge() {
-      max-width: 300px;
-      justify-self: center;
-    }
-  }
-</style>
