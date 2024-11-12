@@ -89,7 +89,7 @@ export default defineNuxtConfig({
             .slice(0, 6);
 
           const filePath = filename
-            .replace(/\.vue(:?\?.+?)?$/u, '')
+            .replace(/\.vue(?:\?.+?)?$/u, '')
             .replace(/\[|\]/gu, '');
 
           const baseName = basename(filePath);
