@@ -32,13 +32,13 @@
     "@vueuse/core": "11.2.0",
     "consola": "3.2.3",
     "drizzle-kit": "0.28.1",
-    "sass": "1.80.7",
+    "sass": "1.81.0",
     "tsx": "4.19.2",
     "typescript": "5.6.3",
     "ufo": "1.5.4",
     "valibot": "0.42.1",
     "vue-tsc": "2.1.10",
-    "wrangler": "3.86.1",
+    "wrangler": "3.87.0",
     "ws": "8.18.0"
   }
 }
