@@ -22,7 +22,6 @@
 </template>
 
 <script lang="ts" setup>
-  import { FetchError } from 'ofetch';
   import EmptyState from '~/components/EmptyState.vue';
   import EditEquipmentForm from '~/components/equipment/EditEquipmentForm.vue';
 
@@ -33,6 +32,7 @@
   const groupId = ref('')
   const isSubmitting = ref(false)
   const { addToast } = useToaster()
+  const { showErrorToast } = useApiErrorToast()
   const { groups, fetchGroups, hasError: hasGroupsError } = useEquipmentGroupsState()
   const { types, fetchTypes, hasError: hasTypesError } = useEquipmentTypesState()
 
@@ -91,12 +91,7 @@
 
       resetForm()
     } catch (error) {
-      if (error instanceof FetchError) {
-        addToast({
-          title: 'Failed to add equipment 🥲',
-          message: error.data.message
-        })
-      }
+      showErrorToast(error, 'Failed to add equipment 🥲')
     } finally {
       isSubmitting.value = false
     }

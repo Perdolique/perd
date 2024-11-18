@@ -2,6 +2,7 @@
   <PageContent :page-title="itemName">
     <template #actions>
       <PerdMenu
+        v-if="user.isAdmin"
         icon="tabler:adjustments"
         text="Manage"
       >
@@ -14,9 +15,15 @@
 
         <OptionButton
           icon="tabler:trash"
-          @click="onDelete"
+          @click="showDeleteConfirmation"
         >
-          Delete
+          <template v-if="isDeleting">
+            Deleting...
+          </template>
+
+          <template v-else>
+            Delete
+          </template>
         </OptionButton>
       </PerdMenu>
     </template>
@@ -101,6 +108,15 @@
       </div>
     </div>
   </PageContent>
+
+  <ConfirmationDialog
+    v-model="isDeleteDialogOpened"
+    header-text="Delete item"
+    confirm-button-text="Delete"
+    @confirm="deleteItem"
+  >
+    Item <strong>{{ itemName }}</strong> will be deleted
+  </ConfirmationDialog>
 </template>
 
 <script lang="ts" setup>
@@ -110,6 +126,7 @@
   import PerdMenu from '~/components/PerdMenu.vue';
   import OptionButton from '~/components/PerdMenu/OptionButton.vue';
   import PerdTag from '~/components/PerdTag.vue';
+  import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue';
 
   definePageMeta({
     layout: 'page'
@@ -117,11 +134,12 @@
 
   const route = useRoute()
   const router = useRouter()
+  const { user } = useUserStore()
   const { addToast } = useToaster()
-  const itemId = computed(() => route.params.itemId)
+  const itemId = route.params.itemId?.toString() ?? ''
   const itemName = ref('')
   const description = ref('')
-  const { data, error } = await useFetch(`/api/equipment/items/${itemId.value}`)
+  const { data, error } = await useFetch(`/api/equipment/items/${itemId}`)
 
   itemName.value = data.value?.equipment.name ?? '¯\\_(ツ)_/¯'
   description.value = data.value?.equipment.description ?? ''
@@ -136,7 +154,7 @@
 
   const errorText = computed(() => {
     if (error.value?.statusCode === 404) {
-      return `Item with ID ${itemId.value} not found`
+      return `Item with ID ${itemId} not found`
     }
 
     return 'Something went wrong'
@@ -144,17 +162,43 @@
 
   const weight = computed(() => data.value?.equipment.weight ?? 0)
   const formattedWeight = computed(() => formatWeight(weight.value))
+  const isDeleting = ref(false)
+  const isDeleteDialogOpened = ref(false)
+  const { showErrorToast } = useApiErrorToast()
 
-  function onEdit() {
-    router.push(`/equipment/item/${itemId.value}/edit`)
+  async function deleteItem() {
+    if (isDeleting.value) {
+      return
+    }
+
+    try {
+      isDeleting.value = true
+
+      await $fetch(`/api/equipment/items/${itemId}`, {
+        method: 'DELETE'
+      })
+
+      addToast({
+        title: 'Item deleted',
+        message: `Item ${itemName.value} has been deleted`
+      })
+
+      await navigateTo('/manager/equipment', {
+        replace: true
+      })
+    } catch (error) {
+      showErrorToast(error, 'Failed to delete item')
+    } finally {
+      isDeleting.value = false
+    }
   }
 
-  function onDelete() {
-    // TODO: Implement deletion
-    addToast({
-      title: '¯\\(ツ)/¯',
-      message: 'This feature is not implemented yet'
-    })
+  function showDeleteConfirmation() {
+    isDeleteDialogOpened.value = true
+  }
+
+  function onEdit() {
+    router.push(`/equipment/item/${itemId}/edit`)
   }
 </script>
 
