@@ -7,43 +7,34 @@ const paramsSchema = v.object({
 })
 
 const bodySchema = v.object({
-  name: v.optional(
-    v.pipe(
-      v.string(),
-      v.nonEmpty(),
-      v.maxLength(limits.maxEquipmentItemNameLength)
-    )
+  name: v.pipe(
+    v.string(),
+    v.nonEmpty(),
+    v.maxLength(limits.maxEquipmentItemNameLength)
   ),
 
-  description: v.optional(
-    v.pipe(
-      v.string(),
-      v.maxLength(limits.maxEquipmentDescriptionLength)
-    )
+  description: v.pipe(
+    v.string(),
+    v.maxLength(limits.maxEquipmentDescriptionLength),
+    v.transform(value => value === '' ? null : value)
   ),
 
-  weight: v.optional(
-    v.pipe(
-      v.number(),
-      v.integer(),
-      v.minValue(0)
-    )
+  weight: v.pipe(
+    v.number(),
+    v.integer(),
+    v.minValue(0)
   ),
 
-  typeId: v.optional(
-    v.pipe(
-      v.number(),
-      v.integer(),
-      v.minValue(1)
-    )
+  typeId: v.pipe(
+    v.number(),
+    v.integer(),
+    v.minValue(1)
   ),
 
-  groupId: v.optional(
-    v.pipe(
-      v.number(),
-      v.integer(),
-      v.minValue(1)
-    )
+  groupId: v.pipe(
+    v.number(),
+    v.integer(),
+    v.minValue(1)
   )
 })
 
@@ -58,21 +49,18 @@ function validateBody(body: unknown) {
 export default defineEventHandler(async (event) => {
   await validateAdmin(event)
 
-
   const { itemId } = await getValidatedRouterParams(event, validateParams)
   const { name, description, weight, typeId, groupId } = await readValidatedBody(event, validateBody)
 
-  const setParams = {
-    ...(name !== undefined && { name }),
-    ...(description !== undefined && { description: description === '' ? null : description }),
-    ...(weight !== undefined && { weight }),
-    ...(typeId !== undefined && { equipmentTypeId: typeId }),
-    ...(groupId !== undefined && { equipmentGroupId: groupId })
-  }
-
   const [item] = await event.context.db
     .update(tables.equipment)
-    .set(setParams)
+    .set({
+      name,
+      description,
+      weight,
+      equipmentTypeId: typeId,
+      equipmentGroupId: groupId
+    })
     .where(
       eq(tables.equipment.id, itemId)
     )
