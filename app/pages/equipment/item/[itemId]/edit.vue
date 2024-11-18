@@ -24,25 +24,26 @@
 </template>
 
 <script lang="ts" setup>
-  import { FetchError } from 'ofetch'
   import EditEquipmentForm from '~/components/equipment/EditEquipmentForm.vue'
   import PageContent from '~/components/layout/PageContent.vue'
   import EmptyState from '~/components/EmptyState.vue'
 
   definePageMeta({
-    layout: 'page'
+    layout: 'page',
+    middleware: 'admin'
   })
 
   const route = useRoute()
   const router = useRouter()
   const isSubmitting = ref(false)
   const { addToast } = useToaster()
+  const { showErrorToast } = useApiErrorToast()
 
   // TODO: create an utility function
-  const itemId = computed(() => route.params.itemId?.toString() ?? '')
+  const itemId = route.params.itemId?.toString() ?? ''
 
   // TODO: use useAsyncData
-  const { data, error } = await useFetch(`/api/equipment/items/${itemId.value}`)
+  const { data, error } = await useFetch(`/api/equipment/items/${itemId}`)
   const { groups, fetchGroups } = useEquipmentGroupsState()
   const { types, fetchTypes } = useEquipmentTypesState()
 
@@ -79,7 +80,7 @@
 
   const errorText = computed(() => {
     if (error.value?.statusCode === 404) {
-      return `Item with ID ${itemId.value} not found`
+      return `Item with ID ${itemId} not found`
     }
 
     return 'Something went wrong'
@@ -93,8 +94,9 @@
     try {
       isSubmitting.value = true
 
-      await $fetch(`/api/equipment/items/${itemId.value}`, {
+      await $fetch(`/api/equipment/items/${itemId}`, {
         method: 'PATCH',
+
         body: {
           name: name.value,
           description: description.value,
@@ -109,14 +111,9 @@
         message: 'The equipment has been successfully updated'
       })
 
-      router.push(`/equipment/item/${itemId.value}`)
+      router.push(`/equipment/item/${itemId}`)
     } catch (error) {
-      if (error instanceof FetchError) {
-        addToast({
-          title: 'Failed to update equipment 🥲',
-          message: error.data.message
-        })
-      }
+      showErrorToast(error, 'Failed to update equipment 🥲')
     } finally {
       isSubmitting.value = false
     }
