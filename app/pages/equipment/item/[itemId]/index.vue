@@ -1,26 +1,24 @@
 <template>
   <PageContent :page-title="itemName">
     <template #actions>
-      <div :class="$style.actions">
-        <PerdMenu
-          icon="tabler:adjustments"
-          text="Manage"
+      <PerdMenu
+        icon="tabler:adjustments"
+        text="Manage"
+      >
+        <OptionButton
+          icon="tabler:pencil"
+          @click="onEdit"
         >
-          <OptionButton
-            icon="tabler:pencil"
-            @click="onEdit"
-          >
-            Edit
-          </OptionButton>
+          Edit
+        </OptionButton>
 
-          <OptionButton
-            icon="tabler:trash"
-            @click="onDelete"
-          >
-            Delete
-          </OptionButton>
-        </PerdMenu>
-      </div>
+        <OptionButton
+          icon="tabler:trash"
+          @click="onDelete"
+        >
+          Delete
+        </OptionButton>
+      </PerdMenu>
     </template>
 
     <EmptyState
@@ -166,12 +164,6 @@
     row-gap: var(--spacing-16);
   }
 
-  .actions {
-    display: flex;
-    gap: var(--spacing-8);
-    justify-content: flex-end;
-  }
-
   .content {
     display: grid;
     row-gap: var(--spacing-24);
@@ -219,9 +211,6 @@
     line-height: 1.5;
     text-wrap: balance;
     overflow: auto;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
   }
 
   .tags {
