@@ -10,6 +10,7 @@
       :groups="groupOptions"
       :types="typeOptions"
       :submitting="isSubmitting"
+      save-button-text="Save changes"
       @submit="onSubmit"
     />
 

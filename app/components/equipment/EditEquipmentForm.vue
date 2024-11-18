@@ -67,7 +67,7 @@
         type="submit"
         :loading="submitting"
       >
-        Save
+        {{ saveButtonText }}
       </PerdButton>
     </div>
 
@@ -85,6 +85,7 @@
     readonly groups: SelectOption[];
     readonly types: SelectOption[];
     readonly submitting: boolean;
+    readonly saveButtonText: string;
   }
 
   type Emits = (event: 'submit') => void;

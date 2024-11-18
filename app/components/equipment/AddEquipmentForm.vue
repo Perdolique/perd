@@ -16,6 +16,7 @@
     :groups="groupOptions"
     :types="typeOptions"
     :submitting="isSubmitting"
+    save-button-text="Add equipment"
     @submit="onSubmit"
   />
 </template>
