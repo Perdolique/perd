@@ -1,35 +1,31 @@
 <template>
   <div :class="$style.component">
-    <div :class="$style.header">
-      <div :class="$style.logo">
-        🐕💨
+    <div :class="$style.card">
+      <PerdHeading :level="1" :class="$style.title">
+        Your Adventure Hub
+      </PerdHeading>
+
+      <div :class="$style.buttons">
+        <PerdButton
+          icon="tabler:brand-among-us"
+          :class="$style.button"
+          class="amogus"
+          :loading="isAuthenticating"
+          @click="signUp"
+        >
+          Guest
+        </PerdButton>
+
+        <PerdButton
+          :class="$style.button"
+          class="twitch"
+          icon="tabler:brand-twitch"
+          :loading="isAuthenticating"
+          @click="redirectToTwitch"
+        >
+          Twitch
+        </PerdButton>
       </div>
-
-      <div :class="$style.title">
-        Welcome to Perd*!
-      </div>
-
-      <div :class="$style.note">
-        *technical name
-      </div>
-    </div>
-
-    <div :class="$style.buttons">
-      <IconButton
-        icon="tabler:brand-among-us"
-        :class="$style.button"
-        class="amogus"
-        :loading="isAuthenticating"
-        @click="signUp"
-      />
-
-      <IconButton
-        :class="$style.button"
-        class="twitch"
-        icon="tabler:brand-twitch"
-        :loading="isAuthenticating"
-        @click="redirectToTwitch"
-      />
     </div>
   </div>
 </template>
@@ -37,7 +33,8 @@
 <script lang="ts" setup>
   import { startPagePath } from '~~/constants';
   import { startViewTransition } from '~/utils/dom';
-  import IconButton from '~/components/IconButton.vue';
+  import PerdButton from '~/components/PerdButton.vue';
+  import PerdHeading from '~/components/PerdHeading.vue';
 
   definePageMeta({
     layout: false
@@ -94,67 +91,92 @@
   }
 </script>
 
-<style module>
+<style lang="scss" module>
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   .component {
+    height: 100%;
+    background: var(--background-100);
+
+    @include tablet {
+      display: grid;
+      place-items: center;
+      padding: var(--spacing-24);
+    }
+  }
+
+  .card {
+    height: 100%;
     display: grid;
-    justify-content: center;
-    text-align: center;
+    padding: var(--spacing-16);
     row-gap: var(--spacing-16);
-    padding: var(--spacing-32);
-  }
+    align-content: space-between;
+    background:
+      linear-gradient(
+        to bottom,
+        color-mix(in oklch, var(--overlay-color-background), black 40%) 0%,
+        transparent 40%,
+        color-mix(in oklch, var(--overlay-color-background), transparent 50%) 70%,
+        color-mix(in oklch, var(--overlay-color-background), black 60%) 100%
+      ),
+      url('public/dog_items_1024.webp') right / cover;
 
-  .logo {
-    font-size: 4rem;
-    white-space: nowrap;
-  }
-
-  .header {
-    display: grid;
-    gap: var(--spacing-32);
+    @include tablet {
+      width: 480px;
+      max-height: 480px;
+      border-radius: var(--border-radius-24);
+      background-position: center;
+    }
   }
 
   .title {
-    font-size: 1.5rem;
-    font-weight: bold;
-  }
-
-  .note {
-    font-size: 0.75rem;
-    margin-top: calc(-1 * var(--spacing-24));
+    padding: var(--spacing-24) 0;
+    text-align: center;
+    color: oklch(100% 0 0);
+    animation: fadeIn 0.8s ease-out;
   }
 
   .buttons {
-    display: flex;
-    gap: var(--spacing-8);
-    justify-content: center;
+    display: grid;
+    gap: var(--spacing-12);
+    padding: var(--spacing-24) var(--spacing-16);
+    border-radius: var(--border-radius-24);
+
+    @include mobileLarge {
+      grid-auto-flow: column;
+      width: 400px;
+      justify-self: center;
+    }
   }
 
   .button {
-    color: #fff;
+    color: oklch(100% 0 0);
+    width: 100%;
+    transition: background-color var(--transition-time-quick);
 
     &:global(.twitch):not(:disabled) {
-      background-color: #9146FF;
+      background-color: rgba(145, 70, 255, 0.9);
 
-      &:focus-visible,
       &:hover {
-        background-color: #772ce8;
-      }
-
-      &:active {
-        background-color: #5b21b6;
+        background-color: rgba(145, 70, 255, 1);
       }
     }
 
     &:global(.amogus):not(:disabled) {
-      background-color: #4CAF50;
+      background-color: rgba(76, 175, 80, 0.9);
 
-      &:focus-visible,
       &:hover {
-        background-color: #45a049;
-      }
-
-      &:active {
-        background-color: #388e3c;
+        background-color: rgba(76, 175, 80, 1);
       }
     }
   }
