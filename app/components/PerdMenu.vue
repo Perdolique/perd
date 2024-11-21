@@ -3,14 +3,11 @@
     ref="rootRef"
     :class="$style.component"
   >
-    <PerdButton
-      secondary
-      small
-      :icon="icon"
-      @click.passive="toggleMenu"
-    >
-      {{ text }}
-    </PerdButton>
+    <slot
+      name="trigger"
+      :toggle-menu="toggleMenu"
+      :is-menu-visible="isMenuVisible"
+    />
 
     <div
       :class="[$style.menu, {
@@ -24,14 +21,6 @@
 
 <script lang="ts" setup>
   import { onClickOutside } from '@vueuse/core';
-  import PerdButton from './PerdButton.vue';
-
-  interface Props {
-    readonly icon: string;
-    readonly text: string;
-  }
-
-  defineProps<Props>()
 
   const isMenuVisible = ref(false)
   const rootRef = useTemplateRef('rootRef')
@@ -42,8 +31,6 @@
 
   onClickOutside(rootRef, () => {
     isMenuVisible.value = false
-  }, {
-    ignore: ['dialog']
   });
 </script>
 

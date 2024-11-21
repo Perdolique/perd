@@ -10,9 +10,9 @@
     />
 
     <div :class="$style.name">
-      <temlplate v-if="checkMode">
+      <template v-if="checkMode">
         {{ item.equipment.name }}
-      </temlplate>
+      </template>
 
       <PerdLink
         v-else

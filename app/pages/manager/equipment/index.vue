@@ -10,10 +10,18 @@
           Add item
         </PerdButton>
 
-        <PerdMenu
-          icon="tabler:link"
-          text="Manage"
-        >
+        <PerdMenu>
+          <template #trigger="{ toggleMenu }">
+            <PerdButton
+              small
+              secondary
+              icon="tabler:link"
+              @click="toggleMenu"
+            >
+              Manage
+            </PerdButton>
+          </template>
+
           <OptionButton
             icon="tabler:tag"
             @click="handleTypesClick"

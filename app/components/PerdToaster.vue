@@ -48,6 +48,7 @@
 <style module>
   .component {
     position: fixed;
+    pointer-events: none;
     top: 0;
     right: 0;
     padding: var(--spacing-24);
