@@ -60,6 +60,7 @@
 
 <style module>
   .component {
+    pointer-events: auto; /* Parent element has pointer-events: none */
     position: relative;
     max-width: 400px;
     display: grid;

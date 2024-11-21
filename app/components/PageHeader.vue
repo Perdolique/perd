@@ -10,19 +10,35 @@
       />
     </button>
 
-    <PerdButton
+    <PerdMenu
       v-if="isAuthenticated"
-      :class="$style.button"
-      @click="removeAuthSession"
-      small
+      :class="$style.profileMenu"
     >
-      Log out
-    </PerdButton>
+      <template #trigger="{ toggleMenu, isMenuVisible }">
+        <button
+          :class="[$style.profileTrigger, { active: isMenuVisible }]"
+          @click="toggleMenu"
+        >
+          <Icon
+            name="tabler:user"
+            size="1.5em"
+          />
+        </button>
+      </template>
+
+      <OptionButton
+        icon="tabler:logout"
+        @click="removeAuthSession"
+      >
+        Log out
+      </OptionButton>
+    </PerdMenu>
   </nav>
 </template>
 
 <script lang="ts" setup>
-  import PerdButton from '~/components/PerdButton.vue';
+  import PerdMenu from '~/components/PerdMenu.vue';
+  import OptionButton from '~/components/PerdMenu/OptionButton.vue';
 
   const { isAuthenticated, resetAuthentication } = useUserStore()
   const { toggleSidebarMobile } = useAppState()
@@ -77,7 +93,30 @@
     }
   }
 
-  .button {
+  .profileMenu {
     margin-left: auto;
+  }
+
+  .profileTrigger {
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    padding: var(--spacing-8);
+    border-radius: var(--border-radius-12);
+    color: var(--text);
+    background-color: transparent;
+    outline: none;
+    transition: background-color var(--transition-time-quick);
+
+
+    &:focus-visible,
+    &:hover {
+      background-color: var(--background-200);
+    }
+
+    &:global(.active),
+    &:active {
+      background-color: var(--background-300);
+    }
   }
 </style>

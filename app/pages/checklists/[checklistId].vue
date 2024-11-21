@@ -12,10 +12,18 @@
           Reset
         </PerdButton>
 
-        <PerdMenu
-          icon="tabler:settings"
-          text="Options"
-        >
+        <PerdMenu>
+          <template #trigger="{ toggleMenu }">
+            <PerdButton
+              small
+              secondary
+              icon="tabler:settings"
+              @click="toggleMenu"
+            >
+              Options
+            </PerdButton>
+          </template>
+
           <OptionButton
             icon="tabler:trash"
             @click="showDeleteConfirmation"

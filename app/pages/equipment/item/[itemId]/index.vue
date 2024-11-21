@@ -1,11 +1,18 @@
 <template>
   <PageContent :page-title="itemName">
     <template #actions>
-      <PerdMenu
-        v-if="user.isAdmin"
-        icon="tabler:adjustments"
-        text="Manage"
-      >
+      <PerdMenu v-if="user.isAdmin">
+        <template #trigger="{ toggleMenu }">
+          <PerdButton
+            small
+            secondary
+            icon="tabler:adjustments"
+            @click="toggleMenu"
+          >
+            Manage
+          </PerdButton>
+        </template>
+
         <OptionButton
           icon="tabler:pencil"
           @click="onEdit"
@@ -127,6 +134,7 @@
   import OptionButton from '~/components/PerdMenu/OptionButton.vue';
   import PerdTag from '~/components/PerdTag.vue';
   import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue';
+  import PerdButton from '~/components/PerdButton.vue';
 
   definePageMeta({
     layout: 'page'
