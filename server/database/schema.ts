@@ -281,7 +281,7 @@ export const equipment = pgTable('equipment', {
   check(
     'equipment_description_check',
     sql.raw(`char_length(description) <= ${limits.maxEquipmentDescriptionLength}`)
-  ),
+  )
 ])
 
 /**
