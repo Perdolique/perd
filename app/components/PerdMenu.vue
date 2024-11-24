@@ -13,6 +13,7 @@
       :class="[$style.menu, {
         visible: isMenuVisible
       }]"
+      @click="hideMenu"
     >
       <slot />
     </div>
@@ -27,6 +28,10 @@
 
   function toggleMenu() {
     isMenuVisible.value = !isMenuVisible.value
+  }
+
+  function hideMenu() {
+    isMenuVisible.value = false
   }
 
   onClickOutside(rootRef, () => {

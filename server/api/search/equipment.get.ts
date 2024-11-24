@@ -1,5 +1,5 @@
 import { and, asc, eq, isNull, like } from 'drizzle-orm'
-import { equipmentTypes } from '~~/shared/models/equipment';
+import { equipmentStatuses } from '~~/shared/models/equipment';
 
 interface ReturnData {
   readonly id: number;
@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) : Promise<ReturnData[]> => {
       )
       .where(
         and(
-          eq(tables.equipment.status, equipmentTypes.active),
+          eq(tables.equipment.status, equipmentStatuses.active),
           like(tables.equipment.name, `%${searchString}%`),
           isNull(tables.userEquipment.userId),
         )

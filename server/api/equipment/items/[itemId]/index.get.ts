@@ -18,7 +18,8 @@ export default defineEventHandler(async (event) => {
         id: tables.equipment.id,
         name: tables.equipment.name,
         description: tables.equipment.description,
-        weight: tables.equipment.weight
+        weight: tables.equipment.weight,
+        status: tables.equipment.status
       },
 
       group: {

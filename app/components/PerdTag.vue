@@ -12,7 +12,7 @@
 <script lang="ts" setup>
   interface Props {
     readonly icon: string;
-    readonly color?: 'green' | 'gray' | 'blue';
+    readonly color?: 'green' | 'gray' | 'blue' | 'yellow';
   }
 
   const { color } = defineProps<Props>()
@@ -25,6 +25,10 @@
 
       case 'blue': {
         return 'oklch(95% 0.1 250)'
+      }
+
+      case 'yellow': {
+        return 'oklch(95% 0.12 90)'
       }
 
       case 'gray':

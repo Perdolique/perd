@@ -1,5 +1,5 @@
 <template>
-  <OptionBase @click="handleClick">
+  <OptionBase @click.stop="handleClick">
     <template #icon>
       <SwitchBase
         small
