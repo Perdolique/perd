@@ -10,6 +10,13 @@
       />
     </button>
 
+    <NuxtLink
+      to="/"
+      :class="$style.homeLink"
+    >
+      PERD
+    </NuxtLink>
+
     <PerdMenu
       v-if="isAuthenticated"
       :class="$style.profileMenu"
@@ -100,6 +107,19 @@
     }
   }
 
+  .homeLink {
+    font-weight: var(--font-weight-bold);
+    color: var(--text);
+    text-decoration: none;
+    outline: none;
+    transition: color var(--transition-time-quick);
+
+    &:focus-visible,
+    &:hover {
+      color: var(--text-600);
+    }
+  }
+
   .profileMenu {
     margin-left: auto;
   }
@@ -111,18 +131,13 @@
     padding: var(--spacing-8);
     border-radius: var(--border-radius-12);
     color: var(--text);
-    background-color: transparent;
+    background-color: var(--background-200);
     outline: none;
     transition: background-color var(--transition-time-quick);
 
-
+    &:global(.active),
     &:focus-visible,
     &:hover {
-      background-color: var(--background-200);
-    }
-
-    &:global(.active),
-    &:active {
       background-color: var(--background-300);
     }
   }
