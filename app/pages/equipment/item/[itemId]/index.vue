@@ -1,38 +1,51 @@
 <template>
   <PageContent :page-title="itemName">
-    <template #actions>
-      <PerdMenu v-if="user.isAdmin">
-        <template #trigger="{ toggleMenu }">
-          <PerdButton
-            small
-            secondary
-            icon="tabler:adjustments"
-            @click="toggleMenu"
+    <template
+      v-if="user.isAdmin"
+      #actions
+    >
+      <div :class="$style.actions">
+        <PerdTag
+          :icon="statusIcon"
+          :color="statusColor"
+        >
+          {{ statusText }}
+        </PerdTag>
+
+        <PerdMenu>
+          <template #trigger="{ toggleMenu }">
+            <PerdButton
+              small
+              secondary
+              icon="tabler:adjustments"
+              @click="toggleMenu"
+            >
+              Manage
+            </PerdButton>
+          </template>
+
+          <OptionButton
+            icon="tabler:pencil"
+            @click="onEdit"
           >
-            Manage
-          </PerdButton>
-        </template>
+            Edit
+          </OptionButton>
 
-        <OptionButton
-          icon="tabler:pencil"
-          @click="onEdit"
-        >
-          Edit
-        </OptionButton>
+          <OptionButton
+            :icon="toggleStatusIcon"
+            @click="toggleStatus"
+          >
+            {{ toggleStatusText }}
+          </OptionButton>
 
-        <OptionButton
-          icon="tabler:trash"
-          @click="showDeleteConfirmation"
-        >
-          <template v-if="isDeleting">
-            Deleting...
-          </template>
-
-          <template v-else>
+          <OptionButton
+            icon="tabler:trash"
+            @click="showDeleteConfirmation"
+          >
             Delete
-          </template>
-        </OptionButton>
-      </PerdMenu>
+          </OptionButton>
+        </PerdMenu>
+      </div>
     </template>
 
     <EmptyState
@@ -127,6 +140,7 @@
 </template>
 
 <script lang="ts" setup>
+  import { equipmentStatuses } from '~~/shared/models/equipment';
   import EmptyState from '~/components/EmptyState.vue';
   import PageContent from '~/components/layout/PageContent.vue'
   import PerdHeading from '~/components/PerdHeading.vue';
@@ -140,6 +154,7 @@
     layout: 'page'
   })
 
+  const defaultStatus = '?';
   const route = useRoute()
   const router = useRouter()
   const { user } = useUserStore()
@@ -147,8 +162,16 @@
   const itemId = route.params.itemId?.toString() ?? ''
   const itemName = ref('')
   const description = ref('')
+  const { showErrorToast } = useApiErrorToast()
+  const status = ref(defaultStatus)
+  const isDeleting = ref(false)
+  const isDeleteDialogOpened = ref(false)
+  const isUpdatingStatus = ref(false)
   const { data, error } = await useFetch(`/api/equipment/items/${itemId}`)
+  const weight = computed(() => data.value?.equipment.weight ?? 0)
+  const formattedWeight = computed(() => formatWeight(weight.value))
 
+  status.value = data.value?.equipment.status ?? defaultStatus
   itemName.value = data.value?.equipment.name ?? '¯\\_(ツ)_/¯'
   description.value = data.value?.equipment.description ?? ''
 
@@ -168,11 +191,58 @@
     return 'Something went wrong'
   })
 
-  const weight = computed(() => data.value?.equipment.weight ?? 0)
-  const formattedWeight = computed(() => formatWeight(weight.value))
-  const isDeleting = ref(false)
-  const isDeleteDialogOpened = ref(false)
-  const { showErrorToast } = useApiErrorToast()
+  const statusIcon = computed(() =>
+    status.value === 'active' ? 'tabler:check' : 'tabler:pencil'
+  )
+
+  const statusColor = computed(() =>
+    status.value === 'active' ? 'green' : 'yellow'
+  )
+
+  const statusText = computed(() => {
+    return status.value.charAt(0).toUpperCase() + status.value.slice(1)
+  })
+
+  const toggleStatusIcon = computed(() =>
+    status.value === 'draft' ? 'tabler:check' : 'tabler:eye-off'
+  )
+
+  const toggleStatusText = computed(() =>
+    status.value === 'draft' ? 'Make Active' : 'Return to Draft'
+  )
+
+  async function toggleStatus() {
+    if (isUpdatingStatus.value) {
+      return;
+    }
+
+    try {
+      isUpdatingStatus.value = true
+
+      const newStatus = status.value === 'draft'
+        ? equipmentStatuses.active
+        : equipmentStatuses.draft
+
+      await $fetch(`/api/equipment/items/${itemId}/status`, {
+        method: 'PATCH',
+
+        body: {
+          status: newStatus
+        }
+      })
+
+      status.value = newStatus
+
+      addToast({
+        title: 'Status updated',
+        message: `Item ${itemName.value} is now ${status.value === 'active' ? 'active' : 'in draft'}`
+      })
+    } catch (error) {
+      showErrorToast(error, 'Failed to update status')
+    } finally {
+      isUpdatingStatus.value = false
+    }
+  }
 
   async function deleteItem() {
     if (isDeleting.value) {
@@ -214,6 +284,12 @@
   @mixin section() {
     display: grid;
     row-gap: var(--spacing-16);
+  }
+
+  .actions {
+    display: flex;
+    column-gap: var(--spacing-12);
+    align-items: center;
   }
 
   .content {
