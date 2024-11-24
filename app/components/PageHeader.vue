@@ -27,6 +27,13 @@
       </template>
 
       <OptionButton
+        icon="tabler:user-circle"
+        @click="navigateTo('/account')"
+      >
+        Account
+      </OptionButton>
+
+      <OptionButton
         icon="tabler:logout"
         @click="removeAuthSession"
       >

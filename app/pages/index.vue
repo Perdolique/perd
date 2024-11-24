@@ -1,12 +1,6 @@
 <template>
   <div :class="$style.component">
-    <div>
-      Hello, {{ user.userId }}
-    </div>
-
-    <div>
-      Your admin status is: {{ user.isAdmin }}
-    </div>
+    🐕💨
   </div>
 </template>
 
@@ -14,15 +8,12 @@
   definePageMeta({
     layout: 'page'
   })
-
-  const { user } = useUserStore()
 </script>
 
 <style module>
   .component {
-    display: grid;
-    justify-content: center;
-    gap: var(--spacing-16);
-    padding-top: var(--spacing-32);
+    text-align: center;
+    font-size: 64px;
+    padding-top: 32px;
   }
 </style>
