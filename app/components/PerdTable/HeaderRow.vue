@@ -1,7 +1,7 @@
 <template>
   <tr>
     <th
-      :class="$style.cell"
+      :class="[$style.cell, column.headerClass]"
       v-for="column in columns"
       :key="column.key"
     >
@@ -13,6 +13,8 @@
 <script lang="ts" setup>
   export interface Column {
     readonly key: string;
+    readonly headerClass?: string;
+    readonly cellClass?: string;
     readonly label?: string;
   }
 

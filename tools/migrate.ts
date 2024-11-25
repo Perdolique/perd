@@ -42,3 +42,5 @@ await migrate(db, {
 })
 
 await afterMigration()
+
+await db.$client.end()

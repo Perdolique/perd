@@ -208,6 +208,35 @@ export const equipmentGroups = pgTable('equipmentGroups', {
 })
 
 /**
+ * Brands table
+ *
+ * This table is used to store equipment brands
+ */
+
+export const brands = pgTable('brands', {
+  id:
+    serial()
+    .primaryKey(),
+
+  name:
+    varchar({
+      length: limits.maxBrandNameLength
+    })
+    .notNull(),
+
+  websiteUrl: varchar(),
+
+  createdAt:
+    timestamp({
+      withTimezone: true
+    })
+    .notNull()
+    .defaultNow()
+}, (table) => [
+  index().on(table.name)
+])
+
+/**
  * Equipment table
  *
  * This table is used to store equipment items
@@ -258,6 +287,13 @@ export const equipment = pgTable('equipment', {
       onUpdate: 'cascade'
     }),
 
+  brandId:
+    integer()
+    .references(() => brands.id, {
+      onDelete: 'restrict',
+      onUpdate: 'cascade'
+    }),
+
   createdAt:
     timestamp({
       withTimezone: true
@@ -277,6 +313,7 @@ export const equipment = pgTable('equipment', {
 }, (table) => [
   index().on(table.equipmentTypeId),
   index().on(table.equipmentGroupId),
+  index().on(table.brandId),
 
   check(
     'equipment_description_check',
@@ -507,6 +544,10 @@ export const equipmentGroupsRelations = relations(equipmentGroups, ({ many }) =>
   equipment: many(equipment)
 }))
 
+export const brandsRelations = relations(brands, ({ many }) => ({
+  equipment: many(equipment)
+}))
+
 export const equipmentRelations = relations(equipment, ({ many, one }) => ({
   userEquipment: many(userEquipment),
   checklistItems: many(checklistItems),
@@ -525,6 +566,11 @@ export const equipmentRelations = relations(equipment, ({ many, one }) => ({
   creatorId: one(users, {
     fields: [equipment.creatorId],
     references: [users.id]
+  }),
+
+  brand: one(brands, {
+    fields: [equipment.brandId],
+    references: [brands.id]
   })
 }))
 

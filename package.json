@@ -12,6 +12,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx ./tools/migrate.ts",
     "db:migrate:local": "tsx --env-file=.env ./tools/migrate.ts",
+    "db:seed": "tsx ./tools/seed.ts",
+    "db:seed:local": "tsx --env-file=.env ./tools/seed.ts",
     "db:studio": "drizzle-kit studio",
     "typecheck": "nuxi typecheck"
   },
@@ -32,6 +34,7 @@
     "@vueuse/core": "11.3.0",
     "consola": "3.2.3",
     "drizzle-kit": "0.28.1",
+    "drizzle-seed": "0.1.2",
     "sass": "1.81.0",
     "tsx": "4.19.2",
     "typescript": "5.6.3",

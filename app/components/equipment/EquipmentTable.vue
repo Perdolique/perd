@@ -3,6 +3,7 @@
     :data="items"
     :columns="columns"
     :class="$style.table"
+    key-field="id"
   >
     <template #name="{ rowData }">
       <PerdLink
@@ -25,7 +26,6 @@
 
   interface Item {
     readonly id: string;
-    readonly key: string;
     readonly name: string;
     readonly weight: number;
   }

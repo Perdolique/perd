@@ -33,6 +33,14 @@ const bodySchema = v.object({
     v.number(),
     v.integer(),
     v.minValue(1)
+  ),
+
+  brandId: v.optional(
+    v.pipe(
+      v.number(),
+      v.integer(),
+      v.minValue(1)
+    )
   )
 })
 
@@ -46,6 +54,7 @@ export default defineEventHandler(async (event) => {
   const body = await readValidatedBody(event, validateBody)
   const status: EquipmentStatus = 'draft'
   const description = body.description ?? null
+  const brandId = body.brandId ?? null
 
   const [inserted] = await db
     .insert(tables.equipment)
@@ -53,6 +62,7 @@ export default defineEventHandler(async (event) => {
       description,
       status,
       creatorId: userId,
+      brandId,
       name: body.name,
       weight: body.weight,
       equipmentTypeId: body.typeId,

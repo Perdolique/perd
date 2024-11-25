@@ -20,6 +20,7 @@
       v-if="hasItems"
       :data="equipment"
       :columns="columns"
+      key-field="id"
     >
       <template #name="{ rowData }">
         <PerdLink
@@ -67,7 +68,6 @@
 
   interface EquipmentItem {
     readonly id: number;
-    readonly key: string;
     readonly name: string;
     readonly weight: number;
     readonly createdAt: string;
