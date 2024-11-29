@@ -37,6 +37,13 @@
         </SidebarItem>
 
         <SidebarItem
+          to="/brands"
+          icon="tabler:building-store"
+        >
+          Brands
+        </SidebarItem>
+
+        <SidebarItem
           v-if="user.isAdmin"
           to="/manager/equipment"
           icon="tabler:building-warehouse"

@@ -12,6 +12,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx ./tools/migrate.ts",
     "db:migrate:local": "tsx --env-file=.env ./tools/migrate.ts",
+    "db:seed": "tsx ./tools/seed.ts",
+    "db:seed:local": "tsx --env-file=.env ./tools/seed.ts",
     "db:studio": "drizzle-kit studio",
     "typecheck": "nuxi typecheck"
   },
@@ -27,18 +29,22 @@
     "@iconify-json/tabler": "1.2.8",
     "@neondatabase/serverless": "0.10.4",
     "@nuxt/fonts": "0.10.2",
-    "@nuxt/icon": "1.8.2",
+    "@nuxt/icon": "1.9.0",
     "@types/ws": "8.5.13",
-    "@vueuse/core": "11.3.0",
+    "@vueuse/core": "12.0.0",
     "consola": "3.2.3",
     "drizzle-kit": "0.28.1",
+    "drizzle-seed": "0.1.2",
     "sass": "1.81.0",
     "tsx": "4.19.2",
     "typescript": "5.6.3",
     "ufo": "1.5.4",
     "valibot": "0.42.1",
     "vue-tsc": "2.1.10",
-    "wrangler": "3.90.0",
+    "wrangler": "3.91.0",
     "ws": "8.18.0"
+  },
+  "overrides": {
+    "unimport": "3.13.4"
   }
 }

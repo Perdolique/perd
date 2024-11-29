@@ -36,6 +36,13 @@
       "when": 1729196229467,
       "tag": "0005_lean_wendell_rand",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1732647266421,
+      "tag": "0006_graceful_excalibur",
+      "breakpoints": true
     }
   ]
 }

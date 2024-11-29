@@ -102,7 +102,6 @@
 
         return {
           id: idString,
-          key: idString,
           name: item.name
         }
       })

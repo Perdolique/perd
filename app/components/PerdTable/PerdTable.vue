@@ -8,12 +8,12 @@
       <tr
         :class="$style.row"
         v-for="row in data"
-        :key="row.key"
+        :key="row[keyField]"
       >
         <td
           v-for="column in columns"
           :key="column.key"
-          :class="$style.cell"
+          :class="[$style.cell, column.cellClass]"
         >
           <slot
             :name="column.key"
@@ -27,7 +27,7 @@
 
 <script lang="ts">
   interface RowBase {
-    readonly key: string;
+    readonly [key: string]: any;
   }
 </script>
 
@@ -37,6 +37,7 @@
   interface Props {
     readonly data: RowType[];
     readonly columns: Column[];
+    readonly keyField: keyof RowType;
   }
 
   defineProps<Props>();

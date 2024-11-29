@@ -1,38 +1,42 @@
 <template>
   <PerdTable
-    :data="items"
+    :data="brands"
     :columns="columns"
     :class="$style.table"
     key-field="id"
   >
     <template #name="{ rowData }">
-      <PerdLink
-        :class="$style.nameLink"
-        :to="`/equipment/item/${rowData.id}`"
-      >
+      <PerdLink :to="`/brands/details/${rowData.id}`">
         {{ rowData.name }}
       </PerdLink>
+    </template>
+
+    <template #info="{ rowData }">
+      <BrandInfo
+        :equipment-count="rowData.equipmentCount"
+        :website-url="rowData.websiteUrl"
+      />
     </template>
   </PerdTable>
 </template>
 
 <script lang="ts" setup>
+  import type { BrandModel } from '~/models/brand';
   import PerdTable from '@/components/PerdTable/PerdTable.vue';
   import PerdLink from '@/components/PerdLink.vue';
-
-  interface Item {
-    readonly id: string;
-    readonly name: string;
-  }
+  import BrandInfo from './BrandInfo.vue';
 
   interface Props {
-    readonly items: Item[];
+    readonly brands: BrandModel[];
   }
 
   defineProps<Props>();
 
+  const classNames = useCssModule();
+
   const columns = [
-    { key: 'name', label: 'Name' }
+    { key: 'name', label: 'Name' },
+    { key: 'info', label: '', headerClass: classNames.infoHeader },
   ]
 </script>
 
@@ -45,7 +49,7 @@
     }
   }
 
-  .nameLink {
-    font-weight: var(--font-weight-medium);
+  .infoHeader {
+    width: 180px;
   }
 </style>

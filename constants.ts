@@ -17,5 +17,6 @@ export const limits = {
   maxEquipmentTypeNameLength: 32,
   maxOAuthProviderNameLength: 32,
   maxOAuthProviderTypeLength: 32,
-  maxUserNameLength: 32
+  maxUserNameLength: 32,
+  maxBrandNameLength: 64
 } as const
