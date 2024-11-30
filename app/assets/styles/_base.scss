@@ -1,7 +1,9 @@
+@use "sass:meta";
 @use "./variables" as *;
 
-// TODO: import to @layer to have correct cascade
-@use "modern-normalize";
+@layer {
+  @include meta.load-css("modern-normalize");
+}
 
 :root {
   color-scheme: light dark;

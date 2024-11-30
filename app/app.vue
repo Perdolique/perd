@@ -81,5 +81,10 @@
     li {
       line-height: 1.5em;
     }
+
+    // Reset strong styles
+    strong {
+      font-weight: var(--font-weight-bold);
+    }
   }
 </style>
