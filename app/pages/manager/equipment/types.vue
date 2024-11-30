@@ -2,6 +2,7 @@
   <PageContent page-title="Equipment types">
     <template #actions>
       <PerdButton
+        small
         icon="tabler:plus"
         @click="onAddClick"
       >

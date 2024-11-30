@@ -3,6 +3,7 @@
     <template #actions>
       <PerdButton
         icon="tabler:plus"
+        small
         @click="onAddClick"
       >
         Add group
