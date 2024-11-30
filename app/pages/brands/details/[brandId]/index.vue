@@ -1,7 +1,7 @@
 <template>
   <PageContent :page-title="brandName">
     <template
-      v-if="user.isAdmin"
+      v-if="hasActions"
       #actions
     >
       <PerdMenu>
@@ -110,6 +110,7 @@
   const isDeleting = ref(false)
   const isDeleteDialogOpened = ref(false)
   const { data, error } = await useFetch(`/api/brands/${brandId}`)
+  const hasActions = computed(() => user.value.isAdmin && error.value === undefined)
 
   brandName.value = data.value?.name ?? '¯\\_(ツ)_/¯'
   itemsCount.value = data.value?.equipmentCount ?? 0

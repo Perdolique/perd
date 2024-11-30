@@ -97,6 +97,7 @@ const db = createDrizzleWebsocket()
 
 async function seedDatabase() {
   // Seed brands
+  // FIXME: potential bug https://github.com/drizzle-team/drizzle-orm/issues/3644
   await reset(db, { brands: tables.brands })
 
   await seed(db, { brands: tables.brands }, {
@@ -105,6 +106,10 @@ async function seedDatabase() {
   }).refine((funcs) => ({
     brands: {
       columns: {
+        id: funcs.default({
+          defaultValue: undefined
+        }),
+
         name: funcs.valuesFromArray({
           values: brands,
           isUnique: true

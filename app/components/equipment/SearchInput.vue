@@ -1,5 +1,6 @@
 <template>
   <PerdInput
+    clearable
     v-model.trim="model"
     label="Search"
     placeholder="Name, description, etc."
