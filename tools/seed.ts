@@ -110,9 +110,19 @@ async function seedDatabase() {
           isUnique: true
         }),
 
-        websiteUrl: funcs.valuesFromArray({
-          values: websiteUrls
-        }),
+        websiteUrl: funcs.weightedRandom([{
+          value: funcs.valuesFromArray({
+            values: websiteUrls
+          }),
+
+          weight: 0.5
+        }, {
+          value: funcs.default({
+            defaultValue: null
+          }),
+
+          weight: 0.5
+        }]),
 
         createdAt: funcs.date({
           maxDate: '2024-11-26'
