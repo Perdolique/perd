@@ -22,6 +22,7 @@
     </label>
 
     <button
+      v-if="clearable"
       :class="[$style.clearAction, { visible: hasValue }]"
       @click="clearValue"
       type="button"
@@ -36,21 +37,20 @@
 
   interface Props {
     readonly label: string;
+    readonly clearable?: boolean;
     readonly autocomplete?: InputHTMLAttributes['autocomplete'];
     readonly autofocus?: InputHTMLAttributes['autofocus'];
     readonly inputmode?: InputHTMLAttributes['inputmode'];
     readonly pattern?: InputHTMLAttributes['pattern'];
     readonly placeholder?: InputHTMLAttributes['placeholder'];
     readonly required?: InputHTMLAttributes['required'];
-    readonly type?: 'text';
+    readonly type?: InputHTMLAttributes['type'];
     readonly disabled?: InputHTMLAttributes['disabled'];
   }
 
   type Emits = (event: 'clear') => void;
 
-  const {
-    type = 'text'
-  } = defineProps<Props>();
+  defineProps<Props>();
 
   const model = defineModel<string>({
     required: true

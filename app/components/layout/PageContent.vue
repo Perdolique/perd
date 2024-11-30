@@ -9,7 +9,10 @@
         {{ pageTitle }}
       </PerdHeading>
 
-      <div :class="$style.actions">
+      <div
+        v-if="$slots.actions"
+        :class="$style.actions"
+      >
         <slot name="actions" />
       </div>
     </div>
