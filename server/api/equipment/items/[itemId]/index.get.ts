@@ -30,6 +30,11 @@ export default defineEventHandler(async (event) => {
       type: {
         id: tables.equipmentGroups.id,
         name: tables.equipmentGroups.name
+      },
+
+      brand: {
+        id: tables.brands.id,
+        name: tables.brands.name
       }
     })
     .from(tables.equipment)
@@ -43,6 +48,10 @@ export default defineEventHandler(async (event) => {
     .leftJoin(
       tables.equipmentGroups,
       eq(tables.equipment.equipmentGroupId, tables.equipmentGroups.id)
+    )
+    .leftJoin(
+      tables.brands,
+      eq(tables.equipment.brandId, tables.brands.id)
     )
 
   const foundItem = item[0]

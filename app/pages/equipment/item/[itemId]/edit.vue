@@ -7,6 +7,7 @@
       v-model:weight="weight"
       v-model:type-id="typeId"
       v-model:group-id="groupId"
+      v-model:brand="brand"
       :groups="groupOptions"
       :types="typeOptions"
       :submitting="isSubmitting"
@@ -24,7 +25,7 @@
 </template>
 
 <script lang="ts" setup>
-  import EditEquipmentForm from '~/components/equipment/EditEquipmentForm.vue'
+  import EditEquipmentForm, { type Brand } from '~/components/equipment/EditEquipmentForm.vue'
   import PageContent from '~/components/layout/PageContent.vue'
   import EmptyState from '~/components/EmptyState.vue'
 
@@ -41,6 +42,7 @@
 
   // TODO: create an utility function
   const itemId = route.params.itemId?.toString() ?? ''
+  const brand = ref<Brand | null>(null)
 
   // TODO: use useAsyncData
   const { data, error } = await useFetch(`/api/equipment/items/${itemId}`)
@@ -54,6 +56,13 @@
   const weight = ref(data.value?.equipment.weight.toString() ?? '')
   const typeId = ref(data.value?.group?.id.toString() ?? '')
   const groupId = ref(data.value?.type?.id.toString() ?? '')
+
+  if (data.value !== undefined && data.value.brand !== null) {
+    brand.value = {
+      label: data.value.brand.name,
+      value: data.value.brand.id.toString()
+    }
+  }
 
   const groupOptions = computed(() => {
     return groups.value.map((group) => ({
@@ -94,15 +103,18 @@
     try {
       isSubmitting.value = true
 
+      const brandId = brand.value?.value === undefined ? null : parseInt(brand.value?.value)
+
       await $fetch(`/api/equipment/items/${itemId}`, {
         method: 'PATCH',
 
         body: {
-          name: name.value,
+          brandId,
           description: description.value,
-          weight: parseInt(weight.value),
+          groupId: parseInt(groupId.value),
+          name: name.value,
           typeId: parseInt(typeId.value),
-          groupId: parseInt(groupId.value)
+          weight: parseInt(weight.value)
         }
       })
 
