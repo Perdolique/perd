@@ -12,6 +12,8 @@
       :required="required"
       :type="type"
       :disabled="disabled"
+      @focus="onFocus"
+      @blur="onBlur"
     >
 
     <label
@@ -48,7 +50,11 @@
     readonly disabled?: InputHTMLAttributes['disabled'];
   }
 
-  type Emits = (event: 'clear') => void;
+  interface Emits {
+    (event: 'clear') : void;
+    (event: 'focus') : void;
+    (event: 'blur') : void;
+  }
 
   defineProps<Props>();
 
@@ -64,6 +70,14 @@
     model.value = '';
 
     emit('clear');
+  }
+
+  function onFocus() {
+    emit('focus');
+  }
+
+  function onBlur() {
+    emit('blur');
   }
 </script>
 

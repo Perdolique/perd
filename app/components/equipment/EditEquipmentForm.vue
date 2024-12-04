@@ -7,6 +7,18 @@
     <div :class="$style.inputs">
       <ImageUpload :class="$style.image" />
 
+      <ComboBox
+        ignore-filter
+        required
+        :class="$style.brand"
+        v-model:selected="brand"
+        :options="brands"
+        :loading="brandLoading"
+        label="Brand"
+        placeholder="Brand name"
+        @search="onBrandSearch"
+      />
+
       <PerdInput
         required
         autocomplete="off"
@@ -70,16 +82,22 @@
         {{ saveButtonText }}
       </PerdButton>
     </div>
-
   </form>
 </template>
 
 <script lang="ts" setup>
+  import { useDebounceFn } from '@vueuse/core'
   import ImageUpload from '~/components/ImageUpload.vue';
   import PerdButton from '~/components/PerdButton.vue';
   import PerdInput from '~/components/PerdInput.vue';
   import PerdSelect, { type SelectOption } from '~/components/PerdSelect.vue';
   import PerdTextArea from '~/components/PerdTextArea.vue';
+  import ComboBox from '~/components/ComboBox/ComboBox.vue';
+
+  export interface Brand {
+    readonly value: string;
+    readonly label: string;
+  }
 
   interface Props {
     readonly groups: SelectOption[];
@@ -92,8 +110,11 @@
 
   defineProps<Props>()
 
+  let abortController : AbortController | null = null
   const emit = defineEmits<Emits>()
   const router = useRouter()
+  const brandLoading = ref(false)
+  const brands = ref<Brand[]>([])
 
   const name = defineModel<string>('name', {
     required: true
@@ -114,6 +135,43 @@
   const groupId = defineModel<string>('groupId', {
     required: true
   })
+
+  const brand = defineModel<Brand | null>('brand', {
+    required: true
+  })
+
+  const debouncedSearch = useDebounceFn(async (searchString: string) => {
+    abortController = new AbortController()
+
+    const result = await $fetch('/api/search/brands', {
+      signal: abortController.signal,
+
+      query: {
+        search: searchString
+      }
+    })
+
+    if (result !== undefined) {
+      brands.value = result.map(({ id, name }) => ({
+        label: name,
+        value: id.toString()
+      }))
+    } else {
+      brands.value = []
+    }
+
+    brandLoading.value = false;
+  }, 300)
+
+  async function onBrandSearch(searchString: string) {
+    brandLoading.value = true;
+
+    if (abortController !== null) {
+      abortController.abort()
+    }
+
+    debouncedSearch(searchString)
+  }
 
   async function onSubmit() {
     emit('submit')
@@ -140,6 +198,7 @@
 
     grid-template-areas:
       "image"
+      "brand"
       "name"
       "description"
       "weight"
@@ -151,17 +210,19 @@
       grid-template-rows: auto auto auto 1fr auto;
       align-items: start;
       grid-template-areas:
+        "image brand"
         "image name"
+        "image description"
         "image weight"
         "image type"
-        "image group"
-        "description description";
+        "image group";
     }
 
     @include tablet() {
       grid-template-columns: repeat(4, 1fr);
       grid-template-rows: auto 1fr;
       grid-template-areas:
+        "image brand brand brand"
         "image name name name"
         "image description description description"
         "image weight type group"
@@ -171,10 +232,9 @@
       grid-template-columns: auto 1fr 1fr;
       grid-template-rows: auto auto auto auto;
       grid-template-areas:
-        "image name description"
-        "image weight description"
-        "image type description"
-        "image group description";
+        "image brand weight"
+        "image name type"
+        "image description group";
     }
   }
 
@@ -198,6 +258,10 @@
     grid-area: description;
     height: 100%;
     min-height: 100px;
+  }
+
+  .brand {
+    grid-area: brand;
   }
 
   .weight {

@@ -13,6 +13,7 @@
     v-model:weight="weight"
     v-model:type-id="typeId"
     v-model:group-id="groupId"
+    v-model:brand="brand"
     :groups="groupOptions"
     :types="typeOptions"
     :submitting="isSubmitting"
@@ -23,13 +24,14 @@
 
 <script lang="ts" setup>
   import EmptyState from '~/components/EmptyState.vue';
-  import EditEquipmentForm from '~/components/equipment/EditEquipmentForm.vue';
+  import EditEquipmentForm, { type Brand } from '~/components/equipment/EditEquipmentForm.vue';
 
   const name = ref('')
   const description = ref('')
   const weight = ref('')
   const typeId = ref('')
   const groupId = ref('')
+  const brand = ref<Brand | null>(null)
   const isSubmitting = ref(false)
   const { addToast } = useToaster()
   const { showErrorToast } = useApiErrorToast()
@@ -59,7 +61,8 @@
     description.value = ''
     weight.value = ''
     typeId.value = ''
-    groupId.value = ''
+    groupId.value = '',
+    brand.value = null
   }
 
   async function onSubmit() {
@@ -71,16 +74,18 @@
       isSubmitting.value = true
 
       const descriptionValue = description.value === '' ? undefined : description.value
+      const brandId = brand.value === null ? undefined : parseInt(brand.value.value)
 
       await $fetch('/api/equipment/items', {
         method: 'POST',
 
         body: {
-          name: name.value,
+          brandId,
           description: descriptionValue,
-          weight: parseInt(weight.value),
+          groupId: parseInt(groupId.value),
+          name: name.value,
           typeId: parseInt(typeId.value),
-          groupId: parseInt(groupId.value)
+          weight: parseInt(weight.value)
         }
       })
 

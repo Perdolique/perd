@@ -111,6 +111,10 @@
           <li>
             <strong>Weight:</strong> {{ formattedWeight }}
           </li>
+
+          <li>
+            <strong>Brand:</strong> {{ brandName }}
+          </li>
         </ul>
       </div>
 
@@ -170,6 +174,7 @@
   const { data, error } = await useFetch(`/api/equipment/items/${itemId}`)
   const weight = computed(() => data.value?.equipment.weight ?? 0)
   const formattedWeight = computed(() => formatWeight(weight.value))
+  const brandName = computed(() => data.value?.brand?.name ?? '–')
 
   status.value = data.value?.equipment.status ?? defaultStatus
   itemName.value = data.value?.equipment.name ?? '¯\\_(ツ)_/¯'

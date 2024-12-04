@@ -35,6 +35,14 @@ const bodySchema = v.object({
     v.number(),
     v.integer(),
     v.minValue(1)
+  ),
+
+  brandId: v.optional(
+    v.pipe(
+      v.number(),
+      v.integer(),
+      v.minValue(1)
+    )
   )
 })
 
@@ -50,7 +58,9 @@ export default defineEventHandler(async (event) => {
   await validateAdmin(event)
 
   const { itemId } = await getValidatedRouterParams(event, validateParams)
-  const { name, description, weight, typeId, groupId } = await readValidatedBody(event, validateBody)
+  const body = await readValidatedBody(event, validateBody)
+  const { name, description, weight, typeId, groupId } = body
+  const brandId = body.brandId ?? null
 
   const [item] = await event.context.db
     .update(tables.equipment)
@@ -58,6 +68,7 @@ export default defineEventHandler(async (event) => {
       name,
       description,
       weight,
+      brandId,
       equipmentTypeId: typeId,
       equipmentGroupId: groupId
     })
