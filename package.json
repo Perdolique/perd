@@ -26,7 +26,7 @@
     "vue": "3.5.13"
   },
   "devDependencies": {
-    "@iconify-json/tabler": "1.2.12",
+    "@iconify-json/tabler": "1.2.13",
     "@neondatabase/serverless": "0.10.4",
     "@nuxt/fonts": "0.10.3",
     "@nuxt/icon": "1.10.2",
@@ -41,7 +41,7 @@
     "ufo": "1.5.4",
     "valibot": "0.42.1",
     "vue-tsc": "2.1.10",
-    "wrangler": "3.95.0",
+    "wrangler": "3.96.0",
     "ws": "8.18.0"
   }
 }
