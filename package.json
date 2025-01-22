@@ -31,7 +31,7 @@
     "@nuxt/fonts": "0.10.3",
     "@nuxt/icon": "1.10.3",
     "@types/ws": "8.5.13",
-    "@vueuse/core": "12.4.0",
+    "@vueuse/core": "12.5.0",
     "consola": "3.4.0",
     "drizzle-kit": "0.30.2",
     "drizzle-seed": "0.3.0",
