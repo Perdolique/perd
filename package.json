@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "date-fns": "4.1.0",
-    "drizzle-orm": "0.39.1",
+    "drizzle-orm": "0.39.2",
     "modern-normalize": "3.0.1",
     "nuxt": "3.15.4",
     "ulid": "2.3.0",
@@ -35,7 +35,7 @@
     "consola": "3.4.0",
     "drizzle-kit": "0.30.4",
     "drizzle-seed": "0.3.1",
-    "sass": "1.83.4",
+    "sass": "1.84.0",
     "tsx": "4.19.2",
     "typescript": "5.7.3",
     "ufo": "1.5.4",
