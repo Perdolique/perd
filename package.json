@@ -19,10 +19,10 @@
   },
   "dependencies": {
     "date-fns": "4.1.0",
-    "drizzle-orm": "0.40.0",
+    "drizzle-orm": "0.40.1",
     "modern-normalize": "3.0.1",
     "nuxt": "3.16.0",
-    "ulid": "2.3.0",
+    "ulid": "2.4.0",
     "vue": "3.5.13"
   },
   "devDependencies": {
@@ -32,7 +32,7 @@
     "@nuxt/icon": "1.11.0",
     "@types/ws": "8.18.0",
     "@vueuse/core": "13.0.0",
-    "consola": "3.4.0",
+    "consola": "3.4.1",
     "drizzle-kit": "0.30.5",
     "drizzle-seed": "0.3.1",
     "sass": "1.85.1",
