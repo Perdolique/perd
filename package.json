@@ -32,16 +32,16 @@
     "@nuxt/icon": "1.11.0",
     "@types/ws": "8.18.0",
     "@vueuse/core": "13.0.0",
-    "consola": "3.4.1",
+    "consola": "3.4.2",
     "drizzle-kit": "0.30.5",
     "drizzle-seed": "0.3.1",
-    "sass": "1.85.1",
+    "sass": "1.86.0",
     "tsx": "4.19.3",
     "typescript": "5.8.2",
     "ufo": "1.5.4",
     "valibot": "0.42.1",
     "vue-tsc": "2.2.8",
-    "wrangler": "4.0.0",
+    "wrangler": "4.1.0",
     "ws": "8.18.1"
   }
 }
