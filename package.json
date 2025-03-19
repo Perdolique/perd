@@ -39,9 +39,9 @@
     "tsx": "4.19.3",
     "typescript": "5.8.2",
     "ufo": "1.5.4",
-    "valibot": "0.42.1",
+    "valibot": "1.0.0",
     "vue-tsc": "2.2.8",
-    "wrangler": "4.1.0",
+    "wrangler": "4.2.0",
     "ws": "8.18.1"
   }
 }
