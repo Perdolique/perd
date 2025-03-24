@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "date-fns": "4.1.0",
-    "drizzle-orm": "0.40.1",
+    "drizzle-orm": "0.41.0",
     "modern-normalize": "3.0.1",
     "nuxt": "3.16.1",
     "ulid": "2.4.0",
@@ -41,7 +41,7 @@
     "ufo": "1.5.4",
     "valibot": "1.0.0",
     "vue-tsc": "2.2.8",
-    "wrangler": "4.3.0",
+    "wrangler": "4.4.0",
     "ws": "8.18.1"
   }
 }
