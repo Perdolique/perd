@@ -37,11 +37,11 @@
     "drizzle-seed": "0.3.1",
     "sass": "1.86.3",
     "tsx": "4.19.3",
-    "typescript": "5.8.2",
-    "ufo": "1.5.4",
+    "typescript": "5.8.3",
+    "ufo": "1.6.0",
     "valibot": "1.0.0",
     "vue-tsc": "2.2.8",
-    "wrangler": "4.7.2",
+    "wrangler": "4.8.0",
     "ws": "8.18.1"
   }
 }
