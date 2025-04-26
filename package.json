@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "date-fns": "4.1.0",
-    "drizzle-orm": "0.42.0",
+    "drizzle-orm": "0.43.1",
     "modern-normalize": "3.0.1",
     "nuxt": "3.16.2",
     "ulid": "3.0.0",
@@ -28,7 +28,7 @@
   "devDependencies": {
     "@iconify-json/tabler": "1.2.17",
     "@neondatabase/serverless": "1.0.0",
-    "@nuxt/fonts": "0.11.1",
+    "@nuxt/fonts": "0.11.2",
     "@nuxt/icon": "1.12.0",
     "@types/ws": "8.18.1",
     "@vueuse/core": "13.1.0",
@@ -41,7 +41,7 @@
     "ufo": "1.6.1",
     "valibot": "1.0.0",
     "vue-tsc": "2.2.10",
-    "wrangler": "4.13.0",
+    "wrangler": "4.13.2",
     "ws": "8.18.1"
   }
 }
