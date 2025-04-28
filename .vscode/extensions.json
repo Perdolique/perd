@@ -18,7 +18,6 @@
     "vue.volar",
     "vunguyentuan.vscode-css-variables",
     "yoavbls.pretty-ts-errors",
-    "jeronimoekerdt.color-picker-universal",
-    "waderyan.gitblame"
+    "jeronimoekerdt.color-picker-universal"
   ]
 }

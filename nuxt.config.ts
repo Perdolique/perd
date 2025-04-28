@@ -30,7 +30,8 @@ export default defineNuxtConfig({
 
   experimental: {
     viewTransition: true,
-    scanPageMeta: true
+    scanPageMeta: true,
+    granularCachedData: true
   },
 
   typescript: {
