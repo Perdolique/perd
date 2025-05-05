@@ -21,7 +21,7 @@
     "date-fns": "4.1.0",
     "drizzle-orm": "0.43.1",
     "modern-normalize": "3.0.1",
-    "nuxt": "3.17.1",
+    "nuxt": "3.17.2",
     "ulid": "3.0.0",
     "vue": "3.5.13"
   },
@@ -33,7 +33,7 @@
     "@types/ws": "8.18.1",
     "@vueuse/core": "13.1.0",
     "consola": "3.4.2",
-    "drizzle-kit": "0.31.0",
+    "drizzle-kit": "0.31.1",
     "drizzle-seed": "0.3.1",
     "sass": "1.87.0",
     "tsx": "4.19.4",
@@ -42,6 +42,6 @@
     "valibot": "1.0.0",
     "vue-tsc": "2.2.10",
     "wrangler": "4.14.1",
-    "ws": "8.18.1"
+    "ws": "8.18.2"
   }
 }
