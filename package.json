@@ -21,7 +21,7 @@
     "date-fns": "4.1.0",
     "drizzle-orm": "0.43.1",
     "modern-normalize": "3.0.1",
-    "nuxt": "3.17.2",
+    "nuxt": "3.17.3",
     "ulid": "3.0.0",
     "vue": "3.5.13"
   },
@@ -35,7 +35,7 @@
     "consola": "3.4.2",
     "drizzle-kit": "0.31.1",
     "drizzle-seed": "0.3.1",
-    "sass": "1.87.0",
+    "sass": "1.88.0",
     "tsx": "4.19.4",
     "typescript": "5.8.3",
     "ufo": "1.6.1",
