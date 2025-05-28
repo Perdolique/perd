@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "date-fns": "4.1.0",
-    "drizzle-orm": "0.43.1",
+    "drizzle-orm": "0.44.0",
     "modern-normalize": "3.0.1",
     "nuxt": "3.17.4",
     "ulid": "3.0.0",
