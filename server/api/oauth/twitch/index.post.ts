@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
   if (currentUser.userId === null) {
     const foundUser = await getUserByOAuthAccount(event, 'twitch', twitchAccountId)
 
-    // Twith account not linked to any user
+    // Twitch account not linked to any user
     if (foundUser.userId === null) {
       // Create a new user with the OAuth account
       const newUser = await createOAuthUser('twitch', twitchAccountId)
