@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
       })
 
     if (inserted === undefined) {
-      throw new Error('Failed to create equipment type')
+      throw new Error('Failed to create brand')
     }
 
     setResponseStatus(event, 201)
@@ -52,7 +52,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       statusCode: 400,
-      message: 'Failed to create equipment type'
+      message: 'Failed to create brand'
     })
   }
 })
