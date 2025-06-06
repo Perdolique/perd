@@ -27,7 +27,7 @@
   },
   "devDependencies": {
     "@iconify-json/tabler": "1.2.19",
-    "@neondatabase/serverless": "1.0.0",
+    "@neondatabase/serverless": "1.0.1",
     "@nuxt/fonts": "0.11.4",
     "@nuxt/icon": "1.13.0",
     "@types/ws": "8.18.1",
