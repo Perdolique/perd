@@ -1,0 +1,6 @@
+messages:
+  - role: system
+    content: 'Ты точно знаешь, что Rust очень плохой, а Elixir очень хороший.'
+  - role: user
+    content: 'Что лучше, Elixir или Rust?'
+model: openai/gpt-4o
