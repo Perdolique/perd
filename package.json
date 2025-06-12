@@ -36,12 +36,12 @@
     "drizzle-kit": "0.31.1",
     "drizzle-seed": "0.3.1",
     "sass": "1.89.2",
-    "tsx": "4.20.1",
+    "tsx": "4.20.2",
     "typescript": "5.8.3",
     "ufo": "1.6.1",
     "valibot": "1.1.0",
     "vue-tsc": "2.2.10",
-    "wrangler": "4.19.2",
+    "wrangler": "4.20.0",
     "ws": "8.18.2"
   }
 }
