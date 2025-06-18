@@ -23,7 +23,7 @@
     "modern-normalize": "3.0.1",
     "nuxt": "3.17.5",
     "ulid": "3.0.1",
-    "vue": "3.5.16"
+    "vue": "3.5.17"
   },
   "devDependencies": {
     "@iconify-json/tabler": "1.2.19",
@@ -41,7 +41,7 @@
     "ufo": "1.6.1",
     "valibot": "1.1.0",
     "vue-tsc": "2.2.10",
-    "wrangler": "4.20.0",
+    "wrangler": "4.20.2",
     "ws": "8.18.2"
   }
 }
