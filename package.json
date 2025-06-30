@@ -29,7 +29,7 @@
     "@iconify-json/tabler": "1.2.19",
     "@neondatabase/serverless": "1.0.1",
     "@nuxt/fonts": "0.11.4",
-    "@nuxt/icon": "1.14.0",
+    "@nuxt/icon": "1.15.0",
     "@types/ws": "8.18.1",
     "@vueuse/core": "13.4.0",
     "consola": "3.4.2",
@@ -42,6 +42,6 @@
     "valibot": "1.1.0",
     "vue-tsc": "2.2.10",
     "wrangler": "4.22.0",
-    "ws": "8.18.2"
+    "ws": "8.18.3"
   }
 }
