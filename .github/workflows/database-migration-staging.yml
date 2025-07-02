@@ -7,6 +7,9 @@ on:
     paths:
       - 'server/database/migrations/**'
 
+permissions:
+  contents: read
+
 jobs:
   migration:
     runs-on: ubuntu-latest
