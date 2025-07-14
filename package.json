@@ -21,7 +21,7 @@
     "date-fns": "4.1.0",
     "drizzle-orm": "0.44.2",
     "modern-normalize": "3.0.1",
-    "nuxt": "3.17.6",
+    "nuxt": "3.17.7",
     "ulid": "3.0.1",
     "vue": "3.5.17"
   },
