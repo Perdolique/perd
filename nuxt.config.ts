@@ -35,7 +35,6 @@ export default defineNuxtConfig({
   },
 
   typescript: {
-    strict: true,
     typeCheck: true
   },
 
@@ -57,10 +56,6 @@ export default defineNuxtConfig({
 
   nitro: {
     preset: 'cloudflare-pages'
-  },
-
-  future: {
-    compatibilityVersion: 4
   },
 
   icon: {
@@ -103,8 +98,6 @@ export default defineNuxtConfig({
 
       preprocessorOptions: {
         scss: {
-          api: 'modern-compiler',
-
           additionalData: `
 @use "~/assets/styles/media" as *;
 @use "~/assets/styles/utils" as *;

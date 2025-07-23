@@ -129,7 +129,7 @@
         color-mix(in oklch, var(--overlay-color-background), transparent 50%) 70%,
         color-mix(in oklch, var(--overlay-color-background), black 60%) 100%
       ),
-      url('public/dog_items_1024.webp') right / cover;
+      url('/dog_items_1024.webp') right / cover;
 
     @include tablet {
       width: 480px;

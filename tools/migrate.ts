@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm'
-import { createDrizzleWebsocket, tables } from '~~/server/utils/database'
+import { createDrizzleWebsocket, tables } from '../server/utils/database'
 import { migrate } from 'drizzle-orm/neon-serverless/migrator'
-import drizzleConfig from '~~/drizzle.config'
+import drizzleConfig from '../drizzle.config'
 
 if (process.env.DATABASE_URL === undefined) {
   throw new Error('DATABASE_URL is not defined')

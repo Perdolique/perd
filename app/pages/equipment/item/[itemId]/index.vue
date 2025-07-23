@@ -60,7 +60,7 @@
       :class="$style.content"
     >
       <img
-        src="public/equipment-item-placeholder.webp"
+        src="/equipment-item-placeholder.webp"
         alt="Equipment item placeholder"
         :class="$style.image"
       />
