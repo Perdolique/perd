@@ -12,7 +12,7 @@ export function createDrizzle() {
     throw new Error('DATABASE_URL is not defined')
   }
 
-  if (import.meta.dev === true || process.env.WRANGLER_DEV || process.env.LOCAL_DATABASE) {
+  if (import.meta.dev === true || process.env.LOCAL_DATABASE) {
     // Check docker-compose.yml for the details
     neonConfig.fetchEndpoint = 'http://db.localtest.me:4444/sql'
   }
