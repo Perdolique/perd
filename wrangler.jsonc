@@ -1,0 +1,14 @@
+{
+  "name": "perd",
+  "compatibility_date": "2025-07-31",
+  "pages_build_output_dir": "./dist",
+  "upload_source_maps": true,
+
+  "dev": {
+    "port": 8888
+  },
+
+  "vars": {
+    "OAUTH_TWITCH_CLIENT_ID": "76z9coffucmezuwxx68iurur0vnigy"
+  }
+}
