@@ -1,10 +1,3 @@
-interface EquipmentItem {
-  readonly id: number;
-  readonly name: string;
-  readonly weight: number;
-  readonly createdAt: string;
-}
-
 export async function useUserEquipment() {
   const { data, refresh } = await useFetch('/api/inventory', {
     default() {

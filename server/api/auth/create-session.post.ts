@@ -1,4 +1,8 @@
-export default defineEventHandler(async (event) => {
+interface ReturnType {
+  userId: string;
+}
+
+export default defineEventHandler(async (event) : Promise<ReturnType> => {
   const { db } = event.context
 
   // TODO (#101): check if user is already logged in

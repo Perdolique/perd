@@ -1,6 +1,11 @@
 import { asc, ilike } from 'drizzle-orm'
 
-export default defineEventHandler(async (event) => {
+interface ReturnType {
+  id: number
+  name: string
+}
+
+export default defineEventHandler(async (event) : Promise<ReturnType[]> => {
   const { search } = getQuery(event)
 
   if (typeof search !== 'string') {
