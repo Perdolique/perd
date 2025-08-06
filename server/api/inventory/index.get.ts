@@ -1,6 +1,13 @@
 import { and, asc, eq } from 'drizzle-orm'
 
-export default defineEventHandler(async (event) => {
+interface EquipmentItem {
+  id: number;
+  name: string;
+  weight: number;
+  createdAt: Date;
+}
+
+export default defineEventHandler(async (event) : Promise<EquipmentItem[]> => {
   const userId = await validateSessionUser(event)
 
   const result = await event.context.db

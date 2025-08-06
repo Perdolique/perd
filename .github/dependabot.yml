@@ -8,10 +8,12 @@ updates:
   - package-ecosystem: "npm"
     directory: "/" # Location of package manifests
     schedule:
-      interval: "daily"
+      interval: cron
+      cronjob: "0 18 * * *"
+      timezone: "Europe/Tallinn"
     groups:
       all-updates:
         applies-to: version-updates
         patterns:
           - "*"
-          
+

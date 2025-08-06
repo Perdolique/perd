@@ -1,6 +1,32 @@
 import * as v from 'valibot'
 import { asc, count, eq, sql } from 'drizzle-orm'
 
+interface Data {
+  id: number;
+  name: string;
+  websiteUrl: string | null;
+  equipmentCount: number;
+}
+
+interface Meta {
+  limit: number;
+  offset: number;
+  total: number;
+}
+
+interface ReturnType {
+  data: Data[];
+  meta: Meta;
+}
+
+interface BrandsQueryResult {
+  id: number;
+  name: string;
+  websiteUrl: string | null;
+  equipmentCount: number;
+  total: number;
+}
+
 function validateQuery(query: unknown) {
   return v.parse(v.object({
     page: v.optional(
@@ -9,13 +35,13 @@ function validateQuery(query: unknown) {
   }), query)
 }
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event) : Promise<ReturnType> => {
   const query = await getValidatedQuery(event, validateQuery)
   const limit = 50;
   const page = query.page ?? 1;
   const offset = limit * (page - 1);
 
-  const result = await event.context.db
+  const result : BrandsQueryResult[] = await event.context.db
     .select({
       id: tables.brands.id,
       name: tables.brands.name,
