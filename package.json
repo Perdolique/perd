@@ -16,7 +16,8 @@
     "db:seed": "tsx ./tools/seed.ts",
     "db:seed:local": "tsx --env-file=.env ./tools/seed.ts",
     "db:studio": "drizzle-kit studio",
-    "typecheck": "nuxi typecheck"
+    "typecheck": "nuxi typecheck",
+    "prepare": "husky"
   },
   "dependencies": {
     "date-fns": "4.1.0",
@@ -37,6 +38,7 @@
     "consola": "3.4.2",
     "drizzle-kit": "0.31.4",
     "drizzle-seed": "0.3.1",
+    "husky": "9.1.7",
     "sass": "1.90.0",
     "taze": "19.1.0",
     "tsx": "4.20.3",
