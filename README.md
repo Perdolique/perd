@@ -43,11 +43,3 @@ A web app for those who love hanging out in the forest but always forget to brin
 # Development
 
 Check our [Wiki](https://github.com/Perdolique/perd/wiki/Development) for details.
-
-## Git Hooks
-
-This project uses [husky](https://typicode.github.io/husky/) to manage Git hooks:
-
-- **pre-commit**: Runs TypeScript type checking before each commit to prevent type errors from being committed
-- To install hooks after cloning: `pnpm install` (automatically runs `husky` prepare script)
-- Type checking can be run manually with: `pnpm typecheck`
