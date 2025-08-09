@@ -46,7 +46,7 @@
     "ufo": "1.6.1",
     "valibot": "1.1.0",
     "vue-tsc": "3.0.5",
-    "wrangler": "4.28.0",
+    "wrangler": "4.28.1",
     "ws": "8.18.3"
   },
   "packageManager": "pnpm@10.14.0"
