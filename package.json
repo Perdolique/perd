@@ -10,6 +10,7 @@
     "postinstall": "nuxt prepare",
     "preview": "wrangler pages dev",
     "update:all": "taze -I -l latest",
+    "update:newest": "taze -I -l newest",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx ./tools/migrate.ts",
     "db:migrate:local": "tsx --env-file=.env ./tools/migrate.ts",
