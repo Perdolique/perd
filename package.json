@@ -50,5 +50,5 @@
     "wrangler": "4.32.0",
     "ws": "8.18.3"
   },
-  "packageManager": "pnpm@10.14.0"
+  "packageManager": "pnpm@10.15.0"
 }
