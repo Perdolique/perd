@@ -64,8 +64,8 @@ importers:
         specifier: 1.92.0
         version: 1.92.0
       taze:
-        specifier: 19.4.0
-        version: 19.4.0
+        specifier: 19.5.0
+        version: 19.5.0
       tsx:
         specifier: 4.20.5
         version: 4.20.5
@@ -3724,8 +3724,8 @@ packages:
     resolution: {integrity: sha512-5S7Va8hKfV7W5U6g3aYxXmlPoZVAwUMy9AOKyF2fVuZa2UD3qZjg578OrLRt8PcNN1PleVaL/5/yYATNL0ICUw==}
     engines: {node: '>=18'}
 
-  taze@19.4.0:
-    resolution: {integrity: sha512-gtPoXBPNALu95kyNTQKdluVFQnh/gJjhjnXyRBh78+js2y1tOhEswUhGJ3sA8GvOvdoCGW7Au6SjOmI+K9tGZA==}
+  taze@19.5.0:
+    resolution: {integrity: sha512-4Rjy23i2bcFWM74rIW1KtsIul57XchYy3U7SXf6JUIveqcllI4tS3cgPwQKnq8X7as0Up9TWBDpD/sBhfB8vSg==}
     hasBin: true
 
   terser@5.44.0:
@@ -8075,7 +8075,7 @@ snapshots:
       mkdirp: 3.0.1
       yallist: 5.0.0
 
-  taze@19.4.0:
+  taze@19.5.0:
     dependencies:
       '@antfu/ni': 25.0.0
       cac: 6.7.14
