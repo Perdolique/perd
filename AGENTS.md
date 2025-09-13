@@ -1,4 +1,11 @@
-## Commit Message Instructions
+# Perd is your outdoor companion
+
+## Development
+
+- `pnpm` is the main package manager.
+- This is a monorepo managed with `pnpm` workspaces.
+
+## Commit message instructions
 
 When writing commit messages, follow these guidelines:
 
@@ -12,3 +19,7 @@ When writing commit messages, follow these guidelines:
 - Use backticks (`) to wrap package names, file names, or code snippets for better readability.
 - For monorepo, when detailing changes in the commit body, include a bullet point in the following format:
   - {package name}: {short description of the change}
+
+## Pull request instructions
+
+- Use English for pull request titles and descriptions.
