@@ -6,14 +6,20 @@
 version: 2
 updates:
   - package-ecosystem: "npm"
-    directory: "/" # Location of package manifests
+    directory: "/"
     schedule:
       interval: cron
-      cronjob: "0 18 * * *"
+      cronjob: "0 18 * * 1"
       timezone: "Europe/Tallinn"
     groups:
       all-updates:
         applies-to: version-updates
         patterns:
           - "*"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: cron
+      cronjob: "0 18 * * 1"
+      timezone: "Europe/Tallinn"
 
