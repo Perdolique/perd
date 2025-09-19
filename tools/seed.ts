@@ -1,5 +1,5 @@
 import { reset, seed } from 'drizzle-seed'
-import { createDrizzleWebsocket, tables } from '~~/server/utils/database'
+import { createDrizzleWebsocket, tables } from '../server/utils/database'
 
 if (process.env.DATABASE_URL === undefined) {
   throw new Error('DATABASE_URL is not defined')
