@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "date-fns": "4.1.0",
-    "drizzle-orm": "0.44.5",
+    "drizzle-orm": "0.44.6",
     "modern-normalize": "3.0.1",
     "nuxt": "4.1.2",
     "ulid": "3.0.1",
@@ -31,7 +31,7 @@
   "devDependencies": {
     "@iconify-json/streamline-emojis": "1.2.4",
     "@iconify-json/tabler": "1.2.23",
-    "@neondatabase/serverless": "1.0.1",
+    "@neondatabase/serverless": "1.0.2",
     "@nuxt/fonts": "0.11.4",
     "@nuxt/icon": "2.0.0",
     "@types/ws": "8.18.1",
@@ -43,11 +43,11 @@
     "sass": "1.93.2",
     "taze": "19.7.0",
     "tsx": "4.20.6",
-    "typescript": "5.9.2",
+    "typescript": "5.9.3",
     "ufo": "1.6.1",
     "valibot": "1.1.0",
     "vue-tsc": "3.1.0",
-    "wrangler": "4.40.2",
+    "wrangler": "4.42.0",
     "ws": "8.18.3"
   },
   "packageManager": "pnpm@10.16.1"
