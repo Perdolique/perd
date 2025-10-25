@@ -1,6 +1,6 @@
 {
   "name": "perd",
-  "compatibility_date": "2025-07-31",
+  "compatibility_date": "2025-10-25",
   "pages_build_output_dir": "./dist",
   "upload_source_maps": true,
 

@@ -31,7 +31,13 @@ export default defineNuxtConfig({
   experimental: {
     viewTransition: true,
     scanPageMeta: true,
-    granularCachedData: true
+    granularCachedData: true,
+    typescriptPlugin: true,
+    viteEnvironmentApi: true
+  },
+
+  future: {
+    compatibilityVersion: 5
   },
 
   typescript: {
@@ -52,7 +58,7 @@ export default defineNuxtConfig({
     dirs: []
   },
 
-  compatibilityDate: '2024-11-03',
+  compatibilityDate: '2025-10-25',
 
   nitro: {
     preset: 'cloudflare-pages'
