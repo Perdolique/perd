@@ -4,11 +4,13 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "deploy": "wrangler pages deploy",
+    "deploy:production": "wrangler deploy --env=production",
+    "deploy:staging": "wrangler deploy --env=staging",
+    "deploy:versions:staging": "wrangler versions upload --env=staging",
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "postinstall": "nuxt prepare",
-    "preview": "wrangler pages dev",
+    "preview": "wrangler dev",
     "update:all": "taze -I -l latest",
     "update:newest": "taze -I -l newest",
     "db:generate": "drizzle-kit generate",
@@ -17,7 +19,7 @@
     "db:seed": "tsx ./tools/seed.ts",
     "db:seed:local": "tsx --env-file=.env ./tools/seed.ts",
     "db:studio": "drizzle-kit studio",
-    "typecheck": "nuxi typecheck",
+    "test:typecheck": "nuxi typecheck",
     "prepare": "husky"
   },
   "dependencies": {

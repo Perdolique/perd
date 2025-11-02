@@ -61,7 +61,11 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-10-25',
 
   nitro: {
-    preset: 'cloudflare-pages'
+    preset: 'cloudflare_module',
+
+    cloudflare: {
+      deployConfig: false
+    }
   },
 
   icon: {

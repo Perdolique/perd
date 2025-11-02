@@ -1,5 +1,6 @@
 import type { H3Event, EventHandlerRequest, SessionConfig } from 'h3'
 import { sessionCookieName } from '~~/constants';
+import { validateSessionSecret } from './validate';
 
 interface SessionData {
   userId?: string;
@@ -8,8 +9,10 @@ interface SessionData {
 }
 
 function getSessionConfig() : SessionConfig {
+  const secret = validateSessionSecret(process.env.SESSION_SECRET);
+
   return {
-    password: process.env.SESSION_SECRET ?? '',
+    password: secret,
     name: sessionCookieName,
 
     cookie: {

@@ -10,6 +10,15 @@ export const stringToIntegerValidator = v.pipe(
   v.integer()
 )
 
+const sessionSecretValidator = v.pipe(
+  v.string('SESSION_SECRET must be a string'),
+  v.minLength(32, 'SESSION_SECRET must be at least 32 characters long')
+)
+
+export function validateSessionSecret(secret: unknown) {
+  return v.parse(sessionSecretValidator, secret)
+}
+
 export async function validateSessionUser(event: H3Event<EventHandlerRequest>) {
   const session = await useAppSession(event)
   const { userId } = session.data
