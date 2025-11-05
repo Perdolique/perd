@@ -1,0 +1,23 @@
+name: Setup pnpm and install dependencies composite action
+
+inputs:
+  install-dependencies:
+    description: Whether to install dependencies
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    # TODO: move to separate repository and add "actions/checkout" step
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: .node-version
+    - name: Install dependencies
+      if: ${{ inputs.install-dependencies == 'true' }}
+      run: |
+        pnpm install --frozen-lockfile
+      shell: bash

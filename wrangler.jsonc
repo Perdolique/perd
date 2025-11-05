@@ -1,14 +1,46 @@
 {
+  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "perd",
   "compatibility_date": "2025-10-25",
-  "pages_build_output_dir": "./dist",
+  "main": ".output/server/index.mjs",
   "upload_source_maps": true,
 
   "dev": {
     "port": 8888
   },
 
-  "vars": {
-    "OAUTH_TWITCH_CLIENT_ID": "76z9coffucmezuwxx68iurur0vnigy"
+  "assets": {
+    "directory": ".output/public"
+  },
+
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+
+  "placement": {
+    "mode": "smart"
+  },
+
+  "env": {
+    "production": {
+      "name": "perd",
+      "preview_urls": false,
+      "workers_dev": true,
+
+      "vars": {
+        "OAUTH_TWITCH_CLIENT_ID": "76z9coffucmezuwxx68iurur0vnigy"
+      }
+    },
+
+    "staging": {
+      "name": "perd-staging",
+      "preview_urls": true,
+      "workers_dev": true,
+
+      "vars": {
+        "OAUTH_TWITCH_CLIENT_ID": "76z9coffucmezuwxx68iurur0vnigy"
+      }
+    }
   }
 }
