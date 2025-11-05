@@ -1,9 +1,8 @@
-name: Setup pnpm composite action
-description: Checkout code, setup pnpm and Node.js
+name: Setup pnpm and install dependencies composite action
 
 inputs:
   install-dependencies:
-    description: 'Whether to install dependencies'
+    description: Whether to install dependencies
     required: false
     default: 'false'
 
