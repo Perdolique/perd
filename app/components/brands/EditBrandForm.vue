@@ -16,7 +16,7 @@
 
       <PerdInput
         label="Website URL"
-        placeholder="https://perd.pages.dev"
+        placeholder="https://perd.perd.workers.dev"
         type="url"
         v-model.trim="websiteUrl"
       />
