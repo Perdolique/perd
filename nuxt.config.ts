@@ -25,7 +25,8 @@ function getComponentName(componentName: string, componentType: ComponentType) :
 export default defineNuxtConfig({
   modules: [
     '@nuxt/fonts',
-    '@nuxt/icon'
+    '@nuxt/icon',
+    '@nuxt/hints'
   ],
 
   experimental: {
