@@ -1,0 +1,213 @@
+name: Reusable Deploy Workflow
+
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        description: Working directory for the project
+        required: false
+        default: '.'
+        type: string
+      artifact-path:
+        description: Path to the build output directory
+        required: false
+        default: '.output'
+        type: string
+      artifact-name:
+        description: Name of the deployment artifact
+        required: false
+        default: 'deployment-artifact'
+        type: string
+      build-command:
+        description: pnpm script name for building the project
+        required: false
+        default: 'build'
+        type: string
+      typecheck-command:
+        description: pnpm script name for type checking (optional, skipped if empty)
+        required: false
+        default: 'test:typecheck'
+        type: string
+      deploy-staging-command:
+        description: pnpm script name for deploying to staging
+        required: false
+        default: 'deploy:versions:staging'
+        type: string
+      deploy-production-command:
+        description: pnpm script name for deploying to production
+        required: false
+        default: 'deploy:production'
+        type: string
+    secrets:
+      cloudflare-account-id:
+        description: Cloudflare account ID
+        required: true
+      cloudflare-api-token:
+        description: Cloudflare API token
+        required: true
+
+concurrency:
+  group: ${{ inputs.artifact-name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Check Typescript types correctness
+  test-typecheck:
+    if: inputs.typecheck-command != ''
+    name: Typecheck
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          install-dependencies: true
+      - name: Run typecheck
+        run: |
+          pnpm ${{ inputs.typecheck-command }}
+
+  # Build the project and upload artifact
+  build:
+    name: Build artifact
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+      - uses: ./.github/actions/setup-pnpm
+        with:
+          install-dependencies: true
+      - name: Build project
+        run: |
+          pnpm run ${{ inputs.build-command }}
+      - name: Upload build artifact
+        id: upload-artifact
+        uses: actions/upload-artifact@v5
+        with:
+          include-hidden-files: true
+          if-no-files-found: error
+          name: ${{ inputs.artifact-name }}
+          path: ${{ inputs.artifact-path }}
+
+  deploy-to-staging:
+    if: github.event_name == 'pull_request'
+    name: Deploy to staging
+    runs-on: ubuntu-24.04
+    permissions:
+      pull-requests: write
+    outputs:
+      wrangler-log: ${{ steps.set-wrangler-log.outputs.wrangler-log }}
+    needs:
+      - build
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      # Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      # Setup, and download artifact
+      - uses: ./.github/actions/pre-deploy
+        with:
+          artifact-name: ${{ inputs.artifact-name }}
+          unpack-path: ${{ inputs.artifact-path }}
+
+      # Set wrangler log file path for capturing output
+      - name: Set wrangler output file path
+        id: set-wrangler-log
+        run: |
+          WRANGLER_LOG=/tmp/wrangler-$(date '+%s%N').log
+          echo "wrangler-log=$WRANGLER_LOG" >> $GITHUB_OUTPUT
+
+      # Deploy to Cloudflare Workers
+      - name: Deploy version to staging
+        id: deploy-version
+        continue-on-error: true
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.cloudflare-account-id }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.cloudflare-api-token }}
+        run: |
+          export WRANGLER_OUTPUT_FILE_PATH=${{ steps.set-wrangler-log.outputs.wrangler-log }}
+          pnpm run ${{ inputs.deploy-staging-command }}
+
+      # Extract deployment URL from wrangler log
+      - name: Get deployment URL
+        id: get-deployment-url
+        continue-on-error: true
+        run: |
+          PREVIEW_URL=$(jq --raw-output --slurp 'first(.[] | select(.preview_url) | .preview_url)' ${{ steps.set-wrangler-log.outputs.wrangler-log }})
+
+          if [ -z "$PREVIEW_URL" ]; then
+            echo "Error: No preview_url found in wrangler log"
+            exit 1
+          fi
+
+          echo "preview-url=$PREVIEW_URL" >> $GITHUB_OUTPUT
+
+      # Comment on the pull request with success status
+      - name: Comment successful deployment URL
+        if: ${{ steps.get-deployment-url.outcome == 'success' }}
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          message: |
+            ## 🎉 Deployed to Cloudflare!
+
+            - Commit: `${{ github.sha }}`
+            - Preview URL: ${{ steps.get-deployment-url.outputs.preview-url }}
+
+      # Comment on the pull request with failure status
+      - name: Comment deployment failure
+        if: ${{ steps.get-deployment-url.outcome == 'failure' }}
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          message: |
+            ## ❌ Deployment to Cloudflare failed!
+
+            - Commit: `${{ github.sha }}`
+            - Please check the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for more details.
+
+      # Fail the workflow if deployment failed
+      - name: Fail workflow if deployment failed
+        if: ${{ steps.get-deployment-url.outcome == 'failure' }}
+        run: |
+          echo "Deployment to staging failed."
+          exit 1
+
+  deploy-to-production:
+    if: github.event_name == 'push'
+    name: Deploy to production
+    runs-on: ubuntu-24.04
+    needs:
+      - build
+      - test-typecheck
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      # Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      # Setup, and download artifact
+      - uses: ./.github/actions/pre-deploy
+        with:
+          artifact-name: ${{ inputs.artifact-name }}
+          unpack-path: ${{ inputs.artifact-path }}
+
+      # Deploy to Cloudflare Workers
+      - name: Deploy to production
+        id: deploy-production
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.cloudflare-account-id }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.cloudflare-api-token }}
+        run: |
+          pnpm run ${{ inputs.deploy-production-command }}
