@@ -50,7 +50,7 @@ on:
         required: true
 
 concurrency:
-  group: ${{ inputs.artifact-name }}-${{ github.ref }}
+  group: ${{ inputs.artifact-name }}-${{ inputs.working-directory }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -95,7 +95,7 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           name: ${{ inputs.artifact-name }}
-          path: ${{ inputs.artifact-path }}
+          path: ${{ inputs.working-directory == '.' && inputs.artifact-path || format('{0}/{1}', inputs.working-directory, inputs.artifact-path) }}
 
   deploy-to-staging:
     if: github.event_name == 'pull_request'
@@ -119,7 +119,7 @@ jobs:
       - uses: ./.github/actions/pre-deploy
         with:
           artifact-name: ${{ inputs.artifact-name }}
-          unpack-path: ${{ inputs.artifact-path }}
+          unpack-path: ${{ inputs.working-directory == '.' && inputs.artifact-path || format('{0}/{1}', inputs.working-directory, inputs.artifact-path) }}
 
       # Set wrangler log file path for capturing output
       - name: Set wrangler output file path
