@@ -201,7 +201,7 @@ jobs:
       - uses: ./.github/actions/pre-deploy
         with:
           artifact-name: ${{ inputs.artifact-name }}
-          unpack-path: ${{ inputs.artifact-path }}
+          unpack-path: ${{ inputs.working-directory == '.' && inputs.artifact-path || format('{0}/{1}', inputs.working-directory, inputs.artifact-path) }}
 
       # Deploy to Cloudflare Workers
       - name: Deploy to production
