@@ -183,7 +183,7 @@ jobs:
           exit 1
 
   deploy-to-production:
-    if: github.event_name == 'push' && (success() || skipped())
+    if: github.event_name == 'push' && needs.build.result == 'success' && (needs.test-typecheck.result == 'success' || needs.test-typecheck.result == 'skipped')
     name: Deploy to production
     runs-on: ubuntu-24.04
     needs:
