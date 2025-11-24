@@ -1,4 +1,4 @@
-name: Database migration (staging)
+name: Database migration
 
 permissions:
   contents: read
@@ -7,29 +7,29 @@ on:
   pull_request:
     branches:
       - master
-    paths:
-      - 'server/database/migrations/**'
-      - .github/workflows/database-migration-staging.yml
+    types:
+      - opened
+      - synchronize
+  push:
+    branches:
+      - master
 
 jobs:
   migration:
     runs-on: ubuntu-24.04
-    environment: staging
+    environment: ${{ github.event_name == 'pull_request' && 'staging' || 'production' }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
-      - uses: pnpm/action-setup@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/checkout@v6
+      - uses: Perdolique/.github/.github/actions/setup-pnpm@master
         with:
-          node-version-file: .node-version
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+          install-dependencies: true
       - name: Run database migration
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: pnpm run db:migrate
       - name: Seed database
+        if: github.event_name == 'pull_request'
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: pnpm run db:seed
