@@ -28,7 +28,7 @@
     "drizzle-orm": "0.44.7",
     "modern-normalize": "3.0.1",
     "nuxt": "4.2.1",
-    "ulid": "3.0.1",
+    "ulid": "3.0.2",
     "vue": "3.5.25"
   },
   "devDependencies": {
