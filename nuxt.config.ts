@@ -23,6 +23,8 @@ function getComponentName(componentName: string, componentType: ComponentType) :
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  compatibilityDate: '2025-12-02',
+
   modules: [
     '@nuxt/fonts',
     '@nuxt/icon',
@@ -58,8 +60,6 @@ export default defineNuxtConfig({
   components: {
     dirs: []
   },
-
-  compatibilityDate: '2025-10-25',
 
   nitro: {
     preset: 'cloudflare_module',

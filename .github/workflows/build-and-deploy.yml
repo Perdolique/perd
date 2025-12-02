@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   deploy:
-    uses: Perdolique/.github/.github/workflows/deploy.yml@master
+    uses: Perdolique/automations/.github/workflows/deploy.yml@v1.0.4
     secrets:
       cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
