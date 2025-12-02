@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-      - uses: Perdolique/.github/.github/actions/setup-pnpm@master
+      - uses: Perdolique/automations/.github/actions/setup-pnpm@v1.0.4
         with:
           install-dependencies: true
       - name: Run database migration

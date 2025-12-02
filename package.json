@@ -23,7 +23,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@nuxt/hints": "1.0.0-alpha.2",
+    "@nuxt/hints": "1.0.0-alpha.3",
     "date-fns": "4.1.0",
     "drizzle-orm": "0.44.7",
     "modern-normalize": "3.0.1",
@@ -53,5 +53,5 @@
     "wrangler": "4.51.0",
     "ws": "8.18.3"
   },
-  "packageManager": "pnpm@10.23.0"
+  "packageManager": "pnpm@10.24.0"
 }
