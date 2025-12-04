@@ -28,7 +28,9 @@ export async function getSessionUser(event: H3Event) : Promise<ReturnUser> {
         isAdmin: true
       },
 
-      where: eq(tables.users.id, userId)
+      where: {
+        id: userId
+      }
     })
 
   if (users?.id === undefined) {
@@ -83,7 +85,9 @@ export async function createOAuthUser(
         id: true
       },
 
-      where: eq(tables.oauthProviders.type, provider)
+      where: {
+        type: provider
+      }
     })
 
     if (providerData === undefined) {
