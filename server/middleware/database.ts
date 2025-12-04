@@ -10,6 +10,6 @@ export default defineEventHandler(async ({ context }) => {
 
 declare module 'h3' {
   interface H3EventContext {
-    db: NeonHttpDatabase<typeof tables>
+    db: NeonHttpDatabase<typeof tables, typeof relations>
   }
 }

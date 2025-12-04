@@ -1,6 +1,5 @@
 import type { H3Event, EventHandlerRequest } from 'h3'
 import { parseISO, differenceInMilliseconds } from 'date-fns'
-import { and, eq } from 'drizzle-orm'
 import { adminCheckInterval } from '~~/constants'
 
 interface CheckAdminOption {
@@ -22,10 +21,10 @@ async function isUserAdmin(event: H3Event<EventHandlerRequest>, userId: string) 
         id: true
       },
 
-      where: and(
-        eq(tables.users.id, userId),
-        eq(tables.users.isAdmin, true)
-      )
+      where: {
+        id: userId,
+        isAdmin: true
+      }
     })
 
   return result?.id !== undefined

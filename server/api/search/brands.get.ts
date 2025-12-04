@@ -1,5 +1,3 @@
-import { asc, ilike } from 'drizzle-orm'
-
 interface ReturnType {
   id: number
   name: string
@@ -18,8 +16,16 @@ export default defineEventHandler(async (event) : Promise<ReturnType[]> => {
       name: true
     },
 
-    where: ilike(tables.brands.name, `%${search}%`),
-    orderBy: asc(tables.brands.name),
+    where: {
+      name: {
+        ilike: `%${search}%`
+      }
+    },
+
+    orderBy: {
+      name: 'asc'
+    },
+
     limit: 10
   })
 
