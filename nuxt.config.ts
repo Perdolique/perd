@@ -35,7 +35,6 @@ export default defineNuxtConfig({
     viewTransition: true,
     scanPageMeta: true,
     granularCachedData: true,
-    typescriptPlugin: true,
     viteEnvironmentApi: true
   },
 

@@ -1,5 +1,15 @@
-import { eq } from 'drizzle-orm'
 import * as v from 'valibot'
+
+interface ReturnEquipment {
+  id: number;
+  name: string;
+  weight: number;
+}
+
+interface ReturnData {
+  id: number;
+  equipment: ReturnEquipment;
+}
 
 const bodySchema = v.object({
   equipmentId: idValidatorNumber
@@ -9,7 +19,7 @@ function validateBody(body: unknown) {
   return v.parse(bodySchema, body)
 }
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event) : Promise<ReturnData | undefined> => {
   const { db } = event.context
 
   await validateSessionUser(event)
@@ -37,7 +47,9 @@ export default defineEventHandler(async (event) => {
     }
 
     const insertedItem = await db.query.checklistItems.findFirst({
-      where: eq(tables.checklistItems.id, foundItem.itemId),
+      where: {
+        id: foundItem.itemId
+      },
 
       columns: {
         id: true
