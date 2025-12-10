@@ -25,9 +25,9 @@
   "dependencies": {
     "@nuxt/hints": "1.0.0-alpha.3",
     "date-fns": "4.1.0",
-    "drizzle-orm": "0.45.0",
+    "drizzle-orm": "0.45.1",
     "modern-normalize": "3.0.1",
-    "nuxt": "4.2.1",
+    "nuxt": "4.2.2",
     "ulid": "3.0.2",
     "vue": "3.5.25"
   },
@@ -43,7 +43,7 @@
     "drizzle-kit": "0.31.8",
     "drizzle-seed": "0.3.1",
     "husky": "9.1.7",
-    "sass": "1.95.0",
+    "sass": "1.95.1",
     "taze": "19.9.2",
     "tsx": "4.21.0",
     "typescript": "5.9.3",
