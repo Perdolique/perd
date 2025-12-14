@@ -36,7 +36,7 @@
     "@iconify-json/tabler": "1.2.23",
     "@neondatabase/serverless": "1.0.2",
     "@nuxt/fonts": "0.12.1",
-    "@nuxt/icon": "2.1.0",
+    "@nuxt/icon": "2.1.1",
     "@types/ws": "8.18.1",
     "@vueuse/core": "14.1.0",
     "consola": "3.4.2",
