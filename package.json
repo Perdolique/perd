@@ -29,7 +29,7 @@
     "modern-normalize": "3.0.1",
     "nuxt": "4.2.2",
     "ulid": "3.0.2",
-    "vue": "3.5.25"
+    "vue": "3.5.26"
   },
   "devDependencies": {
     "@iconify-json/streamline-emojis": "1.2.4",
@@ -50,7 +50,7 @@
     "ufo": "1.6.1",
     "valibot": "1.2.0",
     "vue-tsc": "3.1.8",
-    "wrangler": "4.55.0",
+    "wrangler": "4.56.0",
     "ws": "8.18.3"
   },
   "packageManager": "pnpm@10.24.0"
