@@ -36,22 +36,22 @@
     "@iconify-json/tabler": "1.2.26",
     "@neondatabase/serverless": "1.0.2",
     "@nuxt/fonts": "0.12.1",
-    "@nuxt/icon": "2.1.1",
+    "@nuxt/icon": "2.2.0",
     "@types/ws": "8.18.1",
     "@vueuse/core": "14.1.0",
     "consola": "3.4.2",
     "drizzle-kit": "0.31.8",
     "drizzle-seed": "0.3.1",
     "husky": "9.1.7",
-    "sass": "1.97.1",
+    "sass": "1.97.2",
     "taze": "19.9.2",
     "tsx": "4.21.0",
     "typescript": "5.9.3",
-    "ufo": "1.6.1",
+    "ufo": "1.6.2",
     "valibot": "1.2.0",
-    "vue-tsc": "3.2.1",
+    "vue-tsc": "3.2.2",
     "wrangler": "4.56.0",
-    "ws": "8.18.3"
+    "ws": "8.19.0"
   },
   "packageManager": "pnpm@10.24.0"
 }
