@@ -36,7 +36,7 @@
     "@iconify-json/tabler": "1.2.26",
     "@neondatabase/serverless": "1.0.2",
     "@nuxt/fonts": "0.12.1",
-    "@nuxt/icon": "2.2.0",
+    "@nuxt/icon": "2.2.1",
     "@types/ws": "8.18.1",
     "@vueuse/core": "14.1.0",
     "consola": "3.4.2",
@@ -50,7 +50,7 @@
     "ufo": "1.6.3",
     "valibot": "1.2.0",
     "vue-tsc": "3.2.2",
-    "wrangler": "4.59.2",
+    "wrangler": "4.59.3",
     "ws": "8.19.0"
   },
   "packageManager": "pnpm@10.24.0"
