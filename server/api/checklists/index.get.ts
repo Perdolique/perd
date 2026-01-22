@@ -1,5 +1,3 @@
-import { desc, eq } from 'drizzle-orm'
-
 interface ReturnData {
   readonly id: string;
   readonly name: string;
@@ -15,8 +13,14 @@ export default defineEventHandler(async (event) : Promise<ReturnData[]> => {
         name: true
       },
 
-      orderBy: [desc(tables.checklists.createdAt)],
-      where: eq(tables.checklists.userId, userId),
+      orderBy: {
+        createdAt: 'desc'
+      },
+
+      where: {
+        userId
+      },
+
       limit: 100
     })
 

@@ -47,8 +47,15 @@ export default defineEventHandler(async (event) : Promise<ReturnData[]> => {
 
   const result = await event.context.db.query.equipment
     .findMany({
-      orderBy: [asc(tables.equipment.name)],
-      where: like(tables.equipment.name, `%${searchString}%`),
+      orderBy: {
+        name: 'asc'
+      },
+      where: {
+        name: {
+          like: `%${searchString}%`
+        }
+      },
+
       limit: 100
     })
 

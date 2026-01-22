@@ -1,5 +1,3 @@
-import { and, eq } from 'drizzle-orm'
-
 interface ReturnData {
   readonly id: string;
   readonly name: string;
@@ -17,10 +15,10 @@ export default defineEventHandler(async (event) : Promise<ReturnData> => {
         name: true
       },
 
-      where: and(
-        eq(tables.checklists.userId, userId),
-        eq(tables.checklists.id, checklistId)
-      )
+      where: {
+        userId,
+        id: checklistId
+      }
     })
 
   if (result === undefined) {
