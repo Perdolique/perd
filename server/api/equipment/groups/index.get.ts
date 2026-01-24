@@ -1,4 +1,6 @@
 import { asc, count, eq } from 'drizzle-orm'
+import { defineEventHandler } from 'h3'
+import { tables } from '#server/utils/database'
 
 interface ReturnData {
   readonly id: number;

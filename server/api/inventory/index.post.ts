@@ -1,3 +1,6 @@
+import { defineEventHandler, createError, readValidatedBody, setResponseStatus } from 'h3'
+import { validateSessionUser, idValidatorNumber } from '#server/utils/validate'
+import { tables } from '#server/utils/database'
 import * as v from 'valibot'
 
 const bodySchema = v.object({
@@ -25,7 +28,7 @@ export default defineEventHandler(async (event) => {
     setResponseStatus(event, 201)
   } catch {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Cannot assign equipment to user'
     })
   }

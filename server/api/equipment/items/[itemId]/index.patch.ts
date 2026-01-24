@@ -1,6 +1,10 @@
+import { defineEventHandler, createError, getValidatedRouterParams, readValidatedBody } from 'h3'
 import { eq } from 'drizzle-orm'
 import * as v from 'valibot'
 import { limits } from '~~/constants'
+import { validateAdmin } from '#server/utils/admin'
+import { stringToIntegerValidator } from '#server/utils/validate'
+import { tables } from '#server/utils/database'
 
 const paramsSchema = v.object({
   itemId: stringToIntegerValidator
@@ -86,7 +90,7 @@ export default defineEventHandler(async (event) => {
 
   if (item === undefined) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: `Item with ID ${itemId} not found`
     })
   }

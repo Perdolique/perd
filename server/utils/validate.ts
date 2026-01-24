@@ -1,5 +1,7 @@
 import * as v from 'valibot'
 import type { H3Event, EventHandlerRequest } from 'h3'
+import { createError } from 'h3'
+import { useAppSession } from './session'
 
 export const idValidatorString = v.pipe(v.string(), v.nonEmpty())
 export const idValidatorNumber = v.number()
@@ -25,7 +27,7 @@ export async function validateSessionUser(event: H3Event<EventHandlerRequest>) {
 
   if (userId === undefined) {
     throw createError({
-      statusCode: 401
+      status: 401
     })
   }
 
@@ -40,8 +42,8 @@ export function validateIdString(id: unknown) {
   }
 
   throw createError({
-    statusCode: 400,
-    statusMessage: 'Validation Error',
+    status: 400,
+    statusText: 'Validation Error',
     message: issues[0].message,
     data: issues
   })
@@ -55,8 +57,8 @@ export function validateIdNumber(id: unknown) {
   }
 
   throw createError({
-    statusCode: 400,
-    statusMessage: 'Validation Error',
+    status: 400,
+    statusText: 'Validation Error',
     message: issues[0].message,
     data: issues
   })
@@ -70,8 +72,8 @@ export function validateStringToInteger(id: unknown) {
   }
 
   throw createError({
-    statusCode: 400,
-    statusMessage: 'Validation Error',
+    status: 400,
+    statusText: 'Validation Error',
     message: issues[0].message,
     data: issues
   })

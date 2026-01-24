@@ -1,4 +1,5 @@
 import type { H3Event, EventHandlerRequest, SessionConfig } from 'h3'
+import { useSession, getSession, updateSession, clearSession } from 'h3'
 import { sessionCookieName } from '~~/constants';
 import { validateSessionSecret } from './validate';
 

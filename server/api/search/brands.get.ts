@@ -1,3 +1,5 @@
+import { defineEventHandler, getQuery } from 'h3'
+
 interface ReturnType {
   id: number
   name: string

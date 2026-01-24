@@ -1,6 +1,9 @@
+import { defineEventHandler, createError, readValidatedBody, setResponseStatus } from 'h3'
 import * as v from 'valibot'
 import { limits } from '~~/constants'
 import type { EquipmentStatus } from '#shared/models/equipment';
+import { validateSessionUser } from '#server/utils/validate'
+import { tables } from '#server/utils/database'
 
 const bodySchema = v.object({
   name: v.pipe(
@@ -74,7 +77,7 @@ export default defineEventHandler(async (event) => {
 
   if (inserted?.id === undefined) {
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: 'Failed to create equipment item'
     })
   }

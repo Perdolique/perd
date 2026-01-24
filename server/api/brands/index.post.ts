@@ -1,6 +1,9 @@
 import consola from 'consola'
 import * as v from 'valibot'
+import { tables } from '#server/utils/database'
+import { createError, defineEventHandler, setResponseStatus, readValidatedBody } from 'h3'
 import { limits } from '~~/constants'
+import { validateAdmin } from '~~/server/utils/admin'
 
 const bodySchema = v.object({
   name: v.pipe(
@@ -51,7 +54,7 @@ export default defineEventHandler(async (event) => {
     consola.error(error)
 
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Failed to create brand'
     })
   }

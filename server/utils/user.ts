@@ -1,6 +1,9 @@
 import type { H3Event } from 'h3'
+import { createError } from 'h3'
 import { and, eq } from 'drizzle-orm'
-import type { OAuthProvider } from '~/models/oauth';
+import type { OAuthProvider } from '~/models/oauth'
+import { useAppSession } from './session'
+import { tables, createDrizzleWebsocket } from './database'
 
 interface ReturnUser {
   readonly userId: string | null;
@@ -93,7 +96,7 @@ export async function createOAuthUser(
     if (providerData === undefined) {
       throw createError({
         message: `OAuth provider ${provider} not found`,
-        statusCode: 404
+        status: 404
       })
     }
 
@@ -111,7 +114,7 @@ export async function createOAuthUser(
     if (foundUser?.userId === undefined) {
       throw createError({
         message: 'Failed to create user',
-        statusCode: 500
+        status: 500
       })
     }
 

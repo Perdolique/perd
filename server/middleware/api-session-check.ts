@@ -1,5 +1,7 @@
 import { isSamePath, withBase } from 'ufo'
+import { defineEventHandler, createError, getRequestURL } from 'h3'
 import { publicApiPaths } from '~~/constants'
+import { getAppSession } from '#server/utils/session'
 
 const apiBase = '/api'
 
@@ -19,7 +21,7 @@ export default defineEventHandler(async (event) => {
 
     if (isPublic === false && userId === undefined) {
       throw createError({
-        statusCode: 401
+        status: 401
       })
     }
   }

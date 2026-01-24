@@ -1,3 +1,6 @@
+import { defineEventHandler, createError, getRouterParam } from 'h3'
+import { validateSessionUser, validateIdString } from '#server/utils/validate';
+
 interface ReturnData {
   readonly id: string;
   readonly name: string;
@@ -23,7 +26,7 @@ export default defineEventHandler(async (event) : Promise<ReturnData> => {
 
   if (result === undefined) {
     throw createError({
-      statusCode: 404
+      status: 404
     })
   }
 

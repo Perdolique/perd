@@ -1,4 +1,7 @@
 import * as v from 'valibot'
+import { defineEventHandler, createError, getRouterParam, readValidatedBody, setResponseStatus } from 'h3'
+import { validateSessionUser, validateIdString, idValidatorNumber } from '#server/utils/validate'
+import { tables } from '#server/utils/database'
 
 interface ReturnEquipment {
   id: number;
@@ -41,7 +44,7 @@ export default defineEventHandler(async (event) : Promise<ReturnData | undefined
 
     if (foundItem === undefined) {
       throw createError({
-        statusCode: 500,
+        status: 500,
         message: 'Failed to create checklist item'
       })
     }
@@ -75,7 +78,7 @@ export default defineEventHandler(async (event) : Promise<ReturnData | undefined
     }
 
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Failed to create checklist item'
     })
   }

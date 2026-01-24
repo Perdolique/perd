@@ -1,3 +1,6 @@
+import { defineEventHandler } from 'h3'
+import { validateSessionUser } from '#server/utils/validate'
+import { tables } from '#server/utils/database'
 import { and, asc, eq } from 'drizzle-orm'
 
 interface EquipmentItem {

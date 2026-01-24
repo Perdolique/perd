@@ -181,7 +181,7 @@
   description.value = data.value?.equipment.description ?? ''
 
   const errorIcon = computed(() => {
-    if (error.value?.statusCode === 404) {
+    if (error.value?.status === 404) {
       return 'streamline-emojis:man-shrugging-1'
     }
 
@@ -189,7 +189,7 @@
   })
 
   const errorText = computed(() => {
-    if (error.value?.statusCode === 404) {
+    if (error.value?.status === 404) {
       return `Item with ID ${itemId} not found`
     }
 

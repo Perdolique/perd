@@ -1,4 +1,4 @@
-import { H3Event } from 'h3'
+import { H3Event, createError, getRequestURL } from 'h3'
 import consola from 'consola'
 import { joinURL } from 'ufo'
 
@@ -25,7 +25,7 @@ export async function getTwitchOAuthToken(event: H3Event, code: string) : Promis
     consola.error('OAUTH_TWITCH_CLIENT_ID is not defined')
 
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: 'Internal server error',
     })
   }
@@ -34,7 +34,7 @@ export async function getTwitchOAuthToken(event: H3Event, code: string) : Promis
     consola.error('OAUTH_TWITCH_CLIENT_SECRET is not defined')
 
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: 'Internal server error',
     })
   }
@@ -59,7 +59,7 @@ export async function getTwitchOAuthToken(event: H3Event, code: string) : Promis
     consola.error(error)
 
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Failed to obtain OAuth token',
     })
   }
@@ -72,7 +72,7 @@ export async function getTwitchUserInfo(accessToken: string) : Promise<TwitchUse
     console.error('OAUTH_TWITCH_CLIENT_ID is not defined')
 
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: 'Internal server error',
     })
   }
@@ -94,7 +94,7 @@ export async function getTwitchUserInfo(accessToken: string) : Promise<TwitchUse
     consola.error(error)
 
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Failed to get user info',
     })
   }

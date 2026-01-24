@@ -45,7 +45,7 @@
   }
 
   const errorIcon = computed(() => {
-    if (error.value?.statusCode === 404) {
+    if (error.value?.status === 404) {
       return 'streamline-emojis:man-shrugging-1'
     }
 
@@ -53,7 +53,7 @@
   })
 
   const errorText = computed(() => {
-    if (error.value?.statusCode === 404) {
+    if (error.value?.status === 404) {
       return `Brand with ID ${brandId} not found`
     }
 

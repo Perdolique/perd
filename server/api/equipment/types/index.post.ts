@@ -1,6 +1,9 @@
 import consola from 'consola'
 import * as v from 'valibot'
+import { defineEventHandler, createError, readValidatedBody, setResponseStatus } from 'h3'
 import { limits } from '~~/constants'
+import { validateAdmin } from '#server/utils/admin'
+import { tables } from '#server/utils/database'
 
 const bodySchema = v.object({
   name: v.pipe(
@@ -42,7 +45,7 @@ export default defineEventHandler(async (event) => {
     consola.error(error)
 
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Failed to create equipment type'
     })
   }

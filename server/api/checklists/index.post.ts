@@ -1,5 +1,8 @@
 import * as v from 'valibot'
+import { defineEventHandler, createError, readValidatedBody, setResponseStatus } from 'h3'
 import { limits } from '~~/constants'
+import { validateSessionUser } from '#server/utils/validate'
+import { tables } from '#server/utils/database'
 
 const bodySchema = v.object({
   name: v.pipe(
@@ -30,7 +33,7 @@ export default defineEventHandler(async (event) => {
     setResponseStatus(event, 201)
   } catch {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Failed to create checklist'
     })
   }

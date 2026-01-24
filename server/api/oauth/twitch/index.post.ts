@@ -1,4 +1,8 @@
 import * as v from 'valibot'
+import { defineEventHandler, createError, readValidatedBody } from 'h3'
+import { getSessionUser, getUserByOAuthAccount, createOAuthUser } from '#server/utils/user'
+import { updateAppSession } from '#server/utils/session'
+import { getTwitchOAuthToken, getTwitchUserInfo } from '#server/utils/provider-twitch'
 
 const bodySchema = v.object({
   code: v.pipe(v.string(), v.nonEmpty())
@@ -40,6 +44,6 @@ export default defineEventHandler(async (event) => {
 
   throw createError({
     message: 'Not implemented',
-    statusCode: 501
+    status: 501
   })
 })
