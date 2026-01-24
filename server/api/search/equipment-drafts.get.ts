@@ -1,3 +1,6 @@
+import { defineEventHandler, createError, getValidatedQuery } from 'h3'
+import { stringToIntegerValidator } from '#server/utils/validate'
+import { tables } from '#server/utils/database'
 import * as v from 'valibot'
 import { asc, count, eq } from 'drizzle-orm'
 
@@ -54,7 +57,7 @@ export default defineEventHandler(async (event) : Promise<ReturnData> => {
 
   if (equipmentCount[0] === undefined) {
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: 'Failed to fetch equipment count'
     })
   }

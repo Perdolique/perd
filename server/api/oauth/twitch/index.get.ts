@@ -1,4 +1,6 @@
 import { consola } from 'consola'
+import { defineEventHandler, createError, sendRedirect } from 'h3'
+import { getTwitchRedirectUri } from '#server/utils/provider-twitch'
 
 export default defineEventHandler(async (event) => {
   // TODO (#102): Check if the user is already logged in and linked their account
@@ -10,7 +12,7 @@ export default defineEventHandler(async (event) => {
     consola.error('OAUTH_TWITCH_CLIENT_ID is not defined')
 
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: 'Internal server error',
     })
   }

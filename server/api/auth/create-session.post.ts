@@ -1,3 +1,7 @@
+import { createError, defineEventHandler, setResponseStatus } from 'h3'
+import { tables } from '#server/utils/database'
+import { useAppSession } from '#server/utils/session';
+
 interface ReturnType {
   userId: string;
 }
@@ -19,7 +23,7 @@ export default defineEventHandler(async (event) : Promise<ReturnType> => {
 
   if (foundUser === undefined) {
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: 'Failed to create user'
     })
   }

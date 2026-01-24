@@ -1,3 +1,5 @@
+import { defineEventHandler } from 'h3'
+import { createDrizzle, tables, relations } from '#server/utils/database'
 import type { NeonHttpDatabase } from 'drizzle-orm/neon-http'
 
 export default defineEventHandler(async ({ context }) => {

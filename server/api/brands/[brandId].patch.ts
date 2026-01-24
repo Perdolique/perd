@@ -1,6 +1,10 @@
 import { eq } from 'drizzle-orm'
 import * as v from 'valibot'
+import { defineEventHandler, createError, getValidatedRouterParams, readValidatedBody } from 'h3'
 import { limits } from '~~/constants'
+import { stringToIntegerValidator } from '#server/utils/validate'
+import { validateAdmin } from '#server/utils/admin'
+import { tables } from '#server/utils/database'
 
 const paramsSchema = v.object({
   brandId: stringToIntegerValidator
@@ -53,7 +57,7 @@ export default defineEventHandler(async (event) => {
 
   if (updated === undefined) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: `Brand with ID ${brandId} not found`
     })
   }

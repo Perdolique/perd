@@ -1,5 +1,8 @@
 import { and, eq, exists } from 'drizzle-orm'
 import * as v from 'valibot'
+import { defineEventHandler, createError, getValidatedRouterParams, setResponseStatus } from 'h3'
+import { validateSessionUser, idValidatorString, stringToIntegerValidator } from '#server/utils/validate'
+import { tables } from '#server/utils/database'
 
 const paramsSchema = v.object({
   checklistId: idValidatorString,
@@ -40,7 +43,7 @@ export default defineEventHandler(async (event) => {
 
   if (deletedItem === undefined) {
     throw createError({
-      statusCode: 404
+      status: 404
     })
   }
 

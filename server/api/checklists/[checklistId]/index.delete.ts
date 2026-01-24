@@ -1,4 +1,7 @@
 import { and, eq } from 'drizzle-orm'
+import { defineEventHandler, createError, getRouterParam, setResponseStatus } from 'h3'
+import { validateSessionUser, validateIdString } from '#server/utils/validate'
+import { tables } from '#server/utils/database'
 
 export default defineEventHandler(async (event) => {
   const userId = await validateSessionUser(event)
@@ -19,7 +22,7 @@ export default defineEventHandler(async (event) => {
 
   if (deleted.length === 0) {
     throw createError({
-      statusCode: 404
+      status: 404
     })
   }
 

@@ -1,6 +1,8 @@
 import type { H3Event, EventHandlerRequest } from 'h3'
+import { createError } from 'h3'
 import { parseISO, differenceInMilliseconds } from 'date-fns'
 import { adminCheckInterval } from '~~/constants'
+import { useAppSession } from './session'
 
 interface CheckAdminOption {
   readonly force?: boolean;
@@ -79,7 +81,7 @@ export async function validateAdmin(
 
   if (isAdmin === false) {
     throw createError({
-      statusCode: 403,
+      status: 403,
       message: 'You do not have permission to perform this action'
     })
   }

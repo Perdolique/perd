@@ -35,7 +35,14 @@ export default defineNuxtConfig({
     viewTransition: true,
     scanPageMeta: true,
     granularCachedData: true,
-    viteEnvironmentApi: true
+    viteEnvironmentApi: true,
+
+    /**
+     * FIXME: Enable once fixed in Nuxt 4.3.0 and compatibilityVersion 5
+     *
+     * https://github.com/nuxt/nuxt/issues/34142
+     */
+    nitroAutoImports: true
   },
 
   future: {
