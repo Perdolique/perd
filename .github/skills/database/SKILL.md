@@ -1,6 +1,6 @@
 ---
 name: database
-description: Database patterns using Drizzle ORM with PostgreSQL. Includes schema definitions, relations, migrations workflow, and querying patterns in API routes. Use when working with database schema, queries, migrations, or when user mentions Drizzle, PostgreSQL, tables, relations, migrations, schema, SQL, database queries, transactions, or DB operations.
+description: Database patterns using Drizzle ORM with PostgreSQL. Includes schema definitions, relations, migrations workflow, and querying patterns in API routes. Use when working with database schema, queries, migrations, debugging database issues, or when user mentions Drizzle, PostgreSQL, tables, relations, migrations, schema, SQL, database queries, transactions, DB operations, database errors, migration failures, or connection issues.
 license: Unlicense
 ---
 

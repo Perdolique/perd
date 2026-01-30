@@ -1,5 +1,10 @@
 @use "sass:meta";
 @use "./variables" as *;
+@use '@perd-ui/theme/colors';
+@use '@perd-ui/theme/sizes';
+@use '@perd-ui/theme/spacings';
+@use '@perd-ui/theme/transitions';
+@use '@perd-ui/theme/typography';
 
 @layer {
   @include meta.load-css("modern-normalize");

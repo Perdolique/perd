@@ -4,7 +4,11 @@ A Nuxt 4 application deployed to Cloudflare Workers with Drizzle ORM and Neon Po
 
 ## Package Manager
 
-**Always use `pnpm`** (version 10.28.1)
+**Always use `pnpm`**
+
+## Workflow
+
+**CRITICAL**: Before performing ANY task, action, or code modification, check if there are existing skills that cover the domain of your task and follow their instructions.
 
 ## Commands
 

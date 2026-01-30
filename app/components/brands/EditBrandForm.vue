@@ -6,17 +6,17 @@
   >
     <div :class="$style.inputs">
       <PerdInput
-        required
-        autofocus
-        autocomplete="off"
         label="Name"
         placeholder="The West Pace"
         v-model.trim="name"
+        autocomplete="off"
+        required
+        autofocus
       />
 
       <PerdInput
         label="Website URL"
-        placeholder="https://perd.perd.workers.dev"
+        placeholder="https://perd.dev"
         type="url"
         v-model.trim="websiteUrl"
       />
@@ -44,7 +44,7 @@
 
 <script lang="ts" setup>
   import PerdButton from '~/components/PerdButton.vue'
-  import PerdInput from '~/components/PerdInput.vue'
+  import PerdInput from '../inputs/PerdInput.vue';
 
   interface Props {
     readonly submitting: boolean;
