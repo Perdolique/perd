@@ -89,10 +89,10 @@
   import { useDebounceFn } from '@vueuse/core'
   import ImageUpload from '~/components/ImageUpload.vue';
   import PerdButton from '~/components/PerdButton.vue';
-  import PerdInput from '~/components/PerdInput.vue';
   import PerdSelect, { type SelectOption } from '~/components/PerdSelect.vue';
   import PerdTextArea from '~/components/PerdTextArea.vue';
   import ComboBox from '~/components/ComboBox/ComboBox.vue';
+  import PerdInput from '../inputs/PerdInput.vue';
 
   export interface Brand {
     readonly value: string;

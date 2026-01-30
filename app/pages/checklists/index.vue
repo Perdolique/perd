@@ -11,8 +11,9 @@
 
     <InputDialog
       v-model="isDialogOpened"
+      input-label="Checklist name"
       header-text="Create checklist"
-      placeholder="Checklist name"
+      placeholder="My checklist"
       add-button-text="Create"
       :maxlength="limits.maxChecklistNameLength"
       @submit="createChecklist"

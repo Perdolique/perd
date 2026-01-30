@@ -42,8 +42,8 @@
 
 <script lang="ts" setup>
   import { onClickOutside } from '@vueuse/core';
-  import PerdInput from '~/components/PerdInput.vue';
   import FidgetSpinner from '../FidgetSpinner.vue';
+  import PerdInput from '../inputs/PerdInput.vue';
 
   interface Option {
     readonly label: string;
@@ -140,6 +140,7 @@
 <style module>
   .component {
     position: relative;
+    width: 100%;
   }
 
   @starting-style {

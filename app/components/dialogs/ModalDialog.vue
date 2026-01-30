@@ -42,21 +42,20 @@
 
     /* Apply transitions */
     opacity: 0;
-    scale: 1.1;
+    translate: 0 -20px;
     transition:
       opacity var(--transition-duration) ease,
-      scale var(--transition-duration) ease,
+      translate var(--transition-duration) ease,
       overlay var(--transition-duration) ease allow-discrete,
       display var(--transition-duration) ease allow-discrete;
 
     &[open] {
-      will-change: scale;
       opacity: 1;
-      scale: 1;
+      translate: 0 0;
 
       @starting-style {
         opacity: 0;
-        scale: 1.1;
+        translate: 0 -20px;
       }
     }
   }

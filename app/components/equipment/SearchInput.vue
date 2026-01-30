@@ -11,7 +11,7 @@
 </template>
 
 <script lang="ts" setup>
-  import PerdInput from '@/components/PerdInput.vue'
+  import PerdInput from '../inputs/PerdInput.vue';
 
   interface Props {
     readonly loading?: boolean;

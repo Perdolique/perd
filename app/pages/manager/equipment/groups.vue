@@ -40,6 +40,7 @@
     <InputDialog
       v-model="isAddDialogOpen"
       header-text="Add equipment group"
+      input-label="Group name"
       placeholder="Essentials"
       add-button-text="Add group"
       :maxlength="limits.maxEquipmentGroupNameLength"

@@ -9,13 +9,13 @@
         {{ headerText }}
       </div>
 
-      <TextInput
+      <PerdInput
+        :label="inputLabel"
         required
         autofocus
         ref="textInputRef"
         v-model="input"
         :placeholder="placeholder"
-        :class="$style.input"
         :maxlength="maxlength"
       />
 
@@ -38,10 +38,11 @@
 
 <script lang="ts" setup>
   import PerdButton from '~/components/PerdButton.vue'
-  import TextInput from '~/components/TextInput.vue';
+  import PerdInput from '~/components/inputs/PerdInput.vue';
   import ModalDialog from './ModalDialog.vue'
 
   interface Props {
+    readonly inputLabel: string;
     readonly headerText: string;
     readonly placeholder: string;
     readonly addButtonText: string;
@@ -99,10 +100,6 @@
   .header {
     font-size: var(--font-size-20);
     font-weight: var(--font-weight-medium);
-    text-align: center;
-  }
-
-  .input {
     text-align: center;
   }
 

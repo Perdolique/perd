@@ -40,6 +40,7 @@
     <InputDialog
       v-model="isAddDialogOpen"
       header-text="Add equipment type"
+      input-label="Equipment type name"
       placeholder="Sleeping bag"
       add-button-text="Add type"
       :maxlength="limits.maxEquipmentTypeNameLength"
