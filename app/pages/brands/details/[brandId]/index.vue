@@ -72,6 +72,31 @@
           <strong>Equipment items: </strong> {{ itemsCount }}
         </li>
       </ul>
+
+      <div :class="$style.relatedItems">
+        <PerdHeading :level="2">
+          Related equipment
+        </PerdHeading>
+
+        <EmptyState
+          v-if="equipmentError"
+          icon="streamline-emojis:face-screaming-in-fear"
+        >
+          Can't load related equipment
+        </EmptyState>
+
+        <EmptyState
+          v-else-if="!hasRelatedItems"
+          icon="streamline-emojis:man-shrugging-2"
+        >
+          No equipment items for this brand
+        </EmptyState>
+
+        <template v-else>
+          <EquipmentTable :items="relatedItems" />
+          <EquipmentCards :items="relatedItems" />
+        </template>
+      </div>
     </div>
   </PageContent>
 
@@ -94,6 +119,8 @@
   import PerdButton from '~/components/PerdButton.vue'
   import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue'
   import PerdLink from '~/components/PerdLink.vue'
+  import EquipmentTable from '~/components/equipment/EquipmentTable.vue'
+  import EquipmentCards from '~/components/equipment/EquipmentCards.vue'
 
   definePageMeta({
     layout: 'page'
@@ -110,7 +137,24 @@
   const isDeleting = ref(false)
   const isDeleteDialogOpened = ref(false)
   const { data, error } = await useFetch(`/api/brands/${brandId}`)
+  const { data: equipmentData, error: equipmentError } = await useFetch('/api/equipment/items', {
+    query: {
+      brandId
+    },
+
+    transform: ({ data }) => data.map((item) => {
+      const idString = item.id.toString()
+
+      return {
+        id: idString,
+        name: item.name,
+        weight: item.weight
+      }
+    })
+  })
   const hasActions = computed(() => user.value.isAdmin && error.value === undefined)
+  const relatedItems = computed(() => equipmentData.value ?? [])
+  const hasRelatedItems = computed(() => relatedItems.value.length > 0)
 
   brandName.value = data.value?.name ?? '¯\\_(ツ)_/¯'
   itemsCount.value = data.value?.equipmentCount ?? 0
@@ -171,5 +215,10 @@
   .content {
     display: grid;
     row-gap: var(--spacing-16);
+  }
+
+  .relatedItems {
+    display: grid;
+    row-gap: var(--spacing-12);
   }
 </style>

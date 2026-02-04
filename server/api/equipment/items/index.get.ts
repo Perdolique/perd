@@ -27,6 +27,10 @@ function validateQuery(query: unknown) {
       stringToIntegerValidator
     ),
 
+    brandId: v.optional(
+      stringToIntegerValidator
+    ),
+
     search: v.optional(
         v.pipe(
         v.string(),
@@ -36,10 +40,16 @@ function validateQuery(query: unknown) {
   }), query)
 }
 
-function generateFilter({ search } : ReturnType<typeof validateQuery>) {
+function generateFilter({ brandId, search } : ReturnType<typeof validateQuery>) {
   const filters = [
     eq(tables.equipment.status, 'active')
   ];
+
+  if (brandId !== undefined) {
+    filters.push(
+      eq(tables.equipment.brandId, brandId)
+    )
+  }
 
   if (search !== undefined) {
     filters.push(
