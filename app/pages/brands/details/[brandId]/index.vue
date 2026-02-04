@@ -72,6 +72,25 @@
           <strong>Equipment items: </strong> {{ itemsCount }}
         </li>
       </ul>
+
+      <PerdHeading
+        v-if="itemsCount > 0"
+        :level="2"
+      >
+        Related Items
+      </PerdHeading>
+
+      <EmptyState
+        v-if="equipmentError"
+        icon="streamline-emojis:face-screaming-in-fear"
+      >
+        Can't load equipment data
+      </EmptyState>
+
+      <template v-else-if="equipmentData && itemsCount > 0">
+        <EquipmentTable :items="equipmentData" />
+        <EquipmentCards :items="equipmentData" />
+      </template>
     </div>
   </PageContent>
 
@@ -94,6 +113,8 @@
   import PerdButton from '~/components/PerdButton.vue'
   import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue'
   import PerdLink from '~/components/PerdLink.vue'
+  import EquipmentTable from '~/components/equipment/EquipmentTable.vue'
+  import EquipmentCards from '~/components/equipment/EquipmentCards.vue'
 
   definePageMeta({
     layout: 'page'
@@ -114,6 +135,32 @@
 
   brandName.value = data.value?.name ?? '¯\\_(ツ)_/¯'
   itemsCount.value = data.value?.equipmentCount ?? 0
+
+  // Fetch equipment items for this brand
+  const { data: equipmentRawData, error: equipmentError } = await useFetch(`/api/brands/${brandId}/equipment`)
+
+  interface EquipmentItem {
+    readonly id: number;
+    readonly name: string;
+    readonly weight: number;
+  }
+
+  const equipmentData = computed(() => {
+    if (equipmentRawData.value === null) {
+      return []
+    }
+
+    return equipmentRawData.value.map((item: EquipmentItem) => {
+      const idString = item.id.toString()
+
+      return {
+        id: idString,
+        key: idString,
+        name: item.name,
+        weight: item.weight
+      }
+    })
+  })
 
   const errorIcon = computed(() => {
     if (error.value?.status === 404) {
