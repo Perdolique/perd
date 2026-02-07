@@ -14,7 +14,7 @@
     "ms-vscode.live-server",
     "netcorext.uuid-generator",
     "oxc.oxc-vscode",
-    "pflannery.vscode-versionlens",
+    "legalfina.npm-version-lens",
     "ritwickdey.LiveServer",
     "vitest.explorer",
     "vscode-icons-team.vscode-icons",
