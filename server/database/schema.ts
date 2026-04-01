@@ -1,47 +1,22 @@
+// oxlint-disable max-lines
+// oxlint-disable import/no-relative-parent-imports
 import { sql } from 'drizzle-orm'
-import { limits } from '../../constants'
+import { integer, serial, timestamp, boolean, varchar, unique, uuid, numeric, jsonb, pgTable } from 'drizzle-orm/pg-core'
+// FIXME: drizzle-kit can't handle #shared/constants, so we have to import it with a relative path
+import { limits } from '../../shared/constants'
 
-import {
-  pgTable,
-  integer,
-  customType,
-  timestamp,
-  boolean,
-  varchar,
-  primaryKey,
-  index,
-  unique,
-  serial,
-  text,
-  pgEnum,
-  check
-} from 'drizzle-orm/pg-core'
+// ─── Auth ───────────────────────────────────────────────────────────
 
 /**
- * Custom types
+ * Registered users.
  *
- * These are custom types that are not supported by the default drizzle-orm
+ * Created automatically on first OAuth login.
  */
-
-// Neon ulid type
-// https://github.com/pksunkara/pgx_ulid
-const ulid = customType<{ data: string }>({
-  dataType() {
-    return 'ulid'
-  }
-})
-
-/**
- * Users table
- *
- * This table is used to store user information
- */
-
-export const users = pgTable('users', {
+const users = pgTable('users', {
   id:
-    ulid()
+    uuid()
     .notNull()
-    .default(sql`gen_ulid()`)
+    .default(sql`uuidv7()`)
     .primaryKey(),
 
   name: varchar({
@@ -62,13 +37,11 @@ export const users = pgTable('users', {
 })
 
 /**
- * OAuth providers table
+ * Supported OAuth providers (e.g. Twitch).
  *
- * This table is used to store OAuth providers
- * For example, Twitch, Google, Facebook, etc.
+ * Seeded on deployment, not user-managed.
  */
-
-export const oauthProviders = pgTable('oauthProviders', {
+const oauthProviders = pgTable('oauth_providers', {
   id:
     serial()
     .primaryKey(),
@@ -95,21 +68,19 @@ export const oauthProviders = pgTable('oauthProviders', {
 })
 
 /**
- * OAuth accounts table
+ * Links between users and their OAuth provider accounts.
  *
- * This table is used to store OAuth accounts linked to the user
- * For example, if the user logs in with Twitch, we store the Twitch account ID here
+ * A user can have multiple OAuth accounts across different providers.
  */
-
-export const oauthAccounts = pgTable('oauthAccounts', {
+const oauthAccounts = pgTable('oauth_accounts', {
   id:
-    ulid()
+    uuid()
     .notNull()
-    .default(sql`gen_ulid()`)
+    .default(sql`uuidv7()`)
     .primaryKey(),
 
   userId:
-    ulid()
+    uuid()
     .notNull()
     .references(() => users.id, {
       onDelete: 'cascade',
@@ -138,93 +109,53 @@ export const oauthAccounts = pgTable('oauthAccounts', {
   unique().on(table.providerId, table.accountId)
 ])
 
-/**
- * Equipment types table
- *
- * This table is used to store equipment types
- */
+// ─── Equipment catalog ──────────────────────────────────────────────
 
-export const equipmentTypes = pgTable('equipmentTypes', {
+/**
+ * Top-level functional groupings (e.g. Sleep, Shelter, Cooking).
+ *
+ * Used for navigation and organizing categories.
+ */
+const equipmentGroups = pgTable('equipment_groups', {
   id:
     serial()
     .primaryKey(),
 
   name:
-    varchar({
-      length: limits.maxEquipmentTypeNameLength
-    })
+    varchar({ length: 64 })
     .notNull(),
+
+  slug:
+    varchar({ length: 128 })
+    .notNull()
+    .unique(),
 
   createdAt:
     timestamp({
       withTimezone: true
     })
     .notNull()
-    .defaultNow(),
-
-  updatedAt:
-    timestamp({
-      withTimezone: true
-    })
-    .notNull()
     .defaultNow()
-    .$onUpdate(() => sql`now()`)
-}, (table) => [
-  index().on(table.name)
-])
-
-
-/**
- * Equipment groups table
- *
- * This table is used to store equipment groups
- */
-
-export const equipmentGroups = pgTable('equipmentGroups', {
-  id:
-    serial()
-    .primaryKey(),
-
-  name:
-    varchar({
-      length: limits.maxEquipmentGroupNameLength
-    })
-    .notNull(),
-
-  createdAt:
-    timestamp({
-      withTimezone: true
-    })
-    .notNull()
-    .defaultNow(),
-
-  updatedAt:
-    timestamp({
-      withTimezone: true
-    })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => sql`now()`)
 })
 
 /**
- * Brands table
+ * Specific equipment types (e.g. Sleeping Bags, Sleeping Pads).
  *
- * This table is used to store equipment brands
+ * Each category defines its own set of properties via `category_properties`.
  */
-
-export const brands = pgTable('brands', {
+const equipmentCategories = pgTable('equipment_categories', {
   id:
     serial()
     .primaryKey(),
 
   name:
-    varchar({
-      length: limits.maxBrandNameLength
-    })
+    varchar({ length: 64 })
     .notNull(),
 
-  websiteUrl: varchar(),
+  slug:
+    varchar({ length: 128 })
+    .notNull()
+    .unique(),
 
   createdAt:
     timestamp({
@@ -232,65 +163,77 @@ export const brands = pgTable('brands', {
     })
     .notNull()
     .defaultNow()
-}, (table) => [
-  index().on(table.name)
-])
+})
 
 /**
- * Equipment table
+ * Equipment manufacturers (e.g. Therm-a-Rest, Nemo).
  *
- * This table is used to store equipment items
+ * Each item belongs to exactly one brand.
  */
-
-export const equipment = pgTable('equipment', {
+const brands = pgTable('brands', {
   id:
     serial()
     .primaryKey(),
 
-  creatorId:
-    ulid()
-    .references(() => users.id, {
-      onDelete: 'set null',
-      onUpdate: 'cascade'
-    }),
-
-  status:
-    varchar({
-      length: limits.maxEquipmentItemStatusLength
-    })
-    .notNull(),
-
   name:
-    varchar({
-      length: limits.maxEquipmentItemNameLength
+    varchar({ length: 128 })
+    .notNull()
+    .unique(),
+
+  slug:
+    varchar({ length: 128 })
+    .notNull()
+    .unique(),
+
+  createdAt:
+    timestamp({
+      withTimezone: true
     })
-    .notNull(),
+    .notNull()
+    .defaultNow()
+})
 
-  description: text(),
+/**
+ * Individual equipment entries in the global catalog.
+ *
+ * Each size/variant is a separate item. Status controls visibility (approved/pending/rejected).
+ */
+const equipmentItems = pgTable('equipment_items', {
+  id:
+    uuid()
+    .notNull()
+    .default(sql`uuidv7()`)
+    .primaryKey(),
 
-  weight:
+  categoryId:
     integer()
     .notNull()
-    .default(0),
-
-  equipmentTypeId:
-    integer()
-    .references(() => equipmentTypes.id, {
-      onDelete: 'set null',
-      onUpdate: 'cascade'
-    }),
-
-  equipmentGroupId:
-    integer()
-    .references(() => equipmentGroups.id, {
-      onDelete: 'set null',
+    .references(() => equipmentCategories.id, {
+      onDelete: 'cascade',
       onUpdate: 'cascade'
     }),
 
   brandId:
     integer()
+    .notNull()
     .references(() => brands.id, {
-      onDelete: 'restrict',
+      onDelete: 'cascade',
+      onUpdate: 'cascade'
+    }),
+
+  name:
+    varchar({ length: 256 })
+    .notNull(),
+
+  status:
+    varchar({ length: 16 })
+    .notNull()
+    .default('approved'),
+
+  createdBy:
+    uuid()
+    .references(() => users.id, {
+      onDelete: 'set null',
       onUpdate: 'cascade'
     }),
 
@@ -303,182 +246,44 @@ export const equipment = pgTable('equipment', {
 
   updatedAt:
     timestamp({
-      withTimezone: true,
-      // TODO: https://github.com/drizzle-team/drizzle-orm/issues/2388
-      mode: 'string'
+      withTimezone: true
     })
     .notNull()
     .defaultNow()
-    .$onUpdate(() => sql`now()`)
-}, (table) => [
-  index().on(table.equipmentTypeId),
-  index().on(table.equipmentGroupId),
-  index().on(table.brandId),
-
-  check(
-    'equipment_description_check',
-    sql.raw(`char_length(description) <= ${limits.maxEquipmentDescriptionLength}`)
-  )
-])
-
-/**
- * Equipment attributes data types
- *
- * Types of data that can be stored in the attribute
- */
-export const equipmentAttributeDataType = pgEnum('equipmentAttributeDataType', [
-  'boolean',
-  'string',
-  'integer',
-  'decimal'
-])
-
-/**
- * Equipment attributes table
- *
- * This table is used to store equipment attributes
- */
-
-export const equipmentAttributes = pgTable('equipmentAttributes', {
-  id:
-    serial()
-    .primaryKey(),
-
-  name:
-    varchar({
-      length: limits.maxEquipmentAttributeNameLength
-    })
-    .notNull(),
-
-  dataType:
-    equipmentAttributeDataType()
-    .notNull()
 })
 
 /**
- * Equipment type attributes table
+ * Property definitions per category (EAV schema layer).
  *
- * This table is used to store the attributes of the equipment type
+ * Defines what properties a category has (e.g. R-Value for sleeping bags). Supports number, text, boolean, and enum data types.
  */
-
-export const equipmentTypeAttributes = pgTable('equipmentTypeAttributes', {
-  equipmentTypeId:
-    integer()
-    .references(() => equipmentTypes.id, {
-      onDelete: 'cascade',
-      onUpdate: 'cascade'
-    }),
-
-  equipmentAttributeId:
-    integer()
-    .references(() => equipmentAttributes.id, {
-      onDelete: 'cascade',
-      onUpdate: 'cascade'
-    })
-}, (table) => [
-  primaryKey({
-    columns: [table.equipmentTypeId, table.equipmentAttributeId]
-  }),
-
-  index().on(table.equipmentTypeId),
-  index().on(table.equipmentAttributeId)
-])
-
-/**
- * Equipment attribute values table
- *
- * This table is used to store the values of the equipment attributes
- */
-
-export const equipmentAttributeValues = pgTable('equipmentAttributeValues', {
+const categoryProperties = pgTable('category_properties', {
   id:
     serial()
     .primaryKey(),
 
-  equipmentId:
+  categoryId:
     integer()
     .notNull()
-    .references(() => equipment.id, {
-      onDelete: 'cascade',
-      onUpdate: 'cascade'
-    }),
-
-  equipmentAttributeId:
-    integer()
-    .notNull()
-    .references(() => equipmentAttributes.id, {
-      onDelete: 'cascade',
-      onUpdate: 'cascade'
-    }),
-
-  value:
-    varchar()
-    .notNull()
-}, (table) => [
-  unique().on(table.equipmentId, table.equipmentAttributeId),
-  index().on(table.equipmentId),
-  index().on(table.equipmentAttributeId)
-])
-
-/**
- * User's equipment table
- *
- * This table is used to store the user's equipment
- */
-
-export const userEquipment = pgTable('userEquipment', {
-  userId:
-    ulid()
-    .references(() => users.id, {
-      onDelete: 'cascade',
-      onUpdate: 'cascade'
-    }),
-
-  equipmentId:
-    integer()
-    .references(() => equipment.id, {
-      onDelete: 'cascade',
-      onUpdate: 'cascade'
-    }),
-
-  createdAt:
-    timestamp({
-      withTimezone: true
-    })
-    .notNull()
-    .defaultNow()
-}, (table) => [
-  primaryKey({
-    columns: [table.userId, table.equipmentId]
-  })
-])
-
-/**
- * User's checklists table
- *
- * This table is used to store the user's checklists
- */
-
-export const checklists = pgTable('checklists', {
-  id:
-    ulid()
-    .notNull()
-    .default(sql`gen_ulid()`)
-    .primaryKey(),
-
-  userId:
-    ulid()
-    .notNull()
-    .references(() => users.id, {
+    .references(() => equipmentCategories.id, {
       onDelete: 'cascade',
       onUpdate: 'cascade'
     }),
 
   name:
-    varchar({
-      length: limits.maxChecklistNameLength
-    })
+    varchar({ length: 64 })
     .notNull(),
+
+  slug:
+    varchar({ length: 128 })
+    .notNull(),
+
+  dataType:
+    varchar({ length: 16 })
+    .notNull(),
+
+  unit:
+    varchar({ length: 16 }),
 
   createdAt:
     timestamp({
@@ -487,35 +292,166 @@ export const checklists = pgTable('checklists', {
     .notNull()
     .defaultNow()
 }, (table) => [
-  index('createdAtIndex').on(table.createdAt)
+  unique().on(table.categoryId, table.slug)
 ])
 
 /**
- * Checklist items table
+ * Allowed values for enum-type properties.
  *
- * This table is used to store the checklist items
+ * E.g. Fill Type property might have options: "Down", "Synthetic".
  */
-
-export const checklistItems = pgTable('checklistItems', {
+const propertyEnumOptions = pgTable('property_enum_options', {
   id:
     serial()
     .primaryKey(),
 
-  checklistId:
-    ulid()
+  propertyId:
+    integer()
     .notNull()
-    .references(() => checklists.id, {
+    .references(() => categoryProperties.id, {
       onDelete: 'cascade',
       onUpdate: 'cascade'
     }),
 
-  equipmentId:
-    integer()
+  name:
+    varchar({ length: 64 })
+    .notNull(),
+
+  slug:
+    varchar({ length: 128 })
     .notNull()
-    .references(() => equipment.id, {
+}, (table) => [
+  unique().on(table.propertyId, table.slug)
+])
+
+/**
+ * Actual property values for items (EAV value layer).
+ *
+ * Stores one value per item–property pair. Only one of valueText/valueNumber/valueBoolean is set depending on the property's dataType.
+ */
+const itemPropertyValues = pgTable('item_property_values', {
+  id:
+    serial()
+    .primaryKey(),
+
+  itemId:
+    uuid()
+    .notNull()
+    .references(() => equipmentItems.id, {
       onDelete: 'cascade',
       onUpdate: 'cascade'
-    })
+    }),
+
+  propertyId:
+    integer()
+    .notNull()
+    .references(() => categoryProperties.id, {
+      onDelete: 'cascade',
+      onUpdate: 'cascade'
+    }),
+
+  valueText:
+    varchar(),
+
+  valueNumber:
+    numeric(),
+
+  valueBoolean:
+    boolean()
 }, (table) => [
-  unique().on(table.checklistId, table.equipmentId)
+  unique().on(table.itemId, table.propertyId)
 ])
+
+// ─── User data ──────────────────────────────────────────────────────
+
+/**
+ * User's personal equipment inventory.
+ *
+ * Tracks which items from the global catalog a user owns.
+ */
+const userEquipment = pgTable('user_equipment', {
+  id:
+    uuid()
+    .notNull()
+    .default(sql`uuidv7()`)
+    .primaryKey(),
+
+  userId:
+    uuid()
+    .notNull()
+    .references(() => users.id, {
+      onDelete: 'cascade',
+      onUpdate: 'cascade'
+    }),
+
+  itemId:
+    uuid()
+    .notNull()
+    .references(() => equipmentItems.id, {
+      onDelete: 'cascade',
+      onUpdate: 'cascade'
+    }),
+
+  createdAt:
+    timestamp({
+      withTimezone: true
+    })
+    .notNull()
+    .defaultNow()
+}, (table) => [
+  unique().on(table.userId, table.itemId)
+])
+
+/**
+ * Activity log for tracking user contributions.
+ *
+ * Records every catalog write operation (create/update/delete). Used for future gamification and reputation system.
+ */
+const contributions = pgTable('contributions', {
+  id:
+    uuid()
+    .notNull()
+    .default(sql`uuidv7()`)
+    .primaryKey(),
+
+  userId:
+    uuid()
+    .notNull()
+    .references(() => users.id, {
+      onDelete: 'cascade',
+      onUpdate: 'cascade'
+    }),
+
+  action:
+    varchar({ length: 32 })
+    .notNull(),
+
+  targetId:
+    uuid()
+    .notNull(),
+
+  metadata:
+    jsonb(),
+
+  createdAt:
+    timestamp({
+      withTimezone: true
+    })
+    .notNull()
+    .defaultNow()
+})
+
+export {
+  users,
+  oauthProviders,
+  oauthAccounts,
+  equipmentGroups,
+  equipmentCategories,
+  brands,
+  equipmentItems,
+  categoryProperties,
+  propertyEnumOptions,
+  itemPropertyValues,
+  userEquipment,
+  contributions
+}

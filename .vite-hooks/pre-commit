@@ -1,0 +1,6 @@
+pnpm run lint:markdown
+pnpm run lint:oxlint
+pnpm run test:typecheck
+pnpm run test:unit:ci
+pnpm run build
+pnpm run test:e2e:ci

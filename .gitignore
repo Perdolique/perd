@@ -19,3 +19,7 @@ logs
 .env.*
 !.env.example
 .dev.vars
+
+playwright-report
+test-results
+.codex

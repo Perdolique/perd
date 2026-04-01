@@ -8,7 +8,8 @@
 </template>
 
 <script lang="ts" setup>
-  import { useEventListener } from '@vueuse/core';
+  import { useTemplateRef, watchEffect } from 'vue'
+  import { useEventListener } from '@vueuse/core'
 
   const dialogRef = useTemplateRef('dialogRef')
 
@@ -22,14 +23,14 @@
     } else {
       dialogRef.value?.close()
     }
-  });
+  })
 
   useEventListener(dialogRef, 'close', () => {
     isOpened.value = false
   })
 
   // Close the dialog when clicking outside of it
-  useEventListener(dialogRef, 'click', ({ target }) => {
+  useEventListener(dialogRef, 'click', ({ target }: MouseEvent) => {
     if (target === dialogRef.value) {
       dialogRef.value?.close()
     }
@@ -70,8 +71,8 @@
   }
 
   .dialog[open]::backdrop {
-    background-color: var(--overlay-color-background);
-    backdrop-filter: var(--overlay-backdrop-filter);
+    background-color: var(--color-overlay-background);
+    backdrop-filter: blur(4px);
   }
 
   @starting-style {

@@ -15,7 +15,7 @@
   import OptionBase from './OptionBase.vue';
 
   interface Props {
-    readonly icon: string;
+    icon: string;
   }
 
   defineProps<Props>()

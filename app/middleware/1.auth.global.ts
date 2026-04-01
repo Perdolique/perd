@@ -1,4 +1,5 @@
-import { startPagePath } from '~~/constants';
+import { defineNuxtRouteMiddleware, navigateTo, shouldSkipAuth, useUserStore } from '#imports';
+import { startPagePath } from '#shared/constants';
 
 export default defineNuxtRouteMiddleware(async (to) => {
   if (shouldSkipAuth(to)) {

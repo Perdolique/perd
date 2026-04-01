@@ -21,7 +21,8 @@
 </template>
 
 <script lang="ts" setup>
-  import { onClickOutside } from '@vueuse/core';
+  import { ref, useTemplateRef } from 'vue'
+  import { useClickOutside } from '~/composables/use-click-outside'
 
   const isMenuVisible = ref(false)
   const rootRef = useTemplateRef('rootRef')
@@ -34,9 +35,9 @@
     isMenuVisible.value = false
   }
 
-  onClickOutside(rootRef, () => {
-    isMenuVisible.value = false
-  });
+  useClickOutside(isMenuVisible, hideMenu, {
+    ignore: [rootRef]
+  })
 </script>
 
 <style module>
@@ -55,10 +56,10 @@
     right: 0;
     z-index: 1;
     overflow: hidden;
-    background-color: var(--secondary-50);
-    border: 1px solid var(--secondary-200);
+    background-color: var(--color-secondary-50);
+    border: 1px solid var(--color-secondary-200);
     border-radius: var(--border-radius-12);
-    box-shadow: var(--shadow-2);
+    box-shadow: 0 2px 4px 0 oklch(0 0 0 / 10%);
     transition:
       transform var(--transition-time-quick) ease-out,
       opacity var(--transition-time-quick) ease-out,

@@ -1,24 +1,24 @@
 import { createError, defineEventHandler, setResponseStatus } from 'h3'
-import { tables } from '#server/utils/database'
-import { useAppSession } from '#server/utils/session';
+import { users } from '#server/database/schema'
+import { useAppSession } from '#server/utils/session'
 
 interface ReturnType {
   userId: string;
 }
 
 export default defineEventHandler(async (event) : Promise<ReturnType> => {
-  const { db } = event.context
+  const { dbHttp } = event.context
 
   // TODO (#101): check if user is already logged in
 
-  const [foundUser] = await db
-    .insert(tables.users)
+  const [foundUser] = await dbHttp
+    .insert(users)
     .values({
       isAdmin: false
     })
     .returning({
-      userId: tables.users.id,
-      isAdmin: tables.users.isAdmin
+      userId: users.id,
+      isAdmin: users.isAdmin
     })
 
   if (foundUser === undefined) {

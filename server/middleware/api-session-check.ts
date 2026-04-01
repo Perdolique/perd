@@ -1,9 +1,13 @@
 import { isSamePath, withBase } from 'ufo'
 import { defineEventHandler, createError, getRequestURL } from 'h3'
-import { publicApiPaths } from '~~/constants'
 import { getAppSession } from '#server/utils/session'
 
 const apiBase = '/api'
+
+const publicApiPaths = [
+  '/auth/create-session',
+  '/oauth/twitch'
+] as const
 
 export default defineEventHandler(async (event) => {
   const url = getRequestURL(event)

@@ -1,8 +1,9 @@
 import * as v from 'valibot'
 import { defineEventHandler, createError, readValidatedBody } from 'h3'
-import { getSessionUser, getUserByOAuthAccount, createOAuthUser } from '#server/utils/user'
+import { getSessionUser, getUserByOAuthAccount } from '#server/utils/user'
+import { createOAuthUser } from '#server/utils/oauth/account'
 import { updateAppSession } from '#server/utils/session'
-import { getTwitchOAuthToken, getTwitchUserInfo } from '#server/utils/provider-twitch'
+import { getTwitchOAuthToken, getTwitchUserInfo, getRuntimeTwitchConfig } from '#server/utils/oauth/twitch'
 
 const bodySchema = v.object({
   code: v.pipe(v.string(), v.nonEmpty())
@@ -12,19 +13,21 @@ function validateBody(body: unknown) {
 }
 
 export default defineEventHandler(async (event) => {
+  const twitchConfig = getRuntimeTwitchConfig(event)
+
   const { code } = await readValidatedBody(event, validateBody)
-  const token = await getTwitchOAuthToken(event, code)
-  const { id: twitchAccountId } = await getTwitchUserInfo(token)
+  const token = await getTwitchOAuthToken(event, code, twitchConfig)
+  const { id: twitchAccountId } = await getTwitchUserInfo(token, twitchConfig.clientId)
   const currentUser = await getSessionUser(event)
 
   // Not logged in
   if (currentUser.userId === null) {
-    const foundUser = await getUserByOAuthAccount(event, 'twitch', twitchAccountId)
+    const foundUser = await getUserByOAuthAccount('twitch', twitchAccountId, event)
 
     // Twitch account not linked to any user
     if (foundUser.userId === null) {
       // Create a new user with the OAuth account
-      const newUser = await createOAuthUser('twitch', twitchAccountId)
+      const newUser = await createOAuthUser('twitch', twitchAccountId, event)
 
       await updateAppSession(event, newUser)
 

@@ -8,49 +8,12 @@
     />
 
     <div
-      ref="sidebarRef"
       :class="[$style.content, {
         collapsed: isSidebarCollapsed,
         shown: isSidebarShown
       }]"
     >
-      <div>
-        <SidebarItem
-          to="/inventory"
-          icon="tabler:backpack"
-        >
-          Inventory
-        </SidebarItem>
-
-        <SidebarItem
-          to="/checklists"
-          icon="tabler:check"
-        >
-          Checklists
-        </SidebarItem>
-
-        <SidebarItem
-          to="/equipment"
-          icon="tabler:database"
-        >
-          Equipment database
-        </SidebarItem>
-
-        <SidebarItem
-          to="/brands"
-          icon="tabler:building-store"
-        >
-          Brands
-        </SidebarItem>
-
-        <SidebarItem
-          v-if="user.isAdmin"
-          to="/manager/equipment"
-          icon="tabler:building-warehouse"
-        >
-          Equipment manager
-        </SidebarItem>
-      </div>
+      <div />
 
       <button
         :class="$style.toggle"
@@ -66,17 +29,16 @@
 </template>
 
 <script lang="ts" setup>
-  import SidebarItem from './SidebarItem.vue'
+  import { watch } from 'vue';
+  import { useAppState, useRouter } from '#imports';
 
   const { isSidebarCollapsed, toggleSidebarDesktop, isSidebarShown, hideSidebar } = useAppState()
-  const { user } = useUserStore()
   const router = useRouter()
-  const sidebarRef = useTemplateRef<HTMLDivElement>('sidebarRef')
 
   watch(router.currentRoute, hideSidebar);
 </script>
 
-<style lang="scss" module>
+<style module>
   .component {
     position: relative;
     z-index: 3;
@@ -88,7 +50,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: var(--overlay-color-background);
+    background-color: var(--color-overlay-background);
     backdrop-filter: blur(0);
     opacity: 0;
     display: none;
@@ -99,7 +61,7 @@
 
     &:global(.shown) {
       opacity: 1;
-      backdrop-filter: var(--overlay-backdrop-filter);
+      backdrop-filter: blur(4px);
       display: block;
 
       @starting-style {
@@ -107,12 +69,12 @@
         backdrop-filter: blur(0);
       }
 
-      @include tablet() {
+      @media (width >= 768px) {
         display: none;
       }
     }
 
-    @include tablet() {
+    @media (width >= 768px) {
       display: none;
     }
   }
@@ -123,7 +85,7 @@
     width: 200px;
     display: grid;
     align-content: space-between;
-    background-color: var(--background-200);
+    background-color: var(--color-background-200);
     overflow: hidden;
     translate: -100% 0;
     transition: translate var(--transition-time-quick) ease-out;
@@ -132,7 +94,7 @@
       translate: 0 0;
     }
 
-    @include tablet() {
+    @media (width >= 768px) {
       position: relative;
       transition: width var(--transition-time-quick) ease-out;
       translate: 0 0;
@@ -146,18 +108,18 @@
   .toggle {
     display: none;
     padding: var(--spacing-12);
-    background-color: var(--background-200);
+    background-color: var(--color-background-200);
     outline: none;
     text-align: left;
     transition: background-color var(--transition-time-quick) ease-out;
 
-    @include tablet() {
+    @media (width >= 768px) {
       display: block;
     }
 
     &:focus-visible,
     &:hover {
-      background-color: var(--background-300);
+      background-color: var(--color-background-300);
     }
   }
 </style>

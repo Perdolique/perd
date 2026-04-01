@@ -29,14 +29,14 @@
   </footer>
 </template>
 
-<style lang="scss" module>
+<style module>
   .footer {
     display: flex;
     gap: var(--spacing-16);
     justify-content: center;
     padding: var(--spacing-8);
     text-align: center;
-    border-top: 1px solid var(--background-200);
+    border-top: 1px solid var(--color-background-200);
   }
 
   .link {
@@ -46,7 +46,7 @@
     outline: none;
     height: 40px;
     width: 40px;
-    color: var(--text-color-secondary);
+    color: var(--color-text-secondary);
     transition:
       color var(--transition-time-quick),
       background-color var(--transition-time-quick);
@@ -55,8 +55,8 @@
 
     &:focus-visible,
     &:hover {
-      color: var(--text);
-      background-color: var(--background-100);
+      color: var(--color-text);
+      background-color: var(--color-background-100);
     }
   }
 </style>

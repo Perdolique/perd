@@ -1,0 +1,34 @@
+@layer reset, colors, spacings, sizes, transitions, typography;
+
+@import url("./reset.css") layer(reset);
+@import url("./colors.css") layer(colors);
+@import url("./spacings.css") layer(spacings);
+@import url("./sizes.css") layer(sizes);
+@import url("./transitions.css") layer(transitions);
+@import url("./typography.css") layer(typography);
+
+:root {
+  color-scheme: light dark;
+  font-family: "Inter", sans-serif;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
+}
+
+.perd-root {
+  height: 100dvh;
+}
+
+dialog {
+  color: var(--color-text);
+}
+
+ul {
+  margin-left: 2rem;
+}
+
+strong {
+  font-weight: var(--font-weight-bold);
+}

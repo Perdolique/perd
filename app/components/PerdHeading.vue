@@ -1,43 +1,26 @@
 <template>
   <component
-    :is="element.name"
-    :class="[$style.component, element.className]"
+    :is="tag"
+    :class="[$style.component, tag]"
   >
     <slot />
   </component>
 </template>
 
+<script lang="ts">
+  export type HeadingLevel = 1 | 2 | 3
+</script>
+
 <script lang="ts" setup>
+  import { computed } from 'vue'
+
   interface Props {
-    readonly level: 1 | 2 | 3;
+    level: HeadingLevel;
   }
 
-  const { level } = defineProps<Props>();
+  const { level } = defineProps<Props>()
 
-  const element = computed(() => {
-    switch (level) {
-      case 1: {
-        return {
-          name: 'h1',
-          className: 'h1'
-        };
-      }
-
-      case 2: {
-        return {
-          name: 'h2',
-          className: 'h2'
-        };
-      }
-
-      case 3: {
-        return {
-          name: 'h3',
-          className: 'h3'
-        };
-      }
-    }
-  });
+  const tag = computed(() => `h${level}` as const)
 </script>
 
 <style module>

@@ -1,0 +1,107 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+
+  "extends": [
+    "./node_modules/eslint-config-greenpie/configs/oxlintrc.jsonc"
+  ],
+
+  "options": {
+    "typeAware": true,
+    "typeCheck": true,
+    "reportUnusedDisableDirectives": "error"
+  },
+
+  "rules": {
+    "eslint/arrow-body-style": ["error", "as-needed", {
+      "requireReturnForObjectLiteral": true
+    }],
+
+    "eslint/no-magic-numbers": "off",
+
+    "eslint/id-length": ["error", {
+      "exceptions": [
+        "v" // Valibot
+      ]
+    }],
+
+    "eslint/no-console": "off",
+
+    "import/no-namespace": ["error", {
+      "ignore": [
+        "valibot",
+        "**/schema" // ./schema, etc.
+      ]
+    }],
+  },
+
+  "overrides": [{
+    // Define global for Nuxt config files
+    "files": [
+      "nuxt.config.ts"
+    ],
+
+    "globals": {
+      "defineNuxtConfig": "readonly"
+    }
+  }, {
+    // Allow default exports in some files
+    "files": [
+      "drizzle.config.ts",
+      "nuxt.config.ts",
+      "playwright.config.ts",
+      "app/middleware/**/*.ts",
+      "server/middleware/**/*.ts",
+      "server/api/**/*.ts",
+    ],
+
+    "rules": {
+      "import/no-default-export": "off"
+    }
+  }, {
+    // Nuxt-specific overrides for Vue files
+    "files": [
+      "app.vue",
+      "app/layouts/**/*.vue",
+      "app/pages/**/*.vue"
+    ],
+
+    "rules": {
+      "unicorn/filename-case": "off"
+    },
+
+    "globals": {
+      "console": "readonly"
+    }
+  }, {
+    // Node.js environment
+    "files": [
+      "server/utils/database.ts",
+      "server/utils/**/*.ts",
+      "drizzle.config.ts",
+      "playwright.config.ts",
+      "tools/**/*.ts"
+    ],
+
+    "env": {
+      "node": true
+    }
+  }, {
+    // Worker environment for server things
+    "files": [
+      "server/**/*.ts"
+    ],
+
+    "env":{
+      "worker": true
+    }
+  }, {
+    // ./tools
+    "files": [
+      "tools/**/*.ts"
+    ],
+
+    "rules": {
+      "import/no-relative-parent-imports": "off"
+    }
+  }]
+}

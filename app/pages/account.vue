@@ -62,6 +62,9 @@
 </template>
 
 <script lang="ts" setup>
+  import { computed, ref } from 'vue'
+  import { $fetch } from 'ofetch'
+  import { definePageMeta, navigateTo, useUserStore } from '#imports'
   import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue'
   import IconTitle from '~/components/IconTitle.vue'
   import PageContent from '~/components/layout/PageContent.vue'
@@ -73,8 +76,6 @@
   })
 
   const { user, resetAuthentication } = useUserStore()
-  const { showErrorToast } = useApiErrorToast()
-  const { addToast } = useToaster()
   const showDeleteModal = ref(false)
   const isDeleting = ref(false)
   const role = computed(() => user.value.isAdmin ? 'Admin' : 'User')
@@ -95,18 +96,13 @@
         method: 'DELETE'
       })
 
-      addToast({
-        title: 'Account deleted',
-        message: 'Bye! 👋'
-      })
-
       resetAuthentication()
 
       await navigateTo({
         path: '/login'
       })
     } catch (error) {
-      showErrorToast(error, 'Failed to delete account')
+      console.error('Failed to delete account:', error)
     } finally {
       isDeleting.value = false
     }
@@ -143,6 +139,6 @@
 
   .value {
     font-size: var(--font-size-14);
-    color: var(--text-color-secondary);
+    color: var(--color-text-secondary);
   }
 </style>

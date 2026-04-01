@@ -23,14 +23,14 @@
     align-items: center;
     padding: 0 var(--spacing-32) 0 var(--spacing-12);
     background-color: transparent;
-    color: var(--text-600);
+    color: var(--color-text-600);
     transition: background-color var(--transition-time-quick) ease-out;
     font-size: var(--font-size-14);
     white-space: nowrap;
 
     &:hover,
     &:focus-visible {
-      background-color: var(--secondary-100);
+      background-color: var(--color-secondary-100);
     }
   }
 

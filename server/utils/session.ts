@@ -1,16 +1,25 @@
-import type { H3Event, EventHandlerRequest, SessionConfig } from 'h3'
-import { useSession, getSession, updateSession, clearSession } from 'h3'
-import { sessionCookieName } from '~~/constants';
-import { validateSessionSecret } from './validate';
+import {
+  useSession,
+  getSession,
+  updateSession,
+  clearSession,
+  createError,
+  type H3Event,
+  type EventHandlerRequest,
+  type SessionConfig
+} from 'h3'
+
+import { getRuntimeSessionSecret } from '#server/utils/config'
+
+const sessionCookieName = 'perdSession'
 
 interface SessionData {
   userId?: string;
   isAdmin?: boolean;
-  lastAdminCheck?: string;
 }
 
-function getSessionConfig() : SessionConfig {
-  const secret = validateSessionSecret(process.env.SESSION_SECRET);
+function getSessionConfig(event: H3Event) : SessionConfig {
+  const secret = getRuntimeSessionSecret(event)
 
   return {
     password: secret,
@@ -24,26 +33,41 @@ function getSessionConfig() : SessionConfig {
   }
 }
 
-export async function useAppSession(event: H3Event<EventHandlerRequest>) {
-  const config = getSessionConfig()
+async function useAppSession(event: H3Event<EventHandlerRequest>) {
+  const config = getSessionConfig(event)
 
   return useSession<SessionData>(event, config)
 }
 
-export async function getAppSession(event: H3Event<EventHandlerRequest>) {
-  const config = getSessionConfig()
+async function getAppSession(event: H3Event<EventHandlerRequest>) {
+  const config = getSessionConfig(event)
 
   return getSession<SessionData>(event, config)
 }
 
-export async function updateAppSession(event: H3Event<EventHandlerRequest>, data: SessionData) {
-  const config = getSessionConfig()
+async function updateAppSession(event: H3Event<EventHandlerRequest>, data: SessionData) {
+  const config = getSessionConfig(event)
 
   return updateSession(event, config, data)
 }
 
-export async function clearAppSession(event: H3Event<EventHandlerRequest>) {
-  const config = getSessionConfig()
+async function clearAppSession(event: H3Event<EventHandlerRequest>) {
+  const config = getSessionConfig(event)
 
   return clearSession(event, config)
 }
+
+async function validateSessionUser(event: H3Event<EventHandlerRequest>) {
+  const session = await useAppSession(event)
+  const { userId } = session.data
+
+  if (userId === undefined) {
+    throw createError({
+      status: 401
+    })
+  }
+
+  return userId
+}
+
+export { useAppSession, getAppSession, updateAppSession, clearAppSession, validateSessionUser }

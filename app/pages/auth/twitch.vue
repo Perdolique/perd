@@ -34,7 +34,10 @@
 </template>
 
 <script lang="ts" setup>
-  import { startPagePath } from '~~/constants'
+  import { onBeforeMount, ref } from 'vue'
+  import { $fetch } from 'ofetch'
+  import { definePageMeta, navigateTo, useRoute, useUserStore } from '#imports'
+  import { startPagePath } from '#shared/constants'
   import FidgetSpinner from '~/components/FidgetSpinner.vue'
   import PerdLink from '~/components/PerdLink.vue';
 
@@ -68,7 +71,7 @@
       await navigateTo(startPagePath, {
         replace: true
       })
-    } catch (error) {
+    } catch {
       isFailed.value = true
     }
   }

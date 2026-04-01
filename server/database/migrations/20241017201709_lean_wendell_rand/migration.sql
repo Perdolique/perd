@@ -1,1 +1,0 @@
-ALTER TABLE "equipment" ADD CONSTRAINT "equipment_description_check" CHECK (char_length(description) <= 1024);

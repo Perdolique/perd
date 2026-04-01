@@ -3,3 +3,6 @@ onlyBuiltDependencies:
   - esbuild
   - sharp
   - workerd
+
+publicHoistPattern:
+  - h3

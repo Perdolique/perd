@@ -1,64 +1,66 @@
-import { drizzle as drizzleNeon } from 'drizzle-orm/neon-http'
-import { drizzle as drizzleServerless } from 'drizzle-orm/neon-serverless'
+// oxlint-disable import/no-relative-parent-imports
+import { drizzle as drizzleHttp } from 'drizzle-orm/neon-http'
+import { drizzle as drizzleWebsocket } from 'drizzle-orm/neon-serverless'
 import { neon, neonConfig, Pool } from '@neondatabase/serverless'
 import ws from 'ws'
 import * as schema from '../database/schema'
 import { relations } from '../database/relations'
+import type { DatabaseConfig } from './config-env'
 
-export {
-  schema as tables,
-  relations
-}
-
-export function createDrizzle() {
-  if (process.env.DATABASE_URL === undefined) {
-    throw new Error('DATABASE_URL is not defined')
-  }
-
-  if (import.meta.dev === true || process.env.LOCAL_DATABASE) {
+/**
+ * HTTP Client:
+ * - Best for serverless functions and Lambda environments
+ * - Ideal for stateless operations and quick queries
+ * - Lower overhead for single queries
+ * - Better for applications with sporadic database access
+ */
+function createHttpClient(config: DatabaseConfig) {
+  if (config.isLocalDatabase) {
     // Check docker-compose.yml for the details
     neonConfig.fetchEndpoint = 'http://db.localtest.me:4444/sql'
   }
 
-  const db = neon(process.env.DATABASE_URL)
+  const sql = neon(config.databaseUrl)
 
-  const drizzleDb = drizzleNeon({
-    client: db,
+  const dbHttp = drizzleHttp({
+    client: sql,
     schema,
     relations,
     logger: true
   })
 
-  return drizzleDb
+  return dbHttp
 }
 
 /**
- * Create a Drizzle database instance with WebSocket support.
- * It requires for transactional operations.
- *
- * @see {@link https://orm.drizzle.team/docs/get-started-postgresql#neon-postgres}
- * @see {@link https://github.com/neondatabase/serverless?tab=readme-ov-file#sessions-transactions-and-node-postgres-compatibility}
+ * WebSocket Client:
+ * - Best for long-running applications (like servers)
+ * - Maintains a persistent connection
+ * - More efficient for multiple sequential queries
+ * - Better for high-frequency database operations
  */
-export function createDrizzleWebsocket() {
-  neonConfig.webSocketConstructor = ws
-
-  if (import.meta.dev === true || process.env.LOCAL_DATABASE) {
-    neonConfig.wsProxy = (host) => `${host}:5433/v1`
-    neonConfig.useSecureWebSocket = false;
-    neonConfig.pipelineTLS = false;
-    neonConfig.pipelineConnect = false;
+function createWebSocketClient(config: DatabaseConfig) {
+  if (config.isLocalDatabase) {
+    neonConfig.fetchEndpoint = 'http://db.localtest.me:4444/sql'
+    neonConfig.useSecureWebSocket = false
+    neonConfig.wsProxy = 'db.localtest.me:4444/v2'
   }
 
-  const pool = new Pool({
-    connectionString: process.env.DATABASE_URL
-  })
+  neonConfig.webSocketConstructor = ws
 
-  const drizzleDb = drizzleServerless({
+  const pool = new Pool({ connectionString: config.databaseUrl })
+
+  const dbWebsocket = drizzleWebsocket({
     client: pool,
     schema,
     relations,
     logger: true
   })
 
-  return drizzleDb
+  return dbWebsocket
+}
+
+export {
+  createHttpClient,
+  createWebSocketClient
 }
