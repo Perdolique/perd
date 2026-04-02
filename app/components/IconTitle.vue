@@ -14,11 +14,11 @@
 </template>
 
 <script lang="ts" setup>
-  import PerdHeading from '~/components/PerdHeading.vue'
+  import PerdHeading, { type HeadingLevel } from '~/components/PerdHeading.vue'
 
   interface Props {
-    readonly icon: string;
-    readonly level: InstanceType<typeof PerdHeading>['level'];
+    icon: string;
+    level: HeadingLevel;
   }
 
   defineProps<Props>()
@@ -38,7 +38,7 @@
     width: 40px;
     height: 40px;
     border-radius: var(--border-radius-12);
-    background: var(--secondary-100);
-    color: var(--secondary-500);
+    background: var(--color-secondary-100);
+    color: var(--color-secondary-500);
   }
 </style>

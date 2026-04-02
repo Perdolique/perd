@@ -51,6 +51,8 @@
 </template>
 
 <script lang="ts" setup>
+  import { $fetch } from 'ofetch'
+  import { navigateTo, useAppState, useUserStore } from '#imports'
   import PerdMenu from '~/components/PerdMenu.vue';
   import OptionButton from '~/components/PerdMenu/OptionButton.vue';
 
@@ -70,15 +72,15 @@
   }
 </script>
 
-<style lang="scss" module>
+<style module>
   .component {
     display: flex;
     column-gap: var(--spacing-24);
     padding: var(--spacing-16) var(--spacing-32) var(--spacing-16) var(--spacing-24);
-    background-color: var(--background-100);
+    background-color: var(--color-background-100);
     align-items: center;
 
-    @include tablet() {
+    @media (width >= 768px) {
       padding: var(--spacing-16);
     }
   }
@@ -91,32 +93,32 @@
     border-radius: var(--border-radius-12);
     outline: none;
     transition: background-color var(--transition-time-quick);
-    background-color: var(--background-100);
+    background-color: var(--color-background-100);
 
     &:focus-visible,
     &:hover {
-      background-color: var(--background-200);
+      background-color: var(--color-background-200);
     }
 
     &:active {
-      background-color: var(--background-300);
+      background-color: var(--color-background-300);
     }
 
-    @include tablet() {
+    @media (width >= 768px) {
       display: none;
     }
   }
 
   .homeLink {
     font-weight: var(--font-weight-bold);
-    color: var(--text);
+    color: var(--color-text);
     text-decoration: none;
     outline: none;
     transition: color var(--transition-time-quick);
 
     &:focus-visible,
     &:hover {
-      color: var(--text-600);
+      color: var(--color-text-600);
     }
   }
 
@@ -130,15 +132,15 @@
     cursor: pointer;
     padding: var(--spacing-8);
     border-radius: var(--border-radius-12);
-    color: var(--text);
-    background-color: var(--background-200);
+    color: var(--color-text);
+    background-color: var(--color-background-200);
     outline: none;
     transition: background-color var(--transition-time-quick);
 
     &:global(.active),
     &:focus-visible,
     &:hover {
-      background-color: var(--background-300);
+      background-color: var(--color-background-300);
     }
   }
 </style>

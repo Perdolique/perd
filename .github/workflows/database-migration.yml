@@ -26,10 +26,5 @@ jobs:
           install-dependencies: true
       - name: Run database migration
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NUXT_DATABASE_URL: ${{ secrets.NUXT_DATABASE_URL }}
         run: pnpm run db:migrate
-      - name: Seed database
-        if: github.event_name == 'pull_request'
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: pnpm run db:seed

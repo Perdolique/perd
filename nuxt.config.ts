@@ -1,5 +1,5 @@
-import { createHash, type BinaryLike } from 'crypto'
-import { basename } from 'path'
+import { createHash, type BinaryLike } from 'node:crypto'
+import { basename } from 'node:path'
 
 type ComponentType = 'page' | 'layout' | 'component';
 
@@ -8,9 +8,9 @@ function getComponentType(filePath: string) : ComponentType {
     return 'page';
   } else if (filePath.includes('/app/layouts/')) {
     return 'layout';
-  } else {
-    return 'component';
   }
+
+  return 'component';
 }
 
 function getComponentName(componentName: string, componentType: ComponentType) : string {
@@ -25,6 +25,23 @@ function getComponentName(componentName: string, componentType: ComponentType) :
 export default defineNuxtConfig({
   compatibilityDate: '2025-12-02',
 
+  runtimeConfig: {
+    databaseUrl: '',
+    localDatabase: '',
+    sessionSecret: '',
+
+    oauth: {
+      twitch: {
+        clientId: '',
+        clientSecret: '',
+      }
+    }
+  },
+
+  css: [
+    '~/assets/styles/base.css'
+  ],
+
   modules: [
     '@nuxt/fonts',
     '@nuxt/icon',
@@ -38,7 +55,8 @@ export default defineNuxtConfig({
     viteEnvironmentApi: true,
 
     /**
-     * FIXME: Enable once fixed in Nuxt 4.3.0 and compatibilityVersion 5
+     * FIXME: Disable once @nuxt/icon and other modules
+     * stop relying on Nitro auto-imports
      *
      * https://github.com/nuxt/nuxt/issues/34142
      */
@@ -50,7 +68,17 @@ export default defineNuxtConfig({
   },
 
   typescript: {
-    typeCheck: true
+    typeCheck: true,
+
+    tsConfig: {
+      compilerOptions: {
+        noFallthroughCasesInSwitch: true,
+        noImplicitReturns: true,
+        noUnusedLocals: true,
+        noUnusedParameters: true,
+        noUncheckedSideEffectImports: true
+      }
+    }
   },
 
   app: {
@@ -63,8 +91,8 @@ export default defineNuxtConfig({
     enabled: true
   },
 
-  components: {
-    dirs: []
+  imports: {
+    autoImport: false
   },
 
   nitro: {
@@ -103,7 +131,7 @@ export default defineNuxtConfig({
 
           const filePath = filename
             .replace(/\.vue(?:\?.+?)?$/u, '')
-            .replace(/\[|\]/gu, '');
+            .replaceAll(/\[|\]/gu, '');
 
           const baseName = basename(filePath);
           const componentType = getComponentType(filePath);
@@ -113,14 +141,6 @@ export default defineNuxtConfig({
         }
       },
 
-      preprocessorOptions: {
-        scss: {
-          additionalData: `
-@use "~/assets/styles/media" as *;
-@use "~/assets/styles/utils" as *;
-`
-        }
-      }
     }
   }
 })

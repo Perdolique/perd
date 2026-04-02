@@ -1,0 +1,96 @@
+/**
+ * Fix for iOS Safari landscape orientation
+ *
+ * https://kilianvalkhof.com/2022/css-html/your-css-reset-needs-text-size-adjust-probably/
+ */
+html {
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}
+
+/* Set core body defaults */
+body {
+  box-sizing: border-box;
+  min-height: 100vh;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Remove default margin in favour of better control in authored CSS */
+h1,
+h2,
+h3,
+h4,
+p,
+figure,
+blockquote,
+dl,
+dd {
+  margin-block-end: 0;
+}
+
+/* Set shorter line heights on headings and interactive elements */
+h1,
+h2,
+h3,
+h4,
+button,
+input,
+label {
+  line-height: 1.1;
+}
+
+/* A elements that don't have a class get default styles */
+a:not([class]) {
+  text-decoration-skip-ink: auto;
+  color: currentColor;
+}
+
+/* Inherit fonts for inputs and buttons */
+input,
+button,
+textarea,
+select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Make sure textareas without a rows attribute are not tiny */
+textarea:not([rows]) {
+  min-height: 10em;
+}
+
+/* Anything that has been anchored to should have extra scroll margin */
+:target {
+  scroll-margin-block: 5ex;
+}
+
+/* Disable tap highlight color */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Reset default dialog styles */
+dialog {
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+/* Reset default button styles */
+button {
+  appearance: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+/* Reset default ul styles */
+ul {
+  margin: 0;
+  padding: 0;
+}

@@ -1,18 +1,18 @@
-import { and, eq } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { defineEventHandler, setResponseStatus } from 'h3'
-import { validateSessionUser } from '#server/utils/validate'
-import { tables } from '#server/utils/database'
+import { validateSessionUser, clearAppSession } from '#server/utils/session'
+import { users } from '#server/database/schema'
 
 export default defineEventHandler(async (event) => {
   const userId = await validateSessionUser(event)
 
-  await event.context.db
-    .delete(tables.users)
+  await event.context.dbHttp
+    .delete(users)
     .where(
-      and(
-        eq(tables.users.id, userId)
-      )
+      eq(users.id, userId)
     )
+
+  await clearAppSession(event)
 
   setResponseStatus(event, 204)
 })

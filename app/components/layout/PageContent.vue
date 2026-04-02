@@ -27,13 +27,13 @@
   import PerdHeading from '~/components/PerdHeading.vue'
 
   interface Props {
-    readonly pageTitle?: string;
+    pageTitle?: string;
   }
 
   defineProps<Props>()
 </script>
 
-<style lang="scss" module>
+<style module>
   .layout {
     display: grid;
     row-gap: var(--spacing-32);
@@ -44,13 +44,15 @@
     gap: var(--spacing-16);
     justify-content: space-between;
 
-    @include mobileLarge {
+    @media (width >= 414px) {
       grid-template-columns: 1fr auto;
     }
   }
 
   .heading {
-    @include overflow-ellipsis();
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .actions {

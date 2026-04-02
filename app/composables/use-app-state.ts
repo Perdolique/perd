@@ -1,4 +1,6 @@
-export default function useAppState() {
+import { useCookie, useState } from '#imports'
+
+export function useAppState() {
   const isSidebarCollapsed = useCookie<boolean>('isSidebarCollapsed', {
     default: () => false
   })

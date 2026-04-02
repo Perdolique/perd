@@ -1,3 +1,6 @@
+import { computed } from 'vue'
+import { useFetch, useState } from '#imports'
+
 interface User {
   userId: string | null;
   isAdmin: boolean;
@@ -5,11 +8,13 @@ interface User {
 }
 
 export function useUserStore() {
-  const user = useState<User>('user',  () => ({
-    userId: null,
-    isAdmin: false,
-    hasData: false
-  }))
+  const user = useState<User>('user', () => {
+    return {
+      userId: null,
+      isAdmin: false,
+      hasData: false
+    }
+  })
 
   const isAuthenticated = computed(() => user.value.userId !== null)
 

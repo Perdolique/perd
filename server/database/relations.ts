@@ -1,103 +1,138 @@
 import { defineRelations } from 'drizzle-orm'
 import * as schema from './schema'
 
-export const relations = defineRelations(schema, (r) => ({
-  users: {
-    equipment: r.many.equipment({
-      from: r.users.id,
-      to: r.equipment.creatorId
-    }),
+export const relations = defineRelations(schema, (relation) => {
+  return {
+    users: {
+      oauthAccounts: relation.many.oauthAccounts({
+        from: relation.users.id,
+        to: relation.oauthAccounts.userId
+      }),
 
-    userEquipment: r.many.userEquipment({
-      from: r.users.id,
-      to: r.userEquipment.userId
-    }),
+      userEquipment: relation.many.userEquipment({
+        from: relation.users.id,
+        to: relation.userEquipment.userId
+      }),
 
-    checklists: r.many.checklists({
-      from: r.users.id,
-      to: r.checklists.userId
-    }),
+      contributions: relation.many.contributions({
+        from: relation.users.id,
+        to: relation.contributions.userId
+      }),
 
-    oauthAccounts: r.many.oauthAccounts({
-      from: r.users.id,
-      to: r.oauthAccounts.userId
-    })
-  },
+      createdItems: relation.many.equipmentItems({
+        from: relation.users.id,
+        to: relation.equipmentItems.createdBy
+      })
+    },
 
-  oauthProviders: {
-    oauthAccounts: r.many.oauthAccounts({
-      from: r.oauthProviders.id,
-      to: r.oauthAccounts.providerId
-    })
-  },
+    oauthProviders: {
+      oauthAccounts: relation.many.oauthAccounts({
+        from: relation.oauthProviders.id,
+        to: relation.oauthAccounts.providerId
+      })
+    },
 
-  equipmentTypes: {
-    equipment: r.many.equipment({
-      from: r.equipmentTypes.id,
-      to: r.equipment.equipmentTypeId
-    }),
+    equipmentGroups: {},
 
-    equipmentTypeAttributes: r.many.equipmentTypeAttributes({
-      from: r.equipmentTypes.id,
-      to: r.equipmentTypeAttributes.equipmentTypeId
-    })
-  },
+    equipmentCategories: {
+      items: relation.many.equipmentItems({
+        from: relation.equipmentCategories.id,
+        to: relation.equipmentItems.categoryId
+      }),
 
-  equipmentGroups: {
-    equipment: r.many.equipment({
-      from: r.equipmentGroups.id,
-      to: r.equipment.equipmentGroupId
-    })
-  },
+      properties: relation.many.categoryProperties({
+        from: relation.equipmentCategories.id,
+        to: relation.categoryProperties.categoryId
+      })
+    },
 
-  brands: {
-    equipment: r.many.equipment({
-      from: r.brands.id,
-      to: r.equipment.brandId
-    })
-  },
+    brands: {
+      items: relation.many.equipmentItems({
+        from: relation.brands.id,
+        to: relation.equipmentItems.brandId
+      })
+    },
 
-  equipment: {
-    userEquipment: r.many.userEquipment({
-      from: r.equipment.id,
-      to: r.userEquipment.equipmentId
-    }),
+    equipmentItems: {
+      category: relation.one.equipmentCategories({
+        from: relation.equipmentItems.categoryId,
+        to: relation.equipmentCategories.id
+      }),
 
-    checklistItems: r.many.checklistItems({
-      from: r.equipment.id,
-      to: r.checklistItems.equipmentId
-    }),
+      brand: relation.one.brands({
+        from: relation.equipmentItems.brandId,
+        to: relation.brands.id
+      }),
 
-    equipmentAttributeValues: r.many.equipmentAttributeValues({
-      from: r.equipment.id,
-      to: r.equipmentAttributeValues.equipmentId
-    })
-  },
+      creator: relation.one.users({
+        from: relation.equipmentItems.createdBy,
+        to: relation.users.id
+      }),
 
-  equipmentAttributes: {
-    equipmentTypeAttributes: r.many.equipmentTypeAttributes({
-      from: r.equipmentAttributes.id,
-      to: r.equipmentTypeAttributes.equipmentAttributeId
-    }),
+      propertyValues: relation.many.itemPropertyValues({
+        from: relation.equipmentItems.id,
+        to: relation.itemPropertyValues.itemId
+      }),
 
-    equipmentAttributeValues: r.many.equipmentAttributeValues({
-      from: r.equipmentAttributes.id,
-      to: r.equipmentAttributeValues.equipmentAttributeId
-    })
-  },
+      userEquipment: relation.many.userEquipment({
+        from: relation.equipmentItems.id,
+        to: relation.userEquipment.itemId
+      })
+    },
 
-  checklists: {
-    checklistItems: r.many.checklistItems({
-      from: r.checklists.id,
-      to: r.checklistItems.checklistId
-    })
-  },
+    categoryProperties: {
+      category: relation.one.equipmentCategories({
+        from: relation.categoryProperties.categoryId,
+        to: relation.equipmentCategories.id
+      }),
 
-  checklistItems: {
-    equipment: r.one.equipment({
-      from: r.checklistItems.equipmentId,
-      to: r.equipment.id,
-      optional: false
-    })
+      enumOptions: relation.many.propertyEnumOptions({
+        from: relation.categoryProperties.id,
+        to: relation.propertyEnumOptions.propertyId
+      }),
+
+      values: relation.many.itemPropertyValues({
+        from: relation.categoryProperties.id,
+        to: relation.itemPropertyValues.propertyId
+      })
+    },
+
+    propertyEnumOptions: {
+      property: relation.one.categoryProperties({
+        from: relation.propertyEnumOptions.propertyId,
+        to: relation.categoryProperties.id
+      })
+    },
+
+    itemPropertyValues: {
+      item: relation.one.equipmentItems({
+        from: relation.itemPropertyValues.itemId,
+        to: relation.equipmentItems.id
+      }),
+
+      property: relation.one.categoryProperties({
+        from: relation.itemPropertyValues.propertyId,
+        to: relation.categoryProperties.id
+      })
+    },
+
+    userEquipment: {
+      user: relation.one.users({
+        from: relation.userEquipment.userId,
+        to: relation.users.id
+      }),
+
+      item: relation.one.equipmentItems({
+        from: relation.userEquipment.itemId,
+        to: relation.equipmentItems.id
+      })
+    },
+
+    contributions: {
+      user: relation.one.users({
+        from: relation.contributions.userId,
+        to: relation.users.id
+      })
+    }
   }
-}))
+})

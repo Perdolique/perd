@@ -1,11 +1,14 @@
-export function delay(timeout: number) {
-  return new Promise(resolve => setTimeout(resolve, timeout))
-}
+import delay from 'delay'
 
-export async function withMinimumDelay<P>(promise: Promise<P>, timeout = 250) : Promise<P> {
+async function withMinimumDelay<PromiseType>(
+  promise: Promise<PromiseType>,
+  timeout = 250
+) : Promise<PromiseType> {
   const delayPromise = delay(timeout)
 
   await Promise.allSettled([promise, delayPromise])
 
   return promise
 }
+
+export { delay, withMinimumDelay }

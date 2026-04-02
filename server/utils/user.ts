@@ -1,9 +1,8 @@
 import type { H3Event } from 'h3'
-import { createError } from 'h3'
 import { and, eq } from 'drizzle-orm'
-import type { OAuthProvider } from '~/models/oauth'
-import { useAppSession } from './session'
-import { tables, createDrizzleWebsocket } from './database'
+import type { OAuthProvider } from '#shared/types/oauth'
+import { useAppSession } from '#server/utils/session'
+import { oauthAccounts, oauthProviders, users } from '#server/database/schema'
 
 interface ReturnUser {
   readonly userId: string | null;
@@ -15,7 +14,7 @@ const defaultUser : ReturnUser = {
   isAdmin: false
 }
 
-export async function getSessionUser(event: H3Event) : Promise<ReturnUser> {
+async function getSessionUser(event: H3Event) : Promise<ReturnUser> {
   const session = await useAppSession(event)
   const { userId } = session.data
 
@@ -24,7 +23,7 @@ export async function getSessionUser(event: H3Event) : Promise<ReturnUser> {
   }
 
   // Check if the user in database
-  const users = await event.context.db.query.users
+  const foundUser = await event.context.dbHttp.query.users
     .findFirst({
       columns: {
         id: true,
@@ -36,105 +35,42 @@ export async function getSessionUser(event: H3Event) : Promise<ReturnUser> {
       }
     })
 
-  if (users?.id === undefined) {
+  if (foundUser?.id === undefined) {
     return defaultUser
   }
 
   return {
-    userId: users.id,
-    isAdmin: users.isAdmin
+    userId: foundUser.id,
+    isAdmin: foundUser.isAdmin
   }
 }
 
-export async function getUserByOAuthAccount(
-  event: H3Event,
+async function getUserByOAuthAccount(
   provider: OAuthProvider,
-  accountId: string
+  accountId: string,
+  event: H3Event
 ) : Promise<ReturnUser> {
-  const { db } = event.context
-
-  const [foundUser] = await db
+  const [foundUser] = await event.context.dbHttp
     .select({
-      userId: tables.oauthAccounts.userId,
-      isAdmin: tables.users.isAdmin
+      userId: oauthAccounts.userId,
+      isAdmin: users.isAdmin
     })
-    .from(tables.oauthAccounts)
+    .from(oauthAccounts)
     .innerJoin(
-      tables.oauthProviders,
+      oauthProviders,
 
       and(
-        eq(tables.oauthProviders.id, tables.oauthAccounts.providerId),
-        eq(tables.oauthProviders.type, provider),
-        eq(tables.oauthAccounts.accountId, accountId)
+        eq(oauthProviders.id, oauthAccounts.providerId),
+        eq(oauthProviders.type, provider),
+        eq(oauthAccounts.accountId, accountId)
       )
     )
     .innerJoin(
-      tables.users,
-      eq(tables.users.id, tables.oauthAccounts.userId)
+      users,
+      eq(users.id, oauthAccounts.userId)
     )
 
   return foundUser ?? defaultUser
 }
 
-export async function createOAuthUser(
-  provider: OAuthProvider,
-  accountId: string
-) {
-  const db = createDrizzleWebsocket()
-
-  const newUser = await db.transaction(async (transaction) => {
-    const providerData = await transaction.query.oauthProviders.findFirst({
-      columns: {
-        id: true
-      },
-
-      where: {
-        type: provider
-      }
-    })
-
-    if (providerData === undefined) {
-      throw createError({
-        message: `OAuth provider ${provider} not found`,
-        status: 404
-      })
-    }
-
-    // Create a new user
-    const [foundUser] = await transaction
-      .insert(tables.users)
-      .values({
-        isAdmin: false
-      })
-      .returning({
-        userId: tables.users.id,
-        isAdmin: tables.users.isAdmin
-      })
-
-    if (foundUser?.userId === undefined) {
-      throw createError({
-        message: 'Failed to create user',
-        status: 500
-      })
-    }
-
-    // Link the user to the OAuth provider
-    await transaction
-      .insert(tables.oauthAccounts)
-      .values({
-        userId: foundUser.userId,
-        accountId,
-        providerId: providerData.id
-      })
-
-    return {
-      userId: foundUser.userId,
-      isAdmin: foundUser.isAdmin
-    }
-  })
-
-  return {
-    userId: newUser.userId,
-    isAdmin: newUser.isAdmin
-  }
-}
+export { getSessionUser, getUserByOAuthAccount }

@@ -22,21 +22,20 @@
 </template>
 
 <script lang="ts" setup>
+  import { computed } from 'vue';
   import FidgetSpinner from '@/components/FidgetSpinner.vue';
 
   interface Props {
-    readonly icon?: string;
-    readonly secondary?: boolean;
-    readonly small?: boolean;
-    readonly loading?: boolean;
-    readonly disabled?: boolean;
+    icon?: string;
+    secondary?: boolean;
+    small?: boolean;
+    loading?: boolean;
+    disabled?: boolean;
   }
 
   const { disabled, loading } = defineProps<Props>();
 
-  const isButtonDisabled = computed(() => {
-    return disabled || loading
-  });
+  const isButtonDisabled = computed(() => disabled || loading)
 </script>
 
 <style module>
@@ -44,12 +43,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    column-gap: var(--button-gap);
-    height: var(--button-height);
-    padding: var(--button-padding);
-    border-radius: var(--button-border-radius);
-    background-color: var(--button-color-background);
-    color: var(--button-color-text);
+    column-gap: var(--spacing-8);
+    height: var(--spacing-48);
+    padding: 0 var(--spacing-24);
+    border-radius: var(--border-radius-16);
+    background-color: var(--color-primary);
+    color: var(--color-primary-50);
     outline: none;
     user-select: none;
     white-space: nowrap;
@@ -58,42 +57,42 @@
       color 0.15s ease-out;
 
     &:global(.secondary) {
-      background-color: var(--button-secondary-color-background);
-      color: var(--button-secondary-color-text);
+      background-color: var(--color-accent-200);
+      color: var(--color-accent-800);
     }
 
     &:global(.small) {
-      height: var(--button-small-height);
-      border-radius: var(--button-small-border-radius);
-      font-size: var(--button-small-font-size);
-      padding: var(--button-small-padding);
-      column-gap: var(--button-small-gap);
+      height: var(--spacing-32);
+      border-radius: var(--border-radius-12);
+      font-size: var(--font-size-14);
+      padding: 0 var(--spacing-16);
+      column-gap: var(--spacing-4);
     }
 
     &:focus-visible,
     &:hover {
-      background-color: var(--button-color-background-hover);
+      background-color: var(--color-primary-600);
 
       &:global(.secondary) {
-        background-color: var(--button-secondary-color-background-hover);
+        background-color: var(--color-accent-300);
       }
     }
 
     &:active {
-      background-color: var(--button-color-background-active);
+      background-color: var(--color-primary-700);
 
       &:global(.secondary) {
-        background-color: var(--button-secondary-color-background-active);
+        background-color: var(--color-accent-400);
       }
     }
 
     &:disabled {
-      color: var(--button-color-text-disabled);
-      background-color: var(--button-color-background-disabled);
+      color: var(--color-primary-100);
+      background-color: var(--color-primary-300);
 
       &:global(.secondary) {
-        color: var(--button-secondary-color-text-disabled);
-        background-color: var(--button-secondary-color-background-disabled);
+        color: var(--color-accent-600);
+        background-color: var(--color-accent-100);
       }
     }
   }

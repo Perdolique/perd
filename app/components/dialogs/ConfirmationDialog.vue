@@ -38,9 +38,9 @@
   import ModalDialog from './ModalDialog.vue'
 
   interface Props {
-    readonly headerText: string;
-    readonly confirmButtonText: string;
-    readonly cancelButtonText?: string;
+    headerText: string;
+    confirmButtonText: string;
+    cancelButtonText?: string;
   }
 
   type Emits = (event: 'confirm') => void
@@ -66,19 +66,21 @@
   }
 </script>
 
-<style lang="scss" module>
+<style module>
   .content {
     display: grid;
     row-gap: var(--spacing-24);
     column-gap: var(--spacing-16);
-    background-color:  var(--dialog-color-background);
-    padding: var(--dialog-padding);
-    border-radius: var(--dialog-border-radius);
-    border: 1px solid var(--dialog-color-border);
+    background-color: var(--color-background);
+    padding: var(--spacing-24);
+    border-radius: var(--border-radius-24);
+    border: 1px solid var(--color-background-100);
   }
 
   .header {
-    @include overflow-ellipsis();
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .body {
@@ -95,6 +97,8 @@
   .confirmButton,
   .cancelButton {
     max-width: 200px;
-    @include overflow-ellipsis();
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 </style>

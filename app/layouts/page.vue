@@ -20,7 +20,7 @@
   import PageFooter from '~/components/PageFooter.vue';
 </script>
 
-<style lang="scss" module>
+<style module>
   .layout {
     height: 100%;
     display: flex;
@@ -36,7 +36,7 @@
   .content {
     flex: 1;
     padding: var(--spacing-16);
-    max-width: var(--screen-laptop);
+    max-width: 1024px;
     margin: 0 auto;
     width: 100%;
     box-sizing: border-box;

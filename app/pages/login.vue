@@ -31,8 +31,10 @@
 </template>
 
 <script lang="ts" setup>
-  import { startPagePath } from '~~/constants';
-  import { startViewTransition } from '~/utils/dom';
+  import { ref } from 'vue'
+  import { $fetch } from 'ofetch'
+  import { definePageMeta, navigateTo, useRoute, useUserStore, withMinimumDelay } from '#imports'
+  import { startPagePath } from '#shared/constants';
   import PerdButton from '~/components/PerdButton.vue';
   import PerdHeading from '~/components/PerdHeading.vue';
 
@@ -45,9 +47,7 @@
   const isAuthenticating = ref(false)
 
   function startAuthenticating() {
-    startViewTransition(() => {
-      isAuthenticating.value = true
-    })
+    isAuthenticating.value = true
   }
 
   async function signUp() {
@@ -87,11 +87,13 @@
   function redirectToTwitch() {
     startAuthenticating()
 
-    window.location.href = '/api/oauth/twitch'
+    navigateTo('/api/oauth/twitch', {
+      external: true
+    })
   }
 </script>
 
-<style lang="scss" module>
+<style module>
   @keyframes fadeIn {
     from {
       opacity: 0;
@@ -106,9 +108,9 @@
 
   .component {
     height: 100%;
-    background: var(--background-100);
+    background: var(--color-background-100);
 
-    @include tablet {
+    @media (width >= 768px) {
       display: grid;
       place-items: center;
       padding: var(--spacing-24);
@@ -124,14 +126,14 @@
     background:
       linear-gradient(
         to bottom,
-        color-mix(in oklch, var(--overlay-color-background), black 40%) 0%,
+        color-mix(in oklch, var(--color-overlay-background), black 40%) 0%,
         transparent 40%,
-        color-mix(in oklch, var(--overlay-color-background), transparent 50%) 70%,
-        color-mix(in oklch, var(--overlay-color-background), black 60%) 100%
+        color-mix(in oklch, var(--color-overlay-background), transparent 50%) 70%,
+        color-mix(in oklch, var(--color-overlay-background), black 60%) 100%
       ),
       url('/dog_items_1024.webp') right / cover;
 
-    @include tablet {
+    @media (width >= 768px) {
       width: 480px;
       max-height: 480px;
       border-radius: var(--border-radius-24);
@@ -152,7 +154,7 @@
     padding: var(--spacing-24) var(--spacing-16);
     border-radius: var(--border-radius-24);
 
-    @include mobileLarge {
+    @media (width >= 414px) {
       grid-auto-flow: column;
       width: 400px;
       justify-self: center;
