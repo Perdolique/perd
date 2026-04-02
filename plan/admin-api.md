@@ -26,9 +26,11 @@ Every write operation inserts a row into `contributions`:
 {
   "userId": "<admin-uuid>",
   "action": "create_item",
-  "targetId": "<item-uuid>",
+  "targetId": "0195f6e8-8f44-74f6-bc9a-5c8f7df477d7",
   "metadata": { "name": "NeoAir XLite NXT Regular", "brandId": 1, "categoryId": 1 }
 }
 ```
+
+`targetId` always stores the changed entity primary key as a string. Use a decimal string for `serial` IDs and a canonical UUID string for UUID-based entities.
 
 Actions: `create_item`, `update_item`, `delete_item`, `create_brand`, `update_brand`, `delete_brand`, `create_group`, `update_group`, `delete_group`, `create_category`, `update_category`, `delete_category`.

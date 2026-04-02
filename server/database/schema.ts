@@ -1,7 +1,7 @@
 // oxlint-disable max-lines
 // oxlint-disable import/no-relative-parent-imports
 import { sql } from 'drizzle-orm'
-import { integer, serial, timestamp, boolean, varchar, unique, uuid, numeric, jsonb, pgTable } from 'drizzle-orm/pg-core'
+import { integer, serial, timestamp, boolean, varchar, unique, uuid, numeric, jsonb, pgTable, text } from 'drizzle-orm/pg-core'
 // FIXME: drizzle-kit can't handle #shared/constants, so we have to import it with a relative path
 import { limits } from '../../shared/constants'
 
@@ -426,8 +426,9 @@ const contributions = pgTable('contributions', {
     varchar({ length: 32 })
     .notNull(),
 
+  /** Stringified primary key of the changed catalog entity. Stores either a serial ID or a UUID string. */
   targetId:
-    uuid()
+    text()
     .notNull(),
 
   metadata:
