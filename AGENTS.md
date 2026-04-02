@@ -49,3 +49,12 @@ After any code modification, always run:
 All tasks above can be run in parallel.
 
 If any architectural decisions were made during the task (new patterns, conventions, data model changes), update relevant sections of this file. Remove or revise entries that are no longer accurate.
+
+## Planning conventions
+
+The `plan/` directory is the **global product roadmap**, not a per-sprint task list. It describes the full scope of planned product features and their implementation order.
+
+- `plan/PLAN.md` is the roadmap index — keep it short, link to detailed plan files.
+- Large iterations must be split into sequential task files (e.g. `plan/admin-management/01-foundations.md`).
+- Completed work goes to `plan/completed.md` as short summaries, not detailed specs.
+- When plan files are renamed or moved, update links in `plan/PLAN.md` and overview files immediately.
