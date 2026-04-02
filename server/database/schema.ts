@@ -250,6 +250,7 @@ const equipmentItems = pgTable('equipment_items', {
     })
     .notNull()
     .defaultNow()
+    .$onUpdate(() => sql`now()`)
 })
 
 /**
