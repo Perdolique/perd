@@ -6,9 +6,8 @@ Architecture decisions are captured in `AGENTS.md`.
 
 ## Iteration order
 
-### 1. Seed data + Browsing API
+### 1. Browsing API
 
-- [Seed data](plan/seed-data.md) — script to populate DB with groups, categories, properties, brands, sample items
 - [Equipment browsing API](plan/browsing-api.md) — read-only endpoints for catalog navigation (groups, categories, items, brands)
 
 ### 2. Admin catalog management

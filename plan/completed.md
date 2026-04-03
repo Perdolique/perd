@@ -21,3 +21,7 @@ Nuxt layout with header, footer, sidebar. Login page, account page, Twitch callb
 ## Tooling and tests
 
 Migration CLI script (`tools/migrate.ts`). One Playwright E2E test for login flow. Unit tests for `withMinimumDelay` utility.
+
+## Seed data
+
+Catalog seed CLI implemented with `drizzle-seed` for reset/reference data and plain Drizzle inserts for EAV rows. Includes local (`db:seed:local`) and CI/staging (`db:seed`) entrypoints, PR staging workflow integration, deterministic groups/categories/brands, and sample items covering seeded `number`, `enum`, and `boolean` property values with validation that each property is written to the correct `value*` column.
