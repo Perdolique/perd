@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { and, eq } from 'drizzle-orm'
 import type { OAuthProvider } from '#shared/types/oauth'
-import { useAppSession } from '#server/utils/session'
+import { clearAppSession, useAppSession } from '#server/utils/session'
 import { oauthAccounts, oauthProviders, users } from '#server/database/schema'
 
 interface ReturnUser {
@@ -36,6 +36,8 @@ async function getSessionUser(event: H3Event) : Promise<ReturnUser> {
     })
 
   if (foundUser?.id === undefined) {
+    await clearAppSession(event)
+
     return defaultUser
   }
 
@@ -61,13 +63,15 @@ async function getUserByOAuthAccount(
 
       and(
         eq(oauthProviders.id, oauthAccounts.providerId),
-        eq(oauthProviders.type, provider),
-        eq(oauthAccounts.accountId, accountId)
+        eq(oauthProviders.type, provider)
       )
     )
     .innerJoin(
       users,
       eq(users.id, oauthAccounts.userId)
+    )
+    .where(
+      eq(oauthAccounts.accountId, accountId)
     )
 
   return foundUser ?? defaultUser

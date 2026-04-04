@@ -103,5 +103,15 @@
     "rules": {
       "import/no-relative-parent-imports": "off"
     }
+  }, {
+    // Test files
+    "files": [
+      "**/__tests__/**/*.ts",
+      "tests/**/*.ts"
+    ],
+
+    "rules": {
+      "import/no-relative-parent-imports": "off"
+    }
   }]
 }

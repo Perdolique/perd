@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-// oxlint-disable-next-line import/no-relative-parent-imports -- test files in __tests__/ must import from parent
 import { delay, withMinimumDelay } from '../async'
 
 describe(withMinimumDelay, () => {

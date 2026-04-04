@@ -1,4 +1,4 @@
-import { createError, type H3Event } from 'h3'
+import { createError, isError, type H3Event } from 'h3'
 import type { OAuthProvider } from '#shared/types/oauth'
 import { createWebSocketClient } from '#server/utils/database'
 import { getRuntimeDatabaseConfig } from '#server/utils/config'
@@ -71,7 +71,11 @@ async function createOAuthUser(
       userId: newUser.userId,
       isAdmin: newUser.isAdmin
     }
-  } catch {
+  } catch (error) {
+    if (isError(error)) {
+      throw error
+    }
+
     throw createError({
       message: 'Failed to create user',
       status: 500

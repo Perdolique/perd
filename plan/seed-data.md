@@ -1,32 +1,45 @@
 # Seed data
 
-**Purpose**: Without data in the database, you can't test or demo anything. This script populates the DB with realistic reference data (groups, categories, property definitions, brands) and a few sample items so the browsing and admin APIs have something to work with. It also serves as living documentation of what the data model looks like in practice. Uses the same DB connection pattern as `tools/migrate.ts`: WebSocket client from `server/utils/database.ts` + env config from `server/utils/config-env.ts`. The script should be idempotent — safe to run multiple times (use upserts or check-before-insert).
+**Status**: Implemented.
 
-## File to create
+**Purpose**: Populate the catalog with deterministic reference data and sample items so browsing, admin flows, and PR staging databases are immediately usable. The seed also acts as living documentation of how the current EAV model is written in practice.
 
-`tools/seed.ts` — standalone CLI script, no Nitro runtime.
+## Current behavior
+
+- Uses the same DB connection pattern as `tools/migrate.ts`: WebSocket client from `server/utils/database.ts` + env config from `server/utils/config-env.ts`.
+- Resets only the catalog graph with `drizzle-seed reset()`: groups, categories, brands, category properties, enum options, items, item property values, user equipment, contributions.
+- Seeds reference rows through `drizzle-seed` and then inserts the dependent EAV rows with plain Drizzle queries.
+- Uses deterministic seed data, not random fixtures.
+- Supports both local and CI/staging entrypoints:
+
+```json
+"db:seed": "tsx ./tools/seed.ts",
+"db:seed:local": "tsx --env-file=.env ./tools/seed.ts"
+```
+
+- `db:seed` runs in the PR staging database workflow after migrations.
 
 ## Data definitions
 
 ### Groups
 
-**Purpose**: Cover the main functional areas of outdoor gear. These are the top-level navigation entry points.
+The current seed populates these functional navigation groups:
 
 Shelter, Sleep, Packing, Cooking, Water, Clothing, Footwear, Navigation, Lighting, Electronics, Trekking, Safety.
 
-### Categories (examples)
+### Categories
 
-**Purpose**: Specific equipment types within each functional area. Each category has its own set of properties (EAV schema layer).
+The current seed intentionally keeps the first slice small:
 
-- Sleeping Bags, Sleeping Pads, Pillows
-- Tents, Tarps, Bivvies
-- Backpacks, Stuff Sacks
-- Stoves, Cookware, Utensils
-- Water Filters, Water Bottles
+- Sleeping Bags
+- Sleeping Pads
+- Tents
+- Stoves
+- Water Filters
 
-### Properties (examples)
+### Properties
 
-**Purpose**: Define what measurable/filterable attributes each category has. These power the dynamic filter UI and item comparison. Each property has a `dataType` (number/text/boolean/enum) and optional `unit`.
+Each seeded category has explicit property definitions with `dataType` and optional `unit`.
 
 Sleeping Bags:
 
@@ -42,24 +55,43 @@ Sleeping Pads:
 - Type (enum: inflatable/foam/self-inflating)
 - Thickness (number, cm)
 
-### Brands (examples)
+Tents:
 
-**Purpose**: Real outdoor gear manufacturers. Users will recognize these names, making the seed data feel realistic for testing.
+- Weight (number, g)
+- Capacity (number)
+- Freestanding (boolean)
+
+Stoves:
+
+- Weight (number, g)
+- Fuel Type (enum: canister/alcohol/liquid-fuel)
+- Integrated Pot (boolean)
+
+Water Filters:
+
+- Weight (number, g)
+- Filter Type (enum: squeeze/pump/gravity)
+- Squeeze Compatible (boolean)
+
+### Brands
 
 Therm-a-Rest, Nemo, Sea to Summit, MSR, Big Agnes, Zpacks, Gossamer Gear, Enlightened Equipment.
 
-### Items (a few examples)
+### Sample items
 
-**Purpose**: A handful of real items with property values filled in, to test the full EAV chain (item → property values → property definitions).
+The current seed includes deterministic item examples that cover all currently used seeded property types:
 
 - Therm-a-Rest NeoAir XLite NXT Regular (Sleeping Pads)
 - Nemo Tensor Insulated Regular (Sleeping Pads)
-- Enlightened Equipment Enigma 20°F Regular (Sleeping Bags)
+- Enlightened Equipment Enigma 20F Regular (Sleeping Bags)
+- Big Agnes Copper Spur HV UL2 (Tents)
+- MSR PocketRocket Deluxe (Stoves)
+- MSR Guardian Purifier (Water Filters)
 
-## npm script
+## Validation guarantees
 
-Add `db:seed:local` script to `package.json`:
-
-```json
-"db:seed:local": "tsx --env-file=.env ./tools/seed.ts"
-```
+- Sample item values are stored explicitly in the seed data as `valueText`, `valueNumber`, or `valueBoolean`.
+- The seed validates that each sample property fills exactly one value column.
+- The seed validates that the filled column matches the property `dataType`.
+- The seed validates that every currently seeded property has sample coverage.
+- `text` remains supported by schema, but the current seed does not define any `text` properties yet.

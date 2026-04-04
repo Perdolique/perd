@@ -23,7 +23,7 @@
 
 ### Content management
 
-- **Contributions table** logs every write operation (create/update/delete) with userId, action, targetId, and optional metadata. Used for future gamification.
+- **Contributions table** logs every write operation (create/update/delete) with userId, action, targetId, and optional metadata. `targetId` stores the changed entity's primary key as a string, so it can hold either a serial ID or a UUID. Used for future gamification.
 - **Item status**: `approved` by default for admin-created items. Future user submissions will default to `pending`.
 - MVP: only admins can manage the equipment catalog. Users browse and add items to their inventory.
 
@@ -49,3 +49,16 @@ After any code modification, always run:
 All tasks above can be run in parallel.
 
 If any architectural decisions were made during the task (new patterns, conventions, data model changes), update relevant sections of this file. Remove or revise entries that are no longer accurate.
+
+## Planning conventions
+
+The `plan/` directory is the **global product roadmap**, not a per-sprint task list. It describes the full scope of planned product features and their implementation order.
+
+- Prefer the **smallest possible completed iteration** that removes one blocker or delivers one coherent slice. Smaller iterations reduce implementation mistakes and make progress easier to verify.
+- For new API iterations, every join must be justified by a field returned in the current response or by a filter applied in the current endpoint. Do not preload relations "just in case".
+- Do not add extra detail payload or extra detail endpoints unless the current iteration already has a concrete consumer for them.
+- Response examples in plan files are the **upper bound** for payload in that iteration. Do not silently extend them without updating the plan and the consumer need.
+- `plan/PLAN.md` is the roadmap index — keep it short, link to detailed plan files.
+- Large iterations must be split into sequential task files (e.g. `plan/admin-management/01-foundations.md`).
+- Completed work goes to `plan/completed.md` as short summaries, not detailed specs.
+- When plan files are renamed or moved, update links in `plan/PLAN.md` and overview files immediately.

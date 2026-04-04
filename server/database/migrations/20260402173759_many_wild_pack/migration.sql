@@ -1,0 +1,1 @@
+ALTER TABLE "contributions" ALTER COLUMN "targetId" SET DATA TYPE text USING "targetId"::text;

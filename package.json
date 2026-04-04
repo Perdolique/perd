@@ -7,6 +7,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "tsx --env-file=.env ./tools/migrate.ts",
     "db:migrate": "tsx ./tools/migrate.ts",
+    "db:seed": "tsx ./tools/seed.ts",
+    "db:seed:local": "tsx --env-file=.env ./tools/seed.ts",
     "deploy:production": "wrangler deploy --env=production",
     "deploy:staging": "wrangler deploy --env=staging",
     "deploy:versions:staging": "wrangler versions upload --env=staging",
@@ -23,13 +25,14 @@
     "test:unit": "vitest",
     "test:unit:ci": "vitest run",
     "test:unit:agent": "vitest run --reporter agent",
-    "update:all": "taze --interactive --include-locked"
+    "update:all": "taze --interactive --include-locked",
+    "prepare": "husky"
   },
   "dependencies": {
-    "@nuxt/hints": "1.0.2",
+    "@nuxt/hints": "1.0.3",
     "delay": "7.0.0",
     "nuxt": "4.4.2",
-    "vue": "3.5.31"
+    "vue": "3.5.32"
   },
   "devDependencies": {
     "@iconify-json/streamline-emojis": "1.2.4",
@@ -39,12 +42,14 @@
     "@nuxt/fonts": "0.14.0",
     "@nuxt/icon": "2.2.1",
     "@playwright/test": "1.59.1",
-    "@types/node": "25.5.0",
+    "@types/node": "25.5.2",
     "@types/ws": "8.18.1",
     "@vueuse/core": "14.2.1",
     "drizzle-kit": "1.0.0-beta.20",
     "drizzle-orm": "1.0.0-beta.20",
+    "drizzle-seed": "1.0.0-beta.20",
     "eslint-config-greenpie": "16.0.0-5",
+    "husky": "9.1.7",
     "markdownlint": "0.40.0",
     "markdownlint-cli": "0.48.0",
     "oxlint": "1.58.0",
@@ -55,7 +60,6 @@
     "ufo": "1.6.3",
     "valibot": "1.3.1",
     "vite": "8.0.3",
-    "vite-plus": "0.1.15",
     "vitest": "4.1.2",
     "vue-tsc": "3.2.6",
     "wrangler": "4.80.0",
