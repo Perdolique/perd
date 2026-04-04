@@ -29,10 +29,10 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@nuxt/hints": "1.0.2",
+    "@nuxt/hints": "1.0.3",
     "delay": "7.0.0",
     "nuxt": "4.4.2",
-    "vue": "3.5.31"
+    "vue": "3.5.32"
   },
   "devDependencies": {
     "@iconify-json/streamline-emojis": "1.2.4",
@@ -42,7 +42,7 @@
     "@nuxt/fonts": "0.14.0",
     "@nuxt/icon": "2.2.1",
     "@playwright/test": "1.59.1",
-    "@types/node": "25.5.0",
+    "@types/node": "25.5.2",
     "@types/ws": "8.18.1",
     "@vueuse/core": "14.2.1",
     "drizzle-kit": "1.0.0-beta.20",

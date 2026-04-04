@@ -55,6 +55,9 @@ If any architectural decisions were made during the task (new patterns, conventi
 The `plan/` directory is the **global product roadmap**, not a per-sprint task list. It describes the full scope of planned product features and their implementation order.
 
 - Prefer the **smallest possible completed iteration** that removes one blocker or delivers one coherent slice. Smaller iterations reduce implementation mistakes and make progress easier to verify.
+- For new API iterations, every join must be justified by a field returned in the current response or by a filter applied in the current endpoint. Do not preload relations "just in case".
+- Do not add extra detail payload or extra detail endpoints unless the current iteration already has a concrete consumer for them.
+- Response examples in plan files are the **upper bound** for payload in that iteration. Do not silently extend them without updating the plan and the consumer need.
 - `plan/PLAN.md` is the roadmap index — keep it short, link to detailed plan files.
 - Large iterations must be split into sequential task files (e.g. `plan/admin-management/01-foundations.md`).
 - Completed work goes to `plan/completed.md` as short summaries, not detailed specs.

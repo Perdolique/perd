@@ -106,7 +106,8 @@
   }, {
     // Test files
     "files": [
-      "**/__tests__/**/*.ts"
+      "**/__tests__/**/*.ts",
+      "tests/**/*.ts"
     ],
 
     "rules": {

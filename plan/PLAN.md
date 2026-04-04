@@ -31,3 +31,7 @@ Tasks in execution order:
 ### 4. Frontend
 
 - [Frontend](plan/frontend.md) — UI for browsing, item detail, user inventory, admin management
+
+## Someday
+
+- **Vitest integration tests for API handlers** — currently API tests run via Playwright (full build + preview server). A dedicated test DB (local Neon or pg docker) + Vitest test utils for h3 (`createEvent`) would make API tests faster and independent from the E2E suite.

@@ -2,6 +2,12 @@
 
 **Purpose**: These are the read-only endpoints that power the equipment catalog UI. Users need to browse groups, categories, items, and brands to find gear and add it to their inventory. All endpoints require authentication (existing `server/middleware/api-session-check.ts` blocks unauthenticated `/api/*` requests). Database access uses the HTTP client via `event.context.dbHttp`. Follow the handler pattern from `server/api/account/index.delete.ts` (imports from `#server/...`, `defineEventHandler`, Drizzle query).
 
+**Iteration guardrails**:
+
+- Response examples below are the target payload for this iteration and the upper bound unless the plan is updated.
+- Each join must be justified by a returned field or an endpoint filter in the current iteration.
+- Do not add extra detail data "for future frontend use" without a concrete consumer in the same or earlier iteration.
+
 ## Endpoints
 
 ### `GET /api/equipment/groups`

@@ -11,17 +11,15 @@ export default defineEventHandler(async (event) : Promise<ReturnType> => {
 
   // TODO (#101): check if user is already logged in
 
-  const [foundUser] = await dbHttp
+  const [newUser] = await dbHttp
     .insert(users)
-    .values({
-      isAdmin: false
-    })
+    .values({})
     .returning({
       userId: users.id,
       isAdmin: users.isAdmin
     })
 
-  if (foundUser === undefined) {
+  if (newUser === undefined) {
     throw createError({
       status: 500,
       message: 'Failed to create user'
@@ -33,10 +31,10 @@ export default defineEventHandler(async (event) : Promise<ReturnType> => {
   setResponseStatus(event, 201)
 
   await session.update({
-    userId: foundUser.userId
+    userId: newUser.userId
   })
 
   return {
-    userId: foundUser.userId
+    userId: newUser.userId
   }
 })
