@@ -2,32 +2,23 @@ import { eq } from 'drizzle-orm'
 import { createError, defineEventHandler, getValidatedRouterParams, setResponseStatus } from 'h3'
 import { brands, contributions } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
+import { brandBaseSelection, type BrandBaseRecord } from '#server/utils/equipment/base-records'
 import { validateBrandIdParams } from '#server/utils/validation/schemas'
-
-interface BrandRecord {
-  id: number;
-  name: string;
-  slug: string;
-}
 
 export default defineEventHandler(async (event) => {
   const { dbHttp } = event.context
   const userId = await validateAdminUser(event)
   const { id: brandId } = await getValidatedRouterParams(event, validateBrandIdParams)
 
-  let deletedBrandRows: BrandRecord[] = []
+  let deletedBrandRows: BrandBaseRecord[] = []
 
   try {
     deletedBrandRows = await dbHttp
       .delete(brands)
       .where(
-        eq(brands.id, brandId)
+        eq(brandBaseSelection.id, brandId)
       )
-      .returning({
-        id: brands.id,
-        name: brands.name,
-        slug: brands.slug
-      })
+      .returning(brandBaseSelection)
   } catch {
     throw createError({
       status: 500,
@@ -41,14 +32,12 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 404 })
   }
 
-  const targetId = String(currentBrand.id)
-
   await dbHttp
     .insert(contributions)
     .values({
       userId,
       action: 'delete_brand',
-      targetId,
+      targetId: `${currentBrand.id}`,
 
       metadata: {
         name: currentBrand.name,

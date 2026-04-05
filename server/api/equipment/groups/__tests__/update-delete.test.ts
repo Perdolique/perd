@@ -1,8 +1,8 @@
 import * as h3 from 'h3'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import deleteBrandHandler from '#server/api/equipment/brands/[id].delete'
-import updateBrandHandler from '#server/api/equipment/brands/[id].patch'
-import type { BrandBaseRecord } from '#server/utils/equipment/base-records'
+import deleteGroupHandler from '#server/api/equipment/groups/[id].delete'
+import updateGroupHandler from '#server/api/equipment/groups/[id].patch'
+import type { EquipmentGroupBaseRecord } from '#server/utils/equipment/base-records'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
 const {
@@ -54,17 +54,17 @@ interface MockUpdateDeleteDb {
 
 function createPatchDb({
   updateError,
-  updatedBrand
+  updatedGroup
 }: {
   updateError?: Error;
-  updatedBrand?: BrandBaseRecord;
+  updatedGroup?: EquipmentGroupBaseRecord;
 }) {
   const updateReturningMock = vi.fn(() => {
     if (updateError !== undefined) {
       throw updateError
     }
 
-    const updatedRows = updatedBrand === undefined ? [] : [updatedBrand]
+    const updatedRows = updatedGroup === undefined ? [] : [updatedGroup]
 
     return updatedRows
   })
@@ -110,17 +110,17 @@ function createPatchDb({
 
 function createDeleteDb({
   deleteError,
-  deletedBrand
+  deletedGroup
 }: {
   deleteError?: Error;
-  deletedBrand?: BrandBaseRecord;
+  deletedGroup?: EquipmentGroupBaseRecord;
 }) {
   const deleteReturningMock = vi.fn(() => {
     if (deleteError !== undefined) {
       throw deleteError
     }
 
-    const deletedRows = deletedBrand === undefined ? [] : [deletedBrand]
+    const deletedRows = deletedGroup === undefined ? [] : [deletedGroup]
 
     return deletedRows
   })
@@ -157,19 +157,19 @@ function createDeleteDb({
   }
 }
 
-describe('PATCH /api/equipment/brands/[id]', () => {
+describe('PATCH /api/equipment/groups/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
     validateAdminUserMock.mockResolvedValue('user-1')
 
     readValidatedBodyMock.mockResolvedValue({
-      name: 'MSR',
-      slug: 'msr'
+      name: 'Sleep',
+      slug: 'sleep'
     })
 
     getValidatedRouterParamsMock.mockResolvedValue({
-      id: 12
+      id: 7
     })
   })
 
@@ -177,37 +177,61 @@ describe('PATCH /api/equipment/brands/[id]', () => {
     vi.restoreAllMocks()
   })
 
-  test('should update a brand and log a contribution', async () => {
-    const updatedBrand = {
-      id: 12,
-      name: 'MSR',
-      slug: 'msr'
+  test('should update a group and log a contribution', async () => {
+    const updatedGroup = {
+      id: 7,
+      name: 'Sleep',
+      slug: 'sleep'
     }
 
     const { dbHttp, insertContributionValuesMock, updateSetMock } = createPatchDb({
-      updatedBrand
+      updatedGroup
     })
 
     const event = createTestEvent(dbHttp)
-    const result = await updateBrandHandler(event)
+    const result = await updateGroupHandler(event)
 
-    expect(result).toStrictEqual(updatedBrand)
+    expect(result).toStrictEqual(updatedGroup)
 
     expect(updateSetMock).toHaveBeenCalledWith({
-      name: 'MSR',
-      slug: 'msr'
+      name: 'Sleep',
+      slug: 'sleep'
     })
 
     expect(insertContributionValuesMock).toHaveBeenCalledWith({
-      action: 'update_brand',
+      action: 'update_group',
 
       metadata: {
-        name: 'MSR',
-        slug: 'msr'
+        name: 'Sleep',
+        slug: 'sleep'
       },
 
-      targetId: '12',
+      targetId: '7',
       userId: 'user-1'
+    })
+  })
+
+  test('should return 401 when user is unauthenticated', async () => {
+    const authError = h3.createError({ status: 401 })
+    const { dbHttp } = createPatchDb({})
+    const event = createTestEvent(dbHttp)
+
+    validateAdminUserMock.mockRejectedValue(authError)
+
+    await expect(updateGroupHandler(event)).rejects.toMatchObject({
+      statusCode: 401
+    })
+  })
+
+  test('should return 403 when user is not an admin', async () => {
+    const authError = h3.createError({ status: 403 })
+    const { dbHttp } = createPatchDb({})
+    const event = createTestEvent(dbHttp)
+
+    validateAdminUserMock.mockRejectedValue(authError)
+
+    await expect(updateGroupHandler(event)).rejects.toMatchObject({
+      statusCode: 403
     })
   })
 
@@ -218,7 +242,7 @@ describe('PATCH /api/equipment/brands/[id]', () => {
 
     getValidatedRouterParamsMock.mockRejectedValue(routeError)
 
-    await expect(updateBrandHandler(event)).rejects.toMatchObject({
+    await expect(updateGroupHandler(event)).rejects.toMatchObject({
       statusCode: 400
     })
   })
@@ -230,14 +254,14 @@ describe('PATCH /api/equipment/brands/[id]', () => {
 
     getValidatedRouterParamsMock.mockRejectedValue(routeError)
 
-    await expect(updateBrandHandler(event)).rejects.toMatchObject({
+    await expect(updateGroupHandler(event)).rejects.toMatchObject({
       statusCode: 400
     })
   })
 
   test.each([
-    'msr',
-    '12-msr'
+    'sleep',
+    '7-sleep'
   ])('should return 400 when route id has invalid format: %s', async (routeId) => {
     const routeError = h3.createError({
       message: routeId,
@@ -248,42 +272,53 @@ describe('PATCH /api/equipment/brands/[id]', () => {
 
     getValidatedRouterParamsMock.mockRejectedValue(routeError)
 
-    await expect(updateBrandHandler(event)).rejects.toMatchObject({
+    await expect(updateGroupHandler(event)).rejects.toMatchObject({
       statusCode: 400
     })
   })
 
-  test('should return 404 when the target brand does not exist', async () => {
+  test('should return 400 when body validation fails', async () => {
+    const bodyError = h3.createError({ status: 400 })
     const { dbHttp } = createPatchDb({})
     const event = createTestEvent(dbHttp)
 
-    await expect(updateBrandHandler(event)).rejects.toMatchObject({
+    readValidatedBodyMock.mockRejectedValue(bodyError)
+
+    await expect(updateGroupHandler(event)).rejects.toMatchObject({
+      statusCode: 400
+    })
+  })
+
+  test('should return 404 when the target group does not exist', async () => {
+    const { dbHttp } = createPatchDb({})
+    const event = createTestEvent(dbHttp)
+
+    await expect(updateGroupHandler(event)).rejects.toMatchObject({
       statusCode: 404
     })
   })
 
-  test('should return 500 when brand update fails', async () => {
+  test('should return 500 when group update fails', async () => {
     const { dbHttp } = createPatchDb({
       updateError: new Error('update failed')
     })
-
     const event = createTestEvent(dbHttp)
 
-    await expect(updateBrandHandler(event)).rejects.toMatchObject({
-      message: 'Failed to update brand',
+    await expect(updateGroupHandler(event)).rejects.toMatchObject({
+      message: 'Failed to update group',
       statusCode: 500
     })
   })
 })
 
-describe('DELETE /api/equipment/brands/[id]', () => {
+describe('DELETE /api/equipment/groups/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
     validateAdminUserMock.mockResolvedValue('user-1')
 
     getValidatedRouterParamsMock.mockResolvedValue({
-      id: 12
+      id: 7
     })
   })
 
@@ -291,33 +326,57 @@ describe('DELETE /api/equipment/brands/[id]', () => {
     vi.restoreAllMocks()
   })
 
-  test('should delete a brand and log a contribution', async () => {
-    const deletedBrand = {
-      id: 12,
-      name: 'MSR',
-      slug: 'msr'
+  test('should delete a group and log a contribution', async () => {
+    const deletedGroup = {
+      id: 7,
+      name: 'Sleep',
+      slug: 'sleep'
     }
 
     const { dbHttp, insertContributionValuesMock } = createDeleteDb({
-      deletedBrand
+      deletedGroup
     })
 
     const event = createTestEvent(dbHttp)
 
-    await deleteBrandHandler(event)
+    await deleteGroupHandler(event)
 
     expect(setResponseStatusMock).toHaveBeenCalledWith(event, 204)
 
     expect(insertContributionValuesMock).toHaveBeenCalledWith({
-      action: 'delete_brand',
+      action: 'delete_group',
 
       metadata: {
-        name: 'MSR',
-        slug: 'msr'
+        name: 'Sleep',
+        slug: 'sleep'
       },
 
-      targetId: '12',
+      targetId: '7',
       userId: 'user-1'
+    })
+  })
+
+  test('should return 401 when user is unauthenticated', async () => {
+    const authError = h3.createError({ status: 401 })
+    const { dbHttp } = createDeleteDb({})
+    const event = createTestEvent(dbHttp)
+
+    validateAdminUserMock.mockRejectedValue(authError)
+
+    await expect(deleteGroupHandler(event)).rejects.toMatchObject({
+      statusCode: 401
+    })
+  })
+
+  test('should return 403 when user is not an admin', async () => {
+    const authError = h3.createError({ status: 403 })
+    const { dbHttp } = createDeleteDb({})
+    const event = createTestEvent(dbHttp)
+
+    validateAdminUserMock.mockRejectedValue(authError)
+
+    await expect(deleteGroupHandler(event)).rejects.toMatchObject({
+      statusCode: 403
     })
   })
 
@@ -328,23 +387,23 @@ describe('DELETE /api/equipment/brands/[id]', () => {
 
     getValidatedRouterParamsMock.mockRejectedValue(routeError)
 
-    await expect(deleteBrandHandler(event)).rejects.toMatchObject({
+    await expect(deleteGroupHandler(event)).rejects.toMatchObject({
       statusCode: 400
     })
   })
 
-  test('should return 404 when the target brand does not exist', async () => {
+  test('should return 404 when the target group does not exist', async () => {
     const { dbHttp } = createDeleteDb({})
     const event = createTestEvent(dbHttp)
 
-    await expect(deleteBrandHandler(event)).rejects.toMatchObject({
+    await expect(deleteGroupHandler(event)).rejects.toMatchObject({
       statusCode: 404
     })
   })
 
   test.each([
-    'msr',
-    '12-msr'
+    'sleep',
+    '7-sleep'
   ])('should return 400 when route id has invalid format: %s', async (routeId) => {
     const routeError = h3.createError({
       message: routeId,
@@ -355,20 +414,19 @@ describe('DELETE /api/equipment/brands/[id]', () => {
 
     getValidatedRouterParamsMock.mockRejectedValue(routeError)
 
-    await expect(deleteBrandHandler(event)).rejects.toMatchObject({
+    await expect(deleteGroupHandler(event)).rejects.toMatchObject({
       statusCode: 400
     })
   })
 
-  test('should return 500 when brand delete fails', async () => {
+  test('should return 500 when group delete fails', async () => {
     const { dbHttp } = createDeleteDb({
       deleteError: new Error('delete failed')
     })
-
     const event = createTestEvent(dbHttp)
 
-    await expect(deleteBrandHandler(event)).rejects.toMatchObject({
-      message: 'Failed to delete brand',
+    await expect(deleteGroupHandler(event)).rejects.toMatchObject({
+      message: 'Failed to delete group',
       statusCode: 500
     })
   })
