@@ -15,8 +15,7 @@ export default defineEventHandler(async (event) : Promise<ReturnType> => {
     .insert(users)
     .values({})
     .returning({
-      userId: users.id,
-      isAdmin: users.isAdmin
+      userId: users.id
     })
 
   if (newUser === undefined) {

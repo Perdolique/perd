@@ -1,11 +1,11 @@
 import { ilike, type SQL } from 'drizzle-orm'
-import { defineEventHandler, getQuery } from 'h3'
+import { defineEventHandler, getValidatedQuery } from 'h3'
 import { brands } from '#server/database/schema'
+import { validateBrandsListQuery } from '#server/utils/validation/schemas'
 
 export default defineEventHandler(async (event) => {
   const { dbHttp } = event.context
-  const query = getQuery(event)
-  const search = typeof query.search === 'string' ? query.search : ''
+  const { search } = await getValidatedQuery(event, validateBrandsListQuery)
 
   const safeSearch = search
     .trim()

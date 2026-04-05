@@ -1,15 +1,19 @@
 import { and, count, eq, ilike, type SQL } from 'drizzle-orm'
-import { defineEventHandler, getQuery } from 'h3'
+import { defineEventHandler, getValidatedQuery } from 'h3'
 import { brands, equipmentCategories, equipmentItems } from '#server/database/schema'
+import { validateItemsListQuery } from '#server/utils/validation/schemas'
 
 export default defineEventHandler(async (event) => {
-  const query = getQuery(event)
   const { dbHttp } = event.context
-  const categorySlug = typeof query.categorySlug === 'string' ? query.categorySlug : undefined
-  const brandSlug = typeof query.brandSlug === 'string' ? query.brandSlug : undefined
-  const search = typeof query.search === 'string' ? query.search : undefined
-  const page = Math.max(1, Math.floor(Number(query.page) || 1))
-  const limit = Math.min(100, Math.max(1, Math.floor(Number(query.limit) || 20)))
+  const validatedQuery = await getValidatedQuery(event, validateItemsListQuery)
+
+  const {
+    brandSlug,
+    categorySlug,
+    limit,
+    page,
+    search
+  } = validatedQuery
 
   const conditions: SQL[] = [
     eq(equipmentItems.status, 'approved')
@@ -27,7 +31,7 @@ export default defineEventHandler(async (event) => {
     )
   }
 
-  if (search !== undefined && search !== '') {
+  if (search !== '') {
     const escapedSearch = search
       .replaceAll('%', String.raw`\%`)
       .replaceAll('_', String.raw`\_`)

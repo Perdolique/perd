@@ -79,7 +79,8 @@
       "server/utils/**/*.ts",
       "drizzle.config.ts",
       "playwright.config.ts",
-      "tools/**/*.ts"
+      "tools/**/*.ts",
+      "vitest.config.ts"
     ],
 
     "env": {
@@ -111,6 +112,8 @@
     ],
 
     "rules": {
+      "eslint/max-lines": "off",
+      "import/no-namespace": "off",
       "import/no-relative-parent-imports": "off"
     }
   }]

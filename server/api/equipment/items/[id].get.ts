@@ -1,11 +1,8 @@
-import { createError, defineEventHandler, getRouterParam } from 'h3'
+import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
+import { validateItemDetailParams } from '#server/utils/validation/schemas'
 
 export default defineEventHandler(async (event) => {
-  const id = getRouterParam(event, 'id')
-
-  if (id === undefined || id === '') {
-    throw createError({ status: 400 })
-  }
+  const { id } = await getValidatedRouterParams(event, validateItemDetailParams)
 
   const item = await event.context.dbHttp.query.equipmentItems.findFirst({
     columns: {
@@ -68,8 +65,10 @@ export default defineEventHandler(async (event) => {
     unit: string | null
     value: string | null
   }
+
   const properties: ItemProperty[] = []
 
+  // Property values live in type-specific columns, so the response normalizes them into one `value` field.
   for (const propertyValue of item.propertyValues) {
     const { property } = propertyValue
 

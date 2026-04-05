@@ -1,6 +1,10 @@
 # Admin catalog management API
 
-**Purpose**: Admins need CRUD operations to populate and maintain the equipment catalog. This is the only way to manage catalog data in MVP (no user submissions). Every write operation must log to `contributions` table for future gamification — this is cheap (one insert) and avoids retroactive data recovery later. All endpoints use `validateAdminUser(event)` from `server/utils/admin.ts` which returns 401 if not logged in, 403 if not admin. Request bodies are validated with Valibot schemas via `readValidatedBody` from h3 (see `server/api/auth/create-session.post.ts` for pattern). Database writes that need transactions (e.g. creating an item with property values + contribution log) should use the WebSocket client; simple single-table writes can use the HTTP client.
+**Purpose**: Admins need CRUD operations to populate and maintain the equipment catalog. This is the only way to manage catalog data in MVP (no user submissions). Every write operation must log to `contributions` table for future gamification — this is cheap (one insert) and avoids retroactive data recovery later. All endpoints use `validateAdminUser(event)` from `server/utils/admin.ts` which returns 401 if not logged in, 403 if not admin. All external request inputs are validated with Valibot schemas through h3 validated helpers: `readValidatedBody` for bodies, `getValidatedRouterParams` for route params, and `getValidatedQuery` for query strings. Database writes that need transactions (e.g. creating an item with property values + contribution log) should use the WebSocket client; simple single-table writes can use the HTTP client.
+
+## Route policy
+
+Public read routes for reference data use `slug` in detail URLs. Admin mutation routes for the same reference data use stable `id` route params for `PATCH` and `DELETE`, because `slug` is editable content.
 
 ## Tasks
 
@@ -16,7 +20,7 @@ Ordered by execution sequence (simple single-table writes first, complex multi-t
 
 ## Validation
 
-Use Valibot schemas in `server/utils/validation/schemas.ts`. Add new schemas for each entity creation/update. Validate with `readValidatedBody` from h3 — it throws 400 automatically on validation failure with structured error details.
+Use Valibot schemas in `server/utils/validation/schemas.ts`. Add new schemas for each entity creation/update and any route/query input the current endpoint accepts. Validate with h3 helpers (`readValidatedBody`, `getValidatedRouterParams`, `getValidatedQuery`) — they throw 400 automatically on validation failure with structured error details.
 
 ## Contribution logging
 

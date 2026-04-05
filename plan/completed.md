@@ -8,11 +8,19 @@ Full schema with migrations: auth tables (`users`, `oauth_providers`, `oauth_acc
 
 ## Authentication and sessions
 
-Guest session creation, logout, session middleware protecting `/api/*` routes. `validateSessionUser()` and `validateAdminUser()` utilities for endpoint authorization.
+Guest session creation, logout, session middleware protecting `/api/*` routes. Browser visits to protected API URLs redirect through `/login` and restore the original API document after login, while programmatic API requests still receive `401`. `validateSessionUser()` and `validateAdminUser()` utilities for endpoint authorization. Admin authorization resolves the current role from the database, so role checks do not depend on stale session flags.
+
+## Equipment browsing API
+
+Authenticated read-only catalog endpoints for groups, categories, brands, item lists, and item detail. Includes category property definitions with enum options, narrow brand detail metadata, and item pagination/filtering.
+
+## Admin catalog management
+
+Admin-only Brands CRUD implemented under `/api/equipment/brands`. Public detail reads stay on `slug`, while admin `PATCH` and `DELETE` use stable numeric `id`. Successful create, update, and delete operations log to `contributions`.
 
 ## Twitch OAuth
 
-Redirect to Twitch, token exchange, user info fetch, new user creation with OAuth account linking, login via existing Twitch account. Missing: CSRF `state` parameter, linking existing account to Twitch.
+Redirect to Twitch, token exchange, user info fetch, new user creation with OAuth account linking, login via existing Twitch account, and redirect restoration through OAuth `state`. Missing: CSRF-hardening for `state`, linking existing account to Twitch.
 
 ## App shell and frontend foundation
 
@@ -20,7 +28,7 @@ Nuxt layout with header, footer, sidebar. Login page, account page, Twitch callb
 
 ## Tooling and tests
 
-Migration CLI script (`tools/migrate.ts`). One Playwright E2E test for login flow. Unit tests for `withMinimumDelay` utility.
+Migration CLI script (`tools/migrate.ts`). Playwright browser smoke for login rather than API contract coverage. DB-free Vitest coverage for brands admin/read handlers, category read handler, item read handlers, and shared validation schemas. Unit tests for `withMinimumDelay` utility.
 
 ## Seed data
 
