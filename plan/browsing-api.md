@@ -7,6 +7,7 @@
 - Response examples below are the target payload for this iteration and the upper bound unless the plan is updated.
 - Each join must be justified by a returned field or an endpoint filter in the current iteration.
 - Do not add extra detail data "for future frontend use" without a concrete consumer in the same or earlier iteration.
+- Route params and query strings use Valibot schemas via `getValidatedRouterParams` and `getValidatedQuery` from h3. Schemas live in `server/utils/validation/schemas.ts`.
 
 ## Endpoints
 
@@ -127,7 +128,7 @@ Response:
 
 ### `GET /api/equipment/brands/[slug]`
 
-**Purpose**: Brand detail page. Shows brand info and all approved items from that brand. Users might want to browse by brand ("show me all Therm-a-Rest gear"). Join `brands` → `equipment_items` (where status = 'approved') → `equipment_categories`.
+**Purpose**: Brand detail page header. Returns only the brand data needed to identify the current brand. If the page also shows the brand's items, fetch them separately through `GET /api/equipment/items?brandSlug=...` instead of expanding this detail payload.
 
 Response:
 
@@ -135,10 +136,7 @@ Response:
 {
   "id": 1,
   "name": "Therm-a-Rest",
-  "slug": "therm-a-rest",
-  "items": [
-    { "id": "01234567-...", "name": "NeoAir XLite NXT Regular", "category": { "name": "Sleeping Pads", "slug": "sleeping-pads" } }
-  ]
+  "slug": "therm-a-rest"
 }
 ```
 

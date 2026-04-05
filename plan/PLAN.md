@@ -34,4 +34,5 @@ Tasks in execution order:
 
 ## Someday
 
-- **Vitest integration tests for API handlers** — currently API tests run via Playwright (full build + preview server). A dedicated test DB (local Neon or pg docker) + Vitest test utils for h3 (`createEvent`) would make API tests faster and independent from the E2E suite.
+- **Expand DB-free Vitest handler coverage** — the current catalog handlers already use the baseline pattern: direct handler imports plus mocked `event`, `dbHttp`, and auth/body helpers. Extend the same approach to the remaining API endpoints as they stabilize.
+- **Refine category detail loading** — in `GET /api/equipment/categories/[slug]`, fetch enum options only for enum properties instead of loading relation data that is later discarded for non-enum properties.

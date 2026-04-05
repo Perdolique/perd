@@ -3,7 +3,7 @@ import { useAppSession } from '#server/utils/session'
 
 async function validateAdminUser(event: H3Event<EventHandlerRequest>) {
   const session = await useAppSession(event)
-  const { userId, isAdmin } = session.data
+  const { userId } = session.data
 
   if (userId === undefined) {
     throw createError({
@@ -11,7 +11,23 @@ async function validateAdminUser(event: H3Event<EventHandlerRequest>) {
     })
   }
 
-  if (isAdmin !== true) {
+  const foundUser = await event.context.dbHttp.query.users.findFirst({
+    columns: {
+      isAdmin: true
+    },
+
+    where: {
+      id: userId
+    }
+  })
+
+  if (foundUser === undefined) {
+    throw createError({
+      status: 401
+    })
+  }
+
+  if (foundUser.isAdmin !== true) {
     throw createError({
       status: 403
     })

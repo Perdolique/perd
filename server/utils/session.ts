@@ -15,7 +15,6 @@ const sessionCookieName = 'perdSession'
 
 interface SessionData {
   userId?: string;
-  isAdmin?: boolean;
 }
 
 function getSessionConfig(event: H3Event) : SessionConfig {

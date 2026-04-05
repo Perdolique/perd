@@ -37,9 +37,9 @@
   import { onBeforeMount, ref } from 'vue'
   import { $fetch } from 'ofetch'
   import { definePageMeta, navigateTo, useRoute, useUserStore } from '#imports'
-  import { startPagePath } from '#shared/constants'
+  import { getRedirectNavigationTarget } from '~/utils/router'
   import FidgetSpinner from '~/components/FidgetSpinner.vue'
-  import PerdLink from '~/components/PerdLink.vue';
+  import PerdLink from '~/components/PerdLink.vue'
 
   definePageMeta({
     layout: false,
@@ -68,8 +68,11 @@
       user.value.isAdmin = result.isAdmin
       user.value.hasData = true
 
-      await navigateTo(startPagePath, {
-        replace: true
+      const navigationTarget = getRedirectNavigationTarget(route.query.state)
+
+      await navigateTo(navigationTarget.path, {
+        replace: true,
+        external: navigationTarget.external
       })
     } catch {
       isFailed.value = true
@@ -77,7 +80,7 @@
   }
 
   onBeforeMount(() => {
-    handleConnect()
+    void handleConnect()
   })
 </script>
 

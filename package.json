@@ -2,6 +2,10 @@
   "name": "perd",
   "private": true,
   "type": "module",
+  "imports": {
+    "#server/*": "./server/*.ts",
+    "#shared/*": "./shared/*.ts"
+  },
   "scripts": {
     "build": "nuxt build",
     "db:generate": "drizzle-kit generate",

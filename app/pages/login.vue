@@ -34,9 +34,9 @@
   import { ref } from 'vue'
   import { $fetch } from 'ofetch'
   import { definePageMeta, navigateTo, useRoute, useUserStore, withMinimumDelay } from '#imports'
-  import { startPagePath } from '#shared/constants';
-  import PerdButton from '~/components/PerdButton.vue';
-  import PerdHeading from '~/components/PerdHeading.vue';
+  import { getRedirectNavigationTarget } from '~/utils/router'
+  import PerdButton from '~/components/PerdButton.vue'
+  import PerdHeading from '~/components/PerdHeading.vue'
 
   definePageMeta({
     layout: false
@@ -48,6 +48,15 @@
 
   function startAuthenticating() {
     isAuthenticating.value = true
+  }
+
+  async function navigateAfterLogin(redirectTo: unknown) {
+    const navigationTarget = getRedirectNavigationTarget(redirectTo)
+
+    await navigateTo(navigationTarget.path, {
+      replace: true,
+      external: navigationTarget.external
+    })
   }
 
   async function signUp() {
@@ -66,16 +75,10 @@
 
       if (typeof response.userId === 'string') {
         user.value.userId = response.userId
+        user.value.hasData = true
       }
 
-      const redirectPath =
-        typeof route.query.redirectTo === 'string'
-          ? route.query.redirectTo
-          : startPagePath
-
-      await navigateTo(redirectPath, {
-        replace: true
-      })
+      await navigateAfterLogin(route.query.redirectTo)
     } catch (error) {
       // TODO: Handle error properly
       console.error(error)
@@ -87,7 +90,15 @@
   function redirectToTwitch() {
     startAuthenticating()
 
-    navigateTo('/api/oauth/twitch', {
+    const navigationTarget = getRedirectNavigationTarget(route.query.redirectTo)
+
+    void navigateTo({
+      path: '/api/oauth/twitch',
+
+      query: {
+        redirectTo: navigationTarget.path
+      }
+    }, {
       external: true
     })
   }

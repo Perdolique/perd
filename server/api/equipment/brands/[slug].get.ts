@@ -1,11 +1,8 @@
-import { createError, defineEventHandler, getRouterParam } from 'h3'
+import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
+import { validateBrandDetailParams } from '#server/utils/validation/schemas'
 
 export default defineEventHandler(async (event) => {
-  const slug = getRouterParam(event, 'slug')
-
-  if (slug === undefined || slug === '') {
-    throw createError({ status: 400 })
-  }
+  const { slug } = await getValidatedRouterParams(event, validateBrandDetailParams)
 
   const brand = await event.context.dbHttp.query.brands.findFirst({
     columns: {
@@ -16,28 +13,6 @@ export default defineEventHandler(async (event) => {
 
     where: {
       slug
-    },
-
-    with: {
-      items: {
-        columns: {
-          id: true,
-          name: true
-        },
-
-        where: {
-          status: 'approved'
-        },
-
-        with: {
-          category: {
-            columns: {
-              name: true,
-              slug: true
-            }
-          }
-        }
-      }
     }
   })
 

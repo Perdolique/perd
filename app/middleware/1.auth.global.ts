@@ -1,5 +1,5 @@
 import { defineNuxtRouteMiddleware, navigateTo, shouldSkipAuth, useUserStore } from '#imports';
-import { startPagePath } from '#shared/constants';
+import { getRedirectNavigationTarget } from '~/utils/router'
 
 export default defineNuxtRouteMiddleware(async (to) => {
   if (shouldSkipAuth(to)) {
@@ -9,9 +9,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const { isAuthenticated } = useUserStore()
 
   if (isAuthenticated.value && to.path === '/login') {
+    const navigationTarget = getRedirectNavigationTarget(to.query.redirectTo)
+
     return navigateTo({
-      path: startPagePath,
-      replace: true
+      path: navigationTarget.path
+    }, {
+      replace: true,
+      external: navigationTarget.external
     })
   }
 
