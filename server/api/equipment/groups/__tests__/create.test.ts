@@ -1,7 +1,7 @@
 import * as h3 from 'h3'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import createBrandHandler from '#server/api/equipment/brands/index.post'
-import type { BrandBaseRecord } from '#server/utils/equipment/base-records'
+import createGroupHandler from '#server/api/equipment/groups/index.post'
+import type { EquipmentGroupBaseRecord } from '#server/utils/equipment/base-records'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
 const {
@@ -44,25 +44,25 @@ interface MockCreateDb {
 }
 
 function createDb({
-  createdBrand,
+  createdGroup,
   insertError
 }: {
-  createdBrand?: BrandBaseRecord;
+  createdGroup?: EquipmentGroupBaseRecord;
   insertError?: Error;
 } = {}) {
-  const insertBrandReturningMock = vi.fn(() => {
+  const insertGroupReturningMock = vi.fn(() => {
     if (insertError !== undefined) {
       throw insertError
     }
 
-    const createdRows = createdBrand === undefined ? [] : [createdBrand]
+    const createdRows = createdGroup === undefined ? [] : [createdGroup]
 
     return createdRows
   })
 
-  const insertBrandValuesMock = vi.fn(() => {
+  const insertGroupValuesMock = vi.fn(() => {
     return {
-      returning: insertBrandReturningMock
+      returning: insertGroupReturningMock
     }
   })
 
@@ -72,7 +72,7 @@ function createDb({
   insertMock
     .mockImplementationOnce(() => {
       return {
-        values: insertBrandValuesMock
+        values: insertGroupValuesMock
       }
     })
     .mockImplementationOnce(() => {
@@ -91,15 +91,15 @@ function createDb({
   }
 }
 
-describe('POST /api/equipment/brands', () => {
+describe('POST /api/equipment/groups', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
     validateAdminUserMock.mockResolvedValue('user-1')
 
     readValidatedBodyMock.mockResolvedValue({
-      name: 'MSR',
-      slug: 'msr'
+      name: 'Sleep',
+      slug: 'sleep'
     })
   })
 
@@ -107,32 +107,32 @@ describe('POST /api/equipment/brands', () => {
     vi.restoreAllMocks()
   })
 
-  test('should create a brand and log a contribution', async () => {
-    const createdBrand = {
-      id: 12,
-      name: 'MSR',
-      slug: 'msr'
+  test('should create a group and log a contribution', async () => {
+    const createdGroup = {
+      id: 7,
+      name: 'Sleep',
+      slug: 'sleep'
     }
 
     const { dbHttp, insertContributionValuesMock } = createDb({
-      createdBrand
+      createdGroup
     })
 
     const event = createTestEvent(dbHttp)
-    const result = await createBrandHandler(event)
+    const result = await createGroupHandler(event)
 
-    expect(result).toStrictEqual(createdBrand)
+    expect(result).toStrictEqual(createdGroup)
     expect(setResponseStatusMock).toHaveBeenCalledWith(event, 201)
 
     expect(insertContributionValuesMock).toHaveBeenCalledWith({
-      action: 'create_brand',
+      action: 'create_group',
 
       metadata: {
-        name: 'MSR',
-        slug: 'msr'
+        name: 'Sleep',
+        slug: 'sleep'
       },
 
-      targetId: '12',
+      targetId: '7',
       userId: 'user-1'
     })
   })
@@ -144,7 +144,7 @@ describe('POST /api/equipment/brands', () => {
 
     validateAdminUserMock.mockRejectedValue(authError)
 
-    await expect(createBrandHandler(event)).rejects.toMatchObject({
+    await expect(createGroupHandler(event)).rejects.toMatchObject({
       statusCode: 401
     })
   })
@@ -156,7 +156,7 @@ describe('POST /api/equipment/brands', () => {
 
     validateAdminUserMock.mockRejectedValue(authError)
 
-    await expect(createBrandHandler(event)).rejects.toMatchObject({
+    await expect(createGroupHandler(event)).rejects.toMatchObject({
       statusCode: 403
     })
   })
@@ -168,20 +168,19 @@ describe('POST /api/equipment/brands', () => {
 
     readValidatedBodyMock.mockRejectedValue(bodyError)
 
-    await expect(createBrandHandler(event)).rejects.toMatchObject({
+    await expect(createGroupHandler(event)).rejects.toMatchObject({
       statusCode: 400
     })
   })
 
-  test('should return 500 when brand creation fails', async () => {
+  test('should return 500 when group creation fails', async () => {
     const { dbHttp } = createDb({
       insertError: new Error('insert failed')
     })
-
     const event = createTestEvent(dbHttp)
 
-    await expect(createBrandHandler(event)).rejects.toMatchObject({
-      message: 'Failed to create brand',
+    await expect(createGroupHandler(event)).rejects.toMatchObject({
+      message: 'Failed to create group',
       statusCode: 500
     })
   })

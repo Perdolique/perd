@@ -27,6 +27,7 @@
 - **Admin mutation routes for reference data use `id`** in route params (`PATCH`/`DELETE`), because `slug` is editable content and must not be the stable mutation key.
 - **All API request inputs use Valibot schemas through h3 validated helpers**: `readValidatedBody` for request bodies, `getValidatedRouterParams` for route params, and `getValidatedQuery` for query strings. Schemas and validator functions live in `server/utils/validation/schemas.ts`; handlers should consume parsed values instead of manually validating raw input.
 - **Public read detail endpoints stay narrow**: return the entity needed for that route, and fetch related collections with separate read endpoints when a page needs them. Do not expand detail payloads just to save a future frontend request.
+- **Shared catalog `returning(...)` shapes use reusable base records, not global endpoint models**: extract common `id`/`name`/`slug` selections into server-only helpers when reused, but keep each endpoint free to return a different response shape later if needed.
 - **Protected `/api/*` routes keep mixed auth behavior by caller type**: unauthenticated browser document navigations redirect to `/login?redirectTo=...`, while programmatic API requests (`fetch`/XHR) still receive `401`.
 
 ### Testing conventions

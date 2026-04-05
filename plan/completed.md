@@ -16,7 +16,7 @@ Authenticated read-only catalog endpoints for groups, categories, brands, item l
 
 ## Admin catalog management
 
-Admin-only Brands CRUD implemented under `/api/equipment/brands`. Public detail reads stay on `slug`, while admin `PATCH` and `DELETE` use stable numeric `id`. Successful create, update, and delete operations log to `contributions`.
+Admin-only Brands and Groups CRUD implemented under `/api/equipment/brands` and `/api/equipment/groups`. Public detail reads stay on `slug`, while admin `PATCH` and `DELETE` use stable numeric `id`. Successful create, update, and delete operations log to `contributions`.
 
 ## Twitch OAuth
 

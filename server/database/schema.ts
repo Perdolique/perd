@@ -122,11 +122,11 @@ const equipmentGroups = pgTable('equipment_groups', {
     .primaryKey(),
 
   name:
-    varchar({ length: 64 })
+    varchar({ length: limits.maxEquipmentGroupNameLength })
     .notNull(),
 
   slug:
-    varchar({ length: 128 })
+    varchar({ length: limits.maxEquipmentGroupSlugLength })
     .notNull()
     .unique(),
 
@@ -176,12 +176,12 @@ const brands = pgTable('brands', {
     .primaryKey(),
 
   name:
-    varchar({ length: 128 })
+    varchar({ length: limits.maxBrandNameLength })
     .notNull()
     .unique(),
 
   slug:
-    varchar({ length: 128 })
+    varchar({ length: limits.maxBrandSlugLength })
     .notNull()
     .unique(),
 

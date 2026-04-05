@@ -2,17 +2,12 @@ import { eq } from 'drizzle-orm'
 import { createError, defineEventHandler, getValidatedRouterParams, readValidatedBody } from 'h3'
 import { brands, contributions } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
+import { brandBaseSelection, type BrandBaseRecord } from '#server/utils/equipment/base-records'
 
 import {
   validateBrandIdParams,
   validateBrandMutationBody
 } from '#server/utils/validation/schemas'
-
-interface BrandRecord {
-  id: number;
-  name: string;
-  slug: string;
-}
 
 export default defineEventHandler(async (event) => {
   const { dbHttp } = event.context
@@ -20,7 +15,7 @@ export default defineEventHandler(async (event) => {
   const { id: brandId } = await getValidatedRouterParams(event, validateBrandIdParams)
   const { name, slug } = await readValidatedBody(event, validateBrandMutationBody)
 
-  let updatedBrandRows: BrandRecord[] = []
+  let updatedBrandRows: BrandBaseRecord[] = []
 
   try {
     updatedBrandRows = await dbHttp
@@ -30,13 +25,9 @@ export default defineEventHandler(async (event) => {
         slug
       })
       .where(
-        eq(brands.id, brandId)
+        eq(brandBaseSelection.id, brandId)
       )
-      .returning({
-        id: brands.id,
-        name: brands.name,
-        slug: brands.slug
-      })
+      .returning(brandBaseSelection)
   } catch {
     throw createError({
       status: 500,

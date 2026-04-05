@@ -1,9 +1,12 @@
 import { describe, expect, test } from 'vitest'
+import { limits } from '#shared/constants'
 import {
   validateBrandDetailParams,
   validateBrandIdParams,
   validateBrandMutationBody,
   validateBrandsListQuery,
+  validateGroupIdParams,
+  validateGroupMutationBody,
   validateItemDetailParams,
   validateItemsListQuery,
   validateRedirectTargetQuery,
@@ -11,6 +14,15 @@ import {
 } from '#server/utils/validation/schemas'
 
 describe('validation schemas', () => {
+  const maxBrandName = 'B'.repeat(limits.maxBrandNameLength)
+  const maxBrandSlug = 's'.repeat(limits.maxBrandSlugLength)
+  const tooLongBrandName = 'B'.repeat(limits.maxBrandNameLength + 1)
+  const tooLongBrandSlug = 's'.repeat(limits.maxBrandSlugLength + 1)
+  const maxGroupName = 'G'.repeat(limits.maxEquipmentGroupNameLength)
+  const maxGroupSlug = 'g'.repeat(limits.maxEquipmentGroupSlugLength)
+  const tooLongGroupName = 'G'.repeat(limits.maxEquipmentGroupNameLength + 1)
+  const tooLongGroupSlug = 'g'.repeat(limits.maxEquipmentGroupSlugLength + 1)
+
   test('should convert numeric brand id params to number', () => {
     const result = validateBrandIdParams({
       id: '12'
@@ -66,6 +78,31 @@ describe('validation schemas', () => {
     expect(() => validateBrandMutationBody(body)).toThrow()
   })
 
+  test('should accept brand mutation body at max field lengths', () => {
+    const result = validateBrandMutationBody({
+      name: maxBrandName,
+      slug: maxBrandSlug
+    })
+
+    expect(result).toStrictEqual({
+      name: maxBrandName,
+      slug: maxBrandSlug
+    })
+  })
+
+  test.each([
+    {
+      name: tooLongBrandName,
+      slug: 'msr'
+    },
+    {
+      name: 'MSR',
+      slug: tooLongBrandSlug
+    }
+  ])('should reject brand mutation body with oversized fields: %j', (body) => {
+    expect(() => validateBrandMutationBody(body)).toThrow()
+  })
+
   test('should default and trim brand list query', () => {
     expect(validateBrandsListQuery({})).toStrictEqual({
       search: ''
@@ -76,6 +113,76 @@ describe('validation schemas', () => {
     })).toStrictEqual({
       search: 'msr'
     })
+  })
+
+  test('should convert numeric group id params to number', () => {
+    const result = validateGroupIdParams({
+      id: '7'
+    })
+
+    expect(result).toStrictEqual({
+      id: 7
+    })
+  })
+
+  test.each([
+    {},
+    { id: '' },
+    { id: '0' },
+    { id: '01' },
+    { id: 'sleep' }
+  ])('should reject invalid group id params: %j', (params) => {
+    expect(() => validateGroupIdParams(params)).toThrow()
+  })
+
+  test('should trim group mutation body fields', () => {
+    const result = validateGroupMutationBody({
+      name: '  Sleep  ',
+      slug: '  sleep  '
+    })
+
+    expect(result).toStrictEqual({
+      name: 'Sleep',
+      slug: 'sleep'
+    })
+  })
+
+  test.each([
+    {
+      name: '   ',
+      slug: 'sleep'
+    },
+    {
+      name: 'Sleep',
+      slug: '   '
+    }
+  ])('should reject group mutation body with empty trimmed fields: %j', (body) => {
+    expect(() => validateGroupMutationBody(body)).toThrow()
+  })
+
+  test('should accept group mutation body at max field lengths', () => {
+    const result = validateGroupMutationBody({
+      name: maxGroupName,
+      slug: maxGroupSlug
+    })
+
+    expect(result).toStrictEqual({
+      name: maxGroupName,
+      slug: maxGroupSlug
+    })
+  })
+
+  test.each([
+    {
+      name: tooLongGroupName,
+      slug: 'sleep'
+    },
+    {
+      name: 'Sleep',
+      slug: tooLongGroupSlug
+    }
+  ])('should reject group mutation body with oversized fields: %j', (body) => {
+    expect(() => validateGroupMutationBody(body)).toThrow()
   })
 
   test('should normalize items list query', () => {

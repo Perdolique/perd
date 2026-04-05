@@ -1,5 +1,5 @@
 import * as v from 'valibot'
-import { startPagePath } from '#shared/constants'
+import { limits, startPagePath } from '#shared/constants'
 import { sanitizeRedirectPath } from '#shared/utils/redirect'
 
 const nonEmptyStringSchema = v.pipe(
@@ -53,8 +53,15 @@ const pageQuerySchema = v.pipe(
 )
 
 const brandMutationSchema = v.object({
-  name: trimmedNonEmptyStringSchema,
-  slug: trimmedNonEmptyStringSchema
+  name: v.pipe(
+    trimmedNonEmptyStringSchema,
+    v.maxLength(limits.maxBrandNameLength)
+  ),
+
+  slug: v.pipe(
+    trimmedNonEmptyStringSchema,
+    v.maxLength(limits.maxBrandSlugLength)
+  )
 })
 
 const brandIdParamsSchema = v.object({
@@ -67,6 +74,22 @@ const brandDetailParamsSchema = v.object({
 
 const brandsListQuerySchema = v.object({
   search: v.optional(trimmedStringSchema, '')
+})
+
+const groupMutationSchema = v.object({
+  name: v.pipe(
+    trimmedNonEmptyStringSchema,
+    v.maxLength(limits.maxEquipmentGroupNameLength)
+  ),
+
+  slug: v.pipe(
+    trimmedNonEmptyStringSchema,
+    v.maxLength(limits.maxEquipmentGroupSlugLength)
+  )
+})
+
+const groupIdParamsSchema = v.object({
+  id: positiveIntegerIdParamSchema
 })
 
 const categoryDetailParamsSchema = v.object({
@@ -112,6 +135,14 @@ function validateBrandsListQuery(query: unknown) {
   return v.parse(brandsListQuerySchema, query)
 }
 
+function validateGroupMutationBody(body: unknown) {
+  return v.parse(groupMutationSchema, body)
+}
+
+function validateGroupIdParams(params: unknown) {
+  return v.parse(groupIdParamsSchema, params)
+}
+
 function validateCategoryDetailParams(params: unknown) {
   return v.parse(categoryDetailParamsSchema, params)
 }
@@ -139,6 +170,8 @@ export {
   brandsListQuerySchema,
   canonicalUuidV7Schema,
   categoryDetailParamsSchema,
+  groupIdParamsSchema,
+  groupMutationSchema,
   itemDetailParamsSchema,
   itemsListQuerySchema,
   limitQuerySchema,
@@ -154,6 +187,8 @@ export {
   validateBrandMutationBody,
   validateBrandsListQuery,
   validateCategoryDetailParams,
+  validateGroupIdParams,
+  validateGroupMutationBody,
   validateItemDetailParams,
   validateItemsListQuery,
   validateRedirectTargetQuery,
