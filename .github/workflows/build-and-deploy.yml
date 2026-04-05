@@ -21,8 +21,14 @@ concurrency:
 
 jobs:
   deploy:
-    uses: Perdolique/automations/.github/workflows/deploy.yml@v1.0.4
+    uses: Perdolique/automations/.github/workflows/deploy.yml@v2
+    with:
+      test-typecheck-command: test:typecheck
+      lint-markdown-command: lint:markdown
+      lint-oxlint-command: lint:oxlint
+      test-unit-command: test:unit:ci
+      deploy-to-staging-command: deploy:versions:staging
+      deploy-to-production-command: deploy:production
     secrets:
       cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-
