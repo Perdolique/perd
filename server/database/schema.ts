@@ -209,7 +209,7 @@ const equipmentItems = pgTable('equipment_items', {
     integer()
     .notNull()
     .references(() => equipmentCategories.id, {
-      onDelete: 'cascade',
+      onDelete: 'restrict',
       onUpdate: 'cascade'
     }),
 
@@ -217,7 +217,7 @@ const equipmentItems = pgTable('equipment_items', {
     integer()
     .notNull()
     .references(() => brands.id, {
-      onDelete: 'cascade',
+      onDelete: 'restrict',
       onUpdate: 'cascade'
     }),
 

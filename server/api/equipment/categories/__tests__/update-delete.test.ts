@@ -1,8 +1,8 @@
 import * as h3 from 'h3'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import deleteBrandHandler from '#server/api/equipment/brands/[id].delete'
-import updateBrandHandler from '#server/api/equipment/brands/[id].patch'
-import type { BrandBaseRecord } from '#server/utils/equipment/base-records'
+import deleteCategoryHandler from '#server/api/equipment/categories/[id].delete'
+import updateCategoryHandler from '#server/api/equipment/categories/[id].patch'
+import type { CategoryBaseRecord } from '#server/utils/equipment/base-records'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
 interface MockUpdateDeleteTransaction {
@@ -88,18 +88,18 @@ vi.mock(import('#server/utils/database'), () => {
 function createPatchDb({
   contributionError,
   updateError,
-  updatedBrand
+  updatedCategory
 }: {
   contributionError?: Error;
   updateError?: Error;
-  updatedBrand?: BrandBaseRecord;
+  updatedCategory?: CategoryBaseRecord;
 }) {
   const updateReturningMock = vi.fn(() => {
     if (updateError !== undefined) {
       throw updateError
     }
 
-    const updatedRows = updatedBrand === undefined ? [] : [updatedBrand]
+    const updatedRows = updatedCategory === undefined ? [] : [updatedCategory]
 
     return updatedRows
   })
@@ -166,18 +166,18 @@ function createPatchDb({
 function createDeleteDb({
   contributionError,
   deleteError,
-  deletedBrand
+  deletedCategory
 }: {
   contributionError?: Error;
   deleteError?: Error;
-  deletedBrand?: BrandBaseRecord;
+  deletedCategory?: CategoryBaseRecord;
 }) {
   const deleteReturningMock = vi.fn(() => {
     if (deleteError !== undefined) {
       throw deleteError
     }
 
-    const deletedRows = deletedBrand === undefined ? [] : [deletedBrand]
+    const deletedRows = deletedCategory === undefined ? [] : [deletedCategory]
 
     return deletedRows
   })
@@ -224,6 +224,7 @@ function createDeleteDb({
     $client: {
       end: endMock
     },
+
     transaction: transactionMock
   }
 
@@ -233,19 +234,19 @@ function createDeleteDb({
   }
 }
 
-describe('PATCH /api/equipment/brands/[id]', () => {
+describe('PATCH /api/equipment/categories/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
     validateAdminUserMock.mockResolvedValue('user-1')
 
     readValidatedBodyMock.mockResolvedValue({
-      name: 'MSR',
-      slug: 'msr'
+      name: 'Sleeping Bags',
+      slug: 'sleeping-bags'
     })
 
     getValidatedRouterParamsMock.mockResolvedValue({
-      id: 12
+      id: 5
     })
   })
 
@@ -253,39 +254,39 @@ describe('PATCH /api/equipment/brands/[id]', () => {
     vi.restoreAllMocks()
   })
 
-  test('should update a brand and log a contribution', async () => {
-    const updatedBrand = {
-      id: 12,
-      name: 'MSR',
-      slug: 'msr'
+  test('should update a category and log a contribution', async () => {
+    const updatedCategory = {
+      id: 5,
+      name: 'Sleeping Bags',
+      slug: 'sleeping-bags'
     }
 
     const { dbWrite, insertContributionValuesMock, updateSetMock } = createPatchDb({
-      updatedBrand
+      updatedCategory
     })
 
     createWebSocketClientMock.mockReturnValue(dbWrite)
 
     const event = createTestEvent({})
-    const result = await updateBrandHandler(event)
+    const result = await updateCategoryHandler(event)
 
-    expect(result).toStrictEqual(updatedBrand)
+    expect(result).toStrictEqual(updatedCategory)
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
 
     expect(updateSetMock).toHaveBeenCalledWith({
-      name: 'MSR',
-      slug: 'msr'
+      name: 'Sleeping Bags',
+      slug: 'sleeping-bags'
     })
 
     expect(insertContributionValuesMock).toHaveBeenCalledWith({
-      action: 'update_brand',
+      action: 'update_category',
 
       metadata: {
-        name: 'MSR',
-        slug: 'msr'
+        name: 'Sleeping Bags',
+        slug: 'sleeping-bags'
       },
 
-      targetId: '12',
+      targetId: '5',
       userId: 'user-1'
     })
   })
@@ -296,7 +297,7 @@ describe('PATCH /api/equipment/brands/[id]', () => {
 
     getValidatedRouterParamsMock.mockRejectedValue(routeError)
 
-    await expect(updateBrandHandler(event)).rejects.toMatchObject({
+    await expect(updateCategoryHandler(event)).rejects.toMatchObject({
       statusCode: 400
     })
 
@@ -309,7 +310,7 @@ describe('PATCH /api/equipment/brands/[id]', () => {
 
     getValidatedRouterParamsMock.mockRejectedValue(routeError)
 
-    await expect(updateBrandHandler(event)).rejects.toMatchObject({
+    await expect(updateCategoryHandler(event)).rejects.toMatchObject({
       statusCode: 400
     })
 
@@ -317,8 +318,8 @@ describe('PATCH /api/equipment/brands/[id]', () => {
   })
 
   test.each([
-    'msr',
-    '12-msr'
+    'sleeping-bags',
+    '5-sleeping-bags'
   ])('should return 400 when route id has invalid format: %s', async (routeId) => {
     const routeError = h3.createError({
       message: routeId,
@@ -328,28 +329,28 @@ describe('PATCH /api/equipment/brands/[id]', () => {
 
     getValidatedRouterParamsMock.mockRejectedValue(routeError)
 
-    await expect(updateBrandHandler(event)).rejects.toMatchObject({
+    await expect(updateCategoryHandler(event)).rejects.toMatchObject({
       statusCode: 400
     })
 
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
-  test('should return 404 when the target brand does not exist', async () => {
+  test('should return 404 when the target category does not exist', async () => {
     const { dbWrite } = createPatchDb({})
 
     createWebSocketClientMock.mockReturnValue(dbWrite)
 
     const event = createTestEvent({})
 
-    await expect(updateBrandHandler(event)).rejects.toMatchObject({
+    await expect(updateCategoryHandler(event)).rejects.toMatchObject({
       statusCode: 404
     })
 
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
-  test('should return 500 when brand slug already exists', async () => {
+  test('should return 500 when category slug already exists', async () => {
     const { dbWrite } = createPatchDb({})
 
     dbWrite.transaction.mockRejectedValue(new Error('duplicate slug'))
@@ -357,22 +358,22 @@ describe('PATCH /api/equipment/brands/[id]', () => {
 
     const event = createTestEvent({})
 
-    await expect(updateBrandHandler(event)).rejects.toMatchObject({
-      message: 'Failed to update brand',
+    await expect(updateCategoryHandler(event)).rejects.toMatchObject({
+      message: 'Failed to update category',
       statusCode: 500
     })
 
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
-  test('should return 500 when contribution logging fails after brand update', async () => {
+  test('should return 500 when contribution logging fails after category update', async () => {
     const { dbWrite } = createPatchDb({
       contributionError: new Error('contribution failed'),
 
-      updatedBrand: {
-        id: 12,
-        name: 'MSR',
-        slug: 'msr'
+      updatedCategory: {
+        id: 5,
+        name: 'Sleeping Bags',
+        slug: 'sleeping-bags'
       }
     })
 
@@ -380,15 +381,15 @@ describe('PATCH /api/equipment/brands/[id]', () => {
 
     const event = createTestEvent({})
 
-    await expect(updateBrandHandler(event)).rejects.toMatchObject({
-      message: 'Failed to update brand',
+    await expect(updateCategoryHandler(event)).rejects.toMatchObject({
+      message: 'Failed to update category',
       statusCode: 500
     })
 
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
-  test('should return 500 when brand update fails', async () => {
+  test('should return 500 when category update fails', async () => {
     const { dbWrite } = createPatchDb({
       updateError: new Error('update failed')
     })
@@ -397,8 +398,8 @@ describe('PATCH /api/equipment/brands/[id]', () => {
 
     const event = createTestEvent({})
 
-    await expect(updateBrandHandler(event)).rejects.toMatchObject({
-      message: 'Failed to update brand',
+    await expect(updateCategoryHandler(event)).rejects.toMatchObject({
+      message: 'Failed to update category',
       statusCode: 500
     })
 
@@ -406,14 +407,14 @@ describe('PATCH /api/equipment/brands/[id]', () => {
   })
 })
 
-describe('DELETE /api/equipment/brands/[id]', () => {
+describe('DELETE /api/equipment/categories/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
     validateAdminUserMock.mockResolvedValue('user-1')
 
     getValidatedRouterParamsMock.mockResolvedValue({
-      id: 12
+      id: 5
     })
   })
 
@@ -421,35 +422,35 @@ describe('DELETE /api/equipment/brands/[id]', () => {
     vi.restoreAllMocks()
   })
 
-  test('should delete a brand and log a contribution', async () => {
-    const deletedBrand = {
-      id: 12,
-      name: 'MSR',
-      slug: 'msr'
+  test('should delete a category and log a contribution', async () => {
+    const deletedCategory = {
+      id: 5,
+      name: 'Sleeping Bags',
+      slug: 'sleeping-bags'
     }
 
     const { dbWrite, insertContributionValuesMock } = createDeleteDb({
-      deletedBrand
+      deletedCategory
     })
 
     createWebSocketClientMock.mockReturnValue(dbWrite)
 
     const event = createTestEvent({})
 
-    await deleteBrandHandler(event)
+    await deleteCategoryHandler(event)
 
     expect(setResponseStatusMock).toHaveBeenCalledWith(event, 204)
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
 
     expect(insertContributionValuesMock).toHaveBeenCalledWith({
-      action: 'delete_brand',
+      action: 'delete_category',
 
       metadata: {
-        name: 'MSR',
-        slug: 'msr'
+        name: 'Sleeping Bags',
+        slug: 'sleeping-bags'
       },
 
-      targetId: '12',
+      targetId: '5',
       userId: 'user-1'
     })
   })
@@ -460,21 +461,21 @@ describe('DELETE /api/equipment/brands/[id]', () => {
 
     getValidatedRouterParamsMock.mockRejectedValue(routeError)
 
-    await expect(deleteBrandHandler(event)).rejects.toMatchObject({
+    await expect(deleteCategoryHandler(event)).rejects.toMatchObject({
       statusCode: 400
     })
 
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
-  test('should return 404 when the target brand does not exist', async () => {
+  test('should return 404 when the target category does not exist', async () => {
     const { dbWrite } = createDeleteDb({})
 
     createWebSocketClientMock.mockReturnValue(dbWrite)
 
     const event = createTestEvent({})
 
-    await expect(deleteBrandHandler(event)).rejects.toMatchObject({
+    await expect(deleteCategoryHandler(event)).rejects.toMatchObject({
       statusCode: 404
     })
 
@@ -482,8 +483,8 @@ describe('DELETE /api/equipment/brands/[id]', () => {
   })
 
   test.each([
-    'msr',
-    '12-msr'
+    'sleeping-bags',
+    '5-sleeping-bags'
   ])('should return 400 when route id has invalid format: %s', async (routeId) => {
     const routeError = h3.createError({
       message: routeId,
@@ -493,21 +494,21 @@ describe('DELETE /api/equipment/brands/[id]', () => {
 
     getValidatedRouterParamsMock.mockRejectedValue(routeError)
 
-    await expect(deleteBrandHandler(event)).rejects.toMatchObject({
+    await expect(deleteCategoryHandler(event)).rejects.toMatchObject({
       statusCode: 400
     })
 
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
-  test('should return 500 when contribution logging fails after brand delete', async () => {
+  test('should return 500 when contribution logging fails after category delete', async () => {
     const { dbWrite } = createDeleteDb({
       contributionError: new Error('contribution failed'),
 
-      deletedBrand: {
-        id: 12,
-        name: 'MSR',
-        slug: 'msr'
+      deletedCategory: {
+        id: 5,
+        name: 'Sleeping Bags',
+        slug: 'sleeping-bags'
       }
     })
 
@@ -515,15 +516,15 @@ describe('DELETE /api/equipment/brands/[id]', () => {
 
     const event = createTestEvent({})
 
-    await expect(deleteBrandHandler(event)).rejects.toMatchObject({
-      message: 'Failed to delete brand',
+    await expect(deleteCategoryHandler(event)).rejects.toMatchObject({
+      message: 'Failed to delete category',
       statusCode: 500
     })
 
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
-  test('should return 500 when brand delete fails', async () => {
+  test('should return 500 when category delete fails', async () => {
     const { dbWrite } = createDeleteDb({
       deleteError: new Error('delete failed')
     })
@@ -532,8 +533,8 @@ describe('DELETE /api/equipment/brands/[id]', () => {
 
     const event = createTestEvent({})
 
-    await expect(deleteBrandHandler(event)).rejects.toMatchObject({
-      message: 'Failed to delete brand',
+    await expect(deleteCategoryHandler(event)).rejects.toMatchObject({
+      message: 'Failed to delete category',
       statusCode: 500
     })
 

@@ -1,6 +1,7 @@
 # Equipment catalog: Implementation plan
 
 [Completed work](plan/completed.md) — summary of already implemented features.
+[Technical debt](plan/tech-debt.md) — accepted follow-up work that is intentionally deferred.
 
 Architecture decisions are captured in `AGENTS.md`.
 

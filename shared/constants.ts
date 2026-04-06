@@ -3,6 +3,8 @@ const startPagePath = '/'
 const limits = {
   maxBrandNameLength: 128,
   maxBrandSlugLength: 128,
+  maxEquipmentCategoryNameLength: 64,
+  maxEquipmentCategorySlugLength: 128,
   maxEquipmentGroupNameLength: 64,
   maxEquipmentGroupSlugLength: 128,
   maxOAuthProviderNameLength: 32,

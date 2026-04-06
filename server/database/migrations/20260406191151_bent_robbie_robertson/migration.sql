@@ -1,0 +1,2 @@
+ALTER TABLE "equipment_items" DROP CONSTRAINT "equipment_items_categoryId_equipment_categories_id_fkey", ADD CONSTRAINT "equipment_items_categoryId_equipment_categories_id_fkey" FOREIGN KEY ("categoryId") REFERENCES "equipment_categories"("id") ON DELETE RESTRICT ON UPDATE CASCADE;--> statement-breakpoint
+ALTER TABLE "equipment_items" DROP CONSTRAINT "equipment_items_brandId_brands_id_fkey", ADD CONSTRAINT "equipment_items_brandId_brands_id_fkey" FOREIGN KEY ("brandId") REFERENCES "brands"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

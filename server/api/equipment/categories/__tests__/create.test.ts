@@ -1,7 +1,7 @@
 import * as h3 from 'h3'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import createBrandHandler from '#server/api/equipment/brands/index.post'
-import type { BrandBaseRecord } from '#server/utils/equipment/base-records'
+import createCategoryHandler from '#server/api/equipment/categories/index.post'
+import type { CategoryBaseRecord } from '#server/utils/equipment/base-records'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
 interface MockCreateTransaction {
@@ -34,6 +34,7 @@ const {
         isLocalDatabase: false
       }
     }),
+
     readValidatedBodyMock: vi.fn<typeof h3.readValidatedBody>(),
     setResponseStatusMock: vi.fn<typeof h3.setResponseStatus>(),
     validateAdminUserMock: vi.fn()
@@ -78,26 +79,26 @@ vi.mock(import('#server/utils/database'), () => {
 
 function createDb({
   contributionError,
-  createdBrand,
+  createdCategory,
   insertError
 }: {
   contributionError?: Error;
-  createdBrand?: BrandBaseRecord;
+  createdCategory?: CategoryBaseRecord;
   insertError?: Error;
 } = {}) {
-  const insertBrandReturningMock = vi.fn(() => {
+  const insertCategoryReturningMock = vi.fn(() => {
     if (insertError !== undefined) {
       throw insertError
     }
 
-    const createdRows = createdBrand === undefined ? [] : [createdBrand]
+    const createdRows = createdCategory === undefined ? [] : [createdCategory]
 
     return createdRows
   })
 
-  const insertBrandValuesMock = vi.fn(() => {
+  const insertCategoryValuesMock = vi.fn(() => {
     return {
-      returning: insertBrandReturningMock
+      returning: insertCategoryReturningMock
     }
   })
 
@@ -112,7 +113,7 @@ function createDb({
   insertMock
     .mockImplementationOnce(() => {
       return {
-        values: insertBrandValuesMock
+        values: insertCategoryValuesMock
       }
     })
     .mockImplementationOnce(() => {
@@ -137,7 +138,6 @@ function createDb({
     $client: {
       end: endMock
     },
-
     transaction: transactionMock
   }
 
@@ -147,15 +147,15 @@ function createDb({
   }
 }
 
-describe('POST /api/equipment/brands', () => {
+describe('POST /api/equipment/categories', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
     validateAdminUserMock.mockResolvedValue('user-1')
 
     readValidatedBodyMock.mockResolvedValue({
-      name: 'MSR',
-      slug: 'msr'
+      name: 'Sleeping Bags',
+      slug: 'sleeping-bags'
     })
   })
 
@@ -163,35 +163,35 @@ describe('POST /api/equipment/brands', () => {
     vi.restoreAllMocks()
   })
 
-  test('should create a brand and log a contribution', async () => {
-    const createdBrand = {
-      id: 12,
-      name: 'MSR',
-      slug: 'msr'
+  test('should create a category and log a contribution', async () => {
+    const createdCategory = {
+      id: 5,
+      name: 'Sleeping Bags',
+      slug: 'sleeping-bags'
     }
 
     const { dbWrite, insertContributionValuesMock } = createDb({
-      createdBrand
+      createdCategory
     })
 
     createWebSocketClientMock.mockReturnValue(dbWrite)
 
     const event = createTestEvent({})
-    const result = await createBrandHandler(event)
+    const result = await createCategoryHandler(event)
 
-    expect(result).toStrictEqual(createdBrand)
+    expect(result).toStrictEqual(createdCategory)
     expect(setResponseStatusMock).toHaveBeenCalledWith(event, 201)
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
 
     expect(insertContributionValuesMock).toHaveBeenCalledWith({
-      action: 'create_brand',
+      action: 'create_category',
 
       metadata: {
-        name: 'MSR',
-        slug: 'msr'
+        name: 'Sleeping Bags',
+        slug: 'sleeping-bags'
       },
 
-      targetId: '12',
+      targetId: '5',
       userId: 'user-1'
     })
   })
@@ -202,7 +202,7 @@ describe('POST /api/equipment/brands', () => {
 
     validateAdminUserMock.mockRejectedValue(authError)
 
-    await expect(createBrandHandler(event)).rejects.toMatchObject({
+    await expect(createCategoryHandler(event)).rejects.toMatchObject({
       statusCode: 401
     })
 
@@ -215,7 +215,7 @@ describe('POST /api/equipment/brands', () => {
 
     validateAdminUserMock.mockRejectedValue(authError)
 
-    await expect(createBrandHandler(event)).rejects.toMatchObject({
+    await expect(createCategoryHandler(event)).rejects.toMatchObject({
       statusCode: 403
     })
 
@@ -228,14 +228,14 @@ describe('POST /api/equipment/brands', () => {
 
     readValidatedBodyMock.mockRejectedValue(bodyError)
 
-    await expect(createBrandHandler(event)).rejects.toMatchObject({
+    await expect(createCategoryHandler(event)).rejects.toMatchObject({
       statusCode: 400
     })
 
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
-  test('should return 500 when brand slug already exists', async () => {
+  test('should return 500 when category slug already exists', async () => {
     const { dbWrite } = createDb()
 
     dbWrite.transaction.mockRejectedValue(new Error('duplicate slug'))
@@ -243,15 +243,15 @@ describe('POST /api/equipment/brands', () => {
 
     const event = createTestEvent({})
 
-    await expect(createBrandHandler(event)).rejects.toMatchObject({
-      message: 'Failed to create brand',
+    await expect(createCategoryHandler(event)).rejects.toMatchObject({
+      message: 'Failed to create category',
       statusCode: 500
     })
 
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
-  test('should return 500 when brand creation fails', async () => {
+  test('should return 500 when category creation fails', async () => {
     const { dbWrite } = createDb({
       insertError: new Error('insert failed')
     })
@@ -260,22 +260,21 @@ describe('POST /api/equipment/brands', () => {
 
     const event = createTestEvent({})
 
-    await expect(createBrandHandler(event)).rejects.toMatchObject({
-      message: 'Failed to create brand',
+    await expect(createCategoryHandler(event)).rejects.toMatchObject({
+      message: 'Failed to create category',
       statusCode: 500
     })
 
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
-  test('should return 500 when contribution logging fails after brand creation', async () => {
+  test('should return 500 when contribution logging fails after category creation', async () => {
     const { dbWrite } = createDb({
       contributionError: new Error('contribution failed'),
-
-      createdBrand: {
-        id: 12,
-        name: 'MSR',
-        slug: 'msr'
+      createdCategory: {
+        id: 5,
+        name: 'Sleeping Bags',
+        slug: 'sleeping-bags'
       }
     })
 
@@ -283,12 +282,27 @@ describe('POST /api/equipment/brands', () => {
 
     const event = createTestEvent({})
 
-    await expect(createBrandHandler(event)).rejects.toMatchObject({
-      message: 'Failed to create brand',
+    await expect(createCategoryHandler(event)).rejects.toMatchObject({
+      message: 'Failed to create category',
       statusCode: 500
     })
 
     expect(setResponseStatusMock).not.toHaveBeenCalled()
+    expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
+  })
+
+  test('should return 500 when insert returns no created category', async () => {
+    const { dbWrite } = createDb()
+
+    createWebSocketClientMock.mockReturnValue(dbWrite)
+
+    const event = createTestEvent({})
+
+    await expect(createCategoryHandler(event)).rejects.toMatchObject({
+      message: 'Failed to create category',
+      statusCode: 500
+    })
+
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 })

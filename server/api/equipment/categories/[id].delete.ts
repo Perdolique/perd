@@ -1,30 +1,30 @@
 import { eq } from 'drizzle-orm'
 import { createError, defineEventHandler, getValidatedRouterParams, isError, setResponseStatus } from 'h3'
-import { contributions, equipmentGroups } from '#server/database/schema'
+import { contributions, equipmentCategories } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
 import { getRuntimeDatabaseConfig } from '#server/utils/config'
 import { createWebSocketClient } from '#server/utils/database'
-import { groupBaseSelection, type EquipmentGroupBaseRecord } from '#server/utils/equipment/base-records'
-import { validateGroupIdParams } from '#server/utils/validation/schemas'
+import { categoryBaseSelection, type CategoryBaseRecord } from '#server/utils/equipment/base-records'
+import { validateCategoryIdParams } from '#server/utils/validation/schemas'
 
 export default defineEventHandler(async (event) => {
   const userId = await validateAdminUser(event)
-  const { id: groupId } = await getValidatedRouterParams(event, validateGroupIdParams)
+  const { id: categoryId } = await getValidatedRouterParams(event, validateCategoryIdParams)
   const databaseConfig = getRuntimeDatabaseConfig(event)
   const dbWrite = createWebSocketClient(databaseConfig)
 
   try {
     await dbWrite.transaction(async (transaction) => {
-      const deletedGroupRows: EquipmentGroupBaseRecord[] = await transaction
-        .delete(equipmentGroups)
+      const deletedCategoryRows: CategoryBaseRecord[] = await transaction
+        .delete(equipmentCategories)
         .where(
-          eq(groupBaseSelection.id, groupId)
+          eq(categoryBaseSelection.id, categoryId)
         )
-        .returning(groupBaseSelection)
+        .returning(categoryBaseSelection)
 
-      const [currentGroup] = deletedGroupRows
+      const [currentCategory] = deletedCategoryRows
 
-      if (currentGroup === undefined) {
+      if (currentCategory === undefined) {
         throw createError({ status: 404 })
       }
 
@@ -32,12 +32,12 @@ export default defineEventHandler(async (event) => {
         .insert(contributions)
         .values({
           userId,
-          action: 'delete_group',
-          targetId: `${currentGroup.id}`,
+          action: 'delete_category',
+          targetId: `${currentCategory.id}`,
 
           metadata: {
-            name: currentGroup.name,
-            slug: currentGroup.slug
+            name: currentCategory.name,
+            slug: currentCategory.slug
           }
         })
     })
@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       status: 500,
-      message: 'Failed to delete group'
+      message: 'Failed to delete category'
     })
   } finally {
     await dbWrite.$client.end()
