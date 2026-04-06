@@ -10,13 +10,13 @@ importers:
     dependencies:
       '@nuxt/hints':
         specifier: 1.0.3
-        version: 1.0.3(@azure/identity@4.13.1)(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2)))(ioredis@5.10.1)(magicast@0.5.2)(rolldown@1.0.0-rc.12(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2))(typescript@6.0.2)(vite@8.0.3)(vitest@4.1.2(@types/node@25.5.2)(vite@8.0.3))(vue@3.5.32(typescript@6.0.2))
+        version: 1.0.3(@azure/identity@4.13.1)(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2)))(ioredis@5.10.1)(magicast@0.5.2)(rolldown@1.0.0-rc.12(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2))(typescript@6.0.2)(vite@8.0.5)(vitest@4.1.2(@types/node@25.5.2)(vite@8.0.5))(vue@3.5.32(typescript@6.0.2))
       delay:
         specifier: 7.0.0
         version: 7.0.0
       nuxt:
         specifier: 4.4.2
-        version: 4.4.2(c33f7e3256c104ef1213476a61807695)
+        version: 4.4.2(07d38c57c451cd5fae912301ea56abfa)
       vue:
         specifier: 3.5.32
         version: 3.5.32(typescript@6.0.2)
@@ -32,13 +32,13 @@ importers:
         version: 1.0.2
       '@nuxt/devtools':
         specifier: 4.0.0-alpha.3
-        version: 4.0.0-alpha.3(@azure/identity@4.13.1)(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(typescript@6.0.2)(vite@8.0.3)(vue@3.5.32(typescript@6.0.2))
+        version: 4.0.0-alpha.3(@azure/identity@4.13.1)(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(typescript@6.0.2)(vite@8.0.5)(vue@3.5.32(typescript@6.0.2))
       '@nuxt/fonts':
         specifier: 0.14.0
-        version: 0.14.0(@azure/identity@4.13.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(magicast@0.5.2)(vite@8.0.3)
+        version: 0.14.0(@azure/identity@4.13.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(magicast@0.5.2)(vite@8.0.5)
       '@nuxt/icon':
         specifier: 2.2.1
-        version: 2.2.1(magicast@0.5.2)(vite@8.0.3)(vue@3.5.32(typescript@6.0.2))
+        version: 2.2.1(magicast@0.5.2)(vite@8.0.5)(vue@3.5.32(typescript@6.0.2))
       '@playwright/test':
         specifier: 1.59.1
         version: 1.59.1
@@ -94,11 +94,11 @@ importers:
         specifier: 1.3.1
         version: 1.3.1(typescript@6.0.2)
       vite:
-        specifier: 8.0.3
-        version: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+        specifier: 8.0.5
+        version: 8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
       vitest:
         specifier: 4.1.2
-        version: 4.1.2(@types/node@25.5.2)(vite@8.0.3)
+        version: 4.1.2(@types/node@25.5.2)(vite@8.0.5)
       vue-tsc:
         specifier: 3.2.6
         version: 3.2.6(typescript@6.0.2)
@@ -5619,8 +5619,8 @@ packages:
       vite: ^6.0.0 || ^7.0.0
       vue: ^3.5.0
 
-  vite@7.3.1:
-    resolution: {integrity: sha512-w+N7Hifpc3gRjZ63vYBXA56dvvRlNWRczTdmCBBa+CotUzAPf5b7YMdMR/8CQoeYE5LX3W4wj6RYTgonm1b9DA==}
+  vite@7.3.2:
+    resolution: {integrity: sha512-Bby3NOsna2jsjfLVOHKes8sGwgl4TT0E6vvpYgnAYDIF/tie7MRaFthmKuHx1NSXjiTueXH3do80FMQgvEktRg==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
     peerDependencies:
@@ -5659,14 +5659,14 @@ packages:
       yaml:
         optional: true
 
-  vite@8.0.3:
-    resolution: {integrity: sha512-B9ifbFudT1TFhfltfaIPgjo9Z3mDynBTJSUYxTjOQruf/zHH+ezCQKcoqO+h7a9Pw9Nm/OtlXAiGT1axBgwqrQ==}
+  vite@8.0.5:
+    resolution: {integrity: sha512-nmu43Qvq9UopTRfMx2jOYW5l16pb3iDC1JH6yMuPkpVbzK0k+L7dfsEDH4jRgYFmsg0sTAqkojoZgzLMlwHsCQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
     peerDependencies:
       '@types/node': ^20.19.0 || >=22.12.0
       '@vitejs/devtools': ^0.1.0
-      esbuild: ^0.27.0
+      esbuild: ^0.27.0 || ^0.28.0
       jiti: '>=1.21.0'
       less: ^4.0.0
       sass: ^1.70.0
@@ -6893,19 +6893,19 @@ snapshots:
 
   '@nuxt/devalue@2.0.2': {}
 
-  '@nuxt/devtools-kit@3.2.4(magicast@0.5.2)(vite@8.0.3)':
+  '@nuxt/devtools-kit@3.2.4(magicast@0.5.2)(vite@8.0.5)':
     dependencies:
       '@nuxt/kit': 4.4.2(magicast@0.5.2)
       execa: 8.0.1
-      vite: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+      vite: 8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
     transitivePeerDependencies:
       - magicast
 
-  '@nuxt/devtools-kit@4.0.0-alpha.3(magicast@0.5.2)(vite@8.0.3)':
+  '@nuxt/devtools-kit@4.0.0-alpha.3(magicast@0.5.2)(vite@8.0.5)':
     dependencies:
       '@nuxt/kit': 4.4.2(magicast@0.5.2)
       tinyexec: 1.0.4
-      vite: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+      vite: 8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
     transitivePeerDependencies:
       - magicast
 
@@ -6920,9 +6920,9 @@ snapshots:
       pkg-types: 2.3.0
       semver: 7.7.4
 
-  '@nuxt/devtools@3.2.4(@vitejs/devtools@0.1.13)(vite@8.0.3)(vue@3.5.32(typescript@6.0.2))':
+  '@nuxt/devtools@3.2.4(@vitejs/devtools@0.1.13)(vite@8.0.5)(vue@3.5.32(typescript@6.0.2))':
     dependencies:
-      '@nuxt/devtools-kit': 3.2.4(magicast@0.5.2)(vite@8.0.3)
+      '@nuxt/devtools-kit': 3.2.4(magicast@0.5.2)(vite@8.0.5)
       '@nuxt/devtools-wizard': 3.2.4
       '@nuxt/kit': 4.4.2(magicast@0.5.2)
       '@vue/devtools-core': 8.1.1(vue@3.5.32(typescript@6.0.2))
@@ -6950,25 +6950,25 @@ snapshots:
       sirv: 3.0.2
       structured-clone-es: 2.0.0
       tinyglobby: 0.2.15
-      vite: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
-      vite-plugin-inspect: 11.3.3(@nuxt/kit@4.4.2(magicast@0.5.2))(vite@8.0.3)
-      vite-plugin-vue-tracer: 1.3.0(vite@8.0.3)(vue@3.5.32(typescript@6.0.2))
+      vite: 8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+      vite-plugin-inspect: 11.3.3(@nuxt/kit@4.4.2(magicast@0.5.2))(vite@8.0.5)
+      vite-plugin-vue-tracer: 1.3.0(vite@8.0.5)(vue@3.5.32(typescript@6.0.2))
       which: 6.0.1
       ws: 8.20.0
     optionalDependencies:
-      '@vitejs/devtools': 0.1.13(@azure/identity@4.13.1)(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(typescript@6.0.2)(vite@8.0.3)
+      '@vitejs/devtools': 0.1.13(@azure/identity@4.13.1)(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(typescript@6.0.2)(vite@8.0.5)
     transitivePeerDependencies:
       - bufferutil
       - supports-color
       - utf-8-validate
       - vue
 
-  '@nuxt/devtools@4.0.0-alpha.3(@azure/identity@4.13.1)(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(typescript@6.0.2)(vite@8.0.3)(vue@3.5.32(typescript@6.0.2))':
+  '@nuxt/devtools@4.0.0-alpha.3(@azure/identity@4.13.1)(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(typescript@6.0.2)(vite@8.0.5)(vue@3.5.32(typescript@6.0.2))':
     dependencies:
-      '@nuxt/devtools-kit': 4.0.0-alpha.3(magicast@0.5.2)(vite@8.0.3)
+      '@nuxt/devtools-kit': 4.0.0-alpha.3(magicast@0.5.2)(vite@8.0.5)
       '@nuxt/kit': 4.4.2(magicast@0.5.2)
-      '@vitejs/devtools': 0.1.13(@azure/identity@4.13.1)(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(typescript@6.0.2)(vite@8.0.3)
-      '@vitejs/devtools-kit': 0.1.13(typescript@6.0.2)(vite@8.0.3)(ws@8.20.0)
+      '@vitejs/devtools': 0.1.13(@azure/identity@4.13.1)(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(typescript@6.0.2)(vite@8.0.5)
+      '@vitejs/devtools-kit': 0.1.13(typescript@6.0.2)(vite@8.0.5)(ws@8.20.0)
       '@vue/devtools-core': 8.1.1(vue@3.5.32(typescript@6.0.2))
       '@vue/devtools-kit': 8.1.1
       birpc: 4.0.0
@@ -6991,9 +6991,9 @@ snapshots:
       structured-clone-es: 2.0.0
       tinyexec: 1.0.4
       tinyglobby: 0.2.15
-      vite: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
-      vite-plugin-inspect: 11.3.3(@nuxt/kit@4.4.2(magicast@0.5.2))(vite@8.0.3)
-      vite-plugin-vue-tracer: 1.3.0(vite@8.0.3)(vue@3.5.32(typescript@6.0.2))
+      vite: 8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+      vite-plugin-inspect: 11.3.3(@nuxt/kit@4.4.2(magicast@0.5.2))(vite@8.0.5)
+      vite-plugin-vue-tracer: 1.3.0(vite@8.0.5)(vue@3.5.32(typescript@6.0.2))
       which: 6.0.1
       ws: 8.20.0
     transitivePeerDependencies:
@@ -7023,13 +7023,13 @@ snapshots:
       - utf-8-validate
       - vue
 
-  '@nuxt/fonts@0.14.0(@azure/identity@4.13.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(magicast@0.5.2)(vite@8.0.3)':
+  '@nuxt/fonts@0.14.0(@azure/identity@4.13.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(magicast@0.5.2)(vite@8.0.5)':
     dependencies:
-      '@nuxt/devtools-kit': 3.2.4(magicast@0.5.2)(vite@8.0.3)
+      '@nuxt/devtools-kit': 3.2.4(magicast@0.5.2)(vite@8.0.5)
       '@nuxt/kit': 4.4.2(magicast@0.5.2)
       consola: 3.4.2
       defu: 6.1.6
-      fontless: 0.2.1(@azure/identity@4.13.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(vite@8.0.3)
+      fontless: 0.2.1(@azure/identity@4.13.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(vite@8.0.5)
       h3: 1.15.11
       magic-regexp: 0.10.0
       ofetch: 1.5.1
@@ -7063,15 +7063,15 @@ snapshots:
       - uploadthing
       - vite
 
-  '@nuxt/hints@1.0.3(@azure/identity@4.13.1)(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2)))(ioredis@5.10.1)(magicast@0.5.2)(rolldown@1.0.0-rc.12(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2))(typescript@6.0.2)(vite@8.0.3)(vitest@4.1.2(@types/node@25.5.2)(vite@8.0.3))(vue@3.5.32(typescript@6.0.2))':
+  '@nuxt/hints@1.0.3(@azure/identity@4.13.1)(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2)))(ioredis@5.10.1)(magicast@0.5.2)(rolldown@1.0.0-rc.12(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2))(typescript@6.0.2)(vite@8.0.5)(vitest@4.1.2(@types/node@25.5.2)(vite@8.0.5))(vue@3.5.32(typescript@6.0.2))':
     dependencies:
-      '@nuxt/devtools-kit': 3.2.4(magicast@0.5.2)(vite@8.0.3)
+      '@nuxt/devtools-kit': 3.2.4(magicast@0.5.2)(vite@8.0.5)
       '@nuxt/kit': 4.4.2(magicast@0.5.2)
       consola: 3.4.2
       defu: 6.1.6
       devalue: 5.6.4
       h3: 1.15.11
-      html-validate: 10.11.3(vitest@4.1.2(@types/node@25.5.2)(vite@8.0.3))
+      html-validate: 10.11.3(vitest@4.1.2(@types/node@25.5.2)(vite@8.0.5))
       knitwork: 1.3.0
       magic-string: 0.30.21
       nitropack: 2.13.3(@azure/identity@4.13.1)(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2)))(rolldown@1.0.0-rc.12(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2))
@@ -7081,7 +7081,7 @@ snapshots:
       unplugin: 3.0.0
       unstorage: 1.17.5(@azure/identity@4.13.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)
       valibot: 1.3.1(typescript@6.0.2)
-      vite-plugin-vue-tracer: 1.3.0(vite@8.0.3)(vue@3.5.32(typescript@6.0.2))
+      vite-plugin-vue-tracer: 1.3.0(vite@8.0.5)(vue@3.5.32(typescript@6.0.2))
       web-vitals: 5.2.0
     transitivePeerDependencies:
       - '@azure/app-configuration'
@@ -7127,13 +7127,13 @@ snapshots:
       - vue
       - xml2js
 
-  '@nuxt/icon@2.2.1(magicast@0.5.2)(vite@8.0.3)(vue@3.5.32(typescript@6.0.2))':
+  '@nuxt/icon@2.2.1(magicast@0.5.2)(vite@8.0.5)(vue@3.5.32(typescript@6.0.2))':
     dependencies:
       '@iconify/collections': 1.0.669
       '@iconify/types': 2.0.0
       '@iconify/utils': 3.1.0
       '@iconify/vue': 5.0.0(vue@3.5.32(typescript@6.0.2))
-      '@nuxt/devtools-kit': 3.2.4(magicast@0.5.2)(vite@8.0.3)
+      '@nuxt/devtools-kit': 3.2.4(magicast@0.5.2)(vite@8.0.5)
       '@nuxt/kit': 4.4.2(magicast@0.5.2)
       consola: 3.4.2
       local-pkg: 1.1.2
@@ -7173,7 +7173,7 @@ snapshots:
     transitivePeerDependencies:
       - magicast
 
-  '@nuxt/nitro-server@4.4.2(@azure/identity@4.13.1)(@babel/core@7.29.0)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2)))(ioredis@5.10.1)(magicast@0.5.2)(nuxt@4.4.2(c33f7e3256c104ef1213476a61807695))(rolldown@1.0.0-rc.12(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2))(typescript@6.0.2)':
+  '@nuxt/nitro-server@4.4.2(@azure/identity@4.13.1)(@babel/core@7.29.0)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2)))(ioredis@5.10.1)(magicast@0.5.2)(nuxt@4.4.2(07d38c57c451cd5fae912301ea56abfa))(rolldown@1.0.0-rc.12(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2))(typescript@6.0.2)':
     dependencies:
       '@babel/plugin-syntax-typescript': 7.28.6(@babel/core@7.29.0)
       '@nuxt/devalue': 2.0.2
@@ -7192,7 +7192,7 @@ snapshots:
       klona: 2.0.6
       mocked-exports: 0.1.1
       nitropack: 2.13.3(@azure/identity@4.13.1)(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2)))(rolldown@1.0.0-rc.12(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2))
-      nuxt: 4.4.2(c33f7e3256c104ef1213476a61807695)
+      nuxt: 4.4.2(07d38c57c451cd5fae912301ea56abfa)
       nypm: 0.6.5
       ohash: 2.0.11
       pathe: 2.0.3
@@ -7259,12 +7259,12 @@ snapshots:
       rc9: 3.0.1
       std-env: 4.0.0
 
-  '@nuxt/vite-builder@4.4.2(@babel/plugin-syntax-jsx@7.28.6(@babel/core@7.29.0))(@types/node@25.5.2)(eslint@10.1.0(jiti@2.6.1))(lightningcss@1.32.0)(magicast@0.5.2)(nuxt@4.4.2(c33f7e3256c104ef1213476a61807695))(optionator@0.9.4)(oxlint@1.58.0(oxlint-tsgolint@0.19.0))(rolldown@1.0.0-rc.12(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2))(rollup-plugin-visualizer@7.0.1(rolldown@1.0.0-rc.12(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2))(rollup@4.60.1))(rollup@4.60.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(typescript@6.0.2)(vue-tsc@3.2.6(typescript@6.0.2))(vue@3.5.32(typescript@6.0.2))(yaml@2.8.3)':
+  '@nuxt/vite-builder@4.4.2(@babel/plugin-syntax-jsx@7.28.6(@babel/core@7.29.0))(@types/node@25.5.2)(eslint@10.1.0(jiti@2.6.1))(lightningcss@1.32.0)(magicast@0.5.2)(nuxt@4.4.2(07d38c57c451cd5fae912301ea56abfa))(optionator@0.9.4)(oxlint@1.58.0(oxlint-tsgolint@0.19.0))(rolldown@1.0.0-rc.12(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2))(rollup-plugin-visualizer@7.0.1(rolldown@1.0.0-rc.12(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2))(rollup@4.60.1))(rollup@4.60.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(typescript@6.0.2)(vue-tsc@3.2.6(typescript@6.0.2))(vue@3.5.32(typescript@6.0.2))(yaml@2.8.3)':
     dependencies:
       '@nuxt/kit': 4.4.2(magicast@0.5.2)
       '@rollup/plugin-replace': 6.0.3(rollup@4.60.1)
-      '@vitejs/plugin-vue': 6.0.5(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vue@3.5.32(typescript@6.0.2))
-      '@vitejs/plugin-vue-jsx': 5.1.5(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vue@3.5.32(typescript@6.0.2))
+      '@vitejs/plugin-vue': 6.0.5(vite@7.3.2(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vue@3.5.32(typescript@6.0.2))
+      '@vitejs/plugin-vue-jsx': 5.1.5(vite@7.3.2(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vue@3.5.32(typescript@6.0.2))
       autoprefixer: 10.4.27(postcss@8.5.8)
       consola: 3.4.2
       cssnano: 7.1.4(postcss@8.5.8)
@@ -7277,7 +7277,7 @@ snapshots:
       magic-string: 0.30.21
       mlly: 1.8.2
       mocked-exports: 0.1.1
-      nuxt: 4.4.2(c33f7e3256c104ef1213476a61807695)
+      nuxt: 4.4.2(07d38c57c451cd5fae912301ea56abfa)
       nypm: 0.6.5
       pathe: 2.0.3
       pkg-types: 2.3.0
@@ -7286,9 +7286,9 @@ snapshots:
       std-env: 4.0.0
       ufo: 1.6.3
       unenv: 2.0.0-rc.24
-      vite: 7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+      vite: 7.3.2(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
       vite-node: 5.3.0(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
-      vite-plugin-checker: 0.12.0(eslint@10.1.0(jiti@2.6.1))(optionator@0.9.4)(oxlint@1.58.0(oxlint-tsgolint@0.19.0))(typescript@6.0.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vue-tsc@3.2.6(typescript@6.0.2))
+      vite-plugin-checker: 0.12.0(eslint@10.1.0(jiti@2.6.1))(optionator@0.9.4)(oxlint@1.58.0(oxlint-tsgolint@0.19.0))(typescript@6.0.2)(vite@7.3.2(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vue-tsc@3.2.6(typescript@6.0.2))
       vue: 3.5.32(typescript@6.0.2)
       vue-bundle-renderer: 2.2.0
     optionalDependencies:
@@ -8138,7 +8138,7 @@ snapshots:
   '@typescript-eslint/project-service@8.57.2(typescript@6.0.2)':
     dependencies:
       '@typescript-eslint/tsconfig-utils': 8.57.2(typescript@6.0.2)
-      '@typescript-eslint/types': 8.57.2
+      '@typescript-eslint/types': 8.58.0
       debug: 4.4.3
       typescript: 6.0.2
     transitivePeerDependencies:
@@ -8233,22 +8233,22 @@ snapshots:
       - rollup
       - supports-color
 
-  '@vitejs/devtools-kit@0.1.13(typescript@6.0.2)(vite@8.0.3)(ws@8.20.0)':
+  '@vitejs/devtools-kit@0.1.13(typescript@6.0.2)(vite@8.0.5)(ws@8.20.0)':
     dependencies:
       '@vitejs/devtools-rpc': 0.1.13(typescript@6.0.2)(ws@8.20.0)
       birpc: 4.0.0
       ohash: 2.0.11
-      vite: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+      vite: 8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
     transitivePeerDependencies:
       - typescript
       - ws
 
-  '@vitejs/devtools-rolldown@0.1.13(@azure/identity@4.13.1)(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(typescript@6.0.2)(vite@8.0.3)(vue@3.5.32(typescript@6.0.2))':
+  '@vitejs/devtools-rolldown@0.1.13(@azure/identity@4.13.1)(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(typescript@6.0.2)(vite@8.0.5)(vue@3.5.32(typescript@6.0.2))':
     dependencies:
       '@floating-ui/dom': 1.7.6
       '@pnpm/read-project-manifest': 1001.2.6(@pnpm/logger@1001.0.1)
       '@rolldown/debug': 1.0.0-rc.13
-      '@vitejs/devtools-kit': 0.1.13(typescript@6.0.2)(vite@8.0.3)(ws@8.20.0)
+      '@vitejs/devtools-kit': 0.1.13(typescript@6.0.2)(vite@8.0.5)(ws@8.20.0)
       '@vitejs/devtools-rpc': 0.1.13(typescript@6.0.2)(ws@8.20.0)
       ansis: 4.2.0
       birpc: 4.0.0
@@ -8310,10 +8310,10 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@vitejs/devtools@0.1.13(@azure/identity@4.13.1)(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(typescript@6.0.2)(vite@8.0.3)':
+  '@vitejs/devtools@0.1.13(@azure/identity@4.13.1)(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(typescript@6.0.2)(vite@8.0.5)':
     dependencies:
-      '@vitejs/devtools-kit': 0.1.13(typescript@6.0.2)(vite@8.0.3)(ws@8.20.0)
-      '@vitejs/devtools-rolldown': 0.1.13(@azure/identity@4.13.1)(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(typescript@6.0.2)(vite@8.0.3)(vue@3.5.32(typescript@6.0.2))
+      '@vitejs/devtools-kit': 0.1.13(typescript@6.0.2)(vite@8.0.5)(ws@8.20.0)
+      '@vitejs/devtools-rolldown': 0.1.13(@azure/identity@4.13.1)(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(typescript@6.0.2)(vite@8.0.5)(vue@3.5.32(typescript@6.0.2))
       '@vitejs/devtools-rpc': 0.1.13(typescript@6.0.2)(ws@8.20.0)
       birpc: 4.0.0
       cac: 7.0.0
@@ -8327,7 +8327,7 @@ snapshots:
       perfect-debounce: 2.1.0
       sirv: 3.0.2
       tinyexec: 1.0.4
-      vite: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+      vite: 8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
       vue: 3.5.32(typescript@6.0.2)
       ws: 8.20.0
     transitivePeerDependencies:
@@ -8355,22 +8355,22 @@ snapshots:
       - uploadthing
       - utf-8-validate
 
-  '@vitejs/plugin-vue-jsx@5.1.5(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vue@3.5.32(typescript@6.0.2))':
+  '@vitejs/plugin-vue-jsx@5.1.5(vite@7.3.2(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vue@3.5.32(typescript@6.0.2))':
     dependencies:
       '@babel/core': 7.29.0
       '@babel/plugin-syntax-typescript': 7.28.6(@babel/core@7.29.0)
       '@babel/plugin-transform-typescript': 7.28.6(@babel/core@7.29.0)
       '@rolldown/pluginutils': 1.0.0-rc.13
       '@vue/babel-plugin-jsx': 2.0.1(@babel/core@7.29.0)
-      vite: 7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+      vite: 7.3.2(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
       vue: 3.5.32(typescript@6.0.2)
     transitivePeerDependencies:
       - supports-color
 
-  '@vitejs/plugin-vue@6.0.5(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vue@3.5.32(typescript@6.0.2))':
+  '@vitejs/plugin-vue@6.0.5(vite@7.3.2(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vue@3.5.32(typescript@6.0.2))':
     dependencies:
       '@rolldown/pluginutils': 1.0.0-rc.2
-      vite: 7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+      vite: 7.3.2(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
       vue: 3.5.32(typescript@6.0.2)
 
   '@vitest/expect@4.1.2':
@@ -8382,13 +8382,13 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.0
 
-  '@vitest/mocker@4.1.2(vite@8.0.3)':
+  '@vitest/mocker@4.1.2(vite@8.0.5)':
     dependencies:
       '@vitest/spy': 4.1.2
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+      vite: 8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
 
   '@vitest/pretty-format@4.1.2':
     dependencies:
@@ -9407,7 +9407,7 @@ snapshots:
     dependencies:
       tiny-inflate: 1.0.3
 
-  fontless@0.2.1(@azure/identity@4.13.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(vite@8.0.3):
+  fontless@0.2.1(@azure/identity@4.13.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(vite@8.0.5):
     dependencies:
       consola: 3.4.2
       css-tree: 3.2.1
@@ -9423,7 +9423,7 @@ snapshots:
       unifont: 0.7.4
       unstorage: 1.17.5(@azure/identity@4.13.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)
     optionalDependencies:
-      vite: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+      vite: 8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
     transitivePeerDependencies:
       - '@azure/app-configuration'
       - '@azure/cosmos'
@@ -9544,7 +9544,7 @@ snapshots:
 
   hookable@6.1.0: {}
 
-  html-validate@10.11.3(vitest@4.1.2(@types/node@25.5.2)(vite@8.0.3)):
+  html-validate@10.11.3(vitest@4.1.2(@types/node@25.5.2)(vite@8.0.5)):
     dependencies:
       '@html-validate/stylish': 5.0.0
       '@sidvind/better-ajv-errors': 4.0.1(ajv@8.18.0)
@@ -9555,7 +9555,7 @@ snapshots:
       prompts: 2.4.2
       semver: 7.7.4
     optionalDependencies:
-      vitest: 4.1.2(@types/node@25.5.2)(vite@8.0.3)
+      vitest: 4.1.2(@types/node@25.5.2)(vite@8.0.5)
 
   http-errors@2.0.1:
     dependencies:
@@ -10390,16 +10390,16 @@ snapshots:
     dependencies:
       boolbase: 1.0.0
 
-  nuxt@4.4.2(c33f7e3256c104ef1213476a61807695):
+  nuxt@4.4.2(07d38c57c451cd5fae912301ea56abfa):
     dependencies:
       '@dxup/nuxt': 0.4.0(magicast@0.5.2)(typescript@6.0.2)
       '@nuxt/cli': 3.34.0(@nuxt/schema@4.4.2)(cac@6.7.14)(magicast@0.5.2)
-      '@nuxt/devtools': 3.2.4(@vitejs/devtools@0.1.13)(vite@8.0.3)(vue@3.5.32(typescript@6.0.2))
+      '@nuxt/devtools': 3.2.4(@vitejs/devtools@0.1.13)(vite@8.0.5)(vue@3.5.32(typescript@6.0.2))
       '@nuxt/kit': 4.4.2(magicast@0.5.2)
-      '@nuxt/nitro-server': 4.4.2(@azure/identity@4.13.1)(@babel/core@7.29.0)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2)))(ioredis@5.10.1)(magicast@0.5.2)(nuxt@4.4.2(c33f7e3256c104ef1213476a61807695))(rolldown@1.0.0-rc.12(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2))(typescript@6.0.2)
+      '@nuxt/nitro-server': 4.4.2(@azure/identity@4.13.1)(@babel/core@7.29.0)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2)))(ioredis@5.10.1)(magicast@0.5.2)(nuxt@4.4.2(07d38c57c451cd5fae912301ea56abfa))(rolldown@1.0.0-rc.12(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2))(typescript@6.0.2)
       '@nuxt/schema': 4.4.2
       '@nuxt/telemetry': 2.8.0(@nuxt/kit@4.4.2(magicast@0.5.2))
-      '@nuxt/vite-builder': 4.4.2(@babel/plugin-syntax-jsx@7.28.6(@babel/core@7.29.0))(@types/node@25.5.2)(eslint@10.1.0(jiti@2.6.1))(lightningcss@1.32.0)(magicast@0.5.2)(nuxt@4.4.2(c33f7e3256c104ef1213476a61807695))(optionator@0.9.4)(oxlint@1.58.0(oxlint-tsgolint@0.19.0))(rolldown@1.0.0-rc.12(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2))(rollup-plugin-visualizer@7.0.1(rolldown@1.0.0-rc.12(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2))(rollup@4.60.1))(rollup@4.60.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(typescript@6.0.2)(vue-tsc@3.2.6(typescript@6.0.2))(vue@3.5.32(typescript@6.0.2))(yaml@2.8.3)
+      '@nuxt/vite-builder': 4.4.2(@babel/plugin-syntax-jsx@7.28.6(@babel/core@7.29.0))(@types/node@25.5.2)(eslint@10.1.0(jiti@2.6.1))(lightningcss@1.32.0)(magicast@0.5.2)(nuxt@4.4.2(07d38c57c451cd5fae912301ea56abfa))(optionator@0.9.4)(oxlint@1.58.0(oxlint-tsgolint@0.19.0))(rolldown@1.0.0-rc.12(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2))(rollup-plugin-visualizer@7.0.1(rolldown@1.0.0-rc.12(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2))(rollup@4.60.1))(rollup@4.60.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(typescript@6.0.2)(vue-tsc@3.2.6(typescript@6.0.2))(vue@3.5.32(typescript@6.0.2))(yaml@2.8.3)
       '@unhead/vue': 2.1.12(vue@3.5.32(typescript@6.0.2))
       '@vue/shared': 3.5.32
       c12: 3.3.4(magicast@0.5.2)
@@ -11730,15 +11730,15 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.2
 
-  vite-dev-rpc@1.1.0(vite@8.0.3):
+  vite-dev-rpc@1.1.0(vite@8.0.5):
     dependencies:
       birpc: 2.9.0
-      vite: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
-      vite-hot-client: 2.1.0(vite@8.0.3)
+      vite: 8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+      vite-hot-client: 2.1.0(vite@8.0.5)
 
-  vite-hot-client@2.1.0(vite@8.0.3):
+  vite-hot-client@2.1.0(vite@8.0.5):
     dependencies:
-      vite: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+      vite: 8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
 
   vite-node@5.3.0(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3):
     dependencies:
@@ -11746,7 +11746,7 @@ snapshots:
       es-module-lexer: 2.0.0
       obug: 2.1.1
       pathe: 2.0.3
-      vite: 7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+      vite: 7.3.2(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
     transitivePeerDependencies:
       - '@types/node'
       - jiti
@@ -11760,7 +11760,7 @@ snapshots:
       - tsx
       - yaml
 
-  vite-plugin-checker@0.12.0(eslint@10.1.0(jiti@2.6.1))(optionator@0.9.4)(oxlint@1.58.0(oxlint-tsgolint@0.19.0))(typescript@6.0.2)(vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vue-tsc@3.2.6(typescript@6.0.2)):
+  vite-plugin-checker@0.12.0(eslint@10.1.0(jiti@2.6.1))(optionator@0.9.4)(oxlint@1.58.0(oxlint-tsgolint@0.19.0))(typescript@6.0.2)(vite@7.3.2(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(vue-tsc@3.2.6(typescript@6.0.2)):
     dependencies:
       '@babel/code-frame': 7.29.0
       chokidar: 4.0.3
@@ -11769,7 +11769,7 @@ snapshots:
       picomatch: 4.0.4
       tiny-invariant: 1.3.3
       tinyglobby: 0.2.15
-      vite: 7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+      vite: 7.3.2(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
       vscode-uri: 3.1.0
     optionalDependencies:
       eslint: 10.1.0(jiti@2.6.1)
@@ -11778,7 +11778,7 @@ snapshots:
       typescript: 6.0.2
       vue-tsc: 3.2.6(typescript@6.0.2)
 
-  vite-plugin-inspect@11.3.3(@nuxt/kit@4.4.2(magicast@0.5.2))(vite@8.0.3):
+  vite-plugin-inspect@11.3.3(@nuxt/kit@4.4.2(magicast@0.5.2))(vite@8.0.5):
     dependencies:
       ansis: 4.2.0
       debug: 4.4.3
@@ -11788,24 +11788,24 @@ snapshots:
       perfect-debounce: 2.1.0
       sirv: 3.0.2
       unplugin-utils: 0.3.1
-      vite: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
-      vite-dev-rpc: 1.1.0(vite@8.0.3)
+      vite: 8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+      vite-dev-rpc: 1.1.0(vite@8.0.5)
     optionalDependencies:
       '@nuxt/kit': 4.4.2(magicast@0.5.2)
     transitivePeerDependencies:
       - supports-color
 
-  vite-plugin-vue-tracer@1.3.0(vite@8.0.3)(vue@3.5.32(typescript@6.0.2)):
+  vite-plugin-vue-tracer@1.3.0(vite@8.0.5)(vue@3.5.32(typescript@6.0.2)):
     dependencies:
       estree-walker: 3.0.3
       exsolve: 1.0.8
       magic-string: 0.30.21
       pathe: 2.0.3
       source-map-js: 1.2.1
-      vite: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+      vite: 8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
       vue: 3.5.32(typescript@6.0.2)
 
-  vite@7.3.1(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3):
+  vite@7.3.2(@types/node@25.5.2)(jiti@2.6.1)(lightningcss@1.32.0)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3):
     dependencies:
       esbuild: 0.27.7
       fdir: 6.5.0(picomatch@4.0.4)
@@ -11823,7 +11823,7 @@ snapshots:
       tsx: 4.21.0
       yaml: 2.8.3
 
-  vite@8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3):
+  vite@8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3):
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.4
@@ -11832,7 +11832,7 @@ snapshots:
       tinyglobby: 0.2.15
     optionalDependencies:
       '@types/node': 25.5.2
-      '@vitejs/devtools': 0.1.13(@azure/identity@4.13.1)(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(typescript@6.0.2)(vite@8.0.3)
+      '@vitejs/devtools': 0.1.13(@azure/identity@4.13.1)(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.20(@neondatabase/serverless@1.0.2)(@types/mssql@9.1.11(@azure/core-client@1.10.1))(@types/pg@8.20.0)(mssql@11.0.1(@azure/core-client@1.10.1))(valibot@1.3.1(typescript@6.0.2))))(ioredis@5.10.1)(typescript@6.0.2)(vite@8.0.5)
       esbuild: 0.27.7
       fsevents: 2.3.3
       jiti: 2.6.1
@@ -11844,10 +11844,10 @@ snapshots:
       - '@emnapi/core'
       - '@emnapi/runtime'
 
-  vitest@4.1.2(@types/node@25.5.2)(vite@8.0.3):
+  vitest@4.1.2(@types/node@25.5.2)(vite@8.0.5):
     dependencies:
       '@vitest/expect': 4.1.2
-      '@vitest/mocker': 4.1.2(vite@8.0.3)
+      '@vitest/mocker': 4.1.2(vite@8.0.5)
       '@vitest/pretty-format': 4.1.2
       '@vitest/runner': 4.1.2
       '@vitest/snapshot': 4.1.2
@@ -11864,7 +11864,7 @@ snapshots:
       tinyexec: 1.0.4
       tinyglobby: 0.2.15
       tinyrainbow: 3.1.0
-      vite: 8.0.3(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+      vite: 8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(@vitejs/devtools@0.1.13)(esbuild@0.27.7)(jiti@2.6.1)(sass@1.98.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 25.5.2
