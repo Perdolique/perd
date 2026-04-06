@@ -32,14 +32,7 @@ function createHttpClient(config: DatabaseConfig) {
   return dbHttp
 }
 
-/**
- * WebSocket Client:
- * - Best for long-running applications (like servers)
- * - Maintains a persistent connection
- * - More efficient for multiple sequential queries
- * - Better for high-frequency database operations
- */
-function createWebSocketClient(config: DatabaseConfig) {
+function createWebSocketPool(config: DatabaseConfig) {
   if (config.isLocalDatabase) {
     neonConfig.fetchEndpoint = 'http://db.localtest.me:4444/sql'
     neonConfig.useSecureWebSocket = false
@@ -48,16 +41,25 @@ function createWebSocketClient(config: DatabaseConfig) {
 
   neonConfig.webSocketConstructor = ws
 
-  const pool = new Pool({ connectionString: config.databaseUrl })
+  return new Pool({ connectionString: config.databaseUrl })
+}
 
-  const dbWebsocket = drizzleWebsocket({
+/**
+ * WebSocket Client:
+ * - Best for long-running applications (like servers)
+ * - Maintains a persistent connection
+ * - More efficient for multiple sequential queries
+ * - Better for high-frequency database operations
+ */
+function createWebSocketClient(config: DatabaseConfig) {
+  const pool = createWebSocketPool(config)
+
+  return drizzleWebsocket({
     client: pool,
     schema,
     relations,
     logger: true
   })
-
-  return dbWebsocket
 }
 
 export {

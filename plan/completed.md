@@ -16,7 +16,7 @@ Authenticated read-only catalog endpoints for groups, categories, brands, item l
 
 ## Admin catalog management
 
-Admin-only Brands and Groups CRUD implemented under `/api/equipment/brands` and `/api/equipment/groups`. Public detail reads stay on `slug`, while admin `PATCH` and `DELETE` use stable numeric `id`. Successful create, update, and delete operations log to `contributions`.
+Admin-only Brands, Groups, and Categories CRUD implemented under `/api/equipment/brands`, `/api/equipment/groups`, and `/api/equipment/categories`. Public detail reads stay on `slug`, while admin `PATCH` and `DELETE` use stable numeric `id`. Successful create, update, and delete operations log to `contributions`. Brand/category usage by `equipment_items` is protected at the FK level with `restrict` deletes so reference cleanup cannot cascade into catalog or user inventory records.
 
 ## Twitch OAuth
 
@@ -28,7 +28,7 @@ Nuxt layout with header, footer, sidebar. Login page, account page, Twitch callb
 
 ## Tooling and tests
 
-Migration CLI script (`tools/migrate.ts`). Playwright browser smoke for login rather than API contract coverage. DB-free Vitest coverage for brands admin/read handlers, category read handler, item read handlers, and shared validation schemas. Unit tests for `withMinimumDelay` utility.
+Migration CLI script (`tools/migrate.ts`). Playwright browser smoke for login rather than API contract coverage. DB-free Vitest coverage for brands/groups/categories admin handlers, brand/category/item read handlers, and shared validation schemas. Unit tests for `withMinimumDelay` utility.
 
 ## Seed data
 

@@ -1,39 +1,39 @@
 import { eq } from 'drizzle-orm'
 import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody } from 'h3'
-import { brands, contributions } from '#server/database/schema'
+import { contributions, equipmentCategories } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
 import { getRuntimeDatabaseConfig } from '#server/utils/config'
 import { createWebSocketClient } from '#server/utils/database'
-import { brandBaseSelection, type BrandBaseRecord } from '#server/utils/equipment/base-records'
+import { categoryBaseSelection, type CategoryBaseRecord } from '#server/utils/equipment/base-records'
 
 import {
-  validateBrandIdParams,
-  validateBrandMutationBody
+  validateCategoryIdParams,
+  validateCategoryMutationBody
 } from '#server/utils/validation/schemas'
 
 export default defineEventHandler(async (event) => {
   const userId = await validateAdminUser(event)
-  const { id: brandId } = await getValidatedRouterParams(event, validateBrandIdParams)
-  const { name, slug } = await readValidatedBody(event, validateBrandMutationBody)
+  const { id: categoryId } = await getValidatedRouterParams(event, validateCategoryIdParams)
+  const { name, slug } = await readValidatedBody(event, validateCategoryMutationBody)
   const databaseConfig = getRuntimeDatabaseConfig(event)
   const dbWrite = createWebSocketClient(databaseConfig)
 
   try {
     return await dbWrite.transaction(async (transaction) => {
-      const updatedBrandRows: BrandBaseRecord[] = await transaction
-        .update(brands)
+      const updatedCategoryRows: CategoryBaseRecord[] = await transaction
+        .update(equipmentCategories)
         .set({
           name,
           slug
         })
         .where(
-          eq(brandBaseSelection.id, brandId)
+          eq(categoryBaseSelection.id, categoryId)
         )
-        .returning(brandBaseSelection)
+        .returning(categoryBaseSelection)
 
-      const [updatedBrand] = updatedBrandRows
+      const [updatedCategory] = updatedCategoryRows
 
-      if (updatedBrand === undefined) {
+      if (updatedCategory === undefined) {
         throw createError({ status: 404 })
       }
 
@@ -41,16 +41,16 @@ export default defineEventHandler(async (event) => {
         .insert(contributions)
         .values({
           userId,
-          action: 'update_brand',
-          targetId: `${updatedBrand.id}`,
+          action: 'update_category',
+          targetId: `${updatedCategory.id}`,
 
           metadata: {
-            name: updatedBrand.name,
-            slug: updatedBrand.slug
+            name: updatedCategory.name,
+            slug: updatedCategory.slug
           }
         })
 
-      return updatedBrand
+      return updatedCategory
     })
   } catch (error) {
     if (isError(error)) {
@@ -59,7 +59,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       status: 500,
-      message: 'Failed to update brand'
+      message: 'Failed to update category'
     })
   } finally {
     await dbWrite.$client.end()

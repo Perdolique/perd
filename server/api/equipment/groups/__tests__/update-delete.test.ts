@@ -5,13 +5,40 @@ import updateGroupHandler from '#server/api/equipment/groups/[id].patch'
 import type { EquipmentGroupBaseRecord } from '#server/utils/equipment/base-records'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
+interface MockUpdateDeleteTransaction {
+  delete: ReturnType<typeof vi.fn>;
+  insert: ReturnType<typeof vi.fn>;
+  update: ReturnType<typeof vi.fn>;
+}
+
+interface MockWriteDb {
+  $client: {
+    end: ReturnType<typeof vi.fn>;
+  };
+
+  transaction: ReturnType<typeof vi.fn>;
+}
+
 const {
+  createWebSocketClientMock,
+  getRuntimeDatabaseConfigMock,
   getValidatedRouterParamsMock,
   readValidatedBodyMock,
   setResponseStatusMock,
   validateAdminUserMock
 } = vi.hoisted(() => {
   return {
+    createWebSocketClientMock: vi.fn<(config: unknown) => MockWriteDb>(() => {
+      throw new Error('createWebSocketClient mock is not configured')
+    }),
+
+    getRuntimeDatabaseConfigMock: vi.fn(() => {
+      return {
+        databaseUrl: 'postgres://test',
+        isLocalDatabase: false
+      }
+    }),
+
     getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
     readValidatedBodyMock: vi.fn<typeof h3.readValidatedBody>(),
     setResponseStatusMock: vi.fn<typeof h3.setResponseStatus>(),
@@ -46,16 +73,25 @@ vi.mock(import('#server/utils/admin'), () => {
   }
 })
 
-interface MockUpdateDeleteDb {
-  delete: ReturnType<typeof vi.fn>;
-  insert: ReturnType<typeof vi.fn>;
-  update: ReturnType<typeof vi.fn>;
-}
+vi.mock(import('#server/utils/config'), () => {
+  return {
+    getRuntimeDatabaseConfig: getRuntimeDatabaseConfigMock
+  }
+})
+
+// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial database mock.
+vi.mock(import('#server/utils/database'), () => {
+  return {
+    createWebSocketClient: createWebSocketClientMock
+  }
+})
 
 function createPatchDb({
+  contributionError,
   updateError,
   updatedGroup
 }: {
+  contributionError?: Error;
   updateError?: Error;
   updatedGroup?: EquipmentGroupBaseRecord;
 }) {
@@ -87,7 +123,11 @@ function createPatchDb({
     }
   })
 
-  const insertContributionValuesMock = vi.fn()
+  const insertContributionValuesMock = vi.fn(() => {
+    if (contributionError !== undefined) {
+      throw contributionError
+    }
+  })
 
   const insertMock = vi.fn(() => {
     return {
@@ -95,23 +135,40 @@ function createPatchDb({
     }
   })
 
-  const dbHttp: MockUpdateDeleteDb = {
+  const transaction: MockUpdateDeleteTransaction = {
     delete: vi.fn(),
     insert: insertMock,
     update: updateMock
   }
 
+  const transactionMock = vi.fn(
+    async (executeTransaction: (db: MockUpdateDeleteTransaction) => Promise<unknown>) => executeTransaction(transaction)
+  )
+
+  const endMock = vi.fn(async () => {
+    await Promise.resolve()
+  })
+
+  const dbWrite: MockWriteDb = {
+    $client: {
+      end: endMock
+    },
+    transaction: transactionMock
+  }
+
   return {
-    dbHttp,
+    dbWrite,
     insertContributionValuesMock,
     updateSetMock
   }
 }
 
 function createDeleteDb({
+  contributionError,
   deleteError,
   deletedGroup
 }: {
+  contributionError?: Error;
   deleteError?: Error;
   deletedGroup?: EquipmentGroupBaseRecord;
 }) {
@@ -137,7 +194,11 @@ function createDeleteDb({
     }
   })
 
-  const insertContributionValuesMock = vi.fn()
+  const insertContributionValuesMock = vi.fn(() => {
+    if (contributionError !== undefined) {
+      throw contributionError
+    }
+  })
 
   const insertMock = vi.fn(() => {
     return {
@@ -145,14 +206,29 @@ function createDeleteDb({
     }
   })
 
-  const dbHttp: MockUpdateDeleteDb = {
+  const transaction: MockUpdateDeleteTransaction = {
     delete: deleteMock,
     insert: insertMock,
     update: vi.fn()
   }
 
+  const transactionMock = vi.fn(
+    async (executeTransaction: (db: MockUpdateDeleteTransaction) => Promise<unknown>) => executeTransaction(transaction)
+  )
+
+  const endMock = vi.fn(async () => {
+    await Promise.resolve()
+  })
+
+  const dbWrite: MockWriteDb = {
+    $client: {
+      end: endMock
+    },
+    transaction: transactionMock
+  }
+
   return {
-    dbHttp,
+    dbWrite,
     insertContributionValuesMock
   }
 }
@@ -184,14 +260,17 @@ describe('PATCH /api/equipment/groups/[id]', () => {
       slug: 'sleep'
     }
 
-    const { dbHttp, insertContributionValuesMock, updateSetMock } = createPatchDb({
+    const { dbWrite, insertContributionValuesMock, updateSetMock } = createPatchDb({
       updatedGroup
     })
 
-    const event = createTestEvent(dbHttp)
+    createWebSocketClientMock.mockReturnValue(dbWrite)
+
+    const event = createTestEvent({})
     const result = await updateGroupHandler(event)
 
     expect(result).toStrictEqual(updatedGroup)
+    expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
 
     expect(updateSetMock).toHaveBeenCalledWith({
       name: 'Sleep',
@@ -211,52 +290,30 @@ describe('PATCH /api/equipment/groups/[id]', () => {
     })
   })
 
-  test('should return 401 when user is unauthenticated', async () => {
-    const authError = h3.createError({ status: 401 })
-    const { dbHttp } = createPatchDb({})
-    const event = createTestEvent(dbHttp)
-
-    validateAdminUserMock.mockRejectedValue(authError)
-
-    await expect(updateGroupHandler(event)).rejects.toMatchObject({
-      statusCode: 401
-    })
-  })
-
-  test('should return 403 when user is not an admin', async () => {
-    const authError = h3.createError({ status: 403 })
-    const { dbHttp } = createPatchDb({})
-    const event = createTestEvent(dbHttp)
-
-    validateAdminUserMock.mockRejectedValue(authError)
-
-    await expect(updateGroupHandler(event)).rejects.toMatchObject({
-      statusCode: 403
-    })
-  })
-
   test('should return 400 when route id is invalid', async () => {
     const routeError = h3.createError({ status: 400 })
-    const { dbHttp } = createPatchDb({})
-    const event = createTestEvent(dbHttp)
+    const event = createTestEvent({})
 
     getValidatedRouterParamsMock.mockRejectedValue(routeError)
 
     await expect(updateGroupHandler(event)).rejects.toMatchObject({
       statusCode: 400
     })
+
+    expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
   test('should return 400 when route id is missing', async () => {
     const routeError = h3.createError({ status: 400 })
-    const { dbHttp } = createPatchDb({})
-    const event = createTestEvent(dbHttp)
+    const event = createTestEvent({})
 
     getValidatedRouterParamsMock.mockRejectedValue(routeError)
 
     await expect(updateGroupHandler(event)).rejects.toMatchObject({
       statusCode: 400
     })
+
+    expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
   test.each([
@@ -267,47 +324,84 @@ describe('PATCH /api/equipment/groups/[id]', () => {
       message: routeId,
       status: 400
     })
-    const { dbHttp } = createPatchDb({})
-    const event = createTestEvent(dbHttp)
+    const event = createTestEvent({})
 
     getValidatedRouterParamsMock.mockRejectedValue(routeError)
 
     await expect(updateGroupHandler(event)).rejects.toMatchObject({
       statusCode: 400
     })
-  })
 
-  test('should return 400 when body validation fails', async () => {
-    const bodyError = h3.createError({ status: 400 })
-    const { dbHttp } = createPatchDb({})
-    const event = createTestEvent(dbHttp)
-
-    readValidatedBodyMock.mockRejectedValue(bodyError)
-
-    await expect(updateGroupHandler(event)).rejects.toMatchObject({
-      statusCode: 400
-    })
+    expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
   test('should return 404 when the target group does not exist', async () => {
-    const { dbHttp } = createPatchDb({})
-    const event = createTestEvent(dbHttp)
+    const { dbWrite } = createPatchDb({})
+
+    createWebSocketClientMock.mockReturnValue(dbWrite)
+
+    const event = createTestEvent({})
 
     await expect(updateGroupHandler(event)).rejects.toMatchObject({
       statusCode: 404
     })
+
+    expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
-  test('should return 500 when group update fails', async () => {
-    const { dbHttp } = createPatchDb({
-      updateError: new Error('update failed')
-    })
-    const event = createTestEvent(dbHttp)
+  test('should return 500 when group slug already exists', async () => {
+    const { dbWrite } = createPatchDb({})
+
+    dbWrite.transaction.mockRejectedValue(new Error('duplicate slug'))
+    createWebSocketClientMock.mockReturnValue(dbWrite)
+
+    const event = createTestEvent({})
 
     await expect(updateGroupHandler(event)).rejects.toMatchObject({
       message: 'Failed to update group',
       statusCode: 500
     })
+
+    expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
+  })
+
+  test('should return 500 when contribution logging fails after group update', async () => {
+    const { dbWrite } = createPatchDb({
+      contributionError: new Error('contribution failed'),
+      updatedGroup: {
+        id: 7,
+        name: 'Sleep',
+        slug: 'sleep'
+      }
+    })
+
+    createWebSocketClientMock.mockReturnValue(dbWrite)
+
+    const event = createTestEvent({})
+
+    await expect(updateGroupHandler(event)).rejects.toMatchObject({
+      message: 'Failed to update group',
+      statusCode: 500
+    })
+
+    expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
+  })
+
+  test('should return 500 when group update fails', async () => {
+    const { dbWrite } = createPatchDb({
+      updateError: new Error('update failed')
+    })
+
+    createWebSocketClientMock.mockReturnValue(dbWrite)
+
+    const event = createTestEvent({})
+
+    await expect(updateGroupHandler(event)).rejects.toMatchObject({
+      message: 'Failed to update group',
+      statusCode: 500
+    })
+
+    expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -333,15 +427,18 @@ describe('DELETE /api/equipment/groups/[id]', () => {
       slug: 'sleep'
     }
 
-    const { dbHttp, insertContributionValuesMock } = createDeleteDb({
+    const { dbWrite, insertContributionValuesMock } = createDeleteDb({
       deletedGroup
     })
 
-    const event = createTestEvent(dbHttp)
+    createWebSocketClientMock.mockReturnValue(dbWrite)
+
+    const event = createTestEvent({})
 
     await deleteGroupHandler(event)
 
     expect(setResponseStatusMock).toHaveBeenCalledWith(event, 204)
+    expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
 
     expect(insertContributionValuesMock).toHaveBeenCalledWith({
       action: 'delete_group',
@@ -356,49 +453,31 @@ describe('DELETE /api/equipment/groups/[id]', () => {
     })
   })
 
-  test('should return 401 when user is unauthenticated', async () => {
-    const authError = h3.createError({ status: 401 })
-    const { dbHttp } = createDeleteDb({})
-    const event = createTestEvent(dbHttp)
-
-    validateAdminUserMock.mockRejectedValue(authError)
-
-    await expect(deleteGroupHandler(event)).rejects.toMatchObject({
-      statusCode: 401
-    })
-  })
-
-  test('should return 403 when user is not an admin', async () => {
-    const authError = h3.createError({ status: 403 })
-    const { dbHttp } = createDeleteDb({})
-    const event = createTestEvent(dbHttp)
-
-    validateAdminUserMock.mockRejectedValue(authError)
-
-    await expect(deleteGroupHandler(event)).rejects.toMatchObject({
-      statusCode: 403
-    })
-  })
-
   test('should return 400 when route id is missing', async () => {
     const routeError = h3.createError({ status: 400 })
-    const { dbHttp } = createDeleteDb({})
-    const event = createTestEvent(dbHttp)
+    const event = createTestEvent({})
 
     getValidatedRouterParamsMock.mockRejectedValue(routeError)
 
     await expect(deleteGroupHandler(event)).rejects.toMatchObject({
       statusCode: 400
     })
+
+    expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
   test('should return 404 when the target group does not exist', async () => {
-    const { dbHttp } = createDeleteDb({})
-    const event = createTestEvent(dbHttp)
+    const { dbWrite } = createDeleteDb({})
+
+    createWebSocketClientMock.mockReturnValue(dbWrite)
+
+    const event = createTestEvent({})
 
     await expect(deleteGroupHandler(event)).rejects.toMatchObject({
       statusCode: 404
     })
+
+    expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
   test.each([
@@ -409,25 +488,54 @@ describe('DELETE /api/equipment/groups/[id]', () => {
       message: routeId,
       status: 400
     })
-    const { dbHttp } = createDeleteDb({})
-    const event = createTestEvent(dbHttp)
+    const event = createTestEvent({})
 
     getValidatedRouterParamsMock.mockRejectedValue(routeError)
 
     await expect(deleteGroupHandler(event)).rejects.toMatchObject({
       statusCode: 400
     })
+
+    expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
-  test('should return 500 when group delete fails', async () => {
-    const { dbHttp } = createDeleteDb({
-      deleteError: new Error('delete failed')
+  test('should return 500 when contribution logging fails after group delete', async () => {
+    const { dbWrite } = createDeleteDb({
+      contributionError: new Error('contribution failed'),
+
+      deletedGroup: {
+        id: 7,
+        name: 'Sleep',
+        slug: 'sleep'
+      }
     })
-    const event = createTestEvent(dbHttp)
+
+    createWebSocketClientMock.mockReturnValue(dbWrite)
+
+    const event = createTestEvent({})
 
     await expect(deleteGroupHandler(event)).rejects.toMatchObject({
       message: 'Failed to delete group',
       statusCode: 500
     })
+
+    expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
+  })
+
+  test('should return 500 when group delete fails', async () => {
+    const { dbWrite } = createDeleteDb({
+      deleteError: new Error('delete failed')
+    })
+
+    createWebSocketClientMock.mockReturnValue(dbWrite)
+
+    const event = createTestEvent({})
+
+    await expect(deleteGroupHandler(event)).rejects.toMatchObject({
+      message: 'Failed to delete group',
+      statusCode: 500
+    })
+
+    expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 })

@@ -28,6 +28,11 @@ const canonicalUuidV7Schema = v.pipe(
   v.regex(/^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/)
 )
 
+const referenceDataSlugSchema = v.pipe(
+  trimmedNonEmptyStringSchema,
+  v.regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+)
+
 const optionalFilterQuerySchema = v.optional(
   v.pipe(
     trimmedStringSchema,
@@ -59,7 +64,7 @@ const brandMutationSchema = v.object({
   ),
 
   slug: v.pipe(
-    trimmedNonEmptyStringSchema,
+    referenceDataSlugSchema,
     v.maxLength(limits.maxBrandSlugLength)
   )
 })
@@ -69,7 +74,7 @@ const brandIdParamsSchema = v.object({
 })
 
 const brandDetailParamsSchema = v.object({
-  slug: trimmedNonEmptyStringSchema
+  slug: referenceDataSlugSchema
 })
 
 const brandsListQuerySchema = v.object({
@@ -83,7 +88,7 @@ const groupMutationSchema = v.object({
   ),
 
   slug: v.pipe(
-    trimmedNonEmptyStringSchema,
+    referenceDataSlugSchema,
     v.maxLength(limits.maxEquipmentGroupSlugLength)
   )
 })
@@ -92,8 +97,24 @@ const groupIdParamsSchema = v.object({
   id: positiveIntegerIdParamSchema
 })
 
+const categoryMutationSchema = v.object({
+  name: v.pipe(
+    trimmedNonEmptyStringSchema,
+    v.maxLength(limits.maxEquipmentCategoryNameLength)
+  ),
+
+  slug: v.pipe(
+    referenceDataSlugSchema,
+    v.maxLength(limits.maxEquipmentCategorySlugLength)
+  )
+})
+
+const categoryIdParamsSchema = v.object({
+  id: positiveIntegerIdParamSchema
+})
+
 const categoryDetailParamsSchema = v.object({
-  slug: trimmedNonEmptyStringSchema
+  slug: referenceDataSlugSchema
 })
 
 const itemDetailParamsSchema = v.object({
@@ -147,6 +168,14 @@ function validateCategoryDetailParams(params: unknown) {
   return v.parse(categoryDetailParamsSchema, params)
 }
 
+function validateCategoryIdParams(params: unknown) {
+  return v.parse(categoryIdParamsSchema, params)
+}
+
+function validateCategoryMutationBody(body: unknown) {
+  return v.parse(categoryMutationSchema, body)
+}
+
 function validateItemDetailParams(params: unknown) {
   return v.parse(itemDetailParamsSchema, params)
 }
@@ -170,6 +199,8 @@ export {
   brandsListQuerySchema,
   canonicalUuidV7Schema,
   categoryDetailParamsSchema,
+  categoryIdParamsSchema,
+  categoryMutationSchema,
   groupIdParamsSchema,
   groupMutationSchema,
   itemDetailParamsSchema,
@@ -178,6 +209,7 @@ export {
   nonEmptyStringSchema,
   pageQuerySchema,
   positiveIntegerIdParamSchema,
+  referenceDataSlugSchema,
   redirectTargetQuerySchema,
   trimmedNonEmptyStringSchema,
   trimmedStringSchema,
@@ -187,6 +219,8 @@ export {
   validateBrandMutationBody,
   validateBrandsListQuery,
   validateCategoryDetailParams,
+  validateCategoryIdParams,
+  validateCategoryMutationBody,
   validateGroupIdParams,
   validateGroupMutationBody,
   validateItemDetailParams,

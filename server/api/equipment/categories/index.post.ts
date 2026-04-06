@@ -1,33 +1,33 @@
 import { createError, defineEventHandler, isError, readValidatedBody, setResponseStatus } from 'h3'
-import { contributions, equipmentGroups } from '#server/database/schema'
+import { contributions, equipmentCategories } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
 import { getRuntimeDatabaseConfig } from '#server/utils/config'
 import { createWebSocketClient } from '#server/utils/database'
-import { groupBaseSelection, type EquipmentGroupBaseRecord } from '#server/utils/equipment/base-records'
-import { validateGroupMutationBody } from '#server/utils/validation/schemas'
+import { categoryBaseSelection, type CategoryBaseRecord } from '#server/utils/equipment/base-records'
+import { validateCategoryMutationBody } from '#server/utils/validation/schemas'
 
 export default defineEventHandler(async (event) => {
   const userId = await validateAdminUser(event)
-  const { name, slug } = await readValidatedBody(event, validateGroupMutationBody)
+  const { name, slug } = await readValidatedBody(event, validateCategoryMutationBody)
   const databaseConfig = getRuntimeDatabaseConfig(event)
   const dbWrite = createWebSocketClient(databaseConfig)
 
   try {
-    const createdGroup = await dbWrite.transaction(async (transaction) => {
-      const createdGroupRows: EquipmentGroupBaseRecord[] = await transaction
-        .insert(equipmentGroups)
+    const createdCategory = await dbWrite.transaction(async (transaction) => {
+      const createdCategoryRows: CategoryBaseRecord[] = await transaction
+        .insert(equipmentCategories)
         .values({
           name,
           slug
         })
-        .returning(groupBaseSelection)
+        .returning(categoryBaseSelection)
 
-      const [newGroup] = createdGroupRows
+      const [newCategory] = createdCategoryRows
 
-      if (newGroup === undefined) {
+      if (newCategory === undefined) {
         throw createError({
           status: 500,
-          message: 'Failed to create group'
+          message: 'Failed to create category'
         })
       }
 
@@ -35,21 +35,21 @@ export default defineEventHandler(async (event) => {
         .insert(contributions)
         .values({
           userId,
-          action: 'create_group',
-          targetId: `${newGroup.id}`,
+          action: 'create_category',
+          targetId: `${newCategory.id}`,
 
           metadata: {
-            name: newGroup.name,
-            slug: newGroup.slug
+            name: newCategory.name,
+            slug: newCategory.slug
           }
         })
 
-      return newGroup
+      return newCategory
     })
 
     setResponseStatus(event, 201)
 
-    return createdGroup
+    return createdCategory
   } catch (error) {
     if (isError(error)) {
       throw error
@@ -57,7 +57,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       status: 500,
-      message: 'Failed to create group'
+      message: 'Failed to create category'
     })
   } finally {
     await dbWrite.$client.end()
