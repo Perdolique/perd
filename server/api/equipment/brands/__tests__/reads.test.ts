@@ -175,6 +175,7 @@ describe('brand read handlers', () => {
         name: 'MSR',
         slug: 'msr'
       }
+
       const { dbHttp, findFirstMock } = createDetailDb(brand)
       const event = createTestEvent(dbHttp)
       const result = await brandDetailHandler(event)

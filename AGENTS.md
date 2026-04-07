@@ -27,10 +27,13 @@
 
 - **Public read routes for reference data use `slug`** in detail URLs (`/api/equipment/brands/[slug]`, `/api/equipment/categories/[slug]`).
 - **Admin mutation routes for reference data use `id`** in route params (`PATCH`/`DELETE`), because `slug` is editable content and must not be the stable mutation key.
+- **Admin category property mutations stay nested under category `id` routes** (`/api/equipment/categories/[categoryId]/properties/...`) so parent ownership is explicit and property/enum-option handlers can verify the full route chain.
 - **All API request inputs use Valibot schemas through h3 validated helpers**: `readValidatedBody` for request bodies, `getValidatedRouterParams` for route params, and `getValidatedQuery` for query strings. Schemas and validator functions live in `server/utils/validation/schemas.ts`; handlers should consume parsed values instead of manually validating raw input.
 - **Catalog admin writes that both mutate reference data and log `contributions` must be atomic**: run them through a transaction-capable write path, not separate `dbHttp` calls.
+- **Single-result query arrays should be destructured directly from the awaited query** when only the first row is needed once (`const [row] = await ...`); keep an intermediate array only when the full result set, row count, or repeated reuse matters.
 - **Public read detail endpoints stay narrow**: return the entity needed for that route, and fetch related collections with separate read endpoints when a page needs them. Do not expand detail payloads just to save a future frontend request.
 - **Shared catalog `returning(...)` shapes use reusable base records, not global endpoint models**: extract common `id`/`name`/`slug` selections into server-only helpers when reused, but keep each endpoint free to return a different response shape later if needed.
+- **Deleting an enum option that is already used by existing item property values must return `409`**: enum item values are currently stored by slug text, so option deletes need an application-level guard against orphaned enum values.
 - **Protected `/api/*` routes keep mixed auth behavior by caller type**: unauthenticated browser document navigations redirect to `/login?redirectTo=...`, while programmatic API requests (`fetch`/XHR) still receive `401`.
 
 ### Testing conventions

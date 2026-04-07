@@ -149,11 +149,11 @@ const equipmentCategories = pgTable('equipment_categories', {
     .primaryKey(),
 
   name:
-    varchar({ length: 64 })
+    varchar({ length: limits.maxEquipmentCategoryNameLength })
     .notNull(),
 
   slug:
-    varchar({ length: 128 })
+    varchar({ length: limits.maxEquipmentCategorySlugLength })
     .notNull()
     .unique(),
 
@@ -272,11 +272,11 @@ const categoryProperties = pgTable('category_properties', {
     }),
 
   name:
-    varchar({ length: 64 })
+    varchar({ length: limits.maxCategoryPropertyNameLength })
     .notNull(),
 
   slug:
-    varchar({ length: 128 })
+    varchar({ length: limits.maxCategoryPropertySlugLength })
     .notNull(),
 
   dataType:
@@ -284,7 +284,7 @@ const categoryProperties = pgTable('category_properties', {
     .notNull(),
 
   unit:
-    varchar({ length: 16 }),
+    varchar({ length: limits.maxCategoryPropertyUnitLength }),
 
   createdAt:
     timestamp({
@@ -315,11 +315,11 @@ const propertyEnumOptions = pgTable('property_enum_options', {
     }),
 
   name:
-    varchar({ length: 64 })
+    varchar({ length: limits.maxPropertyEnumOptionNameLength })
     .notNull(),
 
   slug:
-    varchar({ length: 128 })
+    varchar({ length: limits.maxPropertyEnumOptionSlugLength })
     .notNull()
 }, (table) => [
   unique().on(table.propertyId, table.slug)

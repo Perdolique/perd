@@ -113,6 +113,84 @@ const categoryIdParamsSchema = v.object({
   id: positiveIntegerIdParamSchema
 })
 
+const categoryScopedParamsSchema = v.object({
+  categoryId: positiveIntegerIdParamSchema
+})
+
+const categoryPropertyDataTypeSchema = v.picklist([
+  'number',
+  'text',
+  'boolean',
+  'enum'
+])
+
+const categoryPropertyParamsSchema = v.object({
+  categoryId: positiveIntegerIdParamSchema,
+  propertyId: positiveIntegerIdParamSchema
+})
+
+const propertyEnumOptionParamsSchema = v.object({
+  categoryId: positiveIntegerIdParamSchema,
+  propertyId: positiveIntegerIdParamSchema,
+  optionId: positiveIntegerIdParamSchema
+})
+
+const propertyEnumOptionMutationSchema = v.object({
+  name: v.pipe(
+    trimmedNonEmptyStringSchema,
+    v.maxLength(limits.maxPropertyEnumOptionNameLength)
+  ),
+
+  slug: v.pipe(
+    referenceDataSlugSchema,
+    v.maxLength(limits.maxPropertyEnumOptionSlugLength)
+  )
+})
+
+const categoryPropertyMutationSchema = v.pipe(
+  v.object({
+    name: v.pipe(
+      trimmedNonEmptyStringSchema,
+      v.maxLength(limits.maxCategoryPropertyNameLength)
+    ),
+
+    slug: v.pipe(
+      referenceDataSlugSchema,
+      v.maxLength(limits.maxCategoryPropertySlugLength)
+    ),
+
+    dataType: categoryPropertyDataTypeSchema,
+
+    unit: v.optional(
+      v.pipe(
+        trimmedNonEmptyStringSchema,
+        v.maxLength(limits.maxCategoryPropertyUnitLength)
+      )
+    ),
+
+    enumOptions: v.optional(
+      v.array(propertyEnumOptionMutationSchema)
+    )
+  }),
+  v.check((input) => {
+    if (input.dataType === 'enum') {
+      return input.enumOptions !== undefined && input.enumOptions.length > 0
+    }
+
+    return input.enumOptions === undefined
+  }, 'enumOptions must be provided for enum properties and omitted otherwise'),
+  v.check((input) => input.unit === undefined || input.dataType === 'number', 'unit can only be provided for number properties'),
+  v.check((input) => {
+    if (input.enumOptions === undefined) {
+      return true
+    }
+
+    const optionSlugs = input.enumOptions.map((option) => option.slug)
+
+    return new Set(optionSlugs).size === optionSlugs.length
+  }, 'enumOptions must contain unique slugs')
+)
+
 const categoryDetailParamsSchema = v.object({
   slug: referenceDataSlugSchema
 })
@@ -168,8 +246,20 @@ function validateCategoryDetailParams(params: unknown) {
   return v.parse(categoryDetailParamsSchema, params)
 }
 
+function validateCategoryPropertyMutationBody(body: unknown) {
+  return v.parse(categoryPropertyMutationSchema, body)
+}
+
+function validateCategoryPropertyParams(params: unknown) {
+  return v.parse(categoryPropertyParamsSchema, params)
+}
+
 function validateCategoryIdParams(params: unknown) {
   return v.parse(categoryIdParamsSchema, params)
+}
+
+function validateCategoryScopedParams(params: unknown) {
+  return v.parse(categoryScopedParamsSchema, params)
 }
 
 function validateCategoryMutationBody(body: unknown) {
@@ -178,6 +268,14 @@ function validateCategoryMutationBody(body: unknown) {
 
 function validateItemDetailParams(params: unknown) {
   return v.parse(itemDetailParamsSchema, params)
+}
+
+function validatePropertyEnumOptionMutationBody(body: unknown) {
+  return v.parse(propertyEnumOptionMutationSchema, body)
+}
+
+function validatePropertyEnumOptionParams(params: unknown) {
+  return v.parse(propertyEnumOptionParamsSchema, params)
 }
 
 function validateItemsListQuery(query: unknown) {
@@ -201,6 +299,10 @@ export {
   categoryDetailParamsSchema,
   categoryIdParamsSchema,
   categoryMutationSchema,
+  categoryScopedParamsSchema,
+  categoryPropertyDataTypeSchema,
+  categoryPropertyMutationSchema,
+  categoryPropertyParamsSchema,
   groupIdParamsSchema,
   groupMutationSchema,
   itemDetailParamsSchema,
@@ -209,6 +311,8 @@ export {
   nonEmptyStringSchema,
   pageQuerySchema,
   positiveIntegerIdParamSchema,
+  propertyEnumOptionMutationSchema,
+  propertyEnumOptionParamsSchema,
   referenceDataSlugSchema,
   redirectTargetQuerySchema,
   trimmedNonEmptyStringSchema,
@@ -221,10 +325,15 @@ export {
   validateCategoryDetailParams,
   validateCategoryIdParams,
   validateCategoryMutationBody,
+  validateCategoryPropertyMutationBody,
+  validateCategoryPropertyParams,
+  validateCategoryScopedParams,
   validateGroupIdParams,
   validateGroupMutationBody,
   validateItemDetailParams,
   validateItemsListQuery,
+  validatePropertyEnumOptionMutationBody,
+  validatePropertyEnumOptionParams,
   validateRedirectTargetQuery,
   validateTwitchOAuthBody
 }

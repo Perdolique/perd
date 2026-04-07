@@ -1,4 +1,4 @@
-import { brands, equipmentCategories, equipmentGroups } from '#server/database/schema'
+import { brands, categoryProperties, equipmentCategories, equipmentGroups, propertyEnumOptions } from '#server/database/schema'
 
 const groupBaseSelection = {
   id: equipmentGroups.id,
@@ -24,14 +24,36 @@ const brandBaseSelection = {
 
 type BrandBaseRecord = Pick<typeof brands.$inferSelect, 'id' | 'name' | 'slug'>
 
+const categoryPropertyBaseSelection = {
+  id: categoryProperties.id,
+  name: categoryProperties.name,
+  slug: categoryProperties.slug,
+  dataType: categoryProperties.dataType,
+  unit: categoryProperties.unit
+}
+
+type CategoryPropertyBaseRecord = Pick<typeof categoryProperties.$inferSelect, 'id' | 'name' | 'slug' | 'dataType' | 'unit'>
+
+const propertyEnumOptionBaseSelection = {
+  id: propertyEnumOptions.id,
+  name: propertyEnumOptions.name,
+  slug: propertyEnumOptions.slug
+}
+
+type PropertyEnumOptionBaseRecord = Pick<typeof propertyEnumOptions.$inferSelect, 'id' | 'name' | 'slug'>
+
 export {
   brandBaseSelection,
   categoryBaseSelection,
-  groupBaseSelection
+  categoryPropertyBaseSelection,
+  groupBaseSelection,
+  propertyEnumOptionBaseSelection
 }
 
 export type {
   BrandBaseRecord,
+  CategoryPropertyBaseRecord,
   CategoryBaseRecord,
-  EquipmentGroupBaseRecord
+  EquipmentGroupBaseRecord,
+  PropertyEnumOptionBaseRecord
 }

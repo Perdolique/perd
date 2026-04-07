@@ -2,6 +2,7 @@ import * as v from 'valibot'
 import type { H3Event } from 'h3'
 import { useRuntimeConfig } from 'nitropack/runtime'
 import { nonEmptyStringSchema } from '#server/utils/validation/schemas'
+import { createWebSocketClient } from './database'
 import { optionalBooleanSchema, type DatabaseConfig } from './config-env'
 
 const sessionSecretSchema = v.pipe(
@@ -25,7 +26,14 @@ function getRuntimeSessionSecret(event: H3Event): string {
   return secret
 }
 
+function createWebSocketClientFromEvent(event: H3Event) {
+  const config = getRuntimeDatabaseConfig(event)
+
+  return createWebSocketClient(config)
+}
+
 export {
+  createWebSocketClientFromEvent,
   getRuntimeDatabaseConfig,
   getRuntimeSessionSecret
 }

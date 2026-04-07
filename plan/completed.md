@@ -16,7 +16,7 @@ Authenticated read-only catalog endpoints for groups, categories, brands, item l
 
 ## Admin catalog management
 
-Admin-only Brands, Groups, and Categories CRUD implemented under `/api/equipment/brands`, `/api/equipment/groups`, and `/api/equipment/categories`. Public detail reads stay on `slug`, while admin `PATCH` and `DELETE` use stable numeric `id`. Successful create, update, and delete operations log to `contributions`. Brand/category usage by `equipment_items` is protected at the FK level with `restrict` deletes so reference cleanup cannot cascade into catalog or user inventory records.
+Admin-only Brands, Groups, and Categories CRUD implemented under `/api/equipment/brands`, `/api/equipment/groups`, and `/api/equipment/categories`. Category property and enum option management is implemented under nested category routes so admins can define EAV metadata before item creation. Public detail reads stay on `slug`, while admin `PATCH` and `DELETE` use stable numeric `id`. Successful create, update, and delete operations log to `contributions`. Brand/category usage by `equipment_items` is protected at the FK level with `restrict` deletes so reference cleanup cannot cascade into catalog or user inventory records. Enum option deletes are blocked with `409` when the option slug is already used by existing item property values.
 
 ## Twitch OAuth
 

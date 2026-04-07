@@ -1,7 +1,6 @@
 import { createError, isError, type H3Event } from 'h3'
 import type { OAuthProvider } from '#shared/types/oauth'
-import { getRuntimeDatabaseConfig } from '#server/utils/config'
-import { createWebSocketClient } from '#server/utils/database'
+import { createWebSocketClientFromEvent } from '#server/utils/config'
 import { oauthAccounts, users } from '#server/database/schema'
 
 interface OAuthUserResult {
@@ -15,8 +14,7 @@ async function createOAuthUser(
   event: H3Event
 ): Promise<OAuthUserResult> {
   try {
-    const databaseConfig = getRuntimeDatabaseConfig(event)
-    const dbWebsocket = createWebSocketClient(databaseConfig)
+    const dbWebsocket = createWebSocketClientFromEvent(event)
 
     try {
       const newUser = await dbWebsocket.transaction(async (transaction) => {

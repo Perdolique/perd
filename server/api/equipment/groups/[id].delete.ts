@@ -2,27 +2,23 @@ import { eq } from 'drizzle-orm'
 import { createError, defineEventHandler, getValidatedRouterParams, isError, setResponseStatus } from 'h3'
 import { contributions, equipmentGroups } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
-import { getRuntimeDatabaseConfig } from '#server/utils/config'
-import { createWebSocketClient } from '#server/utils/database'
-import { groupBaseSelection, type EquipmentGroupBaseRecord } from '#server/utils/equipment/base-records'
+import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { groupBaseSelection } from '#server/utils/equipment/base-records'
 import { validateGroupIdParams } from '#server/utils/validation/schemas'
 
 export default defineEventHandler(async (event) => {
   const userId = await validateAdminUser(event)
   const { id: groupId } = await getValidatedRouterParams(event, validateGroupIdParams)
-  const databaseConfig = getRuntimeDatabaseConfig(event)
-  const dbWrite = createWebSocketClient(databaseConfig)
+  const dbWebsocket = createWebSocketClientFromEvent(event)
 
   try {
-    await dbWrite.transaction(async (transaction) => {
-      const deletedGroupRows: EquipmentGroupBaseRecord[] = await transaction
+    await dbWebsocket.transaction(async (transaction) => {
+      const [currentGroup] = await transaction
         .delete(equipmentGroups)
         .where(
           eq(groupBaseSelection.id, groupId)
         )
         .returning(groupBaseSelection)
-
-      const [currentGroup] = deletedGroupRows
 
       if (currentGroup === undefined) {
         throw createError({ status: 404 })
@@ -51,7 +47,7 @@ export default defineEventHandler(async (event) => {
       message: 'Failed to delete group'
     })
   } finally {
-    await dbWrite.$client.end()
+    await dbWebsocket.$client.end()
   }
 
   setResponseStatus(event, 204)
