@@ -154,6 +154,9 @@ describe('item read handlers', () => {
   describe('GET /api/equipment/items', () => {
     test('should return paginated items list', async () => {
       const items = [{
+        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
+        name: 'NeoAir XLite NXT Regular',
+
         brand: {
           name: 'Therm-a-Rest',
           slug: 'therm-a-rest'
@@ -162,10 +165,7 @@ describe('item read handlers', () => {
         category: {
           name: 'Sleeping Pads',
           slug: 'sleeping-pads'
-        },
-
-        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
-        name: 'NeoAir XLite NXT Regular'
+        }
       }]
 
       const { dbHttp, itemsLimitMock, itemsOffsetMock, itemsWhereMock } = createListDb({
@@ -213,6 +213,11 @@ describe('item read handlers', () => {
   describe('GET /api/equipment/items/[id]', () => {
     test('should return item detail with normalized property values', async () => {
       const item = {
+        createdAt: '2026-04-01T00:00:00Z',
+        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
+        name: 'PocketRocket Deluxe',
+        status: 'approved',
+
         brand: {
           id: 1,
           name: 'MSR',
@@ -225,48 +230,46 @@ describe('item read handlers', () => {
           slug: 'stoves'
         },
 
-        createdAt: '2026-04-01T00:00:00Z',
-        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
-        name: 'PocketRocket Deluxe',
-
         propertyValues: [{
+          valueBoolean: null,
+          valueNumber: '83',
+          valueText: null,
+
           property: {
             dataType: 'number',
             name: 'Weight',
             slug: 'weight',
             unit: 'g'
-          },
-          valueBoolean: null,
-          valueNumber: '83',
-          valueText: null
+          }
         }, {
+          valueBoolean: true,
+          valueNumber: null,
+          valueText: null,
+
           property: {
             dataType: 'boolean',
             name: 'Piezo',
             slug: 'piezo',
             unit: null
-          },
-          valueBoolean: true,
-          valueNumber: null,
-          valueText: null
+          }
         }, {
+          valueBoolean: null,
+          valueNumber: null,
+          valueText: 'canister',
+
           property: {
             dataType: 'enum',
             name: 'Fuel',
             slug: 'fuel',
             unit: null
-          },
-          valueBoolean: null,
-          valueNumber: null,
-          valueText: 'canister'
+          }
         }, {
-          property: null,
           valueBoolean: null,
           valueNumber: null,
-          valueText: 'ignore-me'
-        }],
+          valueText: 'ignore-me',
 
-        status: 'approved'
+          property: null
+        }]
       }
 
       const { dbHttp, findFirstMock } = createDetailDb(item)
@@ -274,6 +277,11 @@ describe('item read handlers', () => {
       const result = await itemDetailHandler(event)
 
       expect(result).toStrictEqual({
+        createdAt: '2026-04-01T00:00:00Z',
+        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
+        name: 'PocketRocket Deluxe',
+        status: 'approved',
+
         brand: {
           id: 1,
           name: 'MSR',
@@ -285,10 +293,6 @@ describe('item read handlers', () => {
           name: 'Stoves',
           slug: 'stoves'
         },
-
-        createdAt: '2026-04-01T00:00:00Z',
-        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
-        name: 'PocketRocket Deluxe',
 
         properties: [{
           dataType: 'number',
@@ -308,9 +312,7 @@ describe('item read handlers', () => {
           slug: 'fuel',
           unit: null,
           value: 'canister'
-        }],
-
-        status: 'approved'
+        }]
       })
 
       expect(findFirstMock).toHaveBeenCalledTimes(1)

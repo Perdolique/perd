@@ -18,7 +18,6 @@ interface MockWriteDb {
 
 const {
   createWebSocketClientMock,
-  getRuntimeDatabaseConfigMock,
   readValidatedBodyMock,
   setResponseStatusMock,
   validateAdminUserMock
@@ -28,12 +27,6 @@ const {
       throw new Error('createWebSocketClient mock is not configured')
     }),
 
-    getRuntimeDatabaseConfigMock: vi.fn(() => {
-      return {
-        databaseUrl: 'postgres://test',
-        isLocalDatabase: false
-      }
-    }),
     readValidatedBodyMock: vi.fn<typeof h3.readValidatedBody>(),
     setResponseStatusMock: vi.fn<typeof h3.setResponseStatus>(),
     validateAdminUserMock: vi.fn()
@@ -63,16 +56,10 @@ vi.mock(import('#server/utils/admin'), () => {
   }
 })
 
+// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial config mock.
 vi.mock(import('#server/utils/config'), () => {
   return {
-    getRuntimeDatabaseConfig: getRuntimeDatabaseConfigMock
-  }
-})
-
-// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial database mock.
-vi.mock(import('#server/utils/database'), () => {
-  return {
-    createWebSocketClient: createWebSocketClientMock
+    createWebSocketClientFromEvent: createWebSocketClientMock
   }
 })
 

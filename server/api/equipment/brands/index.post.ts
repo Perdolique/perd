@@ -1,28 +1,24 @@
 import { createError, defineEventHandler, isError, readValidatedBody, setResponseStatus } from 'h3'
 import { brands, contributions } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
-import { getRuntimeDatabaseConfig } from '#server/utils/config'
-import { createWebSocketClient } from '#server/utils/database'
-import { brandBaseSelection, type BrandBaseRecord } from '#server/utils/equipment/base-records'
+import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { brandBaseSelection } from '#server/utils/equipment/base-records'
 import { validateBrandMutationBody } from '#server/utils/validation/schemas'
 
 export default defineEventHandler(async (event) => {
   const userId = await validateAdminUser(event)
   const { name, slug } = await readValidatedBody(event, validateBrandMutationBody)
-  const databaseConfig = getRuntimeDatabaseConfig(event)
-  const dbWrite = createWebSocketClient(databaseConfig)
+  const dbWebsocket = createWebSocketClientFromEvent(event)
 
   try {
-    const createdBrand = await dbWrite.transaction(async (transaction) => {
-      const createdBrandRows: BrandBaseRecord[] = await transaction
+    const createdBrand = await dbWebsocket.transaction(async (transaction) => {
+      const [newBrand] = await transaction
         .insert(brands)
         .values({
           name,
           slug
         })
         .returning(brandBaseSelection)
-
-      const [newBrand] = createdBrandRows
 
       if (newBrand === undefined) {
         throw createError({
@@ -60,6 +56,6 @@ export default defineEventHandler(async (event) => {
       message: 'Failed to create brand'
     })
   } finally {
-    await dbWrite.$client.end()
+    await dbWebsocket.$client.end()
   }
 })

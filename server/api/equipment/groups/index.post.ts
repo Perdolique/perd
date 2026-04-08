@@ -1,28 +1,24 @@
 import { createError, defineEventHandler, isError, readValidatedBody, setResponseStatus } from 'h3'
 import { contributions, equipmentGroups } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
-import { getRuntimeDatabaseConfig } from '#server/utils/config'
-import { createWebSocketClient } from '#server/utils/database'
-import { groupBaseSelection, type EquipmentGroupBaseRecord } from '#server/utils/equipment/base-records'
+import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { groupBaseSelection } from '#server/utils/equipment/base-records'
 import { validateGroupMutationBody } from '#server/utils/validation/schemas'
 
 export default defineEventHandler(async (event) => {
   const userId = await validateAdminUser(event)
   const { name, slug } = await readValidatedBody(event, validateGroupMutationBody)
-  const databaseConfig = getRuntimeDatabaseConfig(event)
-  const dbWrite = createWebSocketClient(databaseConfig)
+  const dbWebsocket = createWebSocketClientFromEvent(event)
 
   try {
-    const createdGroup = await dbWrite.transaction(async (transaction) => {
-      const createdGroupRows: EquipmentGroupBaseRecord[] = await transaction
+    const createdGroup = await dbWebsocket.transaction(async (transaction) => {
+      const [newGroup] = await transaction
         .insert(equipmentGroups)
         .values({
           name,
           slug
         })
         .returning(groupBaseSelection)
-
-      const [newGroup] = createdGroupRows
 
       if (newGroup === undefined) {
         throw createError({
@@ -60,6 +56,6 @@ export default defineEventHandler(async (event) => {
       message: 'Failed to create group'
     })
   } finally {
-    await dbWrite.$client.end()
+    await dbWebsocket.$client.end()
   }
 })

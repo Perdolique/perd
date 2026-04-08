@@ -27,23 +27,21 @@ vi.mock(import('h3'), async () => {
 interface CategoryDetail {
   id: number;
   name: string;
+  slug: string;
 
   properties: {
     dataType: string;
+    id: number;
+    name: string;
+    slug: string;
+    unit: string | null;
 
     enumOptions?: {
       id: number;
       name: string;
       slug: string;
     }[];
-
-    id: number;
-    name: string;
-    slug: string;
-    unit: string | null;
   }[];
-
-  slug: string;
 }
 
 function createDetailDb(category?: CategoryDetail) {
@@ -79,30 +77,29 @@ describe('GET /api/equipment/categories/[slug]', () => {
     const category = {
       id: 1,
       name: 'Sleeping Bags',
+      slug: 'sleeping-bags',
 
       properties: [{
         dataType: 'number',
-        enumOptions: [],
         id: 11,
         name: 'Weight',
         slug: 'weight',
-        unit: 'g'
+        unit: 'g',
+
+        enumOptions: []
       }, {
         dataType: 'enum',
+        id: 12,
+        name: 'Fill Type',
+        slug: 'fill-type',
+        unit: null,
 
         enumOptions: [{
           id: 21,
           name: 'Down',
           slug: 'down'
-        }],
-
-        id: 12,
-        name: 'Fill Type',
-        slug: 'fill-type',
-        unit: null
-      }],
-
-      slug: 'sleeping-bags'
+        }]
+      }]
     }
 
     const { dbHttp, findFirstMock } = createDetailDb(category)
@@ -112,6 +109,7 @@ describe('GET /api/equipment/categories/[slug]', () => {
     expect(result).toStrictEqual({
       id: 1,
       name: 'Sleeping Bags',
+      slug: 'sleeping-bags',
 
       properties: [{
         dataType: 'number',
@@ -121,20 +119,17 @@ describe('GET /api/equipment/categories/[slug]', () => {
         unit: 'g'
       }, {
         dataType: 'enum',
+        id: 12,
+        name: 'Fill Type',
+        slug: 'fill-type',
+        unit: null,
 
         enumOptions: [{
           id: 21,
           name: 'Down',
           slug: 'down'
-        }],
-
-        id: 12,
-        name: 'Fill Type',
-        slug: 'fill-type',
-        unit: null
-      }],
-
-      slug: 'sleeping-bags'
+        }]
+      }]
     })
 
     expect(findFirstMock).toHaveBeenCalledTimes(1)

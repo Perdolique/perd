@@ -2,9 +2,8 @@ import { eq } from 'drizzle-orm'
 import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody } from 'h3'
 import { brands, contributions } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
-import { getRuntimeDatabaseConfig } from '#server/utils/config'
-import { createWebSocketClient } from '#server/utils/database'
-import { brandBaseSelection, type BrandBaseRecord } from '#server/utils/equipment/base-records'
+import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { brandBaseSelection } from '#server/utils/equipment/base-records'
 
 import {
   validateBrandIdParams,
@@ -15,12 +14,11 @@ export default defineEventHandler(async (event) => {
   const userId = await validateAdminUser(event)
   const { id: brandId } = await getValidatedRouterParams(event, validateBrandIdParams)
   const { name, slug } = await readValidatedBody(event, validateBrandMutationBody)
-  const databaseConfig = getRuntimeDatabaseConfig(event)
-  const dbWrite = createWebSocketClient(databaseConfig)
+  const dbWebsocket = createWebSocketClientFromEvent(event)
 
   try {
-    return await dbWrite.transaction(async (transaction) => {
-      const updatedBrandRows: BrandBaseRecord[] = await transaction
+    return await dbWebsocket.transaction(async (transaction) => {
+      const [updatedBrand] = await transaction
         .update(brands)
         .set({
           name,
@@ -30,8 +28,6 @@ export default defineEventHandler(async (event) => {
           eq(brandBaseSelection.id, brandId)
         )
         .returning(brandBaseSelection)
-
-      const [updatedBrand] = updatedBrandRows
 
       if (updatedBrand === undefined) {
         throw createError({ status: 404 })
@@ -62,6 +58,6 @@ export default defineEventHandler(async (event) => {
       message: 'Failed to update brand'
     })
   } finally {
-    await dbWrite.$client.end()
+    await dbWebsocket.$client.end()
   }
 })

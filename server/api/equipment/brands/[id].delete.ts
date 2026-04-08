@@ -2,27 +2,23 @@ import { eq } from 'drizzle-orm'
 import { createError, defineEventHandler, getValidatedRouterParams, isError, setResponseStatus } from 'h3'
 import { brands, contributions } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
-import { getRuntimeDatabaseConfig } from '#server/utils/config'
-import { createWebSocketClient } from '#server/utils/database'
-import { brandBaseSelection, type BrandBaseRecord } from '#server/utils/equipment/base-records'
+import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { brandBaseSelection } from '#server/utils/equipment/base-records'
 import { validateBrandIdParams } from '#server/utils/validation/schemas'
 
 export default defineEventHandler(async (event) => {
   const userId = await validateAdminUser(event)
   const { id: brandId } = await getValidatedRouterParams(event, validateBrandIdParams)
-  const databaseConfig = getRuntimeDatabaseConfig(event)
-  const dbWrite = createWebSocketClient(databaseConfig)
+  const dbWebsocket = createWebSocketClientFromEvent(event)
 
   try {
-    await dbWrite.transaction(async (transaction) => {
-      const deletedBrandRows: BrandBaseRecord[] = await transaction
+    await dbWebsocket.transaction(async (transaction) => {
+      const [currentBrand] = await transaction
         .delete(brands)
         .where(
           eq(brandBaseSelection.id, brandId)
         )
         .returning(brandBaseSelection)
-
-      const [currentBrand] = deletedBrandRows
 
       if (currentBrand === undefined) {
         throw createError({ status: 404 })
@@ -51,7 +47,7 @@ export default defineEventHandler(async (event) => {
       message: 'Failed to delete brand'
     })
   } finally {
-    await dbWrite.$client.end()
+    await dbWebsocket.$client.end()
   }
 
   setResponseStatus(event, 204)
