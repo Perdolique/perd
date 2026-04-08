@@ -12,19 +12,23 @@ Guest session creation, logout, session middleware protecting `/api/*` routes. B
 
 ## Equipment browsing API
 
-Authenticated read-only catalog endpoints for groups, categories, brands, item lists, and item detail. Includes category property definitions with enum options, narrow brand detail metadata, and item pagination/filtering.
+Authenticated read-only catalog endpoints for groups, categories, brands, item lists, and item detail. The shipped browsing surface is the current frontend baseline: groups and categories stay independent reference data, category detail includes enum options only where they matter, brand detail stays intentionally narrow, and item list/detail responses provide the catalog contract that future UI slices should reuse before asking for new backend joins.
 
-## Admin catalog management
+## Admin reference-data management
 
-Admin-only Brands, Groups, and Categories CRUD implemented under `/api/equipment/brands`, `/api/equipment/groups`, and `/api/equipment/categories`. Category property and enum option management is implemented under nested category routes so admins can define EAV metadata before item creation. Public detail reads stay on `slug`, while admin `PATCH` and `DELETE` use stable numeric `id`. Successful create, update, and delete operations log to `contributions`. Brand/category usage by `equipment_items` is protected at the FK level with `restrict` deletes so reference cleanup cannot cascade into catalog or user inventory records. Enum option deletes are blocked with `409` when the option slug is already used by existing item property values.
+Admin-only Brands, Groups, and Categories CRUD is implemented under `/api/equipment/brands`, `/api/equipment/groups`, and `/api/equipment/categories`, including the shared validation and contribution logging conventions that later item writes will reuse. Category property and enum option management is implemented under nested category routes so admins can define EAV metadata before item creation. Public detail reads stay on `slug`, while admin `PATCH` and `DELETE` use stable numeric `id`. Brand/category usage by `equipment_items` is protected at the FK level with `restrict` deletes so reference cleanup cannot cascade into catalog or user inventory records. Enum option deletes are blocked with `409` when the option slug is already used by existing item property values.
+
+## Frontend foundation
+
+Application shell, login, account, and OAuth callback pages are implemented. The homepage is still only a placeholder, so real catalog and inventory screens remain active roadmap work rather than completed UI slices.
 
 ## Twitch OAuth
 
 Redirect to Twitch, token exchange, user info fetch, new user creation with OAuth account linking, login via existing Twitch account, and redirect restoration through OAuth `state`. Missing: CSRF-hardening for `state`, linking existing account to Twitch.
 
-## App shell and frontend foundation
+## Shared UI components
 
-Nuxt layout with header, footer, sidebar. Login page, account page, Twitch callback page. Shared UI components: buttons, cards, dialogs, menu, heading, link, spinner. CSS design tokens for colors, spacing, typography, transitions.
+Nuxt layout with header, footer, sidebar. Shared UI components: buttons, cards, dialogs, menu, heading, link, spinner. CSS design tokens for colors, spacing, typography, transitions.
 
 ## Tooling and tests
 

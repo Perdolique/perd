@@ -1,12 +1,22 @@
 # User inventory API
 
-**Purpose**: The core user-facing feature. Users search items in the global catalog (browsing API endpoints) and add them to their personal inventory — "this is what I own/carry". This is the main value prop of the app: hikers and bikepackers track their gear. Authentication is already handled by existing middleware. Use `validateSessionUser(event)` from `server/utils/session.ts` to get userId. Database access via `event.context.dbHttp`.
+**Purpose**: Add the first user-owned data on top of the global catalog. A signed-in user should be able to list the items they own, add an approved item from the catalog, and remove an existing inventory row without affecting anyone else's data.
+
+## Shared rules
+
+- Use `validateSessionUser(event)` from `server/utils/session.ts` to resolve the current `userId`.
+- Use the HTTP client unless an implementation detail proves a transaction is necessary.
+- Keep the payload minimal: inventory row id, item summary, and `createdAt`.
 
 ## Endpoints
 
 ### `GET /api/user/equipment`
 
-**Purpose**: Shows the user's gear closet. Returns all items the user has added to their inventory, with enough item detail (name, brand, category) to display a useful list without extra API calls. Join `user_equipment` → `equipment_items` → `brands`, `equipment_categories`. Filter by `userId` from session.
+Return the current user's inventory rows.
+
+- Filter by `userId` from session.
+- Join `user_equipment` to `equipment_items`, `brands`, and `equipment_categories`.
+- Return only the data needed for the inventory page.
 
 Response:
 
@@ -27,7 +37,7 @@ Response:
 
 ### `POST /api/user/equipment`
 
-**Purpose**: User adds an item to their inventory. Takes just the `itemId` — the user picks an item from the catalog and clicks "I have this". Must check the item actually exists and is `status = 'approved'`. Returns 409 if the user already has this item (unique constraint on `userId + itemId`).
+Add one approved item to the current user's inventory.
 
 Request body:
 
@@ -35,16 +45,37 @@ Request body:
 { "itemId": "<item-uuid>" }
 ```
 
-Returns 201 on success. 409 if already in inventory.
+Rules:
+
+- Validate `itemId` as a UUID v7.
+- Return `404` if the item does not exist.
+- Return `400` or `404` only for domain validation, not duplicate ownership.
+- Return `409 Conflict` if the same user already has the item.
+- Reject items whose status is not `approved`.
+
+Return `201` with the created inventory row in the same shape used by `GET /api/user/equipment`.
 
 ### `DELETE /api/user/equipment/[id]`
 
-**Purpose**: User removes an item from their inventory. The `id` param is the `user_equipment` UUID (not the item UUID), so we delete by PK. Must verify the record belongs to the requesting user (don't let user A delete user B's inventory entry).
+Remove one inventory row by `user_equipment.id`.
 
-Returns 204 on success.
+Rules:
+
+- Validate the route id as a UUID v7.
+- Verify that the row belongs to the requesting user before deleting it.
+- Return `404` when the row does not exist for that user.
+
+Return `204` on success.
 
 ## Files to create
 
 - `server/api/user/equipment/index.get.ts`
 - `server/api/user/equipment/index.post.ts`
 - `server/api/user/equipment/[id].delete.ts`
+
+## Test plan
+
+- Add DB-free Vitest coverage for `401`, `400`, `404`, `409`, success, and unexpected `500`.
+- Cover duplicate add attempts.
+- Cover add rejection for non-approved items.
+- Cover delete rejection when the inventory row belongs to another user.
