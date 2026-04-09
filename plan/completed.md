@@ -12,7 +12,7 @@ Guest session creation, logout, session middleware protecting `/api/*` routes. B
 
 ## Equipment browsing API
 
-Authenticated read-only catalog endpoints for groups, categories, brands, item lists, and item detail. The shipped browsing surface is the current frontend baseline: groups and categories stay independent reference data, category detail includes enum options only where they matter, brand detail stays intentionally narrow, and item list/detail responses provide the catalog contract that future UI slices should reuse before asking for new backend joins.
+Authenticated read-only catalog endpoints for groups, categories, brands, item lists, and item detail. Groups and categories stay independent reference data, category detail includes enum options only where they matter, brand detail stays intentionally narrow, and item list/detail responses provide the backend contract that future UI slices should reuse before asking for new joins.
 
 ## Admin reference-data management
 
@@ -20,7 +20,7 @@ Admin-only Brands, Groups, and Categories CRUD is implemented under `/api/equipm
 
 ## Frontend foundation
 
-Application shell, login, account, and OAuth callback pages are implemented. The homepage is still only a placeholder, so real catalog and inventory screens remain active roadmap work rather than completed UI slices.
+Application shell, login, account, and OAuth callback pages are implemented. The shell includes primary navigation for the catalog area at `/catalog`, while `/` remains a placeholder dashboard route. The catalog screen is still a placeholder while the user-facing browsing flow is rebuilt in staged iterations on top of the existing read API contracts. Item detail and inventory actions remain active roadmap work.
 
 ## Twitch OAuth
 
@@ -28,11 +28,11 @@ Redirect to Twitch, token exchange, user info fetch, new user creation with OAut
 
 ## Shared UI components
 
-Nuxt layout with header, footer, sidebar. Shared UI components: buttons, cards, dialogs, menu, heading, link, spinner. CSS design tokens for colors, spacing, typography, transitions.
+Nuxt layout with header, footer, sidebar. Shared UI components: buttons, cards, dialogs, menu, heading, link, spinner. CSS design tokens for colors, spacing, typography, transitions. Responsive CSS rules now explicitly distinguish `@container` for component-local layout changes from `@media` for viewport and environment behavior, and `PageContent` uses that pattern for its header actions layout.
 
 ## Tooling and tests
 
-Migration CLI script (`tools/migrate.ts`). Playwright browser smoke for login rather than API contract coverage. DB-free Vitest coverage for brands/groups/categories admin handlers, brand/category/item read handlers, and shared validation schemas. Unit tests for `withMinimumDelay` utility.
+Migration CLI script (`tools/migrate.ts`). Playwright browser smoke covers login plus protected dashboard and catalog placeholder restoration flows rather than backend API contracts, and now also checks that `PageContent` header actions respond to container width instead of only viewport width. DB-free Vitest coverage covers brands/groups/categories admin handlers, brand/category/item read handlers, and shared validation schemas. Unit tests also cover `withMinimumDelay`.
 
 ## Seed data
 

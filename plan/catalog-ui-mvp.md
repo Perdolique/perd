@@ -1,40 +1,33 @@
-# Catalog UI MVP
+# Catalog browse baseline UI
 
-**Purpose**: Ship the first user-facing catalog flow using only the existing read APIs. This iteration proves that the current browsing contracts are good enough for real navigation before we add more backend surface area.
+**Purpose**: Replace the current catalog placeholder with the first working `/catalog` browsing flow, while keeping the initial slice limited to category-first navigation and pagination.
 
 ## Scope
 
-- Replace the placeholder home page with a real catalog entry screen.
-- Add a browsable item list flow.
-- Add an item detail page.
-- Do not add new backend endpoints in this iteration.
-
-## Screens
-
-### `/`
-
-Catalog entry screen.
-
-- Fetch `GET /api/equipment/groups` and `GET /api/equipment/categories`.
-- Present groups and categories as separate reference lists. Do not invent a relation between them.
-- Provide a clear path into the catalog item list.
-
-### `/items`
-
-Catalog list screen.
-
-- Fetch `GET /api/equipment/items`.
-- Support existing query parameters only: `categorySlug`, `brandSlug`, `search`, `page`, and `limit`.
-- Start with category-driven browsing. Brand filtering is available when a user enters the screen from a brand context or the UI already has the slug.
+- Replace the placeholder at `/catalog` with a working catalog list page.
+- Fetch `GET /api/equipment/categories` and `GET /api/equipment/items`.
+- Support only `categorySlug` and `page` query parameters in this iteration.
+- Use route query as the single source of truth for the list state.
+- Keep category switching URL-driven. If the list UI changes the selected category, it must update `categorySlug` in the route instead of storing a separate hidden state.
 - Render the existing item summary payload only: item name, brand, and category.
+- Include only the states needed to finish the list workflow: loading, request failure, empty results, and paginated results.
+- Do not add new backend endpoints in this iteration.
+- Do not change `/` beyond existing shell-level placeholder behavior.
+- Do not add `brandSlug`, `search`, or `limit` support in this iteration.
+- Do not add special handling for unrelated query parameters while paginating.
+- Do not add item click-through, inventory actions, dashboard promos, or "coming soon" blocks.
 
-### `/items/[id]`
+## Screen
 
-Item detail screen.
+### `/catalog`
 
-- Fetch `GET /api/equipment/items/[id]`.
-- Show item name, brand, category, status, and normalized property values.
-- Do not add inventory actions yet. That belongs to the inventory UI iteration.
+Catalog list page.
+
+- Start with category-first browsing on the existing categories read API.
+- If no `categorySlug` is present, the page may show all approved items from the existing list API.
+- Do not add a brand browser, search form, limit selector, or any non-working group-based navigation in this iteration.
+- Do not preserve unrelated query parameters during pagination in this iteration; URL parity for those parameters is a separate follow-up slice.
+- Do not add any card or callout that exists only to advertise later iterations.
 
 ## Data contract rules
 
@@ -44,6 +37,9 @@ Item detail screen.
 
 ## Acceptance
 
-- A signed-in user can open `/`, navigate into `/items`, and reach `/items/[id]`.
-- The item list and item detail screens work from the existing read APIs without backend changes.
-- The UI does not rely on any implied group-to-category relationship.
+- A signed-in user can open `/catalog` directly and get a working list without visiting `/`.
+- A signed-in user can deep-link into `/catalog?categorySlug=<slug>` and get a working list without backend changes.
+- The item list screen uses route query as the only persisted list state.
+- The item list screen supports pagination through the existing `page` parameter.
+- The UI does not expose unfinished group-based navigation or rely on any implied group-to-category relationship.
+- The iteration does not require `/`, URL parity for other filters, item detail, or inventory ownership actions to feel complete.

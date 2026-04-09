@@ -4,16 +4,16 @@
 
 ## Depends on
 
-- [Catalog UI MVP](plan/catalog-ui-mvp.md)
+- [Catalog item detail UI](plan/catalog-item-detail-ui.md)
 - [User inventory API](plan/user-inventory-api.md)
 
 ## Screens and actions
 
-### `/items/[id]`
+### `/catalog/[id]`
 
 Add the first inventory action to the existing item detail page.
 
-- Fetch the item detail exactly as in the catalog UI iteration.
+- Fetch the existing item detail exactly as in the catalog item detail iteration.
 - Add an "I have this" action that calls `POST /api/user/equipment`.
 - Show a remove action only after the page knows the user already has the item. Use the inventory row id from the inventory API for deletion.
 
@@ -29,10 +29,12 @@ Personal inventory page.
 
 - Keep the interactions optimistic only if the implementation can recover cleanly from `409` and other request failures. Otherwise use explicit loading and refresh states.
 - Do not add item editing, notes, quantities, or custom user metadata in this iteration.
-- Reuse the existing browsing screens and components before creating new abstractions.
+- Keep inventory ownership actions on the item detail page only. Do not add them to the catalog list in this iteration.
+- Reuse the established catalog screens and shared components before creating new abstractions.
 
 ## Acceptance
 
 - A signed-in user can add an approved item from its detail page.
 - The item then appears on `/inventory`.
 - The same user can remove the inventory row and see the list update.
+- `/inventory` remains a focused list-management screen without item editing or extra user metadata.

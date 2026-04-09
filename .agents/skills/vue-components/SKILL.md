@@ -9,6 +9,8 @@ description: Vue component conventions and patterns for the Perd project. Use wh
 
 Use the standard order: `<template>`, `<script>`, `<style>`.
 
+If a UI has a small, fixed number of known elements and all labels, props, and targets are already known, write those elements directly in the template. Do not introduce arrays, `v-for`, config objects, or extra computed state just to make static markup look generic. Use config-driven rendering only when the structure is genuinely dynamic or repeated enough to justify abstraction.
+
 Type exports that other components need go in a separate non-setup script block above the setup block:
 
 ```vue
@@ -121,6 +123,17 @@ useEventListener(dialogRef, 'close', () => {
 document.addEventListener('pointerdown', handler)
 ```
 
+## Accessibility
+
+All UI must be accessible and meet at least **WCAG 2.1 AA**. Treat this as a project requirement, not a nice-to-have.
+
+- Prefer semantic HTML over `div` / `span` plus manual `role` attributes when a native element already provides the correct behavior.
+- All interactive elements must be keyboard accessible and have a visible focus state.
+- Icon-only buttons, form inputs, and custom controls must have an accessible name via `aria-label`, `aria-labelledby`, or an associated `label`.
+- Decorative elements should be hidden from assistive technology with `aria-hidden="true"`. Informative images must have a meaningful `alt`.
+- Do not rely on color alone to communicate meaning, state, or validation errors.
+- If a custom control is necessary, it must match the native equivalent's keyboard, focus, and ARIA behavior.
+
 ## Styling
 
 ### CSS Modules Only
@@ -175,6 +188,14 @@ The project targets modern browsers only. Use these freely:
 - **Range media queries** — `@media (width >= 768px)`, never `@media screen and (min-width: 768px)`
 - **`@layer`** for CSS organization (reset, colors, spacings, sizes, transitions, typography)
 - **CSS custom properties** for all design tokens (`--spacing-*`, `--color-*`, `--font-size-*`, etc.)
+
+Prefer native CSS features that are already part of the supported browser baseline over legacy compatibility workarounds.
+
+### Responsive Rules
+
+Use `@container` for component-level responsive layout changes that should react to the space actually available inside the component.
+
+Keep `@media` for viewport- and environment-level behavior such as app shell breakpoints, fullscreen page treatments, overlays, and user preference queries like `prefers-color-scheme`.
 
 ### Media Queries
 
