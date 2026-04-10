@@ -11,6 +11,10 @@ updates:
       interval: cron
       cronjob: "0 18 * * *"
       timezone: "Europe/Tallinn"
+    ignore:
+      - dependency-name: oxlint-tsgolint
+        versions:
+          - 0.20.0 # https://github.com/oxc-project/tsgolint/issues/875
     groups:
       all-updates:
         applies-to: version-updates
