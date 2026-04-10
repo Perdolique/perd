@@ -1,8 +1,8 @@
 <template>
-  <PageContent page-title="Dashboard">
+  <PageContent page-title="Catalog">
     <div :class="$style.component">
-      <PagePlaceholder emoji="🐕💨" title="Welcome to Perd.">
-        Your dashboard will live here. The catalog browsing flow is still being rebuilt in staged iterations.
+      <PagePlaceholder emoji="🎒" title="Catalog is being rebuilt.">
+        This area is temporarily a placeholder while we rebuild the browsing flow in staged iterations on top of the existing read APIs.
       </PagePlaceholder>
     </div>
   </PageContent>

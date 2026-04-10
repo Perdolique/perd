@@ -12,23 +12,27 @@ Guest session creation, logout, session middleware protecting `/api/*` routes. B
 
 ## Equipment browsing API
 
-Authenticated read-only catalog endpoints for groups, categories, brands, item lists, and item detail. Includes category property definitions with enum options, narrow brand detail metadata, and item pagination/filtering.
+Authenticated read-only catalog endpoints for groups, categories, brands, item lists, and item detail. Groups and categories stay independent reference data, category detail includes enum options only where they matter, brand detail stays intentionally narrow, and item list/detail responses provide the backend contract that future UI slices should reuse before asking for new joins.
 
-## Admin catalog management
+## Admin reference-data management
 
-Admin-only Brands, Groups, and Categories CRUD implemented under `/api/equipment/brands`, `/api/equipment/groups`, and `/api/equipment/categories`. Category property and enum option management is implemented under nested category routes so admins can define EAV metadata before item creation. Public detail reads stay on `slug`, while admin `PATCH` and `DELETE` use stable numeric `id`. Successful create, update, and delete operations log to `contributions`. Brand/category usage by `equipment_items` is protected at the FK level with `restrict` deletes so reference cleanup cannot cascade into catalog or user inventory records. Enum option deletes are blocked with `409` when the option slug is already used by existing item property values.
+Admin-only Brands, Groups, and Categories CRUD is implemented under `/api/equipment/brands`, `/api/equipment/groups`, and `/api/equipment/categories`, including the shared validation and contribution logging conventions that later item writes will reuse. Category property and enum option management is implemented under nested category routes so admins can define EAV metadata before item creation. Public detail reads stay on `slug`, while admin `PATCH` and `DELETE` use stable numeric `id`. Brand/category usage by `equipment_items` is protected at the FK level with `restrict` deletes so reference cleanup cannot cascade into catalog or user inventory records. Enum option deletes are blocked with `409` when the option slug is already used by existing item property values.
+
+## Frontend foundation
+
+Application shell, login, account, and OAuth callback pages are implemented. The shell includes primary navigation for the catalog area at `/catalog`, while `/` remains a placeholder dashboard route. The catalog screen is still a placeholder while the user-facing browsing flow is rebuilt in staged iterations on top of the existing read API contracts. Item detail and inventory actions remain active roadmap work.
 
 ## Twitch OAuth
 
 Redirect to Twitch, token exchange, user info fetch, new user creation with OAuth account linking, login via existing Twitch account, and redirect restoration through OAuth `state`. Missing: CSRF-hardening for `state`, linking existing account to Twitch.
 
-## App shell and frontend foundation
+## Shared UI components
 
-Nuxt layout with header, footer, sidebar. Login page, account page, Twitch callback page. Shared UI components: buttons, cards, dialogs, menu, heading, link, spinner. CSS design tokens for colors, spacing, typography, transitions.
+Nuxt layout with header, footer, sidebar. Shared UI components: buttons, cards, dialogs, menu, heading, link, spinner. CSS design tokens for colors, spacing, typography, transitions. Responsive CSS rules now explicitly distinguish `@container` for component-local layout changes from `@media` for viewport and environment behavior, and `PageContent` uses that pattern for its header actions layout.
 
 ## Tooling and tests
 
-Migration CLI script (`tools/migrate.ts`). Playwright browser smoke for login rather than API contract coverage. DB-free Vitest coverage for brands/groups/categories admin handlers, brand/category/item read handlers, and shared validation schemas. Unit tests for `withMinimumDelay` utility.
+Migration CLI script (`tools/migrate.ts`). Playwright browser smoke covers login plus protected dashboard and catalog placeholder restoration flows rather than backend API contracts, and now also checks that `PageContent` header actions respond to container width instead of only viewport width. DB-free Vitest coverage covers brands/groups/categories admin handlers, brand/category/item read handlers, and shared validation schemas. Unit tests also cover `withMinimumDelay`.
 
 ## Seed data
 

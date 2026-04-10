@@ -17,17 +17,16 @@ test.describe('Login page', () => {
     await page.route('**/api/auth/create-session', async (route) => {
       await route.fulfill({
         status: 201,
-        contentType: 'application/json',
-        body: JSON.stringify({
+
+        json: {
           userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
-        })
+        }
       })
     })
 
     await page.route('**/api/equipment/brands', async (route) => {
       await route.fulfill({
-        contentType: 'application/json',
-        body: '[]'
+        json: []
       })
     })
 
@@ -40,18 +39,16 @@ test.describe('Login page', () => {
   test('should restore api redirects after the twitch callback', async ({ page }) => {
     await page.route('**/api/oauth/twitch', async (route) => {
       await route.fulfill({
-        contentType: 'application/json',
-        body: JSON.stringify({
+        json: {
           userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
           isAdmin: false
-        })
+        }
       })
     })
 
     await page.route('**/api/equipment/brands', async (route) => {
       await route.fulfill({
-        contentType: 'application/json',
-        body: '[]'
+        json: []
       })
     })
 

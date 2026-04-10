@@ -1,39 +1,28 @@
-# Equipment catalog: Implementation plan
+# Equipment catalog: Active roadmap
 
-[Completed work](plan/completed.md) — summary of already implemented features.
+[Completed work](plan/completed.md) — implemented product and platform slices.
 [Technical debt](plan/tech-debt.md) — accepted follow-up work that is intentionally deferred.
+[Container queries audit](plan/container-queries-audit.md) — responsive CSS decision rules and the current UI audit.
 
 Architecture decisions are captured in `AGENTS.md`.
 
-## Iteration order
+## Active iteration order
 
-### 1. Browsing API
+- [Catalog browse baseline UI](plan/catalog-ui-mvp.md) — first working `/catalog` page with category-first browsing and pagination
+- [Catalog list URL parity](plan/catalog-list-url-parity.md) — support existing item-list query parameters on `/catalog` without adding new controls
+- [Catalog item detail UI](plan/catalog-item-detail-ui.md) — first read-only item detail screen linked from the established catalog list flow
+- [User inventory API](plan/user-inventory-api.md) — list, add, and remove items in a user's personal gear list
+- [Inventory UI MVP](plan/inventory-ui-mvp.md) — user inventory page plus "I have this" actions from the item detail flow
+- [Admin item management overview](plan/admin-api.md) — shared rules for the remaining admin item lifecycle work
+- [Admin item creation API](plan/admin-item-create-api.md) — transactional item creation with property values and contribution logging
+- [Admin item creation UI](plan/admin-item-create-ui.md) — minimal admin form for creating catalog items
+- [Admin item maintenance API](plan/admin-item-maintenance-api.md) — update and delete existing catalog items
+- [Admin item maintenance UI](plan/admin-item-maintenance-ui.md) — minimal admin edit and delete flows for items
 
-- [Equipment browsing API](plan/browsing-api.md) — read-only endpoints for catalog navigation (groups, categories, items, brands)
+## Planning rules
 
-### 2. Admin catalog management
-
-- [Admin management overview](plan/admin-api.md) — CRUD for catalog data (admin only) with contribution logging
-
-Tasks in execution order:
-
-1. [Foundations](plan/admin-management/01-foundations.md) — shared patterns for all admin endpoints
-1. [Brands CRUD](plan/admin-management/02-brands.md) — create, update, delete brands
-1. [Groups CRUD](plan/admin-management/03-groups.md) — create, update, delete groups
-1. [Categories CRUD](plan/admin-management/04-categories.md) — create, update, delete categories
-1. [Category properties](plan/admin-management/05-category-properties.md) — manage property definitions and enum options
-1. [Item creation](plan/admin-management/06-items-create.md) — create items with property values (multi-table transaction)
-1. [Item maintenance](plan/admin-management/07-items-maintenance.md) — update and delete items
-
-### 3. User inventory
-
-- [User inventory API](plan/user-inventory-api.md) — users add/remove items to their personal gear list
-
-### 4. Frontend
-
-- [Frontend](plan/frontend.md) — UI for browsing, item detail, user inventory, admin management
-
-## Someday
-
-- **Expand DB-free Vitest handler coverage** — the current catalog handlers already use the baseline pattern: direct handler imports plus mocked `event`, `dbHttp`, and auth/body helpers. Extend the same approach to the remaining API endpoints as they stabilize.
-- **Refine category detail loading** — in `GET /api/equipment/categories/[slug]`, fetch enum options only for enum properties instead of loading relation data that is later discarded for non-enum properties.
+- Keep active roadmap files limited to work that is still ahead of us. Move shipped detail into `plan/completed.md` instead of leaving stale execution specs in the main flow.
+- Add a new API iteration only when a concrete screen or user workflow needs it.
+- Treat existing browsing read contracts as the default frontend data source unless a UI slice proves they are insufficient.
+- Each UI iteration must ship one complete in-scope workflow. Do not add placeholder blocks, teaser copy, or navigation to unfinished product slices inside that iteration.
+- Shell-level placeholder routes are acceptable only when they stay outside the iteration scope, acceptance, and primary navigation for the active workflow.

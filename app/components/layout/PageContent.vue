@@ -1,6 +1,12 @@
 <template>
-  <div :class="$style.layout">
-    <div :class="$style.header">
+  <div
+    :class="$style.layout"
+    data-testid="page-content"
+  >
+    <div
+      :class="$style.header"
+      data-testid="page-content-header"
+    >
       <PerdHeading
         v-if="pageTitle"
         :class="$style.heading"
@@ -12,6 +18,7 @@
       <div
         v-if="$slots.actions"
         :class="$style.actions"
+        data-testid="page-content-actions"
       >
         <slot name="actions" />
       </div>
@@ -37,6 +44,7 @@
   .layout {
     display: grid;
     row-gap: var(--spacing-32);
+    container-type: inline-size;
   }
 
   .header {
@@ -44,8 +52,9 @@
     gap: var(--spacing-16);
     justify-content: space-between;
 
-    @media (width >= 414px) {
+    @container (width >= 414px) {
       grid-template-columns: 1fr auto;
+      align-items: start;
     }
   }
 
@@ -53,9 +62,11 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
   }
 
   .actions {
     justify-self: start;
+    min-width: 0;
   }
 </style>

@@ -12,11 +12,47 @@
         collapsed: isSidebarCollapsed,
         shown: isSidebarShown
       }]"
+      data-testid="sidebar"
     >
-      <div />
+      <nav
+        :class="$style.navigation"
+        aria-label="Sidebar navigation"
+      >
+        <NuxtLink
+          to="/"
+          :class="$style.navigationLink"
+          exact-active-class="active"
+        >
+          <Icon
+            name="tabler:layout-dashboard"
+            size="1.5em"
+          />
+
+          <span :class="$style.navigationLabel">
+            Dashboard
+          </span>
+        </NuxtLink>
+
+        <NuxtLink
+          to="/catalog"
+          :class="$style.navigationLink"
+          active-class="active"
+        >
+          <Icon
+            name="tabler:package"
+            size="1.5em"
+          />
+
+          <span :class="$style.navigationLabel">
+            Catalog
+          </span>
+        </NuxtLink>
+      </nav>
 
       <button
         :class="$style.toggle"
+        aria-label="Toggle sidebar"
+        data-testid="sidebar-toggle"
         @click="toggleSidebarDesktop"
       >
         <Icon
@@ -30,18 +66,22 @@
 
 <script lang="ts" setup>
   import { watch } from 'vue';
-  import { useAppState, useRouter } from '#imports';
+  import { useAppState, useRoute } from '#imports';
 
   const { isSidebarCollapsed, toggleSidebarDesktop, isSidebarShown, hideSidebar } = useAppState()
-  const router = useRouter()
+  const route = useRoute()
 
-  watch(router.currentRoute, hideSidebar);
+  watch(() => route.fullPath, hideSidebar);
 </script>
 
 <style module>
   .component {
     position: relative;
     z-index: 3;
+    --sidebar-width: 200px;
+    --sidebar-collapsed-width: 56px;
+    --sidebar-control-size: 40px;
+    --sidebar-collapsed-padding: var(--spacing-8);
   }
 
   .overlay {
@@ -82,39 +122,122 @@
   .content {
     height: 100%;
     position: absolute;
-    width: 200px;
+    width: var(--sidebar-width);
     display: grid;
     align-content: space-between;
     background-color: var(--color-background-200);
     overflow: hidden;
+    visibility: hidden;
+    pointer-events: none;
     translate: -100% 0;
-    transition: translate var(--transition-time-quick) ease-out;
+    transition:
+      translate var(--transition-time-quick) ease-out,
+      visibility var(--transition-time-quick) allow-discrete;
 
     &:global(.shown) {
+      visibility: visible;
+      pointer-events: auto;
       translate: 0 0;
     }
 
     @media (width >= 768px) {
       position: relative;
       transition: width var(--transition-time-quick) ease-out;
+      visibility: visible;
+      pointer-events: auto;
       translate: 0 0;
 
       &:global(.collapsed) {
-        width: 50px;
+        width: var(--sidebar-collapsed-width);
+      }
+    }
+  }
+
+  .navigation {
+    display: grid;
+    align-content: start;
+    gap: var(--spacing-8);
+    padding: var(--spacing-12);
+
+    @media (width >= 768px) {
+      .content:global(.collapsed) & {
+        justify-items: center;
+        gap: var(--spacing-4);
+        padding: var(--sidebar-collapsed-padding);
+      }
+    }
+  }
+
+  .navigationLink {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-12);
+    min-height: 48px;
+    padding: var(--spacing-12);
+    border-radius: var(--border-radius-12);
+    color: var(--color-text);
+    text-decoration: none;
+    outline: none;
+    transition:
+      background-color var(--transition-time-quick) ease-out,
+      color var(--transition-time-quick) ease-out;
+
+    &:global(.active),
+    &:focus-visible,
+    &:hover {
+      background-color: var(--color-background-300);
+    }
+
+    &:global(.active) {
+      color: var(--color-primary-700);
+    }
+
+    @media (width >= 768px) {
+      .content:global(.collapsed) & {
+        justify-content: center;
+        width: var(--sidebar-control-size);
+        min-width: var(--sidebar-control-size);
+        min-height: var(--sidebar-control-size);
+        padding: 0;
+        gap: 0;
+      }
+    }
+  }
+
+  .navigationLabel {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    transition: opacity var(--transition-time-quick) ease-out;
+
+    @media (width >= 768px) {
+      .content:global(.collapsed) & {
+        opacity: 0;
+        width: 0;
       }
     }
   }
 
   .toggle {
     display: none;
-    padding: var(--spacing-12);
+    width: var(--sidebar-control-size);
+    min-width: var(--sidebar-control-size);
+    min-height: var(--sidebar-control-size);
+    margin: var(--spacing-12);
+    padding: var(--spacing-8);
     background-color: var(--color-background-200);
     outline: none;
-    text-align: left;
+    border-radius: var(--border-radius-12);
+    align-items: center;
+    justify-content: center;
     transition: background-color var(--transition-time-quick) ease-out;
 
     @media (width >= 768px) {
-      display: block;
+      display: flex;
+
+      .content:global(.collapsed) & {
+        margin: var(--sidebar-collapsed-padding);
+      }
     }
 
     &:focus-visible,

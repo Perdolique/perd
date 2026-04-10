@@ -1,40 +1,44 @@
-# Admin catalog management API
+# Admin item management overview
 
-**Purpose**: Admins need CRUD operations to populate and maintain the equipment catalog. This is the only way to manage catalog data in MVP (no user submissions). Every write operation must log to `contributions` table for future gamification — this is cheap (one insert) and avoids retroactive data recovery later. All endpoints use `validateAdminUser(event)` from `server/utils/admin.ts` which returns 401 if not logged in, 403 if not admin. All external request inputs are validated with Valibot schemas through h3 validated helpers: `readValidatedBody` for bodies, `getValidatedRouterParams` for route params, and `getValidatedQuery` for query strings. Database writes that need transactions (e.g. creating an item with property values + contribution log) should use the WebSocket client; simple single-table writes can use the HTTP client.
+**Purpose**: Reference-data admin management is already shipped. The remaining admin roadmap covers the catalog item lifecycle: creating items, then editing and deleting them, and finally exposing those flows through minimal admin screens. Every write operation continues to log to `contributions`.
 
-## Route policy
+## Completed baseline
 
-Public read routes for reference data use `slug` in detail URLs. Admin mutation routes for the same reference data use stable `id` route params for `PATCH` and `DELETE`, because `slug` is editable content.
+- Admin CRUD for brands, groups, and categories is implemented.
+- Category property and enum option management is implemented under nested category routes.
+- Public reference-data reads use `slug`, while admin mutations use stable `id` params.
+- Brand and category deletes are blocked by `equipment_items` foreign keys with `onDelete: 'restrict'`; cleanup cannot silently remove existing items.
+- Nested category-property delete handlers use the current Nuxt file layout (`.../[propertyId]/index.delete.ts` and `.../[optionId]/index.delete.ts`), not flat sibling delete files.
 
-## Tasks
+## Remaining admin iterations
 
-Ordered by execution sequence (simple single-table writes first, complex multi-table transactions last):
+1. [Admin item creation API](plan/admin-item-create-api.md)
+1. [Admin item creation UI](plan/admin-item-create-ui.md)
+1. [Admin item maintenance API](plan/admin-item-maintenance-api.md)
+1. [Admin item maintenance UI](plan/admin-item-maintenance-ui.md)
 
-1. [Foundations](admin-management/01-foundations.md) — shared patterns for all admin endpoints
-1. [Brands CRUD](admin-management/02-brands.md) — create, update, delete brands
-1. [Groups CRUD](admin-management/03-groups.md) — create, update, delete groups
-1. [Categories CRUD](admin-management/04-categories.md) — create, update, delete categories
-1. [Category properties](admin-management/05-category-properties.md) — manage property definitions and enum options
-1. [Item creation](admin-management/06-items-create.md) — create items with property values (multi-table transaction)
-1. [Item maintenance](admin-management/07-items-maintenance.md) — update and delete items
+## Shared rules
 
-## Validation
+- All admin endpoints use `validateAdminUser(event)` from `server/utils/admin.ts`.
+- Validate external inputs through Valibot schemas in `server/utils/validation/schemas.ts` and h3 helpers such as `readValidatedBody`, `getValidatedRouterParams`, and `getValidatedQuery`.
+- Use the WebSocket client for transaction-bound writes. Simple single-table writes may use the HTTP client.
+- `targetId` in `contributions` is always a stringified primary key: decimal string for `serial` entities and canonical UUID string for UUID entities.
 
-Use Valibot schemas in `server/utils/validation/schemas.ts`. Add new schemas for each entity creation/update and any route/query input the current endpoint accepts. Validate with h3 helpers (`readValidatedBody`, `getValidatedRouterParams`, `getValidatedQuery`) — they throw 400 automatically on validation failure with structured error details.
+## Contribution actions in use
 
-## Contribution logging
-
-Every write operation inserts a row into `contributions`:
-
-```json
-{
-  "userId": "<admin-uuid>",
-  "action": "create_item",
-  "targetId": "0195f6e8-8f44-74f6-bc9a-5c8f7df477d7",
-  "metadata": { "name": "NeoAir XLite NXT Regular", "brandId": 1, "categoryId": 1 }
-}
-```
-
-`targetId` always stores the changed entity primary key as a string. Use a decimal string for `serial` IDs and a canonical UUID string for UUID-based entities.
-
-Actions: `create_item`, `update_item`, `delete_item`, `create_brand`, `update_brand`, `delete_brand`, `create_group`, `update_group`, `delete_group`, `create_category`, `update_category`, `delete_category`.
+- `create_brand`
+- `update_brand`
+- `delete_brand`
+- `create_group`
+- `update_group`
+- `delete_group`
+- `create_category`
+- `update_category`
+- `delete_category`
+- `create_category_property`
+- `delete_category_property`
+- `create_property_enum_option`
+- `delete_property_enum_option`
+- `create_item`
+- `update_item`
+- `delete_item`
