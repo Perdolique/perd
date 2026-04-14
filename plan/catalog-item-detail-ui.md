@@ -5,14 +5,13 @@
 ## Depends on
 
 - [Catalog browse baseline UI](plan/catalog-ui-mvp.md)
-- [Catalog list URL parity](plan/catalog-list-url-parity.md)
 
 ## Scope
 
 - Add the first item detail page at `/catalog/[id]`.
 - Reuse the established catalog list flow and existing read APIs.
 - Do not add inventory actions in this iteration.
-- Do not change the list payload or list filtering behavior.
+- Do not change the list payload or reintroduce catalog filters in this iteration.
 
 ## Screen
 

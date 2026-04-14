@@ -45,9 +45,15 @@ function createListDb({
     }
   })
 
-  const itemsWhereMock = vi.fn(() => {
+  const itemsOrderByMock = vi.fn(() => {
     return {
       limit: itemsLimitMock
+    }
+  })
+
+  const itemsWhereMock = vi.fn(() => {
+    return {
+      orderBy: itemsOrderByMock
     }
   })
 
@@ -111,6 +117,7 @@ function createListDb({
     },
     itemsLimitMock,
     itemsOffsetMock,
+    itemsOrderByMock,
     itemsWhereMock
   }
 }
@@ -168,7 +175,7 @@ describe('item read handlers', () => {
         }
       }]
 
-      const { dbHttp, itemsLimitMock, itemsOffsetMock, itemsWhereMock } = createListDb({
+      const { dbHttp, itemsLimitMock, itemsOffsetMock, itemsOrderByMock, itemsWhereMock } = createListDb({
         items,
         total: 42
       })
@@ -193,8 +200,53 @@ describe('item read handlers', () => {
       })
 
       expect(itemsWhereMock).toHaveBeenCalledTimes(1)
+      expect(itemsOrderByMock).toHaveBeenCalledTimes(1)
       expect(itemsLimitMock).toHaveBeenCalledWith(10)
       expect(itemsOffsetMock).toHaveBeenCalledWith(10)
+    })
+
+    test('should use the clamped list limit returned by query validation', async () => {
+      const items = [{
+        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
+        name: 'PocketRocket Deluxe',
+
+        brand: {
+          name: 'MSR',
+          slug: 'msr'
+        },
+
+        category: {
+          name: 'Stoves',
+          slug: 'stoves'
+        }
+      }]
+
+      const { dbHttp, itemsLimitMock, itemsOffsetMock } = createListDb({
+        items,
+        total: 250
+      })
+
+      const event = createTestEvent(dbHttp)
+
+      getValidatedQueryMock.mockResolvedValue({
+        brandSlug: undefined,
+        categorySlug: undefined,
+        limit: 100,
+        page: 3,
+        search: ''
+      })
+
+      const result = await listItemsHandler(event)
+
+      expect(result).toStrictEqual({
+        items,
+        limit: 100,
+        page: 3,
+        total: 250
+      })
+
+      expect(itemsLimitMock).toHaveBeenCalledWith(100)
+      expect(itemsOffsetMock).toHaveBeenCalledWith(200)
     })
 
     test('should return 400 when query validation fails', async () => {

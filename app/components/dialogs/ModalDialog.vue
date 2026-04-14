@@ -41,6 +41,10 @@
   .dialog {
     --transition-duration: 0.3s;
 
+    padding: 0;
+    border: none;
+    background: none;
+
     /* Apply transitions */
     opacity: 0;
     translate: 0 -20px;

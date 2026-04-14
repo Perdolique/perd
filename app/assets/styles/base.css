@@ -20,15 +20,3 @@ body {
 .perd-root {
   height: 100dvh;
 }
-
-dialog {
-  color: var(--color-text);
-}
-
-ul {
-  margin-left: 2rem;
-}
-
-strong {
-  font-weight: var(--font-weight-bold);
-}

@@ -1,21 +1,19 @@
 # Catalog browse baseline UI
 
-**Purpose**: Replace the current catalog placeholder with the first working `/catalog` browsing flow, while keeping the initial slice limited to category-first navigation and pagination.
+**Purpose**: Replace the current catalog placeholder with the first working `/catalog` browsing flow, while keeping the initial slice limited to a compact all-items list and pagination.
 
 ## Scope
 
 - Replace the placeholder at `/catalog` with a working catalog list page.
-- Fetch `GET /api/equipment/categories` and `GET /api/equipment/items`.
-- Support only `categorySlug` and `page` query parameters in this iteration.
-- Use route query as the single source of truth for the list state.
-- Keep category switching URL-driven. If the list UI changes the selected category, it must update `categorySlug` in the route instead of storing a separate hidden state.
+- Fetch only `GET /api/equipment/items` for this iteration.
+- Support only `page` in the user-space URL for this iteration.
+- Use route query as the single source of truth for pagination state.
 - Render the existing item summary payload only: item name, brand, and category.
+- Present the list as a compact table-like view rather than large cards.
 - Include only the states needed to finish the list workflow: loading, request failure, empty results, and paginated results.
 - Do not add new backend endpoints in this iteration.
 - Do not change `/` beyond existing shell-level placeholder behavior.
-- Do not add `brandSlug`, `search`, or `limit` support in this iteration.
-- Do not add special handling for unrelated query parameters while paginating.
-- Do not add item click-through, inventory actions, dashboard promos, or "coming soon" blocks.
+- Do not add visible filters, search, grouping UI, item click-through, inventory actions, dashboard promos, or "coming soon" blocks.
 
 ## Screen
 
@@ -23,11 +21,10 @@
 
 Catalog list page.
 
-- Start with category-first browsing on the existing categories read API.
-- If no `categorySlug` is present, the page may show all approved items from the existing list API.
-- Do not add a brand browser, search form, limit selector, or any non-working group-based navigation in this iteration.
-- Do not preserve unrelated query parameters during pagination in this iteration; URL parity for those parameters is a separate follow-up slice.
-- Do not add any card or callout that exists only to advertise later iterations.
+- Show all visible catalog items from the existing list API.
+- Keep the page UI intentionally minimal: page title, short item count summary, compact table-like list, and pagination.
+- Keep unsupported query keys out of the page state; only `page` is part of the public contract for this slice.
+- Do not expose brand, category, or group browsing controls in this iteration.
 
 ## Data contract rules
 
@@ -38,8 +35,8 @@ Catalog list page.
 ## Acceptance
 
 - A signed-in user can open `/catalog` directly and get a working list without visiting `/`.
-- A signed-in user can deep-link into `/catalog?categorySlug=<slug>` and get a working list without backend changes.
-- The item list screen uses route query as the only persisted list state.
+- A signed-in user can deep-link into `/catalog?page=<n>` and get a working list without backend changes.
+- The item list screen uses route query as the only persisted pagination state.
 - The item list screen supports pagination through the existing `page` parameter.
-- The UI does not expose unfinished group-based navigation or rely on any implied group-to-category relationship.
-- The iteration does not require `/`, URL parity for other filters, item detail, or inventory ownership actions to feel complete.
+- The UI does not expose unfinished filters, group-based navigation, item detail links, or inventory actions.
+- The iteration does not require `/`, extra URL parity, item detail, or inventory ownership actions to feel complete.

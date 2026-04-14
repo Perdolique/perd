@@ -20,7 +20,11 @@ Admin-only Brands, Groups, and Categories CRUD is implemented under `/api/equipm
 
 ## Frontend foundation
 
-Application shell, login, account, and OAuth callback pages are implemented. The shell includes primary navigation for the catalog area at `/catalog`, while `/` remains a placeholder dashboard route. The catalog screen is still a placeholder while the user-facing browsing flow is rebuilt in staged iterations on top of the existing read API contracts. Item detail and inventory actions remain active roadmap work.
+Application shell, login, account, and OAuth callback pages are implemented. The shell includes primary navigation for the catalog area at `/catalog`, while `/` remains a placeholder dashboard route.
+
+## Catalog browse UI
+
+`/catalog` now ships the first working read-only browsing flow on top of the existing items read API. The page keeps the UI intentionally minimal: title, compact table-like list, simple item count summary, and pagination. Route query is used only for the public `page` key, unsupported query keys are not preserved by list interactions, and the backend item list uses a stable name/id ordering so pagination does not drift across requests. Item detail and inventory actions remain active roadmap work.
 
 ## Twitch OAuth
 
@@ -32,7 +36,7 @@ Nuxt layout with header, footer, sidebar. Shared UI components: buttons, cards, 
 
 ## Tooling and tests
 
-Migration CLI script (`tools/migrate.ts`). Playwright browser smoke covers login plus protected dashboard and catalog placeholder restoration flows rather than backend API contracts, and now also checks that `PageContent` header actions respond to container width instead of only viewport width. DB-free Vitest coverage covers brands/groups/categories admin handlers, brand/category/item read handlers, and shared validation schemas. Unit tests also cover `withMinimumDelay`.
+Migration CLI script (`tools/migrate.ts`). Playwright browser smoke covers login plus protected dashboard and catalog browsing flows rather than backend API contracts, and now also checks that `PageContent` header actions respond to container width instead of only viewport width. DB-free Vitest coverage covers brands/groups/categories admin handlers, brand/category/item read handlers, shared validation schemas, and the catalog query adapter that maps user-space URLs onto the existing items list API. Unit tests also cover `withMinimumDelay`.
 
 ## Seed data
 

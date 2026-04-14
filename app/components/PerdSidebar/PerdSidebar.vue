@@ -219,6 +219,9 @@
   }
 
   .toggle {
+    appearance: none;
+    border: none;
+    cursor: pointer;
     display: none;
     width: var(--sidebar-control-size);
     min-width: var(--sidebar-control-size);

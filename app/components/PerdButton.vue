@@ -40,6 +40,9 @@
 
 <style module>
   .button {
+    appearance: none;
+    border: none;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -87,6 +90,7 @@
     }
 
     &:disabled {
+      cursor: not-allowed;
       color: var(--color-primary-100);
       background-color: var(--color-primary-300);
 
