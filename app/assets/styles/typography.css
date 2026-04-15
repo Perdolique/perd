@@ -6,3 +6,12 @@
   --font-weight-medium: 500;
   --font-weight-bold: 700;
 }
+
+strong {
+  font-weight: var(--font-weight-bold);
+}
+
+ul,
+ol {
+  padding-inline-start: 2rem;
+}

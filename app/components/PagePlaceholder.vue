@@ -13,6 +13,10 @@
         <p :class="$style.content">
           <slot />
         </p>
+
+        <div v-if="$slots.actions" :class="$style.actions">
+          <slot name="actions" />
+        </div>
       </div>
     </PerdCard>
   </div>
@@ -62,5 +66,10 @@
     max-width: 32rem;
     color: var(--color-text-secondary);
     line-height: 1.5;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: center;
   }
 </style>

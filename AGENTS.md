@@ -29,6 +29,7 @@ Before any task, check whether a local skill matches the domain and follow it.
 ## Workflow rules
 
 - Files imported by standalone Node or `tsx` scripts, including `tools/*.ts`, migrations, seeds, and their transitive dependencies, must not rely on Nuxt-only aliases like `~/` or `@@/`. If they use `#shared/*` or `#server/*`, keep those aliases backed by `package.json#imports`.
+- Do not implement fixes, features, compatibility branches, or refactors unless they address a reproducible problem, an explicitly requested behavior, or a currently supported project scenario. Treat hypothetical improvements and broader compatibility ideas as follow-up work, not as justification for changing the current behavior.
 - After any architecture, route-convention, data-model, or test-strategy change, update the relevant docs in the same change. This can include `AGENTS.md`, `plan/PLAN.md`, `plan/completed.md`, or the detailed roadmap file that changed.
 
 ## Verification matrix

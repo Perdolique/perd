@@ -69,4 +69,10 @@ async function validateSessionUser(event: H3Event<EventHandlerRequest>) {
   return userId
 }
 
-export { useAppSession, getAppSession, updateAppSession, clearAppSession, validateSessionUser }
+export {
+  useAppSession,
+  getAppSession,
+  updateAppSession,
+  clearAppSession,
+  validateSessionUser
+}

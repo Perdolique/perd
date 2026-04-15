@@ -86,6 +86,9 @@
   }
 
   .sidebarToggle {
+    appearance: none;
+    border: none;
+    cursor: pointer;
     display: flex;
     padding: var(--spacing-8);
     align-items: center;
@@ -127,9 +130,11 @@
   }
 
   .profileTrigger {
+    appearance: none;
+    border: none;
+    cursor: pointer;
     width: 40px;
     height: 40px;
-    cursor: pointer;
     padding: var(--spacing-8);
     border-radius: var(--border-radius-12);
     color: var(--color-text);

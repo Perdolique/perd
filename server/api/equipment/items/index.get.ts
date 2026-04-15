@@ -1,9 +1,33 @@
-import { and, count, eq, ilike, type SQL } from 'drizzle-orm'
+import { and, asc, count, eq, ilike, type SQL } from 'drizzle-orm'
 import { defineEventHandler, getValidatedQuery } from 'h3'
 import { brands, equipmentCategories, equipmentItems } from '#server/database/schema'
 import { validateItemsListQuery } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event) => {
+interface Brand {
+  name: string;
+  slug: string;
+}
+
+interface Category {
+  name: string;
+  slug: string;
+}
+
+interface EquipmentItem {
+  id: string;
+  name: string;
+  brand: Brand;
+  category: Category;
+}
+
+interface ReturnData {
+  items: EquipmentItem[];
+  limit: number;
+  page: number;
+  total: number;
+}
+
+export default defineEventHandler(async (event) : Promise<ReturnData> => {
   const { dbHttp } = event.context
   const validatedQuery = await getValidatedQuery(event, validateItemsListQuery)
 
@@ -63,6 +87,10 @@ export default defineEventHandler(async (event) => {
       .innerJoin(brands, eq(equipmentItems.brandId, brands.id))
       .innerJoin(equipmentCategories, eq(equipmentItems.categoryId, equipmentCategories.id))
       .where(where)
+      .orderBy(
+        asc(equipmentItems.name),
+        asc(equipmentItems.id)
+      )
       .limit(limit)
       .offset((page - 1) * limit),
 

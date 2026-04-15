@@ -8,8 +8,6 @@ Architecture decisions are captured in `AGENTS.md`.
 
 ## Active iteration order
 
-- [Catalog browse baseline UI](plan/catalog-ui-mvp.md) — first working `/catalog` page with category-first browsing and pagination
-- [Catalog list URL parity](plan/catalog-list-url-parity.md) — support existing item-list query parameters on `/catalog` without adding new controls
 - [Catalog item detail UI](plan/catalog-item-detail-ui.md) — first read-only item detail screen linked from the established catalog list flow
 - [User inventory API](plan/user-inventory-api.md) — list, add, and remove items in a user's personal gear list
 - [Inventory UI MVP](plan/inventory-ui-mvp.md) — user inventory page plus "I have this" actions from the item detail flow
@@ -24,5 +22,6 @@ Architecture decisions are captured in `AGENTS.md`.
 - Keep active roadmap files limited to work that is still ahead of us. Move shipped detail into `plan/completed.md` instead of leaving stale execution specs in the main flow.
 - Add a new API iteration only when a concrete screen or user workflow needs it.
 - Treat existing browsing read contracts as the default frontend data source unless a UI slice proves they are insufficient.
+- Treat user-space catalog URLs as a frontend contract with only the keys that the current screen actually supports.
 - Each UI iteration must ship one complete in-scope workflow. Do not add placeholder blocks, teaser copy, or navigation to unfinished product slices inside that iteration.
 - Shell-level placeholder routes are acceptable only when they stay outside the iteration scope, acceptance, and primary navigation for the active workflow.

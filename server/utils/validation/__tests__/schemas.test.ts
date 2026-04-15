@@ -565,7 +565,19 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each([{ page: 'abc' }, { page: '0' }, { limit: '0' }, { limit: '101' }, { page: ['1'] }])('should reject malformed items list query: %j', (query) => {
+  test('should clamp too-large items list limits to the shared maximum', () => {
+    const result = validateItemsListQuery({
+      limit: '101'
+    })
+
+    expect(result).toStrictEqual({
+      limit: 100,
+      page: 1,
+      search: ''
+    })
+  })
+
+  test.each([{ page: 'abc' }, { page: '0' }, { limit: '0' }, { page: ['1'] }])('should reject malformed items list query: %j', (query) => {
     expect(() => validateItemsListQuery(query)).toThrow()
   })
 

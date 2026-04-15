@@ -46,7 +46,7 @@ const limitQuerySchema = v.pipe(
   v.toNumber(),
   v.integer(),
   v.minValue(1),
-  v.maxValue(100)
+  v.transform((value) => Math.min(value, limits.maxPaginatedListLimit))
 )
 
 const pageQuerySchema = v.pipe(
