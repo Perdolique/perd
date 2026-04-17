@@ -29,7 +29,7 @@ const {
 
     readValidatedBodyMock: vi.fn<typeof h3.readValidatedBody>(),
     setResponseStatusMock: vi.fn<typeof h3.setResponseStatus>(),
-    validateAdminUserMock: vi.fn()
+    validateAdminUserMock: vi.fn<(event: unknown) => Promise<string>>()
   }
 })
 
