@@ -12,6 +12,9 @@
   },
 
   "rules": {
+    // TODO: https://github.com/oxc-project/tsgolint/issues/875
+    "typescript/no-unnecessary-type-arguments": "off",
+
     "eslint/arrow-body-style": ["error", "as-needed", {
       "requireReturnForObjectLiteral": true
     }],
@@ -114,7 +117,17 @@
     "rules": {
       "eslint/max-lines": "off",
       "import/no-namespace": "off",
-      "import/no-relative-parent-imports": "off"
+      "import/no-relative-parent-imports": "off",
+      "vitest/require-mock-type-parameters": "off"
+    }
+  }, {
+    // Playwright tests use @playwright/test, not Vitest globals
+    "files": [
+      "tests/playwright/**/*.ts"
+    ],
+
+    "rules": {
+      "vitest/prefer-importing-vitest-globals": "off"
     }
   }]
 }
