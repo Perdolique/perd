@@ -1,6 +1,6 @@
-# Container queries audit
+# Container queries
 
-Compact audit for responsive CSS usage in the current UI shell.
+Responsive CSS decision rules live here as architecture guidance, not as roadmap work.
 
 ## Decision rule
 

@@ -1,6 +1,7 @@
 # Technical debt
 
 Accepted follow-up work that is intentionally deferred after a smaller safe iteration ships.
+Product-scope changes belong in the active roadmap or deferred roadmap files, not here.
 
 ## API error mapping
 
