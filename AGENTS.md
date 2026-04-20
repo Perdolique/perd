@@ -18,6 +18,19 @@
 - Public reference-data read routes use `slug`; admin mutations use stable `id` params.
 - All tables live in `server/database/schema.ts`, organized by Auth, Equipment catalog, and User data sections.
 
+## Visual design prototype
+
+The designer's visual prototype of the final application lives in `new-design-assets/`. It is the source of truth for UI layout, component appearance, color tokens, typography, spacing, and interaction patterns.
+
+When creating or updating Vue components, page layouts, or any visual styles, consult `new-design-assets/` first:
+
+- `new-design-assets/styles/tokens.css` — design tokens (colors, spacing, typography scale).
+- `new-design-assets/styles/base.css` and `components.css` — global resets and component-level styles.
+- `new-design-assets/scripts/` — JSX view files that show per-screen layout and component structure (`view-dashboard.jsx`, `view-catalog.jsx`, `view-detail.jsx`, etc.).
+- `new-design-assets/index.html` — runnable prototype; open in a browser to inspect the full interactive design.
+
+Do not invent visual decisions (colors, spacing values, component shapes) that contradict the prototype. If the prototype does not cover a case, match the nearest existing pattern from it.
+
 ## Local skills
 
 Before any task, check whether a local skill matches the domain and follow it.

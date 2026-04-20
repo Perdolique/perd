@@ -39,20 +39,17 @@
 
 <style module>
   .dialog {
-    --transition-duration: 0.3s;
-
     padding: 0;
     border: none;
     background: none;
 
-    /* Apply transitions */
     opacity: 0;
-    translate: 0 -20px;
+    translate: 0 0.75rem;
     transition:
-      opacity var(--transition-duration) ease,
-      translate var(--transition-duration) ease,
-      overlay var(--transition-duration) ease allow-discrete,
-      display var(--transition-duration) ease allow-discrete;
+      opacity var(--transition-duration-base) var(--transition-easing-out),
+      translate var(--transition-duration-base) var(--transition-easing-out),
+      overlay var(--transition-duration-base) var(--transition-easing-out) allow-discrete,
+      display var(--transition-duration-base) var(--transition-easing-out) allow-discrete;
 
     &[open] {
       opacity: 1;
@@ -60,7 +57,7 @@
 
       @starting-style {
         opacity: 0;
-        translate: 0 -20px;
+        translate: 0 0.75rem;
       }
     }
   }
@@ -69,14 +66,14 @@
     background-color: transparent;
     backdrop-filter: blur(0);
     transition:
-      background-color var(--transition-duration) ease,
-      backdrop-filter var(--transition-duration) ease,
-      display var(--transition-duration) ease allow-discrete;
+      background-color var(--transition-duration-base) var(--transition-easing-out),
+      backdrop-filter var(--transition-duration-base) var(--transition-easing-out),
+      display var(--transition-duration-base) var(--transition-easing-out) allow-discrete;
   }
 
   .dialog[open]::backdrop {
     background-color: var(--color-overlay-background);
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(10px);
   }
 
   @starting-style {

@@ -1,16 +1,44 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type BrowserContext } from '@playwright/test'
 
-test.describe('Sidebar', () => {
-  test('should keep collapsed desktop navigation inside the sidebar bounds', async ({ context, page }) => {
-    await context.route('**/api/auth/create-session**', async (route) => {
-      await route.fulfill({
-        status: 201,
+async function mockGuestLogin(context: BrowserContext) {
+  await context.route('**/api/auth/create-session**', async (route) => {
+    await route.fulfill({
+      status: 201,
 
-        json: {
-          userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
-        }
-      })
+      json: {
+        userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+      }
     })
+  })
+}
+
+async function mockCatalogReads(context: BrowserContext) {
+  await context.route('**/api/equipment/items**', async (route) => {
+    await route.fulfill({
+      json: {
+        items: [],
+        limit: 20,
+        page: 1,
+        total: 0
+      }
+    })
+  })
+}
+
+async function mockLogout(context: BrowserContext) {
+  await context.route('**/api/auth/logout**', async (route) => {
+    await route.fulfill({
+      status: 204,
+      body: ''
+    })
+  })
+}
+
+test.describe('Shell navigation', () => {
+  test('should show the desktop sidebar, highlight the active route, and allow logout', async ({ context, page }) => {
+    await mockGuestLogin(context)
+    await mockCatalogReads(context)
+    await mockLogout(context)
 
     await page.goto('/')
 
@@ -20,57 +48,72 @@ test.describe('Sidebar', () => {
 
     await expect(page).toHaveURL(/\/$/u)
 
-    const sidebar = page.getByTestId('sidebar')
-    const sidebarToggle = page.getByTestId('sidebar-toggle')
-    const dashboardLink = page.getByRole('link', { name: 'Dashboard' })
-    const catalogLink = page.getByRole('link', { name: 'Catalog', exact: true })
+    const sidebar = page.getByTestId('shell-sidebar')
 
-    await sidebarToggle.click()
+    await expect(sidebar).toBeVisible()
+    await expect(page.getByTestId('shell-topbar')).toBeHidden()
+    await expect(page.getByTestId('shell-dock')).toBeHidden()
 
-    await expect(sidebar).toHaveCSS('width', '56px')
+    const dashboardLink = sidebar.getByRole('link', { name: 'Dashboard' })
+    const catalogLink = sidebar.getByRole('link', { name: 'Catalog' })
+    const gearLink = sidebar.getByRole('link', { name: 'Gear' })
+    const accountLink = sidebar.getByRole('link', { name: 'Account' })
 
-    const sidebarBox = await sidebar.boundingBox()
-    const dashboardLinkBox = await dashboardLink.boundingBox()
-    const catalogLinkBox = await catalogLink.boundingBox()
-    const sidebarToggleBox = await sidebarToggle.boundingBox()
+    await expect(dashboardLink).toHaveClass(/active/u)
+    await expect(catalogLink).toBeVisible()
+    await expect(gearLink).toBeVisible()
+    await expect(accountLink).toBeVisible()
 
-    expect(sidebarBox).not.toBeNull()
-    expect(dashboardLinkBox).not.toBeNull()
-    expect(catalogLinkBox).not.toBeNull()
-    expect(sidebarToggleBox).not.toBeNull()
+    await catalogLink.click()
 
-    if (
-      sidebarBox === null ||
-      dashboardLinkBox === null ||
-      catalogLinkBox === null ||
-      sidebarToggleBox === null
-    ) {
-      throw new Error('Sidebar elements must have visible bounding boxes in collapsed desktop mode')
-    }
+    await expect(page).toHaveURL(/\/catalog$/u)
+    await expect(catalogLink).toHaveClass(/active/u)
 
-    expect(dashboardLinkBox.x).toBeGreaterThanOrEqual(sidebarBox.x)
+    await accountLink.click()
 
-    expect(dashboardLinkBox.x + dashboardLinkBox.width).toBeLessThanOrEqual(
-      sidebarBox.x + sidebarBox.width
-    )
+    await expect(page).toHaveURL(/\/account$/u)
+    await expect(accountLink).toHaveClass(/active/u)
 
-    expect(catalogLinkBox.x).toBeGreaterThanOrEqual(sidebarBox.x)
+    await sidebar.getByRole('button', { name: 'Log out' }).click()
 
-    expect(catalogLinkBox.x + catalogLinkBox.width).toBeLessThanOrEqual(
-      sidebarBox.x + sidebarBox.width
-    )
+    await expect(page).toHaveURL(/\/login$/u)
+  })
 
-    expect(sidebarToggleBox.x).toBeGreaterThanOrEqual(sidebarBox.x)
+  test('should expose the mobile top bar and dock navigation', async ({ context, page }) => {
+    await mockGuestLogin(context)
+    await mockCatalogReads(context)
+    await mockLogout(context)
 
-    expect(sidebarToggleBox.x + sidebarToggleBox.width).toBeLessThanOrEqual(
-      sidebarBox.x + sidebarBox.width
-    )
+    await page.setViewportSize({
+      width: 390,
+      height: 844
+    })
 
-    expect(Math.round(dashboardLinkBox.width)).toBe(40)
-    expect(Math.round(dashboardLinkBox.height)).toBe(40)
-    expect(Math.round(catalogLinkBox.width)).toBe(40)
-    expect(Math.round(catalogLinkBox.height)).toBe(40)
-    expect(Math.round(sidebarToggleBox.width)).toBe(40)
-    expect(Math.round(sidebarToggleBox.height)).toBe(40)
+    await page.goto('/')
+    await page.getByRole('button', { name: 'Guest' }).click()
+
+    const topbar = page.getByTestId('shell-topbar')
+    const dock = page.getByTestId('shell-dock')
+
+    await expect(topbar).toBeVisible()
+    await expect(dock).toBeVisible()
+    await expect(page.getByTestId('shell-sidebar')).toBeHidden()
+
+    const dockCatalogLink = dock.getByRole('link', { name: 'Catalog' })
+    const dockAccountLink = dock.getByRole('link', { name: 'Account' })
+
+    await dockCatalogLink.click()
+
+    await expect(page).toHaveURL(/\/catalog$/u)
+    await expect(dockCatalogLink).toHaveClass(/active/u)
+
+    await dockAccountLink.click()
+
+    await expect(page).toHaveURL(/\/account$/u)
+    await expect(dockAccountLink).toHaveClass(/active/u)
+
+    await topbar.getByRole('button', { name: 'Log out' }).click()
+
+    await expect(page).toHaveURL(/\/login$/u)
   })
 })

@@ -1,10 +1,16 @@
 :root {
-  --font-size-14: 0.875rem;
-  --font-size-16: 1rem;
-  --font-size-20: 1.25rem;
-  --font-size-24: 1.5rem;
+  --font-size-12: clamp(0.75rem, 0.72rem + 0.08vw, 0.8125rem);
+  --font-size-14: clamp(0.8125rem, 0.79rem + 0.12vw, 0.875rem);
+  --font-size-16: clamp(0.9375rem, 0.9rem + 0.22vw, 1rem);
+  --font-size-20: clamp(1.125rem, 1.03rem + 0.36vw, 1.375rem);
+  --font-size-24: clamp(1.5rem, 1.28rem + 0.72vw, 2rem);
+  --font-size-32: clamp(2rem, 1.7rem + 1.2vw, 3rem);
   --font-weight-medium: 500;
+  --font-weight-semibold: 600;
   --font-weight-bold: 700;
+  --line-height-tight: 1.05;
+  --line-height-snug: 1.2;
+  --line-height-body: 1.5;
 }
 
 strong {

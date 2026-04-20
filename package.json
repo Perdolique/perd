@@ -22,7 +22,7 @@
     "lint:oxlint": "pnpm exec oxlint",
     "postinstall": "pnpm exec nuxt prepare",
     "preview": "pnpm exec wrangler dev",
-    "preview:e2e": "pnpm run build && pnpm run preview",
+    "preview:e2e": "mkdir -p /tmp/perd-e2e/config /tmp/perd-e2e/cache /tmp/perd-e2e/state /tmp/perd-e2e/logs /tmp/perd-e2e/home && XDG_CONFIG_HOME=/tmp/perd-e2e/config XDG_CACHE_HOME=/tmp/perd-e2e/cache XDG_STATE_HOME=/tmp/perd-e2e/state WRANGLER_LOG_PATH=/tmp/perd-e2e/logs WRANGLER_CACHE_DIR=/tmp/perd-e2e/cache/wrangler CLOUDFLARE_HOME=/tmp/perd-e2e/home pnpm run build && XDG_CONFIG_HOME=/tmp/perd-e2e/config XDG_CACHE_HOME=/tmp/perd-e2e/cache XDG_STATE_HOME=/tmp/perd-e2e/state WRANGLER_LOG_PATH=/tmp/perd-e2e/logs WRANGLER_CACHE_DIR=/tmp/perd-e2e/cache/wrangler CLOUDFLARE_HOME=/tmp/perd-e2e/home pnpm run preview",
     "test:e2e": "pnpm exec playwright test",
     "test:e2e:ci": "CI=true pnpm exec playwright test",
     "test:typecheck": "pnpm exec nuxi typecheck",

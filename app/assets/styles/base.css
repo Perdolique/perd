@@ -12,11 +12,30 @@
   font-family: "Inter", sans-serif;
 }
 
+html,
 body {
-  background-color: var(--color-background);
-  color: var(--color-text);
+  min-height: 100%;
 }
 
-.perd-root {
-  height: 100dvh;
+body {
+  background-color: var(--color-background-base);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-body);
+  font-size: var(--font-size-16);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a,
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent-ring);
+  outline-offset: 3px;
 }

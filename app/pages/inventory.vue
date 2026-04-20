@@ -25,7 +25,7 @@
         We could not load your inventory right now. Try this request again.
 
         <template #actions>
-          <PerdButton secondary @click="handleRetry">
+          <PerdButton variant="secondary" @click="handleRetry">
             Retry
           </PerdButton>
         </template>
@@ -37,9 +37,18 @@
 
       <div v-else :class="$style.list">
         <div :class="$style.summaryBar">
-          <p :class="$style.summaryCount">
-            <Icon name="tabler:backpack" aria-hidden="true" />
-            <span>{{ inventoryResponse.length }} saved item{{ inventoryResponse.length === 1 ? '' : 's' }}</span>
+          <div>
+            <p :class="$style.summaryLabel">
+              My gear
+            </p>
+
+            <p :class="$style.summaryCount">
+              {{ inventorySummaryText }}
+            </p>
+          </div>
+
+          <p :class="$style.summaryCopy">
+            Everything already in your kit, ready to revisit from the catalog.
           </p>
         </div>
 
@@ -48,7 +57,7 @@
         </p>
 
         <PerdCard
-          v-for="inventoryRow in inventoryResponse"
+          v-for="inventoryRow in inventoryItems"
           :key="inventoryRow.id"
           :class="$style.itemCard"
         >
@@ -59,9 +68,15 @@
                   <Icon name="tabler:backpack" />
                 </span>
 
-                <PerdLink :to="`/catalog/${inventoryRow.item.id}`">
-                  {{ inventoryRow.item.name }}
-                </PerdLink>
+                <div :class="$style.itemTitleBlock">
+                  <p :class="$style.itemBrand">
+                    {{ inventoryRow.item.brand.name }}
+                  </p>
+
+                  <PerdLink :to="inventoryRow.catalogPath">
+                    {{ inventoryRow.item.name }}
+                  </PerdLink>
+                </div>
               </div>
 
               <div :class="$style.itemTags">
@@ -77,16 +92,16 @@
 
             <div :class="$style.itemActions">
               <p :class="$style.itemMeta">
-                Added <time :datetime="inventoryRow.createdAt">{{ formatCreatedAt(inventoryRow.createdAt) }}</time>
+                Added <time :datetime="inventoryRow.createdAt">{{ inventoryRow.formattedCreatedAt }}</time>
               </p>
 
               <PerdButton
-                small
-                destructive
+                size="sm"
+                variant="danger"
                 icon="tabler:trash"
-                :loading="removingInventoryId === inventoryRow.id"
-                :disabled="isRemovingAnotherItem(inventoryRow.id)"
-                @click="handleRemove(inventoryRow.id)"
+                :loading="inventoryRow.isRemoving"
+                :disabled="inventoryRow.isRemoveDisabled"
+                @click="inventoryRow.handleRemoveClick"
               >
                 Remove
               </PerdButton>
@@ -155,6 +170,11 @@
   const hasError = computed(() => inventoryError.value !== undefined && inventoryError.value !== null)
   const isInitialLoading = computed(() => inventoryStatus.value === 'pending')
   const isEmpty = computed(() => inventoryResponse.value.length === 0)
+  const inventorySummaryText = computed(() => {
+    const itemCount = inventoryResponse.value.length
+
+    return `${itemCount} saved item${itemCount === 1 ? '' : 's'}`
+  })
 
   function formatCreatedAt(createdAt: string) {
     return inventoryDateFormatter.format(new Date(createdAt))
@@ -188,6 +208,19 @@
       removingInventoryId.value = null
     }
   }
+
+  const inventoryItems = computed(() => inventoryResponse.value.map((inventoryRow) => {
+    return {
+      catalogPath: `/catalog/${inventoryRow.item.id}`,
+      createdAt: inventoryRow.createdAt,
+      formattedCreatedAt: formatCreatedAt(inventoryRow.createdAt),
+      handleRemoveClick: () => void handleRemove(inventoryRow.id),
+      id: inventoryRow.id,
+      isRemoveDisabled: isRemovingAnotherItem(inventoryRow.id),
+      isRemoving: removingInventoryId.value === inventoryRow.id,
+      item: inventoryRow.item
+    }
+  }))
 </script>
 
 <style module>
@@ -213,47 +246,54 @@
   }
 
   .stateText,
-  .itemMeta,
+  .itemMeta {
+    margin: 0;
+    color: var(--color-text-tertiary);
+  }
+
   .errorMessage {
     margin: 0;
-  }
-
-  .stateText,
-  .itemMeta {
-    color: var(--color-text-secondary);
-  }
-
-  .errorMessage {
-    color: var(--color-danger-700);
+    color: var(--color-danger);
   }
 
   .list {
     display: grid;
-    gap: var(--spacing-16);
+    gap: var(--spacing-24);
   }
 
   .summaryBar {
     display: flex;
-    align-items: center;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--spacing-16);
+    align-items: end;
+  }
+
+  .summaryLabel,
+  .summaryCount,
+  .summaryCopy {
+    margin: 0;
+  }
+
+  .summaryLabel {
+    margin-bottom: var(--spacing-8);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-12);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
   }
 
   .summaryCount {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-8);
-    margin: 0;
-    padding: var(--spacing-8) var(--spacing-12);
-    border: 1px solid var(--color-background-200);
-    border-radius: 999px;
-    background:
-      linear-gradient(
-        135deg,
-        color-mix(in oklch, var(--color-primary), transparent 88%),
-        var(--color-background-50)
-      );
-    color: var(--color-text);
-    font-size: var(--font-size-14);
-    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-24);
+    line-height: var(--line-height-snug);
+    font-weight: var(--font-weight-bold);
+  }
+
+  .summaryCopy {
+    max-width: 24rem;
+    color: var(--color-text-tertiary);
+    text-align: right;
   }
 
   .itemCard {
@@ -261,8 +301,8 @@
     background:
       linear-gradient(
         145deg,
-        color-mix(in oklch, var(--color-primary), transparent 94%),
-        var(--color-background-50)
+        color-mix(in oklch, var(--color-accent-base), transparent 94%),
+        var(--color-surface-base)
       );
   }
 
@@ -288,15 +328,29 @@
     gap: var(--spacing-12);
   }
 
+  .itemTitleBlock {
+    min-width: 0;
+    display: grid;
+    gap: 0.12rem;
+  }
+
+  .itemBrand {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-12);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
   .itemIcon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 2.5rem;
     height: 2.5rem;
-    border-radius: var(--border-radius-12);
-    background-color: color-mix(in oklch, var(--color-primary), transparent 84%);
-    color: var(--color-primary-700);
+    border-radius: var(--border-radius-16);
+    background-color: var(--color-accent-subtle);
+    color: var(--color-accent-base);
     font-size: 1.1rem;
   }
 
@@ -310,9 +364,10 @@
     margin: 0;
     padding: var(--spacing-4) var(--spacing-12);
     border-radius: 999px;
-    background-color: color-mix(in oklch, var(--color-background-100), transparent 12%);
+    background-color: var(--color-surface-subtle);
     color: var(--color-text-secondary);
-    font-size: var(--font-size-14);
+    font-size: var(--font-size-12);
+    border: 1px solid var(--color-border-subtle);
   }
 
   .itemActions {
@@ -324,6 +379,12 @@
     @media (width >= 640px) {
       justify-items: end;
       text-align: right;
+    }
+  }
+
+  @media (width < 640px) {
+    .summaryCopy {
+      text-align: left;
     }
   }
 </style>

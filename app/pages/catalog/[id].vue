@@ -25,7 +25,7 @@
         We could not load this catalog item right now. Try this request again.
 
         <template #actions>
-          <PerdButton secondary @click="handleRetry">
+          <PerdButton variant="secondary" @click="handleRetry">
             Retry
           </PerdButton>
         </template>
@@ -33,55 +33,65 @@
 
       <div v-else :class="$style.content">
         <div :class="$style.topGrid">
-          <PerdCard :class="$style.summaryCard">
-            <div :class="$style.summaryHeader">
-              <div :class="$style.summaryInfo">
+          <div :class="$style.mainColumn">
+            <PerdCard :class="$style.mediaCard">
+              <span :class="$style.mediaBadge">
+                {{ itemResponse.category.name }}
+              </span>
+
+              <span :class="$style.mediaIcon" aria-hidden="true">
+                <Icon name="tabler:backpack" />
+              </span>
+            </PerdCard>
+
+            <PerdCard :class="$style.summaryCard">
+              <div :class="$style.summaryHeader">
                 <p :class="$style.summaryEyebrow">
-                  Catalog item
-                </p>
-
-                <PerdHeading :level="2">
-                  {{ itemResponse.name }}
-                </PerdHeading>
-
-                <p :class="$style.summaryText">
-                  {{ itemResponse.brand.name }} · {{ itemResponse.category.name }}
-                </p>
-              </div>
-            </div>
-
-            <dl :class="$style.metadataList">
-              <div :class="$style.metadataItem">
-                <dt :class="$style.metadataLabel">
-                  Brand
-                </dt>
-
-                <dd :class="$style.metadataValue">
                   {{ itemResponse.brand.name }}
-                </dd>
-              </div>
+                </p>
 
-              <div :class="$style.metadataItem">
-                <dt :class="$style.metadataLabel">
-                  Category
-                </dt>
-
-                <dd :class="$style.metadataValue">
-                  {{ itemResponse.category.name }}
-                </dd>
-              </div>
-
-              <div :class="$style.metadataItem">
-                <dt :class="$style.metadataLabel">
-                  Status
-                </dt>
-
-                <dd :class="$style.metadataValue">
+                <span :class="statusBadgeClass">
                   {{ statusText }}
-                </dd>
+                </span>
               </div>
-            </dl>
-          </PerdCard>
+
+              <p :class="$style.summaryText">
+                {{ itemResponse.category.name }} gear entry ready for inventory tracking and future packing workflows.
+              </p>
+
+              <dl :class="$style.metadataList">
+                <div :class="$style.metadataItem">
+                  <dt :class="$style.metadataLabel">
+                    Brand
+                  </dt>
+
+                  <dd :class="$style.metadataValue">
+                    {{ itemResponse.brand.name }}
+                  </dd>
+                </div>
+
+                <div :class="$style.metadataItem">
+                  <dt :class="$style.metadataLabel">
+                    Category
+                  </dt>
+
+                  <dd :class="$style.metadataValue">
+                    {{ itemResponse.category.name }}
+                  </dd>
+                </div>
+
+                <div :class="$style.metadataItem">
+                  <dt :class="$style.metadataLabel">
+                    Status
+                  </dt>
+
+                  <dd :class="$style.metadataValue">
+                    {{ statusText }}
+                  </dd>
+                </div>
+              </dl>
+            </PerdCard>
+          </div>
 
           <PerdCard :class="$style.ownershipCard">
             <div :class="$style.ownershipHeader">
@@ -89,7 +99,7 @@
                 Ownership
               </IconTitle>
 
-              <p :class="[$style.ownershipBadge, ownershipStateClass]" role="status">
+              <p :class="ownershipBadgeClass" role="status">
                 <Icon
                   :name="ownershipStateIcon"
                   :class="$style.ownershipBadgeIcon"
@@ -106,9 +116,9 @@
 
             <div :class="$style.ownershipActions">
               <PerdButton
+                :variant="ownershipActionVariant"
                 :loading="isOwnershipActionLoading"
                 :disabled="isOwnershipActionDisabled"
-                :destructive="isOwned"
                 :icon="ownershipActionIcon"
                 @click="handleOwnershipAction"
               >
@@ -143,7 +153,7 @@
 
           <dl v-else :class="$style.propertiesList">
             <div
-              v-for="property in itemResponse.properties"
+              v-for="property in displayProperties"
               :key="property.slug"
               :class="$style.propertyItem"
             >
@@ -152,7 +162,7 @@
               </dt>
 
               <dd :class="$style.propertyValue">
-                {{ formatPropertyValue(property) }}
+                {{ property.displayValue }}
               </dd>
             </div>
           </dl>
@@ -163,7 +173,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, ref } from 'vue'
+  import { computed, ref, useCssModule } from 'vue'
   import { $fetch } from 'ofetch'
   import { definePageMeta, useFetch, useRoute } from '#imports'
   import FidgetSpinner from '~/components/FidgetSpinner.vue'
@@ -196,13 +206,13 @@
   }
 
   interface ItemDetailResponse {
+    brand: ItemBrand;
+    category: ItemCategory;
     createdAt: string;
     id: string;
     name: string;
     properties: ItemProperty[];
     status: string;
-    brand: ItemBrand;
-    category: ItemCategory;
   }
 
   interface InventoryItemBrand {
@@ -233,6 +243,7 @@
   })
 
   const route = useRoute()
+  const styles = useCssModule()
   const itemId = Array.isArray(route.params.id)
     ? route.params.id[0] ?? ''
     : route.params.id
@@ -248,12 +259,6 @@
   } = await useFetch<ItemDetailResponse>(`/api/equipment/items/${itemId}`, {
     default: () => {
       return {
-        createdAt: '',
-        id: '',
-        name: '',
-        properties: [],
-        status: '',
-
         brand: {
           id: 0,
           name: '',
@@ -264,7 +269,13 @@
           id: 0,
           name: '',
           slug: ''
-        }
+        },
+
+        createdAt: '',
+        id: '',
+        name: '',
+        properties: [],
+        status: ''
       }
     }
   })
@@ -310,6 +321,17 @@
 
   const pageTitle = computed(() => itemResponse.value.name === '' ? 'Catalog item' : itemResponse.value.name)
   const statusText = computed(() => formatStatus(itemResponse.value.status))
+  const statusClass = computed(() => {
+    if (itemResponse.value.status === 'approved') {
+      return 'approved'
+    }
+
+    if (itemResponse.value.status === 'rejected') {
+      return 'rejected'
+    }
+
+    return 'pending'
+  })
   const ownedInventoryRow = computed(() => inventoryResponse.value.find((inventoryRow) => inventoryRow.item.id === itemResponse.value.id))
   const isOwned = computed(() => ownedInventoryRow.value !== undefined)
   const isOwnershipActionLoading = computed(() => isInventoryLoading.value || isOwnershipPending.value)
@@ -321,6 +343,7 @@
 
     return isOwned.value ? 'Remove from inventory' : 'I have this'
   })
+  const ownershipActionVariant = computed(() => isOwned.value ? 'danger' : 'primary')
   const ownershipActionIcon = computed(() => isOwned.value ? 'tabler:trash' : 'tabler:backpack')
   const ownershipStateText = computed(() => {
     if (isInventoryLoading.value) {
@@ -369,6 +392,18 @@
       : 'Save this item to your personal inventory so it is ready for future packing workflows.'
   })
   const hasNoProperties = computed(() => itemResponse.value.properties.length === 0)
+  const displayProperties = computed(() => itemResponse.value.properties.map((property) => {
+    return {
+      dataType: property.dataType,
+      displayValue: formatPropertyValue(property),
+      name: property.name,
+      slug: property.slug,
+      unit: property.unit,
+      value: property.value
+    }
+  }))
+  const statusBadgeClass = computed(() => [styles.statusBadge, statusClass.value])
+  const ownershipBadgeClass = computed(() => [styles.ownershipBadge, ownershipStateClass.value])
 
   async function handleRetry() {
     await Promise.all([
@@ -438,6 +473,11 @@
     }
   }
 
+  .mainColumn {
+    display: grid;
+    gap: var(--spacing-24);
+  }
+
   .stateCard {
     min-height: min(60vh, 32rem);
     display: grid;
@@ -458,9 +498,10 @@
   .stateText {
     margin: 0;
     max-width: 28rem;
-    color: var(--color-text-secondary);
+    color: var(--color-text-tertiary);
   }
 
+  .mediaCard,
   .summaryCard,
   .ownershipCard,
   .propertiesCard {
@@ -468,19 +509,46 @@
     gap: var(--spacing-24);
   }
 
+  .mediaCard {
+    position: relative;
+    min-height: 18rem;
+    overflow: hidden;
+    place-items: center;
+    background:
+      radial-gradient(circle at top center, color-mix(in oklch, var(--color-accent-base), transparent 78%), transparent 35%),
+      linear-gradient(180deg, var(--color-surface-base), var(--color-background-sunken));
+  }
+
+  .mediaBadge {
+    position: absolute;
+    top: var(--spacing-16);
+    left: var(--spacing-16);
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    background: var(--color-surface-base);
+    border: 1px solid var(--color-border-subtle);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-12);
+  }
+
+  .mediaIcon {
+    display: grid;
+    place-items: center;
+    width: min(10rem, 30vw);
+    height: min(10rem, 30vw);
+    border-radius: 2rem;
+    background: color-mix(in oklch, var(--color-surface-base), transparent 8%);
+    border: 1px solid var(--color-border-subtle);
+    color: var(--color-text-secondary);
+    font-size: clamp(4rem, 10vw, 5.5rem);
+  }
+
   .summaryHeader {
-    display: grid;
-    gap: var(--spacing-16);
-  }
-
-  .summaryInfo {
-    display: grid;
-    gap: var(--spacing-8);
-  }
-
-  .ownershipHeader {
-    display: grid;
-    gap: var(--spacing-16);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--spacing-12);
+    align-items: center;
   }
 
   .summaryEyebrow,
@@ -492,27 +560,54 @@
   }
 
   .summaryEyebrow {
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-14);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-12);
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.16em;
   }
 
   .summaryText,
   .ownershipText,
   .inlineMessage {
-    color: var(--color-text-secondary);
+    color: var(--color-text-tertiary);
+  }
+
+  .statusBadge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-size: var(--font-size-12);
+    font-weight: var(--font-weight-medium);
+
+    &:global(.approved) {
+      background: var(--color-success-subtle);
+      color: var(--color-success);
+    }
+
+    &:global(.pending) {
+      background: var(--color-warning-subtle);
+      color: var(--color-warning);
+    }
+
+    &:global(.rejected) {
+      background: var(--color-danger-subtle);
+      color: var(--color-danger);
+    }
   }
 
   .ownershipCard {
     background:
       linear-gradient(
         160deg,
-        color-mix(in oklch, var(--color-primary), transparent 90%),
-        color-mix(in oklch, var(--color-accent-300), transparent 95%) 45%,
-        var(--color-background-50)
+        color-mix(in oklch, var(--color-accent-base), transparent 90%),
+        color-mix(in oklch, var(--color-accent-base), transparent 95%) 45%,
+        var(--color-surface-base)
       );
-    border-color: color-mix(in oklch, var(--color-primary), var(--color-background-100) 74%);
+  }
+
+  .ownershipHeader {
+    display: grid;
+    gap: var(--spacing-16);
   }
 
   .ownershipBadge {
@@ -520,32 +615,31 @@
     align-items: center;
     gap: var(--spacing-8);
     width: fit-content;
-    margin: 0;
-    padding: var(--spacing-8) var(--spacing-12);
+    padding: 0.4rem 0.75rem;
     border-radius: 999px;
-    font-size: var(--font-size-14);
+    border: 1px solid transparent;
+    font-size: var(--font-size-12);
     font-weight: var(--font-weight-medium);
-    background-color: color-mix(in oklch, var(--color-background-100), transparent 8%);
-    color: var(--color-text);
 
     &:global(.owned) {
-      background-color: color-mix(in oklch, var(--color-primary), transparent 85%);
-      color: var(--color-primary-700);
+      background: var(--color-success-subtle);
+      color: var(--color-success);
     }
 
     &:global(.missing) {
-      background-color: color-mix(in oklch, var(--color-accent-300), transparent 84%);
-      color: var(--color-accent-800);
+      background: var(--color-surface-subtle);
+      color: var(--color-text-secondary);
+      border-color: var(--color-border-subtle);
     }
 
     &:global(.pending) {
-      background-color: color-mix(in oklch, var(--color-background-200), transparent 12%);
-      color: var(--color-text-secondary);
+      background: var(--color-warning-subtle);
+      color: var(--color-warning);
     }
 
     &:global(.error) {
-      background-color: color-mix(in oklch, var(--color-danger), transparent 88%);
-      color: var(--color-danger-700);
+      background: var(--color-danger-subtle);
+      color: var(--color-danger);
     }
   }
 
@@ -554,65 +648,70 @@
   }
 
   .ownershipActions {
-    display: grid;
+    display: flex;
+    flex-wrap: wrap;
     gap: var(--spacing-12);
     align-items: center;
-
-    @media (width >= 640px) {
-      grid-template-columns: minmax(0, 1fr) auto;
-    }
-  }
-
-  .errorMessage {
-    color: var(--color-danger-700);
   }
 
   .metadataList {
     display: grid;
-    gap: var(--spacing-16);
-    margin: 0;
+    gap: var(--spacing-12);
 
     @media (width >= 640px) {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 
-  .metadataItem,
-  .propertyItem {
+  .metadataItem {
     display: grid;
     gap: var(--spacing-8);
-    margin: 0;
-    padding: var(--spacing-16);
-    border: 1px solid var(--color-background-200);
-    border-radius: var(--border-radius-12);
-    background-color: color-mix(in oklch, var(--color-background-50), transparent 4%);
+    padding: var(--spacing-12);
+    border-radius: var(--border-radius-16);
+    background: var(--color-surface-subtle);
+    border: 1px solid var(--color-border-subtle);
   }
 
   .metadataLabel,
   .propertyLabel {
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-14);
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-12);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
   }
 
   .metadataValue,
   .propertyValue {
     margin: 0;
-    font-size: var(--font-size-16);
+    color: var(--color-text-primary);
     font-weight: var(--font-weight-medium);
   }
 
   .sectionHeader {
-    display: grid;
-    gap: var(--spacing-12);
+    display: flex;
+    align-items: center;
   }
 
   .propertiesList {
     display: grid;
-    gap: var(--spacing-16);
-    margin: 0;
+    gap: var(--spacing-12);
 
     @media (width >= 640px) {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+  }
+
+  .propertyItem {
+    display: grid;
+    gap: var(--spacing-8);
+    padding: var(--spacing-16);
+    border-radius: var(--border-radius-16);
+    background-color: var(--color-surface-subtle);
+    border: 1px solid var(--color-border-subtle);
+  }
+
+  .errorMessage {
+    color: var(--color-danger);
   }
 </style>

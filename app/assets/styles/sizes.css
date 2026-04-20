@@ -1,6 +1,9 @@
 :root {
-  --border-radius-8: 0.5rem;
-  --border-radius-12: 0.75rem;
-  --border-radius-16: 1rem;
-  --border-radius-24: 1.5rem;
+  --border-radius-12: 0.625rem;
+  --border-radius-16: 0.875rem;
+  --border-radius-24: 1.25rem;
+
+  --layout-content-max-width: 72rem;
+  --layout-sidebar-width: 15.5rem;
+  --layout-dock-height: 4.25rem;
 }

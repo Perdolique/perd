@@ -19,7 +19,7 @@
         We could not load the catalog right now. Try this request again.
 
         <template #actions>
-          <PerdButton secondary @click="handleRetry">
+          <PerdButton variant="secondary" @click="handleRetry">
             Retry
           </PerdButton>
         </template>
@@ -27,14 +27,18 @@
 
       <div v-else :class="$style.results">
         <div :class="$style.resultsHeader">
-          <p :class="$style.resultsSummary">
-            <span :class="$style.resultsSummaryLabel">
+          <div>
+            <p :class="$style.resultsSummaryLabel">
               Catalog
-            </span>
+            </p>
 
-            <strong :class="$style.resultsSummaryValue">
+            <p :class="$style.resultsSummaryValue">
               {{ itemsSummaryText }}
-            </strong>
+            </p>
+          </div>
+
+          <p :class="$style.resultsCopy">
+            Approved gear entries ready for inventory tracking.
           </p>
         </div>
 
@@ -47,7 +51,7 @@
             There are catalog items here, but this page number is no longer valid.
 
             <template #actions>
-              <PerdButton secondary @click="handlePageChange(totalPages)">
+              <PerdButton variant="secondary" @click="handleGoToLastPage">
                 Go to last page
               </PerdButton>
             </template>
@@ -55,8 +59,8 @@
 
           <div
             v-else
-            :class="$style.tableShell"
-            :aria-busy="showResultsLoadingOverlay ? 'true' : 'false'"
+            :class="$style.listShell"
+            :aria-busy="resultsAriaBusy"
           >
             <div v-if="showResultsLoadingOverlay" :class="$style.loadingOverlay">
               <p :class="$style.loadingBadge" role="status" aria-label="Loading page" aria-live="polite">
@@ -65,51 +69,47 @@
               </p>
             </div>
 
-            <div :class="$style.tableWrapper">
-              <table :class="$style.resultsTable">
-                <thead>
-                  <tr>
-                    <th :class="$style.tableHeading" scope="col">
-                      Name
-                    </th>
+            <div :class="$style.list">
+              <PerdCard
+                v-for="item in catalogItems"
+                :key="item.id"
+                :class="$style.rowCard"
+              >
+                <div :class="$style.row">
+                  <div :class="$style.rowIdentity">
+                    <span :class="$style.rowIcon" aria-hidden="true">
+                      <Icon name="tabler:backpack" />
+                    </span>
 
-                    <th :class="$style.tableHeading" scope="col">
-                      Brand
-                    </th>
+                    <div :class="$style.rowText">
+                      <p :class="$style.rowBrand">
+                        {{ item.brand.name }}
+                      </p>
 
-                    <th :class="$style.tableHeading" scope="col">
-                      Category
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  <tr v-for="item in itemsResponse.items" :key="item.id">
-                    <td :class="$style.tableCell">
-                      <PerdLink :to="`/catalog/${item.id}`">
+                      <PerdLink :to="item.detailPath" :class="$style.rowName">
                         {{ item.name }}
                       </PerdLink>
-                    </td>
+                    </div>
+                  </div>
 
-                    <td :class="$style.tableCell">
-                      {{ item.brand.name }}
-                    </td>
-
-                    <td :class="$style.tableCell">
+                  <div :class="$style.rowMeta">
+                    <span :class="$style.rowTag">
                       {{ item.category.name }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                    </span>
+
+                    <Icon name="tabler:arrow-up-right" :class="$style.rowArrow" aria-hidden="true" />
+                  </div>
+                </div>
+              </PerdCard>
             </div>
           </div>
 
           <div v-if="showPagination" :class="$style.pagination">
             <PerdButton
-              small
-              secondary
-              :disabled="!canGoPrevious || shouldDisablePaginationControls"
-              @click="handlePageChange(itemsResponse.page - 1)"
+              size="sm"
+              variant="secondary"
+              :disabled="isPreviousPageDisabled"
+              @click="handleGoToPreviousPage"
             >
               Previous
             </PerdButton>
@@ -119,10 +119,10 @@
             </p>
 
             <PerdButton
-              small
-              secondary
-              :disabled="!canGoNext || shouldDisablePaginationControls"
-              @click="handlePageChange(itemsResponse.page + 1)"
+              size="sm"
+              variant="secondary"
+              :disabled="isNextPageDisabled"
+              @click="handleGoToNextPage"
             >
               Next
             </PerdButton>
@@ -183,8 +183,20 @@
   const canGoPrevious = computed(() => itemsResponse.value.page > 1)
   const canGoNext = computed(() => itemsResponse.value.page < totalPages.value)
   const showPagination = computed(() => totalPages.value > 1 && isEmpty.value === false)
+  const catalogItems = computed(() => itemsResponse.value.items.map((item) => {
+    return {
+      brand: item.brand,
+      category: item.category,
+      detailPath: `/catalog/${item.id}`,
+      id: item.id,
+      name: item.name
+    }
+  }))
   const showResultsLoadingOverlay = computed(() => isRefreshing.value)
   const shouldDisablePaginationControls = computed(() => isRefreshing.value)
+  const resultsAriaBusy = computed(() => showResultsLoadingOverlay.value ? 'true' : 'false')
+  const isPreviousPageDisabled = computed(() => canGoPrevious.value === false || shouldDisablePaginationControls.value)
+  const isNextPageDisabled = computed(() => canGoNext.value === false || shouldDisablePaginationControls.value)
 
   async function handlePageChange(page: number) {
     const currentPage = routeState.value.page
@@ -204,6 +216,18 @@
 
   async function handleRetry() {
     await refreshItems()
+  }
+
+  async function handleGoToLastPage() {
+    await handlePageChange(totalPages.value)
+  }
+
+  async function handleGoToPreviousPage() {
+    await handlePageChange(itemsResponse.value.page - 1)
+  }
+
+  async function handleGoToNextPage() {
+    await handlePageChange(itemsResponse.value.page + 1)
   }
 </script>
 
@@ -232,7 +256,7 @@
   .stateText {
     margin: 0;
     max-width: 28rem;
-    color: var(--color-text-secondary);
+    color: var(--color-text-tertiary);
   }
 
   .results {
@@ -241,51 +265,55 @@
   }
 
   .resultsHeader {
-    display: flex;
-    align-items: center;
-  }
-
-  .resultsSummary {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-12);
     margin: 0;
-    padding: var(--spacing-12) var(--spacing-16);
-    border: 1px solid var(--color-background-200);
-    border-radius: 999px;
-    background:
-      linear-gradient(
-        135deg,
-        color-mix(in oklch, var(--color-primary), transparent 88%),
-        var(--color-background-50)
-      );
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--spacing-16);
+    align-items: end;
   }
 
   .resultsSummaryLabel {
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-14);
+    margin: 0 0 var(--spacing-8);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-12);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
   }
 
   .resultsSummaryValue {
-    color: var(--color-text);
+    margin: 0;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-24);
+    line-height: var(--line-height-snug);
+    font-weight: var(--font-weight-bold);
   }
 
-  .tableShell {
+  .resultsCopy {
+    margin: 0;
+    color: var(--color-text-tertiary);
+    max-width: 24rem;
+    text-align: right;
+  }
+
+  .listShell {
     position: relative;
-    overflow: hidden;
-    border: 1px solid var(--color-background-200);
-    border-radius: var(--border-radius-12);
-    background-color: var(--color-background);
+    border-radius: var(--border-radius-24);
   }
 
-  .tableWrapper {
-    overflow-x: auto;
+  .list {
+    display: grid;
+    gap: var(--spacing-12);
   }
 
-  .resultsTable {
-    width: 100%;
-    min-width: 32rem;
-    border-collapse: collapse;
+  .rowCard {
+    padding: var(--spacing-16);
+    background:
+      linear-gradient(
+        135deg,
+        color-mix(in oklch, var(--color-accent-base), transparent 94%),
+        var(--color-surface-base)
+      );
   }
 
   .loadingOverlay {
@@ -293,8 +321,9 @@
     inset: 0;
     display: grid;
     place-items: center;
-    background-color: color-mix(in oklch, var(--color-background), transparent 18%);
+    background-color: color-mix(in oklch, var(--color-background-base), transparent 18%);
     backdrop-filter: blur(0.35rem);
+    border-radius: inherit;
   }
 
   .loadingBadge {
@@ -303,35 +332,83 @@
     gap: var(--spacing-8);
     margin: 0;
     padding: var(--spacing-12) var(--spacing-16);
-    border: 1px solid var(--color-background-200);
+    border: 1px solid var(--color-border-default);
     border-radius: 999px;
-    background-color: color-mix(in oklch, var(--color-background-50), transparent 8%);
-    color: var(--color-text);
+    background-color: color-mix(in oklch, var(--color-surface-base), transparent 8%);
+    color: var(--color-text-primary);
   }
 
   .loadingSpinner {
     font-size: 1rem;
   }
 
-  .tableHeading {
-    padding: var(--spacing-16) var(--spacing-24);
-    border-bottom: 1px solid var(--color-background-300);
-    text-align: left;
-    font-size: var(--font-size-14);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-text-secondary);
-    background-color: color-mix(in oklch, var(--color-background-50), var(--color-background) 55%);
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-16);
+    align-items: center;
+    justify-content: space-between;
   }
 
-  .tableCell {
-    padding: var(--spacing-16) var(--spacing-24);
-    border-bottom: 1px solid var(--color-background-200);
-    color: var(--color-text);
-    vertical-align: top;
+  .rowIdentity {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-12);
+    min-width: 0;
+  }
 
-    &:first-child {
-      font-weight: var(--font-weight-medium);
-    }
+  .rowIcon {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: var(--border-radius-16);
+    background: var(--color-accent-subtle);
+    color: var(--color-accent-base);
+    flex-shrink: 0;
+  }
+
+  .rowText {
+    min-width: 0;
+    display: grid;
+    gap: 0.1rem;
+  }
+
+  .rowBrand,
+  .paginationText {
+    margin: 0;
+    color: var(--color-text-muted);
+  }
+
+  .rowBrand {
+    font-size: var(--font-size-12);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .rowName {
+    font-size: var(--font-size-16);
+    color: var(--color-text-primary);
+  }
+
+  .rowMeta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-12);
+    margin-left: auto;
+  }
+
+  .rowTag {
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    background: var(--color-surface-subtle);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border-subtle);
+    font-size: var(--font-size-12);
+  }
+
+  .rowArrow {
+    color: var(--color-text-muted);
   }
 
   .pagination {
@@ -347,8 +424,18 @@
   }
 
   .paginationText {
-    margin: 0;
-    color: var(--color-text-secondary);
     text-align: center;
+  }
+
+  @media (width < 640px) {
+    .resultsCopy {
+      text-align: left;
+    }
+
+    .rowMeta {
+      width: 100%;
+      justify-content: space-between;
+      margin-left: 0;
+    }
   }
 </style>
