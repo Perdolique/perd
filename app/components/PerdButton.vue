@@ -1,7 +1,10 @@
 <template>
   <button
+    type="button"
     :disabled="isButtonDisabled"
+    :aria-busy="ariaBusy"
     :class="[$style.button, {
+      destructive,
       small,
       secondary
     }]"
@@ -22,10 +25,11 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed } from 'vue';
-  import FidgetSpinner from '@/components/FidgetSpinner.vue';
+  import { computed } from 'vue'
+  import FidgetSpinner from '~/components/FidgetSpinner.vue'
 
   interface Props {
+    destructive?: boolean;
     icon?: string;
     secondary?: boolean;
     small?: boolean;
@@ -33,8 +37,9 @@
     disabled?: boolean;
   }
 
-  const { disabled, loading } = defineProps<Props>();
+  const { disabled, loading } = defineProps<Props>()
 
+  const ariaBusy = computed(() => loading || undefined)
   const isButtonDisabled = computed(() => disabled || loading)
 </script>
 
@@ -64,6 +69,11 @@
       color: var(--color-accent-800);
     }
 
+    &:global(.destructive) {
+      background-color: var(--color-danger);
+      color: var(--color-danger-50);
+    }
+
     &:global(.small) {
       height: var(--spacing-32);
       border-radius: var(--border-radius-12);
@@ -79,6 +89,10 @@
       &:global(.secondary) {
         background-color: var(--color-accent-300);
       }
+
+      &:global(.destructive) {
+        background-color: var(--color-danger-600);
+      }
     }
 
     &:active {
@@ -86,6 +100,10 @@
 
       &:global(.secondary) {
         background-color: var(--color-accent-400);
+      }
+
+      &:global(.destructive) {
+        background-color: var(--color-danger-700);
       }
     }
 
@@ -97,6 +115,11 @@
       &:global(.secondary) {
         color: var(--color-accent-600);
         background-color: var(--color-accent-100);
+      }
+
+      &:global(.destructive) {
+        color: var(--color-danger-100);
+        background-color: var(--color-danger-300);
       }
     }
   }

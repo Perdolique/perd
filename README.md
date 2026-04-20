@@ -16,7 +16,9 @@ Perd is not meant to stop at a read-only catalog. The goal is a useful packing w
 
 - sign in;
 - open the catalog;
-- browse the current list of equipment.
+- browse the current list of equipment;
+- open item detail pages;
+- keep a personal inventory with "I have this" actions.
 
 This is still an early product state. The full user workflow is not shipped yet.
 
@@ -24,8 +26,6 @@ This is still an early product state. The full user workflow is not shipped yet.
 
 The next user-facing slices are:
 
-- item detail pages;
-- a personal inventory with "I own this" actions;
 - packing lists for specific trips or activities;
 - custom checklist entries for things that are not in the catalog yet.
 

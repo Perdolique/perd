@@ -86,7 +86,9 @@
                 <tbody>
                   <tr v-for="item in itemsResponse.items" :key="item.id">
                     <td :class="$style.tableCell">
-                      {{ item.name }}
+                      <PerdLink :to="`/catalog/${item.id}`">
+                        {{ item.name }}
+                      </PerdLink>
                     </td>
 
                     <td :class="$style.tableCell">
@@ -140,6 +142,7 @@
   import PerdButton from '~/components/PerdButton.vue'
   import PerdCard from '~/components/PerdCard.vue'
   import PerdHeading from '~/components/PerdHeading.vue'
+  import PerdLink from '~/components/PerdLink.vue'
   import PageContent from '~/components/layout/PageContent.vue'
 
   definePageMeta({

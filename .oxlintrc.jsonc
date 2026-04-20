@@ -5,6 +5,10 @@
     "./node_modules/eslint-config-greenpie/configs/oxlintrc.jsonc"
   ],
 
+  "ignorePatterns": [
+    "new-design-assets/"
+  ],
+
   "options": {
     "typeAware": true,
     "typeCheck": true,

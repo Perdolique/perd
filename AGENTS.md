@@ -30,6 +30,14 @@ Before any task, check whether a local skill matches the domain and follow it.
 
 - Files imported by standalone Node or `tsx` scripts, including `tools/*.ts`, migrations, seeds, and their transitive dependencies, must not rely on Nuxt-only aliases like `~/` or `@@/`. If they use `#shared/*` or `#server/*`, keep those aliases backed by `package.json#imports`.
 - Do not implement fixes, features, compatibility branches, or refactors unless they address a reproducible problem, an explicitly requested behavior, or a currently supported project scenario. Treat hypothetical improvements and broader compatibility ideas as follow-up work, not as justification for changing the current behavior.
+- Async action areas must remain structurally stable while state is loading or mutating. Keep the same interactive control mounted and change its state instead of swapping it out for unrelated text blocks.
+- Related navigation and actions must be grouped by user meaning. Do not tuck inventory actions or similar workflow controls into unrelated content sections such as property lists.
+- Plan each "next iteration" as a sequence of minimal self-contained tasks. Every task must state its intended result, scope boundaries, and required verification.
+- When one iteration spans multiple tasks, each task must be safe to complete, commit, and validate independently without hidden follow-up decisions.
+- New Playwright scenarios should be run against their individual spec file before the full `pnpm run test:e2e:ci` suite.
+- Playwright `context.route(...)` matchers must account for query strings whenever the real endpoint is requested with query parameters.
+- E2E flows that rely on mocked auth should not use `page.goto()` after login unless the test also establishes a real server-side session cookie.
+- If browser tests run through `wrangler dev`, the E2E preview path must keep Wrangler state, logs, and config under a writable temp directory instead of the user's default `~/.config`.
 - After any architecture, route-convention, data-model, or test-strategy change, update the relevant docs in the same change. This can include `AGENTS.md`, `plan/PLAN.md`, `plan/completed.md`, or the detailed roadmap file that changed.
 
 ## Verification matrix

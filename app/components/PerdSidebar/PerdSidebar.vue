@@ -47,6 +47,21 @@
             Catalog
           </span>
         </NuxtLink>
+
+        <NuxtLink
+          to="/inventory"
+          :class="$style.navigationLink"
+          active-class="active"
+        >
+          <Icon
+            name="tabler:backpack"
+            size="1.5em"
+          />
+
+          <span :class="$style.navigationLabel">
+            Inventory
+          </span>
+        </NuxtLink>
       </nav>
 
       <button

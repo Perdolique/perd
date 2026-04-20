@@ -101,6 +101,22 @@ const isOpened = defineModel<boolean>({
 })
 ```
 
+### Template Expressions
+
+Template bindings should be simple: a prop, a reactive ref, or a computed reference. When a binding requires any expression — `||`, `&&`, a ternary, a negation, or anything beyond a plain identifier — move that logic into a `computed` in the script section and bind the computed instead.
+
+The reason is that templates are meant to be declarative: they should describe *what* to render, not *how* to compute it. Keeping expressions out of the template makes the logic independently readable, ensures TypeScript can properly infer the bound type, and makes it easy to reason about each binding without tracing expression chains in the markup.
+
+```ts
+// In <script setup> — logic lives here
+const ariaBusy = computed(() => loading || undefined)
+```
+
+```html
+<!-- In <template> — binding stays clean -->
+:aria-busy="ariaBusy"
+```
+
 ### SSR Safety
 
 The project uses SSR (server-side rendering). Never access browser globals (`document`, `window`, `navigator`, etc.) directly in component code — it will crash on the server.

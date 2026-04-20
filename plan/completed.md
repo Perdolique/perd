@@ -24,7 +24,11 @@ Application shell, login, account, and OAuth callback pages are implemented. The
 
 ## Catalog browse UI
 
-`/catalog` now ships the first working read-only browsing flow on top of the existing items read API. The page keeps the UI intentionally minimal: title, compact table-like list, simple item count summary, and pagination. Route query is used only for the public `page` key, unsupported query keys are not preserved by list interactions, and the backend item list uses a stable name/id ordering so pagination does not drift across requests. Item detail and inventory actions remain active roadmap work.
+`/catalog` now ships the first working read-only browsing flow on top of the existing items read API. The page keeps the UI intentionally minimal: title, compact table-like list, simple item count summary, and pagination. Route query is used only for the public `page` key, unsupported query keys are not preserved by list interactions, and the backend item list uses a stable name/id ordering so pagination does not drift across requests. The browse table now links into item detail, while ownership actions still stay off the list page itself.
+
+## Catalog ownership MVP
+
+Catalog item detail now ships at `/catalog/[id]` on top of the existing item detail read endpoint instead of introducing a new ownership-status contract. Signed-in users can add approved catalog items to personal inventory from the detail page, remove them again from either the detail page or `/inventory`, and manage that inventory through the first user-owned CRUD API under `/api/user/equipment`. Ownership is resolved by reusing the inventory list rather than a dedicated per-item status endpoint, the catalog browse table stays read-only apart from item links, and the app shell now includes minimal navigation to `/inventory`.
 
 ## Twitch OAuth
 

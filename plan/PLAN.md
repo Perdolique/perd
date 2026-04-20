@@ -6,7 +6,6 @@
 
 ## Active iteration order
 
-- [Catalog ownership MVP](catalog-ownership-mvp.md) — item detail plus the first useful ownership flow from catalog to inventory
 - [Packing lists MVP](packing-lists-mvp.md) — the first trip-oriented checklist flow with catalog-backed and custom entries
 - [Catalog discoverability](catalog-discoverability.md) — search/filter/URL work only after the first complete user workflow ships
 

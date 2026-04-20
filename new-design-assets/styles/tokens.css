@@ -1,0 +1,141 @@
+/* ============================================================
+   Perd — Design Tokens
+   Three aesthetic variants × light/dark = 6 total moods.
+   ============================================================ */
+
+:root {
+  /* ------ Type scale (fluid) ------ */
+  --font-display: "Source Serif 4", "Source Serif Pro", Georgia, serif;
+  --font-sans: "Inter Tight", "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --fs-micro: clamp(0.6875rem, 0.66rem + 0.1vw, 0.75rem);   /* 11-12 */
+  --fs-xs:    clamp(0.75rem, 0.72rem + 0.15vw, 0.8125rem);  /* 12-13 */
+  --fs-sm:    clamp(0.8125rem, 0.78rem + 0.18vw, 0.875rem); /* 13-14 */
+  --fs-body:  clamp(0.9375rem, 0.9rem + 0.22vw, 1rem);      /* 15-16 */
+  --fs-lg:    clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);    /* 17-19 */
+  --fs-xl:    clamp(1.25rem, 1.15rem + 0.4vw, 1.4375rem);   /* 20-23 */
+  --fs-2xl:   clamp(1.5rem, 1.35rem + 0.8vw, 2rem);         /* 24-32 */
+  --fs-3xl:   clamp(2rem, 1.7rem + 1.4vw, 3rem);            /* 32-48 */
+  --fs-4xl:   clamp(2.75rem, 2.25rem + 2.3vw, 4.5rem);      /* 44-72 */
+
+  --lh-tight: 1.05;
+  --lh-snug: 1.2;
+  --lh-body: 1.5;
+  --lh-loose: 1.7;
+
+  /* ------ Spacing (8pt with half-steps) ------ */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.25rem;
+  --sp-6: 1.5rem;
+  --sp-8: 2rem;
+  --sp-10: 2.5rem;
+  --sp-12: 3rem;
+  --sp-16: 4rem;
+  --sp-24: 6rem;
+
+  /* ------ Radii ------ */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-pill: 999px;
+
+  /* ------ Motion ------ */
+  --ease-out: cubic-bezier(.22,1,.36,1);
+  --ease-in-out: cubic-bezier(.6,.01,.3,1);
+  --dur-fast: 120ms;
+  --dur: 220ms;
+  --dur-slow: 420ms;
+
+  /* ------ Layout ------ */
+  --sidebar-w: 248px;
+  --content-max: 1200px;
+  --dock-h: 68px;
+
+  /* ------ Elevation (authored per-theme below) ------ */
+  --shadow-1: 0 1px 2px oklch(0% 0 0 / 0.04), 0 1px 1px oklch(0% 0 0 / 0.03);
+  --shadow-2: 0 4px 16px oklch(0% 0 0 / 0.06), 0 1px 2px oklch(0% 0 0 / 0.04);
+  --shadow-3: 0 12px 40px oklch(0% 0 0 / 0.10), 0 2px 6px oklch(0% 0 0 / 0.05);
+}
+
+/* ============================================================
+   AESTHETIC 1 — Field Manual  (default, LIGHT)
+   Paper cream + ink, sunset orange accent, moss supporting.
+   ============================================================ */
+:root, :root[data-theme="light"] {
+  --bg:         oklch(98.8% 0 0);            /* near-white paper */
+  --bg-sunk:    oklch(96.5% 0.003 145);
+  --bg-raised:  oklch(100% 0 0);
+  --surface:    oklch(100% 0 0);
+  --surface-2:  oklch(96.8% 0.004 145);
+  --hairline:   oklch(85% 0.008 145 / 0.75);
+  --hairline-soft: oklch(85% 0.008 145 / 0.35);
+
+  --ink:        oklch(18% 0.015 165);
+  --ink-2:      oklch(34% 0.018 160);
+  --ink-3:      oklch(50% 0.015 160);
+  --ink-mute:   oklch(62% 0.012 160);
+
+  --accent:     oklch(46% 0.09 145);          /* moss green, primary */
+  --accent-ink: oklch(98% 0.005 145);
+  --accent-soft: oklch(92% 0.04 145);
+  --accent-ring: oklch(46% 0.09 145 / 0.3);
+
+  --support:    oklch(46% 0.09 145);          /* same moss for success */
+  --support-soft: oklch(92% 0.04 145);
+
+  --warn:       oklch(62% 0.14 70);
+  --danger:     oklch(52% 0.21 25);
+
+  --shadow-1: 0 1px 2px oklch(0% 0 0 / 0.04);
+  --shadow-2: 0 6px 20px oklch(0% 0 0 / 0.06), 0 1px 2px oklch(0% 0 0 / 0.04);
+  --shadow-3: 0 18px 44px oklch(0% 0 0 / 0.10), 0 2px 6px oklch(0% 0 0 / 0.04);
+
+  --grain-opacity: 0;
+}
+
+/* ============================================================
+   AESTHETIC 1 — Field Manual (DARK = "Dark Bivouac")
+   Ink-deep indigo, moon cream, amber accent.
+   ============================================================ */
+:root[data-theme="dark"] {
+  --bg:         oklch(15% 0.012 160);
+  --bg-sunk:    oklch(12% 0.012 160);
+  --bg-raised:  oklch(18.5% 0.014 160);
+  --surface:    oklch(18.5% 0.014 160);
+  --surface-2:  oklch(22% 0.016 160);
+  --hairline:   oklch(34% 0.015 160 / 0.8);
+  --hairline-soft: oklch(34% 0.015 160 / 0.4);
+
+  --ink:        oklch(96% 0.006 145);
+  --ink-2:      oklch(80% 0.01 145);
+  --ink-3:      oklch(66% 0.012 145);
+  --ink-mute:   oklch(54% 0.014 145);
+
+  --accent:     oklch(70% 0.12 145);
+  --accent-ink: oklch(14% 0.015 160);
+  --accent-soft: oklch(28% 0.06 145);
+  --accent-ring: oklch(70% 0.12 145 / 0.35);
+
+  --support:    oklch(70% 0.12 145);
+  --support-soft: oklch(28% 0.06 145);
+
+  --warn:       oklch(72% 0.14 60);
+  --danger:     oklch(66% 0.18 25);
+
+  --shadow-1: 0 1px 2px oklch(0% 0 0 / 0.3);
+  --shadow-2: 0 8px 24px oklch(0% 0 0 / 0.45);
+  --shadow-3: 0 24px 60px oklch(0% 0 0 / 0.55);
+
+  --grain-opacity: 0;
+}
+
+/* ------ Density ------ */
+[data-density="airy"]    { --row-pad-y: var(--sp-4); --row-pad-x: var(--sp-5); --card-pad: var(--sp-6); }
+[data-density="balanced"]{ --row-pad-y: var(--sp-3); --row-pad-x: var(--sp-4); --card-pad: var(--sp-5); }
+[data-density="dense"]   { --row-pad-y: var(--sp-2); --row-pad-x: var(--sp-3); --card-pad: var(--sp-4); }

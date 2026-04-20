@@ -33,11 +33,10 @@ export default defineConfig({
     use: { ...devices['Desktop Chrome'] }
   }],
 
-  // Run preview server (production build) before starting the tests
+  // Run the production preview before E2E. `preview:e2e` owns the writable temp-dir setup for Wrangler state.
   webServer: {
     command: 'pnpm run preview:e2e',
     url: appBaseUrl,
-    reuseExistingServer: !isCI,
-    timeout: 120_000
+    reuseExistingServer: !isCI
   }
 })
