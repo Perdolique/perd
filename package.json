@@ -63,13 +63,13 @@
     "typescript": "6.0.3",
     "ufo": "1.6.3",
     "valibot": "1.3.1",
-    "vite": "8.0.9",
+    "vite": "8.0.10",
     "vitest": "4.1.5",
     "vue-tsc": "3.2.7",
-    "wrangler": "4.84.1",
+    "wrangler": "4.85.0",
     "ws": "8.20.0"
   },
-  "packageManager": "pnpm@10.33.1",
+  "packageManager": "pnpm@10.33.2",
   "overrides": {
     "@nuxt/devtools": "$@nuxt/devtools"
   }
