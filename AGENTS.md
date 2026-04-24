@@ -35,6 +35,7 @@ Do not invent visual decisions (colors, spacing values, component shapes) that c
 
 Before any task, check whether a local skill matches the domain and follow it.
 
+- `nuxt-app` for Nuxt pages, layouts, app composables, internal API fetch typing, request-aware `useRequestFetch()`, and Nitro handler return types that drive internal route inference.
 - `vue-components` for `.vue` component structure, styling, props/emits, and SSR-safe frontend patterns.
 - `equipment-backend` for equipment/catalog backend work in `server/api`, validation schemas, Drizzle write paths, schema changes, and equipment API tests.
 - `planning-docs` for roadmap files in `plan/`, completed work notes, architecture docs, and iteration planning tasks.

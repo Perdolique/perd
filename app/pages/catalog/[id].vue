@@ -60,8 +60,7 @@
 
 <script lang="ts" setup>
   import { computed, ref } from 'vue'
-  import { $fetch } from 'ofetch'
-  import { definePageMeta, useFetch, useRoute } from '#imports'
+  import { definePageMeta, useFetch, useRequestFetch, useRoute } from '#imports'
   import type { ItemProperty } from '~/types/equipment'
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
@@ -84,6 +83,7 @@
 
   const ownershipErrorMessage = ref<string | null>(null)
   const isOwnershipPending = ref(false)
+  const $fetch = useRequestFetch()
 
   const {
     data: itemResponse,

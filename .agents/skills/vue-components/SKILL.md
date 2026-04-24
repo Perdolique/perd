@@ -1,6 +1,6 @@
 ---
 name: vue-components
-description: Vue component conventions and patterns for the Perd project. Use when creating new Vue components, editing existing .vue files, reviewing Vue code, adding styles to components, defining props/emits/slots, working with CSS Modules, writing media queries, or when the user mentions Vue components, component styling, CSS Modules, props, emits, or any .vue file changes. Apply these rules during code generation, code review, and refactoring of Vue components.
+description: Vue component conventions and patterns for the Perd project. Use when creating new Vue components, editing existing .vue files, reviewing Vue code, adding styles to components, defining props/emits/slots, working with CSS Modules, writing media queries, or when the user mentions Vue components, component styling, CSS Modules, props, emits, or any .vue file changes. Excludes framework-owned routing, pages/layouts, app composables, and app-level data-fetching patterns.
 ---
 
 # Vue Component Conventions
@@ -29,20 +29,16 @@ Type exports that other components need go in a separate non-setup script block 
 
 Auto-imports are disabled. Every import must be explicit.
 
-- Nuxt composables (`useRoute`, `useFetch`, `navigateTo`, `definePageMeta`, `useState`, `useCookie`, etc.) come from `#imports` — never from `#app`.
-- `$fetch` comes from `'ofetch'` — it is not available through `#imports` when auto-imports are disabled.
 - Vue APIs (`ref`, `computed`, `onMounted`, etc.) come from `'vue'`.
 - VueUse composables come from `'@vueuse/core'`.
 - Shared project code comes from `#shared/...`.
-- Components use relative `~/components/...` paths.
+- Component imports should follow the path style already established by the owning feature instead of introducing alias-specific rules here.
 
 ```ts
 import { computed, ref } from 'vue'
 import { onClickOutside } from '@vueuse/core'
-import { $fetch } from 'ofetch'
-import { definePageMeta, navigateTo, useRoute } from '#imports'
 import { startPagePath } from '#shared/constants'
-import PerdButton from '~/components/PerdButton.vue'
+import PerdButton from './PerdButton.vue'
 ```
 
 ### Props
@@ -117,25 +113,23 @@ const ariaBusy = computed(() => loading || undefined)
 :aria-busy="ariaBusy"
 ```
 
-### SSR Safety
+### Browser APIs
 
-The project uses SSR (server-side rendering). Never access browser globals (`document`, `window`, `navigator`, etc.) directly in component code — it will crash on the server.
-
-Use VueUse composables for DOM interactions instead. They handle SSR automatically by no-oping on the server:
+Never access browser globals (`document`, `window`, `navigator`, etc.) directly during component setup. Prefer VueUse composables for DOM interactions because they degrade safely when the DOM is unavailable:
 
 - `useEventListener` — instead of `document.addEventListener` / `element.addEventListener`
 - `onClickOutside` — instead of manual pointerdown + contains checks
 - Other `@vueuse/core` composables as needed
 
 ```ts
-// Correct — SSR-safe
+// Correct
 import { useEventListener } from '@vueuse/core'
 
 useEventListener(dialogRef, 'close', () => {
   isOpened.value = false
 })
 
-// Wrong — crashes during SSR
+// Wrong
 document.addEventListener('pointerdown', handler)
 ```
 
@@ -174,23 +168,25 @@ Use CSS module classes directly in templates with `$style`. Do not import `useCs
 
 ```vue
 <template>
-  <NuxtLink
+  <button
+    type="button"
     :class="[
       $style.navigationItem,
-
       {
         active: isCatalogActive
       }
     ]"
   >
     Catalog
-  </NuxtLink>
+  </button>
 </template>
 
 <script lang="ts" setup>
-  import { computed } from 'vue'
+  import { computed, ref } from 'vue'
 
-  const isCatalogActive = computed(() => route.path.startsWith('/catalog'))
+  const selectedView = ref<'catalog' | 'inventory'>('catalog')
+
+  const isCatalogActive = computed(() => selectedView.value === 'catalog')
 </script>
 ```
 
