@@ -49,7 +49,6 @@
   import { computed, ref } from 'vue'
   import { $fetch } from 'ofetch'
   import { definePageMeta, useFetch } from '#imports'
-  import type { InventoryRecord } from '~/types/equipment'
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PerdButton from '~/components/PerdButton.vue'
@@ -73,7 +72,7 @@
     error: inventoryError,
     refresh: refreshInventory,
     status: inventoryStatus
-  } = await useFetch<InventoryRecord[]>('/api/user/equipment', {
+  } = await useFetch('/api/user/equipment', {
     default: () => []
   })
 

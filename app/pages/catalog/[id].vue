@@ -62,7 +62,7 @@
   import { computed, ref } from 'vue'
   import { $fetch } from 'ofetch'
   import { definePageMeta, useFetch, useRoute } from '#imports'
-  import type { InventoryRecord, ItemDetailResponse, ItemProperty } from '~/types/equipment'
+  import type { ItemProperty } from '~/types/equipment'
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PerdButton from '~/components/PerdButton.vue'
@@ -90,7 +90,7 @@
     error: itemError,
     refresh: refreshItem,
     status: itemStatus
-  } = await useFetch<ItemDetailResponse>(`/api/equipment/items/${itemId}`, {
+  } = await useFetch(`/api/equipment/items/${itemId}`, {
     default: () => {
       return {
         brand: {
@@ -119,7 +119,7 @@
     error: inventoryError,
     refresh: refreshInventory,
     status: inventoryStatus
-  } = await useFetch<InventoryRecord[]>('/api/user/equipment', {
+  } = await useFetch('/api/user/equipment', {
     default: () => []
   })
 
@@ -255,7 +255,7 @@
 
     try {
       if (ownedBeforeRequest === false) {
-        const createdInventoryRow = await $fetch<InventoryRecord>('/api/user/equipment', {
+        const createdInventoryRow = await $fetch('/api/user/equipment', {
           method: 'POST',
 
           body: {

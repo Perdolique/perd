@@ -63,7 +63,6 @@
 <script lang="ts" setup>
   import { computed } from 'vue'
   import { definePageMeta, navigateTo, useFetch, useRoute } from '#imports'
-  import type { CatalogItemsResponse } from '~/types/equipment'
   import { buildCatalogRouteQuery, getCatalogItemsApiQuery, getCatalogRouteState } from '~/utils/catalog'
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
@@ -85,7 +84,7 @@
     error: itemsError,
     refresh: refreshItems,
     status: itemsStatus
-  } = await useFetch<CatalogItemsResponse>('/api/equipment/items', {
+  } = await useFetch('/api/equipment/items', {
     default: () => {
       return {
         items: [],
