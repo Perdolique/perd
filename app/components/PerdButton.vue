@@ -3,9 +3,18 @@
     :type="type"
     :disabled="isButtonDisabled"
     :aria-busy="ariaBusy"
-    :data-size="size"
-    :data-variant="variant"
-    :class="$style.button"
+    :class="[
+      $style.button,
+
+      {
+        [$style.small]: isSmallSize,
+        [$style.iconOnly]: isIconOnlySize,
+        [$style.iconSmall]: isIconSmallSize,
+        [$style.secondary]: isSecondaryVariant,
+        [$style.ghost]: isGhostVariant,
+        [$style.danger]: isDangerVariant
+      }
+    ]"
   >
     <FidgetSpinner
       v-if="loading"
@@ -37,7 +46,7 @@
     icon?: string;
     iconRight?: string;
     loading?: boolean;
-    size?: 'md' | 'sm' | 'icon' | 'icon-sm';
+    size?: 'medium' | 'small' | 'icon-only' | 'icon-small';
     type?: 'button' | 'reset' | 'submit';
     variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   }
@@ -46,13 +55,19 @@
     disabled,
     iconRight,
     loading = false,
-    size = 'md',
+    size = 'medium',
     type = 'button',
     variant = 'primary'
   } = defineProps<Props>()
 
   const ariaBusy = computed(() => loading || undefined)
   const isButtonDisabled = computed(() => disabled || loading)
+  const isSmallSize = computed(() => size === 'small')
+  const isIconOnlySize = computed(() => size === 'icon-only')
+  const isIconSmallSize = computed(() => size === 'icon-small')
+  const isSecondaryVariant = computed(() => variant === 'secondary')
+  const isGhostVariant = computed(() => variant === 'ghost')
+  const isDangerVariant = computed(() => variant === 'danger')
   const rightIconName = computed(() => iconRight ?? '')
   const showRightIcon = computed(() => iconRight !== undefined && iconRight !== '' && loading === false)
 </script>
@@ -82,86 +97,95 @@
       color var(--transition-duration-quick) var(--transition-easing-out),
       transform var(--transition-duration-quick) var(--transition-easing-out);
 
-    &[data-size="sm"] {
-      height: 2rem;
-      padding: 0 var(--spacing-12);
-      border-radius: var(--border-radius-12);
-      font-size: var(--font-size-12);
-    }
-
-    &[data-size="icon"],
-    &[data-size="icon-sm"] {
-      padding: 0;
-    }
-
-    &[data-size="icon"] {
-      width: 2.5rem;
-    }
-
-    &[data-size="icon-sm"] {
-      width: 2rem;
-      height: 2rem;
-      border-radius: var(--border-radius-12);
-    }
-
-    &[data-variant="secondary"] {
-      background: var(--color-surface-base);
-      color: var(--color-text-primary);
-      border-color: var(--color-border-default);
-    }
-
-    &[data-variant="ghost"] {
-      background: transparent;
-      color: var(--color-text-secondary);
-    }
-
-    &[data-variant="danger"] {
-      background: transparent;
-      color: var(--color-danger);
-      border-color: color-mix(in oklch, var(--color-danger), transparent 76%);
-    }
-
     &:focus-visible,
     &:hover {
       background: var(--color-accent-hover);
-    }
-
-    &[data-variant="secondary"]:focus-visible,
-    &[data-variant="secondary"]:hover {
-      background: var(--color-surface-subtle);
-      border-color: var(--color-border-default);
-      color: var(--color-text-primary);
-    }
-
-    &[data-variant="ghost"]:focus-visible,
-    &[data-variant="ghost"]:hover {
-      background: var(--color-surface-subtle);
-      color: var(--color-text-primary);
-    }
-
-    &[data-variant="danger"]:focus-visible,
-    &[data-variant="danger"]:hover {
-      background: color-mix(in oklch, var(--color-danger), transparent 90%);
     }
 
     &:active {
       transform: translateY(1px);
       background: var(--color-accent-active);
     }
+  }
 
-    &[data-variant="secondary"]:active,
-    &[data-variant="ghost"]:active,
-    &[data-variant="danger"]:active {
+  .small {
+    height: 2rem;
+    padding: 0 var(--spacing-12);
+    border-radius: var(--border-radius-12);
+    font-size: var(--font-size-12);
+  }
+
+  .iconOnly,
+  .iconSmall {
+    padding: 0;
+  }
+
+  .iconOnly {
+    width: 2.5rem;
+  }
+
+  .iconSmall {
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--border-radius-12);
+  }
+
+  .secondary {
+    background: var(--color-surface-base);
+    color: var(--color-text-primary);
+    border-color: var(--color-border-default);
+
+    &:focus-visible,
+    &:hover {
+      background: var(--color-surface-subtle);
+      border-color: var(--color-border-default);
+      color: var(--color-text-primary);
+    }
+
+    &:active {
       transform: translateY(1px);
     }
+  }
 
-    &:disabled {
-      cursor: not-allowed;
-      transform: none;
-      color: var(--color-text-muted);
+  .ghost {
+    background: transparent;
+    color: var(--color-text-secondary);
+
+    &:focus-visible,
+    &:hover {
       background: var(--color-surface-subtle);
-      border-color: transparent;
+      color: var(--color-text-primary);
     }
+
+    &:active {
+      transform: translateY(1px);
+    }
+  }
+
+  .danger {
+    background: transparent;
+    color: var(--color-danger);
+    border-color: color-mix(in oklch, var(--color-danger), transparent 76%);
+
+    &:focus-visible,
+    &:hover {
+      background: color-mix(in oklch, var(--color-danger), transparent 90%);
+    }
+
+    &:active {
+      transform: translateY(1px);
+    }
+  }
+
+  .button:disabled,
+  .button:disabled:focus-visible,
+  .button:disabled:hover,
+  .button:disabled:active {
+    cursor: not-allowed;
+    transform: none;
+    color: var(--color-text-muted);
+    background: var(--color-surface-subtle);
+    border-color: transparent;
   }
 
   .icon {

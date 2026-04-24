@@ -170,6 +170,32 @@ Every component uses `<style module>` — never `<style scoped>`. The root class
 </style>
 ```
 
+Use CSS module classes directly in templates with `$style`. Do not import `useCssModule()` just to compose class lists in script. Keep class names in the template and move only the logic into computed values:
+
+```vue
+<template>
+  <NuxtLink
+    :class="[
+      $style.navigationItem,
+
+      {
+        active: isCatalogActive
+      }
+    ]"
+  >
+    Catalog
+  </NuxtLink>
+</template>
+
+<script lang="ts" setup>
+  import { computed } from 'vue'
+
+  const isCatalogActive = computed(() => route.path.startsWith('/catalog'))
+</script>
+```
+
+Avoid inline conditional logic in class bindings. Do not write route comparisons, ternaries, negations, or boolean expressions directly inside template class objects; compute them in script first.
+
 ### Modifier Pattern with :global()
 
 State-based class modifiers use plain string classes in the template combined with `&:global(.modifier)` in CSS. This is the project's established convention for CSS Modules — it is intentional and correct:
@@ -193,6 +219,12 @@ State-based class modifiers use plain string classes in the template combined wi
 ```
 
 The modifier string (e.g., `visible`, `active`, `small`) is a plain class name — not a `$style` reference. The `&:global(.modifier)` selector escapes the CSS Module hashing so it matches the plain class.
+
+### Naming And Selectors
+
+Use full, readable names for component prop values and CSS/state variants. Prefer `medium`, `small`, `icon-only`, and `icon-small` over abbreviations like `md`, `sm`, or `icon-sm`.
+
+Style owned markup through explicit classes on the element being styled. Avoid nested tag selectors such as `& em`, `& span`, or `& strong` when the element can be given its own class.
 
 ### CSS Features (Baseline 2025)
 

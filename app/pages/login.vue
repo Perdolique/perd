@@ -3,7 +3,7 @@
     <div :class="$style.layout">
       <section :class="$style.hero">
         <p :class="$style.brand">
-          perd<span>.</span>
+          perd<span :class="$style.brandPunctuation">.</span>
         </p>
 
         <PerdHeading :level="1" :class="$style.title">
@@ -179,10 +179,10 @@
   .brand {
     color: color-mix(in oklch, white, transparent 14%);
     font-weight: var(--font-weight-bold);
+  }
 
-    & span {
-      color: color-mix(in oklch, var(--color-accent-base), white 20%);
-    }
+  .brandPunctuation {
+    color: color-mix(in oklch, var(--color-accent-base), white 20%);
   }
 
   .title {

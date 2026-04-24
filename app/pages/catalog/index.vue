@@ -1,19 +1,11 @@
 <template>
   <PageContent page-title="Catalog">
     <div :class="$style.component">
-      <PerdCard v-if="isInitialLoading" :class="$style.stateCard">
-        <div :class="$style.stateBody">
-          <FidgetSpinner :class="$style.spinner" />
-
-          <PerdHeading :level="2">
-            Loading catalog
-          </PerdHeading>
-
-          <p :class="$style.stateText">
-            We are loading items for this page.
-          </p>
-        </div>
-      </PerdCard>
+      <PageLoadingState
+        v-if="isInitialLoading"
+        title="Loading catalog"
+        description="We are loading items for this page."
+      />
 
       <PagePlaceholder v-else-if="hasError" emoji="🧭" title="Catalog is temporarily unavailable.">
         We could not load the catalog right now. Try this request again.
@@ -46,88 +38,23 @@
           We do not have any items to show here yet.
         </PagePlaceholder>
 
-        <div v-else :class="$style.resultsPanel">
-          <PagePlaceholder v-if="isOutOfRangePage" emoji="🗺️" title="This page is out of range.">
-            There are catalog items here, but this page number is no longer valid.
+        <CatalogResultsPanel
+          v-else
+          :items="catalogItems"
+          :is-out-of-range-page="isOutOfRangePage"
+          :show-loading-overlay="showResultsLoadingOverlay"
+          @go-last="handleGoToLastPage"
+        />
 
-            <template #actions>
-              <PerdButton variant="secondary" @click="handleGoToLastPage">
-                Go to last page
-              </PerdButton>
-            </template>
-          </PagePlaceholder>
-
-          <div
-            v-else
-            :class="$style.listShell"
-            :aria-busy="resultsAriaBusy"
-          >
-            <div v-if="showResultsLoadingOverlay" :class="$style.loadingOverlay">
-              <p :class="$style.loadingBadge" role="status" aria-label="Loading page" aria-live="polite">
-                <FidgetSpinner :class="$style.loadingSpinner" />
-                Loading page
-              </p>
-            </div>
-
-            <div :class="$style.list">
-              <PerdCard
-                v-for="item in catalogItems"
-                :key="item.id"
-                :class="$style.rowCard"
-              >
-                <div :class="$style.row">
-                  <div :class="$style.rowIdentity">
-                    <span :class="$style.rowIcon" aria-hidden="true">
-                      <Icon name="tabler:backpack" />
-                    </span>
-
-                    <div :class="$style.rowText">
-                      <p :class="$style.rowBrand">
-                        {{ item.brand.name }}
-                      </p>
-
-                      <PerdLink :to="item.detailPath" :class="$style.rowName">
-                        {{ item.name }}
-                      </PerdLink>
-                    </div>
-                  </div>
-
-                  <div :class="$style.rowMeta">
-                    <span :class="$style.rowTag">
-                      {{ item.category.name }}
-                    </span>
-
-                    <Icon name="tabler:arrow-up-right" :class="$style.rowArrow" aria-hidden="true" />
-                  </div>
-                </div>
-              </PerdCard>
-            </div>
-          </div>
-
-          <div v-if="showPagination" :class="$style.pagination">
-            <PerdButton
-              size="sm"
-              variant="secondary"
-              :disabled="isPreviousPageDisabled"
-              @click="handleGoToPreviousPage"
-            >
-              Previous
-            </PerdButton>
-
-            <p :class="$style.paginationText">
-              Page {{ itemsResponse.page }} of {{ totalPages }}
-            </p>
-
-            <PerdButton
-              size="sm"
-              variant="secondary"
-              :disabled="isNextPageDisabled"
-              @click="handleGoToNextPage"
-            >
-              Next
-            </PerdButton>
-          </div>
-        </div>
+        <CatalogPagination
+          :is-visible="showPagination"
+          :page="itemsResponse.page"
+          :total-pages="totalPages"
+          :is-previous-disabled="isPreviousPageDisabled"
+          :is-next-disabled="isNextPageDisabled"
+          @previous="handleGoToPreviousPage"
+          @next="handleGoToNextPage"
+        />
       </div>
     </div>
   </PageContent>
@@ -136,13 +63,13 @@
 <script lang="ts" setup>
   import { computed } from 'vue'
   import { definePageMeta, navigateTo, useFetch, useRoute } from '#imports'
+  import type { CatalogItemsResponse } from '~/types/equipment'
   import { buildCatalogRouteQuery, getCatalogItemsApiQuery, getCatalogRouteState } from '~/utils/catalog'
-  import FidgetSpinner from '~/components/FidgetSpinner.vue'
+  import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PerdButton from '~/components/PerdButton.vue'
-  import PerdCard from '~/components/PerdCard.vue'
-  import PerdHeading from '~/components/PerdHeading.vue'
-  import PerdLink from '~/components/PerdLink.vue'
+  import CatalogPagination from '~/components/catalog/CatalogPagination.vue'
+  import CatalogResultsPanel from '~/components/catalog/CatalogResultsPanel.vue'
   import PageContent from '~/components/layout/PageContent.vue'
 
   definePageMeta({
@@ -158,7 +85,7 @@
     error: itemsError,
     refresh: refreshItems,
     status: itemsStatus
-  } = await useFetch('/api/equipment/items', {
+  } = await useFetch<CatalogItemsResponse>('/api/equipment/items', {
     default: () => {
       return {
         items: [],
@@ -194,7 +121,6 @@
   }))
   const showResultsLoadingOverlay = computed(() => isRefreshing.value)
   const shouldDisablePaginationControls = computed(() => isRefreshing.value)
-  const resultsAriaBusy = computed(() => showResultsLoadingOverlay.value ? 'true' : 'false')
   const isPreviousPageDisabled = computed(() => canGoPrevious.value === false || shouldDisablePaginationControls.value)
   const isNextPageDisabled = computed(() => canGoNext.value === false || shouldDisablePaginationControls.value)
 
@@ -236,29 +162,6 @@
     display: grid;
   }
 
-  .stateCard {
-    min-height: min(60vh, 32rem);
-    display: grid;
-    place-items: center;
-  }
-
-  .stateBody {
-    display: grid;
-    gap: var(--spacing-16);
-    justify-items: center;
-    text-align: center;
-  }
-
-  .spinner {
-    font-size: 2rem;
-  }
-
-  .stateText {
-    margin: 0;
-    max-width: 28rem;
-    color: var(--color-text-tertiary);
-  }
-
   .results {
     display: grid;
     gap: var(--spacing-24);
@@ -296,146 +199,9 @@
     text-align: right;
   }
 
-  .listShell {
-    position: relative;
-    border-radius: var(--border-radius-24);
-  }
-
-  .list {
-    display: grid;
-    gap: var(--spacing-12);
-  }
-
-  .rowCard {
-    padding: var(--spacing-16);
-    background:
-      linear-gradient(
-        135deg,
-        color-mix(in oklch, var(--color-accent-base), transparent 94%),
-        var(--color-surface-base)
-      );
-  }
-
-  .loadingOverlay {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    background-color: color-mix(in oklch, var(--color-background-base), transparent 18%);
-    backdrop-filter: blur(0.35rem);
-    border-radius: inherit;
-  }
-
-  .loadingBadge {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-8);
-    margin: 0;
-    padding: var(--spacing-12) var(--spacing-16);
-    border: 1px solid var(--color-border-default);
-    border-radius: 999px;
-    background-color: color-mix(in oklch, var(--color-surface-base), transparent 8%);
-    color: var(--color-text-primary);
-  }
-
-  .loadingSpinner {
-    font-size: 1rem;
-  }
-
-  .row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-16);
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .rowIdentity {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-12);
-    min-width: 0;
-  }
-
-  .rowIcon {
-    display: grid;
-    place-items: center;
-    width: 2.75rem;
-    height: 2.75rem;
-    border-radius: var(--border-radius-16);
-    background: var(--color-accent-subtle);
-    color: var(--color-accent-base);
-    flex-shrink: 0;
-  }
-
-  .rowText {
-    min-width: 0;
-    display: grid;
-    gap: 0.1rem;
-  }
-
-  .rowBrand,
-  .paginationText {
-    margin: 0;
-    color: var(--color-text-muted);
-  }
-
-  .rowBrand {
-    font-size: var(--font-size-12);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-
-  .rowName {
-    font-size: var(--font-size-16);
-    color: var(--color-text-primary);
-  }
-
-  .rowMeta {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-12);
-    margin-left: auto;
-  }
-
-  .rowTag {
-    padding: 0.35rem 0.7rem;
-    border-radius: 999px;
-    background: var(--color-surface-subtle);
-    color: var(--color-text-secondary);
-    border: 1px solid var(--color-border-subtle);
-    font-size: var(--font-size-12);
-  }
-
-  .rowArrow {
-    color: var(--color-text-muted);
-  }
-
-  .pagination {
-    display: grid;
-    gap: var(--spacing-12);
-    align-items: center;
-    padding-top: var(--spacing-16);
-
-    @media (width >= 40rem) {
-      grid-template-columns: auto auto auto;
-      justify-content: space-between;
-    }
-  }
-
-  .paginationText {
-    text-align: center;
-  }
-
   @media (width < 640px) {
     .resultsCopy {
       text-align: left;
-    }
-
-    .rowMeta {
-      width: 100%;
-      justify-content: space-between;
-      margin-left: 0;
     }
   }
 </style>
