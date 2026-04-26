@@ -41,11 +41,12 @@
 
   .navigationTitle {
     margin: 0;
-    padding: var(--spacing-8) var(--spacing-12) 0;
+    padding: var(--spacing-12) var(--spacing-12) var(--spacing-4);
     font-size: var(--font-size-12);
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
+    font-weight: var(--font-weight-medium);
+    letter-spacing: 0;
     color: var(--color-text-muted);
+    text-transform: none;
   }
 
   .navigationItem {

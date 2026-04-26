@@ -20,11 +20,18 @@ test.describe('Dashboard page', () => {
 
     await expect(page).toHaveURL(/\/$/u)
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
-    await expect(page.getByTestId('page-content-actions')).toHaveCount(0)
+    await expect(page.getByTestId('page-content-actions')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Browse catalog' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Open inventory' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Welcome to Perd.' })).toBeVisible()
 
     await expect(
-      page.getByText('Your dashboard will live here. The catalog browsing flow is still being rebuilt in staged iterations.')
+      page.getByText(
+        'This route stays intentionally lightweight while the first trip-oriented workflow lands. The live catalog and inventory flows below are ready to use today.'
+      )
     ).toBeVisible()
+
+    await expect(page.getByRole('link', { name: /Browse approved gear/u })).toBeVisible()
+    await expect(page.getByRole('link', { name: /Manage saved items/u })).toBeVisible()
   })
 })
