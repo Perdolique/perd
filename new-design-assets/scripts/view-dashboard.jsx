@@ -27,10 +27,7 @@ function DashboardView({ state, go }) {
         {/* ————— HEADER STRIP ————— */}
         <section className="dash-head rise">
           <div>
-            <div className="section-label" style={{ marginBottom: 2 }}>
-              <Icon name="pin" size={11} style={{ marginRight: 4, verticalAlign: '-1px' }} />
-              Base camp · {today}
-            </div>
+            <div className="section-label" style={{ marginBottom: 2 }}>{today}</div>
             <h1 className="dash-hello">Good morning, Kira.</h1>
           </div>
           <div className="dash-head-actions">
@@ -54,15 +51,12 @@ function DashboardView({ state, go }) {
             interactive
             onClick={() => go(`/packs/${nextPack.slug}`)}
             className="dash-trip-card"
-            style={{ textAlign: 'left', position: 'relative', overflow: 'hidden' }}>
-            <TopoBackdrop opacity={0.07} seed={1.2} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--sp-4)', position: 'relative' }}>
-              <div>
+            style={{ textAlign: 'left' }}>
+            <div className="dash-trip-top">
+              <div className="dash-trip-head">
                 <div className="section-label" style={{ marginBottom: 4 }}>Next trip</div>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-3xl)', lineHeight: 1.02, letterSpacing: '-0.02em', paddingBottom: '0.06em' }}>
-                  {nextPack.name}
-                </div>
-                <div style={{ color: 'var(--ink-3)', marginTop: 'var(--sp-2)', fontSize: 'var(--fs-sm)' }}>
+                <div className="dash-trip-name">{nextPack.name}</div>
+                <div className="dash-trip-sub">
                   {nextPack.trip} · departs {nextPack.start}
                 </div>
               </div>
@@ -97,8 +91,8 @@ function DashboardView({ state, go }) {
               <WeightRing base={baseW} worn={wornW} consumable={consW} size={132} thickness={14} unit={state.unit} />
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--sp-3)' }}>
                 <BreakdownRow color="var(--accent)"   label="Base"       items={ownedBase.length} weight={baseW} total={total} unit={state.unit} />
-                <BreakdownRow color="var(--support)"  label="Worn"       items={ownedWorn.length} weight={wornW} total={total} unit={state.unit} />
-                <BreakdownRow color="var(--ink-3)"    label="Consumable" items={ownedCons.length} weight={consW} total={total} unit={state.unit} />
+                <BreakdownRow color="var(--chart-2)"  label="Worn"       items={ownedWorn.length} weight={wornW} total={total} unit={state.unit} />
+                <BreakdownRow color="var(--chart-3)"  label="Consumable" items={ownedCons.length} weight={consW} total={total} unit={state.unit} />
               </div>
             </div>
           </Card>
@@ -106,7 +100,7 @@ function DashboardView({ state, go }) {
 
         {/* ————— OTHER PACKS ————— */}
         {packs.length > 1 && (
-          <section style={{ marginTop: 'var(--sp-7)' }}>
+          <section className="dash-section">
             <div className="section-head">
               <div>
                 <div className="section-label">Other trips</div>
@@ -139,7 +133,7 @@ function DashboardView({ state, go }) {
         )}
 
         {/* ————— RECENT ————— */}
-        <section style={{ marginTop: 'var(--sp-7)' }}>
+        <section className="dash-section">
           <div className="section-head">
             <div>
               <div className="section-label">Latest additions</div>
@@ -150,9 +144,8 @@ function DashboardView({ state, go }) {
           <div className="grid-4">
             {recent.map(item => (
               <Card key={item.id} interactive onClick={() => go(`/catalog/${item.id}`)} style={{ padding: 'var(--sp-4)' }}>
-                <div style={{ aspectRatio: '5/4', borderRadius: 'var(--r-md)', background: 'var(--surface-2)', marginBottom: 'var(--sp-3)', position: 'relative', overflow: 'hidden', display: 'grid', placeItems: 'center', border: '1px solid var(--hairline-soft)' }}>
-                  <TopoBackdrop opacity={0.1} seed={parseInt(item.id.slice(1)) * 0.3} />
-                  <Icon name={PerdData.catById(item.category).icon} size={36} stroke={1.2} style={{ color: 'var(--ink-2)', opacity: 0.7 }} />
+                <div className="recent-thumb">
+                  <Icon name={PerdData.catById(item.category).icon} size={36} stroke={1.2} />
                 </div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-micro)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-mute)' }}>
                   {PerdData.brandById(item.brand).name}

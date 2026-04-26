@@ -162,8 +162,8 @@ function WeightRing({ base = 0, worn = 0, consumable = 0, size = 160, thickness 
 
   const segments = [
     { key: 'base', v: frac(base), color: 'var(--accent)' },
-    { key: 'worn', v: frac(worn), color: 'var(--support)' },
-    { key: 'consumable', v: frac(consumable), color: 'var(--ink-3)' },
+    { key: 'worn', v: frac(worn), color: 'var(--chart-2)' },
+    { key: 'consumable', v: frac(consumable), color: 'var(--chart-3)' },
   ];
 
   let offset = 0;
