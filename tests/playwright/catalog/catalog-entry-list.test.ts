@@ -1,5 +1,5 @@
 import { URL } from 'node:url'
-import { expect, test, type BrowserContext } from '@playwright/test'
+import { expect, test, type BrowserContext, type Page } from '@playwright/test'
 
 interface CatalogItemsResponse {
   items: {
@@ -112,6 +112,31 @@ async function trackCategoryRequests(context: BrowserContext) {
   return requestCounter
 }
 
+interface CatalogItemsRouteConfig {
+  defaultResponse: CatalogItemsResponse;
+  delayedPage?: string;
+  delayMs?: number;
+  pageResponses?: Partial<Record<string, CatalogItemsResponse>>;
+}
+
+async function mockCatalogItemsRoute(context: BrowserContext, page: Page, config: CatalogItemsRouteConfig): Promise<void> {
+  await context.route('**/api/equipment/items**', async (route) => {
+    const requestUrl = new URL(route.request().url())
+    const pageParam = requestUrl.searchParams.get('page')
+    const matchedResponse = pageParam === null ? undefined : config.pageResponses?.[pageParam]
+
+    if (config.delayedPage === pageParam) {
+      await page.waitForTimeout(config.delayMs ?? 0)
+    }
+
+    const response = matchedResponse ?? config.defaultResponse
+
+    await route.fulfill({
+      json: response
+    })
+  })
+}
+
 test.describe('Catalog page', () => {
   test('should restore the catalog route after guest login and render all items', async ({ context, page }) => {
     await mockGuestLogin(context)
@@ -133,15 +158,12 @@ test.describe('Catalog page', () => {
     await expect(page).toHaveURL(/\/catalog$/u)
     await expect(page.getByRole('heading', { name: 'Catalog', exact: true })).toBeVisible()
     await expect(page.getByText('3 items')).toBeVisible()
-    await expect(page.getByRole('columnheader', { name: 'Name' })).toBeVisible()
-    await expect(page.getByRole('columnheader', { name: 'Brand' })).toBeVisible()
-    await expect(page.getByRole('columnheader', { name: 'Category' })).toBeVisible()
-    await expect(page.getByText('PocketRocket Deluxe')).toBeVisible()
-    await expect(page.getByRole('cell', { name: 'MSR' })).toBeVisible()
-    await expect(page.getByRole('cell', { name: 'Stoves' }).first()).toBeVisible()
-    await expect(page.getByText('NeoAir XLite NXT')).toBeVisible()
-    await expect(page.getByRole('cell', { name: 'Therm-a-Rest' })).toBeVisible()
-    await expect(page.getByRole('cell', { name: 'Sleeping Pads' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'PocketRocket Deluxe' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'NeoAir XLite NXT' })).toBeVisible()
+    await expect(page.getByText('MSR').first()).toBeVisible()
+    await expect(page.getByText('Therm-a-Rest')).toBeVisible()
+    await expect(page.getByText('Stoves').first()).toBeVisible()
+    await expect(page.getByText('Sleeping Pads')).toBeVisible()
     expect(categoryRequests.count).toBe(0)
   })
 
@@ -150,21 +172,11 @@ test.describe('Catalog page', () => {
 
     const categoryRequests = await trackCategoryRequests(context)
 
-    await context.route('**/api/equipment/items**', async (route) => {
-      const requestUrl = new URL(route.request().url())
-      const pageParam = requestUrl.searchParams.get('page')
-
-      if (pageParam === '2') {
-        await route.fulfill({
-          json: secondPageResponse
-        })
-
-        return
+    await mockCatalogItemsRoute(context, page, {
+      defaultResponse: firstPageResponse,
+      pageResponses: {
+        2: secondPageResponse
       }
-
-      await route.fulfill({
-        json: firstPageResponse
-      })
     })
 
     await page.goto('/login?redirectTo=/catalog?page=2')
@@ -175,8 +187,8 @@ test.describe('Catalog page', () => {
 
     await expect(page).toHaveURL(/\/catalog\?page=2$/u)
     await expect(page.getByText('WhisperLite Universal')).toBeVisible()
-    await expect(page.getByRole('cell', { name: 'MSR' })).toBeVisible()
-    await expect(page.getByRole('cell', { name: 'Stoves' })).toBeVisible()
+    await expect(page.getByText('MSR').first()).toBeVisible()
+    await expect(page.getByText('Stoves').first()).toBeVisible()
     await expect(page.getByText('Page 2 of 2')).toBeVisible()
 
     await page.getByRole('button', { name: 'Previous' }).click()
@@ -192,23 +204,13 @@ test.describe('Catalog page', () => {
 
     const categoryRequests = await trackCategoryRequests(context)
 
-    await context.route('**/api/equipment/items**', async (route) => {
-      const requestUrl = new URL(route.request().url())
-      const pageParam = requestUrl.searchParams.get('page')
-
-      if (pageParam === '2') {
-        await page.waitForTimeout(500)
-
-        await route.fulfill({
-          json: secondPageResponse
-        })
-
-        return
+    await mockCatalogItemsRoute(context, page, {
+      defaultResponse: firstPageResponse,
+      delayedPage: '2',
+      delayMs: 500,
+      pageResponses: {
+        2: secondPageResponse
       }
-
-      await route.fulfill({
-        json: firstPageResponse
-      })
     })
 
     await page.goto('/login?redirectTo=/catalog')
@@ -263,29 +265,12 @@ test.describe('Catalog page', () => {
 
     const categoryRequests = await trackCategoryRequests(context)
 
-    await context.route('**/api/equipment/items**', async (route) => {
-      const requestUrl = new URL(route.request().url())
-      const pageParam = requestUrl.searchParams.get('page')
-
-      if (pageParam === '999') {
-        await route.fulfill({
-          json: outOfRangePageResponse
-        })
-
-        return
+    await mockCatalogItemsRoute(context, page, {
+      defaultResponse: firstPageResponse,
+      pageResponses: {
+        2: secondPageResponse,
+        999: outOfRangePageResponse
       }
-
-      if (pageParam === '2') {
-        await route.fulfill({
-          json: secondPageResponse
-        })
-
-        return
-      }
-
-      await route.fulfill({
-        json: firstPageResponse
-      })
     })
 
     await page.goto('/login?redirectTo=/catalog?page=999')

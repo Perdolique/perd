@@ -1,111 +1,195 @@
 <template>
   <button
+    :type="type"
     :disabled="isButtonDisabled"
-    :class="[$style.button, {
-      small,
-      secondary
-    }]"
+    :aria-busy="ariaBusy"
+    :class="[
+      $style.button,
+
+      {
+        [$style.small]: isSmallSize,
+        [$style.iconOnly]: isIconOnlySize,
+        [$style.iconSmall]: isIconSmallSize,
+        [$style.secondary]: isSecondaryVariant,
+        [$style.ghost]: isGhostVariant,
+        [$style.danger]: isDangerVariant
+      }
+    ]"
   >
     <FidgetSpinner
       v-if="loading"
-      :class="[$style.icon, { small }]"
+      :class="$style.icon"
     />
 
     <Icon
       v-else-if="icon"
       :name="icon"
-      :class="[$style.icon, { small }]"
+      :class="$style.icon"
     />
 
     <slot />
+
+    <Icon
+      v-if="showRightIcon"
+      :name="rightIconName"
+      :class="$style.icon"
+    />
   </button>
 </template>
 
 <script lang="ts" setup>
-  import { computed } from 'vue';
-  import FidgetSpinner from '@/components/FidgetSpinner.vue';
+  import { computed } from 'vue'
+  import FidgetSpinner from '~/components/FidgetSpinner.vue'
 
   interface Props {
-    icon?: string;
-    secondary?: boolean;
-    small?: boolean;
-    loading?: boolean;
     disabled?: boolean;
+    icon?: string;
+    iconRight?: string;
+    loading?: boolean;
+    size?: 'medium' | 'small' | 'icon-only' | 'icon-small';
+    type?: 'button' | 'reset' | 'submit';
+    variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   }
 
-  const { disabled, loading } = defineProps<Props>();
+  const {
+    disabled,
+    iconRight,
+    loading = false,
+    size = 'medium',
+    type = 'button',
+    variant = 'primary'
+  } = defineProps<Props>()
 
+  const ariaBusy = computed(() => loading || undefined)
   const isButtonDisabled = computed(() => disabled || loading)
+  const isSmallSize = computed(() => size === 'small')
+  const isIconOnlySize = computed(() => size === 'icon-only')
+  const isIconSmallSize = computed(() => size === 'icon-small')
+  const isSecondaryVariant = computed(() => variant === 'secondary')
+  const isGhostVariant = computed(() => variant === 'ghost')
+  const isDangerVariant = computed(() => variant === 'danger')
+  const rightIconName = computed(() => iconRight ?? '')
+  const showRightIcon = computed(() => iconRight !== undefined && iconRight !== '' && loading === false)
 </script>
 
 <style module>
   .button {
     appearance: none;
-    border: none;
+    border: 1px solid transparent;
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    column-gap: var(--spacing-8);
-    height: var(--spacing-48);
-    padding: 0 var(--spacing-24);
+    gap: var(--spacing-8);
+    height: 2.5rem;
+    padding: 0 var(--spacing-16);
     border-radius: var(--border-radius-16);
-    background-color: var(--color-primary);
-    color: var(--color-primary-50);
+    background: var(--color-accent-base);
+    color: var(--color-accent-contrast);
     outline: none;
     user-select: none;
     white-space: nowrap;
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-14);
     transition:
-      background-color 0.15s ease-out,
-      color 0.15s ease-out;
-
-    &:global(.secondary) {
-      background-color: var(--color-accent-200);
-      color: var(--color-accent-800);
-    }
-
-    &:global(.small) {
-      height: var(--spacing-32);
-      border-radius: var(--border-radius-12);
-      font-size: var(--font-size-14);
-      padding: 0 var(--spacing-16);
-      column-gap: var(--spacing-4);
-    }
+      background-color var(--transition-duration-quick) var(--transition-easing-out),
+      border-color var(--transition-duration-quick) var(--transition-easing-out),
+      color var(--transition-duration-quick) var(--transition-easing-out),
+      transform var(--transition-duration-quick) var(--transition-easing-out);
 
     &:focus-visible,
     &:hover {
-      background-color: var(--color-primary-600);
-
-      &:global(.secondary) {
-        background-color: var(--color-accent-300);
-      }
+      background: var(--color-accent-hover);
     }
 
     &:active {
-      background-color: var(--color-primary-700);
-
-      &:global(.secondary) {
-        background-color: var(--color-accent-400);
-      }
-    }
-
-    &:disabled {
-      cursor: not-allowed;
-      color: var(--color-primary-100);
-      background-color: var(--color-primary-300);
-
-      &:global(.secondary) {
-        color: var(--color-accent-600);
-        background-color: var(--color-accent-100);
-      }
+      transform: translateY(1px);
+      background: var(--color-accent-active);
     }
   }
 
-  .icon {
-    font-size: 1.25em;
+  .small {
+    height: 2rem;
+    padding: 0 var(--spacing-12);
+    border-radius: var(--border-radius-12);
+    font-size: var(--font-size-12);
+  }
 
-    &:global(.small) {
-      font-size: 1.15em;
+  .iconOnly,
+  .iconSmall {
+    padding: 0;
+  }
+
+  .iconOnly {
+    width: 2.5rem;
+  }
+
+  .iconSmall {
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--border-radius-12);
+  }
+
+  .secondary {
+    background: var(--color-surface-base);
+    color: var(--color-text-primary);
+    border-color: var(--color-border-default);
+
+    &:focus-visible,
+    &:hover {
+      background: var(--color-surface-subtle);
+      border-color: var(--color-border-default);
+      color: var(--color-text-primary);
     }
+
+    &:active {
+      transform: translateY(1px);
+    }
+  }
+
+  .ghost {
+    background: transparent;
+    color: var(--color-text-secondary);
+
+    &:focus-visible,
+    &:hover {
+      background: var(--color-surface-subtle);
+      color: var(--color-text-primary);
+    }
+
+    &:active {
+      transform: translateY(1px);
+    }
+  }
+
+  .danger {
+    background: transparent;
+    color: var(--color-danger);
+    border-color: color-mix(in oklch, var(--color-danger), transparent 76%);
+
+    &:focus-visible,
+    &:hover {
+      background: color-mix(in oklch, var(--color-danger), transparent 90%);
+    }
+
+    &:active {
+      transform: translateY(1px);
+    }
+  }
+
+  .button:disabled,
+  .button:disabled:focus-visible,
+  .button:disabled:hover,
+  .button:disabled:active {
+    cursor: not-allowed;
+    transform: none;
+    color: var(--color-text-muted);
+    background: var(--color-surface-subtle);
+    border-color: transparent;
+  }
+
+  .icon {
+    font-size: 1.05em;
+    flex-shrink: 0;
   }
 </style>

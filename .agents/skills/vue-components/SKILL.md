@@ -1,6 +1,6 @@
 ---
 name: vue-components
-description: Vue component conventions and patterns for the Perd project. Use when creating new Vue components, editing existing .vue files, reviewing Vue code, adding styles to components, defining props/emits/slots, working with CSS Modules, writing media queries, or when the user mentions Vue components, component styling, CSS Modules, props, emits, or any .vue file changes. Apply these rules during code generation, code review, and refactoring of Vue components.
+description: Vue component conventions and patterns for the Perd project. Use when creating new Vue components, editing existing .vue files, reviewing Vue code, adding styles to components, defining props/emits/slots, working with CSS Modules, writing media queries, or when the user mentions Vue components, component styling, CSS Modules, props, emits, or any .vue file changes. Excludes framework-owned routing, pages/layouts, app composables, and app-level data-fetching patterns.
 ---
 
 # Vue Component Conventions
@@ -29,20 +29,16 @@ Type exports that other components need go in a separate non-setup script block 
 
 Auto-imports are disabled. Every import must be explicit.
 
-- Nuxt composables (`useRoute`, `useFetch`, `navigateTo`, `definePageMeta`, `useState`, `useCookie`, etc.) come from `#imports` — never from `#app`.
-- `$fetch` comes from `'ofetch'` — it is not available through `#imports` when auto-imports are disabled.
 - Vue APIs (`ref`, `computed`, `onMounted`, etc.) come from `'vue'`.
 - VueUse composables come from `'@vueuse/core'`.
 - Shared project code comes from `#shared/...`.
-- Components use relative `~/components/...` paths.
+- Component imports should follow the path style already established by the owning feature instead of introducing alias-specific rules here.
 
 ```ts
 import { computed, ref } from 'vue'
 import { onClickOutside } from '@vueuse/core'
-import { $fetch } from 'ofetch'
-import { definePageMeta, navigateTo, useRoute } from '#imports'
 import { startPagePath } from '#shared/constants'
-import PerdButton from '~/components/PerdButton.vue'
+import PerdButton from './PerdButton.vue'
 ```
 
 ### Props
@@ -101,25 +97,39 @@ const isOpened = defineModel<boolean>({
 })
 ```
 
-### SSR Safety
+### Template Expressions
 
-The project uses SSR (server-side rendering). Never access browser globals (`document`, `window`, `navigator`, etc.) directly in component code — it will crash on the server.
+Template bindings should be simple: a prop, a reactive ref, or a computed reference. When a binding requires any expression — `||`, `&&`, a ternary, a negation, or anything beyond a plain identifier — move that logic into a `computed` in the script section and bind the computed instead.
 
-Use VueUse composables for DOM interactions instead. They handle SSR automatically by no-oping on the server:
+The reason is that templates are meant to be declarative: they should describe *what* to render, not *how* to compute it. Keeping expressions out of the template makes the logic independently readable, ensures TypeScript can properly infer the bound type, and makes it easy to reason about each binding without tracing expression chains in the markup.
+
+```ts
+// In <script setup> — logic lives here
+const ariaBusy = computed(() => loading || undefined)
+```
+
+```html
+<!-- In <template> — binding stays clean -->
+:aria-busy="ariaBusy"
+```
+
+### Browser APIs
+
+Never access browser globals (`document`, `window`, `navigator`, etc.) directly during component setup. Prefer VueUse composables for DOM interactions because they degrade safely when the DOM is unavailable:
 
 - `useEventListener` — instead of `document.addEventListener` / `element.addEventListener`
 - `onClickOutside` — instead of manual pointerdown + contains checks
 - Other `@vueuse/core` composables as needed
 
 ```ts
-// Correct — SSR-safe
+// Correct
 import { useEventListener } from '@vueuse/core'
 
 useEventListener(dialogRef, 'close', () => {
   isOpened.value = false
 })
 
-// Wrong — crashes during SSR
+// Wrong
 document.addEventListener('pointerdown', handler)
 ```
 
@@ -154,6 +164,34 @@ Every component uses `<style module>` — never `<style scoped>`. The root class
 </style>
 ```
 
+Use CSS module classes directly in templates with `$style`. Do not import `useCssModule()` just to compose class lists in script. Keep class names in the template and move only the logic into computed values:
+
+```vue
+<template>
+  <button
+    type="button"
+    :class="[
+      $style.navigationItem,
+      {
+        active: isCatalogActive
+      }
+    ]"
+  >
+    Catalog
+  </button>
+</template>
+
+<script lang="ts" setup>
+  import { computed, ref } from 'vue'
+
+  const selectedView = ref<'catalog' | 'inventory'>('catalog')
+
+  const isCatalogActive = computed(() => selectedView.value === 'catalog')
+</script>
+```
+
+Avoid inline conditional logic in class bindings. Do not write route comparisons, ternaries, negations, or boolean expressions directly inside template class objects; compute them in script first.
+
 ### Modifier Pattern with :global()
 
 State-based class modifiers use plain string classes in the template combined with `&:global(.modifier)` in CSS. This is the project's established convention for CSS Modules — it is intentional and correct:
@@ -177,6 +215,12 @@ State-based class modifiers use plain string classes in the template combined wi
 ```
 
 The modifier string (e.g., `visible`, `active`, `small`) is a plain class name — not a `$style` reference. The `&:global(.modifier)` selector escapes the CSS Module hashing so it matches the plain class.
+
+### Naming And Selectors
+
+Use full, readable names for component prop values and CSS/state variants. Prefer `medium`, `small`, `icon-only`, and `icon-small` over abbreviations like `md`, `sm`, or `icon-sm`.
+
+Style owned markup through explicit classes on the element being styled. Avoid nested tag selectors such as `& em`, `& span`, or `& strong` when the element can be given its own class.
 
 ### CSS Features (Baseline 2025)
 
