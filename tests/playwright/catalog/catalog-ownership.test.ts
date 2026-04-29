@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type BrowserContext, type Page, type Route } from '@playwright/test'
 
 interface CatalogItemsResponse {
   items: {
@@ -121,10 +121,105 @@ const itemDetailResponse: ItemDetailResponse = {
   }
 }
 
+interface InventoryRouteState {
+  getRequestCount: number;
+  rows: InventoryRecord[];
+}
+
+function createInventoryRow(): InventoryRecord {
+  return {
+    createdAt: '2026-04-03T09:00:00.000Z',
+    id: inventoryId,
+
+    item: {
+      id: itemId,
+      name: 'PocketRocket Deluxe',
+
+      brand: {
+        name: 'MSR',
+        slug: 'msr'
+      },
+
+      category: {
+        name: 'Stoves',
+        slug: 'stoves'
+      }
+    }
+  }
+}
+
+async function fulfillInventoryCollectionRoute(route: Route, page: Page, inventoryState: InventoryRouteState): Promise<void> {
+  const request = route.request()
+  const method = request.method()
+
+  if (method === 'GET') {
+    inventoryState.getRequestCount += 1
+
+    await route.fulfill({
+      json: inventoryState.rows
+    })
+
+    return
+  }
+
+  if (method === 'POST') {
+    expect(request.postDataJSON()).toStrictEqual({
+      itemId
+    })
+
+    await page.waitForTimeout(250)
+
+    const createdInventoryRow = createInventoryRow()
+    inventoryState.rows = [createdInventoryRow]
+
+    await route.fulfill({
+      status: 201,
+      json: createdInventoryRow
+    })
+
+    return
+  }
+
+  await route.abort()
+}
+
+async function fulfillInventoryItemRoute(route: Route, page: Page, inventoryState: InventoryRouteState): Promise<void> {
+  const request = route.request()
+  const method = request.method()
+
+  if (method === 'DELETE') {
+    expect(request.url()).toContain(`/api/user/equipment/${inventoryId}`)
+
+    await page.waitForTimeout(250)
+    inventoryState.rows = []
+
+    await route.fulfill({
+      status: 204,
+      body: ''
+    })
+
+    return
+  }
+
+  await route.abort()
+}
+
+async function mockInventoryRoutes(context: BrowserContext, page: Page, inventoryState: InventoryRouteState): Promise<void> {
+  await context.route('**/api/user/equipment', async (route) => {
+    await fulfillInventoryCollectionRoute(route, page, inventoryState)
+  })
+
+  await context.route('**/api/user/equipment/*', async (route) => {
+    await fulfillInventoryItemRoute(route, page, inventoryState)
+  })
+}
+
 test.describe('Catalog ownership flow', () => {
   test('should add and remove an item through detail and inventory pages', async ({ context, page }) => {
-    let inventoryRows: InventoryRecord[] = []
-    let inventoryGetRequestCount = 0
+    const inventoryState: InventoryRouteState = {
+      getRequestCount: 0,
+      rows: []
+    }
 
     await context.route('**/api/auth/create-session**', async (route) => {
       await route.fulfill({
@@ -148,78 +243,7 @@ test.describe('Catalog ownership flow', () => {
       })
     })
 
-    await context.route('**/api/user/equipment', async (route) => {
-      const request = route.request()
-
-      if (request.method() === 'GET') {
-        inventoryGetRequestCount += 1
-
-        await route.fulfill({
-          json: inventoryRows
-        })
-
-        return
-      }
-
-      if (request.method() === 'POST') {
-        expect(request.postDataJSON()).toStrictEqual({
-          itemId
-        })
-
-        await page.waitForTimeout(250)
-
-        const createdInventoryRow: InventoryRecord = {
-          createdAt: '2026-04-03T09:00:00.000Z',
-          id: inventoryId,
-
-          item: {
-            id: itemId,
-            name: 'PocketRocket Deluxe',
-
-            brand: {
-              name: 'MSR',
-              slug: 'msr'
-            },
-
-            category: {
-              name: 'Stoves',
-              slug: 'stoves'
-            }
-          }
-        }
-
-        inventoryRows = [createdInventoryRow]
-
-        await route.fulfill({
-          status: 201,
-          json: createdInventoryRow
-        })
-
-        return
-      }
-
-      await route.abort()
-    })
-
-    await context.route('**/api/user/equipment/*', async (route) => {
-      const request = route.request()
-
-      if (request.method() === 'DELETE') {
-        expect(request.url()).toContain(`/api/user/equipment/${inventoryId}`)
-
-        await page.waitForTimeout(250)
-        inventoryRows = []
-
-        await route.fulfill({
-          status: 204,
-          body: ''
-        })
-
-        return
-      }
-
-      await route.abort()
-    })
+    await mockInventoryRoutes(context, page, inventoryState)
 
     await page.goto('/login?redirectTo=/catalog')
     await page.getByRole('button', { name: 'Guest' }).click()
@@ -240,7 +264,7 @@ test.describe('Catalog ownership flow', () => {
     await expect(addButton).toBeVisible()
     await addActionPromise
 
-    expect(inventoryGetRequestCount).toBe(1)
+    expect(inventoryState.getRequestCount).toBe(1)
 
     const removeFromDetailButton = page.getByRole('button', { name: 'Remove from inventory' })
     await expect(removeFromDetailButton).toBeVisible()
@@ -248,7 +272,7 @@ test.describe('Catalog ownership flow', () => {
 
     await expect(page).toHaveURL(/\/inventory$/u)
     await expect(page.getByRole('link', { name: 'PocketRocket Deluxe' })).toBeVisible()
-    expect(inventoryGetRequestCount).toBe(2)
+    expect(inventoryState.getRequestCount).toBe(2)
 
     const removeFromInventoryButton = page.getByRole('button', { name: 'Remove' })
     const removeActionPromise = removeFromInventoryButton.click()
@@ -256,7 +280,7 @@ test.describe('Catalog ownership flow', () => {
     await expect(removeFromInventoryButton).toBeVisible()
     await removeActionPromise
 
-    expect(inventoryGetRequestCount).toBe(2)
+    expect(inventoryState.getRequestCount).toBe(2)
     await expect(page.getByRole('heading', { name: 'No saved gear yet.' })).toBeVisible()
     await page.getByRole('link', { name: 'Browse catalog' }).click()
     await page.getByRole('link', { name: 'PocketRocket Deluxe' }).click()

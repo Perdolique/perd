@@ -1,5 +1,5 @@
 import { URL } from 'node:url'
-import { expect, test, type BrowserContext } from '@playwright/test'
+import { expect, test, type BrowserContext, type Page } from '@playwright/test'
 
 interface CatalogItemsResponse {
   items: {
@@ -112,6 +112,31 @@ async function trackCategoryRequests(context: BrowserContext) {
   return requestCounter
 }
 
+interface CatalogItemsRouteConfig {
+  defaultResponse: CatalogItemsResponse;
+  delayedPage?: string;
+  delayMs?: number;
+  pageResponses?: Partial<Record<string, CatalogItemsResponse>>;
+}
+
+async function mockCatalogItemsRoute(context: BrowserContext, page: Page, config: CatalogItemsRouteConfig): Promise<void> {
+  await context.route('**/api/equipment/items**', async (route) => {
+    const requestUrl = new URL(route.request().url())
+    const pageParam = requestUrl.searchParams.get('page')
+    const matchedResponse = pageParam === null ? undefined : config.pageResponses?.[pageParam]
+
+    if (config.delayedPage === pageParam) {
+      await page.waitForTimeout(config.delayMs ?? 0)
+    }
+
+    const response = matchedResponse ?? config.defaultResponse
+
+    await route.fulfill({
+      json: response
+    })
+  })
+}
+
 test.describe('Catalog page', () => {
   test('should restore the catalog route after guest login and render all items', async ({ context, page }) => {
     await mockGuestLogin(context)
@@ -147,21 +172,11 @@ test.describe('Catalog page', () => {
 
     const categoryRequests = await trackCategoryRequests(context)
 
-    await context.route('**/api/equipment/items**', async (route) => {
-      const requestUrl = new URL(route.request().url())
-      const pageParam = requestUrl.searchParams.get('page')
-
-      if (pageParam === '2') {
-        await route.fulfill({
-          json: secondPageResponse
-        })
-
-        return
+    await mockCatalogItemsRoute(context, page, {
+      defaultResponse: firstPageResponse,
+      pageResponses: {
+        2: secondPageResponse
       }
-
-      await route.fulfill({
-        json: firstPageResponse
-      })
     })
 
     await page.goto('/login?redirectTo=/catalog?page=2')
@@ -189,23 +204,13 @@ test.describe('Catalog page', () => {
 
     const categoryRequests = await trackCategoryRequests(context)
 
-    await context.route('**/api/equipment/items**', async (route) => {
-      const requestUrl = new URL(route.request().url())
-      const pageParam = requestUrl.searchParams.get('page')
-
-      if (pageParam === '2') {
-        await page.waitForTimeout(500)
-
-        await route.fulfill({
-          json: secondPageResponse
-        })
-
-        return
+    await mockCatalogItemsRoute(context, page, {
+      defaultResponse: firstPageResponse,
+      delayedPage: '2',
+      delayMs: 500,
+      pageResponses: {
+        2: secondPageResponse
       }
-
-      await route.fulfill({
-        json: firstPageResponse
-      })
     })
 
     await page.goto('/login?redirectTo=/catalog')
@@ -260,29 +265,12 @@ test.describe('Catalog page', () => {
 
     const categoryRequests = await trackCategoryRequests(context)
 
-    await context.route('**/api/equipment/items**', async (route) => {
-      const requestUrl = new URL(route.request().url())
-      const pageParam = requestUrl.searchParams.get('page')
-
-      if (pageParam === '999') {
-        await route.fulfill({
-          json: outOfRangePageResponse
-        })
-
-        return
+    await mockCatalogItemsRoute(context, page, {
+      defaultResponse: firstPageResponse,
+      pageResponses: {
+        2: secondPageResponse,
+        999: outOfRangePageResponse
       }
-
-      if (pageParam === '2') {
-        await route.fulfill({
-          json: secondPageResponse
-        })
-
-        return
-      }
-
-      await route.fulfill({
-        json: firstPageResponse
-      })
     })
 
     await page.goto('/login?redirectTo=/catalog?page=999')
