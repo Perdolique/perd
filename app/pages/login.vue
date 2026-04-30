@@ -1,31 +1,54 @@
 <template>
   <div :class="$style.component">
-    <div :class="$style.card">
-      <PerdHeading :level="1" :class="$style.title">
-        Your Adventure Hub
-      </PerdHeading>
+    <div :class="$style.layout">
+      <section :class="$style.hero">
+        <p :class="$style.brand">
+          perd<span :class="$style.brandPunctuation">.</span>
+        </p>
 
-      <div :class="$style.buttons">
-        <PerdButton
-          icon="tabler:brand-among-us"
-          :class="$style.button"
-          class="amogus"
-          :loading="isAuthenticating"
-          @click="signUp"
-        >
-          Guest
-        </PerdButton>
+        <PerdHeading :level="1" :class="$style.title">
+          Your Adventure Hub
+        </PerdHeading>
 
-        <PerdButton
-          :class="$style.button"
-          class="twitch"
-          icon="tabler:brand-twitch"
-          :loading="isAuthenticating"
-          @click="redirectToTwitch"
-        >
-          Twitch
-        </PerdButton>
-      </div>
+        <p :class="$style.copy">
+          Keep your field kit close, pick up approved catalog entries, and move between routes without losing your place.
+        </p>
+      </section>
+
+      <section :class="$style.card">
+        <p :class="$style.cardLabel">
+          Access
+        </p>
+
+        <PerdHeading :level="2">
+          Sign in to continue
+        </PerdHeading>
+
+        <p :class="$style.cardCopy">
+          Use a quick guest session or continue with Twitch. Redirect flow stays the same.
+        </p>
+
+        <div :class="$style.buttons">
+          <PerdButton
+            icon="tabler:brand-among-us"
+            :class="$style.button"
+            :loading="isAuthenticating"
+            @click="signUp"
+          >
+            Guest
+          </PerdButton>
+
+          <PerdButton
+            variant="secondary"
+            :class="$style.button"
+            icon="tabler:brand-twitch"
+            :loading="isAuthenticating"
+            @click="redirectToTwitch"
+          >
+            Twitch
+          </PerdButton>
+        </div>
+      </section>
     </div>
   </div>
 </template>
@@ -80,7 +103,6 @@
 
       await navigateAfterLogin(route.query.redirectTo)
     } catch (error) {
-      // TODO: Handle error properly
       console.error(error)
     } finally {
       isAuthenticating.value = false
@@ -105,92 +127,98 @@
 </script>
 
 <style module>
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
   .component {
-    height: 100%;
-    background: var(--color-background-100);
-
-    @media (width >= 768px) {
-      display: grid;
-      place-items: center;
-      padding: var(--spacing-24);
-    }
-  }
-
-  .card {
-    height: 100%;
+    min-block-size: 100dvh;
     display: grid;
     padding: var(--spacing-16);
-    row-gap: var(--spacing-16);
-    align-content: space-between;
     background:
-      linear-gradient(
-        to bottom,
-        color-mix(in oklch, var(--color-overlay-background), black 40%) 0%,
-        transparent 40%,
-        color-mix(in oklch, var(--color-overlay-background), transparent 50%) 70%,
-        color-mix(in oklch, var(--color-overlay-background), black 60%) 100%
-      ),
-      url('/dog_items_1024.webp') right / cover;
+      radial-gradient(circle at top left, color-mix(in oklch, var(--color-accent-base), transparent 88%), transparent 30%),
+      linear-gradient(180deg, var(--color-background-base), var(--color-background-sunken));
+  }
 
-    @media (width >= 768px) {
-      width: 480px;
-      max-height: 480px;
-      border-radius: var(--border-radius-24);
-      background-position: center;
+  .layout {
+    inline-size: min(100%, 66rem);
+    margin: auto;
+    display: grid;
+    gap: var(--spacing-24);
+
+    @media (width >= 860px) {
+      grid-template-columns: minmax(0, 1.1fr) minmax(24rem, 0.9fr);
+      align-items: stretch;
     }
+  }
+
+  .hero,
+  .card {
+    border-radius: var(--border-radius-24);
+    border: 1px solid var(--color-border-subtle);
+    overflow: hidden;
+  }
+
+  .hero {
+    display: grid;
+    align-content: end;
+    gap: var(--spacing-16);
+    min-block-size: 24rem;
+    padding: var(--spacing-32) var(--spacing-24);
+    background:
+      linear-gradient(180deg, color-mix(in oklch, var(--color-overlay-background), transparent 46%), transparent 35%),
+      url('/dog_items_1024.webp') right / cover;
+    color: oklch(99% 0 0);
+    box-shadow: var(--shadow-2);
+  }
+
+  .brand,
+  .cardLabel {
+    margin: 0;
+    font-size: var(--font-size-12);
+    letter-spacing: var(--letter-spacing-label);
+    text-transform: uppercase;
+  }
+
+  .brand {
+    color: color-mix(in oklch, white, transparent 14%);
+    font-weight: var(--font-weight-bold);
+  }
+
+  .brandPunctuation {
+    color: color-mix(in oklch, var(--color-accent-base), white 20%);
   }
 
   .title {
-    padding: var(--spacing-24) 0;
-    text-align: center;
-    color: oklch(100% 0 0);
-    animation: fadeIn 0.8s ease-out;
+    max-inline-size: 10ch;
+    color: inherit;
+  }
+
+  .copy {
+    margin: 0;
+    max-inline-size: 26rem;
+    color: color-mix(in oklch, white, transparent 18%);
+  }
+
+  .card {
+    display: grid;
+    padding: var(--spacing-24) var(--spacing-16);
+    gap: var(--spacing-16);
+    background: var(--color-surface-base);
+  }
+
+  .cardLabel {
+    color: var(--color-text-muted);
+  }
+
+  .cardCopy {
+    margin: 0;
+    color: var(--color-text-tertiary);
   }
 
   .buttons {
     display: grid;
     gap: var(--spacing-12);
-    padding: var(--spacing-24) var(--spacing-16);
-    border-radius: var(--border-radius-24);
-
-    @media (width >= 414px) {
-      grid-auto-flow: column;
-      width: 400px;
-      justify-self: center;
-    }
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
   }
 
   .button {
-    color: oklch(100% 0 0);
-    width: 100%;
-    transition: background-color var(--transition-time-quick);
-
-    &:global(.twitch):not(:disabled) {
-      background-color: rgba(145, 70, 255, 0.9);
-
-      &:hover {
-        background-color: rgba(145, 70, 255, 1);
-      }
-    }
-
-    &:global(.amogus):not(:disabled) {
-      background-color: rgba(76, 175, 80, 0.9);
-
-      &:hover {
-        background-color: rgba(76, 175, 80, 1);
-      }
-    }
+    inline-size: 100%;
   }
 </style>

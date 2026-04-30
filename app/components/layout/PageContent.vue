@@ -7,13 +7,15 @@
       :class="$style.header"
       data-testid="page-content-header"
     >
-      <PerdHeading
-        v-if="pageTitle"
-        :class="$style.heading"
-        :level="1"
-      >
-        {{ pageTitle }}
-      </PerdHeading>
+      <div :class="$style.headingBlock">
+        <PerdHeading
+          v-if="pageTitle"
+          :class="$style.heading"
+          :level="1"
+        >
+          {{ pageTitle }}
+        </PerdHeading>
+      </div>
 
       <div
         v-if="$slots.actions"
@@ -43,30 +45,32 @@
 <style module>
   .layout {
     display: grid;
-    row-gap: var(--spacing-32);
+    row-gap: var(--spacing-24);
     container-type: inline-size;
   }
 
   .header {
-    display: grid;
-    gap: var(--spacing-16);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
     justify-content: space-between;
+    gap: var(--spacing-16);
+    padding-block-end: var(--spacing-16);
+    border-block-end: 1px solid var(--color-border-subtle);
+  }
 
-    @container (width >= 414px) {
-      grid-template-columns: 1fr auto;
-      align-items: start;
-    }
+  .headingBlock {
+    min-inline-size: 0;
   }
 
   .heading {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    min-width: 0;
+    text-wrap: balance;
   }
 
   .actions {
-    justify-self: start;
-    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-8);
+    align-items: center;
   }
 </style>

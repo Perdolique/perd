@@ -1,25 +1,17 @@
 <template>
   <PageContent page-title="Catalog">
     <div :class="$style.component">
-      <PerdCard v-if="isInitialLoading" :class="$style.stateCard">
-        <div :class="$style.stateBody">
-          <FidgetSpinner :class="$style.spinner" />
-
-          <PerdHeading :level="2">
-            Loading catalog
-          </PerdHeading>
-
-          <p :class="$style.stateText">
-            We are loading items for this page.
-          </p>
-        </div>
-      </PerdCard>
+      <PageLoadingState
+        v-if="isInitialLoading"
+        title="Loading catalog"
+        description="We are loading items for this page."
+      />
 
       <PagePlaceholder v-else-if="hasError" emoji="🧭" title="Catalog is temporarily unavailable.">
         We could not load the catalog right now. Try this request again.
 
         <template #actions>
-          <PerdButton secondary @click="handleRetry">
+          <PerdButton variant="secondary" @click="handleRetry">
             Retry
           </PerdButton>
         </template>
@@ -27,14 +19,18 @@
 
       <div v-else :class="$style.results">
         <div :class="$style.resultsHeader">
-          <p :class="$style.resultsSummary">
-            <span :class="$style.resultsSummaryLabel">
+          <div>
+            <p :class="$style.resultsSummaryLabel">
               Catalog
-            </span>
+            </p>
 
-            <strong :class="$style.resultsSummaryValue">
+            <p :class="$style.resultsSummaryValue">
               {{ itemsSummaryText }}
-            </strong>
+            </p>
+          </div>
+
+          <p :class="$style.resultsCopy">
+            Approved gear entries ready for inventory tracking.
           </p>
         </div>
 
@@ -42,90 +38,23 @@
           We do not have any items to show here yet.
         </PagePlaceholder>
 
-        <div v-else :class="$style.resultsPanel">
-          <PagePlaceholder v-if="isOutOfRangePage" emoji="🗺️" title="This page is out of range.">
-            There are catalog items here, but this page number is no longer valid.
+        <CatalogResultsPanel
+          v-else
+          :items="catalogItems"
+          :is-out-of-range-page="isOutOfRangePage"
+          :show-loading-overlay="showResultsLoadingOverlay"
+          @go-last="handleGoToLastPage"
+        />
 
-            <template #actions>
-              <PerdButton secondary @click="handlePageChange(totalPages)">
-                Go to last page
-              </PerdButton>
-            </template>
-          </PagePlaceholder>
-
-          <div
-            v-else
-            :class="$style.tableShell"
-            :aria-busy="showResultsLoadingOverlay ? 'true' : 'false'"
-          >
-            <div v-if="showResultsLoadingOverlay" :class="$style.loadingOverlay">
-              <p :class="$style.loadingBadge" role="status" aria-label="Loading page" aria-live="polite">
-                <FidgetSpinner :class="$style.loadingSpinner" />
-                Loading page
-              </p>
-            </div>
-
-            <div :class="$style.tableWrapper">
-              <table :class="$style.resultsTable">
-                <thead>
-                  <tr>
-                    <th :class="$style.tableHeading" scope="col">
-                      Name
-                    </th>
-
-                    <th :class="$style.tableHeading" scope="col">
-                      Brand
-                    </th>
-
-                    <th :class="$style.tableHeading" scope="col">
-                      Category
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  <tr v-for="item in itemsResponse.items" :key="item.id">
-                    <td :class="$style.tableCell">
-                      {{ item.name }}
-                    </td>
-
-                    <td :class="$style.tableCell">
-                      {{ item.brand.name }}
-                    </td>
-
-                    <td :class="$style.tableCell">
-                      {{ item.category.name }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div v-if="showPagination" :class="$style.pagination">
-            <PerdButton
-              small
-              secondary
-              :disabled="!canGoPrevious || shouldDisablePaginationControls"
-              @click="handlePageChange(itemsResponse.page - 1)"
-            >
-              Previous
-            </PerdButton>
-
-            <p :class="$style.paginationText">
-              Page {{ itemsResponse.page }} of {{ totalPages }}
-            </p>
-
-            <PerdButton
-              small
-              secondary
-              :disabled="!canGoNext || shouldDisablePaginationControls"
-              @click="handlePageChange(itemsResponse.page + 1)"
-            >
-              Next
-            </PerdButton>
-          </div>
-        </div>
+        <CatalogPagination
+          :is-visible="showPagination"
+          :page="itemsResponse.page"
+          :total-pages="totalPages"
+          :is-previous-disabled="isPreviousPageDisabled"
+          :is-next-disabled="isNextPageDisabled"
+          @previous="handleGoToPreviousPage"
+          @next="handleGoToNextPage"
+        />
       </div>
     </div>
   </PageContent>
@@ -135,11 +64,11 @@
   import { computed } from 'vue'
   import { definePageMeta, navigateTo, useFetch, useRoute } from '#imports'
   import { buildCatalogRouteQuery, getCatalogItemsApiQuery, getCatalogRouteState } from '~/utils/catalog'
-  import FidgetSpinner from '~/components/FidgetSpinner.vue'
+  import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PerdButton from '~/components/PerdButton.vue'
-  import PerdCard from '~/components/PerdCard.vue'
-  import PerdHeading from '~/components/PerdHeading.vue'
+  import CatalogPagination from '~/components/catalog/CatalogPagination.vue'
+  import CatalogResultsPanel from '~/components/catalog/CatalogResultsPanel.vue'
   import PageContent from '~/components/layout/PageContent.vue'
 
   definePageMeta({
@@ -180,8 +109,19 @@
   const canGoPrevious = computed(() => itemsResponse.value.page > 1)
   const canGoNext = computed(() => itemsResponse.value.page < totalPages.value)
   const showPagination = computed(() => totalPages.value > 1 && isEmpty.value === false)
+  const catalogItems = computed(() => itemsResponse.value.items.map((item) => {
+    return {
+      brand: item.brand,
+      category: item.category,
+      detailPath: `/catalog/${item.id}`,
+      id: item.id,
+      name: item.name
+    }
+  }))
   const showResultsLoadingOverlay = computed(() => isRefreshing.value)
   const shouldDisablePaginationControls = computed(() => isRefreshing.value)
+  const isPreviousPageDisabled = computed(() => canGoPrevious.value === false || shouldDisablePaginationControls.value)
+  const isNextPageDisabled = computed(() => canGoNext.value === false || shouldDisablePaginationControls.value)
 
   async function handlePageChange(page: number) {
     const currentPage = routeState.value.page
@@ -202,34 +142,23 @@
   async function handleRetry() {
     await refreshItems()
   }
+
+  async function handleGoToLastPage() {
+    await handlePageChange(totalPages.value)
+  }
+
+  async function handleGoToPreviousPage() {
+    await handlePageChange(itemsResponse.value.page - 1)
+  }
+
+  async function handleGoToNextPage() {
+    await handlePageChange(itemsResponse.value.page + 1)
+  }
 </script>
 
 <style module>
   .component {
     display: grid;
-  }
-
-  .stateCard {
-    min-height: min(60vh, 32rem);
-    display: grid;
-    place-items: center;
-  }
-
-  .stateBody {
-    display: grid;
-    gap: var(--spacing-16);
-    justify-items: center;
-    text-align: center;
-  }
-
-  .spinner {
-    font-size: 2rem;
-  }
-
-  .stateText {
-    margin: 0;
-    max-width: 28rem;
-    color: var(--color-text-secondary);
   }
 
   .results {
@@ -238,114 +167,40 @@
   }
 
   .resultsHeader {
-    display: flex;
-    align-items: center;
-  }
-
-  .resultsSummary {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-12);
     margin: 0;
-    padding: var(--spacing-12) var(--spacing-16);
-    border: 1px solid var(--color-background-200);
-    border-radius: 999px;
-    background:
-      linear-gradient(
-        135deg,
-        color-mix(in oklch, var(--color-primary), transparent 88%),
-        var(--color-background-50)
-      );
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--spacing-16);
+    align-items: end;
   }
 
   .resultsSummaryLabel {
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-14);
+    margin: 0 0 var(--spacing-8);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-12);
+    letter-spacing: var(--letter-spacing-label);
+    text-transform: uppercase;
   }
 
   .resultsSummaryValue {
-    color: var(--color-text);
-  }
-
-  .tableShell {
-    position: relative;
-    overflow: hidden;
-    border: 1px solid var(--color-background-200);
-    border-radius: var(--border-radius-12);
-    background-color: var(--color-background);
-  }
-
-  .tableWrapper {
-    overflow-x: auto;
-  }
-
-  .resultsTable {
-    width: 100%;
-    min-width: 32rem;
-    border-collapse: collapse;
-  }
-
-  .loadingOverlay {
-    position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    background-color: color-mix(in oklch, var(--color-background), transparent 18%);
-    backdrop-filter: blur(0.35rem);
-  }
-
-  .loadingBadge {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-8);
     margin: 0;
-    padding: var(--spacing-12) var(--spacing-16);
-    border: 1px solid var(--color-background-200);
-    border-radius: 999px;
-    background-color: color-mix(in oklch, var(--color-background-50), transparent 8%);
-    color: var(--color-text);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-24);
+    line-height: var(--line-height-snug);
+    font-weight: var(--font-weight-bold);
   }
 
-  .loadingSpinner {
-    font-size: 1rem;
-  }
-
-  .tableHeading {
-    padding: var(--spacing-16) var(--spacing-24);
-    border-bottom: 1px solid var(--color-background-300);
-    text-align: left;
-    font-size: var(--font-size-14);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-text-secondary);
-    background-color: color-mix(in oklch, var(--color-background-50), var(--color-background) 55%);
-  }
-
-  .tableCell {
-    padding: var(--spacing-16) var(--spacing-24);
-    border-bottom: 1px solid var(--color-background-200);
-    color: var(--color-text);
-    vertical-align: top;
-
-    &:first-child {
-      font-weight: var(--font-weight-medium);
-    }
-  }
-
-  .pagination {
-    display: grid;
-    gap: var(--spacing-12);
-    align-items: center;
-    padding-top: var(--spacing-16);
-
-    @media (width >= 40rem) {
-      grid-template-columns: auto auto auto;
-      justify-content: space-between;
-    }
-  }
-
-  .paginationText {
+  .resultsCopy {
     margin: 0;
-    color: var(--color-text-secondary);
-    text-align: center;
+    color: var(--color-text-tertiary);
+    max-inline-size: 24rem;
+    text-align: right;
+  }
+
+  @container (inline-size < 40rem) {
+    .resultsCopy {
+      text-align: left;
+    }
   }
 </style>

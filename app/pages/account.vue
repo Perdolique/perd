@@ -1,38 +1,13 @@
 <template>
   <PageContent page-title="Account">
     <div :class="$style.content">
-      <PerdCard :class="$style.card">
-        <IconTitle
-          icon="tabler:user"
-          :level="2"
-        >
-          Profile Information
-        </IconTitle>
+      <AccountProfileCard
+        :role="role"
+        :user-id-text="userIdText"
+        :user-initial="userInitial"
+      />
 
-        <div :class="$style.infoBlock">
-          <div :class="$style.infoItem">
-            <span :class="$style.label">
-              User ID
-            </span>
-
-            <span :class="$style.value">
-              {{ user.userId }}
-            </span>
-          </div>
-
-          <div :class="$style.infoItem">
-            <span :class="$style.label">
-              Role
-            </span>
-
-            <span :class="$style.value">
-              {{ role }}
-            </span>
-          </div>
-        </div>
-      </PerdCard>
-
-      <PerdCard :class="$style.card">
+      <PerdCard :class="[$style.card, $style.dangerCard]">
         <IconTitle
           icon="tabler:alert-triangle"
           :level="2"
@@ -41,7 +16,7 @@
         </IconTitle>
 
         <PerdButton
-          secondary
+          variant="danger"
           icon="tabler:trash"
           @click="onDeleteClick"
         >
@@ -54,6 +29,7 @@
       v-model="showDeleteModal"
       header-text="Delete account"
       confirm-button-text="Delete account"
+      confirm-variant="danger"
       @confirm="handleDeleteAccount"
     >
       Are you sure you want to delete your account? This action cannot be undone.
@@ -65,6 +41,7 @@
   import { computed, ref } from 'vue'
   import { $fetch } from 'ofetch'
   import { definePageMeta, navigateTo, useUserStore } from '#imports'
+  import AccountProfileCard from '~/components/account/AccountProfileCard.vue'
   import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue'
   import IconTitle from '~/components/IconTitle.vue'
   import PageContent from '~/components/layout/PageContent.vue'
@@ -79,6 +56,8 @@
   const showDeleteModal = ref(false)
   const isDeleting = ref(false)
   const role = computed(() => user.value.isAdmin ? 'Admin' : 'User')
+  const userIdText = computed(() => user.value.userId ?? '')
+  const userInitial = computed(() => userIdText.value.slice(0, 1).toUpperCase() || 'P')
 
   function onDeleteClick() {
     showDeleteModal.value = true
@@ -118,27 +97,14 @@
   .card {
     display: grid;
     row-gap: var(--spacing-24);
-    justify-content: start;
   }
 
-  .infoBlock {
-    display: grid;
-    row-gap: var(--spacing-16);
-  }
-
-  .infoItem {
-    display: grid;
-    row-gap: var(--spacing-8);
-    justify-content: start;
-  }
-
-  .label {
-    font-size: var(--font-size-16);
-    font-weight: var(--font-weight-medium);
-  }
-
-  .value {
-    font-size: var(--font-size-14);
-    color: var(--color-text-secondary);
+  .dangerCard {
+    background:
+      linear-gradient(
+        145deg,
+        color-mix(in oklch, var(--color-danger), transparent 94%),
+        var(--color-surface-base)
+      );
   }
 </style>

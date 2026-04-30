@@ -36,17 +36,17 @@
 
 <style module>
   .component {
-    width: 100%;
+    inline-size: 100%;
   }
 
   .card {
-    width: 100%;
-    max-width: 40rem;
+    inline-size: 100%;
+    max-inline-size: 42rem;
     box-sizing: border-box;
     margin: 0 auto;
     background:
-      radial-gradient(circle at top center, color-mix(in oklch, var(--color-primary), transparent 78%), transparent 38%),
-      linear-gradient(180deg, var(--color-background-50), var(--color-background-100));
+      radial-gradient(circle at top center, color-mix(in oklch, var(--color-accent-base), transparent 80%), transparent 42%),
+      linear-gradient(180deg, var(--color-surface-base), var(--color-surface-subtle));
   }
 
   .body {
@@ -63,13 +63,15 @@
 
   .content {
     margin: 0;
-    max-width: 32rem;
-    color: var(--color-text-secondary);
-    line-height: 1.5;
+    max-inline-size: 32rem;
+    color: var(--color-text-tertiary);
+    line-height: var(--line-height-body);
   }
 
   .actions {
     display: flex;
     justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-8);
   }
 </style>

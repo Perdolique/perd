@@ -1,10 +1,16 @@
 :root {
+  --font-size-12: 0.75rem;
   --font-size-14: 0.875rem;
   --font-size-16: 1rem;
   --font-size-20: 1.25rem;
   --font-size-24: 1.5rem;
+  --font-size-32: 2rem;
   --font-weight-medium: 500;
   --font-weight-bold: 700;
+  --line-height-tight: 1.05;
+  --line-height-snug: 1.2;
+  --line-height-body: 1.5;
+  --letter-spacing-label: 0.14em;
 }
 
 strong {

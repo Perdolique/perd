@@ -18,7 +18,9 @@ import {
   validatePropertyEnumOptionMutationBody,
   validatePropertyEnumOptionParams,
   validateRedirectTargetQuery,
-  validateTwitchOAuthBody
+  validateTwitchOAuthBody,
+  validateUserEquipmentCreateBody,
+  validateUserEquipmentIdParams
 } from '#server/utils/validation/schemas'
 
 describe('validation schemas', () => {
@@ -591,6 +593,34 @@ describe('validation schemas', () => {
     })
 
     expect(() => validateItemDetailParams({
+      id: '550e8400-e29b-41d4-a716-446655440000'
+    })).toThrow()
+  })
+
+  test('should accept canonical uuid v7 inventory create bodies only', () => {
+    const result = validateUserEquipmentCreateBody({
+      itemId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+    })
+
+    expect(result).toStrictEqual({
+      itemId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+    })
+
+    expect(() => validateUserEquipmentCreateBody({
+      itemId: '550e8400-e29b-41d4-a716-446655440000'
+    })).toThrow()
+  })
+
+  test('should accept canonical uuid v7 inventory id params only', () => {
+    const result = validateUserEquipmentIdParams({
+      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+    })
+
+    expect(result).toStrictEqual({
+      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+    })
+
+    expect(() => validateUserEquipmentIdParams({
       id: '550e8400-e29b-41d4-a716-446655440000'
     })).toThrow()
   })

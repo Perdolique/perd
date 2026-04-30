@@ -1,7 +1,37 @@
 import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
 import { validateItemDetailParams } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event) => {
+interface ItemDetailBrand {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+interface ItemDetailCategory {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+interface ItemProperty {
+  dataType: string;
+  name: string;
+  slug: string;
+  unit: string | null;
+  value: string | null;
+}
+
+interface ItemDetailResponse {
+  brand: ItemDetailBrand;
+  category: ItemDetailCategory;
+  createdAt: Date | string;
+  id: string;
+  name: string;
+  properties: ItemProperty[];
+  status: string;
+}
+
+export default defineEventHandler(async (event) : Promise<ItemDetailResponse> => {
   const { id } = await getValidatedRouterParams(event, validateItemDetailParams)
 
   const item = await event.context.dbHttp.query.equipmentItems.findFirst({
@@ -58,12 +88,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 404 })
   }
 
-  interface ItemProperty {
-    dataType: string
-    name: string
-    slug: string
-    unit: string | null
-    value: string | null
+  if (item.brand === null || item.category === null) {
+    throw createError({
+      status: 500,
+      message: 'Failed to load item reference data'
+    })
   }
 
   const properties: ItemProperty[] = []

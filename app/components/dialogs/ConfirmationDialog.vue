@@ -14,7 +14,7 @@
 
       <div :class="$style.buttons">
         <PerdButton
-          secondary
+          variant="secondary"
           :class="$style.cancelButton"
           @click="close"
         >
@@ -22,6 +22,7 @@
         </PerdButton>
 
         <PerdButton
+          :variant="confirmVariant"
           :class="$style.confirmButton"
           @click="emitConfirm"
         >
@@ -34,13 +35,14 @@
 
 <script lang="ts" setup>
   import PerdButton from '~/components/PerdButton.vue'
-  import PerdHeading from '~/components/PerdHeading.vue';
+  import PerdHeading from '~/components/PerdHeading.vue'
   import ModalDialog from './ModalDialog.vue'
 
   interface Props {
+    cancelButtonText?: string;
+    confirmVariant?: 'danger' | 'primary';
     headerText: string;
     confirmButtonText: string;
-    cancelButtonText?: string;
   }
 
   type Emits = (event: 'confirm') => void
@@ -50,7 +52,8 @@
   })
 
   const {
-    cancelButtonText = 'Cancel'
+    cancelButtonText = 'Cancel',
+    confirmVariant = 'primary'
   } = defineProps<Props>()
 
   const emit = defineEmits<Emits>()
@@ -71,20 +74,21 @@
     display: grid;
     row-gap: var(--spacing-24);
     column-gap: var(--spacing-16);
-    background-color: var(--color-background);
+    background:
+      linear-gradient(180deg, var(--color-surface-base), var(--color-surface-subtle));
     padding: var(--spacing-24);
     border-radius: var(--border-radius-24);
-    border: 1px solid var(--color-background-100);
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: var(--shadow-3);
   }
 
   .header {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    text-wrap: balance;
   }
 
   .body {
-    word-break: break-word;
+    overflow-wrap: anywhere;
+    color: var(--color-text-tertiary);
   }
 
   .buttons {
@@ -96,7 +100,7 @@
 
   .confirmButton,
   .cancelButton {
-    max-width: 200px;
+    max-inline-size: 12.5rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

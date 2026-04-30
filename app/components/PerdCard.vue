@@ -6,9 +6,9 @@
 
 <style module>
   .component {
-    background-color: var(--color-background-50);
+    background: var(--color-surface-base);
     border-radius: var(--border-radius-16);
     padding: var(--spacing-24);
-    border: 1px solid var(--color-background-100);
+    border: 1px solid var(--color-border-subtle);
   }
 </style>

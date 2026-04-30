@@ -19,4 +19,10 @@
   .component {
     animation: spin 1s linear infinite;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    .component {
+      animation: none;
+    }
+  }
 </style>

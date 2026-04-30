@@ -8,21 +8,27 @@
 
 <style module>
   .component {
-    outline: none;
-    color: var(--color-primary-700);
+    outline: 2px solid transparent;
+    outline-offset: 3px;
+    color: var(--color-accent-base);
     position: relative;
     text-decoration: none;
-    transition: color var(--transition-time-quick);
+    transition: color var(--transition-duration-quick) var(--transition-easing-out);
     cursor: pointer;
+    font-weight: var(--font-weight-medium);
 
     &:hover,
     &:focus-visible {
       text-decoration: underline;
-      color: var(--color-primary-600);
+      color: var(--color-accent-hover);
+    }
+
+    &:focus-visible {
+      outline-color: var(--color-accent-ring);
     }
 
     &:active {
-      color: var(--color-primary-500);
+      color: var(--color-accent-active);
     }
   }
 </style>

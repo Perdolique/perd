@@ -199,6 +199,14 @@ const itemDetailParamsSchema = v.object({
   id: canonicalUuidV7Schema
 })
 
+const userEquipmentIdParamsSchema = v.object({
+  id: canonicalUuidV7Schema
+})
+
+const userEquipmentCreateBodySchema = v.object({
+  itemId: canonicalUuidV7Schema
+})
+
 const itemsListQuerySchema = v.object({
   brandSlug: optionalFilterQuerySchema,
   categorySlug: optionalFilterQuerySchema,
@@ -270,6 +278,14 @@ function validateItemDetailParams(params: unknown) {
   return v.parse(itemDetailParamsSchema, params)
 }
 
+function validateUserEquipmentIdParams(params: unknown) {
+  return v.parse(userEquipmentIdParamsSchema, params)
+}
+
+function validateUserEquipmentCreateBody(body: unknown) {
+  return v.parse(userEquipmentCreateBodySchema, body)
+}
+
 function validatePropertyEnumOptionMutationBody(body: unknown) {
   return v.parse(propertyEnumOptionMutationSchema, body)
 }
@@ -318,6 +334,8 @@ export {
   trimmedNonEmptyStringSchema,
   trimmedStringSchema,
   twitchOAuthBodySchema,
+  userEquipmentCreateBodySchema,
+  userEquipmentIdParamsSchema,
   validateBrandDetailParams,
   validateBrandIdParams,
   validateBrandMutationBody,
@@ -335,5 +353,7 @@ export {
   validatePropertyEnumOptionMutationBody,
   validatePropertyEnumOptionParams,
   validateRedirectTargetQuery,
-  validateTwitchOAuthBody
+  validateTwitchOAuthBody,
+  validateUserEquipmentCreateBody,
+  validateUserEquipmentIdParams
 }
