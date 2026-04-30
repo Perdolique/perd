@@ -12,7 +12,7 @@ Use this skill to keep `plan/` as a small, implementation-oriented roadmap inste
 Use this skill for:
 
 - editing files under `plan/**`
-- changing `plan/PLAN.md` order, links, or section membership
+- changing `plan/ROADMAP.md` order, links, or section membership
 - splitting product, backend, frontend, or test work into implementation iterations
 - moving shipped work from an active plan into `plan/completed.md`
 - recording accepted follow-up work in `plan/tech-debt.md`
@@ -21,7 +21,7 @@ Do not use this skill for generic Markdown cleanup, README/docs copy edits, arch
 
 ## Roadmap model
 
-- `plan/PLAN.md` is the top-down index and source of truth for work order.
+- `plan/ROADMAP.md` is the top-down index and source of truth for work order.
 - Active roadmap files hold only work that still matters for upcoming implementation.
 - `plan/completed.md` is a short factual journal, not an archive of execution detail.
 - `plan/tech-debt.md` is for accepted engineering follow-up after a smaller slice ships.
@@ -29,9 +29,9 @@ Do not use this skill for generic Markdown cleanup, README/docs copy edits, arch
 
 ## Editing workflow
 
-1. Read `plan/PLAN.md` and the target plan file before changing roadmap content.
+1. Read `plan/ROADMAP.md` and the target plan file before changing roadmap content.
 2. Classify the change as active roadmap, deferred product work, engineering follow-up, or completed work.
-3. Keep links and section membership in `plan/PLAN.md` synchronized with renamed, moved, added, or completed plan files.
+3. Keep links and section membership in `plan/ROADMAP.md` synchronized with renamed, moved, added, or completed plan files.
 4. Remove stale roadmap detail when work ships. Preserve only the short completed summary needed in `plan/completed.md`.
 5. Move new follow-up ideas to `plan/tech-debt.md` or a deferred roadmap file instead of leaving TODOs inside completed or active shipped sections.
 
@@ -60,3 +60,4 @@ When drafting or revising iterations:
 - Prefer concrete behavior and current constraints over generic platform-speak.
 - State assumptions and activation rules directly when work is deferred.
 - Remove stale guidance instead of appending contradictory notes on top of it.
+
