@@ -1,6 +1,6 @@
 # Completed work
 
-Summary of already implemented features.
+Short summary of already implemented features. Detailed execution notes belong in active roadmap files only while the work is still in progress.
 
 ## Database foundation
 
@@ -32,7 +32,7 @@ Catalog item detail now ships at `/catalog/[id]` on top of the existing item det
 
 ## Twitch OAuth
 
-Redirect to Twitch, token exchange, user info fetch, new user creation with OAuth account linking, login via existing Twitch account, and redirect restoration through OAuth `state`. Missing: CSRF-hardening for `state`, linking existing account to Twitch.
+Redirect to Twitch, token exchange, user info fetch, new user creation with an OAuth account record, login via existing Twitch account, and redirect restoration through OAuth `state` are implemented.
 
 ## Shared UI components
 
@@ -40,7 +40,7 @@ Nuxt layout with header, footer, sidebar. Shared UI components: buttons, cards, 
 
 ## Tooling and tests
 
-Migration CLI script (`tools/migrate.ts`). Playwright browser smoke covers login plus protected dashboard and catalog browsing flows rather than backend API contracts, and now also checks that `PageContent` header actions respond to container width instead of only viewport width. DB-free Vitest coverage covers brands/groups/categories admin handlers, brand/category/item read handlers, shared validation schemas, and the catalog query adapter that maps user-space URLs onto the existing items list API. Unit tests also cover `withMinimumDelay`.
+Migration CLI script (`tools/migrate.ts`). Playwright browser smoke covers login plus protected dashboard and catalog browsing flows rather than backend API contracts. DB-free Vitest coverage covers brands/groups/categories admin handlers, brand/category/item read handlers, shared validation schemas, and the catalog query adapter that maps user-space URLs onto the existing items list API. Unit tests also cover `withMinimumDelay`.
 
 ## Seed data
 
