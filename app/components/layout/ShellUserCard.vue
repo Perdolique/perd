@@ -37,7 +37,8 @@
     border: 1px solid var(--color-border-subtle);
     text-decoration: none;
     color: inherit;
-    outline: none;
+    outline: 2px solid transparent;
+    outline-offset: 3px;
     transition:
       background-color var(--transition-duration-base) var(--transition-easing-out),
       border-color var(--transition-duration-base) var(--transition-easing-out),
@@ -49,13 +50,17 @@
       border-color: var(--color-border-subtle);
     }
 
+    &:focus-visible {
+      outline-color: var(--color-accent-ring);
+    }
+
     &:global(.active) {
       box-shadow: inset 3px 0 0 var(--color-accent-base);
     }
   }
 
   .meta {
-    min-width: 0;
+    min-inline-size: 0;
     display: grid;
     gap: 0.15rem;
   }

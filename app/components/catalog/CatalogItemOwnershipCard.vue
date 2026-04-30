@@ -5,7 +5,7 @@
         Ownership
       </IconTitle>
 
-      <p :class="[$style.badge, stateClass]" role="status">
+      <PerdPill :tone="stateTone" role="status">
         <Icon
           :name="stateIcon"
           :class="$style.badgeIcon"
@@ -13,7 +13,7 @@
         />
 
         <span>{{ stateText }}</span>
-      </p>
+      </PerdPill>
     </div>
 
     <p :class="$style.text">
@@ -47,12 +47,14 @@
 </template>
 
 <script lang="ts" setup>
+  import { computed } from 'vue'
   import IconTitle from '~/components/IconTitle.vue'
   import PerdButton from '~/components/PerdButton.vue'
   import PerdCard from '~/components/PerdCard.vue'
   import PerdLink from '~/components/PerdLink.vue'
+  import PerdPill, { type PerdPillTone } from '~/components/PerdPill.vue'
 
-  type OwnershipActionVariant = 'primary' | 'secondary' | 'ghost' | 'danger'
+  type OwnershipActionVariant = 'primary' | 'secondary' | 'danger'
 
   interface Props {
     actionIcon: string;
@@ -70,8 +72,24 @@
 
   type Emits = (event: 'ownership-action') => void
 
-  defineProps<Props>()
+  const props = defineProps<Props>()
   const emit = defineEmits<Emits>()
+
+  const stateTone = computed<PerdPillTone>(() => {
+    if (props.stateClass === 'owned') {
+      return 'success'
+    }
+
+    if (props.stateClass === 'pending') {
+      return 'warning'
+    }
+
+    if (props.stateClass === 'error') {
+      return 'danger'
+    }
+
+    return 'neutral'
+  })
 
   function emitAction() {
     emit('ownership-action')
@@ -94,39 +112,6 @@
   .header {
     display: grid;
     gap: var(--spacing-16);
-  }
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-8);
-    width: fit-content;
-    padding: 0.4rem 0.75rem;
-    border-radius: 999px;
-    border: 1px solid transparent;
-    font-size: var(--font-size-12);
-    font-weight: var(--font-weight-medium);
-
-    &:global(.owned) {
-      background: var(--color-success-subtle);
-      color: var(--color-success);
-    }
-
-    &:global(.missing) {
-      background: var(--color-surface-subtle);
-      color: var(--color-text-secondary);
-      border-color: var(--color-border-subtle);
-    }
-
-    &:global(.pending) {
-      background: var(--color-warning-subtle);
-      color: var(--color-warning);
-    }
-
-    &:global(.error) {
-      background: var(--color-danger-subtle);
-      color: var(--color-danger);
-    }
   }
 
   .badgeIcon {

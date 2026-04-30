@@ -47,13 +47,13 @@
 <style module>
   .component {
     position: sticky;
-    top: 0;
+    inset-block-start: 0;
     z-index: 10;
     display: flex;
     align-items: center;
     gap: var(--spacing-12);
     padding: var(--spacing-12) var(--spacing-16);
-    border-bottom: 1px solid var(--color-border-subtle);
+    border-block-end: 1px solid var(--color-border-subtle);
     background: color-mix(in oklch, var(--color-background-raised), transparent 9%);
     backdrop-filter: blur(14px) saturate(1.3);
 
@@ -67,7 +67,13 @@
     text-decoration: none;
     font-size: var(--font-size-20);
     font-weight: var(--font-weight-bold);
-    letter-spacing: -0.04em;
+    letter-spacing: 0;
+    outline: 2px solid transparent;
+    outline-offset: 3px;
+
+    &:focus-visible {
+      outline-color: var(--color-accent-ring);
+    }
   }
 
   .brandPunctuation {
@@ -77,7 +83,7 @@
 
   .path {
     font-size: var(--font-size-12);
-    letter-spacing: 0.16em;
+    letter-spacing: var(--letter-spacing-label);
     text-transform: uppercase;
     color: var(--color-text-muted);
   }
@@ -89,14 +95,15 @@
   .action {
     display: grid;
     place-items: center;
-    width: 2rem;
-    height: 2rem;
+    inline-size: 2rem;
+    block-size: 2rem;
     border-radius: var(--border-radius-12);
     color: var(--color-text-secondary);
     text-decoration: none;
     background: transparent;
     border: 1px solid transparent;
-    outline: none;
+    outline: 2px solid transparent;
+    outline-offset: 3px;
     transition:
       background-color var(--transition-duration-base) var(--transition-easing-out),
       border-color var(--transition-duration-base) var(--transition-easing-out),
@@ -107,6 +114,10 @@
       background: var(--color-surface-base);
       border-color: var(--color-border-subtle);
       color: var(--color-text-primary);
+    }
+
+    &:focus-visible {
+      outline-color: var(--color-accent-ring);
     }
   }
 </style>

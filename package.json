@@ -35,7 +35,7 @@
   "dependencies": {
     "@nuxt/hints": "1.0.3",
     "delay": "7.0.0",
-    "nuxt": "4.4.2",
+    "nuxt": "4.4.4",
     "vue": "3.5.33"
   },
   "devDependencies": {
@@ -66,10 +66,10 @@
     "vite": "8.0.10",
     "vitest": "4.1.5",
     "vue-tsc": "3.2.7",
-    "wrangler": "4.86.0",
+    "wrangler": "4.87.0",
     "ws": "8.20.0"
   },
-  "packageManager": "pnpm@10.33.2",
+  "packageManager": "pnpm@11.0.2",
   "overrides": {
     "@nuxt/devtools": "$@nuxt/devtools"
   }

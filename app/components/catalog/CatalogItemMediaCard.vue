@@ -1,8 +1,8 @@
 <template>
   <PerdCard :class="$style.component">
-    <span :class="$style.badge">
+    <PerdPill :class="$style.badge">
       {{ categoryName }}
-    </span>
+    </PerdPill>
 
     <span :class="$style.icon" aria-hidden="true">
       <Icon name="tabler:backpack" />
@@ -12,6 +12,7 @@
 
 <script lang="ts" setup>
   import PerdCard from '~/components/PerdCard.vue'
+  import PerdPill from '~/components/PerdPill.vue'
 
   interface Props {
     categoryName: string;
@@ -23,11 +24,12 @@
 <style module>
   .component {
     position: relative;
-    min-height: 18rem;
+    min-block-size: 18rem;
     overflow: hidden;
     display: grid;
     gap: var(--spacing-24);
     place-items: center;
+    container-type: inline-size;
     background:
       radial-gradient(circle at top center, color-mix(in oklch, var(--color-accent-base), transparent 78%), transparent 35%),
       linear-gradient(180deg, var(--color-surface-base), var(--color-background-sunken));
@@ -35,21 +37,16 @@
 
   .badge {
     position: absolute;
-    top: var(--spacing-16);
-    left: var(--spacing-16);
-    padding: 0.35rem 0.75rem;
-    border-radius: 999px;
+    inset-block-start: var(--spacing-16);
+    inset-inline-start: var(--spacing-16);
     background: var(--color-surface-base);
-    border: 1px solid var(--color-border-subtle);
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-12);
   }
 
   .icon {
     display: grid;
     place-items: center;
-    width: min(10rem, 30vw);
-    height: min(10rem, 30vw);
+    inline-size: min(10rem, 45cqi);
+    block-size: min(10rem, 45cqi);
     border-radius: 2rem;
     background: color-mix(in oklch, var(--color-surface-base), transparent 8%);
     border: 1px solid var(--color-border-subtle);

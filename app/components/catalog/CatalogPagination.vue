@@ -54,9 +54,9 @@
     display: grid;
     gap: var(--spacing-12);
     align-items: center;
-    padding-top: var(--spacing-16);
+    padding-block-start: var(--spacing-16);
 
-    @media (width >= 40rem) {
+    @container (inline-size >= 40rem) {
       grid-template-columns: auto auto auto;
       justify-content: space-between;
     }

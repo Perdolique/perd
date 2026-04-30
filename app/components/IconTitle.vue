@@ -35,8 +35,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
     border-radius: var(--border-radius-12);
     background: var(--color-accent-subtle);
     color: var(--color-accent-base);

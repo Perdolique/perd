@@ -7,7 +7,7 @@
         :user-initial="userInitial"
       />
 
-      <PerdCard :class="$style.card">
+      <PerdCard :class="[$style.card, $style.dangerCard]">
         <IconTitle
           icon="tabler:alert-triangle"
           :level="2"
@@ -99,7 +99,7 @@
     row-gap: var(--spacing-24);
   }
 
-  .card:last-of-type {
+  .dangerCard {
     background:
       linear-gradient(
         145deg,

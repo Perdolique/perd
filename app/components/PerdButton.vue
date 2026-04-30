@@ -3,12 +3,9 @@
     :type="type"
     :disabled="isButtonDisabled"
     :aria-busy="ariaBusy"
-    :class="[$style.button, {
+    :class="[$style.component, {
       small: isSmallSize,
-      iconOnly: isIconOnlySize,
-      iconSmall: isIconSmallSize,
       secondary: isSecondaryVariant,
-      ghost: isGhostVariant,
       danger: isDangerVariant
     }]"
   >
@@ -42,9 +39,9 @@
     icon?: string;
     iconRight?: string;
     loading?: boolean;
-    size?: 'medium' | 'small' | 'icon-only' | 'icon-small';
+    size?: 'medium' | 'small';
     type?: 'button' | 'reset' | 'submit';
-    variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+    variant?: 'primary' | 'secondary' | 'danger';
   }
 
   const {
@@ -59,17 +56,14 @@
   const ariaBusy = computed(() => loading || undefined)
   const isButtonDisabled = computed(() => disabled || loading)
   const isSmallSize = computed(() => size === 'small')
-  const isIconOnlySize = computed(() => size === 'icon-only')
-  const isIconSmallSize = computed(() => size === 'icon-small')
   const isSecondaryVariant = computed(() => variant === 'secondary')
-  const isGhostVariant = computed(() => variant === 'ghost')
   const isDangerVariant = computed(() => variant === 'danger')
   const rightIconName = computed(() => iconRight ?? '')
   const showRightIcon = computed(() => iconRight !== undefined && iconRight !== '' && loading === false)
 </script>
 
 <style module>
-  .button {
+  .component {
     appearance: none;
     border: 1px solid transparent;
     cursor: pointer;
@@ -77,12 +71,13 @@
     align-items: center;
     justify-content: center;
     gap: var(--spacing-8);
-    height: 2.5rem;
-    padding: 0 var(--spacing-16);
+    block-size: 2.5rem;
+    padding-inline: var(--spacing-16);
     border-radius: var(--border-radius-16);
     background: var(--color-accent-base);
     color: var(--color-accent-contrast);
-    outline: none;
+    outline: 2px solid transparent;
+    outline-offset: 3px;
     user-select: none;
     white-space: nowrap;
     font-weight: var(--font-weight-medium);
@@ -93,9 +88,13 @@
       color var(--transition-duration-quick) var(--transition-easing-out),
       transform var(--transition-duration-quick) var(--transition-easing-out);
 
-    &:focus-visible,
     &:hover {
       background: var(--color-accent-hover);
+    }
+
+    &:focus-visible {
+      background: var(--color-accent-hover);
+      outline-color: var(--color-accent-ring);
     }
 
     &:active {
@@ -104,25 +103,10 @@
     }
 
     &:global(.small) {
-      height: 2rem;
-      padding: 0 var(--spacing-12);
+      block-size: 2rem;
+      padding-inline: var(--spacing-12);
       border-radius: var(--border-radius-12);
       font-size: var(--font-size-12);
-    }
-
-    &:global(.iconOnly),
-    &:global(.iconSmall) {
-      padding: 0;
-    }
-
-    &:global(.iconOnly) {
-      width: 2.5rem;
-    }
-
-    &:global(.iconSmall) {
-      width: 2rem;
-      height: 2rem;
-      border-radius: var(--border-radius-12);
     }
 
     &:global(.secondary) {
@@ -130,25 +114,15 @@
       color: var(--color-text-primary);
       border-color: var(--color-border-default);
 
-      &:focus-visible,
       &:hover {
         background: var(--color-surface-subtle);
         border-color: var(--color-border-default);
         color: var(--color-text-primary);
       }
 
-      &:active {
-        transform: translateY(1px);
-      }
-    }
-
-    &:global(.ghost) {
-      background: transparent;
-      color: var(--color-text-secondary);
-
-      &:focus-visible,
-      &:hover {
+      &:focus-visible {
         background: var(--color-surface-subtle);
+        border-color: var(--color-border-default);
         color: var(--color-text-primary);
       }
 
@@ -162,9 +136,13 @@
       color: var(--color-danger);
       border-color: color-mix(in oklch, var(--color-danger), transparent 76%);
 
-      &:focus-visible,
       &:hover {
         background: color-mix(in oklch, var(--color-danger), transparent 90%);
+      }
+
+      &:focus-visible {
+        background: color-mix(in oklch, var(--color-danger), transparent 90%);
+        outline-color: color-mix(in oklch, var(--color-danger), transparent 48%);
       }
 
       &:active {
@@ -173,19 +151,26 @@
     }
   }
 
-  .button:disabled,
-  .button:disabled:focus-visible,
-  .button:disabled:hover,
-  .button:disabled:active {
+  .component:disabled,
+  .component:disabled:focus-visible,
+  .component:disabled:hover,
+  .component:disabled:active {
     cursor: not-allowed;
     transform: none;
     color: var(--color-text-muted);
     background: var(--color-surface-subtle);
     border-color: transparent;
+    outline-color: transparent;
   }
 
   .icon {
     font-size: 1.05em;
     flex-shrink: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .component:active {
+      transform: none;
+    }
   }
 </style>

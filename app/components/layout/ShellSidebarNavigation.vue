@@ -60,7 +60,8 @@
     background: transparent;
     text-decoration: none;
     border: 1px solid transparent;
-    outline: none;
+    outline: 2px solid transparent;
+    outline-offset: 3px;
     transition:
       background-color var(--transition-duration-base) var(--transition-easing-out),
       border-color var(--transition-duration-base) var(--transition-easing-out),
@@ -72,6 +73,10 @@
       background: var(--color-surface-base);
       border-color: var(--color-border-subtle);
       color: var(--color-text-primary);
+    }
+
+    &:focus-visible {
+      outline-color: var(--color-accent-ring);
     }
 
     &:global(.active) {

@@ -24,24 +24,26 @@ vi.mock(import('h3'), async () => {
   }
 })
 
-interface CategoryDetail {
+interface CategoryPropertyEnumOption {
   id: number;
   name: string;
   slug: string;
+}
 
-  properties: {
-    dataType: string;
-    id: number;
-    name: string;
-    slug: string;
-    unit: string | null;
+interface CategoryDetailProperty {
+  dataType: string;
+  enumOptions?: CategoryPropertyEnumOption[];
+  id: number;
+  name: string;
+  slug: string;
+  unit: string | null;
+}
 
-    enumOptions?: {
-      id: number;
-      name: string;
-      slug: string;
-    }[];
-  }[];
+interface CategoryDetail {
+  id: number;
+  name: string;
+  properties: CategoryDetailProperty[];
+  slug: string;
 }
 
 function createDetailDb(category?: CategoryDetail) {

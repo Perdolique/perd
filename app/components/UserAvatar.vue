@@ -22,7 +22,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 999px;
+    border-radius: var(--border-radius-pill);
     background: var(--color-accent-subtle);
     color: var(--color-accent-base);
     font-weight: var(--font-weight-bold);
@@ -30,14 +30,14 @@
     border: 1px solid var(--color-accent-ring);
 
     &:global(.large) {
-      width: 4rem;
-      height: 4rem;
+      inline-size: 4rem;
+      block-size: 4rem;
       font-size: var(--font-size-20);
     }
 
     &:global(.medium) {
-      width: 2.5rem;
-      height: 2.5rem;
+      inline-size: 2.5rem;
+      block-size: 2.5rem;
       font-size: var(--font-size-16);
     }
   }

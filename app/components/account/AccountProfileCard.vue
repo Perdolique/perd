@@ -56,6 +56,7 @@
   .component {
     display: grid;
     row-gap: var(--spacing-24);
+    container-type: inline-size;
   }
 
   .header {
@@ -74,7 +75,7 @@
     margin: 0;
     color: var(--color-text-muted);
     font-size: var(--font-size-12);
-    letter-spacing: 0.18em;
+    letter-spacing: var(--letter-spacing-label);
     text-transform: uppercase;
   }
 
@@ -82,7 +83,7 @@
     display: grid;
     row-gap: var(--spacing-16);
 
-    @media (width >= 640px) {
+    @container (inline-size >= 40rem) {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       column-gap: var(--spacing-16);
     }
@@ -101,7 +102,7 @@
   .label {
     font-size: var(--font-size-12);
     font-weight: var(--font-weight-medium);
-    letter-spacing: 0.14em;
+    letter-spacing: var(--letter-spacing-label);
     text-transform: uppercase;
     color: var(--color-text-muted);
   }

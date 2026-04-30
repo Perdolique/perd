@@ -287,6 +287,7 @@
 <style module>
   .component {
     display: grid;
+    container-type: inline-size;
   }
 
   .content {
@@ -298,7 +299,7 @@
     display: grid;
     gap: var(--spacing-24);
 
-    @media (width >= 960px) {
+    @container (inline-size >= 60rem) {
       grid-template-columns: minmax(0, 1.35fr) minmax(20rem, 0.95fr);
       align-items: start;
     }

@@ -16,10 +16,10 @@
       :aria-busy="ariaBusy"
     >
       <div v-if="showLoadingOverlay" :class="$style.loadingOverlay">
-        <p :class="$style.loadingBadge" role="status" aria-label="Loading page" aria-live="polite">
+        <PerdPill tone="neutral" role="status" aria-label="Loading page" aria-live="polite">
           <FidgetSpinner :class="$style.loadingSpinner" />
           Loading page
-        </p>
+        </PerdPill>
       </div>
 
       <div :class="$style.list">
@@ -39,6 +39,7 @@
   import FidgetSpinner from '~/components/FidgetSpinner.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PerdButton from '~/components/PerdButton.vue'
+  import PerdPill from '~/components/PerdPill.vue'
   import CatalogItemRow from '~/components/catalog/CatalogItemRow.vue'
 
   interface Props {
@@ -81,18 +82,6 @@
     background-color: color-mix(in oklch, var(--color-background-base), transparent 18%);
     backdrop-filter: blur(0.35rem);
     border-radius: inherit;
-  }
-
-  .loadingBadge {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-8);
-    margin: 0;
-    padding: var(--spacing-12) var(--spacing-16);
-    border: 1px solid var(--color-border-default);
-    border-radius: 999px;
-    background-color: color-mix(in oklch, var(--color-surface-base), transparent 8%);
-    color: var(--color-text-primary);
   }
 
   .loadingSpinner {

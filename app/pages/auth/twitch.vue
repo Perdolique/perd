@@ -93,7 +93,7 @@
 
 <style module>
   .component {
-    min-height: 100dvh;
+    min-block-size: 100dvh;
     display: grid;
     place-items: center;
     padding: var(--spacing-16);
@@ -108,7 +108,7 @@
     justify-items: center;
     text-align: center;
     text-wrap: balance;
-    width: min(100%, 28rem);
+    inline-size: min(100%, 28rem);
     padding: var(--spacing-24);
     border-radius: var(--border-radius-24);
     border: 1px solid var(--color-border-subtle);
@@ -125,9 +125,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 4rem;
-    height: 4rem;
-    border-radius: 999px;
+    inline-size: 4rem;
+    block-size: 4rem;
+    border-radius: var(--border-radius-pill);
     background: var(--color-surface-subtle);
     border: 1px solid var(--color-border-subtle);
   }
@@ -135,7 +135,7 @@
   .label {
     color: var(--color-text-muted);
     font-size: var(--font-size-12);
-    letter-spacing: 0.18em;
+    letter-spacing: var(--letter-spacing-label);
     text-transform: uppercase;
   }
 

@@ -1,6 +1,18 @@
 import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
 import { validateItemDetailParams } from '#server/utils/validation/schemas'
 
+interface ItemDetailBrand {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+interface ItemDetailCategory {
+  id: number;
+  name: string;
+  slug: string;
+}
+
 interface ItemProperty {
   dataType: string;
   name: string;
@@ -10,18 +22,8 @@ interface ItemProperty {
 }
 
 interface ItemDetailResponse {
-  brand: {
-    id: number;
-    name: string;
-    slug: string;
-  };
-
-  category: {
-    id: number;
-    name: string;
-    slug: string;
-  };
-
+  brand: ItemDetailBrand;
+  category: ItemDetailCategory;
   createdAt: Date | string;
   id: string;
   name: string;

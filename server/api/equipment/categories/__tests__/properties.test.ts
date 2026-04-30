@@ -11,11 +11,12 @@ interface MockPropertyTransaction {
   select: ReturnType<typeof vi.fn>;
 }
 
-interface MockWriteDb {
-  $client: {
-    end: ReturnType<typeof vi.fn>;
-  };
+interface MockWriteDbClient {
+  end: ReturnType<typeof vi.fn>;
+}
 
+interface MockWriteDb {
+  $client: MockWriteDbClient;
   transaction: ReturnType<typeof vi.fn>;
 }
 

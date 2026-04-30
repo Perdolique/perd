@@ -1,21 +1,20 @@
 import { URL } from 'node:url'
 import { expect, test, type BrowserContext, type Page } from '@playwright/test'
 
+interface CatalogEntitySummary {
+  name: string;
+  slug: string;
+}
+
+interface CatalogListItem {
+  brand: CatalogEntitySummary;
+  category: CatalogEntitySummary;
+  id: string;
+  name: string;
+}
+
 interface CatalogItemsResponse {
-  items: {
-    id: string;
-    name: string;
-
-    brand: {
-      name: string;
-      slug: string;
-    };
-
-    category: {
-      name: string;
-      slug: string;
-    };
-  }[];
+  items: CatalogListItem[];
   limit: number;
   page: number;
   total: number;

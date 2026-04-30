@@ -19,13 +19,13 @@
         </div>
 
         <div :class="$style.tags">
-          <p :class="$style.tag">
+          <PerdPill>
             {{ inventoryRow.item.brand.name }}
-          </p>
+          </PerdPill>
 
-          <p :class="$style.tag">
+          <PerdPill>
             {{ inventoryRow.item.category.name }}
-          </p>
+          </PerdPill>
         </div>
       </div>
 
@@ -54,6 +54,7 @@
   import PerdButton from '~/components/PerdButton.vue'
   import PerdCard from '~/components/PerdCard.vue'
   import PerdLink from '~/components/PerdLink.vue'
+  import PerdPill from '~/components/PerdPill.vue'
 
   interface Props {
     inventoryRow: InventoryRecordView;
@@ -72,6 +73,7 @@
 <style module>
   .component {
     display: grid;
+    container-type: inline-size;
     background:
       linear-gradient(
         145deg,
@@ -84,7 +86,7 @@
     display: grid;
     gap: var(--spacing-16);
 
-    @media (width >= 640px) {
+    @container (inline-size >= 40rem) {
       grid-template-columns: minmax(0, 1fr) auto;
       align-items: start;
     }
@@ -103,7 +105,7 @@
   }
 
   .titleBlock {
-    min-width: 0;
+    min-inline-size: 0;
     display: grid;
     gap: 0.12rem;
   }
@@ -112,7 +114,7 @@
     margin: 0;
     color: var(--color-text-muted);
     font-size: var(--font-size-12);
-    letter-spacing: 0.12em;
+    letter-spacing: var(--letter-spacing-label);
     text-transform: uppercase;
   }
 
@@ -120,8 +122,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 2.5rem;
-    height: 2.5rem;
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
     border-radius: var(--border-radius-16);
     background-color: var(--color-accent-subtle);
     color: var(--color-accent-base);
@@ -134,23 +136,13 @@
     gap: var(--spacing-8);
   }
 
-  .tag {
-    margin: 0;
-    padding: var(--spacing-4) var(--spacing-12);
-    border-radius: 999px;
-    background-color: var(--color-surface-subtle);
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-12);
-    border: 1px solid var(--color-border-subtle);
-  }
-
   .actions {
     display: grid;
     gap: var(--spacing-12);
     align-items: start;
     justify-items: start;
 
-    @media (width >= 640px) {
+    @container (inline-size >= 40rem) {
       justify-items: end;
       text-align: right;
     }

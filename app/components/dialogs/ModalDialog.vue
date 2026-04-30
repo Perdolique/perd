@@ -82,4 +82,11 @@
       backdrop-filter: blur(0);
     }
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dialog,
+    .dialog[open] {
+      translate: 0;
+    }
+  }
 </style>

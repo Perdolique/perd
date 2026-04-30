@@ -106,7 +106,7 @@
     background:
       radial-gradient(circle at top right, color-mix(in oklch, var(--color-accent-base), transparent 84%), transparent 32%),
       linear-gradient(180deg, var(--color-surface-base), var(--color-background-sunken));
-    min-height: min(24rem, 60vh);
+    min-block-size: min(24rem, 60vh);
     align-content: start;
   }
 
@@ -114,18 +114,18 @@
     margin: 0;
     font-size: var(--font-size-12);
     font-weight: var(--font-weight-medium);
-    letter-spacing: 0.14em;
+    letter-spacing: var(--letter-spacing-label);
     text-transform: uppercase;
     color: var(--color-text-muted);
   }
 
   .title {
-    max-width: 12ch;
+    max-inline-size: 12ch;
   }
 
   .lede {
     margin: 0;
-    max-width: 44rem;
+    max-inline-size: 44rem;
     color: var(--color-text-tertiary);
     font-size: var(--font-size-16);
   }
@@ -133,10 +133,7 @@
   .quickGrid {
     display: grid;
     gap: var(--spacing-16);
-
-    @media (width >= 760px) {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
   }
 
   .quickCard {
@@ -149,7 +146,8 @@
     color: inherit;
     text-decoration: none;
     box-shadow: var(--shadow-1);
-    outline: none;
+    outline: 2px solid transparent;
+    outline-offset: 3px;
     transition:
       border-color var(--transition-duration-base) var(--transition-easing-out),
       background-color var(--transition-duration-base) var(--transition-easing-out),
@@ -162,6 +160,10 @@
       transform: translateY(-1px);
     }
 
+    &:focus-visible {
+      outline-color: var(--color-accent-ring);
+    }
+
     &:active {
       transform: translateY(0);
     }
@@ -171,7 +173,7 @@
     margin: 0;
     font-size: var(--font-size-12);
     font-weight: var(--font-weight-medium);
-    letter-spacing: 0.14em;
+    letter-spacing: var(--letter-spacing-label);
     text-transform: uppercase;
     color: var(--color-text-muted);
   }
@@ -183,7 +185,7 @@
     gap: var(--spacing-12);
     font-size: var(--font-size-20);
     font-weight: var(--font-weight-bold);
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
     line-height: var(--line-height-snug);
     text-wrap: balance;
     color: var(--color-text-primary);
@@ -192,5 +194,13 @@
   .quickDescription {
     margin: 0;
     color: var(--color-text-tertiary);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .quickCard:focus-visible,
+    .quickCard:hover,
+    .quickCard:active {
+      transform: none;
+    }
   }
 </style>

@@ -55,12 +55,12 @@
     align-items: end;
     justify-content: space-between;
     gap: var(--spacing-16);
-    padding-bottom: var(--spacing-16);
-    border-bottom: 1px solid var(--color-border-subtle);
+    padding-block-end: var(--spacing-16);
+    border-block-end: 1px solid var(--color-border-subtle);
   }
 
   .headingBlock {
-    min-width: 0;
+    min-inline-size: 0;
   }
 
   .heading {

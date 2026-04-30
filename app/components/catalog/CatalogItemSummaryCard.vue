@@ -5,9 +5,9 @@
         {{ brandName }}
       </p>
 
-      <span :class="[$style.statusBadge, statusClass]">
+      <PerdPill :tone="statusTone">
         {{ statusText }}
-      </span>
+      </PerdPill>
     </div>
 
     <p :class="$style.text">
@@ -49,6 +49,9 @@
 </template>
 
 <script lang="ts" setup>
+  import { computed } from 'vue'
+  import PerdPill, { type PerdPillTone } from '~/components/PerdPill.vue'
+
   interface Props {
     brandName: string;
     categoryName: string;
@@ -56,13 +59,26 @@
     statusText: string;
   }
 
-  defineProps<Props>()
+  const props = defineProps<Props>()
+
+  const statusTone = computed<PerdPillTone>(() => {
+    if (props.statusClass === 'approved') {
+      return 'success'
+    }
+
+    if (props.statusClass === 'rejected') {
+      return 'danger'
+    }
+
+    return 'warning'
+  })
 </script>
 
 <style module>
   .component {
     display: grid;
     gap: var(--spacing-24);
+    container-type: inline-size;
   }
 
   .header {
@@ -82,41 +98,18 @@
     color: var(--color-text-muted);
     font-size: var(--font-size-12);
     text-transform: uppercase;
-    letter-spacing: 0.16em;
+    letter-spacing: var(--letter-spacing-label);
   }
 
   .text {
     color: var(--color-text-tertiary);
   }
 
-  .statusBadge {
-    padding: 0.35rem 0.75rem;
-    border-radius: 999px;
-    border: 1px solid transparent;
-    font-size: var(--font-size-12);
-    font-weight: var(--font-weight-medium);
-
-    &:global(.approved) {
-      background: var(--color-success-subtle);
-      color: var(--color-success);
-    }
-
-    &:global(.pending) {
-      background: var(--color-warning-subtle);
-      color: var(--color-warning);
-    }
-
-    &:global(.rejected) {
-      background: var(--color-danger-subtle);
-      color: var(--color-danger);
-    }
-  }
-
   .metadataList {
     display: grid;
     gap: var(--spacing-12);
 
-    @media (width >= 640px) {
+    @container (inline-size >= 40rem) {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
@@ -135,7 +128,7 @@
     color: var(--color-text-muted);
     font-size: var(--font-size-12);
     text-transform: uppercase;
-    letter-spacing: 0.12em;
+    letter-spacing: var(--letter-spacing-label);
   }
 
   .metadataValue {

@@ -18,9 +18,9 @@
       </div>
 
       <div :class="$style.meta">
-        <span :class="$style.tag">
+        <PerdPill :class="$style.tag">
           {{ item.category.name }}
-        </span>
+        </PerdPill>
 
         <Icon name="tabler:arrow-up-right" :class="$style.arrow" aria-hidden="true" />
       </div>
@@ -32,6 +32,7 @@
   import type { CatalogListItemView } from '~/types/equipment'
   import PerdCard from '~/components/PerdCard.vue'
   import PerdLink from '~/components/PerdLink.vue'
+  import PerdPill from '~/components/PerdPill.vue'
 
   interface Props {
     item: CatalogListItemView;
@@ -43,6 +44,7 @@
 <style module>
   .component {
     padding: var(--spacing-16);
+    container-type: inline-size;
     background:
       linear-gradient(
         135deg,
@@ -63,14 +65,14 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-12);
-    min-width: 0;
+    min-inline-size: 0;
   }
 
   .icon {
     display: grid;
     place-items: center;
-    width: 2.75rem;
-    height: 2.75rem;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
     border-radius: var(--border-radius-16);
     background: var(--color-accent-subtle);
     color: var(--color-accent-base);
@@ -78,7 +80,7 @@
   }
 
   .text {
-    min-width: 0;
+    min-inline-size: 0;
     display: grid;
     gap: 0.1rem;
   }
@@ -87,7 +89,7 @@
     margin: 0;
     color: var(--color-text-muted);
     font-size: var(--font-size-12);
-    letter-spacing: 0.12em;
+    letter-spacing: var(--letter-spacing-label);
     text-transform: uppercase;
   }
 
@@ -100,27 +102,22 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-12);
-    margin-left: auto;
+    margin-inline-start: auto;
   }
 
   .tag {
-    padding: 0.35rem 0.7rem;
-    border-radius: 999px;
-    background: var(--color-surface-subtle);
-    color: var(--color-text-secondary);
-    border: 1px solid var(--color-border-subtle);
-    font-size: var(--font-size-12);
+    max-inline-size: 100%;
   }
 
   .arrow {
     color: var(--color-text-muted);
   }
 
-  @media (width < 640px) {
+  @container (inline-size < 40rem) {
     .meta {
-      width: 100%;
+      inline-size: 100%;
       justify-content: space-between;
-      margin-left: 0;
+      margin-inline-start: 0;
     }
   }
 </style>

@@ -3,44 +3,40 @@ import { userEquipment } from '#server/database/schema'
 import { validateSessionUser } from '#server/utils/session'
 import { validateUserEquipmentCreateBody } from '#server/utils/validation/schemas'
 
+interface InventoryItemBrand {
+  name: string;
+  slug: string;
+}
+
+interface InventoryItemCategory {
+  name: string;
+  slug: string;
+}
+
+interface CreatedInventoryItem {
+  brand: InventoryItemBrand;
+  category: InventoryItemCategory;
+  id: string;
+  name: string;
+}
+
 interface CreatedInventoryRecord {
   createdAt: Date | string;
   id: string;
+  item: CreatedInventoryItem;
+}
 
-  item: {
-    id: string;
-    name: string;
-
-    brand: {
-      name: string;
-      slug: string;
-    };
-
-    category: {
-      name: string;
-      slug: string;
-    };
-  };
+interface InventoryQueryItem {
+  brand: InventoryItemBrand | null;
+  category: InventoryItemCategory | null;
+  id: string;
+  name: string;
 }
 
 interface InventoryQueryRow {
   createdAt: Date | string;
   id: string;
-
-  item: {
-    id: string;
-    name: string;
-
-    brand: {
-      name: string;
-      slug: string;
-    } | null;
-
-    category: {
-      name: string;
-      slug: string;
-    } | null;
-  } | null;
+  item: InventoryQueryItem | null;
 }
 
 interface PostgresErrorWithCode {

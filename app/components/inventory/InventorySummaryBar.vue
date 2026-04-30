@@ -43,7 +43,7 @@
     margin-bottom: var(--spacing-8);
     color: var(--color-text-muted);
     font-size: var(--font-size-12);
-    letter-spacing: 0.18em;
+    letter-spacing: var(--letter-spacing-label);
     text-transform: uppercase;
   }
 
@@ -55,12 +55,12 @@
   }
 
   .copy {
-    max-width: 24rem;
+    max-inline-size: 24rem;
     color: var(--color-text-tertiary);
     text-align: right;
   }
 
-  @media (width < 640px) {
+  @container (inline-size < 40rem) {
     .copy {
       text-align: left;
     }

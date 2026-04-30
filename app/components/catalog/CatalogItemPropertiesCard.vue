@@ -47,6 +47,7 @@
   .component {
     display: grid;
     gap: var(--spacing-24);
+    container-type: inline-size;
   }
 
   .sectionHeader {
@@ -58,7 +59,7 @@
     display: grid;
     gap: var(--spacing-12);
 
-    @media (width >= 640px) {
+    @container (inline-size >= 40rem) {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
@@ -77,7 +78,7 @@
     color: var(--color-text-muted);
     font-size: var(--font-size-12);
     text-transform: uppercase;
-    letter-spacing: 0.12em;
+    letter-spacing: var(--letter-spacing-label);
   }
 
   .value {

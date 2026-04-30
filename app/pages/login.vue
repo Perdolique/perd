@@ -128,7 +128,7 @@
 
 <style module>
   .component {
-    min-height: 100dvh;
+    min-block-size: 100dvh;
     display: grid;
     padding: var(--spacing-16);
     background:
@@ -137,7 +137,7 @@
   }
 
   .layout {
-    width: min(100%, 66rem);
+    inline-size: min(100%, 66rem);
     margin: auto;
     display: grid;
     gap: var(--spacing-24);
@@ -159,7 +159,7 @@
     display: grid;
     align-content: end;
     gap: var(--spacing-16);
-    min-height: 24rem;
+    min-block-size: 24rem;
     padding: var(--spacing-32) var(--spacing-24);
     background:
       linear-gradient(180deg, color-mix(in oklch, var(--color-overlay-background), transparent 46%), transparent 35%),
@@ -172,7 +172,7 @@
   .cardLabel {
     margin: 0;
     font-size: var(--font-size-12);
-    letter-spacing: 0.18em;
+    letter-spacing: var(--letter-spacing-label);
     text-transform: uppercase;
   }
 
@@ -186,13 +186,13 @@
   }
 
   .title {
-    max-width: 10ch;
+    max-inline-size: 10ch;
     color: inherit;
   }
 
   .copy {
     margin: 0;
-    max-width: 26rem;
+    max-inline-size: 26rem;
     color: color-mix(in oklch, white, transparent 18%);
   }
 
@@ -215,13 +215,10 @@
   .buttons {
     display: grid;
     gap: var(--spacing-12);
-
-    @media (width >= 520px) {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
   }
 
   .button {
-    width: 100%;
+    inline-size: 100%;
   }
 </style>

@@ -2,6 +2,7 @@
   --border-radius-12: 0.625rem;
   --border-radius-16: 0.875rem;
   --border-radius-24: 1.25rem;
+  --border-radius-pill: 999px;
 
   --layout-content-max-width: 72rem;
   --layout-sidebar-width: 15.5rem;

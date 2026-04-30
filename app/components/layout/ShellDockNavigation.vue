@@ -53,14 +53,13 @@
 <style module>
   .dock {
     position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset-inline: 0;
+    inset-block-end: 0;
     z-index: 20;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     padding: 0.375rem 0.5rem calc(0.5rem + env(safe-area-inset-bottom));
-    border-top: 1px solid var(--color-border-subtle);
+    border-block-start: 1px solid var(--color-border-subtle);
     background: color-mix(in oklch, var(--color-background-raised), transparent 6%);
     backdrop-filter: blur(14px) saturate(1.25);
 
@@ -79,7 +78,12 @@
     text-decoration: none;
     font-size: var(--font-size-12);
     font-weight: var(--font-weight-medium);
-    outline: none;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+
+    &:focus-visible {
+      outline-color: var(--color-accent-ring);
+    }
 
     &:global(.active) {
       color: var(--color-text-primary);
@@ -95,9 +99,9 @@
   .dockIcon {
     display: grid;
     place-items: center;
-    width: 2.25rem;
-    height: 1.9rem;
-    border-radius: 999px;
+    inline-size: 2.25rem;
+    block-size: 1.9rem;
+    border-radius: var(--border-radius-pill);
     border: 1px solid var(--color-border-subtle);
     background: var(--color-surface-base);
     color: inherit;

@@ -1,69 +1,57 @@
 import { expect, test, type BrowserContext, type Page, type Route } from '@playwright/test'
 
+interface CatalogEntitySummary {
+  name: string;
+  slug: string;
+}
+
+interface CatalogEntityDetail extends CatalogEntitySummary {
+  id: number;
+}
+
+interface CatalogListItem {
+  brand: CatalogEntitySummary;
+  category: CatalogEntitySummary;
+  id: string;
+  name: string;
+}
+
 interface CatalogItemsResponse {
-  items: {
-    id: string;
-    name: string;
-
-    brand: {
-      name: string;
-      slug: string;
-    };
-
-    category: {
-      name: string;
-      slug: string;
-    };
-  }[];
+  items: CatalogListItem[];
   limit: number;
   page: number;
   total: number;
 }
 
+interface ItemDetailProperty {
+  dataType: string;
+  name: string;
+  slug: string;
+  unit: string | null;
+  value: string | null;
+}
+
 interface ItemDetailResponse {
+  brand: CatalogEntityDetail;
+  category: CatalogEntityDetail;
   createdAt: string;
   id: string;
   name: string;
-  properties: {
-    dataType: string;
-    name: string;
-    slug: string;
-    unit: string | null;
-    value: string | null;
-  }[];
+  properties: ItemDetailProperty[];
   status: string;
+}
 
-  brand: {
-    id: number;
-    name: string;
-    slug: string;
-  };
-
-  category: {
-    id: number;
-    name: string;
-    slug: string;
-  };
+interface InventoryItem {
+  brand: CatalogEntitySummary;
+  category: CatalogEntitySummary;
+  id: string;
+  name: string;
 }
 
 interface InventoryRecord {
   createdAt: string;
   id: string;
-
-  item: {
-    id: string;
-    name: string;
-
-    brand: {
-      name: string;
-      slug: string;
-    };
-
-    category: {
-      name: string;
-      slug: string;
-    };
-  };
+  item: InventoryItem;
 }
 
 const itemId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'

@@ -101,7 +101,7 @@
 
 <style module>
   .layout {
-    min-height: 100dvh;
+    min-block-size: 100dvh;
     display: grid;
     grid-template-columns: 1fr;
     background:
@@ -115,10 +115,10 @@
   .sidebar {
     display: none;
     position: sticky;
-    top: 0;
-    height: 100dvh;
+    inset-block-start: 0;
+    block-size: 100dvh;
     padding: var(--spacing-24) var(--spacing-16) var(--spacing-16);
-    border-right: 1px solid var(--color-border-subtle);
+    border-inline-end: 1px solid var(--color-border-subtle);
     background: var(--color-background-sunken);
     gap: var(--spacing-16);
     flex-direction: column;
@@ -133,7 +133,8 @@
     gap: var(--spacing-8);
     color: inherit;
     text-decoration: none;
-    outline: none;
+    outline: 2px solid transparent;
+    outline-offset: 3px;
     padding: var(--spacing-8) var(--spacing-12);
     border-radius: var(--border-radius-16);
 
@@ -141,12 +142,16 @@
     &:hover {
       background: color-mix(in oklch, var(--color-surface-base), transparent 30%);
     }
+
+    &:focus-visible {
+      outline-color: var(--color-accent-ring);
+    }
   }
 
   .brandMark {
     font-size: var(--font-size-32);
     line-height: var(--line-height-tight);
-    letter-spacing: -0.05em;
+    letter-spacing: 0;
     font-weight: var(--font-weight-bold);
   }
 
@@ -157,15 +162,18 @@
 
   .brandMeta {
     font-size: var(--font-size-12);
-    letter-spacing: 0.18em;
+    letter-spacing: var(--letter-spacing-label);
     text-transform: uppercase;
     color: var(--color-text-muted);
   }
 
   .logoutButton {
+    appearance: none;
+    cursor: pointer;
     display: flex;
     align-items: center;
     gap: var(--spacing-12);
+    inline-size: 100%;
     min-height: 2.875rem;
     padding: 0 var(--spacing-12);
     border-radius: var(--border-radius-12);
@@ -173,7 +181,9 @@
     background: transparent;
     text-decoration: none;
     border: 1px solid transparent;
-    outline: none;
+    outline: 2px solid transparent;
+    outline-offset: 3px;
+    font: inherit;
     transition:
       background-color var(--transition-duration-base) var(--transition-easing-out),
       border-color var(--transition-duration-base) var(--transition-easing-out),
@@ -187,19 +197,9 @@
       color: var(--color-text-primary);
     }
 
-    &:global(.active) {
-      background: var(--color-surface-base);
-      border-color: var(--color-border-subtle);
-      color: var(--color-text-primary);
-      box-shadow: inset 3px 0 0 var(--color-accent-base);
+    &:focus-visible {
+      outline-color: var(--color-accent-ring);
     }
-  }
-
-  .logoutButton {
-    appearance: none;
-    cursor: pointer;
-    width: 100%;
-    font: inherit;
   }
 
   .navigationIcon {
@@ -208,26 +208,26 @@
   }
 
   .main {
-    min-width: 0;
-    padding-bottom: calc(var(--layout-dock-height) + var(--spacing-24));
+    min-inline-size: 0;
+    padding-block-end: calc(var(--layout-dock-height) + var(--spacing-24));
 
     @media (width >= 900px) {
-      padding-bottom: var(--spacing-32);
+      padding-block-end: var(--spacing-32);
     }
   }
 
   .content {
-    width: min(100%, var(--layout-content-max-width));
+    inline-size: min(100%, var(--layout-content-max-width));
     margin: 0 auto;
     padding: var(--spacing-24) var(--spacing-16) 0;
   }
 
   .sidebarFoot {
-    margin-top: auto;
+    margin-block-start: auto;
     display: grid;
     gap: var(--spacing-12);
-    padding-top: var(--spacing-16);
-    border-top: 1px solid var(--color-border-subtle);
+    padding-block-start: var(--spacing-16);
+    border-block-start: 1px solid var(--color-border-subtle);
   }
 
 </style>

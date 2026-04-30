@@ -3,3 +3,10 @@
   --transition-duration-base: 0.22s;
   --transition-easing-out: cubic-bezier(.22, 1, .36, 1);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-duration-quick: 0s;
+    --transition-duration-base: 0s;
+  }
+}

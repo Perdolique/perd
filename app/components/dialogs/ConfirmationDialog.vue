@@ -35,7 +35,7 @@
 
 <script lang="ts" setup>
   import PerdButton from '~/components/PerdButton.vue'
-  import PerdHeading from '~/components/PerdHeading.vue';
+  import PerdHeading from '~/components/PerdHeading.vue'
   import ModalDialog from './ModalDialog.vue'
 
   interface Props {
@@ -87,7 +87,7 @@
   }
 
   .body {
-    word-break: break-word;
+    overflow-wrap: anywhere;
     color: var(--color-text-tertiary);
   }
 
@@ -100,7 +100,7 @@
 
   .confirmButton,
   .cancelButton {
-    max-width: 200px;
+    max-inline-size: 12.5rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

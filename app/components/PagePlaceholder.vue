@@ -36,12 +36,12 @@
 
 <style module>
   .component {
-    width: 100%;
+    inline-size: 100%;
   }
 
   .card {
-    width: 100%;
-    max-width: 42rem;
+    inline-size: 100%;
+    max-inline-size: 42rem;
     box-sizing: border-box;
     margin: 0 auto;
     background:
@@ -63,7 +63,7 @@
 
   .content {
     margin: 0;
-    max-width: 32rem;
+    max-inline-size: 32rem;
     color: var(--color-text-tertiary);
     line-height: var(--line-height-body);
   }

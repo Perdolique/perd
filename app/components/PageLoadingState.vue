@@ -29,7 +29,7 @@
 
 <style module>
   .component {
-    min-height: min(60vh, 32rem);
+    min-block-size: min(60vh, 32rem);
     display: grid;
     place-items: center;
   }
@@ -47,7 +47,7 @@
 
   .text {
     margin: 0;
-    max-width: 28rem;
+    max-inline-size: 28rem;
     color: var(--color-text-tertiary);
   }
 </style>

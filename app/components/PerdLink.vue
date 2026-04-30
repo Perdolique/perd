@@ -8,7 +8,8 @@
 
 <style module>
   .component {
-    outline: none;
+    outline: 2px solid transparent;
+    outline-offset: 3px;
     color: var(--color-accent-base);
     position: relative;
     text-decoration: none;
@@ -20,6 +21,10 @@
     &:focus-visible {
       text-decoration: underline;
       color: var(--color-accent-hover);
+    }
+
+    &:focus-visible {
+      outline-color: var(--color-accent-ring);
     }
 
     &:active {
