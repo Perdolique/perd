@@ -43,12 +43,16 @@ interface InventoryQueryRow {
   } | null;
 }
 
-function isUniqueViolation(error: unknown) {
-  if (error !== null && typeof error === 'object' && 'code' in error && error.code === '23505') {
-    return true
-  }
+interface PostgresErrorWithCode {
+  code: unknown;
+}
 
-  return error instanceof Error && /duplicate|unique/u.test(error.message)
+function hasPostgresErrorCode(error: unknown): error is PostgresErrorWithCode {
+  return error !== null && typeof error === 'object' && 'code' in error
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  return hasPostgresErrorCode(error) && error.code === '23505'
 }
 
 export default defineEventHandler(async (event) : Promise<CreatedInventoryRecord> => {

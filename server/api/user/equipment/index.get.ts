@@ -1,4 +1,6 @@
 import { defineEventHandler } from 'h3'
+import type { AnyColumn, SQL } from 'drizzle-orm'
+import type { userEquipment } from '#server/database/schema'
 import { validateSessionUser } from '#server/utils/session'
 
 interface InventoryItemBrand {
@@ -50,6 +52,11 @@ export default defineEventHandler(async (event) : Promise<InventoryRecord[]> => 
       userId
     },
 
+    orderBy: (equipment: typeof userEquipment, { desc }: { desc: (column: AnyColumn) => SQL }) => [
+      desc(equipment.createdAt),
+      desc(equipment.id)
+    ],
+
     with: {
       item: {
         columns: {
@@ -81,15 +88,6 @@ export default defineEventHandler(async (event) : Promise<InventoryRecord[]> => 
   )
 
   return completeInventoryRows
-    .toSorted((leftRow, rightRow) => {
-      const createdAtDifference = new Date(rightRow.createdAt).getTime() - new Date(leftRow.createdAt).getTime()
-
-      if (createdAtDifference !== 0) {
-        return createdAtDifference
-      }
-
-      return rightRow.id.localeCompare(leftRow.id)
-    })
     .map((row) => {
       return {
         createdAt: row.createdAt,

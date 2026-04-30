@@ -170,12 +170,9 @@ Use CSS module classes directly in templates with `$style`. Do not import `useCs
 <template>
   <button
     type="button"
-    :class="[
-      $style.navigationItem,
-      {
-        active: isCatalogActive
-      }
-    ]"
+    :class="[$style.navigationItem, {
+      active: isCatalogActive
+    }]"
   >
     Catalog
   </button>
@@ -185,7 +182,6 @@ Use CSS module classes directly in templates with `$style`. Do not import `useCs
   import { computed, ref } from 'vue'
 
   const selectedView = ref<'catalog' | 'inventory'>('catalog')
-
   const isCatalogActive = computed(() => selectedView.value === 'catalog')
 </script>
 ```

@@ -47,13 +47,69 @@ vi.mock(import('#server/utils/session'), () => {
 })
 
 function createListDb(rows: unknown[]) {
+  let lastFindManyConfig: InventoryFindManyConfig | null = null
+  const findManyMock = vi.fn((config: InventoryFindManyConfig) => {
+    lastFindManyConfig = config
+
+    return rows
+  })
+
   return {
+    getLastFindManyConfig() {
+      if (lastFindManyConfig === null) {
+        throw new Error('Expected userEquipment.findMany to be called')
+      }
+
+      return lastFindManyConfig
+    },
+
     query: {
       userEquipment: {
-        findMany: vi.fn(() => rows)
+        findMany: findManyMock
       }
     }
   }
+}
+
+type InventoryOrderByCallback = (table: InventoryOrderByTable, helpers: InventoryOrderByHelpers) => unknown
+
+interface InventoryFindManyConfig {
+  columns: unknown;
+  orderBy: InventoryOrderByCallback;
+  where: unknown;
+  with: unknown;
+}
+
+interface InventoryOrderByExpression {
+  column: string;
+  direction: 'desc';
+}
+
+interface InventoryOrderByTable {
+  createdAt: 'createdAt';
+  id: 'id';
+}
+
+interface InventoryOrderByHelpers {
+  desc: (column: string) => InventoryOrderByExpression;
+}
+
+function resolveInventoryOrderBy(orderBy: InventoryOrderByCallback): unknown {
+  const table: InventoryOrderByTable = {
+    createdAt: 'createdAt',
+    id: 'id'
+  }
+
+  const helpers: InventoryOrderByHelpers = {
+    desc(column) {
+      return {
+        column,
+        direction: 'desc'
+      }
+    }
+  }
+
+  return orderBy(table, helpers)
 }
 
 function createCreateDb({
@@ -156,26 +212,8 @@ describe('user equipment handlers', () => {
   })
 
   describe('GET /api/user/equipment', () => {
-    test('should return the current user inventory in stable reverse chronological order', async () => {
-      const event = createTestEvent(createListDb([{
-        createdAt: '2026-04-01T09:00:00.000Z',
-        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d1',
-
-        item: {
-          id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477f1',
-          name: 'PocketRocket Deluxe',
-
-          brand: {
-            name: 'MSR',
-            slug: 'msr'
-          },
-
-          category: {
-            name: 'Stoves',
-            slug: 'stoves'
-          }
-        }
-      }, {
+    test('should return complete current user inventory rows', async () => {
+      const dbHttp = createListDb([{
         createdAt: '2026-04-03T09:00:00.000Z',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d3',
 
@@ -211,7 +249,45 @@ describe('user equipment handlers', () => {
             slug: 'stoves'
           }
         }
-      }]))
+      }, {
+        createdAt: '2026-04-01T09:00:00.000Z',
+        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d1',
+
+        item: {
+          id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477f1',
+          name: 'PocketRocket Deluxe',
+
+          brand: {
+            name: 'MSR',
+            slug: 'msr'
+          },
+
+          category: {
+            name: 'Stoves',
+            slug: 'stoves'
+          }
+        }
+      }, {
+        createdAt: '2026-04-01T09:00:00.000Z',
+        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d4',
+        item: null
+      }, {
+        createdAt: '2026-04-01T09:00:00.000Z',
+        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d5',
+
+        item: {
+          id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477f5',
+          name: 'Incomplete Stove',
+          brand: null,
+
+          category: {
+            name: 'Stoves',
+            slug: 'stoves'
+          }
+        }
+      }])
+
+      const event = createTestEvent(dbHttp)
 
       const result = await listInventoryHandler(event)
 
@@ -269,6 +345,58 @@ describe('user equipment handlers', () => {
             slug: 'stoves'
           }
         }
+      }])
+
+      expect(dbHttp.query.userEquipment.findMany).toHaveBeenCalledTimes(1)
+
+      const findManyConfig = dbHttp.getLastFindManyConfig()
+
+      expect(findManyConfig).toMatchObject({
+        columns: {
+          createdAt: true,
+          id: true
+        },
+
+        where: {
+          userId: 'user-1'
+        },
+
+        with: {
+          item: {
+            columns: {
+              id: true,
+              name: true
+            },
+
+            with: {
+              brand: {
+                columns: {
+                  name: true,
+                  slug: true
+                }
+              },
+
+              category: {
+                columns: {
+                  name: true,
+                  slug: true
+                }
+              }
+            }
+          }
+        }
+      })
+
+      expect(typeof findManyConfig.orderBy).toBe('function')
+
+      const orderBy = resolveInventoryOrderBy(findManyConfig.orderBy)
+
+      expect(orderBy).toStrictEqual([{
+        column: 'createdAt',
+        direction: 'desc'
+      }, {
+        column: 'id',
+        direction: 'desc'
       }])
     })
 
@@ -370,7 +498,25 @@ describe('user equipment handlers', () => {
       const event = createTestEvent(dbHttp)
 
       await expect(createInventoryHandler(event)).rejects.toMatchObject({
+        message: 'Item is already in inventory',
         statusCode: 409
+      })
+    })
+
+    test('should return 500 when a duplicate-looking insert error has no PostgreSQL code', async () => {
+      const { dbHttp } = createCreateDb({
+        approvedItem: {
+          id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+        },
+
+        insertError: new Error('duplicate key value violates unique constraint')
+      })
+
+      const event = createTestEvent(dbHttp)
+
+      await expect(createInventoryHandler(event)).rejects.toMatchObject({
+        message: 'Failed to create inventory row',
+        statusCode: 500
       })
     })
 

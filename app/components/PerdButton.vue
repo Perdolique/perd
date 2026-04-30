@@ -3,18 +3,14 @@
     :type="type"
     :disabled="isButtonDisabled"
     :aria-busy="ariaBusy"
-    :class="[
-      $style.button,
-
-      {
-        [$style.small]: isSmallSize,
-        [$style.iconOnly]: isIconOnlySize,
-        [$style.iconSmall]: isIconSmallSize,
-        [$style.secondary]: isSecondaryVariant,
-        [$style.ghost]: isGhostVariant,
-        [$style.danger]: isDangerVariant
-      }
-    ]"
+    :class="[$style.button, {
+      small: isSmallSize,
+      iconOnly: isIconOnlySize,
+      iconSmall: isIconSmallSize,
+      secondary: isSecondaryVariant,
+      ghost: isGhostVariant,
+      danger: isDangerVariant
+    }]"
   >
     <FidgetSpinner
       v-if="loading"
@@ -106,74 +102,74 @@
       transform: translateY(1px);
       background: var(--color-accent-active);
     }
-  }
 
-  .small {
-    height: 2rem;
-    padding: 0 var(--spacing-12);
-    border-radius: var(--border-radius-12);
-    font-size: var(--font-size-12);
-  }
+    &:global(.small) {
+      height: 2rem;
+      padding: 0 var(--spacing-12);
+      border-radius: var(--border-radius-12);
+      font-size: var(--font-size-12);
+    }
 
-  .iconOnly,
-  .iconSmall {
-    padding: 0;
-  }
+    &:global(.iconOnly),
+    &:global(.iconSmall) {
+      padding: 0;
+    }
 
-  .iconOnly {
-    width: 2.5rem;
-  }
+    &:global(.iconOnly) {
+      width: 2.5rem;
+    }
 
-  .iconSmall {
-    width: 2rem;
-    height: 2rem;
-    border-radius: var(--border-radius-12);
-  }
+    &:global(.iconSmall) {
+      width: 2rem;
+      height: 2rem;
+      border-radius: var(--border-radius-12);
+    }
 
-  .secondary {
-    background: var(--color-surface-base);
-    color: var(--color-text-primary);
-    border-color: var(--color-border-default);
-
-    &:focus-visible,
-    &:hover {
-      background: var(--color-surface-subtle);
+    &:global(.secondary) {
+      background: var(--color-surface-base);
+      color: var(--color-text-primary);
       border-color: var(--color-border-default);
-      color: var(--color-text-primary);
+
+      &:focus-visible,
+      &:hover {
+        background: var(--color-surface-subtle);
+        border-color: var(--color-border-default);
+        color: var(--color-text-primary);
+      }
+
+      &:active {
+        transform: translateY(1px);
+      }
     }
 
-    &:active {
-      transform: translateY(1px);
-    }
-  }
+    &:global(.ghost) {
+      background: transparent;
+      color: var(--color-text-secondary);
 
-  .ghost {
-    background: transparent;
-    color: var(--color-text-secondary);
+      &:focus-visible,
+      &:hover {
+        background: var(--color-surface-subtle);
+        color: var(--color-text-primary);
+      }
 
-    &:focus-visible,
-    &:hover {
-      background: var(--color-surface-subtle);
-      color: var(--color-text-primary);
-    }
-
-    &:active {
-      transform: translateY(1px);
-    }
-  }
-
-  .danger {
-    background: transparent;
-    color: var(--color-danger);
-    border-color: color-mix(in oklch, var(--color-danger), transparent 76%);
-
-    &:focus-visible,
-    &:hover {
-      background: color-mix(in oklch, var(--color-danger), transparent 90%);
+      &:active {
+        transform: translateY(1px);
+      }
     }
 
-    &:active {
-      transform: translateY(1px);
+    &:global(.danger) {
+      background: transparent;
+      color: var(--color-danger);
+      border-color: color-mix(in oklch, var(--color-danger), transparent 76%);
+
+      &:focus-visible,
+      &:hover {
+        background: color-mix(in oklch, var(--color-danger), transparent 90%);
+      }
+
+      &:active {
+        transform: translateY(1px);
+      }
     }
   }
 
