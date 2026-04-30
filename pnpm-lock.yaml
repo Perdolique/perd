@@ -10,13 +10,13 @@ importers:
     dependencies:
       '@nuxt/hints':
         specifier: 1.0.3
-        version: 1.0.3(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))(ioredis@5.10.1)(magicast@0.5.2)(rolldown@1.0.0-rc.17)(typescript@6.0.3)(vite@8.0.10)(vitest@4.1.5(@types/node@25.6.0)(vite@8.0.10))(vue@3.5.33(typescript@6.0.3))
+        version: 1.0.3(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))(ioredis@5.10.1)(magicast@0.5.2)(rolldown@1.0.0-rc.17)(typescript@6.0.3)(vite@8.0.10)(vitest@4.1.5(@types/node@25.6.0)(vite@8.0.10))(vue@3.5.33(typescript@6.0.3))
       delay:
         specifier: 7.0.0
         version: 7.0.0
       nuxt:
         specifier: 4.4.4
-        version: 4.4.4(@babel/core@7.29.0)(@babel/plugin-syntax-jsx@7.28.6(@babel/core@7.29.0))(@parcel/watcher@2.5.6)(@types/node@25.6.0)(@vitejs/devtools@0.1.15)(@vue/compiler-sfc@3.5.33)(cac@6.7.14)(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))(eslint@10.1.0(jiti@2.6.1))(ioredis@5.10.1)(lightningcss@1.32.0)(magicast@0.5.2)(optionator@0.9.4)(oxlint@1.62.0(oxlint-tsgolint@0.22.1))(rolldown@1.0.0-rc.17)(rollup-plugin-visualizer@7.0.1(rolldown@1.0.0-rc.17)(rollup@4.60.2))(rollup@4.60.2)(terser@5.46.2)(tsx@4.21.0)(typescript@6.0.3)(vite@8.0.10)(vue-tsc@3.2.7(typescript@6.0.3))(yaml@2.8.3)
+        version: 4.4.4(@babel/core@7.29.0)(@babel/plugin-syntax-jsx@7.28.6(@babel/core@7.29.0))(@parcel/watcher@2.5.6)(@types/node@25.6.0)(@vitejs/devtools@0.1.15)(@vue/compiler-sfc@3.5.33)(cac@6.7.14)(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))(eslint@10.1.0(jiti@2.6.1))(ioredis@5.10.1)(lightningcss@1.32.0)(magicast@0.5.2)(optionator@0.9.4)(oxlint@1.62.0(oxlint-tsgolint@0.22.1))(rolldown@1.0.0-rc.17)(rollup-plugin-visualizer@7.0.1(rolldown@1.0.0-rc.17)(rollup@4.60.2))(rollup@4.60.2)(terser@5.46.2)(tsx@4.21.0)(typescript@6.0.3)(vite@8.0.10)(vue-tsc@3.2.7(typescript@6.0.3))(yaml@2.8.3)
       vue:
         specifier: 3.5.33
         version: 3.5.33(typescript@6.0.3)
@@ -32,10 +32,10 @@ importers:
         version: 1.1.0
       '@nuxt/devtools':
         specifier: 4.0.0-alpha.4
-        version: 4.0.0-alpha.4(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(typescript@6.0.3)(vite@8.0.10)(vue@3.5.33(typescript@6.0.3))
+        version: 4.0.0-alpha.4(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(typescript@6.0.3)(vite@8.0.10)(vue@3.5.33(typescript@6.0.3))
       '@nuxt/fonts':
         specifier: 0.14.0
-        version: 0.14.0(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(magicast@0.5.2)(vite@8.0.10)
+        version: 0.14.0(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(magicast@0.5.2)(vite@8.0.10)
       '@nuxt/icon':
         specifier: 2.2.1
         version: 2.2.1(magicast@0.5.2)(vite@8.0.10)(vue@3.5.33(typescript@6.0.3))
@@ -52,14 +52,14 @@ importers:
         specifier: 14.2.1
         version: 14.2.1(vue@3.5.33(typescript@6.0.3))
       drizzle-kit:
-        specifier: 1.0.0-beta.22
-        version: 1.0.0-beta.22
+        specifier: 1.0.0-beta.23
+        version: 1.0.0-beta.23
       drizzle-orm:
-        specifier: 1.0.0-beta.22
-        version: 1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))
+        specifier: 1.0.0-beta.23
+        version: 1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))
       drizzle-seed:
-        specifier: 1.0.0-beta.22
-        version: 1.0.0-beta.22(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))
+        specifier: 1.0.0-beta.23
+        version: 1.0.0-beta.23(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))
       eslint-config-greenpie:
         specifier: 16.0.0-10
         version: 16.0.0-10(@stylistic/eslint-plugin@5.10.0(eslint@10.1.0(jiti@2.6.1)))(eslint-plugin-vue@10.8.0(@stylistic/eslint-plugin@5.10.0(eslint@10.1.0(jiti@2.6.1)))(@typescript-eslint/parser@8.57.2(eslint@10.1.0(jiti@2.6.1))(typescript@6.0.3))(eslint@10.1.0(jiti@2.6.1))(vue-eslint-parser@10.4.0(eslint@10.1.0(jiti@2.6.1))))(eslint@10.1.0(jiti@2.6.1))(oxlint-tsgolint@0.22.1)(oxlint@1.62.0(oxlint-tsgolint@0.22.1))(typescript-eslint@8.57.2(eslint@10.1.0(jiti@2.6.1))(typescript@6.0.3))
@@ -3505,12 +3505,12 @@ packages:
     resolution: {integrity: sha512-nI4U3TottKAcAD9LLud4Cb7b2QztQMUEfHbvhTH09bqXTxnSie8WnjPALV/WMCrJZ6UV/qHJ6L03OqO3LcdYZw==}
     engines: {node: '>=12'}
 
-  drizzle-kit@1.0.0-beta.22:
-    resolution: {integrity: sha512-9HTZuQRljQKTgCx4UhiGn8KYYfHGk4+B/bRR1714W67kz0qgJvdrG527i8rQD8uUyET9UTGR1u8syySJD4znGw==}
+  drizzle-kit@1.0.0-beta.23:
+    resolution: {integrity: sha512-AXVAYTItegF3h1JQECt4s4z9RwipiBoK99A3IY/thGZ0xdSPlsXZr/SU9sh6JvQi5bq08ZYXmKcdIwJpNxITig==}
     hasBin: true
 
-  drizzle-orm@1.0.0-beta.22:
-    resolution: {integrity: sha512-F+DZyVIvH0oVKa/w08Cle1xfoH+pc+htIXHG/frnMLG72aby9NYYr9oc+9XvghnoO4umxFItduz0OMmQJMnenw==}
+  drizzle-orm@1.0.0-beta.23:
+    resolution: {integrity: sha512-LeXxZgOd6YPCBNEz7z7BrrvQqrkjFf4vrRDbW8xKCvvTWYBAadaIwrXNdLM/rHEky0vdtzX6SG0EpX0hsd4ZVg==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
       '@cloudflare/workers-types': '>=4'
@@ -3520,6 +3520,7 @@ packages:
       '@libsql/client': '>=0.10.0'
       '@libsql/client-wasm': '>=0.10.0'
       '@neondatabase/serverless': '>=0.10.0'
+      '@netlify/db': '>=0.4.0'
       '@op-engineering/op-sqlite': '>=2'
       '@opentelemetry/api': ^1.4.1
       '@planetscale/database': '>=1.13'
@@ -3566,6 +3567,8 @@ packages:
       '@libsql/client-wasm':
         optional: true
       '@neondatabase/serverless':
+        optional: true
+      '@netlify/db':
         optional: true
       '@op-engineering/op-sqlite':
         optional: true
@@ -3628,8 +3631,8 @@ packages:
       zod:
         optional: true
 
-  drizzle-seed@1.0.0-beta.22:
-    resolution: {integrity: sha512-T3wJVOy0es3hHnxgE2fMWrrTVWmwfCryBR9/xIh5hLErvU6QjPFcUX4m0L2Rj0+aLs6RShabQ8j9LYXGm/WVZA==}
+  drizzle-seed@1.0.0-beta.23:
+    resolution: {integrity: sha512-+8FtiNpR3o3nuVSxIjpoxzvM8CS5f8upyPe724f+zjTPhXfPWQ9SUyvM+kZoiExHUe5dDwoZkppV53K09AweKw==}
     peerDependencies:
       drizzle-orm: '>=1.0.0-beta.2'
 
@@ -7054,18 +7057,18 @@ snapshots:
       which: 6.0.1
       ws: 8.20.0
     optionalDependencies:
-      '@vitejs/devtools': 0.1.15(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(typescript@6.0.3)(vite@8.0.10)
+      '@vitejs/devtools': 0.1.15(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(typescript@6.0.3)(vite@8.0.10)
     transitivePeerDependencies:
       - bufferutil
       - supports-color
       - utf-8-validate
       - vue
 
-  '@nuxt/devtools@4.0.0-alpha.4(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(typescript@6.0.3)(vite@8.0.10)(vue@3.5.33(typescript@6.0.3))':
+  '@nuxt/devtools@4.0.0-alpha.4(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(typescript@6.0.3)(vite@8.0.10)(vue@3.5.33(typescript@6.0.3))':
     dependencies:
       '@nuxt/devtools-kit': 4.0.0-alpha.4(magicast@0.5.2)(vite@8.0.10)
       '@nuxt/kit': 4.4.2(magicast@0.5.2)
-      '@vitejs/devtools': 0.1.15(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(typescript@6.0.3)(vite@8.0.10)
+      '@vitejs/devtools': 0.1.15(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(typescript@6.0.3)(vite@8.0.10)
       '@vitejs/devtools-kit': 0.1.15(typescript@6.0.3)(vite@8.0.10)
       '@vue/devtools-core': 8.1.1(vue@3.5.33(typescript@6.0.3))
       '@vue/devtools-kit': 8.1.1
@@ -7120,13 +7123,13 @@ snapshots:
       - utf-8-validate
       - vue
 
-  '@nuxt/fonts@0.14.0(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(magicast@0.5.2)(vite@8.0.10)':
+  '@nuxt/fonts@0.14.0(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(magicast@0.5.2)(vite@8.0.10)':
     dependencies:
       '@nuxt/devtools-kit': 3.2.4(magicast@0.5.2)(vite@8.0.10)
       '@nuxt/kit': 4.4.2(magicast@0.5.2)
       consola: 3.4.2
       defu: 6.1.7
-      fontless: 0.2.1(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(vite@8.0.10)
+      fontless: 0.2.1(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(vite@8.0.10)
       h3: 1.15.11
       magic-regexp: 0.10.0
       ofetch: 1.5.1
@@ -7136,7 +7139,7 @@ snapshots:
       ufo: 1.6.4
       unifont: 0.7.4
       unplugin: 3.0.0
-      unstorage: 1.17.5(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)
+      unstorage: 1.17.5(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)
     transitivePeerDependencies:
       - '@azure/app-configuration'
       - '@azure/cosmos'
@@ -7160,7 +7163,7 @@ snapshots:
       - uploadthing
       - vite
 
-  '@nuxt/hints@1.0.3(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))(ioredis@5.10.1)(magicast@0.5.2)(rolldown@1.0.0-rc.17)(typescript@6.0.3)(vite@8.0.10)(vitest@4.1.5(@types/node@25.6.0)(vite@8.0.10))(vue@3.5.33(typescript@6.0.3))':
+  '@nuxt/hints@1.0.3(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))(ioredis@5.10.1)(magicast@0.5.2)(rolldown@1.0.0-rc.17)(typescript@6.0.3)(vite@8.0.10)(vitest@4.1.5(@types/node@25.6.0)(vite@8.0.10))(vue@3.5.33(typescript@6.0.3))':
     dependencies:
       '@nuxt/devtools-kit': 3.2.4(magicast@0.5.2)(vite@8.0.10)
       '@nuxt/kit': 4.4.2(magicast@0.5.2)
@@ -7171,12 +7174,12 @@ snapshots:
       html-validate: 10.13.1(vitest@4.1.5(@types/node@25.6.0)(vite@8.0.10))
       knitwork: 1.3.0
       magic-string: 0.30.21
-      nitropack: 2.13.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))(oxc-parser@0.121.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(rolldown@1.0.0-rc.17)
+      nitropack: 2.13.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))(oxc-parser@0.121.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(rolldown@1.0.0-rc.17)
       oxc-parser: 0.121.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)
       prettier: 3.8.3
       sirv: 3.0.2
       unplugin: 3.0.0
-      unstorage: 1.17.5(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)
+      unstorage: 1.17.5(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)
       valibot: 1.3.1(typescript@6.0.3)
       vite-plugin-vue-tracer: 1.3.0(vite@8.0.10)(vue@3.5.33(typescript@6.0.3))
       web-vitals: 5.2.0
@@ -7296,7 +7299,7 @@ snapshots:
     transitivePeerDependencies:
       - magicast
 
-  '@nuxt/nitro-server@4.4.4(1a3adc7c6338ef32bb9a2ceb8d5412a4)':
+  '@nuxt/nitro-server@4.4.4(aaddff80030568777fbe7ccb9d5f8867)':
     dependencies:
       '@babel/plugin-syntax-typescript': 7.28.6(@babel/core@7.29.0)
       '@nuxt/devalue': 2.0.2
@@ -7314,8 +7317,8 @@ snapshots:
       impound: 1.1.5
       klona: 2.0.6
       mocked-exports: 0.1.1
-      nitropack: 2.13.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))(oxc-parser@0.128.0)(rolldown@1.0.0-rc.17)
-      nuxt: 4.4.4(@babel/core@7.29.0)(@babel/plugin-syntax-jsx@7.28.6(@babel/core@7.29.0))(@parcel/watcher@2.5.6)(@types/node@25.6.0)(@vitejs/devtools@0.1.15)(@vue/compiler-sfc@3.5.33)(cac@6.7.14)(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))(eslint@10.1.0(jiti@2.6.1))(ioredis@5.10.1)(lightningcss@1.32.0)(magicast@0.5.2)(optionator@0.9.4)(oxlint@1.62.0(oxlint-tsgolint@0.22.1))(rolldown@1.0.0-rc.17)(rollup-plugin-visualizer@7.0.1(rolldown@1.0.0-rc.17)(rollup@4.60.2))(rollup@4.60.2)(terser@5.46.2)(tsx@4.21.0)(typescript@6.0.3)(vite@8.0.10)(vue-tsc@3.2.7(typescript@6.0.3))(yaml@2.8.3)
+      nitropack: 2.13.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))(oxc-parser@0.128.0)(rolldown@1.0.0-rc.17)
+      nuxt: 4.4.4(@babel/core@7.29.0)(@babel/plugin-syntax-jsx@7.28.6(@babel/core@7.29.0))(@parcel/watcher@2.5.6)(@types/node@25.6.0)(@vitejs/devtools@0.1.15)(@vue/compiler-sfc@3.5.33)(cac@6.7.14)(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))(eslint@10.1.0(jiti@2.6.1))(ioredis@5.10.1)(lightningcss@1.32.0)(magicast@0.5.2)(optionator@0.9.4)(oxlint@1.62.0(oxlint-tsgolint@0.22.1))(rolldown@1.0.0-rc.17)(rollup-plugin-visualizer@7.0.1(rolldown@1.0.0-rc.17)(rollup@4.60.2))(rollup@4.60.2)(terser@5.46.2)(tsx@4.21.0)(typescript@6.0.3)(vite@8.0.10)(vue-tsc@3.2.7(typescript@6.0.3))(yaml@2.8.3)
       nypm: 0.6.6
       ohash: 2.0.11
       pathe: 2.0.3
@@ -7323,7 +7326,7 @@ snapshots:
       std-env: 4.1.0
       ufo: 1.6.4
       unctx: 2.5.0
-      unstorage: 1.17.5(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)
+      unstorage: 1.17.5(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)
       vue: 3.5.33(typescript@6.0.3)
       vue-bundle-renderer: 2.2.0
       vue-devtools-stub: 0.1.0
@@ -7382,7 +7385,7 @@ snapshots:
       rc9: 3.0.1
       std-env: 4.1.0
 
-  '@nuxt/vite-builder@4.4.4(35bb4f19191ea6a6841a57e2fa8237c2)':
+  '@nuxt/vite-builder@4.4.4(e2f19887238320af4700bdea8c82af10)':
     dependencies:
       '@nuxt/kit': 4.4.4(magicast@0.5.2)
       '@rollup/plugin-replace': 6.0.3(rollup@4.60.2)
@@ -7400,7 +7403,7 @@ snapshots:
       magic-string: 0.30.21
       mlly: 1.8.2
       mocked-exports: 0.1.1
-      nuxt: 4.4.4(@babel/core@7.29.0)(@babel/plugin-syntax-jsx@7.28.6(@babel/core@7.29.0))(@parcel/watcher@2.5.6)(@types/node@25.6.0)(@vitejs/devtools@0.1.15)(@vue/compiler-sfc@3.5.33)(cac@6.7.14)(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))(eslint@10.1.0(jiti@2.6.1))(ioredis@5.10.1)(lightningcss@1.32.0)(magicast@0.5.2)(optionator@0.9.4)(oxlint@1.62.0(oxlint-tsgolint@0.22.1))(rolldown@1.0.0-rc.17)(rollup-plugin-visualizer@7.0.1(rolldown@1.0.0-rc.17)(rollup@4.60.2))(rollup@4.60.2)(terser@5.46.2)(tsx@4.21.0)(typescript@6.0.3)(vite@8.0.10)(vue-tsc@3.2.7(typescript@6.0.3))(yaml@2.8.3)
+      nuxt: 4.4.4(@babel/core@7.29.0)(@babel/plugin-syntax-jsx@7.28.6(@babel/core@7.29.0))(@parcel/watcher@2.5.6)(@types/node@25.6.0)(@vitejs/devtools@0.1.15)(@vue/compiler-sfc@3.5.33)(cac@6.7.14)(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))(eslint@10.1.0(jiti@2.6.1))(ioredis@5.10.1)(lightningcss@1.32.0)(magicast@0.5.2)(optionator@0.9.4)(oxlint@1.62.0(oxlint-tsgolint@0.22.1))(rolldown@1.0.0-rc.17)(rollup-plugin-visualizer@7.0.1(rolldown@1.0.0-rc.17)(rollup@4.60.2))(rollup@4.60.2)(terser@5.46.2)(tsx@4.21.0)(typescript@6.0.3)(vite@8.0.10)(vue-tsc@3.2.7(typescript@6.0.3))(yaml@2.8.3)
       nypm: 0.6.6
       pathe: 2.0.3
       pkg-types: 2.3.1
@@ -8402,7 +8405,7 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@vitejs/devtools-rolldown@0.1.15(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(typescript@6.0.3)(vite@8.0.10)(vue@3.5.33(typescript@6.0.3))':
+  '@vitejs/devtools-rolldown@0.1.15(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(typescript@6.0.3)(vite@8.0.10)(vue@3.5.33(typescript@6.0.3))':
     dependencies:
       '@floating-ui/dom': 1.7.6
       '@pnpm/read-project-manifest': 1001.2.6(@pnpm/logger@1001.0.1)
@@ -8428,7 +8431,7 @@ snapshots:
       structured-clone-es: 2.0.0
       tinyglobby: 0.2.16
       unconfig: 7.5.0
-      unstorage: 1.17.5(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)
+      unstorage: 1.17.5(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)
       vue-virtual-scroller: 2.0.1(vue@3.5.33(typescript@6.0.3))
       ws: 8.20.0
     transitivePeerDependencies:
@@ -8472,10 +8475,10 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@vitejs/devtools@0.1.15(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(typescript@6.0.3)(vite@8.0.10)':
+  '@vitejs/devtools@0.1.15(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(typescript@6.0.3)(vite@8.0.10)':
     dependencies:
       '@vitejs/devtools-kit': 0.1.15(typescript@6.0.3)(vite@8.0.10)
-      '@vitejs/devtools-rolldown': 0.1.15(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(typescript@6.0.3)(vite@8.0.10)(vue@3.5.33(typescript@6.0.3))
+      '@vitejs/devtools-rolldown': 0.1.15(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(typescript@6.0.3)(vite@8.0.10)(vue@3.5.33(typescript@6.0.3))
       '@vitejs/devtools-rpc': 0.1.15(typescript@6.0.3)
       birpc: 4.0.0
       cac: 7.0.0
@@ -9125,9 +9128,9 @@ snapshots:
     dependencies:
       d3-path: 3.1.0
 
-  db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))):
+  db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))):
     optionalDependencies:
-      drizzle-orm: 1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))
+      drizzle-orm: 1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))
 
   debug@4.4.3:
     dependencies:
@@ -9203,7 +9206,7 @@ snapshots:
 
   dotenv@17.4.2: {}
 
-  drizzle-kit@1.0.0-beta.22:
+  drizzle-kit@1.0.0-beta.23:
     dependencies:
       '@drizzle-team/brocli': 0.11.0
       '@js-temporal/polyfill': 0.5.1
@@ -9211,14 +9214,14 @@ snapshots:
       get-tsconfig: 4.14.0
       jiti: 2.6.1
 
-  drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)):
+  drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)):
     optionalDependencies:
       '@neondatabase/serverless': 1.1.0
       valibot: 1.3.1(typescript@6.0.3)
 
-  drizzle-seed@1.0.0-beta.22(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))):
+  drizzle-seed@1.0.0-beta.23(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))):
     dependencies:
-      drizzle-orm: 1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))
+      drizzle-orm: 1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))
       pure-rand: 6.1.0
 
   duplexer@0.1.2: {}
@@ -9586,7 +9589,7 @@ snapshots:
     dependencies:
       tiny-inflate: 1.0.3
 
-  fontless@0.2.1(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(vite@8.0.10):
+  fontless@0.2.1(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(vite@8.0.10):
     dependencies:
       consola: 3.4.2
       css-tree: 3.2.1
@@ -9600,7 +9603,7 @@ snapshots:
       pathe: 2.0.3
       ufo: 1.6.4
       unifont: 0.7.4
-      unstorage: 1.17.5(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)
+      unstorage: 1.17.5(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)
     optionalDependencies:
       vite: 8.0.10(@types/node@25.6.0)(@vitejs/devtools@0.1.15)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.2)(tsx@4.21.0)(yaml@2.8.3)
     transitivePeerDependencies:
@@ -10365,7 +10368,7 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  nitropack@2.13.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))(oxc-parser@0.121.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(rolldown@1.0.0-rc.17):
+  nitropack@2.13.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))(oxc-parser@0.121.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(rolldown@1.0.0-rc.17):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.4.2
       '@rollup/plugin-alias': 6.0.0(rollup@4.60.2)
@@ -10386,7 +10389,7 @@ snapshots:
       cookie-es: 2.0.1
       croner: 10.0.1
       crossws: 0.3.5
-      db0: 0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))
+      db0: 0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))
       defu: 6.1.7
       destr: 2.0.5
       dot-prop: 10.1.0
@@ -10432,7 +10435,7 @@ snapshots:
       unenv: 2.0.0-rc.24
       unimport: 6.2.0(oxc-parser@0.121.0(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))
       unplugin-utils: 0.3.1
-      unstorage: 1.17.5(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)
+      unstorage: 1.17.5(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)
       untyped: 2.0.0
       unwasm: 0.5.3
       youch: 4.1.1
@@ -10469,7 +10472,7 @@ snapshots:
       - supports-color
       - uploadthing
 
-  nitropack@2.13.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))(oxc-parser@0.128.0)(rolldown@1.0.0-rc.17):
+  nitropack@2.13.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))(oxc-parser@0.128.0)(rolldown@1.0.0-rc.17):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.4.2
       '@rollup/plugin-alias': 6.0.0(rollup@4.60.2)
@@ -10490,7 +10493,7 @@ snapshots:
       cookie-es: 2.0.1
       croner: 10.0.1
       crossws: 0.3.5
-      db0: 0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))
+      db0: 0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))
       defu: 6.1.7
       destr: 2.0.5
       dot-prop: 10.1.0
@@ -10536,7 +10539,7 @@ snapshots:
       unenv: 2.0.0-rc.24
       unimport: 6.2.0(oxc-parser@0.128.0)
       unplugin-utils: 0.3.1
-      unstorage: 1.17.5(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)
+      unstorage: 1.17.5(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)
       untyped: 2.0.0
       unwasm: 0.5.3
       youch: 4.1.1
@@ -10608,16 +10611,16 @@ snapshots:
     dependencies:
       boolbase: 1.0.0
 
-  nuxt@4.4.4(@babel/core@7.29.0)(@babel/plugin-syntax-jsx@7.28.6(@babel/core@7.29.0))(@parcel/watcher@2.5.6)(@types/node@25.6.0)(@vitejs/devtools@0.1.15)(@vue/compiler-sfc@3.5.33)(cac@6.7.14)(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))(eslint@10.1.0(jiti@2.6.1))(ioredis@5.10.1)(lightningcss@1.32.0)(magicast@0.5.2)(optionator@0.9.4)(oxlint@1.62.0(oxlint-tsgolint@0.22.1))(rolldown@1.0.0-rc.17)(rollup-plugin-visualizer@7.0.1(rolldown@1.0.0-rc.17)(rollup@4.60.2))(rollup@4.60.2)(terser@5.46.2)(tsx@4.21.0)(typescript@6.0.3)(vite@8.0.10)(vue-tsc@3.2.7(typescript@6.0.3))(yaml@2.8.3):
+  nuxt@4.4.4(@babel/core@7.29.0)(@babel/plugin-syntax-jsx@7.28.6(@babel/core@7.29.0))(@parcel/watcher@2.5.6)(@types/node@25.6.0)(@vitejs/devtools@0.1.15)(@vue/compiler-sfc@3.5.33)(cac@6.7.14)(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))(eslint@10.1.0(jiti@2.6.1))(ioredis@5.10.1)(lightningcss@1.32.0)(magicast@0.5.2)(optionator@0.9.4)(oxlint@1.62.0(oxlint-tsgolint@0.22.1))(rolldown@1.0.0-rc.17)(rollup-plugin-visualizer@7.0.1(rolldown@1.0.0-rc.17)(rollup@4.60.2))(rollup@4.60.2)(terser@5.46.2)(tsx@4.21.0)(typescript@6.0.3)(vite@8.0.10)(vue-tsc@3.2.7(typescript@6.0.3))(yaml@2.8.3):
     dependencies:
       '@dxup/nuxt': 0.4.1(magicast@0.5.2)(typescript@6.0.3)
       '@nuxt/cli': 3.35.1(@nuxt/schema@4.4.4)(cac@6.7.14)(magicast@0.5.2)
       '@nuxt/devtools': 3.2.4(@vitejs/devtools@0.1.15)(vite@8.0.10)(vue@3.5.33(typescript@6.0.3))
       '@nuxt/kit': 4.4.4(magicast@0.5.2)
-      '@nuxt/nitro-server': 4.4.4(1a3adc7c6338ef32bb9a2ceb8d5412a4)
+      '@nuxt/nitro-server': 4.4.4(aaddff80030568777fbe7ccb9d5f8867)
       '@nuxt/schema': 4.4.4
       '@nuxt/telemetry': 2.8.0(@nuxt/kit@4.4.4(magicast@0.5.2))
-      '@nuxt/vite-builder': 4.4.4(35bb4f19191ea6a6841a57e2fa8237c2)
+      '@nuxt/vite-builder': 4.4.4(e2f19887238320af4700bdea8c82af10)
       '@unhead/vue': 2.1.13(vue@3.5.33(typescript@6.0.3))
       '@vue/shared': 3.5.33
       chokidar: 5.0.0
@@ -11864,7 +11867,7 @@ snapshots:
       escape-string-regexp: 5.0.0
       ufo: 1.6.4
 
-  unstorage@1.17.5(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1):
+  unstorage@1.17.5(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1):
     dependencies:
       anymatch: 3.1.3
       chokidar: 5.0.0
@@ -11875,7 +11878,7 @@ snapshots:
       ofetch: 1.5.1
       ufo: 1.6.4
     optionalDependencies:
-      db0: 0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))
+      db0: 0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3)))
       ioredis: 5.10.1
 
   untun@0.1.3:
@@ -12040,7 +12043,7 @@ snapshots:
       tinyglobby: 0.2.16
     optionalDependencies:
       '@types/node': 25.6.0
-      '@vitejs/devtools': 0.1.15(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.22(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(typescript@6.0.3)(vite@8.0.10)
+      '@vitejs/devtools': 0.1.15(@pnpm/logger@1001.0.1)(db0@0.3.4(drizzle-orm@1.0.0-beta.23(@neondatabase/serverless@1.1.0)(valibot@1.3.1(typescript@6.0.3))))(ioredis@5.10.1)(typescript@6.0.3)(vite@8.0.10)
       esbuild: 0.28.0
       fsevents: 2.3.3
       jiti: 2.6.1
