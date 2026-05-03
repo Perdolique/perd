@@ -33,7 +33,7 @@
     "prepare": "pnpm exec husky"
   },
   "dependencies": {
-    "@nuxt/hints": "1.0.3",
+    "@nuxt/hints": "1.1.0",
     "delay": "7.0.0",
     "nuxt": "4.4.4",
     "vue": "3.5.33"
@@ -48,10 +48,10 @@
     "@playwright/test": "1.59.1",
     "@types/node": "25.6.0",
     "@types/ws": "8.18.1",
-    "@vueuse/core": "14.2.1",
-    "drizzle-kit": "1.0.0-beta.23",
-    "drizzle-orm": "1.0.0-beta.23",
-    "drizzle-seed": "1.0.0-beta.23",
+    "@vueuse/core": "14.3.0",
+    "drizzle-kit": "1.0.0-rc.2-203eab8",
+    "drizzle-orm": "1.0.0-rc.2-203eab8",
+    "drizzle-seed": "1.0.0-rc.2-203eab8",
     "eslint-config-greenpie": "16.0.0-10",
     "husky": "9.1.7",
     "markdownlint": "0.40.0",
