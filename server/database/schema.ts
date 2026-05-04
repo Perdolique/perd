@@ -404,6 +404,46 @@ const userEquipment = pgTable('user_equipment', {
 ])
 
 /**
+ * User-owned packing list shell.
+ *
+ * Entries are intentionally added in a later MVP iteration.
+ */
+const packingLists = pgTable('packing_lists', {
+  id:
+    uuid()
+    .notNull()
+    .default(sql`uuidv7()`)
+    .primaryKey(),
+
+  userId:
+    uuid()
+    .notNull()
+    .references(() => users.id, {
+      onDelete: 'cascade',
+      onUpdate: 'cascade'
+    }),
+
+  name:
+    varchar({ length: limits.maxPackingListNameLength })
+    .notNull(),
+
+  createdAt:
+    timestamp({
+      withTimezone: true
+    })
+    .notNull()
+    .defaultNow(),
+
+  updatedAt:
+    timestamp({
+      withTimezone: true
+    })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => sql`now()`)
+})
+
+/**
  * Activity log for tracking user contributions.
  *
  * Records every catalog write operation (create/update/delete). Used for future gamification and reputation system.
@@ -455,5 +495,6 @@ export {
   propertyEnumOptions,
   itemPropertyValues,
   userEquipment,
+  packingLists,
   contributions
 }

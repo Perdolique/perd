@@ -15,6 +15,8 @@ import {
   validateGroupMutationBody,
   validateItemDetailParams,
   validateItemsListQuery,
+  validatePackingListIdParams,
+  validatePackingListMutationBody,
   validatePropertyEnumOptionMutationBody,
   validatePropertyEnumOptionParams,
   validateRedirectTargetQuery,
@@ -42,6 +44,8 @@ describe('validation schemas', () => {
   const maxGroupSlug = 'g'.repeat(limits.maxEquipmentGroupSlugLength)
   const tooLongGroupName = 'G'.repeat(limits.maxEquipmentGroupNameLength + 1)
   const tooLongGroupSlug = 'g'.repeat(limits.maxEquipmentGroupSlugLength + 1)
+  const maxPackingListName = 'P'.repeat(limits.maxPackingListNameLength)
+  const tooLongPackingListName = 'P'.repeat(limits.maxPackingListNameLength + 1)
   const maxPropertyEnumOptionName = 'O'.repeat(limits.maxPropertyEnumOptionNameLength)
   const maxPropertyEnumOptionSlug = 'o'.repeat(limits.maxPropertyEnumOptionSlugLength)
   const tooLongPropertyEnumOptionName = 'O'.repeat(limits.maxPropertyEnumOptionNameLength + 1)
@@ -178,6 +182,51 @@ describe('validation schemas', () => {
 
   test.each([{}, { id: '' }, { id: '0' }, { id: '01' }, { id: 'sleep' }])('should reject invalid group id params: %j', (params) => {
     expect(() => validateGroupIdParams(params)).toThrow()
+  })
+
+  test('should validate packing list id params', () => {
+    const result = validatePackingListIdParams({
+      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+    })
+
+    expect(result).toStrictEqual({
+      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+    })
+  })
+
+  test.each([{}, { id: '' }, { id: '0195f6e8-8f44-64f6-bc9a-5c8f7df477d7' }, { id: 'packing-list' }])(
+    'should reject invalid packing list id params: %j',
+    (params) => {
+      expect(() => validatePackingListIdParams(params)).toThrow()
+    }
+  )
+
+  test('should trim packing list mutation body name', () => {
+    const result = validatePackingListMutationBody({
+      name: '  Alpine weekend  '
+    })
+
+    expect(result).toStrictEqual({
+      name: 'Alpine weekend'
+    })
+  })
+
+  test('should accept packing list mutation body at max name length', () => {
+    const result = validatePackingListMutationBody({
+      name: maxPackingListName
+    })
+
+    expect(result).toStrictEqual({
+      name: maxPackingListName
+    })
+  })
+
+  test.each([{
+    name: '   '
+  }, {
+    name: tooLongPackingListName
+  }])('should reject invalid packing list mutation body: %j', (body) => {
+    expect(() => validatePackingListMutationBody(body)).toThrow()
   })
 
   test('should trim group mutation body fields', () => {

@@ -2,6 +2,7 @@
   <dialog
     ref="dialogRef"
     :class="$style.dialog"
+    @cancel="handleCancel"
   >
     <slot />
   </dialog>
@@ -11,6 +12,11 @@
   import { useTemplateRef, watchEffect } from 'vue'
   import { useEventListener } from '@vueuse/core'
 
+  interface Props {
+    closeDisabled?: boolean;
+  }
+
+  const { closeDisabled = false } = defineProps<Props>()
   const dialogRef = useTemplateRef('dialogRef')
 
   const isOpened = defineModel<boolean>({
@@ -26,15 +32,31 @@
   })
 
   useEventListener(dialogRef, 'close', () => {
+    if (closeDisabled) {
+      dialogRef.value?.showModal()
+
+      return
+    }
+
     isOpened.value = false
   })
 
   // Close the dialog when clicking outside of it
   useEventListener(dialogRef, 'click', ({ target }: MouseEvent) => {
+    if (closeDisabled) {
+      return
+    }
+
     if (target === dialogRef.value) {
       dialogRef.value?.close()
     }
   })
+
+  function handleCancel(event: Event) {
+    if (closeDisabled) {
+      event.preventDefault()
+    }
+  }
 </script>
 
 <style module>

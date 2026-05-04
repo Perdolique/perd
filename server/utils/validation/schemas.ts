@@ -1,3 +1,4 @@
+// oxlint-disable max-lines
 import * as v from 'valibot'
 import { limits, startPagePath } from '#shared/constants'
 import { sanitizeRedirectPath } from '#shared/utils/redirect'
@@ -207,6 +208,17 @@ const userEquipmentCreateBodySchema = v.object({
   itemId: canonicalUuidV7Schema
 })
 
+const packingListIdParamsSchema = v.object({
+  id: canonicalUuidV7Schema
+})
+
+const packingListMutationBodySchema = v.object({
+  name: v.pipe(
+    trimmedNonEmptyStringSchema,
+    v.maxLength(limits.maxPackingListNameLength)
+  )
+})
+
 const itemsListQuerySchema = v.object({
   brandSlug: optionalFilterQuerySchema,
   categorySlug: optionalFilterQuerySchema,
@@ -286,6 +298,14 @@ function validateUserEquipmentCreateBody(body: unknown) {
   return v.parse(userEquipmentCreateBodySchema, body)
 }
 
+function validatePackingListIdParams(params: unknown) {
+  return v.parse(packingListIdParamsSchema, params)
+}
+
+function validatePackingListMutationBody(body: unknown) {
+  return v.parse(packingListMutationBodySchema, body)
+}
+
 function validatePropertyEnumOptionMutationBody(body: unknown) {
   return v.parse(propertyEnumOptionMutationSchema, body)
 }
@@ -326,6 +346,8 @@ export {
   limitQuerySchema,
   nonEmptyStringSchema,
   pageQuerySchema,
+  packingListIdParamsSchema,
+  packingListMutationBodySchema,
   positiveIntegerIdParamSchema,
   propertyEnumOptionMutationSchema,
   propertyEnumOptionParamsSchema,
@@ -350,6 +372,8 @@ export {
   validateGroupMutationBody,
   validateItemDetailParams,
   validateItemsListQuery,
+  validatePackingListIdParams,
+  validatePackingListMutationBody,
   validatePropertyEnumOptionMutationBody,
   validatePropertyEnumOptionParams,
   validateRedirectTargetQuery,
