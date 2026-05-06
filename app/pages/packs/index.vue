@@ -66,6 +66,7 @@
   import { computed, ref } from 'vue'
   import { definePageMeta, navigateTo, useFetch, useRequestFetch } from '#imports'
   import type { PackingListSummary, PackingListView } from '~/types/packing'
+  import { packingListDateFormatter } from '~/utils/packing'
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PerdButton from '~/components/PerdButton.vue'
@@ -82,9 +83,6 @@
   const createErrorMessage = ref<string | null>(null)
   const creatingList = ref(false)
   const isCreateDialogVisible = ref(false)
-  const packingListDateFormatter = new Intl.DateTimeFormat('en', {
-    dateStyle: 'medium'
-  })
 
   const {
     data: packingLists,
@@ -92,7 +90,8 @@
     refresh: refreshPackingLists,
     status: packingListStatus
   } = await useFetch('/api/user/packing-lists', {
-    default: () => []
+    default: () => [],
+    lazy: true
   })
 
   const hasError = computed(() => packingListError.value !== undefined && packingListError.value !== null)

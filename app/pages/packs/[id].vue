@@ -122,6 +122,7 @@
 <script lang="ts" setup>
   import { computed, ref } from 'vue'
   import { definePageMeta, navigateTo, useFetch, useRequestFetch, useRoute } from '#imports'
+  import { packingListDateFormatter } from '~/utils/packing'
   import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue'
   import IconTitle from '~/components/IconTitle.vue'
   import PageLoadingState from '~/components/PageLoadingState.vue'
@@ -154,9 +155,6 @@
   const isDeleteDialogVisible = ref(false)
   const isDeleting = ref(false)
   const deleteErrorMessage = ref<string | null>(null)
-  const packingListDateFormatter = new Intl.DateTimeFormat('en', {
-    dateStyle: 'medium'
-  })
 
   const {
     data: packingList,
@@ -171,7 +169,9 @@
         name: '',
         updatedAt: ''
       }
-    }
+    },
+
+    lazy: true
   })
 
   const hasError = computed(() => packingListError.value !== undefined && packingListError.value !== null)
