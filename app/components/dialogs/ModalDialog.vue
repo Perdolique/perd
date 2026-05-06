@@ -32,12 +32,6 @@
   })
 
   useEventListener(dialogRef, 'close', () => {
-    if (closeDisabled) {
-      dialogRef.value?.showModal()
-
-      return
-    }
-
     isOpened.value = false
   })
 

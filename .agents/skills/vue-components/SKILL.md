@@ -84,8 +84,10 @@ const emit = defineEmits<Emits>()
 Use `useTemplateRef` (Vue 3.5+), not the old `ref()` + template `ref=""` pattern:
 
 ```ts
-const dialogRef = useTemplateRef<HTMLDialogElement>('dialog')
+const dialogRef = useTemplateRef('dialog')
 ```
+
+Do not add an explicit generic to `useTemplateRef` when Vue can infer the type from a static template `ref` on a native element or component. Add a generic only when inference is unavailable or incorrect.
 
 ### Models
 
