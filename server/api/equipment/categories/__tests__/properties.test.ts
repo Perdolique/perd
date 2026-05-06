@@ -225,7 +225,7 @@ describe('category property handlers', () => {
     vi.restoreAllMocks()
   })
 
-  describe('POST /api/equipment/categories/[categoryId]/properties', () => {
+  describe('post /api/equipment/categories/[categoryId]/properties', () => {
     beforeEach(() => {
       getValidatedRouterParamsMock.mockResolvedValue({
         categoryId: 5
@@ -501,7 +501,7 @@ describe('category property handlers', () => {
     })
   })
 
-  describe('DELETE /api/equipment/categories/[categoryId]/properties/[propertyId]', () => {
+  describe('delete /api/equipment/categories/[categoryId]/properties/[propertyId]', () => {
     beforeEach(() => {
       getValidatedRouterParamsMock.mockResolvedValue({
         categoryId: 5,

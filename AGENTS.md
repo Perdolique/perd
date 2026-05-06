@@ -36,5 +36,5 @@
 ## Verification
 
 - Markdown changes: `pnpm run lint:markdown`.
-- TypeScript or Vue changes: `pnpm run test:typecheck`, `pnpm run test:unit:agent`, `pnpm run lint:oxlint`, `pnpm run build`, and `pnpm run test:e2e:ci`.
+- TypeScript or Vue changes: `pnpm run test:typecheck`, `pnpm run test:unit:agent`, `pnpm run lint:oxlint:agent`, `pnpm run build`, and `pnpm run test:e2e:ci`.
 - Run applicable checks in parallel where practical.

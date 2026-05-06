@@ -1,6 +1,6 @@
 pnpm run lint:markdown
-pnpm run lint:oxlint
+pnpm run lint:oxlint:agent
 pnpm run test:typecheck
-pnpm run test:unit:ci
+pnpm run test:unit:agent
 pnpm run build
 pnpm run test:e2e:ci

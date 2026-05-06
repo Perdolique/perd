@@ -20,18 +20,18 @@ const trimmedNonEmptyStringSchema = v.pipe(
 
 const positiveIntegerIdParamSchema = v.pipe(
   v.string(),
-  v.regex(/^[1-9]\d*$/),
+  v.regex(/^[1-9]\d*$/u),
   v.toNumber()
 )
 
 const canonicalUuidV7Schema = v.pipe(
   v.string(),
-  v.regex(/^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/)
+  v.regex(/^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/u)
 )
 
 const referenceDataSlugSchema = v.pipe(
   trimmedNonEmptyStringSchema,
-  v.regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+  v.regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u)
 )
 
 const optionalFilterQuerySchema = v.optional(

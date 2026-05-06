@@ -229,7 +229,7 @@ describe('property enum option handlers', () => {
     vi.restoreAllMocks()
   })
 
-  describe('POST /api/equipment/categories/[categoryId]/properties/[propertyId]/enum-options', () => {
+  describe('post /api/equipment/categories/[categoryId]/properties/[propertyId]/enum-options', () => {
     test('should create a property enum option and log a contribution', async () => {
       const createdOption: PropertyEnumOptionBaseRecord = {
         id: 21,
@@ -401,7 +401,7 @@ describe('property enum option handlers', () => {
     })
   })
 
-  describe('DELETE /api/equipment/categories/[categoryId]/properties/[propertyId]/enum-options/[optionId]', () => {
+  describe('delete /api/equipment/categories/[categoryId]/properties/[propertyId]/enum-options/[optionId]', () => {
     beforeEach(() => {
       getValidatedRouterParamsMock.mockResolvedValue({
         categoryId: 5,

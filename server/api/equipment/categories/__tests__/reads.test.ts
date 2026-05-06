@@ -62,7 +62,7 @@ function createDetailDb(category?: CategoryDetail) {
   }
 }
 
-describe('GET /api/equipment/categories/[slug]', () => {
+describe('get /api/equipment/categories/[slug]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 

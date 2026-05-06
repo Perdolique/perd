@@ -215,7 +215,7 @@ describe('user packing list handlers', () => {
     vi.restoreAllMocks()
   })
 
-  describe('GET /api/user/packing-lists', () => {
+  describe('get /api/user/packing-lists', () => {
     test('should return packing lists scoped to the current user', async () => {
       const rows = [{
         createdAt: '2026-04-03T09:00:00.000Z',
@@ -269,7 +269,7 @@ describe('user packing list handlers', () => {
     })
   })
 
-  describe('GET /api/user/packing-lists/[id]', () => {
+  describe('get /api/user/packing-lists/[id]', () => {
     test('should return an owned packing list', async () => {
       const row = {
         createdAt: '2026-04-03T09:00:00.000Z',
@@ -320,7 +320,7 @@ describe('user packing list handlers', () => {
     })
   })
 
-  describe('POST /api/user/packing-lists', () => {
+  describe('post /api/user/packing-lists', () => {
     test('should create a packing list for the current user', async () => {
       const createdRow = {
         createdAt: '2026-04-03T09:00:00.000Z',
@@ -366,7 +366,7 @@ describe('user packing list handlers', () => {
     })
   })
 
-  describe('PATCH /api/user/packing-lists/[id]', () => {
+  describe('patch /api/user/packing-lists/[id]', () => {
     test('should rename an owned packing list', async () => {
       const updatedRow = {
         createdAt: '2026-04-03T09:00:00.000Z',
@@ -424,7 +424,7 @@ describe('user packing list handlers', () => {
     })
   })
 
-  describe('DELETE /api/user/packing-lists/[id]', () => {
+  describe('delete /api/user/packing-lists/[id]', () => {
     test('should delete an owned packing list', async () => {
       const { dbHttp, deleteWhereMock } = createDeleteDb({
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'

@@ -219,7 +219,7 @@ function createDeleteDb({
   }
 }
 
-describe('PATCH /api/equipment/groups/[id]', () => {
+describe('patch /api/equipment/groups/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
@@ -391,7 +391,7 @@ describe('PATCH /api/equipment/groups/[id]', () => {
   })
 })
 
-describe('DELETE /api/equipment/groups/[id]', () => {
+describe('delete /api/equipment/groups/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 

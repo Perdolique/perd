@@ -13,7 +13,7 @@ test.describe('Login page', () => {
   test('should return to the api document after guest login', async ({ page }) => {
     await page.goto('/api/equipment/brands')
 
-    await expect(page).toHaveURL(/\/login\?redirectTo=\/api\/equipment\/brands$/)
+    await expect(page).toHaveURL(/\/login\?redirectTo=\/api\/equipment\/brands$/u)
 
     await page.route('**/api/auth/create-session', async (route) => {
       await route.fulfill({
@@ -33,7 +33,7 @@ test.describe('Login page', () => {
 
     await page.getByRole('button', { name: 'Guest' }).click()
 
-    await expect(page).toHaveURL(/\/api\/equipment\/brands$/)
+    await expect(page).toHaveURL(/\/api\/equipment\/brands$/u)
     await expect(page.locator('body')).toHaveText('[]')
   })
 
@@ -55,7 +55,7 @@ test.describe('Login page', () => {
 
     await page.goto('/auth/twitch?code=oauth-code&state=%2Fapi%2Fequipment%2Fbrands')
 
-    await expect(page).toHaveURL(/\/api\/equipment\/brands$/)
+    await expect(page).toHaveURL(/\/api\/equipment\/brands$/u)
     await expect(page.locator('body')).toHaveText('[]')
   })
 })
