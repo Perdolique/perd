@@ -100,15 +100,11 @@ function createListDb({
   const selectMock = vi.fn()
 
   selectMock
-    .mockImplementationOnce(() => {
-      return {
-        from: itemsFromMock
-      }
+    .mockReturnValueOnce({
+      from: itemsFromMock
     })
-    .mockImplementationOnce(() => {
-      return {
-        from: countFromMock
-      }
+    .mockReturnValueOnce({
+      from: countFromMock
     })
 
   return {
@@ -158,7 +154,7 @@ describe('item read handlers', () => {
     vi.restoreAllMocks()
   })
 
-  describe('GET /api/equipment/items', () => {
+  describe('get /api/equipment/items', () => {
     test('should return paginated items list', async () => {
       const items = [{
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
@@ -262,7 +258,7 @@ describe('item read handlers', () => {
     })
   })
 
-  describe('GET /api/equipment/items/[id]', () => {
+  describe('get /api/equipment/items/[id]', () => {
     test('should return item detail with normalized property values', async () => {
       const item = {
         createdAt: '2026-04-01T00:00:00Z',

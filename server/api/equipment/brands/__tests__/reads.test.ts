@@ -109,7 +109,7 @@ describe('brand read handlers', () => {
     vi.restoreAllMocks()
   })
 
-  describe('GET /api/equipment/brands', () => {
+  describe('get /api/equipment/brands', () => {
     test('should return all brands when search is empty', async () => {
       const brands = [{
         id: 1,
@@ -168,7 +168,7 @@ describe('brand read handlers', () => {
     })
   })
 
-  describe('GET /api/equipment/brands/[slug]', () => {
+  describe('get /api/equipment/brands/[slug]', () => {
     test('should return brand detail for a known slug', async () => {
       const brand = {
         id: 1,

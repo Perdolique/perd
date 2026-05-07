@@ -30,6 +30,15 @@
       <Icon name="tabler:backpack" :class="$style.navigationIcon" />
       <span>Gear</span>
     </NuxtLink>
+
+    <NuxtLink
+      to="/packs"
+      active-class="active"
+      :class="$style.navigationItem"
+    >
+      <Icon name="tabler:route" :class="$style.navigationIcon" />
+      <span>Packs</span>
+    </NuxtLink>
   </nav>
 </template>
 

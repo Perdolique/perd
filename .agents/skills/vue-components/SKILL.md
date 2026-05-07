@@ -5,6 +5,10 @@ description: Vue component conventions and patterns for the Perd project. Use wh
 
 # Vue Component Conventions
 
+## Web Baseline 2025
+
+The project targets **Baseline 2025** across all web technologies. Freely use modern HTML elements (like native `<dialog>`, `popover`, etc.), modern JS browser APIs, and modern CSS. We do not chase legacy browser support. Always choose modern native features over polyfills, fallbacks, or compatibility workarounds when they simplify the component structure.
+
 ## Component Structure
 
 Use the standard order: `<template>`, `<script>`, `<style>`.
@@ -84,8 +88,10 @@ const emit = defineEmits<Emits>()
 Use `useTemplateRef` (Vue 3.5+), not the old `ref()` + template `ref=""` pattern:
 
 ```ts
-const dialogRef = useTemplateRef<HTMLDialogElement>('dialog')
+const dialogRef = useTemplateRef('dialog')
 ```
+
+Do not add an explicit generic to `useTemplateRef` when Vue can infer the type from a static template `ref` on a native element or component. Add a generic only when inference is unavailable or incorrect.
 
 ### Models
 
@@ -218,18 +224,32 @@ Use full, readable names for component prop values and CSS/state variants. Prefe
 
 Style owned markup through explicit classes on the element being styled. Avoid nested tag selectors such as `& em`, `& span`, or `& strong` when the element can be given its own class.
 
-### CSS Features (Baseline 2025)
+When an element changes style based on an ancestor component state, keep that state rule nested under the element's own class instead of writing a separate ancestor-to-descendant selector. Prefer this:
 
-The project targets modern browsers only. Use these freely:
+```css
+.name {
+  .component:hover &,
+  .component:focus-visible & {
+    color: var(--color-text-primary);
+  }
+}
+```
+
+Do not write the same rule as a separate selector such as `.component:hover .name` or `.component:focus-visible .name`. In this codebase, selector ownership should stay with the class being styled.
+
+### Modern CSS Features
+
+Leverage our Web Baseline 2025 and use these CSS features freely:
 
 - **Native CSS nesting** — no preprocessors
+- **Modern CSS features and selectors** when they simplify the component without adding unnecessary complexity
 - **`oklch()` color function** with `prefers-color-scheme` for light/dark themes
 - **`@starting-style`** + `allow-discrete` for animating `display: none` transitions
 - **Range media queries** — `@media (width >= 768px)`, never `@media screen and (min-width: 768px)`
 - **`@layer`** for CSS organization (reset, colors, spacings, sizes, transitions, typography)
 - **CSS custom properties** for all design tokens (`--spacing-*`, `--color-*`, `--font-size-*`, etc.)
 
-Prefer native CSS features that are already part of the supported browser baseline over legacy compatibility workarounds.
+Prefer native CSS features over legacy compatibility workarounds.
 
 ### Responsive Rules
 

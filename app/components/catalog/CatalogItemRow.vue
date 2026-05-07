@@ -1,5 +1,5 @@
 <template>
-  <PerdCard :class="$style.component">
+  <NuxtLink :to="item.detailPath" :class="$style.component">
     <div :class="$style.row">
       <div :class="$style.identity">
         <span :class="$style.icon" aria-hidden="true">
@@ -11,9 +11,9 @@
             {{ item.brand.name }}
           </p>
 
-          <PerdLink :to="item.detailPath" :class="$style.name">
+          <span :class="$style.name">
             {{ item.name }}
-          </PerdLink>
+          </span>
         </div>
       </div>
 
@@ -25,13 +25,11 @@
         <Icon name="tabler:arrow-up-right" :class="$style.arrow" aria-hidden="true" />
       </div>
     </div>
-  </PerdCard>
+  </NuxtLink>
 </template>
 
 <script lang="ts" setup>
   import type { CatalogListItemView } from '~/types/equipment'
-  import PerdCard from '~/components/PerdCard.vue'
-  import PerdLink from '~/components/PerdLink.vue'
   import PerdPill from '~/components/PerdPill.vue'
 
   interface Props {
@@ -43,46 +41,70 @@
 
 <style module>
   .component {
-    padding: var(--spacing-16);
+    display: grid;
     container-type: inline-size;
-    background:
-      linear-gradient(
-        135deg,
-        color-mix(in oklch, var(--color-accent-base), transparent 94%),
-        var(--color-surface-base)
-      );
+    padding: var(--spacing-12) var(--spacing-16);
+    border-block-end: 1px solid var(--color-border-subtle);
+    color: inherit;
+    text-decoration: none;
+    transition:
+      background-color var(--transition-duration-quick) var(--transition-easing-out),
+      box-shadow var(--transition-duration-quick) var(--transition-easing-out);
+
+    &:hover {
+      background-color: var(--color-surface-subtle);
+    }
+
+    &:focus-visible {
+      background-color: var(--color-surface-subtle);
+      box-shadow: inset 0 0 0 2px var(--color-accent-ring);
+      outline: none;
+    }
+
+    &:active {
+      background-color: color-mix(in oklch, var(--color-surface-subtle), var(--color-accent-subtle) 24%);
+    }
+
+    &:last-child {
+      border-block-end: 0;
+    }
   }
 
   .row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-16);
-    align-items: center;
-    justify-content: space-between;
+    display: grid;
+    gap: var(--spacing-12);
+
+    @container (inline-size >= 40rem) {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+    }
   }
 
   .identity {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
     gap: var(--spacing-12);
     min-inline-size: 0;
   }
 
   .icon {
-    display: grid;
-    place-items: center;
-    inline-size: 2.75rem;
-    block-size: 2.75rem;
-    border-radius: var(--border-radius-16);
-    background: var(--color-accent-subtle);
-    color: var(--color-accent-base);
-    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 2.25rem;
+    block-size: 2.25rem;
+    border-radius: var(--border-radius-12);
+    background-color: var(--color-surface-subtle);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border-subtle);
+    font-size: 1rem;
   }
 
   .text {
     min-inline-size: 0;
     display: grid;
-    gap: 0.1rem;
+    gap: 0.15rem;
   }
 
   .brand {
@@ -94,15 +116,26 @@
   }
 
   .name {
-    font-size: var(--font-size-16);
     color: var(--color-text-primary);
+    font-size: var(--font-size-16);
+    line-height: var(--line-height-snug);
+    font-weight: var(--font-weight-medium);
+    overflow-wrap: anywhere;
+
+    .component:hover &,
+    .component:focus-visible & {
+      color: var(--color-text-primary);
+    }
   }
 
   .meta {
     display: flex;
     align-items: center;
-    gap: var(--spacing-12);
-    margin-inline-start: auto;
+    gap: var(--spacing-8);
+
+    @container (inline-size >= 40rem) {
+      justify-content: end;
+    }
   }
 
   .tag {
@@ -117,7 +150,6 @@
     .meta {
       inline-size: 100%;
       justify-content: space-between;
-      margin-inline-start: 0;
     }
   }
 </style>

@@ -4,11 +4,10 @@ This file is the source of truth for the order of upcoming work. Each active ite
 
 ## Now
 
-- [Packing list shell](packing-lists-mvp.md#iteration-1-packing-list-shell) — create the first user-owned packing list surface; done when a signed-in user can create, view, rename, and delete empty packing lists.
+- [Custom checklist entries](packing-lists-mvp.md#iteration-2-custom-checklist-entries) — make one packing list useful without catalog coverage; done when custom entries can be added, packed/unpacked, and removed.
 
 ## Next
 
-- [Custom checklist entries](packing-lists-mvp.md#iteration-2-custom-checklist-entries) — make one packing list useful without catalog coverage; done when custom entries can be added, packed/unpacked, and removed.
 - [Catalog-backed packing entries](packing-lists-mvp.md#iteration-3-catalog-backed-packing-entries) — connect catalog detail to packing lists; done when an approved catalog item can be added from `/catalog/[id]` to an existing packing list.
 - [Packing navigation decision](packing-lists-mvp.md#iteration-4-packing-navigation-decision) — decide how packing becomes the primary workflow; done when navigation and `/` behavior match the shipped packing experience.
 

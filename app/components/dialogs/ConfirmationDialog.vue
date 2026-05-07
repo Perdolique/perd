@@ -1,5 +1,5 @@
 <template>
-  <ModalDialog v-model="isOpened">
+  <ModalDialog v-model="isOpened" :close-disabled="isCloseDisabled">
     <div :class="$style.content">
       <PerdHeading
         :class="$style.header"
@@ -16,6 +16,7 @@
         <PerdButton
           variant="secondary"
           :class="$style.cancelButton"
+          :disabled="isCancelDisabled"
           @click="close"
         >
           {{ cancelButtonText }}
@@ -24,6 +25,8 @@
         <PerdButton
           :variant="confirmVariant"
           :class="$style.confirmButton"
+          :loading="confirmLoading"
+          :disabled="confirmDisabled"
           @click="emitConfirm"
         >
           {{ confirmButtonText }}
@@ -34,12 +37,16 @@
 </template>
 
 <script lang="ts" setup>
+  import { computed } from 'vue'
   import PerdButton from '~/components/PerdButton.vue'
   import PerdHeading from '~/components/PerdHeading.vue'
   import ModalDialog from './ModalDialog.vue'
 
   interface Props {
     cancelButtonText?: string;
+    closeOnConfirm?: boolean;
+    confirmDisabled?: boolean;
+    confirmLoading?: boolean;
     confirmVariant?: 'danger' | 'primary';
     headerText: string;
     confirmButtonText: string;
@@ -53,19 +60,30 @@
 
   const {
     cancelButtonText = 'Cancel',
+    closeOnConfirm = true,
+    confirmDisabled = false,
+    confirmLoading = false,
     confirmVariant = 'primary'
   } = defineProps<Props>()
 
   const emit = defineEmits<Emits>()
+  const isCancelDisabled = computed(() => confirmLoading)
+  const isCloseDisabled = computed(() => confirmLoading)
 
   function close() {
+    if (confirmLoading) {
+      return
+    }
+
     isOpened.value = false
   }
 
   function emitConfirm() {
     emit('confirm')
 
-    close()
+    if (closeOnConfirm) {
+      close()
+    }
   }
 </script>
 

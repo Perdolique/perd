@@ -14,6 +14,11 @@ export const relations = defineRelations(schema, (relation) => {
         to: relation.userEquipment.userId
       }),
 
+      packingLists: relation.many.packingLists({
+        from: relation.users.id,
+        to: relation.packingLists.userId
+      }),
+
       contributions: relation.many.contributions({
         from: relation.users.id,
         to: relation.contributions.userId
@@ -125,6 +130,13 @@ export const relations = defineRelations(schema, (relation) => {
       item: relation.one.equipmentItems({
         from: relation.userEquipment.itemId,
         to: relation.equipmentItems.id
+      })
+    },
+
+    packingLists: {
+      user: relation.one.users({
+        from: relation.packingLists.userId,
+        to: relation.users.id
       })
     },
 

@@ -72,6 +72,10 @@
       return 'Gear'
     }
 
+    if (isRouteActive('/packs')) {
+      return 'Packs'
+    }
+
     if (isRouteActive('/account')) {
       return 'Account'
     }

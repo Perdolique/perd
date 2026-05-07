@@ -38,6 +38,17 @@
     </NuxtLink>
 
     <NuxtLink
+      to="/packs"
+      active-class="active"
+      :class="$style.dockItem"
+    >
+      <span :class="$style.dockIcon">
+        <Icon name="tabler:route" />
+      </span>
+      <span>Packs</span>
+    </NuxtLink>
+
+    <NuxtLink
       to="/account"
       active-class="active"
       :class="$style.dockItem"
@@ -57,7 +68,7 @@
     inset-block-end: 0;
     z-index: 20;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     padding: 0.375rem 0.5rem calc(0.5rem + env(safe-area-inset-bottom));
     border-block-start: 1px solid var(--color-border-subtle);
     background: color-mix(in oklch, var(--color-background-raised), transparent 6%);

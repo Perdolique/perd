@@ -12,35 +12,6 @@ Catalog ownership is already shipped and summarized in [Completed work](complete
 - Do not add packing-list actions to the `/catalog` browse table during this MVP.
 - Do not change `/` behavior until the navigation decision iteration.
 
-## Iteration 1: Packing list shell
-
-**Result**: A signed-in user can create, view, rename, and delete empty packing lists.
-
-**Scope**:
-
-- Add `packing_lists` as a user-owned parent record.
-- Add the minimal relations and validation needed for list ownership and name updates.
-- Add `GET /api/user/packing-lists` for the current user's list summaries.
-- Add `POST /api/user/packing-lists` with `{ name }`.
-- Add `PATCH /api/user/packing-lists/[id]` for renaming an owned list.
-- Add `DELETE /api/user/packing-lists/[id]` for deleting an owned empty list.
-- Add `/packing-lists` with list, create, rename, and delete controls.
-
-**Non-goals**:
-
-- No entries table or entry API yet.
-- No packing list detail page beyond navigation targets needed by the shell.
-- No catalog-backed add action.
-- No `/` redirect or app navigation reshuffle unless required to reach the new page during verification.
-
-**Verification**:
-
-- Unit coverage for ownership-scoped API handlers and validation.
-- Focused Playwright coverage for creating, renaming, and deleting a packing list from `/packing-lists`.
-- `pnpm run test:typecheck`, `pnpm run test:unit:agent`, `pnpm run lint:oxlint`, `pnpm run build`, and the focused Playwright spec before the full e2e suite.
-
-**Completed summary**: Packing list shell shipped with user-owned list create, read, rename, and delete on `/packing-lists`.
-
 ## Iteration 2: Custom checklist entries
 
 **Result**: A signed-in user can make a packing list useful even when the catalog is incomplete.
@@ -54,7 +25,7 @@ Catalog ownership is already shipped and summarized in [Completed work](complete
 - Add `PATCH /api/user/packing-lists/[id]/entries/[entryId]` for toggling `isPacked`.
 - Add `DELETE /api/user/packing-lists/[id]/entries/[entryId]` for removing an entry.
 - Ensure deleting a packing list also removes its entries.
-- Add `/packing-lists/[id]` with custom entry creation, packed toggle, and delete controls.
+- Add `/packs/[id]` with custom entry creation, packed toggle, and delete controls.
 
 **Non-goals**:
 
@@ -79,7 +50,7 @@ Catalog ownership is already shipped and summarized in [Completed work](complete
 - Extend packing list entries so each row stores exactly one source: `equipmentItemId` for catalog-backed entries or `customName` for user-defined entries.
 - Update entry creation to accept `{ equipmentItemId }` or `{ customName }`, rejecting both-or-neither payloads.
 - Accept only approved catalog items for catalog-backed entries.
-- Show catalog-backed entries on `/packing-lists/[id]` using only fields needed by that page.
+- Show catalog-backed entries on `/packs/[id]` using only fields needed by that page.
 - Add a minimal "Add to packing list" action on `/catalog/[id]` with an existing-list target picker.
 
 **Non-goals**:
@@ -103,7 +74,7 @@ Catalog ownership is already shipped and summarized in [Completed work](complete
 **Scope**:
 
 - Add or adjust shell navigation so packing lists are easy to reach.
-- Decide whether `/` remains a lightweight dashboard with a packing-list call to action or redirects to `/packing-lists`.
+- Decide whether `/` remains a lightweight dashboard with a packing-list call to action or redirects to `/packs`.
 - Update login redirect expectations and dashboard/navigation e2e coverage to match the chosen behavior.
 
 **Non-goals**:
@@ -123,7 +94,7 @@ Catalog ownership is already shipped and summarized in [Completed work](complete
 ## MVP acceptance
 
 - A signed-in user can create, rename, and delete a packing list.
-- A signed-in user can add a custom entry directly on `/packing-lists/[id]`.
+- A signed-in user can add a custom entry directly on `/packs/[id]`.
 - A signed-in user can toggle entries as packed and remove them.
 - A signed-in user can add an approved catalog item to an existing packing list from `/catalog/[id]`.
 - The flow remains useful even when the public catalog is incomplete.
