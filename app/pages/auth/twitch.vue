@@ -116,9 +116,17 @@
     box-shadow: var(--shadow-2);
   }
 
-  .label,
+  .label {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-12);
+    letter-spacing: var(--letter-spacing-label);
+    text-transform: uppercase;
+  }
+
   .copy {
     margin: 0;
+    color: var(--color-text-tertiary);
   }
 
   .progress {
@@ -132,13 +140,6 @@
     border: 1px solid var(--color-border-subtle);
   }
 
-  .label {
-    color: var(--color-text-muted);
-    font-size: var(--font-size-12);
-    letter-spacing: var(--letter-spacing-label);
-    text-transform: uppercase;
-  }
-
   .icon {
     font-size: 32px;
   }
@@ -146,9 +147,5 @@
   .spinner {
     font-size: 1.75rem;
     color: var(--color-accent-base);
-  }
-
-  .copy {
-    color: var(--color-text-tertiary);
   }
 </style>

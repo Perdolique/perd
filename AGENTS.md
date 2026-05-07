@@ -13,6 +13,11 @@
 - Keep reference-data slugs as canonical lowercase URL tokens using only `a-z`, `0-9`, and single hyphens; `name` values stay English display strings.
 - Keep `equipment_items` brand/category foreign keys non-cascading (`restrict`) so reference-data deletion cannot silently remove catalog or inventory records.
 
+## Web Baseline 2025
+
+- The project targets **Baseline 2025** across all web technologies, including CSS, HTML, and JS browser APIs.
+- We do not chase legacy browser support. Always choose modern native features over polyfills, fallbacks, or compatibility workarounds when they simplify the code.
+
 ## Frontend and UX guardrails
 
 - For UI work, `new-design-assets/` is the source of truth for layout, component appearance, color tokens, typography, spacing, and interaction patterns.

@@ -149,18 +149,42 @@
         transform: translateY(1px);
       }
     }
-  }
 
-  .component:disabled,
-  .component:disabled:focus-visible,
-  .component:disabled:hover,
-  .component:disabled:active {
-    cursor: not-allowed;
-    transform: none;
-    color: var(--color-text-muted);
-    background: var(--color-surface-subtle);
-    border-color: transparent;
-    outline-color: transparent;
+    &:disabled {
+      cursor: not-allowed;
+      transform: none;
+      color: var(--color-text-muted);
+      background: var(--color-surface-subtle);
+      border-color: transparent;
+      outline-color: transparent;
+
+      &:focus-visible {
+        cursor: not-allowed;
+        transform: none;
+        color: var(--color-text-muted);
+        background: var(--color-surface-subtle);
+        border-color: transparent;
+        outline-color: transparent;
+      }
+
+      &:hover {
+        cursor: not-allowed;
+        transform: none;
+        color: var(--color-text-muted);
+        background: var(--color-surface-subtle);
+        border-color: transparent;
+        outline-color: transparent;
+      }
+
+      &:active {
+        cursor: not-allowed;
+        transform: none;
+        color: var(--color-text-muted);
+        background: var(--color-surface-subtle);
+        border-color: transparent;
+        outline-color: transparent;
+      }
+    }
   }
 
   .icon {
@@ -169,8 +193,10 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .component:active {
-      transform: none;
+    .component {
+      &:active {
+        transform: none;
+      }
     }
   }
 </style>

@@ -1,9 +1,9 @@
 <template>
-  <span :class="[$style.component, size]" aria-hidden="true">
-    <span :class="$style.initial">
+  <div :class="[$style.component, size]" aria-hidden="true">
+    <div :class="$style.initial">
       {{ initial }}
-    </span>
-  </span>
+    </div>
+  </div>
 </template>
 
 <script lang="ts" setup>
@@ -43,7 +43,6 @@
   }
 
   .initial {
-    display: block;
     line-height: 1;
     transform: translateY(0.02em);
   }

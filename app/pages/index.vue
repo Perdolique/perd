@@ -153,7 +153,12 @@
       background-color var(--transition-duration-base) var(--transition-easing-out),
       transform var(--transition-duration-quick) var(--transition-easing-out);
 
-    &:focus-visible,
+    &:focus-visible {
+      background: var(--color-surface-subtle);
+      border-color: var(--color-border-default);
+      transform: translateY(-1px);
+    }
+
     &:hover {
       background: var(--color-surface-subtle);
       border-color: var(--color-border-default);
@@ -197,10 +202,18 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .quickCard:focus-visible,
-    .quickCard:hover,
-    .quickCard:active {
-      transform: none;
+    .quickCard {
+      &:focus-visible {
+        transform: none;
+      }
+
+      &:hover {
+        transform: none;
+      }
+
+      &:active {
+        transform: none;
+      }
     }
   }
 </style>

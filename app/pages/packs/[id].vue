@@ -36,9 +36,9 @@
               </span>
 
               <div :class="$style.titleBlock">
-                <p :class="$style.label">
+                <div :class="$style.label">
                   Pack
-                </p>
+                </div>
 
                 <h2 :class="$style.title">
                   {{ packingList.name }}
@@ -46,27 +46,27 @@
               </div>
             </div>
 
-            <div :class="$style.metaGrid">
+            <dl :class="$style.metaGrid">
               <div :class="$style.metaItem">
-                <p :class="$style.metaLabel">
+                <dt :class="$style.metaLabel">
                   Items
-                </p>
+                </dt>
 
-                <p :class="$style.metaValue">
+                <dd :class="$style.metaValue">
                   0
-                </p>
+                </dd>
               </div>
 
               <div :class="$style.metaItem">
-                <p :class="$style.metaLabel">
+                <dt :class="$style.metaLabel">
                   Updated
-                </p>
+                </dt>
 
-                <p :class="$style.metaValue">
+                <dd :class="$style.metaValue">
                   <time :datetime="packingList.updatedAt">{{ formattedUpdatedAt }}</time>
-                </p>
+                </dd>
               </div>
-            </div>
+            </dl>
           </div>
         </PerdCard>
 
@@ -101,8 +101,8 @@
       :header-text="deleteDialogHeaderText"
       confirm-button-text="Delete pack"
       confirm-variant="danger"
-      :confirm-loading="isDeleteInFlight"
-      :confirm-disabled="isDeleteInFlight"
+      :confirm-loading="isDeleting"
+      :confirm-disabled="isDeleting"
       :close-on-confirm="false"
       @confirm="handleDeletePack"
     >
@@ -175,7 +175,6 @@
   })
 
   const hasError = computed(() => packingListError.value !== undefined && packingListError.value !== null)
-  const isDeleteInFlight = computed(() => isDeleting.value)
   const isInitialLoading = computed(() => packingListStatus.value === 'pending')
   const pageTitle = computed(() => hasError.value ? 'Pack' : packingList.value.name)
   const deleteDialogHeaderText = computed(() => `Delete "${packingList.value.name}"?`)
@@ -237,16 +236,25 @@
 </script>
 
 <style module>
-  .component,
-  .content,
-  .dangerContent,
-  .confirmationBody {
+  .component {
     display: grid;
+    gap: var(--spacing-24);
   }
 
-  .component,
   .content {
+    display: grid;
     gap: var(--spacing-24);
+  }
+
+  .dangerContent {
+    display: grid;
+    gap: var(--spacing-16);
+    justify-items: start;
+  }
+
+  .confirmationBody {
+    display: grid;
+    gap: var(--spacing-12);
   }
 
   .overviewCard {
@@ -289,25 +297,8 @@
     min-inline-size: 0;
   }
 
-  .label,
-  .title,
-  .metaLabel,
-  .metaValue,
-  .dangerCopy,
-  .confirmationCopy,
-  .errorMessage {
-    margin: 0;
-  }
-
-  .label,
-  .metaLabel {
-    color: var(--color-text-muted);
-    font-size: var(--font-size-12);
-    letter-spacing: var(--letter-spacing-label);
-    text-transform: uppercase;
-  }
-
   .title {
+    margin: 0;
     color: var(--color-text-primary);
     font-size: var(--font-size-20);
     line-height: var(--line-height-snug);
@@ -315,10 +306,50 @@
     overflow-wrap: anywhere;
   }
 
+  .metaValue {
+    margin: 0;
+    margin-block-start: var(--spacing-4);
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-medium);
+    overflow-wrap: anywhere;
+  }
+
+  .dangerCopy {
+    margin: 0;
+    color: var(--color-text-tertiary);
+    line-height: var(--line-height-body);
+  }
+
+  .confirmationCopy {
+    margin: 0;
+    color: var(--color-text-tertiary);
+    line-height: var(--line-height-body);
+  }
+
+  .errorMessage {
+    margin: 0;
+    color: var(--color-danger);
+  }
+
+  .label {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-12);
+    letter-spacing: var(--letter-spacing-label);
+    text-transform: uppercase;
+  }
+
+  .metaLabel {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-12);
+    letter-spacing: var(--letter-spacing-label);
+    text-transform: uppercase;
+  }
+
   .metaGrid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, auto));
     gap: var(--spacing-16);
+    margin: 0;
 
     @container (inline-size >= 40rem) {
       justify-content: end;
@@ -330,13 +361,6 @@
     min-inline-size: 0;
   }
 
-  .metaValue {
-    margin-block-start: var(--spacing-4);
-    color: var(--color-text-primary);
-    font-weight: var(--font-weight-medium);
-    overflow-wrap: anywhere;
-  }
-
   .dangerCard {
     background:
       linear-gradient(
@@ -344,24 +368,5 @@
         color-mix(in oklch, var(--color-danger), transparent 94%),
         var(--color-surface-base)
       );
-  }
-
-  .dangerContent {
-    gap: var(--spacing-16);
-    justify-items: start;
-  }
-
-  .dangerCopy,
-  .confirmationCopy {
-    color: var(--color-text-tertiary);
-    line-height: var(--line-height-body);
-  }
-
-  .confirmationBody {
-    gap: var(--spacing-12);
-  }
-
-  .errorMessage {
-    color: var(--color-danger);
   }
 </style>

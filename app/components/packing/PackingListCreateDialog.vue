@@ -1,15 +1,15 @@
 <template>
   <ModalDialog
     v-model="isOpened"
-    :close-disabled="isCloseDisabled"
+    :close-disabled="loading"
     aria-labelledby="new-pack-dialog-title"
   >
     <form :class="$style.component" @submit.prevent="handleSubmit">
       <div :class="$style.header">
         <div :class="$style.headingBlock">
-          <p :class="$style.kicker">
+          <div :class="$style.kicker">
             New pack
-          </p>
+          </div>
 
           <PerdHeading
             id="new-pack-dialog-title"
@@ -23,7 +23,7 @@
         <button
           type="button"
           :class="$style.closeButton"
-          :disabled="isCloseButtonDisabled"
+          :disabled="loading"
           aria-label="Close new pack dialog"
           @click="close"
         >
@@ -112,8 +112,6 @@
   const nameInput = useTemplateRef<HTMLInputElement>('nameInput')
 
   const errorMessageId = computed(() => errorMessage === null ? undefined : 'new-pack-create-error')
-  const isCloseButtonDisabled = computed(() => loading)
-  const isCloseDisabled = computed(() => loading)
   const isCreateDisabled = computed(() => packName.value.trim() === '' || loading)
   const isErrorVisible = computed(() => errorMessage !== null)
 
@@ -169,11 +167,6 @@
     min-inline-size: 0;
   }
 
-  .kicker,
-  .errorMessage {
-    margin: 0;
-  }
-
   .kicker {
     color: var(--color-text-muted);
     font-size: var(--font-size-12);
@@ -218,12 +211,18 @@
       outline-color: var(--color-accent-ring);
     }
 
-    &:disabled,
-    &:disabled:hover {
+    &:disabled {
       border-color: transparent;
       background: var(--color-surface-subtle);
       color: var(--color-text-muted);
       cursor: not-allowed;
+
+      &:hover {
+        border-color: transparent;
+        background: var(--color-surface-subtle);
+        color: var(--color-text-muted);
+        cursor: not-allowed;
+      }
     }
   }
 
@@ -285,6 +284,7 @@
   }
 
   .errorMessage {
+    margin: 0;
     color: var(--color-danger);
     overflow-wrap: anywhere;
   }

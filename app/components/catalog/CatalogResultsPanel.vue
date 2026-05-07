@@ -67,11 +67,9 @@
   .listShell {
     position: relative;
     border-radius: var(--border-radius-24);
-  }
-
-  .list {
-    display: grid;
-    gap: var(--spacing-12);
+    overflow: hidden;
+    border: 1px solid var(--color-border-subtle);
+    background-color: var(--color-surface-base);
   }
 
   .loadingOverlay {

@@ -3,7 +3,7 @@
     <template v-if="showHeaderCreateAction" #actions>
       <PerdButton
         icon="tabler:plus"
-        :disabled="isNewPackButtonDisabled"
+        :disabled="creatingList"
         aria-haspopup="dialog"
         @click="openCreateDialog"
       >
@@ -34,7 +34,7 @@
         <template #actions>
           <PerdButton
             icon="tabler:plus"
-            :disabled="isCreateInFlight"
+            :disabled="creatingList"
             aria-haspopup="dialog"
             @click="openCreateDialog"
           >
@@ -55,7 +55,7 @@
     <PackingListCreateDialog
       v-model="isCreateDialogVisible"
       v-model:name="newListName"
-      :loading="isCreateInFlight"
+      :loading="creatingList"
       :error-message="createErrorMessage"
       @create="handleCreate"
     />
@@ -95,11 +95,9 @@
   })
 
   const hasError = computed(() => packingListError.value !== undefined && packingListError.value !== null)
-  const isCreateInFlight = computed(() => creatingList.value)
   const isCreateDisabled = computed(() => newListName.value.trim() === '' || creatingList.value)
   const isEmpty = computed(() => packingLists.value.length === 0)
   const isInitialLoading = computed(() => packingListStatus.value === 'pending')
-  const isNewPackButtonDisabled = computed(() => creatingList.value)
   const showHeaderCreateAction = computed(() => isEmpty.value === false)
 
   function formatUpdatedAt(updatedAt: string) {
@@ -108,7 +106,10 @@
 
   function createPackingListView(row: PackingListSummary): PackingListView {
     return {
-      ...row,
+      createdAt: row.createdAt,
+      id: row.id,
+      name: row.name,
+      updatedAt: row.updatedAt,
       formattedUpdatedAt: formatUpdatedAt(row.updatedAt)
     }
   }

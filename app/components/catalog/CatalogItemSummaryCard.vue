@@ -89,12 +89,8 @@
     align-items: center;
   }
 
-  .eyebrow,
-  .text {
-    margin: 0;
-  }
-
   .eyebrow {
+    margin: 0;
     color: var(--color-text-muted);
     font-size: var(--font-size-12);
     text-transform: uppercase;
@@ -102,6 +98,7 @@
   }
 
   .text {
+    margin: 0;
     color: var(--color-text-tertiary);
   }
 
@@ -124,7 +121,6 @@
   }
 
   .metadataLabel {
-    margin: 0;
     color: var(--color-text-muted);
     font-size: var(--font-size-12);
     text-transform: uppercase;

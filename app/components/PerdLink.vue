@@ -17,7 +17,11 @@
     cursor: pointer;
     font-weight: var(--font-weight-medium);
 
-    &:hover,
+    &:hover {
+      text-decoration: underline;
+      color: var(--color-accent-hover);
+    }
+
     &:focus-visible {
       text-decoration: underline;
       color: var(--color-accent-hover);

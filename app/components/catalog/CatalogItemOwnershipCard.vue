@@ -118,15 +118,19 @@
     font-size: 1rem;
   }
 
-  .text,
-  .inlineMessage,
-  .errorMessage {
+  .text {
     margin: 0;
+    color: var(--color-text-tertiary);
   }
 
-  .text,
   .inlineMessage {
+    margin: 0;
     color: var(--color-text-tertiary);
+  }
+
+  .errorMessage {
+    margin: 0;
+    color: var(--color-danger);
   }
 
   .actions {
@@ -134,9 +138,5 @@
     flex-wrap: wrap;
     gap: var(--spacing-12);
     align-items: center;
-  }
-
-  .errorMessage {
-    color: var(--color-danger);
   }
 </style>

@@ -33,13 +33,8 @@
     align-items: end;
   }
 
-  .label,
-  .count,
-  .copy {
-    margin: 0;
-  }
-
   .label {
+    margin: 0;
     margin-bottom: var(--spacing-8);
     color: var(--color-text-muted);
     font-size: var(--font-size-12);
@@ -48,6 +43,7 @@
   }
 
   .count {
+    margin: 0;
     color: var(--color-text-primary);
     font-size: var(--font-size-24);
     line-height: var(--line-height-snug);
@@ -55,6 +51,7 @@
   }
 
   .copy {
+    margin: 0;
     max-inline-size: 24rem;
     color: var(--color-text-tertiary);
     text-align: right;

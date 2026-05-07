@@ -44,7 +44,11 @@
       border-color var(--transition-duration-base) var(--transition-easing-out),
       box-shadow var(--transition-duration-base) var(--transition-easing-out);
 
-    &:focus-visible,
+    &:focus-visible {
+      background: var(--color-surface-base);
+      border-color: var(--color-border-subtle);
+    }
+
     &:hover {
       background: var(--color-surface-base);
       border-color: var(--color-border-subtle);
@@ -65,19 +69,18 @@
     gap: 0.15rem;
   }
 
-  .name,
-  .role {
+  .name {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  .name {
     font-size: var(--font-size-14);
     color: var(--color-text-primary);
   }
 
   .role {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: var(--font-size-12);
     color: var(--color-text-muted);
   }

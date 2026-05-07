@@ -7,9 +7,9 @@
         </span>
 
         <div :class="$style.titleBlock">
-          <p :class="$style.label">
+          <div :class="$style.label">
             Pack
-          </p>
+          </div>
 
           <h2 :class="$style.title">
             {{ packingList.name }}
@@ -17,27 +17,27 @@
         </div>
       </div>
 
-      <div :class="$style.metaGrid">
+      <dl :class="$style.metaGrid">
         <div :class="$style.metaItem">
-          <p :class="$style.metaLabel">
+          <dt :class="$style.metaLabel">
             Items
-          </p>
+          </dt>
 
-          <p :class="$style.metaValue">
+          <dd :class="$style.metaValue">
             0
-          </p>
+          </dd>
         </div>
 
         <div :class="$style.metaItem">
-          <p :class="$style.metaLabel">
+          <dt :class="$style.metaLabel">
             Updated
-          </p>
+          </dt>
 
-          <p :class="$style.metaValue">
+          <dd :class="$style.metaValue">
             <time :datetime="packingList.updatedAt">{{ packingList.formattedUpdatedAt }}</time>
-          </p>
+          </dd>
         </div>
-      </div>
+      </dl>
     </div>
   </NuxtLink>
 </template>
@@ -75,12 +75,20 @@
       border-color: var(--color-border-default);
       box-shadow: var(--shadow-2);
       transform: translateY(-1px);
+
+      & .title {
+        color: var(--color-accent-base);
+      }
     }
 
     &:focus-visible {
       border-color: var(--color-border-default);
       box-shadow: var(--shadow-2);
       outline-color: var(--color-accent-ring);
+
+      & .title {
+        color: var(--color-accent-base);
+      }
     }
 
     &:active {
@@ -124,22 +132,8 @@
     min-inline-size: 0;
   }
 
-  .label,
-  .title,
-  .metaLabel,
-  .metaValue {
-    margin: 0;
-  }
-
-  .label,
-  .metaLabel {
-    color: var(--color-text-muted);
-    font-size: var(--font-size-12);
-    letter-spacing: var(--letter-spacing-label);
-    text-transform: uppercase;
-  }
-
   .title {
+    margin: 0;
     color: var(--color-text-primary);
     font-size: var(--font-size-20);
     line-height: var(--line-height-snug);
@@ -147,15 +141,33 @@
     overflow-wrap: anywhere;
   }
 
-  .component:hover .title,
-  .component:focus-visible .title {
-    color: var(--color-accent-base);
+  .metaValue {
+    margin: 0;
+    margin-block-start: var(--spacing-4);
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-medium);
+    overflow-wrap: anywhere;
+  }
+
+  .label {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-12);
+    letter-spacing: var(--letter-spacing-label);
+    text-transform: uppercase;
+  }
+
+  .metaLabel {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-12);
+    letter-spacing: var(--letter-spacing-label);
+    text-transform: uppercase;
   }
 
   .metaGrid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, auto));
     gap: var(--spacing-16);
+    margin: 0;
 
     @container (inline-size >= 40rem) {
       justify-content: end;
@@ -167,18 +179,17 @@
     min-inline-size: 0;
   }
 
-  .metaValue {
-    margin-block-start: var(--spacing-4);
-    color: var(--color-text-primary);
-    font-weight: var(--font-weight-medium);
-    overflow-wrap: anywhere;
-  }
-
   @media (prefers-reduced-motion: reduce) {
-    .component,
-    .component:hover,
-    .component:active {
+    .component {
       transform: none;
+
+      &:hover {
+        transform: none;
+      }
+
+      &:active {
+        transform: none;
+      }
     }
   }
 </style>

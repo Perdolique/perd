@@ -1,5 +1,5 @@
 <template>
-  <ModalDialog v-model="isOpened" :close-disabled="isCloseDisabled">
+  <ModalDialog v-model="isOpened" :close-disabled="confirmLoading">
     <div :class="$style.content">
       <PerdHeading
         :class="$style.header"
@@ -16,7 +16,7 @@
         <PerdButton
           variant="secondary"
           :class="$style.cancelButton"
-          :disabled="isCancelDisabled"
+          :disabled="confirmLoading"
           @click="close"
         >
           {{ cancelButtonText }}
@@ -37,7 +37,6 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed } from 'vue'
   import PerdButton from '~/components/PerdButton.vue'
   import PerdHeading from '~/components/PerdHeading.vue'
   import ModalDialog from './ModalDialog.vue'
@@ -67,8 +66,6 @@
   } = defineProps<Props>()
 
   const emit = defineEmits<Emits>()
-  const isCancelDisabled = computed(() => confirmLoading)
-  const isCloseDisabled = computed(() => confirmLoading)
 
   function close() {
     if (confirmLoading) {
@@ -116,7 +113,13 @@
     gap: var(--spacing-16);
   }
 
-  .confirmButton,
+  .confirmButton {
+    max-inline-size: 12.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .cancelButton {
     max-inline-size: 12.5rem;
     white-space: nowrap;

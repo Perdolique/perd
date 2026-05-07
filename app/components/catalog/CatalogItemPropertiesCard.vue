@@ -74,7 +74,6 @@
   }
 
   .label {
-    margin: 0;
     color: var(--color-text-muted);
     font-size: var(--font-size-12);
     text-transform: uppercase;

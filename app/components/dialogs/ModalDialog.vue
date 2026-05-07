@@ -76,33 +76,42 @@
         translate: 0 0.75rem;
       }
     }
-  }
 
-  .dialog::backdrop {
-    background-color: transparent;
-    backdrop-filter: blur(0);
-    transition:
-      background-color var(--transition-duration-base) var(--transition-easing-out),
-      backdrop-filter var(--transition-duration-base) var(--transition-easing-out),
-      display var(--transition-duration-base) var(--transition-easing-out) allow-discrete;
-  }
+    &::backdrop {
+      background-color: transparent;
+      backdrop-filter: blur(0);
+      transition:
+        background-color var(--transition-duration-base) var(--transition-easing-out),
+        backdrop-filter var(--transition-duration-base) var(--transition-easing-out),
+        display var(--transition-duration-base) var(--transition-easing-out) allow-discrete;
+    }
 
-  .dialog[open]::backdrop {
-    background-color: var(--color-overlay-background);
-    backdrop-filter: blur(10px);
+    &[open] {
+      &::backdrop {
+        background-color: var(--color-overlay-background);
+        backdrop-filter: blur(10px);
+      }
+    }
   }
 
   @starting-style {
-    .dialog[open]::backdrop {
-      background-color: transparent;
-      backdrop-filter: blur(0);
+    .dialog {
+      &[open] {
+        &::backdrop {
+          background-color: transparent;
+          backdrop-filter: blur(0);
+        }
+      }
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .dialog,
-    .dialog[open] {
+    .dialog {
       translate: 0;
+
+      &[open] {
+        translate: 0;
+      }
     }
   }
 </style>

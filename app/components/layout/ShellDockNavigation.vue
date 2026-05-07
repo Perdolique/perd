@@ -98,12 +98,12 @@
 
     &:global(.active) {
       color: var(--color-text-primary);
-    }
 
-    &:global(.active) .dockIcon {
-      background: var(--color-accent-base);
-      color: var(--color-accent-contrast);
-      border-color: transparent;
+      & .dockIcon {
+        background: var(--color-accent-base);
+        color: var(--color-accent-contrast);
+        border-color: transparent;
+      }
     }
   }
 
