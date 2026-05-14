@@ -10,6 +10,7 @@ const limits = {
   maxEquipmentCategorySlugLength: 128,
   maxEquipmentGroupNameLength: 64,
   maxEquipmentGroupSlugLength: 128,
+  maxPackingListNameLength: 128,
   maxPaginatedListLimit: 100,
   maxOAuthProviderNameLength: 32,
   maxOAuthProviderTypeLength: 32,

@@ -162,8 +162,8 @@ function createCreateDb({
 
         userEquipment: {
           findFirst: vi.fn()
-            .mockImplementationOnce(() => duplicateRow)
-            .mockImplementationOnce(() => inventoryRow)
+            .mockReturnValueOnce(duplicateRow)
+            .mockReturnValueOnce(inventoryRow)
         }
       }
     }
@@ -211,7 +211,7 @@ describe('user equipment handlers', () => {
     vi.restoreAllMocks()
   })
 
-  describe('GET /api/user/equipment', () => {
+  describe('get /api/user/equipment', () => {
     test('should return complete current user inventory rows', async () => {
       const dbHttp = createListDb([{
         createdAt: '2026-04-03T09:00:00.000Z',
@@ -412,7 +412,7 @@ describe('user equipment handlers', () => {
     })
   })
 
-  describe('POST /api/user/equipment', () => {
+  describe('post /api/user/equipment', () => {
     test('should create an inventory row for an approved item', async () => {
       const createdInventoryRow = {
         createdAt: '2026-04-03T09:00:00.000Z',
@@ -533,7 +533,7 @@ describe('user equipment handlers', () => {
     })
   })
 
-  describe('DELETE /api/user/equipment/[id]', () => {
+  describe('delete /api/user/equipment/[id]', () => {
     test('should delete an inventory row owned by the current user', async () => {
       const { dbHttp, deleteWhereMock } = createDeleteDb({
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'

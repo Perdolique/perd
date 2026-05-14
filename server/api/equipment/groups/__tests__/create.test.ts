@@ -97,15 +97,11 @@ function createDb({
   const insertMock = vi.fn()
 
   insertMock
-    .mockImplementationOnce(() => {
-      return {
-        values: insertGroupValuesMock
-      }
+    .mockReturnValueOnce({
+      values: insertGroupValuesMock
     })
-    .mockImplementationOnce(() => {
-      return {
-        values: insertContributionValuesMock
-      }
+    .mockReturnValueOnce({
+      values: insertContributionValuesMock
     })
 
   const transaction: MockCreateTransaction = {
@@ -134,7 +130,7 @@ function createDb({
   }
 }
 
-describe('POST /api/equipment/groups', () => {
+describe('post /api/equipment/groups', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 

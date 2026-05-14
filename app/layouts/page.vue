@@ -72,6 +72,10 @@
       return 'Gear'
     }
 
+    if (isRouteActive('/packs')) {
+      return 'Packs'
+    }
+
     if (isRouteActive('/account')) {
       return 'Account'
     }
@@ -138,7 +142,10 @@
     padding: var(--spacing-8) var(--spacing-12);
     border-radius: var(--border-radius-16);
 
-    &:focus-visible,
+    &:focus-visible {
+      background: color-mix(in oklch, var(--color-surface-base), transparent 30%);
+    }
+
     &:hover {
       background: color-mix(in oklch, var(--color-surface-base), transparent 30%);
     }
@@ -190,7 +197,12 @@
       color var(--transition-duration-base) var(--transition-easing-out),
       transform var(--transition-duration-quick) var(--transition-easing-out);
 
-    &:focus-visible,
+    &:focus-visible {
+      background: var(--color-surface-base);
+      border-color: var(--color-border-subtle);
+      color: var(--color-text-primary);
+    }
+
     &:hover {
       background: var(--color-surface-base);
       border-color: var(--color-border-subtle);

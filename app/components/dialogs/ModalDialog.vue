@@ -2,6 +2,7 @@
   <dialog
     ref="dialogRef"
     :class="$style.dialog"
+    @cancel="handleCancel"
   >
     <slot />
   </dialog>
@@ -11,6 +12,11 @@
   import { useTemplateRef, watchEffect } from 'vue'
   import { useEventListener } from '@vueuse/core'
 
+  interface Props {
+    closeDisabled?: boolean;
+  }
+
+  const { closeDisabled = false } = defineProps<Props>()
   const dialogRef = useTemplateRef('dialogRef')
 
   const isOpened = defineModel<boolean>({
@@ -31,10 +37,20 @@
 
   // Close the dialog when clicking outside of it
   useEventListener(dialogRef, 'click', ({ target }: MouseEvent) => {
+    if (closeDisabled) {
+      return
+    }
+
     if (target === dialogRef.value) {
       dialogRef.value?.close()
     }
   })
+
+  function handleCancel(event: Event) {
+    if (closeDisabled) {
+      event.preventDefault()
+    }
+  }
 </script>
 
 <style module>
@@ -60,33 +76,42 @@
         translate: 0 0.75rem;
       }
     }
-  }
 
-  .dialog::backdrop {
-    background-color: transparent;
-    backdrop-filter: blur(0);
-    transition:
-      background-color var(--transition-duration-base) var(--transition-easing-out),
-      backdrop-filter var(--transition-duration-base) var(--transition-easing-out),
-      display var(--transition-duration-base) var(--transition-easing-out) allow-discrete;
-  }
+    &::backdrop {
+      background-color: transparent;
+      backdrop-filter: blur(0);
+      transition:
+        background-color var(--transition-duration-base) var(--transition-easing-out),
+        backdrop-filter var(--transition-duration-base) var(--transition-easing-out),
+        display var(--transition-duration-base) var(--transition-easing-out) allow-discrete;
+    }
 
-  .dialog[open]::backdrop {
-    background-color: var(--color-overlay-background);
-    backdrop-filter: blur(10px);
+    &[open] {
+      &::backdrop {
+        background-color: var(--color-overlay-background);
+        backdrop-filter: blur(10px);
+      }
+    }
   }
 
   @starting-style {
-    .dialog[open]::backdrop {
-      background-color: transparent;
-      backdrop-filter: blur(0);
+    .dialog {
+      &[open] {
+        &::backdrop {
+          background-color: transparent;
+          backdrop-filter: blur(0);
+        }
+      }
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .dialog,
-    .dialog[open] {
+    .dialog {
       translate: 0;
+
+      &[open] {
+        translate: 0;
+      }
     }
   }
 </style>

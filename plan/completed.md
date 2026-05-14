@@ -30,6 +30,10 @@ Application shell, login, account, and OAuth callback pages are implemented. The
 
 Catalog item detail now ships at `/catalog/[id]` on top of the existing item detail read endpoint instead of introducing a new ownership-status contract. Signed-in users can add approved catalog items to personal inventory from the detail page, remove them again from either the detail page or `/inventory`, and manage that inventory through the first user-owned CRUD API under `/api/user/equipment`. Ownership is resolved by reusing the inventory list rather than a dedicated per-item status endpoint, the catalog browse table stays read-only apart from item links, and the app shell now includes minimal navigation to `/inventory`.
 
+## Packing list shell
+
+Packing list shell shipped with user-owned list create, read, rename, and delete on `/packs`.
+
 ## Twitch OAuth
 
 Redirect to Twitch, token exchange, user info fetch, new user creation with an OAuth account record, login via existing Twitch account, and redirect restoration through OAuth `state` are implemented.

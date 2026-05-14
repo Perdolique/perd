@@ -148,14 +148,10 @@
     }
   }
 
-  .hero,
-  .card {
+  .hero {
     border-radius: var(--border-radius-24);
     border: 1px solid var(--color-border-subtle);
     overflow: hidden;
-  }
-
-  .hero {
     display: grid;
     align-content: end;
     gap: var(--spacing-16);
@@ -168,17 +164,31 @@
     box-shadow: var(--shadow-2);
   }
 
-  .brand,
+  .card {
+    border-radius: var(--border-radius-24);
+    border: 1px solid var(--color-border-subtle);
+    overflow: hidden;
+    display: grid;
+    padding: var(--spacing-24) var(--spacing-16);
+    gap: var(--spacing-16);
+    background: var(--color-surface-base);
+  }
+
+  .brand {
+    margin: 0;
+    font-size: var(--font-size-12);
+    letter-spacing: var(--letter-spacing-label);
+    text-transform: uppercase;
+    color: color-mix(in oklch, white, transparent 14%);
+    font-weight: var(--font-weight-bold);
+  }
+
   .cardLabel {
     margin: 0;
     font-size: var(--font-size-12);
     letter-spacing: var(--letter-spacing-label);
     text-transform: uppercase;
-  }
-
-  .brand {
-    color: color-mix(in oklch, white, transparent 14%);
-    font-weight: var(--font-weight-bold);
+    color: var(--color-text-muted);
   }
 
   .brandPunctuation {
@@ -194,17 +204,6 @@
     margin: 0;
     max-inline-size: 26rem;
     color: color-mix(in oklch, white, transparent 18%);
-  }
-
-  .card {
-    display: grid;
-    padding: var(--spacing-24) var(--spacing-16);
-    gap: var(--spacing-16);
-    background: var(--color-surface-base);
-  }
-
-  .cardLabel {
-    color: var(--color-text-muted);
   }
 
   .cardCopy {

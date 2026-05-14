@@ -109,7 +109,12 @@
       border-color var(--transition-duration-base) var(--transition-easing-out),
       color var(--transition-duration-base) var(--transition-easing-out);
 
-    &:focus-visible,
+    &:focus-visible {
+      background: var(--color-surface-base);
+      border-color: var(--color-border-subtle);
+      color: var(--color-text-primary);
+    }
+
     &:hover {
       background: var(--color-surface-base);
       border-color: var(--color-border-subtle);

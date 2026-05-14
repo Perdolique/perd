@@ -1,8 +1,8 @@
 <template>
   <nav :class="$style.navigationGroup" aria-label="Workspace navigation">
-    <p :class="$style.navigationTitle">
+    <div :class="$style.navigationTitle">
       Workspace
-    </p>
+    </div>
 
     <NuxtLink
       to="/"
@@ -30,6 +30,15 @@
       <Icon name="tabler:backpack" :class="$style.navigationIcon" />
       <span>Gear</span>
     </NuxtLink>
+
+    <NuxtLink
+      to="/packs"
+      active-class="active"
+      :class="$style.navigationItem"
+    >
+      <Icon name="tabler:route" :class="$style.navigationIcon" />
+      <span>Packs</span>
+    </NuxtLink>
   </nav>
 </template>
 
@@ -40,7 +49,6 @@
   }
 
   .navigationTitle {
-    margin: 0;
     padding: var(--spacing-12) var(--spacing-12) var(--spacing-4);
     font-size: var(--font-size-12);
     font-weight: var(--font-weight-medium);
@@ -68,7 +76,12 @@
       color var(--transition-duration-base) var(--transition-easing-out),
       transform var(--transition-duration-quick) var(--transition-easing-out);
 
-    &:focus-visible,
+    &:focus-visible {
+      background: var(--color-surface-base);
+      border-color: var(--color-border-subtle);
+      color: var(--color-text-primary);
+    }
+
     &:hover {
       background: var(--color-surface-base);
       border-color: var(--color-border-subtle);
