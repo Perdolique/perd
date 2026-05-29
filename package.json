@@ -37,7 +37,7 @@
     "@nuxt/hints": "1.1.2",
     "delay": "7.0.0",
     "nuxt": "4.4.6",
-    "vue": "3.5.34"
+    "vue": "3.5.35"
   },
   "devDependencies": {
     "@iconify-json/streamline-emojis": "1.2.4",
@@ -53,24 +53,24 @@
     "drizzle-kit": "1.0.0-beta.23",
     "drizzle-orm": "1.0.0-beta.23",
     "drizzle-seed": "1.0.0-beta.23",
-    "eslint-config-greenpie": "16.0.0",
+    "eslint-config-greenpie": "16.1.0",
     "husky": "9.1.7",
     "markdownlint": "0.40.0",
     "markdownlint-cli": "0.48.0",
-    "oxlint": "1.66.0",
+    "oxlint": "1.67.0",
     "oxlint-tsgolint": "0.23.0",
-    "taze": "19.13.0",
+    "taze": "19.14.1",
     "tsx": "4.22.3",
     "typescript": "6.0.3",
     "ufo": "1.6.4",
-    "valibot": "1.4.0",
+    "valibot": "1.4.1",
     "vite": "8.0.14",
     "vitest": "4.1.7",
-    "vue-tsc": "3.3.1",
-    "wrangler": "4.94.0",
+    "vue-tsc": "3.3.2",
+    "wrangler": "4.95.0",
     "ws": "8.21.0"
   },
-  "packageManager": "pnpm@11.3.0",
+  "packageManager": "pnpm@11.4.0",
   "overrides": {
     "@nuxt/devtools": "$@nuxt/devtools"
   }
