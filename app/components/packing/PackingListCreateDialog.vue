@@ -150,8 +150,8 @@
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--border-radius-24);
     background:
-      linear-gradient(180deg, var(--color-surface-base), var(--color-surface-subtle));
-    box-shadow: var(--shadow-3);
+      linear-gradient(180deg, var(--color-surface-primary), var(--color-surface-secondary));
+    box-shadow: var(--shadow-large);
   }
 
   .header {
@@ -188,38 +188,37 @@
     padding: 0;
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--border-radius-12);
-    background: var(--color-surface-base);
+    background: var(--color-surface-primary);
     color: var(--color-text-muted);
     cursor: pointer;
     font-size: 1rem;
-    outline: 2px solid transparent;
-    outline-offset: 3px;
     transition:
-      background-color var(--transition-duration-quick) var(--transition-easing-out),
-      border-color var(--transition-duration-quick) var(--transition-easing-out),
-      color var(--transition-duration-quick) var(--transition-easing-out);
+      background-color var(--transition-duration-fast) var(--transition-easing-standard),
+      border-color var(--transition-duration-fast) var(--transition-easing-standard),
+      box-shadow var(--transition-duration-fast) var(--transition-easing-standard),
+      color var(--transition-duration-fast) var(--transition-easing-standard);
 
     &:hover {
-      border-color: var(--color-border-default);
-      background: var(--color-surface-subtle);
+      border-color: var(--color-border-strong);
+      background: var(--color-surface-secondary);
       color: var(--color-text-primary);
     }
 
     &:focus-visible {
-      border-color: var(--color-border-default);
+      border-color: var(--color-border-strong);
       color: var(--color-text-primary);
-      outline-color: var(--color-accent-ring);
+      box-shadow: var(--shadow-focus);
     }
 
     &:disabled {
       border-color: transparent;
-      background: var(--color-surface-subtle);
+      background: var(--color-surface-secondary);
       color: var(--color-text-muted);
       cursor: not-allowed;
 
       &:hover {
         border-color: transparent;
-        background: var(--color-surface-subtle);
+        background: var(--color-surface-secondary);
         color: var(--color-text-muted);
         cursor: not-allowed;
       }
@@ -243,17 +242,17 @@
     gap: var(--spacing-8);
     min-block-size: 2.75rem;
     padding-inline: var(--spacing-12);
-    border: 1px solid var(--color-border-default);
+    border: 1px solid var(--color-border-strong);
     border-radius: var(--border-radius-12);
-    background: var(--color-background-raised);
+    background: var(--color-background-elevated);
     color: var(--color-text-primary);
     transition:
-      border-color var(--transition-duration-quick) var(--transition-easing-out),
-      box-shadow var(--transition-duration-quick) var(--transition-easing-out);
+      border-color var(--transition-duration-fast) var(--transition-easing-standard),
+      box-shadow var(--transition-duration-fast) var(--transition-easing-standard);
 
     &:focus-within {
-      border-color: var(--color-accent-base);
-      box-shadow: 0 0 0 3px var(--color-accent-ring);
+      border-color: var(--color-accent-primary);
+      box-shadow: 0 0 0 3px var(--color-focus-ring);
     }
   }
 
@@ -285,7 +284,7 @@
 
   .errorMessage {
     margin: 0;
-    color: var(--color-danger);
+    color: var(--color-danger-primary);
     overflow-wrap: anywhere;
   }
 

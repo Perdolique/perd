@@ -1,7 +1,7 @@
 // oxlint-disable max-lines
 // oxlint-disable import/no-relative-parent-imports
 import { sql } from 'drizzle-orm'
-import { integer, serial, timestamp, boolean, varchar, unique, uuid, numeric, jsonb, pgTable, text } from 'drizzle-orm/pg-core'
+import { integer, serial, timestamp, boolean, varchar, unique, uuid, numeric, jsonb, pgTable, text, check } from 'drizzle-orm/pg-core'
 // FIXME: drizzle-kit can't handle #shared/constants, so we have to import it with a relative path
 import { limits } from '../../shared/constants'
 
@@ -405,8 +405,6 @@ const userEquipment = pgTable('user_equipment', {
 
 /**
  * User-owned packing list shell.
- *
- * Entries are intentionally added in a later MVP iteration.
  */
 const packingLists = pgTable('packing_lists', {
   id:
@@ -442,6 +440,63 @@ const packingLists = pgTable('packing_lists', {
     .defaultNow()
     .$onUpdate(() => sql`now()`)
 })
+
+/**
+ * Checklist entries scoped to one user-owned packing list.
+ *
+ * An entry is either a custom text row or a link to one owned inventory row.
+ */
+const packingListEntries = pgTable('packing_list_entries', {
+  id:
+    uuid()
+    .notNull()
+    .default(sql`uuidv7()`)
+    .primaryKey(),
+
+  packingListId:
+    uuid()
+    .notNull()
+    .references(() => packingLists.id, {
+      onDelete: 'cascade',
+      onUpdate: 'cascade'
+    }),
+
+  customName:
+    varchar({ length: limits.maxPackingListEntryCustomNameLength }),
+
+  userEquipmentId:
+    uuid()
+    .references(() => userEquipment.id, {
+      onDelete: 'restrict',
+      onUpdate: 'cascade'
+    }),
+
+  isPacked:
+    boolean()
+    .notNull()
+    .default(false),
+
+  createdAt:
+    timestamp({
+      withTimezone: true
+    })
+    .notNull()
+    .defaultNow(),
+
+  updatedAt:
+    timestamp({
+      withTimezone: true
+    })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => sql`now()`)
+}, (table) => [
+  check(
+    'packing_list_entries_source_check',
+    sql`(("packing_list_entries"."customName" IS NOT NULL) <> ("packing_list_entries"."userEquipmentId" IS NOT NULL))`
+  ),
+  unique().on(table.packingListId, table.userEquipmentId)
+])
 
 /**
  * Activity log for tracking user contributions.
@@ -496,5 +551,6 @@ export {
   itemPropertyValues,
   userEquipment,
   packingLists,
+  packingListEntries,
   contributions
 }

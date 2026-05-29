@@ -5,6 +5,19 @@ import { validateSessionUser } from '#server/utils/session'
 
 interface PackingListSummary {
   createdAt: Date | string;
+  entryCount: number;
+  id: string;
+  name: string;
+  updatedAt: Date | string;
+}
+
+interface PackingListEntryCountRow {
+  id: string;
+}
+
+interface PackingListQueryRow {
+  createdAt: Date | string;
+  entries: PackingListEntryCountRow[];
   id: string;
   name: string;
   updatedAt: Date | string;
@@ -13,7 +26,7 @@ interface PackingListSummary {
 export default defineEventHandler(async (event) : Promise<PackingListSummary[]> => {
   const userId = await validateSessionUser(event)
 
-  const rows: PackingListSummary[] = await event.context.dbHttp.query.packingLists.findMany({
+  const rows: PackingListQueryRow[] = await event.context.dbHttp.query.packingLists.findMany({
     columns: {
       createdAt: true,
       id: true,
@@ -28,8 +41,26 @@ export default defineEventHandler(async (event) : Promise<PackingListSummary[]> 
     orderBy: (lists: typeof packingLists, { desc }: { desc: (column: AnyColumn) => SQL }) => [
       desc(lists.createdAt),
       desc(lists.id)
-    ]
+    ],
+
+    with: {
+      entries: {
+        columns: {
+          id: true
+        }
+      }
+    }
   })
 
-  return rows
+  return rows.map((row) => {
+    const entryCount = row.entries.length
+
+    return {
+      createdAt: row.createdAt,
+      entryCount,
+      id: row.id,
+      name: row.name,
+      updatedAt: row.updatedAt
+    }
+  })
 })

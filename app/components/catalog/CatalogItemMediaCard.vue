@@ -31,15 +31,15 @@
     place-items: center;
     container-type: inline-size;
     background:
-      radial-gradient(circle at top center, color-mix(in oklch, var(--color-accent-base), transparent 78%), transparent 35%),
-      linear-gradient(180deg, var(--color-surface-base), var(--color-background-sunken));
+      radial-gradient(circle at top center, color-mix(in oklch, var(--color-accent-primary), transparent 78%), transparent 35%),
+      linear-gradient(180deg, var(--color-surface-primary), var(--color-background-muted));
   }
 
   .badge {
     position: absolute;
     inset-block-start: var(--spacing-16);
     inset-inline-start: var(--spacing-16);
-    background: var(--color-surface-base);
+    background: var(--color-surface-primary);
   }
 
   .icon {
@@ -48,7 +48,7 @@
     inline-size: min(10rem, 45cqi);
     block-size: min(10rem, 45cqi);
     border-radius: 2rem;
-    background: color-mix(in oklch, var(--color-surface-base), transparent 8%);
+    background: color-mix(in oklch, var(--color-surface-primary), transparent 8%);
     border: 1px solid var(--color-border-subtle);
     color: var(--color-text-secondary);
     font-size: clamp(4rem, 10vw, 5.5rem);

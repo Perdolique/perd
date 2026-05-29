@@ -54,12 +54,12 @@ test.describe('Shell navigation', () => {
     await expect(page.getByTestId('shell-topbar')).toBeHidden()
     await expect(page.getByTestId('shell-dock')).toBeHidden()
 
-    const dashboardLink = sidebar.getByRole('link', { name: 'Dashboard' })
+    const homeLink = sidebar.getByRole('link', { name: 'Home' })
     const catalogLink = sidebar.getByRole('link', { name: 'Catalog' })
     const gearLink = sidebar.getByRole('link', { name: 'Gear' })
     const accountLink = sidebar.getByRole('link', { name: 'Account' })
 
-    await expect(dashboardLink).toHaveClass(/active/u)
+    await expect(homeLink).toHaveClass(/active/u)
     await expect(catalogLink).toBeVisible()
     await expect(gearLink).toBeVisible()
     await expect(accountLink).toBeVisible()

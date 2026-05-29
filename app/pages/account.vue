@@ -12,7 +12,7 @@
           icon="tabler:alert-triangle"
           :level="2"
         >
-          Danger Zone
+          Danger
         </IconTitle>
 
         <PerdButton
@@ -103,8 +103,8 @@
     background:
       linear-gradient(
         145deg,
-        color-mix(in oklch, var(--color-danger), transparent 94%),
-        var(--color-surface-base)
+        color-mix(in oklch, var(--color-danger-primary), transparent 94%),
+        var(--color-surface-primary)
       );
   }
 </style>

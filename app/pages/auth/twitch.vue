@@ -20,14 +20,6 @@
         {{ statusHeading }}
       </PerdHeading>
 
-      <p :class="$style.copy" v-if="isFailed">
-        Failed to connect <strong>Twitch</strong>
-      </p>
-
-      <p :class="$style.copy" v-else>
-        Connecting <strong>Twitch</strong>...
-      </p>
-
       <PerdLink
         v-if="isFailed"
         to="/"
@@ -55,7 +47,7 @@
   const isFailed = ref(false)
   const route = useRoute()
   const { user } = useUserStore()
-  const statusHeading = computed(() => isFailed.value ? 'Failed to connect Twitch' : 'Connecting Twitch...')
+  const statusHeading = computed(() => isFailed.value ? 'Twitch failed' : 'Connecting Twitch')
 
   async function handleConnect() {
     try {
@@ -98,8 +90,7 @@
     place-items: center;
     padding: var(--spacing-16);
     background:
-      radial-gradient(circle at top left, color-mix(in oklch, var(--color-accent-base), transparent 88%), transparent 32%),
-      linear-gradient(180deg, var(--color-background-base), var(--color-background-sunken));
+      linear-gradient(180deg, var(--color-background-page), var(--color-background-muted));
   }
 
   .card {
@@ -112,8 +103,8 @@
     padding: var(--spacing-24);
     border-radius: var(--border-radius-24);
     border: 1px solid var(--color-border-subtle);
-    background: linear-gradient(180deg, var(--color-surface-base), var(--color-surface-subtle));
-    box-shadow: var(--shadow-2);
+    background: linear-gradient(180deg, var(--color-surface-primary), var(--color-surface-secondary));
+    box-shadow: var(--shadow-medium);
   }
 
   .label {
@@ -124,11 +115,6 @@
     text-transform: uppercase;
   }
 
-  .copy {
-    margin: 0;
-    color: var(--color-text-tertiary);
-  }
-
   .progress {
     display: flex;
     align-items: center;
@@ -136,7 +122,7 @@
     inline-size: 4rem;
     block-size: 4rem;
     border-radius: var(--border-radius-pill);
-    background: var(--color-surface-subtle);
+    background: var(--color-surface-secondary);
     border: 1px solid var(--color-border-subtle);
   }
 
@@ -146,6 +132,6 @@
 
   .spinner {
     font-size: 1.75rem;
-    color: var(--color-accent-base);
+    color: var(--color-accent-primary);
   }
 </style>

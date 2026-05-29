@@ -95,7 +95,7 @@
     justify-content: start;
     padding: var(--spacing-16);
     border-radius: var(--border-radius-16);
-    background: var(--color-surface-subtle);
+    background: var(--color-surface-secondary);
     border: 1px solid var(--color-border-subtle);
   }
 

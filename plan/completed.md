@@ -34,13 +34,15 @@ Catalog item detail now ships at `/catalog/[id]` on top of the existing item det
 
 Packing list shell shipped with user-owned list create, read, rename, and delete on `/packs`.
 
+Packing list detail shipped with custom checklist entries, packed toggles, and entry removal.
+
 ## Twitch OAuth
 
 Redirect to Twitch, token exchange, user info fetch, new user creation with an OAuth account record, login via existing Twitch account, and redirect restoration through OAuth `state` are implemented.
 
 ## Shared UI components
 
-Nuxt layout with header, footer, sidebar. Shared UI components: buttons, cards, dialogs, menu, heading, link, spinner. CSS design tokens for colors, spacing, typography, transitions. Responsive CSS rules now explicitly distinguish `@container` for component-local layout changes from `@media` for viewport and environment behavior, and `PageContent` uses that pattern for its header actions layout.
+Nuxt layout with header, footer, sidebar. Shared UI components: buttons, cards, dialogs, menu, heading, link, spinner. CSS design tokens cover colors, spacing, typography, motion, and elevation. Responsive CSS rules distinguish `@container` for component-local layout changes from `@media` for viewport and environment behavior, and `PageContent` uses that pattern for its header actions layout.
 
 ## Tooling and tests
 

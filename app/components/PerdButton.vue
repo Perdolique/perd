@@ -5,8 +5,12 @@
     :aria-busy="ariaBusy"
     :class="[$style.component, {
       small: isSmallSize,
+      large: isLargeSize,
       secondary: isSecondaryVariant,
-      danger: isDangerVariant
+      soft: isSoftVariant,
+      ghost: isGhostVariant,
+      danger: isDangerVariant,
+      block
     }]"
   >
     <FidgetSpinner
@@ -35,16 +39,18 @@
   import FidgetSpinner from '~/components/FidgetSpinner.vue'
 
   interface Props {
+    block?: boolean;
     disabled?: boolean;
     icon?: string;
     iconRight?: string;
     loading?: boolean;
-    size?: 'medium' | 'small';
+    size?: 'large' | 'medium' | 'small';
     type?: 'button' | 'reset' | 'submit';
-    variant?: 'primary' | 'secondary' | 'danger';
+    variant?: 'danger' | 'ghost' | 'primary' | 'secondary' | 'soft';
   }
 
   const {
+    block = false,
     disabled,
     iconRight,
     loading = false,
@@ -56,7 +62,10 @@
   const ariaBusy = computed(() => loading || undefined)
   const isButtonDisabled = computed(() => disabled || loading)
   const isSmallSize = computed(() => size === 'small')
+  const isLargeSize = computed(() => size === 'large')
   const isSecondaryVariant = computed(() => variant === 'secondary')
+  const isSoftVariant = computed(() => variant === 'soft')
+  const isGhostVariant = computed(() => variant === 'ghost')
   const isDangerVariant = computed(() => variant === 'danger')
   const rightIconName = computed(() => iconRight ?? '')
   const showRightIcon = computed(() => iconRight !== undefined && iconRight !== '' && loading === false)
@@ -64,137 +73,149 @@
 
 <style module>
   .component {
+    --button-background: var(--color-accent-primary);
+    --button-background-hover: var(--color-accent-hover);
+    --button-background-active: var(--color-accent-active);
+    --button-border-color: var(--color-accent-border);
+    --button-border-color-hover: var(--color-accent-border-hover);
+    --button-shadow:
+      inset 0 1px 0 color-mix(in oklch, var(--color-accent-contrast) 22%, transparent),
+      0 10px 24px -18px color-mix(in oklch, var(--color-accent-primary) 62%, transparent);
+    --button-text-color: var(--color-accent-contrast);
+
     appearance: none;
-    border: 1px solid transparent;
+    border: 1px solid var(--button-border-color);
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: var(--spacing-8);
-    block-size: 2.5rem;
-    padding-inline: var(--spacing-16);
-    border-radius: var(--border-radius-16);
-    background: var(--color-accent-base);
-    color: var(--color-accent-contrast);
-    outline: 2px solid transparent;
-    outline-offset: 3px;
+    min-block-size: var(--layout-button-height-medium);
+    padding-inline: var(--spacing-24);
+    border-radius: var(--layout-button-radius);
+    background-color: var(--button-background);
+    color: var(--button-text-color);
+    box-shadow: var(--button-shadow);
     user-select: none;
     white-space: nowrap;
-    font-weight: var(--font-weight-medium);
-    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-16);
+    line-height: var(--line-height-snug);
     transition:
-      background-color var(--transition-duration-quick) var(--transition-easing-out),
-      border-color var(--transition-duration-quick) var(--transition-easing-out),
-      color var(--transition-duration-quick) var(--transition-easing-out),
-      transform var(--transition-duration-quick) var(--transition-easing-out);
+      background-color var(--transition-duration-normal) var(--transition-easing-standard),
+      border-color var(--transition-duration-normal) var(--transition-easing-standard),
+      box-shadow var(--transition-duration-normal) var(--transition-easing-standard),
+      color var(--transition-duration-normal) var(--transition-easing-standard),
+      transform var(--transition-duration-fast) var(--transition-easing-standard);
 
-    &:hover {
-      background: var(--color-accent-hover);
+    &:hover:not(:disabled) {
+      border-color: var(--button-border-color-hover);
+      background-color: var(--button-background-hover);
     }
 
     &:focus-visible {
-      background: var(--color-accent-hover);
-      outline-color: var(--color-accent-ring);
+      border-color: var(--button-border-color-hover);
+      background-color: var(--button-background-hover);
+      box-shadow: var(--shadow-focus), var(--button-shadow);
     }
 
-    &:active {
-      transform: translateY(1px);
-      background: var(--color-accent-active);
+    &:active:not(:disabled) {
+      border-color: var(--button-border-color-hover);
+      background-color: var(--button-background-active);
+      transform: scale(0.98);
     }
 
     &:global(.small) {
-      block-size: 2rem;
-      padding-inline: var(--spacing-12);
-      border-radius: var(--border-radius-12);
-      font-size: var(--font-size-12);
+      min-block-size: var(--layout-button-height-small);
+      padding-inline: var(--spacing-16);
+      border-radius: var(--layout-button-radius-small);
+      font-size: var(--font-size-14);
+    }
+
+    &:global(.large) {
+      min-block-size: var(--layout-button-height-large);
+      padding-inline: var(--spacing-32);
+      font-size: var(--font-size-17);
+    }
+
+    &:global(.block) {
+      inline-size: 100%;
     }
 
     &:global(.secondary) {
-      background: var(--color-surface-base);
-      color: var(--color-text-primary);
-      border-color: var(--color-border-default);
+      --button-background: color-mix(in oklch, var(--color-background-elevated) 88%, var(--color-accent-subtle));
+      --button-background-hover: var(--color-surface-secondary);
+      --button-background-active: var(--color-background-muted);
+      --button-border-color: var(--color-border-strong);
+      --button-border-color-hover: color-mix(in oklch, var(--color-accent-primary) 34%, transparent);
+      --button-shadow: inset 0 1px 0 color-mix(in oklch, var(--color-white) 44%, transparent);
+      --button-text-color: var(--color-text-primary);
+    }
 
-      &:hover {
-        background: var(--color-surface-subtle);
-        border-color: var(--color-border-default);
-        color: var(--color-text-primary);
-      }
+    &:global(.soft) {
+      --button-background: var(--color-accent-subtle);
+      --button-background-hover: var(--color-accent-subtle-hover);
+      --button-background-active: var(--color-accent-subtle-active);
+      --button-border-color: var(--color-accent-subtle-border);
+      --button-border-color-hover: color-mix(in oklch, var(--color-accent-primary) 34%, transparent);
+      --button-shadow: inset 0 1px 0 color-mix(in oklch, var(--color-background-elevated) 42%, transparent);
+      --button-text-color: var(--color-accent-primary);
+    }
 
-      &:focus-visible {
-        background: var(--color-surface-subtle);
-        border-color: var(--color-border-default);
-        color: var(--color-text-primary);
-      }
-
-      &:active {
-        transform: translateY(1px);
-      }
+    &:global(.ghost) {
+      --button-background: transparent;
+      --button-background-hover: var(--color-surface-tertiary);
+      --button-background-active: var(--color-accent-subtle);
+      --button-border-color: transparent;
+      --button-border-color-hover: var(--color-border-subtle);
+      --button-shadow: none;
+      --button-text-color: var(--color-text-primary);
     }
 
     &:global(.danger) {
-      background: transparent;
-      color: var(--color-danger);
-      border-color: color-mix(in oklch, var(--color-danger), transparent 76%);
-
-      &:hover {
-        background: color-mix(in oklch, var(--color-danger), transparent 90%);
-      }
+      --button-background: var(--color-danger-subtle);
+      --button-background-hover: var(--color-danger-subtle-hover);
+      --button-background-active: color-mix(in oklch, var(--color-danger-primary) 32%, transparent);
+      --button-border-color: var(--color-danger-border);
+      --button-border-color-hover: color-mix(in oklch, var(--color-danger-primary) 42%, transparent);
+      --button-shadow: inset 0 1px 0 color-mix(in oklch, var(--color-background-elevated) 36%, transparent);
+      --button-text-color: var(--color-danger-primary);
 
       &:focus-visible {
-        background: color-mix(in oklch, var(--color-danger), transparent 90%);
-        outline-color: color-mix(in oklch, var(--color-danger), transparent 48%);
-      }
-
-      &:active {
-        transform: translateY(1px);
+        box-shadow:
+          0 0 0 3px color-mix(in oklch, var(--color-danger-primary) 42%, transparent),
+          var(--button-shadow);
       }
     }
 
     &:disabled {
       cursor: not-allowed;
-      transform: none;
+      background-color: var(--color-surface-secondary);
+      border-color: var(--color-border-subtle);
       color: var(--color-text-muted);
-      background: var(--color-surface-subtle);
-      border-color: transparent;
-      outline-color: transparent;
+      box-shadow: inset 0 1px 0 color-mix(in oklch, var(--color-background-elevated) 48%, transparent);
 
-      &:focus-visible {
-        cursor: not-allowed;
-        transform: none;
-        color: var(--color-text-muted);
-        background: var(--color-surface-subtle);
-        border-color: transparent;
-        outline-color: transparent;
-      }
-
-      &:hover {
-        cursor: not-allowed;
-        transform: none;
-        color: var(--color-text-muted);
-        background: var(--color-surface-subtle);
-        border-color: transparent;
-        outline-color: transparent;
-      }
-
+      &:hover,
+      &:focus-visible,
       &:active {
         cursor: not-allowed;
-        transform: none;
+        background-color: var(--color-surface-secondary);
+        border-color: var(--color-border-subtle);
         color: var(--color-text-muted);
-        background: var(--color-surface-subtle);
-        border-color: transparent;
-        outline-color: transparent;
+        box-shadow: inset 0 1px 0 color-mix(in oklch, var(--color-background-elevated) 48%, transparent);
+        transform: none;
       }
     }
   }
 
   .icon {
-    font-size: 1.05em;
+    font-size: 1.1em;
     flex-shrink: 0;
   }
 
   @media (prefers-reduced-motion: reduce) {
     .component {
-      &:active {
+      &:active:not(:disabled) {
         transform: none;
       }
     }

@@ -170,8 +170,20 @@ function createCreateDb({
   }
 }
 
-function createDeleteDb(deletedRow?: { id: string }) {
-  const deleteReturningMock = vi.fn(() => deletedRow === undefined ? [] : [deletedRow])
+function createDeleteDb({
+  deletedRow,
+  deleteError
+}: {
+  deletedRow?: { id: string };
+  deleteError?: Error;
+} = {}) {
+  const deleteReturningMock = vi.fn(() => {
+    if (deleteError !== undefined) {
+      throw deleteError
+    }
+
+    return deletedRow === undefined ? [] : [deletedRow]
+  })
   const deleteWhereMock = vi.fn(() => {
     return {
       returning: deleteReturningMock
@@ -536,7 +548,9 @@ describe('user equipment handlers', () => {
   describe('delete /api/user/equipment/[id]', () => {
     test('should delete an inventory row owned by the current user', async () => {
       const { dbHttp, deleteWhereMock } = createDeleteDb({
-        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+        deletedRow: {
+          id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+        }
       })
 
       const event = createTestEvent(dbHttp)
@@ -553,6 +567,20 @@ describe('user equipment handlers', () => {
 
       await expect(deleteInventoryHandler(event)).rejects.toMatchObject({
         statusCode: 404
+      })
+    })
+
+    test('should return 409 when the inventory row is still used in a pack', async () => {
+      const { dbHttp } = createDeleteDb({
+        deleteError: Object.assign(new Error('update or delete on table violates foreign key constraint'), {
+          code: '23503'
+        })
+      })
+      const event = createTestEvent(dbHttp)
+
+      await expect(deleteInventoryHandler(event)).rejects.toMatchObject({
+        message: 'Inventory item is still used in a pack',
+        statusCode: 409
       })
     })
 

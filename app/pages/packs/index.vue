@@ -15,11 +15,10 @@
       <PageLoadingState
         v-if="isInitialLoading"
         title="Loading packs"
-        description="We are loading your packs right now."
       />
 
-      <PagePlaceholder v-else-if="hasError" emoji="🎒" title="Packs are temporarily unavailable.">
-        We could not load your packs right now. Try this request again.
+      <PagePlaceholder v-else-if="hasError" emoji="🎒" title="Packs unavailable.">
+        Try again.
 
         <template #actions>
           <PerdButton variant="secondary" @click="handleRetry">
@@ -29,8 +28,6 @@
       </PagePlaceholder>
 
       <PagePlaceholder v-else-if="isEmpty" emoji="🧭" title="No packs yet.">
-        Create the first pack when you are ready.
-
         <template #actions>
           <PerdButton
             icon="tabler:plus"
@@ -107,6 +104,7 @@
   function createPackingListView(row: PackingListSummary): PackingListView {
     return {
       createdAt: row.createdAt,
+      entryCount: row.entryCount,
       id: row.id,
       name: row.name,
       updatedAt: row.updatedAt,
@@ -142,13 +140,21 @@
         }
       })
 
-      packingLists.value = [createdList, ...packingLists.value]
+      const createdListSummary = {
+        createdAt: createdList.createdAt,
+        entryCount: 0,
+        id: createdList.id,
+        name: createdList.name,
+        updatedAt: createdList.updatedAt
+      }
+
+      packingLists.value = [createdListSummary, ...packingLists.value]
       newListName.value = ''
       isCreateDialogVisible.value = false
 
       await navigateTo(`/packs/${createdList.id}`)
     } catch {
-      createErrorMessage.value = 'We could not create this pack right now.'
+      createErrorMessage.value = 'Could not create pack.'
     } finally {
       creatingList.value = false
     }

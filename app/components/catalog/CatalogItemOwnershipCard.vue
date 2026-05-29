@@ -16,7 +16,7 @@
       </PerdPill>
     </div>
 
-    <p :class="$style.text">
+    <p v-if="description" :class="$style.text">
       {{ description }}
     </p>
 
@@ -41,7 +41,7 @@
     </p>
 
     <p v-else-if="hasInventoryError" :class="$style.inlineMessage" role="status">
-      We could not confirm your inventory state right now. Reload this page to try again.
+      Inventory state unavailable.
     </p>
   </PerdCard>
 </template>
@@ -103,9 +103,9 @@
     background:
       linear-gradient(
         160deg,
-        color-mix(in oklch, var(--color-accent-base), transparent 90%),
-        color-mix(in oklch, var(--color-accent-base), transparent 95%) 45%,
-        var(--color-surface-base)
+        color-mix(in oklch, var(--color-accent-primary), transparent 90%),
+        color-mix(in oklch, var(--color-accent-primary), transparent 95%) 45%,
+        var(--color-surface-primary)
       );
   }
 
@@ -130,7 +130,7 @@
 
   .errorMessage {
     margin: 0;
-    color: var(--color-danger);
+    color: var(--color-danger-primary);
   }
 
   .actions {

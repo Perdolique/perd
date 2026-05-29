@@ -24,7 +24,7 @@
           </dt>
 
           <dd :class="$style.metaValue">
-            0
+            {{ packingList.entryCount }}
           </dd>
         </div>
 
@@ -58,41 +58,32 @@
   .component {
     display: grid;
     container-type: inline-size;
-    background: var(--color-surface-base);
+    background: var(--color-surface-primary);
     border-radius: var(--border-radius-16);
     padding: var(--spacing-24);
     border: 1px solid var(--color-border-subtle);
     color: inherit;
-    outline: 2px solid transparent;
-    outline-offset: 3px;
     text-decoration: none;
     transition:
-      border-color var(--transition-duration-quick) var(--transition-easing-out),
-      box-shadow var(--transition-duration-quick) var(--transition-easing-out),
-      transform var(--transition-duration-quick) var(--transition-easing-out);
+      border-color var(--transition-duration-fast) var(--transition-easing-standard),
+      box-shadow var(--transition-duration-fast) var(--transition-easing-standard);
 
     &:hover {
-      border-color: var(--color-border-default);
-      box-shadow: var(--shadow-2);
-      transform: translateY(-1px);
+      border-color: var(--color-border-strong);
+      box-shadow: var(--shadow-medium);
 
       & .title {
-        color: var(--color-accent-base);
+        color: var(--color-accent-primary);
       }
     }
 
     &:focus-visible {
-      border-color: var(--color-border-default);
-      box-shadow: var(--shadow-2);
-      outline-color: var(--color-accent-ring);
+      border-color: var(--color-border-strong);
+      box-shadow: var(--shadow-focus), var(--shadow-medium);
 
       & .title {
-        color: var(--color-accent-base);
+        color: var(--color-accent-primary);
       }
-    }
-
-    &:active {
-      transform: translateY(0);
     }
   }
 
@@ -122,7 +113,7 @@
     block-size: 2.5rem;
     border-radius: var(--border-radius-16);
     background-color: var(--color-accent-subtle);
-    color: var(--color-accent-base);
+    color: var(--color-accent-primary);
     font-size: 1.1rem;
   }
 
@@ -177,19 +168,5 @@
 
   .metaItem {
     min-inline-size: 0;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .component {
-      transform: none;
-
-      &:hover {
-        transform: none;
-      }
-
-      &:active {
-        transform: none;
-      }
-    }
   }
 </style>

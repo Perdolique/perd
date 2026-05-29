@@ -10,11 +10,10 @@
       <PageLoadingState
         v-if="isInitialLoading"
         title="Loading item"
-        description="We are loading this catalog item right now."
       />
 
-      <PagePlaceholder v-else-if="hasItemError" emoji="🧭" title="This item is temporarily unavailable.">
-        We could not load this catalog item right now. Try this request again.
+      <PagePlaceholder v-else-if="hasItemError" emoji="🧭" title="Item unavailable.">
+        Try again.
 
         <template #actions>
           <PerdButton variant="secondary" @click="handleRetry">
@@ -213,17 +212,11 @@
     return isOwned.value ? 'owned' : 'missing'
   })
   const ownershipDescription = computed(() => {
-    if (isInventoryLoading.value) {
-      return 'We are syncing your saved gear so this action stays accurate.'
-    }
-
     if (hasInventoryError.value) {
-      return 'The item loaded, but your inventory state did not. The control stays stable until that state is available again.'
+      return 'Inventory unavailable.'
     }
 
-    return isOwned.value
-      ? 'This item is already part of your saved gear. Remove it here if you no longer own it.'
-      : 'Save this item to your personal inventory so it is ready for future packing workflows.'
+    return ''
   })
   const displayProperties = computed(() => itemResponse.value.properties.map((property) => {
     return {
@@ -276,8 +269,8 @@
       }
     } catch {
       ownershipErrorMessage.value = ownedBeforeRequest === false
-        ? 'We could not add this item to your inventory right now.'
-        : 'We could not remove this item from your inventory right now.'
+        ? 'Could not add item.'
+        : 'Could not remove item.'
     } finally {
       isOwnershipPending.value = false
     }

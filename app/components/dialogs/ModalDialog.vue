@@ -62,10 +62,10 @@
     opacity: 0;
     translate: 0 0.75rem;
     transition:
-      opacity var(--transition-duration-base) var(--transition-easing-out),
-      translate var(--transition-duration-base) var(--transition-easing-out),
-      overlay var(--transition-duration-base) var(--transition-easing-out) allow-discrete,
-      display var(--transition-duration-base) var(--transition-easing-out) allow-discrete;
+      opacity var(--transition-duration-normal) var(--transition-easing-standard),
+      translate var(--transition-duration-normal) var(--transition-easing-standard),
+      overlay var(--transition-duration-normal) var(--transition-easing-standard) allow-discrete,
+      display var(--transition-duration-normal) var(--transition-easing-standard) allow-discrete;
 
     &[open] {
       opacity: 1;
@@ -81,9 +81,9 @@
       background-color: transparent;
       backdrop-filter: blur(0);
       transition:
-        background-color var(--transition-duration-base) var(--transition-easing-out),
-        backdrop-filter var(--transition-duration-base) var(--transition-easing-out),
-        display var(--transition-duration-base) var(--transition-easing-out) allow-discrete;
+        background-color var(--transition-duration-normal) var(--transition-easing-standard),
+        backdrop-filter var(--transition-duration-normal) var(--transition-easing-standard),
+        display var(--transition-duration-normal) var(--transition-easing-standard) allow-discrete;
     }
 
     &[open] {

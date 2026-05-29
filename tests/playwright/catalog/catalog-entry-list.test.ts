@@ -255,7 +255,6 @@ test.describe('Catalog page', () => {
     await expect(page).toHaveURL(/\/catalog$/u)
     await expect(page.getByText('0 items')).toBeVisible()
     await expect(page.getByRole('heading', { name: 'No items yet.' })).toBeVisible()
-    await expect(page.getByText('We do not have any items to show here yet.')).toBeVisible()
     expect(categoryRequests.count).toBe(0)
   })
 
@@ -310,7 +309,7 @@ test.describe('Catalog page', () => {
     await page.getByRole('button', { name: 'Guest' }).click()
 
     await expect(page).toHaveURL(/\/catalog$/u)
-    await expect(page.getByRole('heading', { name: 'Catalog is temporarily unavailable.' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Catalog unavailable.' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible()
 
     expect(categoryRequests.count).toBe(0)

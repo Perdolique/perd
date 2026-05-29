@@ -8,14 +8,14 @@
 
 <style module>
   .component {
-    outline: 2px solid transparent;
-    outline-offset: 3px;
-    color: var(--color-accent-base);
+    color: var(--color-accent-primary);
     position: relative;
     text-decoration: none;
-    transition: color var(--transition-duration-quick) var(--transition-easing-out);
+    transition:
+      box-shadow var(--transition-duration-fast) var(--transition-easing-standard),
+      color var(--transition-duration-fast) var(--transition-easing-standard);
     cursor: pointer;
-    font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-semibold);
 
     &:hover {
       text-decoration: underline;
@@ -25,10 +25,7 @@
     &:focus-visible {
       text-decoration: underline;
       color: var(--color-accent-hover);
-    }
-
-    &:focus-visible {
-      outline-color: var(--color-accent-ring);
+      box-shadow: var(--shadow-focus);
     }
 
     &:active {

@@ -32,14 +32,14 @@
     color: var(--color-text-primary);
 
     &:global(.h1) {
-      font-size: var(--font-size-32);
+      font-size: var(--font-size-30);
       font-weight: var(--font-weight-bold);
       line-height: var(--line-height-tight);
     }
 
     &:global(.h2) {
       font-size: var(--font-size-20);
-      font-weight: var(--font-weight-bold);
+      font-weight: var(--font-weight-semibold);
       line-height: var(--line-height-snug);
     }
   }

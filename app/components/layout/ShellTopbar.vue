@@ -52,9 +52,9 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-12);
-    padding: var(--spacing-12) var(--spacing-16);
+    padding: calc(var(--spacing-12) + var(--layout-safe-top)) var(--spacing-16) var(--spacing-12);
     border-block-end: 1px solid var(--color-border-subtle);
-    background: color-mix(in oklch, var(--color-background-raised), transparent 9%);
+    background: color-mix(in oklch, var(--color-background-elevated), transparent 9%);
     backdrop-filter: blur(14px) saturate(1.3);
 
     @media (width >= 900px) {
@@ -68,16 +68,13 @@
     font-size: var(--font-size-20);
     font-weight: var(--font-weight-bold);
     letter-spacing: 0;
-    outline: 2px solid transparent;
-    outline-offset: 3px;
-
     &:focus-visible {
-      outline-color: var(--color-accent-ring);
+      box-shadow: var(--shadow-focus);
     }
   }
 
   .brandPunctuation {
-    color: var(--color-accent-base);
+    color: var(--color-accent-primary);
     font-style: normal;
   }
 
@@ -95,34 +92,27 @@
   .action {
     display: grid;
     place-items: center;
-    inline-size: 2rem;
-    block-size: 2rem;
-    border-radius: var(--border-radius-12);
+    inline-size: 2.25rem;
+    block-size: 2.25rem;
+    border-radius: var(--border-radius-14);
     color: var(--color-text-secondary);
     text-decoration: none;
     background: transparent;
     border: 1px solid transparent;
-    outline: 2px solid transparent;
-    outline-offset: 3px;
     transition:
-      background-color var(--transition-duration-base) var(--transition-easing-out),
-      border-color var(--transition-duration-base) var(--transition-easing-out),
-      color var(--transition-duration-base) var(--transition-easing-out);
+      background-color var(--transition-duration-normal) var(--transition-easing-standard),
+      border-color var(--transition-duration-normal) var(--transition-easing-standard),
+      color var(--transition-duration-normal) var(--transition-easing-standard);
 
+    &:hover,
     &:focus-visible {
-      background: var(--color-surface-base);
-      border-color: var(--color-border-subtle);
-      color: var(--color-text-primary);
-    }
-
-    &:hover {
-      background: var(--color-surface-base);
+      background: var(--color-surface-primary);
       border-color: var(--color-border-subtle);
       color: var(--color-text-primary);
     }
 
     &:focus-visible {
-      outline-color: var(--color-accent-ring);
+      box-shadow: var(--shadow-focus);
     }
   }
 </style>

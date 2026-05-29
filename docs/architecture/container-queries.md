@@ -10,10 +10,9 @@ Responsive CSS decision rules live here as architecture guidance, not as roadmap
 ## Current audit
 
 - `app/components/layout/PageContent.vue` uses `container-type: inline-size` because the header layout depends on available content width.
-- Keep `app/components/PageHeader.vue` on `@media`: the sidebar toggle and shell spacing are coupled to mobile vs desktop navigation behavior.
-- Keep `app/components/PerdSidebar/PerdSidebar.vue` on `@media`: overlay visibility, off-canvas behavior, and desktop collapsed mode are viewport-shell concerns.
-- Keep `app/pages/login.vue` mostly on `@media`: fullscreen centering and card presentation depend on the screen. Revisit the button row only if the card becomes reusable outside the login page shell.
-- Keep `app/assets/styles/colors.css` on `@media`: `prefers-color-scheme` is an environment query, not a container concern.
+- Keep app shell layout rules on `@media`: mobile dock visibility, desktop sidebar visibility, and shell spacing are viewport concerns.
+- Keep `app/pages/login.vue` mostly on `@media`: fullscreen centering and card presentation depend on the screen.
+- Keep dark theme tokens in global styles on `@media`: `prefers-color-scheme` is an environment query, not a container concern.
 
 ## Verification
 
