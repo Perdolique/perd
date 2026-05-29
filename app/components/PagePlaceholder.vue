@@ -10,7 +10,7 @@
           {{ title }}
         </PerdHeading>
 
-        <p :class="$style.content">
+        <p v-if="$slots.default" :class="$style.content">
           <slot />
         </p>
 
@@ -45,8 +45,7 @@
     box-sizing: border-box;
     margin: 0 auto;
     background:
-      radial-gradient(circle at top center, color-mix(in oklch, var(--color-accent-base), transparent 80%), transparent 42%),
-      linear-gradient(180deg, var(--color-surface-base), var(--color-surface-subtle));
+      linear-gradient(180deg, var(--color-surface-primary), var(--color-surface-secondary));
   }
 
   .body {
@@ -57,7 +56,7 @@
   }
 
   .emojiMark {
-    font-size: clamp(3rem, 8vw, 4.5rem);
+    font-size: clamp(2rem, 6vw, 3rem);
     line-height: 1;
   }
 

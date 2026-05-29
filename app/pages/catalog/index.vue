@@ -4,11 +4,10 @@
       <PageLoadingState
         v-if="isInitialLoading"
         title="Loading catalog"
-        description="We are loading items for this page."
       />
 
-      <PagePlaceholder v-else-if="hasError" emoji="🧭" title="Catalog is temporarily unavailable.">
-        We could not load the catalog right now. Try this request again.
+      <PagePlaceholder v-else-if="hasError" emoji="🧭" title="Catalog unavailable.">
+        Try again.
 
         <template #actions>
           <PerdButton variant="secondary" @click="handleRetry">
@@ -29,14 +28,9 @@
             </p>
           </div>
 
-          <p :class="$style.resultsCopy">
-            Approved gear entries ready for inventory tracking.
-          </p>
         </div>
 
-        <PagePlaceholder v-if="isEmpty" emoji="🧺" title="No items yet.">
-          We do not have any items to show here yet.
-        </PagePlaceholder>
+        <PagePlaceholder v-if="isEmpty" emoji="🧺" title="No items yet." />
 
         <CatalogResultsPanel
           v-else
@@ -188,19 +182,6 @@
     color: var(--color-text-primary);
     font-size: var(--font-size-24);
     line-height: var(--line-height-snug);
-    font-weight: var(--font-weight-bold);
-  }
-
-  .resultsCopy {
-    margin: 0;
-    color: var(--color-text-tertiary);
-    max-inline-size: 24rem;
-    text-align: right;
-  }
-
-  @container (inline-size < 40rem) {
-    .resultsCopy {
-      text-align: left;
-    }
+    font-weight: var(--font-weight-semibold);
   }
 </style>

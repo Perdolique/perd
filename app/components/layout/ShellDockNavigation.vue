@@ -12,7 +12,7 @@
       <span :class="$style.dockIcon">
         <Icon name="tabler:home-2" />
       </span>
-      <span>Dashboard</span>
+      <span>Home</span>
     </NuxtLink>
 
     <NuxtLink
@@ -69,9 +69,9 @@
     z-index: 20;
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    padding: 0.375rem 0.5rem calc(0.5rem + env(safe-area-inset-bottom));
+    padding: var(--spacing-8) var(--spacing-8) calc(var(--spacing-8) + var(--layout-safe-bottom));
     border-block-start: 1px solid var(--color-border-subtle);
-    background: color-mix(in oklch, var(--color-background-raised), transparent 6%);
+    background: color-mix(in oklch, var(--color-background-elevated), transparent 6%);
     backdrop-filter: blur(14px) saturate(1.25);
 
     @media (width >= 900px) {
@@ -82,25 +82,23 @@
   .dockItem {
     display: grid;
     justify-items: center;
-    gap: 0.15rem;
-    padding: 0.45rem 0.25rem;
-    border-radius: var(--border-radius-12);
+    gap: var(--spacing-4);
+    min-block-size: var(--layout-touch-target);
+    padding: var(--spacing-4);
+    border-radius: var(--border-radius-14);
     color: var(--color-text-muted);
     text-decoration: none;
     font-size: var(--font-size-12);
     font-weight: var(--font-weight-medium);
-    outline: 2px solid transparent;
-    outline-offset: 2px;
-
     &:focus-visible {
-      outline-color: var(--color-accent-ring);
+      box-shadow: var(--shadow-focus);
     }
 
     &:global(.active) {
       color: var(--color-text-primary);
 
       & .dockIcon {
-        background: var(--color-accent-base);
+        background: var(--color-accent-primary);
         color: var(--color-accent-contrast);
         border-color: transparent;
       }
@@ -111,14 +109,14 @@
     display: grid;
     place-items: center;
     inline-size: 2.25rem;
-    block-size: 1.9rem;
+    block-size: 1.75rem;
     border-radius: var(--border-radius-pill);
     border: 1px solid var(--color-border-subtle);
-    background: var(--color-surface-base);
+    background: var(--color-surface-primary);
     color: inherit;
     transition:
-      background-color var(--transition-duration-base) var(--transition-easing-out),
-      color var(--transition-duration-base) var(--transition-easing-out),
-      border-color var(--transition-duration-base) var(--transition-easing-out);
+      background-color var(--transition-duration-normal) var(--transition-easing-standard),
+      color var(--transition-duration-normal) var(--transition-easing-standard),
+      border-color var(--transition-duration-normal) var(--transition-easing-standard);
   }
 </style>

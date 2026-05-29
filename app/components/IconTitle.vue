@@ -35,10 +35,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    inline-size: 2.5rem;
-    block-size: 2.5rem;
-    border-radius: var(--border-radius-12);
+    inline-size: var(--layout-touch-target);
+    block-size: var(--layout-touch-target);
+    border-radius: var(--border-radius-14);
     background: var(--color-accent-subtle);
-    color: var(--color-accent-base);
+    color: var(--color-accent-primary);
   }
 </style>

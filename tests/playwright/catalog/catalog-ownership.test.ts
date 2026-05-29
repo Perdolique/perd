@@ -1,4 +1,5 @@
-import { expect, test, type BrowserContext, type Page, type Route } from '@playwright/test'
+import { expect, test, type BrowserContext, type Page, type Response, type Route } from '@playwright/test'
+import { URL } from 'node:url'
 
 interface CatalogEntitySummary {
   name: string;
@@ -136,6 +137,22 @@ function createInventoryRow(): InventoryRecord {
   }
 }
 
+function isInventoryCreateResponse(response: Response): boolean {
+  const responseUrl = new URL(response.url())
+  const isInventoryCollectionResponse = responseUrl.pathname === '/api/user/equipment'
+  const isPostRequest = response.request().method() === 'POST'
+
+  return isInventoryCollectionResponse && isPostRequest
+}
+
+function isInventoryDeleteResponse(response: Response): boolean {
+  const responseUrl = new URL(response.url())
+  const isInventoryItemResponse = responseUrl.pathname === `/api/user/equipment/${inventoryId}`
+  const isDeleteRequest = response.request().method() === 'DELETE'
+
+  return isInventoryItemResponse && isDeleteRequest
+}
+
 async function fulfillInventoryCollectionRoute(route: Route, page: Page, inventoryState: InventoryRouteState): Promise<void> {
   const request = route.request()
   const method = request.method()
@@ -247,10 +264,13 @@ test.describe('Catalog ownership flow', () => {
     await expect(page.getByRole('link', { name: 'View inventory' })).toBeVisible()
     await expect(page.getByText('Checking ownership...', { exact: true })).toHaveCount(0)
 
-    const addActionPromise = addButton.click()
-    await expect(addButton).toBeDisabled()
-    await expect(addButton).toBeVisible()
-    await addActionPromise
+    const addResponsePromise = page.waitForResponse(isInventoryCreateResponse)
+
+    await addButton.click()
+
+    const addResponse = await addResponsePromise
+
+    expect(addResponse.status()).toBe(201)
 
     expect(inventoryState.getRequestCount).toBe(1)
 
@@ -263,10 +283,13 @@ test.describe('Catalog ownership flow', () => {
     expect(inventoryState.getRequestCount).toBe(2)
 
     const removeFromInventoryButton = page.getByRole('button', { name: 'Remove' })
-    const removeActionPromise = removeFromInventoryButton.click()
-    await expect(removeFromInventoryButton).toBeDisabled()
-    await expect(removeFromInventoryButton).toBeVisible()
-    await removeActionPromise
+    const removeResponsePromise = page.waitForResponse(isInventoryDeleteResponse)
+
+    await removeFromInventoryButton.click()
+
+    const removeResponse = await removeResponsePromise
+
+    expect(removeResponse.status()).toBe(204)
 
     expect(inventoryState.getRequestCount).toBe(2)
     await expect(page.getByRole('heading', { name: 'No saved gear yet.' })).toBeVisible()

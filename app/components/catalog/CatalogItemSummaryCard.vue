@@ -10,10 +10,6 @@
       </PerdPill>
     </div>
 
-    <p :class="$style.text">
-      {{ categoryName }} gear entry ready for inventory tracking and future packing workflows.
-    </p>
-
     <dl :class="$style.metadataList">
       <div :class="$style.metadataItem">
         <dt :class="$style.metadataLabel">
@@ -97,11 +93,6 @@
     letter-spacing: var(--letter-spacing-label);
   }
 
-  .text {
-    margin: 0;
-    color: var(--color-text-tertiary);
-  }
-
   .metadataList {
     display: grid;
     gap: var(--spacing-12);
@@ -116,7 +107,7 @@
     gap: var(--spacing-8);
     padding: var(--spacing-12);
     border-radius: var(--border-radius-16);
-    background: var(--color-surface-subtle);
+    background: var(--color-surface-secondary);
     border: 1px solid var(--color-border-subtle);
   }
 

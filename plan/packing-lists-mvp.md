@@ -12,35 +12,6 @@ Catalog ownership is already shipped and summarized in [Completed work](complete
 - Do not add packing-list actions to the `/catalog` browse table during this MVP.
 - Do not change `/` behavior until the navigation decision iteration.
 
-## Iteration 2: Custom checklist entries
-
-**Result**: A signed-in user can make a packing list useful even when the catalog is incomplete.
-
-**Scope**:
-
-- Add `packing_list_entries` scoped to a packing list.
-- Support custom entries with `customName` and `isPacked`.
-- Add `GET /api/user/packing-lists/[id]` for one owned list and its entries.
-- Add `POST /api/user/packing-lists/[id]/entries` for `{ customName }`.
-- Add `PATCH /api/user/packing-lists/[id]/entries/[entryId]` for toggling `isPacked`.
-- Add `DELETE /api/user/packing-lists/[id]/entries/[entryId]` for removing an entry.
-- Ensure deleting a packing list also removes its entries.
-- Add `/packs/[id]` with custom entry creation, packed toggle, and delete controls.
-
-**Non-goals**:
-
-- No `equipmentItemId` entries yet.
-- No catalog detail integration.
-- No quantities, notes, sections, or templates.
-
-**Verification**:
-
-- Unit coverage for entry validation, ownership scoping, toggling, and deletion.
-- Focused Playwright coverage for adding a custom entry, toggling packed state, deleting it, and returning to the list shell.
-- Run the same TypeScript, unit, lint, build, and focused e2e checks as Iteration 1.
-
-**Completed summary**: Packing list detail shipped with custom checklist entries, packed toggles, and entry removal.
-
 ## Iteration 3: Catalog-backed packing entries
 
 **Result**: A signed-in user can add an approved catalog item to an existing packing list from item detail.

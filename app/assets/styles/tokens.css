@@ -1,0 +1,192 @@
+@layer tokens {
+  :root {
+    color-scheme: light dark;
+
+    --color-forest-50: oklch(97% 0.01 146.6);
+    --color-forest-100: oklch(93% 0.016 146.6);
+    --color-forest-200: oklch(85% 0.026 146.6);
+    --color-forest-300: oklch(72% 0.04 146.6);
+    --color-forest-400: oklch(59% 0.048 146.6);
+    --color-forest-500: oklch(50% 0.052 146.6);
+    --color-forest-600: oklch(45% 0.051 146.6);
+    --color-forest-700: oklch(41.1% 0.049 146.6);
+    --color-forest-800: oklch(31% 0.043 148);
+    --color-forest-900: oklch(21% 0.034 150);
+
+    --color-sand-50: oklch(98.8% 0.004 67.7);
+    --color-sand-100: oklch(96.6% 0.007 67.7);
+    --color-sand-200: oklch(93.4% 0.011 67.7);
+    --color-sand-300: oklch(88% 0.016 67.7);
+
+    --color-ink-300: oklch(78% 0.006 240);
+    --color-ink-500: oklch(55% 0.01 240);
+    --color-ink-700: oklch(35% 0.014 240);
+    --color-ink-900: oklch(18% 0.02 240);
+
+    --color-white: oklch(100% 0 0);
+    --color-black: oklch(12% 0.012 240);
+
+    --color-background-page: var(--color-sand-100);
+    --color-background-muted: var(--color-sand-200);
+    --color-background-elevated: oklch(99% 0.003 67.7);
+    --color-surface-primary: oklch(99% 0.003 67.7);
+    --color-surface-secondary: var(--color-sand-50);
+    --color-surface-tertiary: color-mix(in oklch, var(--color-forest-700) 7%, transparent);
+
+    --color-border-subtle: color-mix(in oklch, var(--color-forest-900) 10%, transparent);
+    --color-border-strong: color-mix(in oklch, var(--color-forest-900) 22%, transparent);
+
+    --color-text-primary: var(--color-forest-900);
+    --color-text-secondary: var(--color-ink-700);
+    --color-text-tertiary: var(--color-ink-500);
+    --color-text-muted: color-mix(in oklch, var(--color-ink-500) 82%, transparent);
+
+    --color-accent-primary: var(--color-forest-700);
+    --color-accent-hover: var(--color-forest-800);
+    --color-accent-active: var(--color-forest-900);
+    --color-accent-contrast: var(--color-sand-50);
+    --color-accent-border: color-mix(in oklch, var(--color-accent-contrast) 22%, var(--color-accent-primary));
+    --color-accent-border-hover: color-mix(in oklch, var(--color-accent-contrast) 28%, var(--color-accent-primary));
+    --color-accent-subtle: color-mix(in oklch, var(--color-forest-700) 12%, var(--color-background-elevated));
+    --color-accent-subtle-hover: color-mix(in oklch, var(--color-forest-700) 18%, var(--color-background-elevated));
+    --color-accent-subtle-active: color-mix(in oklch, var(--color-forest-700) 24%, var(--color-background-elevated));
+    --color-accent-subtle-border: color-mix(in oklch, var(--color-forest-700) 22%, transparent);
+    --color-focus-ring: color-mix(in oklch, var(--color-forest-700) 55%, transparent);
+
+    --color-success-primary: oklch(55% 0.14 150);
+    --color-success-subtle: color-mix(in oklch, var(--color-success-primary) 18%, transparent);
+    --color-warning-primary: oklch(64% 0.14 75);
+    --color-warning-subtle: color-mix(in oklch, var(--color-warning-primary) 18%, transparent);
+    --color-danger-primary: oklch(58% 0.2 27);
+    --color-danger-subtle: color-mix(in oklch, var(--color-danger-primary) 16%, transparent);
+    --color-danger-subtle-hover: color-mix(in oklch, var(--color-danger-primary) 24%, transparent);
+    --color-danger-border: color-mix(in oklch, var(--color-danger-primary) 28%, transparent);
+    --color-info-primary: oklch(62% 0.12 240);
+    --color-info-subtle: color-mix(in oklch, var(--color-info-primary) 16%, transparent);
+
+    --color-overlay-background: oklch(0% 0 0 / 42%);
+
+    --spacing-0: 0;
+    --spacing-4: 0.25rem;
+    --spacing-8: 0.5rem;
+    --spacing-12: 0.75rem;
+    --spacing-16: 1rem;
+    --spacing-20: 1.25rem;
+    --spacing-24: 1.5rem;
+    --spacing-32: 2rem;
+    --spacing-40: 2.5rem;
+    --spacing-48: 3rem;
+    --spacing-64: 4rem;
+
+    --border-radius-6: 0.375rem;
+    --border-radius-10: 0.625rem;
+    --border-radius-14: 0.875rem;
+    --border-radius-20: 1.25rem;
+    --border-radius-28: 1.75rem;
+    --border-radius-pill: 999px;
+
+    --border-radius-12: var(--border-radius-10);
+    --border-radius-16: var(--border-radius-14);
+    --border-radius-24: var(--border-radius-20);
+
+    --font-family-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", roboto, sans-serif;
+    --font-size-12: clamp(0.75rem, 0.72rem + 0.15vw, 0.8125rem);
+    --font-size-14: clamp(0.8125rem, 0.79rem + 0.15vw, 0.875rem);
+    --font-size-16: clamp(0.9375rem, 0.91rem + 0.2vw, 1rem);
+    --font-size-17: clamp(1rem, 0.97rem + 0.25vw, 1.0625rem);
+    --font-size-20: clamp(1.125rem, 1.08rem + 0.3vw, 1.25rem);
+    --font-size-24: clamp(1.25rem, 1.18rem + 0.5vw, 1.5rem);
+    --font-size-30: clamp(1.5rem, 1.35rem + 0.75vw, 1.875rem);
+    --font-size-40: clamp(1.875rem, 1.6rem + 1.4vw, 2.5rem);
+    --font-size-52: clamp(2.25rem, 1.85rem + 2vw, 3.25rem);
+
+    --font-weight-regular: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+
+    --line-height-tight: 1.15;
+    --line-height-snug: 1.3;
+    --line-height-body: 1.5;
+    --line-height-relaxed: 1.65;
+    --letter-spacing-label: 0;
+
+    --shadow-small: 0 2px 6px color-mix(in oklch, var(--color-forest-900) 8%, transparent);
+    --shadow-medium: 0 8px 24px -6px color-mix(in oklch, var(--color-forest-900) 12%, transparent);
+    --shadow-large: 0 18px 48px -12px color-mix(in oklch, var(--color-forest-900) 18%, transparent);
+    --shadow-focus: 0 0 0 3px var(--color-focus-ring);
+
+    --transition-duration-fast: 120ms;
+    --transition-duration-normal: 200ms;
+    --transition-duration-slow: 320ms;
+    --transition-easing-standard: cubic-bezier(0.2, 0.7, 0.2, 1);
+    --transition-easing-spring: cubic-bezier(0.34, 1.4, 0.5, 1);
+
+    --layout-content-max-width: 72rem;
+    --layout-sidebar-width: 15.5rem;
+    --layout-dock-height: 4.25rem;
+    --layout-touch-target: 2.75rem;
+    --layout-button-height-small: var(--layout-touch-target);
+    --layout-button-height-medium: 3.5rem;
+    --layout-button-height-large: 4rem;
+    --layout-button-radius: var(--border-radius-20);
+    --layout-button-radius-small: var(--border-radius-16);
+    --layout-safe-top: env(safe-area-inset-top, 0px);
+    --layout-safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-background-page: oklch(20% 0.024 146.6);
+      --color-background-muted: oklch(16% 0.022 146.6);
+      --color-background-elevated: oklch(24% 0.025 146.6);
+      --color-surface-primary: oklch(25% 0.026 146.6);
+      --color-surface-secondary: oklch(29% 0.026 146.6);
+      --color-surface-tertiary: color-mix(in oklch, var(--color-forest-200) 8%, transparent);
+
+      --color-border-subtle: color-mix(in oklch, var(--color-sand-50) 10%, transparent);
+      --color-border-strong: color-mix(in oklch, var(--color-sand-50) 22%, transparent);
+
+      --color-text-primary: oklch(96% 0.012 90);
+      --color-text-secondary: oklch(82% 0.012 100);
+      --color-text-tertiary: oklch(72% 0.012 100);
+      --color-text-muted: oklch(56% 0.012 100);
+
+      --color-accent-primary: var(--color-forest-300);
+      --color-accent-hover: var(--color-forest-200);
+      --color-accent-active: var(--color-forest-100);
+      --color-accent-contrast: var(--color-forest-900);
+      --color-accent-border: color-mix(in oklch, var(--color-forest-100) 30%, var(--color-forest-300));
+      --color-accent-border-hover: color-mix(in oklch, var(--color-forest-100) 40%, var(--color-forest-300));
+      --color-accent-subtle: color-mix(in oklch, var(--color-forest-300) 20%, transparent);
+      --color-accent-subtle-hover: color-mix(in oklch, var(--color-forest-300) 28%, transparent);
+      --color-accent-subtle-active: color-mix(in oklch, var(--color-forest-300) 36%, transparent);
+      --color-accent-subtle-border: color-mix(in oklch, var(--color-forest-300) 34%, transparent);
+      --color-focus-ring: color-mix(in oklch, var(--color-forest-300) 65%, transparent);
+
+      --color-success-primary: oklch(70% 0.12 145);
+      --color-success-subtle: color-mix(in oklch, var(--color-success-primary) 20%, transparent);
+      --color-warning-primary: oklch(76% 0.14 82);
+      --color-warning-subtle: color-mix(in oklch, var(--color-warning-primary) 20%, transparent);
+      --color-danger-primary: oklch(66% 0.18 25);
+      --color-danger-subtle: color-mix(in oklch, var(--color-danger-primary) 20%, transparent);
+      --color-danger-subtle-hover: color-mix(in oklch, var(--color-danger-primary) 28%, transparent);
+      --color-danger-border: color-mix(in oklch, var(--color-danger-primary) 34%, transparent);
+      --color-info-primary: oklch(72% 0.1 240);
+      --color-info-subtle: color-mix(in oklch, var(--color-info-primary) 20%, transparent);
+
+      --shadow-small: 0 2px 8px oklch(0% 0 0 / 0.45);
+      --shadow-medium: 0 8px 24px -6px oklch(0% 0 0 / 0.55);
+      --shadow-large: 0 18px 48px -12px oklch(0% 0 0 / 0.6);
+      --color-overlay-background: oklch(0% 0 0 / 56%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --transition-duration-fast: 0ms;
+      --transition-duration-normal: 0ms;
+      --transition-duration-slow: 0ms;
+    }
+  }
+}

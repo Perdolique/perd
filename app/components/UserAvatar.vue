@@ -24,10 +24,10 @@
     justify-content: center;
     border-radius: var(--border-radius-pill);
     background: var(--color-accent-subtle);
-    color: var(--color-accent-base);
-    font-weight: var(--font-weight-bold);
+    color: var(--color-accent-primary);
+    font-weight: var(--font-weight-semibold);
     line-height: 1;
-    border: 1px solid var(--color-accent-ring);
+    border: 1px solid var(--color-border-subtle);
 
     &:global(.large) {
       inline-size: 4rem;

@@ -15,6 +15,9 @@ import {
   validateGroupMutationBody,
   validateItemDetailParams,
   validateItemsListQuery,
+  validatePackingListEntryCreateBody,
+  validatePackingListEntryParams,
+  validatePackingListEntryUpdateBody,
   validatePackingListIdParams,
   validatePackingListMutationBody,
   validatePropertyEnumOptionMutationBody,
@@ -46,6 +49,8 @@ describe('validation schemas', () => {
   const tooLongGroupSlug = 'g'.repeat(limits.maxEquipmentGroupSlugLength + 1)
   const maxPackingListName = 'P'.repeat(limits.maxPackingListNameLength)
   const tooLongPackingListName = 'P'.repeat(limits.maxPackingListNameLength + 1)
+  const maxPackingListEntryCustomName = 'E'.repeat(limits.maxPackingListEntryCustomNameLength)
+  const tooLongPackingListEntryCustomName = 'E'.repeat(limits.maxPackingListEntryCustomNameLength + 1)
   const maxPropertyEnumOptionName = 'O'.repeat(limits.maxPropertyEnumOptionNameLength)
   const maxPropertyEnumOptionSlug = 'o'.repeat(limits.maxPropertyEnumOptionSlugLength)
   const tooLongPropertyEnumOptionName = 'O'.repeat(limits.maxPropertyEnumOptionNameLength + 1)
@@ -201,6 +206,38 @@ describe('validation schemas', () => {
     }
   )
 
+  test('should validate packing list entry params', () => {
+    const camelCaseResult = validatePackingListEntryParams({
+      entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
+      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+    })
+    const kebabCaseResult = validatePackingListEntryParams({
+      'entry-id': '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
+      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+    })
+
+    expect(camelCaseResult).toStrictEqual({
+      entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
+      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+    })
+    expect(kebabCaseResult).toStrictEqual({
+      entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
+      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+    })
+  })
+
+  test.each([
+    {},
+    { entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8' },
+    { id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7' },
+    {
+      entryId: 'packing-entry',
+      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+    }
+  ])('should reject invalid packing list entry params: %j', (params) => {
+    expect(() => validatePackingListEntryParams(params)).toThrow(/./u)
+  })
+
   test('should trim packing list mutation body name', () => {
     const result = validatePackingListMutationBody({
       name: '  Alpine weekend  '
@@ -228,6 +265,69 @@ describe('validation schemas', () => {
   }])('should reject invalid packing list mutation body: %j', (body) => {
     expect(() => validatePackingListMutationBody(body)).toThrow(/./u)
   })
+
+  test('should trim packing list entry custom name', () => {
+    const result = validatePackingListEntryCreateBody({
+      customName: '  Rain jacket  '
+    })
+
+    expect(result).toStrictEqual({
+      customName: 'Rain jacket'
+    })
+  })
+
+  test('should accept packing list entry custom name at max length', () => {
+    const result = validatePackingListEntryCreateBody({
+      customName: maxPackingListEntryCustomName
+    })
+
+    expect(result).toStrictEqual({
+      customName: maxPackingListEntryCustomName
+    })
+  })
+
+  test('should accept packing list entry inventory id', () => {
+    const result = validatePackingListEntryCreateBody({
+      inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9'
+    })
+
+    expect(result).toStrictEqual({
+      inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9'
+    })
+  })
+
+  test.each([{
+    customName: 'Rain jacket',
+    inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9'
+  }, {
+    inventoryId: 'packing-entry'
+  }, {
+    customName: '   '
+  }, {
+    customName: tooLongPackingListEntryCustomName
+  }, {
+    customName: undefined,
+    inventoryId: undefined
+  }])('should reject invalid packing list entry create body: %j', (body) => {
+    expect(() => validatePackingListEntryCreateBody(body)).toThrow(/./u)
+  })
+
+  test.each([true, false])('should accept packing list entry packed state: %s', (isPacked) => {
+    const result = validatePackingListEntryUpdateBody({
+      isPacked
+    })
+
+    expect(result).toStrictEqual({
+      isPacked
+    })
+  })
+
+  test.each([{}, { isPacked: 'true' }, { isPacked: 1 }, { isPacked: null }])(
+    'should reject invalid packing list entry update body: %j',
+    (body) => {
+      expect(() => validatePackingListEntryUpdateBody(body)).toThrow(/./u)
+    }
+  )
 
   test('should trim group mutation body fields', () => {
     const result = validateGroupMutationBody({

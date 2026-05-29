@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { delay, withMinimumDelay } from '../async'
 
+async function slowTask() {
+  await delay(500)
+  return 'slow'
+}
+
 describe(withMinimumDelay, () => {
   beforeEach(() => {
     vi.useFakeTimers()
@@ -45,11 +50,6 @@ describe(withMinimumDelay, () => {
   })
 
   test('should not add extra delay when the promise takes longer than the timeout', async () => {
-    async function slowTask() {
-      await delay(500)
-      return 'slow'
-    }
-
     const promise = withMinimumDelay(slowTask(), 100)
 
     await vi.advanceTimersByTimeAsync(500)

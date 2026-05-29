@@ -7,10 +7,7 @@
   >
     <UserAvatar :initial="userInitial" />
 
-    <div :class="$style.meta">
-      <strong :class="$style.name">{{ userLabel }}</strong>
-      <span :class="$style.role">{{ userRole }}</span>
-    </div>
+    <strong :class="$style.name">{{ userLabel }}</strong>
   </NuxtLink>
 </template>
 
@@ -20,7 +17,6 @@
   interface Props {
     userInitial: string;
     userLabel: string;
-    userRole: string;
   }
 
   defineProps<Props>()
@@ -32,41 +28,29 @@
     align-items: center;
     gap: var(--spacing-12);
     padding: var(--spacing-8) var(--spacing-12);
-    border-radius: var(--border-radius-16);
-    background: color-mix(in oklch, var(--color-surface-base), transparent 18%);
+    border-radius: var(--border-radius-20);
+    background: var(--color-surface-primary);
     border: 1px solid var(--color-border-subtle);
     text-decoration: none;
     color: inherit;
-    outline: 2px solid transparent;
-    outline-offset: 3px;
     transition:
-      background-color var(--transition-duration-base) var(--transition-easing-out),
-      border-color var(--transition-duration-base) var(--transition-easing-out),
-      box-shadow var(--transition-duration-base) var(--transition-easing-out);
+      background-color var(--transition-duration-normal) var(--transition-easing-standard),
+      border-color var(--transition-duration-normal) var(--transition-easing-standard),
+      box-shadow var(--transition-duration-normal) var(--transition-easing-standard);
 
+    &:hover,
     &:focus-visible {
-      background: var(--color-surface-base);
-      border-color: var(--color-border-subtle);
-    }
-
-    &:hover {
-      background: var(--color-surface-base);
-      border-color: var(--color-border-subtle);
+      background: var(--color-surface-secondary);
+      border-color: var(--color-border-strong);
     }
 
     &:focus-visible {
-      outline-color: var(--color-accent-ring);
+      box-shadow: var(--shadow-focus);
     }
 
     &:global(.active) {
-      box-shadow: inset 3px 0 0 var(--color-accent-base);
+      box-shadow: inset 3px 0 0 var(--color-accent-primary);
     }
-  }
-
-  .meta {
-    min-inline-size: 0;
-    display: grid;
-    gap: 0.15rem;
   }
 
   .name {
@@ -75,13 +59,5 @@
     white-space: nowrap;
     font-size: var(--font-size-14);
     color: var(--color-text-primary);
-  }
-
-  .role {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: var(--font-size-12);
-    color: var(--color-text-muted);
   }
 </style>

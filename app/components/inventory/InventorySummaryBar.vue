@@ -10,9 +10,6 @@
       </p>
     </div>
 
-    <p :class="$style.copy">
-      Everything already in your kit, ready to revisit from the catalog.
-    </p>
   </div>
 </template>
 
@@ -47,19 +44,6 @@
     color: var(--color-text-primary);
     font-size: var(--font-size-24);
     line-height: var(--line-height-snug);
-    font-weight: var(--font-weight-bold);
-  }
-
-  .copy {
-    margin: 0;
-    max-inline-size: 24rem;
-    color: var(--color-text-tertiary);
-    text-align: right;
-  }
-
-  @container (inline-size < 40rem) {
-    .copy {
-      text-align: left;
-    }
+    font-weight: var(--font-weight-semibold);
   }
 </style>

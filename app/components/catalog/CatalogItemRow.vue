@@ -48,21 +48,21 @@
     color: inherit;
     text-decoration: none;
     transition:
-      background-color var(--transition-duration-quick) var(--transition-easing-out),
-      box-shadow var(--transition-duration-quick) var(--transition-easing-out);
+      background-color var(--transition-duration-fast) var(--transition-easing-standard),
+      box-shadow var(--transition-duration-fast) var(--transition-easing-standard);
 
     &:hover {
-      background-color: var(--color-surface-subtle);
+      background-color: var(--color-surface-secondary);
     }
 
     &:focus-visible {
-      background-color: var(--color-surface-subtle);
-      box-shadow: inset 0 0 0 2px var(--color-accent-ring);
+      background-color: var(--color-surface-secondary);
+      box-shadow: inset 0 0 0 2px var(--color-focus-ring);
       outline: none;
     }
 
     &:active {
-      background-color: color-mix(in oklch, var(--color-surface-subtle), var(--color-accent-subtle) 24%);
+      background-color: color-mix(in oklch, var(--color-surface-secondary), var(--color-accent-subtle) 24%);
     }
 
     &:last-child {
@@ -95,7 +95,7 @@
     inline-size: 2.25rem;
     block-size: 2.25rem;
     border-radius: var(--border-radius-12);
-    background-color: var(--color-surface-subtle);
+    background-color: var(--color-surface-secondary);
     color: var(--color-text-secondary);
     border: 1px solid var(--color-border-subtle);
     font-size: 1rem;

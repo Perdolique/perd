@@ -5,7 +5,6 @@
         <span :class="$style.brandMark">
           perd<em :class="$style.brandPunctuation">.</em>
         </span>
-        <span :class="$style.brandMeta">Field companion</span>
       </NuxtLink>
 
       <ShellSidebarNavigation />
@@ -14,7 +13,6 @@
         <ShellUserCard
           :user-initial="userInitial"
           :user-label="userLabel"
-          :user-role="userRole"
         />
 
         <button
@@ -88,8 +86,6 @@
   const userLabel = computed(() => userIdText.value === ''
     ? 'Field user'
     : `User ${userIdText.value.slice(0, 8)}`)
-  const userRole = computed(() => user.value.isAdmin ? 'Admin' : 'Explorer')
-
   async function removeAuthSession() {
     await $fetch('/api/auth/logout', {
       method: 'POST'
@@ -109,7 +105,7 @@
     display: grid;
     grid-template-columns: 1fr;
     background:
-      linear-gradient(180deg, var(--color-background-base), color-mix(in oklch, var(--color-background-base), var(--color-background-sunken) 38%));
+      linear-gradient(180deg, var(--color-background-page), var(--color-background-muted));
 
     @media (width >= 900px) {
       grid-template-columns: var(--layout-sidebar-width) minmax(0, 1fr);
@@ -123,8 +119,8 @@
     block-size: 100dvh;
     padding: var(--spacing-24) var(--spacing-16) var(--spacing-16);
     border-inline-end: 1px solid var(--color-border-subtle);
-    background: var(--color-background-sunken);
-    gap: var(--spacing-16);
+    background: color-mix(in oklch, var(--color-background-elevated) 52%, transparent);
+    gap: var(--spacing-24);
     flex-direction: column;
 
     @media (width >= 900px) {
@@ -134,44 +130,35 @@
 
   .brand {
     display: grid;
-    gap: var(--spacing-8);
+    gap: var(--spacing-4);
     color: inherit;
     text-decoration: none;
-    outline: 2px solid transparent;
-    outline-offset: 3px;
     padding: var(--spacing-8) var(--spacing-12);
-    border-radius: var(--border-radius-16);
+    border-radius: var(--border-radius-14);
 
     &:focus-visible {
-      background: color-mix(in oklch, var(--color-surface-base), transparent 30%);
+      background: color-mix(in oklch, var(--color-surface-primary), transparent 30%);
     }
 
     &:hover {
-      background: color-mix(in oklch, var(--color-surface-base), transparent 30%);
+      background: color-mix(in oklch, var(--color-surface-primary), transparent 30%);
     }
 
     &:focus-visible {
-      outline-color: var(--color-accent-ring);
+      box-shadow: var(--shadow-focus);
     }
   }
 
   .brandMark {
-    font-size: var(--font-size-32);
+    font-size: var(--font-size-30);
     line-height: var(--line-height-tight);
     letter-spacing: 0;
     font-weight: var(--font-weight-bold);
   }
 
   .brandPunctuation {
-    color: var(--color-accent-base);
+    color: var(--color-accent-primary);
     font-style: normal;
-  }
-
-  .brandMeta {
-    font-size: var(--font-size-12);
-    letter-spacing: var(--letter-spacing-label);
-    text-transform: uppercase;
-    color: var(--color-text-muted);
   }
 
   .logoutButton {
@@ -181,36 +168,34 @@
     align-items: center;
     gap: var(--spacing-12);
     inline-size: 100%;
-    min-height: 2.875rem;
+    min-height: var(--layout-touch-target);
     padding: 0 var(--spacing-12);
-    border-radius: var(--border-radius-12);
+    border-radius: var(--border-radius-14);
     color: var(--color-text-secondary);
     background: transparent;
     text-decoration: none;
     border: 1px solid transparent;
-    outline: 2px solid transparent;
-    outline-offset: 3px;
     font: inherit;
     transition:
-      background-color var(--transition-duration-base) var(--transition-easing-out),
-      border-color var(--transition-duration-base) var(--transition-easing-out),
-      color var(--transition-duration-base) var(--transition-easing-out),
-      transform var(--transition-duration-quick) var(--transition-easing-out);
+      background-color var(--transition-duration-normal) var(--transition-easing-standard),
+      border-color var(--transition-duration-normal) var(--transition-easing-standard),
+      color var(--transition-duration-normal) var(--transition-easing-standard),
+      box-shadow var(--transition-duration-normal) var(--transition-easing-standard);
 
     &:focus-visible {
-      background: var(--color-surface-base);
+      background: var(--color-surface-primary);
       border-color: var(--color-border-subtle);
       color: var(--color-text-primary);
     }
 
     &:hover {
-      background: var(--color-surface-base);
+      background: var(--color-surface-primary);
       border-color: var(--color-border-subtle);
       color: var(--color-text-primary);
     }
 
     &:focus-visible {
-      outline-color: var(--color-accent-ring);
+      box-shadow: var(--shadow-focus);
     }
   }
 
