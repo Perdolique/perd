@@ -8,7 +8,7 @@
 
     <div :class="$style.component">
       <PageLoadingState
-        v-if="isInitialLoading"
+        v-if="isItemLoading"
         title="Loading item"
       />
 
@@ -126,7 +126,6 @@
   const isItemLoading = computed(() => itemStatus.value === 'pending')
   const isInventoryLoading = computed(() => inventoryStatus.value === 'pending')
   const hasInventoryError = computed(() => inventoryError.value !== undefined && inventoryError.value !== null)
-  const isInitialLoading = computed(() => isItemLoading.value)
 
   function formatStatus(status: string) {
     if (status === '') {

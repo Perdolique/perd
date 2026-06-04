@@ -36,7 +36,7 @@
           v-else
           :items="catalogItems"
           :is-out-of-range-page="isOutOfRangePage"
-          :show-loading-overlay="showResultsLoadingOverlay"
+          :show-loading-overlay="isRefreshing"
           @go-last="handleGoToLastPage"
         />
 
@@ -112,15 +112,13 @@
       name: item.name
     }
   }))
-  const showResultsLoadingOverlay = computed(() => isRefreshing.value)
-  const shouldDisablePaginationControls = computed(() => isRefreshing.value)
-  const isPreviousPageDisabled = computed(() => canGoPrevious.value === false || shouldDisablePaginationControls.value)
-  const isNextPageDisabled = computed(() => canGoNext.value === false || shouldDisablePaginationControls.value)
+  const isPreviousPageDisabled = computed(() => canGoPrevious.value === false || isRefreshing.value)
+  const isNextPageDisabled = computed(() => canGoNext.value === false || isRefreshing.value)
 
   async function handlePageChange(page: number) {
     const currentPage = routeState.value.page
 
-    if (page === currentPage || shouldDisablePaginationControls.value) {
+    if (page === currentPage || isRefreshing.value) {
       return
     }
 

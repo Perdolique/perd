@@ -133,7 +133,7 @@
                   <input
                     id="new-packing-list-entry-name"
                     v-model="newEntryName"
-                    :disabled="isCustomEntryInputDisabled"
+                    :disabled="isAnyEntryActionPending"
                     :aria-describedby="createEntryDescribedBy"
                     :class="$style.input"
                     name="customName"
@@ -475,7 +475,6 @@
   const isInventoryCreatePending = computed(() => creatingInventoryId.value !== null)
   const isEntryCreatePending = computed(() => isCreatingCustomEntry.value || isInventoryCreatePending.value)
   const isAnyEntryActionPending = computed(() => isEntryCreatePending.value || isEntryMutationPending.value)
-  const isCustomEntryInputDisabled = computed(() => isAnyEntryActionPending.value)
   const isCreateEntryErrorVisible = computed(() => createEntryErrorMessage.value !== null)
   const isEntryMutationErrorVisible = computed(() => entryMutationErrorMessage.value !== null)
   const inventoryEntryIds = computed(() => new Set(

@@ -1,5 +1,5 @@
 <template>
-  <span :class="[$style.component, toneClass]">
+  <span :class="[$style.component, tone]">
     <slot />
   </span>
 </template>
@@ -9,8 +9,6 @@
 </script>
 
 <script lang="ts" setup>
-  import { computed } from 'vue'
-
   interface Props {
     tone?: PerdPillTone;
   }
@@ -18,8 +16,6 @@
   const {
     tone = 'neutral'
   } = defineProps<Props>()
-
-  const toneClass = computed(() => tone)
 </script>
 
 <style module>
