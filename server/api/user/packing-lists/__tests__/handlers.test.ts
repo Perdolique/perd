@@ -62,9 +62,6 @@ vi.mock(import('#server/utils/config'), () => {
   }
 })
 
-type PackingListOrderByCallback = (table: PackingListOrderByTable, helpers: PackingListOrderByHelpers) => unknown
-type PackingListEntryOrderByCallback = (table: PackingListEntryOrderByTable, helpers: PackingListEntryOrderByHelpers) => unknown
-
 interface MockWriteDbClient {
   end: ReturnType<typeof vi.fn>;
 }
@@ -76,7 +73,7 @@ interface MockWriteDb {
 
 interface PackingListFindManyConfig {
   columns: unknown;
-  orderBy: PackingListOrderByCallback;
+  orderBy: PackingListOrderByConfig;
   where: unknown;
   with: unknown;
 }
@@ -93,36 +90,18 @@ interface PackingListWithEntriesConfig {
 
 interface PackingListEntriesConfig {
   columns: unknown;
-  orderBy: PackingListEntryOrderByCallback;
+  orderBy: PackingListEntryOrderByConfig;
   with?: unknown;
 }
 
-interface PackingListOrderByExpression {
-  column: string;
-  direction: 'desc';
+interface PackingListOrderByConfig {
+  createdAt: 'desc';
+  id: 'desc';
 }
 
-interface PackingListOrderByTable {
-  createdAt: 'createdAt';
-  id: 'id';
-}
-
-interface PackingListOrderByHelpers {
-  desc: (column: string) => PackingListOrderByExpression;
-}
-
-interface PackingListEntryOrderByExpression {
-  column: string;
-  direction: 'asc';
-}
-
-interface PackingListEntryOrderByTable {
-  createdAt: 'createdAt';
-  id: 'id';
-}
-
-interface PackingListEntryOrderByHelpers {
-  asc: (column: string) => PackingListEntryOrderByExpression;
+interface PackingListEntryOrderByConfig {
+  createdAt: 'asc';
+  id: 'asc';
 }
 
 interface SelectOperation {
@@ -193,42 +172,6 @@ function createDetailDb(row?: unknown) {
       }
     }
   }
-}
-
-function resolvePackingListOrderBy(orderBy: PackingListOrderByCallback): unknown {
-  const table: PackingListOrderByTable = {
-    createdAt: 'createdAt',
-    id: 'id'
-  }
-
-  const helpers: PackingListOrderByHelpers = {
-    desc(column) {
-      return {
-        column,
-        direction: 'desc'
-      }
-    }
-  }
-
-  return orderBy(table, helpers)
-}
-
-function resolvePackingListEntryOrderBy(orderBy: PackingListEntryOrderByCallback): unknown {
-  const table: PackingListEntryOrderByTable = {
-    createdAt: 'createdAt',
-    id: 'id'
-  }
-
-  const helpers: PackingListEntryOrderByHelpers = {
-    asc(column) {
-      return {
-        column,
-        direction: 'asc'
-      }
-    }
-  }
-
-  return orderBy(table, helpers)
 }
 
 function createCreateDb(createdRow?: unknown) {
@@ -540,15 +483,10 @@ describe('user packing list handlers', () => {
         }
       })
 
-      const orderBy = resolvePackingListOrderBy(findManyConfig.orderBy)
-
-      expect(orderBy).toStrictEqual([{
-        column: 'createdAt',
-        direction: 'desc'
-      }, {
-        column: 'id',
-        direction: 'desc'
-      }])
+      expect(findManyConfig.orderBy).toStrictEqual({
+        createdAt: 'desc',
+        id: 'desc'
+      })
     })
 
     test('should return 401 when the user is unauthenticated', async () => {
@@ -695,15 +633,10 @@ describe('user packing list handlers', () => {
         }
       })
 
-      const entriesOrderBy = resolvePackingListEntryOrderBy(findFirstConfig.with.entries.orderBy)
-
-      expect(entriesOrderBy).toStrictEqual([{
-        column: 'createdAt',
-        direction: 'asc'
-      }, {
-        column: 'id',
-        direction: 'asc'
-      }])
+      expect(findFirstConfig.with.entries.orderBy).toStrictEqual({
+        createdAt: 'asc',
+        id: 'asc'
+      })
     })
 
     test('should return 404 when the packing list is missing or unowned', async () => {

@@ -71,45 +71,16 @@ function createListDb(rows: unknown[]) {
   }
 }
 
-type InventoryOrderByCallback = (table: InventoryOrderByTable, helpers: InventoryOrderByHelpers) => unknown
-
 interface InventoryFindManyConfig {
   columns: unknown;
-  orderBy: InventoryOrderByCallback;
+  orderBy: InventoryOrderByConfig;
   where: unknown;
   with: unknown;
 }
 
-interface InventoryOrderByExpression {
-  column: string;
-  direction: 'desc';
-}
-
-interface InventoryOrderByTable {
-  createdAt: 'createdAt';
-  id: 'id';
-}
-
-interface InventoryOrderByHelpers {
-  desc: (column: string) => InventoryOrderByExpression;
-}
-
-function resolveInventoryOrderBy(orderBy: InventoryOrderByCallback): unknown {
-  const table: InventoryOrderByTable = {
-    createdAt: 'createdAt',
-    id: 'id'
-  }
-
-  const helpers: InventoryOrderByHelpers = {
-    desc(column) {
-      return {
-        column,
-        direction: 'desc'
-      }
-    }
-  }
-
-  return orderBy(table, helpers)
+interface InventoryOrderByConfig {
+  createdAt: 'desc';
+  id: 'desc';
 }
 
 function createCreateDb({
@@ -399,17 +370,10 @@ describe('user equipment handlers', () => {
         }
       })
 
-      expect(typeof findManyConfig.orderBy).toBe('function')
-
-      const orderBy = resolveInventoryOrderBy(findManyConfig.orderBy)
-
-      expect(orderBy).toStrictEqual([{
-        column: 'createdAt',
-        direction: 'desc'
-      }, {
-        column: 'id',
-        direction: 'desc'
-      }])
+      expect(findManyConfig.orderBy).toStrictEqual({
+        createdAt: 'desc',
+        id: 'desc'
+      })
     })
 
     test('should return 401 when the user is unauthenticated', async () => {

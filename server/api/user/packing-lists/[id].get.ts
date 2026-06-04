@@ -1,6 +1,4 @@
 import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
-import type { AnyColumn, SQL } from 'drizzle-orm'
-import type { packingListEntries } from '#server/database/schema'
 import { validatePackingListIdParams } from '#server/utils/validation/schemas'
 import { validateSessionUser } from '#server/utils/session'
 
@@ -148,10 +146,10 @@ export default defineEventHandler(async (event) : Promise<PackingListDetail> => 
           updatedAt: true
         },
 
-        orderBy: (entries: typeof packingListEntries, { asc }: { asc: (column: AnyColumn) => SQL }) => [
-          asc(entries.createdAt),
-          asc(entries.id)
-        ],
+        orderBy: {
+          createdAt: 'asc',
+          id: 'asc'
+        },
 
         with: {
           userEquipment: {

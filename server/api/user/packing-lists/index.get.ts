@@ -1,6 +1,4 @@
-import type { AnyColumn, SQL } from 'drizzle-orm'
 import { defineEventHandler } from 'h3'
-import type { packingLists } from '#server/database/schema'
 import { validateSessionUser } from '#server/utils/session'
 
 interface PackingListSummary {
@@ -38,10 +36,10 @@ export default defineEventHandler(async (event) : Promise<PackingListSummary[]> 
       userId
     },
 
-    orderBy: (lists: typeof packingLists, { desc }: { desc: (column: AnyColumn) => SQL }) => [
-      desc(lists.createdAt),
-      desc(lists.id)
-    ],
+    orderBy: {
+      createdAt: 'desc',
+      id: 'desc'
+    },
 
     with: {
       entries: {
