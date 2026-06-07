@@ -2,20 +2,20 @@
   <div :class="$style.component">
     <div>
       <p :class="$style.label">
-        My gear
+        {{ label }}
       </p>
 
-      <p :class="$style.count">
-        {{ summaryText }}
+      <p :class="$style.value">
+        {{ value }}
       </p>
     </div>
-
   </div>
 </template>
 
 <script lang="ts" setup>
   interface Props {
-    summaryText: string;
+    label: string;
+    value: string;
   }
 
   defineProps<Props>()
@@ -31,15 +31,14 @@
   }
 
   .label {
-    margin: 0;
-    margin-bottom: var(--spacing-8);
+    margin: 0 0 var(--spacing-8);
     color: var(--color-text-muted);
     font-size: var(--font-size-12);
     letter-spacing: var(--letter-spacing-label);
     text-transform: uppercase;
   }
 
-  .count {
+  .value {
     margin: 0;
     color: var(--color-text-primary);
     font-size: var(--font-size-24);

@@ -1,21 +1,7 @@
 <template>
   <NuxtLink :to="packingListPath" :class="$style.component">
     <div :class="$style.header">
-      <div :class="$style.titleRow">
-        <span :class="$style.icon" aria-hidden="true">
-          <Icon name="tabler:route" />
-        </span>
-
-        <div :class="$style.titleBlock">
-          <div :class="$style.label">
-            Pack
-          </div>
-
-          <h2 :class="$style.title">
-            {{ packingList.name }}
-          </h2>
-        </div>
-      </div>
+      <PackingListIdentity :name="packingList.name" />
 
       <dl :class="$style.metaGrid">
         <div :class="$style.metaItem">
@@ -45,6 +31,7 @@
 <script lang="ts" setup>
   import { computed } from 'vue'
   import type { PackingListView } from '~/types/packing'
+  import PackingListIdentity from '~/components/packing/PackingListIdentity.vue'
 
   interface Props {
     packingList: PackingListView;
@@ -72,7 +59,7 @@
       border-color: var(--color-border-strong);
       box-shadow: var(--shadow-medium);
 
-      & .title {
+      & :global(.packing-list-identity-title) {
         color: var(--color-accent-primary);
       }
     }
@@ -81,7 +68,7 @@
       border-color: var(--color-border-strong);
       box-shadow: var(--shadow-focus), var(--shadow-medium);
 
-      & .title {
+      & :global(.packing-list-identity-title) {
         color: var(--color-accent-primary);
       }
     }
@@ -97,54 +84,12 @@
     }
   }
 
-  .titleRow {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: center;
-    gap: var(--spacing-12);
-    min-inline-size: 0;
-  }
-
-  .icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    inline-size: 2.5rem;
-    block-size: 2.5rem;
-    border-radius: var(--border-radius-16);
-    background-color: var(--color-accent-subtle);
-    color: var(--color-accent-primary);
-    font-size: 1.1rem;
-  }
-
-  .titleBlock {
-    display: grid;
-    gap: var(--spacing-4);
-    min-inline-size: 0;
-  }
-
-  .title {
-    margin: 0;
-    color: var(--color-text-primary);
-    font-size: var(--font-size-20);
-    line-height: var(--line-height-snug);
-    font-weight: var(--font-weight-bold);
-    overflow-wrap: anywhere;
-  }
-
   .metaValue {
     margin: 0;
     margin-block-start: var(--spacing-4);
     color: var(--color-text-primary);
     font-weight: var(--font-weight-medium);
     overflow-wrap: anywhere;
-  }
-
-  .label {
-    color: var(--color-text-muted);
-    font-size: var(--font-size-12);
-    letter-spacing: var(--letter-spacing-label);
-    text-transform: uppercase;
   }
 
   .metaLabel {

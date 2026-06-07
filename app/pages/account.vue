@@ -7,22 +7,11 @@
         :user-initial="userInitial"
       />
 
-      <PerdCard :class="[$style.card, $style.dangerCard]">
-        <IconTitle
-          icon="tabler:alert-triangle"
-          :level="2"
-        >
-          Danger
-        </IconTitle>
-
-        <PerdButton
-          variant="danger"
-          icon="tabler:trash"
-          @click="onDeleteClick"
-        >
-          Delete Account
-        </PerdButton>
-      </PerdCard>
+      <DangerActionCard
+        title="Danger"
+        action-text="Delete Account"
+        @action="onDeleteClick"
+      />
     </div>
 
     <ConfirmationDialog
@@ -43,10 +32,8 @@
   import { definePageMeta, navigateTo, useUserStore } from '#imports'
   import AccountProfileCard from '~/components/account/AccountProfileCard.vue'
   import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue'
-  import IconTitle from '~/components/IconTitle.vue'
+  import DangerActionCard from '~/components/DangerActionCard.vue'
   import PageContent from '~/components/layout/PageContent.vue'
-  import PerdButton from '~/components/PerdButton.vue'
-  import PerdCard from '~/components/PerdCard.vue'
 
   definePageMeta({
     layout: 'page'
@@ -94,17 +81,4 @@
     row-gap: var(--spacing-24);
   }
 
-  .card {
-    display: grid;
-    row-gap: var(--spacing-24);
-  }
-
-  .dangerCard {
-    background:
-      linear-gradient(
-        145deg,
-        color-mix(in oklch, var(--color-danger-primary), transparent 94%),
-        var(--color-surface-primary)
-      );
-  }
 </style>

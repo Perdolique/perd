@@ -17,18 +17,7 @@
       </PagePlaceholder>
 
       <div v-else :class="$style.results">
-        <div :class="$style.resultsHeader">
-          <div>
-            <p :class="$style.resultsSummaryLabel">
-              Catalog
-            </p>
-
-            <p :class="$style.resultsSummaryValue">
-              {{ itemsSummaryText }}
-            </p>
-          </div>
-
-        </div>
+        <PageSummaryHeader label="Catalog" :value="itemsSummaryText" />
 
         <PagePlaceholder v-if="isEmpty" emoji="🧺" title="No items yet." />
 
@@ -60,6 +49,7 @@
   import { buildCatalogRouteQuery, getCatalogItemsApiQuery, getCatalogRouteState } from '~/utils/catalog'
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
+  import PageSummaryHeader from '~/components/PageSummaryHeader.vue'
   import PerdButton from '~/components/PerdButton.vue'
   import CatalogPagination from '~/components/catalog/CatalogPagination.vue'
   import CatalogResultsPanel from '~/components/catalog/CatalogResultsPanel.vue'
@@ -158,28 +148,4 @@
     gap: var(--spacing-24);
   }
 
-  .resultsHeader {
-    margin: 0;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: var(--spacing-16);
-    align-items: end;
-  }
-
-  .resultsSummaryLabel {
-    margin: 0 0 var(--spacing-8);
-    color: var(--color-text-muted);
-    font-size: var(--font-size-12);
-    letter-spacing: var(--letter-spacing-label);
-    text-transform: uppercase;
-  }
-
-  .resultsSummaryValue {
-    margin: 0;
-    color: var(--color-text-primary);
-    font-size: var(--font-size-24);
-    line-height: var(--line-height-snug);
-    font-weight: var(--font-weight-semibold);
-  }
 </style>

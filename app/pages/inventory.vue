@@ -25,7 +25,7 @@
       <PagePlaceholder v-else-if="isEmpty" emoji="🧺" title="No saved gear yet." />
 
       <div v-else :class="$style.list">
-        <InventorySummaryBar :summary-text="inventorySummaryText" />
+        <PageSummaryHeader label="My gear" :value="inventorySummaryText" />
 
         <p v-if="removeErrorMessage" :class="$style.errorMessage" role="status">
           {{ removeErrorMessage }}
@@ -48,10 +48,10 @@
   import { definePageMeta, useFetch } from '#imports'
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
+  import PageSummaryHeader from '~/components/PageSummaryHeader.vue'
   import PerdButton from '~/components/PerdButton.vue'
   import PerdLink from '~/components/PerdLink.vue'
   import InventoryItemCard from '~/components/inventory/InventoryItemCard.vue'
-  import InventorySummaryBar from '~/components/inventory/InventorySummaryBar.vue'
   import PageContent from '~/components/layout/PageContent.vue'
 
   definePageMeta({
