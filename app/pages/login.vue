@@ -1,68 +1,81 @@
 <template>
-  <div :class="$style.component">
-    <div :class="$style.layout">
-      <section :class="$style.hero">
-        <p :class="$style.brand">
-          perd<span :class="$style.brandPunctuation">.</span>
-        </p>
+  <main :class="$style.component">
+    <picture :class="$style.backgroundMedia" aria-hidden="true">
+      <source
+        srcset="/images/login-background-desktop.avif"
+        media="(width >= 860px)"
+        type="image/avif"
+      >
 
-        <PerdHeading :level="1" :class="$style.title">
-          Your Adventure Hub
-        </PerdHeading>
+      <source
+        srcset="/images/login-background-mobile.avif"
+        type="image/avif"
+      >
 
-        <p :class="$style.copy">
-          Keep your field kit close, pick up approved catalog entries, and move between routes without losing your place.
-        </p>
-      </section>
+      <img
+        :class="$style.backgroundImage"
+        src="/images/login-background-mobile.avif"
+        width="941"
+        height="1672"
+        alt=""
+        decoding="async"
+        fetchpriority="high"
+        loading="eager"
+      >
+    </picture>
 
-      <section :class="$style.card">
-        <p :class="$style.cardLabel">
-          Access
-        </p>
+    <div :class="$style.content">
+      <div :class="$style.buttons">
+        <PerdButton
+          icon="tabler:brand-among-us"
+          :class="$style.button"
+          :loading="isAuthenticating"
+          @click="signUp"
+        >
+          Guest
+        </PerdButton>
 
-        <PerdHeading :level="2">
-          Sign in to continue
-        </PerdHeading>
-
-        <p :class="$style.cardCopy">
-          Use a quick guest session or continue with Twitch. Redirect flow stays the same.
-        </p>
-
-        <div :class="$style.buttons">
-          <PerdButton
-            icon="tabler:brand-among-us"
-            :class="$style.button"
-            :loading="isAuthenticating"
-            @click="signUp"
-          >
-            Guest
-          </PerdButton>
-
-          <PerdButton
-            variant="secondary"
-            :class="$style.button"
-            icon="tabler:brand-twitch"
-            :loading="isAuthenticating"
-            @click="redirectToTwitch"
-          >
-            Twitch
-          </PerdButton>
-        </div>
-      </section>
+        <PerdButton
+          variant="secondary"
+          :class="$style.button"
+          icon="tabler:brand-twitch"
+          :loading="isAuthenticating"
+          @click="redirectToTwitch"
+        >
+          Twitch
+        </PerdButton>
+      </div>
     </div>
-  </div>
+  </main>
 </template>
 
 <script lang="ts" setup>
   import { ref } from 'vue'
   import { $fetch } from 'ofetch'
-  import { definePageMeta, navigateTo, useRoute, useUserStore, withMinimumDelay } from '#imports'
+  import { definePageMeta, navigateTo, useHead, useRoute, useUserStore, withMinimumDelay } from '#imports'
   import { getRedirectNavigationTarget } from '~/utils/router'
   import PerdButton from '~/components/PerdButton.vue'
-  import PerdHeading from '~/components/PerdHeading.vue'
 
   definePageMeta({
     layout: false
+  })
+
+  useHead({
+    link: [{
+      rel: 'preload',
+      as: 'image',
+      href: '/images/login-background-mobile.avif',
+      type: 'image/avif',
+      media: '(width < 860px)',
+      fetchpriority: 'high'
+    }, {
+      rel: 'preload',
+      as: 'image',
+      href: '/images/login-background-desktop.avif',
+      type: 'image/avif',
+      media: '(width >= 860px)',
+      fetchpriority: 'high'
+    }]
   })
 
   const { user } = useUserStore()
@@ -128,93 +141,64 @@
 
 <style module>
   .component {
+    position: relative;
+    isolation: isolate;
     min-block-size: 100dvh;
     display: grid;
-    padding: var(--spacing-16);
-    background:
-      radial-gradient(circle at top left, color-mix(in oklch, var(--color-accent-base), transparent 88%), transparent 30%),
-      linear-gradient(180deg, var(--color-background-base), var(--color-background-sunken));
-  }
+    place-items: center;
+    overflow: hidden;
+    padding:
+      max(var(--spacing-24), env(safe-area-inset-top))
+      var(--spacing-16)
+      max(var(--spacing-24), env(safe-area-inset-bottom));
+    background: var(--color-background-muted);
+    color: oklch(99% 0 0);
 
-  .layout {
-    inline-size: min(100%, 66rem);
-    margin: auto;
-    display: grid;
-    gap: var(--spacing-24);
+    &::after {
+      content: "";
+      position: absolute;
+      z-index: 1;
+      inset: 0;
+      background:
+        linear-gradient(
+          180deg,
+          color-mix(in oklch, var(--color-overlay-background), transparent 78%),
+          color-mix(in oklch, var(--color-overlay-background), transparent 6%)
+        );
+      pointer-events: none;
+    }
 
     @media (width >= 860px) {
-      grid-template-columns: minmax(0, 1.1fr) minmax(24rem, 0.9fr);
-      align-items: stretch;
+      padding-inline: var(--spacing-32);
     }
   }
 
-  .hero {
-    border-radius: var(--border-radius-24);
-    border: 1px solid var(--color-border-subtle);
-    overflow: hidden;
+  .backgroundMedia {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+  }
+
+  .backgroundImage {
+    inline-size: 100%;
+    block-size: 100%;
+    display: block;
+    object-fit: cover;
+    object-position: center bottom;
+  }
+
+  .content {
+    position: relative;
+    z-index: 2;
+    inline-size: min(100%, 24rem);
+    margin-inline: auto;
     display: grid;
-    align-content: end;
     gap: var(--spacing-16);
-    min-block-size: 24rem;
-    padding: var(--spacing-32) var(--spacing-24);
-    background:
-      linear-gradient(180deg, color-mix(in oklch, var(--color-overlay-background), transparent 46%), transparent 35%),
-      url('/dog_items_1024.webp') right / cover;
-    color: oklch(99% 0 0);
-    box-shadow: var(--shadow-2);
-  }
-
-  .card {
-    border-radius: var(--border-radius-24);
-    border: 1px solid var(--color-border-subtle);
-    overflow: hidden;
-    display: grid;
-    padding: var(--spacing-24) var(--spacing-16);
-    gap: var(--spacing-16);
-    background: var(--color-surface-base);
-  }
-
-  .brand {
-    margin: 0;
-    font-size: var(--font-size-12);
-    letter-spacing: var(--letter-spacing-label);
-    text-transform: uppercase;
-    color: color-mix(in oklch, white, transparent 14%);
-    font-weight: var(--font-weight-bold);
-  }
-
-  .cardLabel {
-    margin: 0;
-    font-size: var(--font-size-12);
-    letter-spacing: var(--letter-spacing-label);
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-  }
-
-  .brandPunctuation {
-    color: color-mix(in oklch, var(--color-accent-base), white 20%);
-  }
-
-  .title {
-    max-inline-size: 10ch;
-    color: inherit;
-  }
-
-  .copy {
-    margin: 0;
-    max-inline-size: 26rem;
-    color: color-mix(in oklch, white, transparent 18%);
-  }
-
-  .cardCopy {
-    margin: 0;
-    color: var(--color-text-tertiary);
   }
 
   .buttons {
     display: grid;
     gap: var(--spacing-12);
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
   }
 
   .button {

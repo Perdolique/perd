@@ -14,24 +14,16 @@ test.describe('Dashboard page', () => {
 
     await page.goto('/')
 
-    await expect(page).toHaveURL(/\/login\?redirectTo=(%2F|\/)$/u)
+    await expect(page).toHaveURL(/\/login\?redirectTo=(?<redirectTo>%2F|\/)$/u)
 
     await page.getByRole('button', { name: 'Guest' }).click()
 
     await expect(page).toHaveURL(/\/$/u)
-    await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
-    await expect(page.getByTestId('page-content-actions')).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Browse catalog' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Open inventory' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Welcome to Perd.' })).toBeVisible()
+    const pageContent = page.getByTestId('page-content')
 
-    await expect(
-      page.getByText(
-        'This route stays intentionally lightweight while the first trip-oriented workflow lands. The live catalog and inventory flows below are ready to use today.'
-      )
-    ).toBeVisible()
-
-    await expect(page.getByRole('link', { name: /Browse approved gear/u })).toBeVisible()
-    await expect(page.getByRole('link', { name: /Manage saved items/u })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible()
+    await expect(pageContent.getByRole('link', { name: 'Packs Plan and check gear' })).toBeVisible()
+    await expect(pageContent.getByRole('link', { name: 'Catalog', exact: true })).toBeVisible()
+    await expect(pageContent.getByRole('link', { name: 'Gear', exact: true })).toBeVisible()
   })
 })

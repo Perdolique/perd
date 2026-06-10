@@ -90,11 +90,11 @@
     row-gap: var(--spacing-24);
     column-gap: var(--spacing-16);
     background:
-      linear-gradient(180deg, var(--color-surface-base), var(--color-surface-subtle));
+      linear-gradient(180deg, var(--color-surface-primary), var(--color-surface-secondary));
     padding: var(--spacing-24);
     border-radius: var(--border-radius-24);
     border: 1px solid var(--color-border-subtle);
-    box-shadow: var(--shadow-3);
+    box-shadow: var(--shadow-large);
   }
 
   .header {

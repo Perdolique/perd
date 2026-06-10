@@ -69,7 +69,7 @@
     border-radius: var(--border-radius-24);
     overflow: hidden;
     border: 1px solid var(--color-border-subtle);
-    background-color: var(--color-surface-base);
+    background-color: var(--color-surface-primary);
   }
 
   .loadingOverlay {
@@ -77,7 +77,7 @@
     inset: 0;
     display: grid;
     place-items: center;
-    background-color: color-mix(in oklch, var(--color-background-base), transparent 18%);
+    background-color: color-mix(in oklch, var(--color-background-page), transparent 18%);
     backdrop-filter: blur(0.35rem);
     border-radius: inherit;
   }

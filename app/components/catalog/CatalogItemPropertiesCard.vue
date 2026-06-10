@@ -69,7 +69,7 @@
     gap: var(--spacing-8);
     padding: var(--spacing-16);
     border-radius: var(--border-radius-16);
-    background-color: var(--color-surface-subtle);
+    background-color: var(--color-surface-secondary);
     border: 1px solid var(--color-border-subtle);
   }
 

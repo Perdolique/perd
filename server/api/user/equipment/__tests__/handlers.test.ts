@@ -1,5 +1,5 @@
 import * as h3 from 'h3'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import deleteInventoryHandler from '#server/api/user/equipment/[id].delete'
 import listInventoryHandler from '#server/api/user/equipment/index.get'
 import createInventoryHandler from '#server/api/user/equipment/index.post'
@@ -71,45 +71,16 @@ function createListDb(rows: unknown[]) {
   }
 }
 
-type InventoryOrderByCallback = (table: InventoryOrderByTable, helpers: InventoryOrderByHelpers) => unknown
-
 interface InventoryFindManyConfig {
   columns: unknown;
-  orderBy: InventoryOrderByCallback;
+  orderBy: InventoryOrderByConfig;
   where: unknown;
   with: unknown;
 }
 
-interface InventoryOrderByExpression {
-  column: string;
-  direction: 'desc';
-}
-
-interface InventoryOrderByTable {
-  createdAt: 'createdAt';
-  id: 'id';
-}
-
-interface InventoryOrderByHelpers {
-  desc: (column: string) => InventoryOrderByExpression;
-}
-
-function resolveInventoryOrderBy(orderBy: InventoryOrderByCallback): unknown {
-  const table: InventoryOrderByTable = {
-    createdAt: 'createdAt',
-    id: 'id'
-  }
-
-  const helpers: InventoryOrderByHelpers = {
-    desc(column) {
-      return {
-        column,
-        direction: 'desc'
-      }
-    }
-  }
-
-  return orderBy(table, helpers)
+interface InventoryOrderByConfig {
+  createdAt: 'desc';
+  id: 'desc';
 }
 
 function createCreateDb({
@@ -170,8 +141,20 @@ function createCreateDb({
   }
 }
 
-function createDeleteDb(deletedRow?: { id: string }) {
-  const deleteReturningMock = vi.fn(() => deletedRow === undefined ? [] : [deletedRow])
+function createDeleteDb({
+  deletedRow,
+  deleteError
+}: {
+  deletedRow?: { id: string };
+  deleteError?: Error;
+} = {}) {
+  const deleteReturningMock = vi.fn(() => {
+    if (deleteError !== undefined) {
+      throw deleteError
+    }
+
+    return deletedRow === undefined ? [] : [deletedRow]
+  })
   const deleteWhereMock = vi.fn(() => {
     return {
       returning: deleteReturningMock
@@ -212,7 +195,7 @@ describe('user equipment handlers', () => {
   })
 
   describe('get /api/user/equipment', () => {
-    test('should return complete current user inventory rows', async () => {
+    it('should return complete current user inventory rows', async () => {
       const dbHttp = createListDb([{
         createdAt: '2026-04-03T09:00:00.000Z',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d3',
@@ -387,20 +370,13 @@ describe('user equipment handlers', () => {
         }
       })
 
-      expect(typeof findManyConfig.orderBy).toBe('function')
-
-      const orderBy = resolveInventoryOrderBy(findManyConfig.orderBy)
-
-      expect(orderBy).toStrictEqual([{
-        column: 'createdAt',
-        direction: 'desc'
-      }, {
-        column: 'id',
-        direction: 'desc'
-      }])
+      expect(findManyConfig.orderBy).toStrictEqual({
+        createdAt: 'desc',
+        id: 'desc'
+      })
     })
 
-    test('should return 401 when the user is unauthenticated', async () => {
+    it('should return 401 when the user is unauthenticated', async () => {
       const authError = h3.createError({ status: 401 })
       const event = createTestEvent(createListDb([]))
 
@@ -413,7 +389,7 @@ describe('user equipment handlers', () => {
   })
 
   describe('post /api/user/equipment', () => {
-    test('should create an inventory row for an approved item', async () => {
+    it('should create an inventory row for an approved item', async () => {
       const createdInventoryRow = {
         createdAt: '2026-04-03T09:00:00.000Z',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
@@ -457,7 +433,7 @@ describe('user equipment handlers', () => {
       })
     })
 
-    test('should return 404 when the item is not approved', async () => {
+    it('should return 404 when the item is not approved', async () => {
       const { dbHttp } = createCreateDb()
       const event = createTestEvent(dbHttp)
 
@@ -466,7 +442,7 @@ describe('user equipment handlers', () => {
       })
     })
 
-    test('should return 409 when the item is already in inventory', async () => {
+    it('should return 409 when the item is already in inventory', async () => {
       const { dbHttp } = createCreateDb({
         approvedItem: {
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
@@ -484,7 +460,7 @@ describe('user equipment handlers', () => {
       })
     })
 
-    test('should return 409 when the insert hits a duplicate constraint', async () => {
+    it('should return 409 when the insert hits a duplicate constraint', async () => {
       const { dbHttp } = createCreateDb({
         approvedItem: {
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
@@ -503,7 +479,7 @@ describe('user equipment handlers', () => {
       })
     })
 
-    test('should return 500 when a duplicate-looking insert error has no PostgreSQL code', async () => {
+    it('should return 500 when a duplicate-looking insert error has no PostgreSQL code', async () => {
       const { dbHttp } = createCreateDb({
         approvedItem: {
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
@@ -520,7 +496,7 @@ describe('user equipment handlers', () => {
       })
     })
 
-    test('should return 400 when body validation fails', async () => {
+    it('should return 400 when body validation fails', async () => {
       const bodyError = h3.createError({ status: 400 })
       const { dbHttp } = createCreateDb()
       const event = createTestEvent(dbHttp)
@@ -534,9 +510,11 @@ describe('user equipment handlers', () => {
   })
 
   describe('delete /api/user/equipment/[id]', () => {
-    test('should delete an inventory row owned by the current user', async () => {
+    it('should delete an inventory row owned by the current user', async () => {
       const { dbHttp, deleteWhereMock } = createDeleteDb({
-        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+        deletedRow: {
+          id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+        }
       })
 
       const event = createTestEvent(dbHttp)
@@ -547,7 +525,7 @@ describe('user equipment handlers', () => {
       expect(setResponseStatusMock).toHaveBeenCalledWith(event, 204)
     })
 
-    test('should return 404 when the row does not belong to the current user', async () => {
+    it('should return 404 when the row does not belong to the current user', async () => {
       const { dbHttp } = createDeleteDb()
       const event = createTestEvent(dbHttp)
 
@@ -556,7 +534,21 @@ describe('user equipment handlers', () => {
       })
     })
 
-    test('should return 400 when route params validation fails', async () => {
+    it('should return 409 when the inventory row is still used in a pack', async () => {
+      const { dbHttp } = createDeleteDb({
+        deleteError: Object.assign(new Error('update or delete on table violates foreign key constraint'), {
+          code: '23503'
+        })
+      })
+      const event = createTestEvent(dbHttp)
+
+      await expect(deleteInventoryHandler(event)).rejects.toMatchObject({
+        message: 'Inventory item is still used in a pack',
+        statusCode: 409
+      })
+    })
+
+    it('should return 400 when route params validation fails', async () => {
       const routeError = h3.createError({ status: 400 })
       const { dbHttp } = createDeleteDb()
       const event = createTestEvent(dbHttp)

@@ -1,7 +1,9 @@
 allowBuilds:
-  '@parcel/watcher': true
-  esbuild: true
-  sharp: true
-  workerd: true
+  '@parcel/watcher': false
+  esbuild: false
+  sharp: false
+  workerd: false
+minimumReleaseAgeExclude:
+  - eslint-config-greenpie@16.3.0
 publicHoistPattern:
   - h3

@@ -4,11 +4,10 @@
       <PageLoadingState
         v-if="isInitialLoading"
         title="Loading catalog"
-        description="We are loading items for this page."
       />
 
-      <PagePlaceholder v-else-if="hasError" emoji="🧭" title="Catalog is temporarily unavailable.">
-        We could not load the catalog right now. Try this request again.
+      <PagePlaceholder v-else-if="hasError" emoji="🧭" title="Catalog unavailable.">
+        Try again.
 
         <template #actions>
           <PerdButton variant="secondary" @click="handleRetry">
@@ -18,31 +17,15 @@
       </PagePlaceholder>
 
       <div v-else :class="$style.results">
-        <div :class="$style.resultsHeader">
-          <div>
-            <p :class="$style.resultsSummaryLabel">
-              Catalog
-            </p>
+        <PageSummaryHeader label="Catalog" :value="itemsSummaryText" />
 
-            <p :class="$style.resultsSummaryValue">
-              {{ itemsSummaryText }}
-            </p>
-          </div>
-
-          <p :class="$style.resultsCopy">
-            Approved gear entries ready for inventory tracking.
-          </p>
-        </div>
-
-        <PagePlaceholder v-if="isEmpty" emoji="🧺" title="No items yet.">
-          We do not have any items to show here yet.
-        </PagePlaceholder>
+        <PagePlaceholder v-if="isEmpty" emoji="🧺" title="No items yet." />
 
         <CatalogResultsPanel
           v-else
           :items="catalogItems"
           :is-out-of-range-page="isOutOfRangePage"
-          :show-loading-overlay="showResultsLoadingOverlay"
+          :show-loading-overlay="isRefreshing"
           @go-last="handleGoToLastPage"
         />
 
@@ -66,6 +49,7 @@
   import { buildCatalogRouteQuery, getCatalogItemsApiQuery, getCatalogRouteState } from '~/utils/catalog'
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
+  import PageSummaryHeader from '~/components/PageSummaryHeader.vue'
   import PerdButton from '~/components/PerdButton.vue'
   import CatalogPagination from '~/components/catalog/CatalogPagination.vue'
   import CatalogResultsPanel from '~/components/catalog/CatalogResultsPanel.vue'
@@ -118,15 +102,13 @@
       name: item.name
     }
   }))
-  const showResultsLoadingOverlay = computed(() => isRefreshing.value)
-  const shouldDisablePaginationControls = computed(() => isRefreshing.value)
-  const isPreviousPageDisabled = computed(() => canGoPrevious.value === false || shouldDisablePaginationControls.value)
-  const isNextPageDisabled = computed(() => canGoNext.value === false || shouldDisablePaginationControls.value)
+  const isPreviousPageDisabled = computed(() => canGoPrevious.value === false || isRefreshing.value)
+  const isNextPageDisabled = computed(() => canGoNext.value === false || isRefreshing.value)
 
   async function handlePageChange(page: number) {
     const currentPage = routeState.value.page
 
-    if (page === currentPage || shouldDisablePaginationControls.value) {
+    if (page === currentPage || isRefreshing.value) {
       return
     }
 
@@ -166,41 +148,4 @@
     gap: var(--spacing-24);
   }
 
-  .resultsHeader {
-    margin: 0;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: var(--spacing-16);
-    align-items: end;
-  }
-
-  .resultsSummaryLabel {
-    margin: 0 0 var(--spacing-8);
-    color: var(--color-text-muted);
-    font-size: var(--font-size-12);
-    letter-spacing: var(--letter-spacing-label);
-    text-transform: uppercase;
-  }
-
-  .resultsSummaryValue {
-    margin: 0;
-    color: var(--color-text-primary);
-    font-size: var(--font-size-24);
-    line-height: var(--line-height-snug);
-    font-weight: var(--font-weight-bold);
-  }
-
-  .resultsCopy {
-    margin: 0;
-    color: var(--color-text-tertiary);
-    max-inline-size: 24rem;
-    text-align: right;
-  }
-
-  @container (inline-size < 40rem) {
-    .resultsCopy {
-      text-align: left;
-    }
-  }
 </style>

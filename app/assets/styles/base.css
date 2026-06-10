@@ -1,41 +1,38 @@
-@layer reset, colors, spacings, sizes, transitions, typography;
+@layer reset, tokens, base;
 
 @import url("./reset.css") layer(reset);
-@import url("./colors.css") layer(colors);
-@import url("./spacings.css") layer(spacings);
-@import url("./sizes.css") layer(sizes);
-@import url("./transitions.css") layer(transitions);
-@import url("./typography.css") layer(typography);
+@import url("./tokens.css");
 
-:root {
-  color-scheme: light dark;
-  font-family: "Inter", sans-serif;
-}
+@layer base {
+  :root {
+    font-family: var(--font-family-sans);
+  }
 
-html,
-body {
-  min-height: 100%;
-}
+  html,
+  body {
+    min-height: 100%;
+  }
 
-body {
-  background-color: var(--color-background-base);
-  color: var(--color-text-primary);
-  line-height: var(--line-height-body);
-  font-size: var(--font-size-16);
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+  body {
+    background-color: var(--color-background-page);
+    color: var(--color-text-primary);
+    line-height: var(--line-height-body);
+    font-size: var(--font-size-16);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-a,
-button,
-input,
-textarea,
-select {
-  font: inherit;
-}
+  a,
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
 
-:focus-visible {
-  outline: 2px solid var(--color-accent-ring);
-  outline-offset: 3px;
+  :focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
 }

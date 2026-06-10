@@ -212,11 +212,58 @@ const packingListIdParamsSchema = v.object({
   id: canonicalUuidV7Schema
 })
 
+const packingListEntryParamsSchema = v.pipe(
+  v.looseObject({
+    id: canonicalUuidV7Schema,
+    entryId: v.optional(canonicalUuidV7Schema),
+    'entry-id': v.optional(canonicalUuidV7Schema)
+  }),
+  v.check((params) => params.entryId !== undefined || params['entry-id'] !== undefined, 'entryId is required'),
+  v.transform((params) => {
+    const entryId = params.entryId ?? params['entry-id']
+
+    if (entryId === undefined) {
+      return {
+        entryId: '',
+        id: params.id
+      }
+    }
+
+    return {
+      entryId,
+      id: params.id
+    }
+  })
+)
+
 const packingListMutationBodySchema = v.object({
   name: v.pipe(
     trimmedNonEmptyStringSchema,
     v.maxLength(limits.maxPackingListNameLength)
   )
+})
+
+const packingListEntryCreateBodySchema = v.pipe(
+  v.object({
+    customName: v.optional(
+      v.pipe(
+        trimmedNonEmptyStringSchema,
+        v.maxLength(limits.maxPackingListEntryCustomNameLength)
+      )
+    ),
+
+    inventoryId: v.optional(canonicalUuidV7Schema)
+  }),
+  v.check((body) => {
+    const hasCustomName = body.customName !== undefined
+    const hasInventoryId = body.inventoryId !== undefined
+
+    return hasCustomName !== hasInventoryId
+  }, 'Exactly one of customName or inventoryId is required')
+)
+
+const packingListEntryUpdateBodySchema = v.object({
+  isPacked: v.boolean()
 })
 
 const itemsListQuerySchema = v.object({
@@ -302,8 +349,20 @@ function validatePackingListIdParams(params: unknown) {
   return v.parse(packingListIdParamsSchema, params)
 }
 
+function validatePackingListEntryParams(params: unknown) {
+  return v.parse(packingListEntryParamsSchema, params)
+}
+
 function validatePackingListMutationBody(body: unknown) {
   return v.parse(packingListMutationBodySchema, body)
+}
+
+function validatePackingListEntryCreateBody(body: unknown) {
+  return v.parse(packingListEntryCreateBodySchema, body)
+}
+
+function validatePackingListEntryUpdateBody(body: unknown) {
+  return v.parse(packingListEntryUpdateBodySchema, body)
 }
 
 function validatePropertyEnumOptionMutationBody(body: unknown) {
@@ -346,6 +405,9 @@ export {
   limitQuerySchema,
   nonEmptyStringSchema,
   pageQuerySchema,
+  packingListEntryCreateBodySchema,
+  packingListEntryParamsSchema,
+  packingListEntryUpdateBodySchema,
   packingListIdParamsSchema,
   packingListMutationBodySchema,
   positiveIntegerIdParamSchema,
@@ -372,6 +434,9 @@ export {
   validateGroupMutationBody,
   validateItemDetailParams,
   validateItemsListQuery,
+  validatePackingListEntryCreateBody,
+  validatePackingListEntryParams,
+  validatePackingListEntryUpdateBody,
   validatePackingListIdParams,
   validatePackingListMutationBody,
   validatePropertyEnumOptionMutationBody,

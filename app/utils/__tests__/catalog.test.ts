@@ -1,8 +1,8 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { buildCatalogRouteQuery, getCatalogItemsApiQuery, getCatalogRouteState } from '../catalog'
 
 describe(getCatalogRouteState, () => {
-  test('should normalize the public catalog page query', () => {
+  it('should normalize the public catalog page query', () => {
     const result = getCatalogRouteState({
       page: '2'
     })
@@ -12,7 +12,7 @@ describe(getCatalogRouteState, () => {
     })
   })
 
-  test('should ignore unsupported query keys and invalid page values', () => {
+  it('should ignore unsupported query keys and invalid page values', () => {
     const result = getCatalogRouteState({
       category: 'sleeping-pads',
       page: 'wat'
@@ -25,7 +25,7 @@ describe(getCatalogRouteState, () => {
 })
 
 describe(getCatalogItemsApiQuery, () => {
-  test('should map only the public page key to the backend query contract', () => {
+  it('should map only the public page key to the backend query contract', () => {
     const result = getCatalogItemsApiQuery({
       category: 'sleeping-pads',
       page: '3'
@@ -36,7 +36,7 @@ describe(getCatalogItemsApiQuery, () => {
     })
   })
 
-  test('should default to the first page when the query is empty', () => {
+  it('should default to the first page when the query is empty', () => {
     const result = getCatalogItemsApiQuery({})
 
     expect(result).toStrictEqual({
@@ -46,7 +46,7 @@ describe(getCatalogItemsApiQuery, () => {
 })
 
 describe(buildCatalogRouteQuery, () => {
-  test('should keep only the public page query key', () => {
+  it('should keep only the public page query key', () => {
     const result = buildCatalogRouteQuery({
       page: 3
     })
@@ -56,7 +56,7 @@ describe(buildCatalogRouteQuery, () => {
     })
   })
 
-  test('should omit page=1 from the public catalog url', () => {
+  it('should omit page=1 from the public catalog url', () => {
     const result = buildCatalogRouteQuery({
       page: 1
     })

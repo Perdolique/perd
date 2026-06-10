@@ -77,8 +77,8 @@
     background:
       linear-gradient(
         145deg,
-        color-mix(in oklch, var(--color-accent-base), transparent 94%),
-        var(--color-surface-base)
+        color-mix(in oklch, var(--color-accent-primary), transparent 94%),
+        var(--color-surface-primary)
       );
   }
 
@@ -126,7 +126,7 @@
     block-size: 2.5rem;
     border-radius: var(--border-radius-16);
     background-color: var(--color-accent-subtle);
-    color: var(--color-accent-base);
+    color: var(--color-accent-primary);
     font-size: 1.1rem;
   }
 

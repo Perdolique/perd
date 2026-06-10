@@ -1,16 +1,14 @@
 <template>
-  <span :class="[$style.component, toneClass]">
+  <span :class="[$style.component, tone]">
     <slot />
   </span>
 </template>
 
 <script lang="ts">
-  export type PerdPillTone = 'neutral' | 'success' | 'warning' | 'danger'
+  export type PerdPillTone = 'brand' | 'danger' | 'info' | 'neutral' | 'success' | 'warning'
 </script>
 
 <script lang="ts" setup>
-  import { computed } from 'vue'
-
   interface Props {
     tone?: PerdPillTone;
   }
@@ -18,8 +16,6 @@
   const {
     tone = 'neutral'
   } = defineProps<Props>()
-
-  const toneClass = computed(() => tone === 'neutral' ? undefined : tone)
 </script>
 
 <style module>
@@ -29,32 +25,39 @@
     gap: var(--spacing-4);
     inline-size: fit-content;
     max-inline-size: 100%;
-    padding: 0.25rem var(--spacing-8);
+    padding: var(--spacing-4) var(--spacing-12);
     border-radius: var(--border-radius-pill);
-    border: 1px solid var(--color-border-subtle);
-    background: var(--color-surface-subtle);
+    border: 1px solid transparent;
+    background: var(--color-surface-tertiary);
     color: var(--color-text-secondary);
     font-size: var(--font-size-12);
     font-weight: var(--font-weight-medium);
     line-height: var(--line-height-snug);
     overflow-wrap: anywhere;
 
+    &:global(.brand) {
+      background: var(--color-accent-subtle);
+      color: var(--color-accent-primary);
+    }
+
     &:global(.success) {
       background: var(--color-success-subtle);
-      border-color: transparent;
-      color: var(--color-success);
+      color: var(--color-success-primary);
     }
 
     &:global(.warning) {
       background: var(--color-warning-subtle);
-      border-color: transparent;
-      color: var(--color-warning);
+      color: var(--color-warning-primary);
     }
 
     &:global(.danger) {
       background: var(--color-danger-subtle);
-      border-color: transparent;
-      color: var(--color-danger);
+      color: var(--color-danger-primary);
+    }
+
+    &:global(.info) {
+      background: var(--color-info-subtle);
+      color: var(--color-info-primary);
     }
   }
 </style>
