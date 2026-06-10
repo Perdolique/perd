@@ -1,5 +1,5 @@
 import * as h3 from 'h3'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import createCategoryHandler from '#server/api/equipment/categories/index.post'
 import type { CategoryBaseRecord } from '#server/utils/equipment/base-records'
 import { createTestEvent } from '~~/test-utils/create-test-event'
@@ -146,7 +146,7 @@ describe('post /api/equipment/categories', () => {
     vi.restoreAllMocks()
   })
 
-  test('should create a category and log a contribution', async () => {
+  it('should create a category and log a contribution', async () => {
     const createdCategory = {
       id: 5,
       name: 'Sleeping Bags',
@@ -179,7 +179,7 @@ describe('post /api/equipment/categories', () => {
     })
   })
 
-  test('should return 401 when user is unauthenticated', async () => {
+  it('should return 401 when user is unauthenticated', async () => {
     const authError = h3.createError({ status: 401 })
     const event = createTestEvent({})
 
@@ -192,7 +192,7 @@ describe('post /api/equipment/categories', () => {
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
-  test('should return 403 when user is not an admin', async () => {
+  it('should return 403 when user is not an admin', async () => {
     const authError = h3.createError({ status: 403 })
     const event = createTestEvent({})
 
@@ -205,7 +205,7 @@ describe('post /api/equipment/categories', () => {
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
-  test('should return 400 when body validation fails', async () => {
+  it('should return 400 when body validation fails', async () => {
     const bodyError = h3.createError({ status: 400 })
     const event = createTestEvent({})
 
@@ -218,7 +218,7 @@ describe('post /api/equipment/categories', () => {
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
-  test('should return 500 when category slug already exists', async () => {
+  it('should return 500 when category slug already exists', async () => {
     const { dbWrite } = createDb()
 
     dbWrite.transaction.mockRejectedValue(new Error('duplicate slug'))
@@ -234,7 +234,7 @@ describe('post /api/equipment/categories', () => {
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
-  test('should return 500 when category creation fails', async () => {
+  it('should return 500 when category creation fails', async () => {
     const { dbWrite } = createDb({
       insertError: new Error('insert failed')
     })
@@ -251,7 +251,7 @@ describe('post /api/equipment/categories', () => {
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
-  test('should return 500 when contribution logging fails after category creation', async () => {
+  it('should return 500 when contribution logging fails after category creation', async () => {
     const { dbWrite } = createDb({
       contributionError: new Error('contribution failed'),
       createdCategory: {
@@ -274,7 +274,7 @@ describe('post /api/equipment/categories', () => {
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
-  test('should return 500 when insert returns no created category', async () => {
+  it('should return 500 when insert returns no created category', async () => {
     const { dbWrite } = createDb()
 
     createWebSocketClientMock.mockReturnValue(dbWrite)

@@ -1,7 +1,7 @@
 import { IncomingMessage, ServerResponse } from 'node:http'
 import { Socket } from 'node:net'
 import { createEvent } from 'h3'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import apiSessionCheckHandler from '#server/middleware/api-session-check'
 
 const {
@@ -48,7 +48,7 @@ describe('api session check middleware', () => {
     vi.restoreAllMocks()
   })
 
-  test('should redirect browser document requests for protected api routes to login', async () => {
+  it('should redirect browser document requests for protected api routes to login', async () => {
     const event = createMiddlewareEvent({
       path: '/api/equipment/brands',
 
@@ -66,7 +66,7 @@ describe('api session check middleware', () => {
     expect(event.node.res.getHeader('location')).toBe('/login?redirectTo=%2Fapi%2Fequipment%2Fbrands')
   })
 
-  test('should reject non-browser api requests with 401', async () => {
+  it('should reject non-browser api requests with 401', async () => {
     const event = createMiddlewareEvent({
       path: '/api/equipment/brands',
 
@@ -81,7 +81,7 @@ describe('api session check middleware', () => {
     })
   })
 
-  test('should skip redirects for public api routes', async () => {
+  it('should skip redirects for public api routes', async () => {
     const event = createMiddlewareEvent({
       path: '/api/oauth/twitch',
 

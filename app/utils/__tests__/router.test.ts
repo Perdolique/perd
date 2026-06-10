@@ -1,8 +1,8 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { getRedirectNavigationTarget } from '../router'
 
 describe(getRedirectNavigationTarget, () => {
-  test('should mark api redirects as external document navigations', () => {
+  it('should mark api redirects as external document navigations', () => {
     const result = getRedirectNavigationTarget('/api/equipment/brands')
 
     expect(result).toStrictEqual({
@@ -11,7 +11,7 @@ describe(getRedirectNavigationTarget, () => {
     })
   })
 
-  test('should keep app routes as internal navigations', () => {
+  it('should keep app routes as internal navigations', () => {
     const result = getRedirectNavigationTarget('/account')
 
     expect(result).toStrictEqual({
@@ -20,7 +20,7 @@ describe(getRedirectNavigationTarget, () => {
     })
   })
 
-  test.each([
+  it.each([
     ['', '/'],
     ['   ', '/'],
     ['https://evil.example/path', '/'],

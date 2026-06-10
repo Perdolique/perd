@@ -1,5 +1,5 @@
 import * as h3 from 'h3'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import deleteBrandHandler from '#server/api/equipment/brands/[id].delete'
 import updateBrandHandler from '#server/api/equipment/brands/[id].patch'
 import type { BrandBaseRecord } from '#server/utils/equipment/base-records'
@@ -241,7 +241,7 @@ describe('patch /api/equipment/brands/[id]', () => {
     vi.restoreAllMocks()
   })
 
-  test('should update a brand and log a contribution', async () => {
+  it('should update a brand and log a contribution', async () => {
     const updatedBrand = {
       id: 12,
       name: 'MSR',
@@ -278,7 +278,7 @@ describe('patch /api/equipment/brands/[id]', () => {
     })
   })
 
-  test('should return 400 when route id is invalid', async () => {
+  it('should return 400 when route id is invalid', async () => {
     const routeError = h3.createError({ status: 400 })
     const event = createTestEvent({})
 
@@ -291,7 +291,7 @@ describe('patch /api/equipment/brands/[id]', () => {
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
-  test('should return 400 when route id is missing', async () => {
+  it('should return 400 when route id is missing', async () => {
     const routeError = h3.createError({ status: 400 })
     const event = createTestEvent({})
 
@@ -304,7 +304,7 @@ describe('patch /api/equipment/brands/[id]', () => {
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
-  test.each([
+  it.each([
     'msr',
     '12-msr'
   ])('should return 400 when route id has invalid format: %s', async (routeId) => {
@@ -323,7 +323,7 @@ describe('patch /api/equipment/brands/[id]', () => {
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
-  test('should return 404 when the target brand does not exist', async () => {
+  it('should return 404 when the target brand does not exist', async () => {
     const { dbWrite } = createPatchDb({})
 
     createWebSocketClientMock.mockReturnValue(dbWrite)
@@ -337,7 +337,7 @@ describe('patch /api/equipment/brands/[id]', () => {
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
-  test('should return 500 when brand slug already exists', async () => {
+  it('should return 500 when brand slug already exists', async () => {
     const { dbWrite } = createPatchDb({})
 
     dbWrite.transaction.mockRejectedValue(new Error('duplicate slug'))
@@ -353,7 +353,7 @@ describe('patch /api/equipment/brands/[id]', () => {
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
-  test('should return 500 when contribution logging fails after brand update', async () => {
+  it('should return 500 when contribution logging fails after brand update', async () => {
     const { dbWrite } = createPatchDb({
       contributionError: new Error('contribution failed'),
 
@@ -376,7 +376,7 @@ describe('patch /api/equipment/brands/[id]', () => {
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
-  test('should return 500 when brand update fails', async () => {
+  it('should return 500 when brand update fails', async () => {
     const { dbWrite } = createPatchDb({
       updateError: new Error('update failed')
     })
@@ -409,7 +409,7 @@ describe('delete /api/equipment/brands/[id]', () => {
     vi.restoreAllMocks()
   })
 
-  test('should delete a brand and log a contribution', async () => {
+  it('should delete a brand and log a contribution', async () => {
     const deletedBrand = {
       id: 12,
       name: 'MSR',
@@ -442,7 +442,7 @@ describe('delete /api/equipment/brands/[id]', () => {
     })
   })
 
-  test('should return 400 when route id is missing', async () => {
+  it('should return 400 when route id is missing', async () => {
     const routeError = h3.createError({ status: 400 })
     const event = createTestEvent({})
 
@@ -455,7 +455,7 @@ describe('delete /api/equipment/brands/[id]', () => {
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
-  test('should return 404 when the target brand does not exist', async () => {
+  it('should return 404 when the target brand does not exist', async () => {
     const { dbWrite } = createDeleteDb({})
 
     createWebSocketClientMock.mockReturnValue(dbWrite)
@@ -469,7 +469,7 @@ describe('delete /api/equipment/brands/[id]', () => {
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
-  test.each([
+  it.each([
     'msr',
     '12-msr'
   ])('should return 400 when route id has invalid format: %s', async (routeId) => {
@@ -488,7 +488,7 @@ describe('delete /api/equipment/brands/[id]', () => {
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
-  test('should return 500 when contribution logging fails after brand delete', async () => {
+  it('should return 500 when contribution logging fails after brand delete', async () => {
     const { dbWrite } = createDeleteDb({
       contributionError: new Error('contribution failed'),
 
@@ -511,7 +511,7 @@ describe('delete /api/equipment/brands/[id]', () => {
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
-  test('should return 500 when brand delete fails', async () => {
+  it('should return 500 when brand delete fails', async () => {
     const { dbWrite } = createDeleteDb({
       deleteError: new Error('delete failed')
     })

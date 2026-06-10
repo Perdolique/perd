@@ -1,5 +1,5 @@
 import * as h3 from 'h3'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import brandDetailHandler from '#server/api/equipment/brands/[slug].get'
 import listBrandsHandler from '#server/api/equipment/brands/index.get'
 import { createTestEvent } from '~~/test-utils/create-test-event'
@@ -110,7 +110,7 @@ describe('brand read handlers', () => {
   })
 
   describe('get /api/equipment/brands', () => {
-    test('should return all brands when search is empty', async () => {
+    it('should return all brands when search is empty', async () => {
       const brands = [{
         id: 1,
         name: 'MSR',
@@ -132,7 +132,7 @@ describe('brand read handlers', () => {
       expect(whereMock).not.toHaveBeenCalled()
     })
 
-    test('should return filtered brands when search is present', async () => {
+    it('should return filtered brands when search is present', async () => {
       const filteredBrands = [{
         id: 1,
         name: 'MSR',
@@ -155,7 +155,7 @@ describe('brand read handlers', () => {
       expect(whereMock).toHaveBeenCalledTimes(1)
     })
 
-    test('should return 400 when query validation fails', async () => {
+    it('should return 400 when query validation fails', async () => {
       const queryError = h3.createError({ status: 400 })
       const { dbHttp } = createListDb()
       const event = createTestEvent(dbHttp)
@@ -169,7 +169,7 @@ describe('brand read handlers', () => {
   })
 
   describe('get /api/equipment/brands/[slug]', () => {
-    test('should return brand detail for a known slug', async () => {
+    it('should return brand detail for a known slug', async () => {
       const brand = {
         id: 1,
         name: 'MSR',
@@ -184,7 +184,7 @@ describe('brand read handlers', () => {
       expect(findFirstMock).toHaveBeenCalledTimes(1)
     })
 
-    test('should return 400 when route param is missing', async () => {
+    it('should return 400 when route param is missing', async () => {
       const routeError = h3.createError({ status: 400 })
       const { dbHttp } = createDetailDb()
       const event = createTestEvent(dbHttp)
@@ -196,7 +196,7 @@ describe('brand read handlers', () => {
       })
     })
 
-    test('should return 404 when brand slug does not exist', async () => {
+    it('should return 404 when brand slug does not exist', async () => {
       const { dbHttp } = createDetailDb()
       const event = createTestEvent(dbHttp)
 

@@ -1,5 +1,5 @@
 import * as h3 from 'h3'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import deletePackingListHandler from '#server/api/user/packing-lists/[id].delete'
 import deletePackingListEntryHandler from '#server/api/user/packing-lists/[id]/entries/[entry-id].delete'
 import updatePackingListEntryHandler from '#server/api/user/packing-lists/[id]/entries/[entry-id].patch'
@@ -432,7 +432,7 @@ describe('user packing list handlers', () => {
   })
 
   describe('get /api/user/packing-lists', () => {
-    test('should return packing lists scoped to the current user', async () => {
+    it('should return packing lists scoped to the current user', async () => {
       const rows = [{
         createdAt: '2026-04-03T09:00:00.000Z',
         entries: [{
@@ -489,7 +489,7 @@ describe('user packing list handlers', () => {
       })
     })
 
-    test('should return 401 when the user is unauthenticated', async () => {
+    it('should return 401 when the user is unauthenticated', async () => {
       const authError = h3.createError({ status: 401 })
       const event = createTestEvent(createListDb([]))
 
@@ -502,7 +502,7 @@ describe('user packing list handlers', () => {
   })
 
   describe('get /api/user/packing-lists/[id]', () => {
-    test('should return an owned packing list', async () => {
+    it('should return an owned packing list', async () => {
       const row = {
         createdAt: '2026-04-03T09:00:00.000Z',
         entries: [{
@@ -639,7 +639,7 @@ describe('user packing list handlers', () => {
       })
     })
 
-    test('should return 404 when the packing list is missing or unowned', async () => {
+    it('should return 404 when the packing list is missing or unowned', async () => {
       const dbHttp = createDetailDb()
       const event = createTestEvent(dbHttp)
 
@@ -648,7 +648,7 @@ describe('user packing list handlers', () => {
       })
     })
 
-    test('should return 401 when the user is unauthenticated', async () => {
+    it('should return 401 when the user is unauthenticated', async () => {
       const authError = h3.createError({ status: 401 })
       const dbHttp = createDetailDb()
       const event = createTestEvent(dbHttp)
@@ -662,7 +662,7 @@ describe('user packing list handlers', () => {
   })
 
   describe('post /api/user/packing-lists', () => {
-    test('should create a packing list for the current user', async () => {
+    it('should create a packing list for the current user', async () => {
       const createdRow = {
         createdAt: '2026-04-03T09:00:00.000Z',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
@@ -682,7 +682,7 @@ describe('user packing list handlers', () => {
       })
     })
 
-    test('should return 400 when body validation fails', async () => {
+    it('should return 400 when body validation fails', async () => {
       const bodyError = h3.createError({ status: 400 })
       const { dbHttp } = createCreateDb()
       const event = createTestEvent(dbHttp)
@@ -694,7 +694,7 @@ describe('user packing list handlers', () => {
       })
     })
 
-    test('should return 401 when the user is unauthenticated', async () => {
+    it('should return 401 when the user is unauthenticated', async () => {
       const authError = h3.createError({ status: 401 })
       const { dbHttp } = createCreateDb()
       const event = createTestEvent(dbHttp)
@@ -708,7 +708,7 @@ describe('user packing list handlers', () => {
   })
 
   describe('patch /api/user/packing-lists/[id]', () => {
-    test('should rename an owned packing list', async () => {
+    it('should rename an owned packing list', async () => {
       const updatedRow = {
         createdAt: '2026-04-03T09:00:00.000Z',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
@@ -731,7 +731,7 @@ describe('user packing list handlers', () => {
       expect(updateWhereMock).toHaveBeenCalledTimes(1)
     })
 
-    test('should return 404 when the packing list is missing or unowned', async () => {
+    it('should return 404 when the packing list is missing or unowned', async () => {
       const { dbHttp } = createUpdateDb()
       const event = createTestEvent(dbHttp)
 
@@ -740,7 +740,7 @@ describe('user packing list handlers', () => {
       })
     })
 
-    test('should return 400 when route params validation fails', async () => {
+    it('should return 400 when route params validation fails', async () => {
       const routeError = h3.createError({ status: 400 })
       const { dbHttp } = createUpdateDb()
       const event = createTestEvent(dbHttp)
@@ -752,7 +752,7 @@ describe('user packing list handlers', () => {
       })
     })
 
-    test('should return 401 when the user is unauthenticated', async () => {
+    it('should return 401 when the user is unauthenticated', async () => {
       const authError = h3.createError({ status: 401 })
       const { dbHttp } = createUpdateDb()
       const event = createTestEvent(dbHttp)
@@ -766,7 +766,7 @@ describe('user packing list handlers', () => {
   })
 
   describe('delete /api/user/packing-lists/[id]', () => {
-    test('should delete an owned packing list', async () => {
+    it('should delete an owned packing list', async () => {
       const { dbHttp, deleteWhereMock } = createDeleteDb({
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
       })
@@ -779,7 +779,7 @@ describe('user packing list handlers', () => {
       expect(setResponseStatusMock).toHaveBeenCalledWith(event, 204)
     })
 
-    test('should return 404 when the packing list is missing or unowned', async () => {
+    it('should return 404 when the packing list is missing or unowned', async () => {
       const { dbHttp } = createDeleteDb()
       const event = createTestEvent(dbHttp)
 
@@ -788,7 +788,7 @@ describe('user packing list handlers', () => {
       })
     })
 
-    test('should return 401 when the user is unauthenticated', async () => {
+    it('should return 401 when the user is unauthenticated', async () => {
       const authError = h3.createError({ status: 401 })
       const { dbHttp } = createDeleteDb()
       const event = createTestEvent(dbHttp)
@@ -802,7 +802,7 @@ describe('user packing list handlers', () => {
   })
 
   describe('post /api/user/packing-lists/[id]/entries', () => {
-    test('should create a custom entry and touch the parent packing list', async () => {
+    it('should create a custom entry and touch the parent packing list', async () => {
       const createdEntry = {
         createdAt: '2026-04-03T09:01:00.000Z',
         customName: 'Rain jacket',
@@ -857,7 +857,7 @@ describe('user packing list handlers', () => {
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
 
-    test('should create an inventory entry and touch the parent packing list', async () => {
+    it('should create an inventory entry and touch the parent packing list', async () => {
       const createdEntry = {
         createdAt: '2026-04-03T09:01:00.000Z',
         customName: null,
@@ -926,7 +926,7 @@ describe('user packing list handlers', () => {
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
 
-    test('should return 404 when the inventory row is missing or unowned', async () => {
+    it('should return 404 when the inventory row is missing or unowned', async () => {
       readValidatedBodyMock.mockResolvedValue({
         inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9'
       })
@@ -959,7 +959,7 @@ describe('user packing list handlers', () => {
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
 
-    test('should return 409 when the inventory item is already in the pack', async () => {
+    it('should return 409 when the inventory item is already in the pack', async () => {
       readValidatedBodyMock.mockResolvedValue({
         inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9'
       })
@@ -1000,7 +1000,7 @@ describe('user packing list handlers', () => {
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
 
-    test('should return 404 when the parent packing list is missing or unowned', async () => {
+    it('should return 404 when the parent packing list is missing or unowned', async () => {
       readValidatedBodyMock.mockResolvedValue({
         customName: 'Rain jacket'
       })
@@ -1029,7 +1029,7 @@ describe('user packing list handlers', () => {
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
 
-    test('should return 400 when create body validation fails before opening a write client', async () => {
+    it('should return 400 when create body validation fails before opening a write client', async () => {
       const bodyError = h3.createError({ status: 400 })
       const event = createTestEvent({})
 
@@ -1043,7 +1043,7 @@ describe('user packing list handlers', () => {
   })
 
   describe('patch /api/user/packing-lists/[id]/entries/[entryId]', () => {
-    test('should toggle a custom entry and touch the parent packing list', async () => {
+    it('should toggle a custom entry and touch the parent packing list', async () => {
       const updatedEntry = {
         createdAt: '2026-04-03T09:01:00.000Z',
         customName: 'Rain jacket',
@@ -1101,7 +1101,7 @@ describe('user packing list handlers', () => {
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
 
-    test('should toggle an inventory entry and keep its inventory metadata', async () => {
+    it('should toggle an inventory entry and keep its inventory metadata', async () => {
       const updatedEntry = {
         createdAt: '2026-04-03T09:01:00.000Z',
         customName: null,
@@ -1173,7 +1173,7 @@ describe('user packing list handlers', () => {
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
 
-    test('should return 404 when the entry is missing from the owned packing list', async () => {
+    it('should return 404 when the entry is missing from the owned packing list', async () => {
       getValidatedRouterParamsMock.mockResolvedValue({
         entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
@@ -1207,7 +1207,7 @@ describe('user packing list handlers', () => {
   })
 
   describe('delete /api/user/packing-lists/[id]/entries/[entryId]', () => {
-    test('should delete a custom entry and touch the parent packing list', async () => {
+    it('should delete a custom entry and touch the parent packing list', async () => {
       getValidatedRouterParamsMock.mockResolvedValue({
         entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
@@ -1247,7 +1247,7 @@ describe('user packing list handlers', () => {
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
 
-    test('should return 404 when the parent packing list is missing or unowned', async () => {
+    it('should return 404 when the parent packing list is missing or unowned', async () => {
       getValidatedRouterParamsMock.mockResolvedValue({
         entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'

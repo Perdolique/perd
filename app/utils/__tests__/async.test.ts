@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { delay, withMinimumDelay } from '../async'
 
 async function slowTask() {
@@ -16,7 +16,7 @@ describe(withMinimumDelay, () => {
     vi.useRealTimers()
   })
 
-  test('should return the resolved value of the promise', async () => {
+  it('should return the resolved value of the promise', async () => {
     const promise = withMinimumDelay(Promise.resolve('hello'), 100)
 
     await vi.advanceTimersByTimeAsync(100)
@@ -24,7 +24,7 @@ describe(withMinimumDelay, () => {
     await expect(promise).resolves.toBe('hello')
   })
 
-  test('should reject when the original promise rejects', async () => {
+  it('should reject when the original promise rejects', async () => {
     const promise = withMinimumDelay(Promise.reject(new Error('boom')), 100)
     const assertion = expect(promise).rejects.toThrow('boom')
 
@@ -33,7 +33,7 @@ describe(withMinimumDelay, () => {
     await assertion
   })
 
-  test('should wait for the minimum delay even if the promise resolves instantly', async () => {
+  it('should wait for the minimum delay even if the promise resolves instantly', async () => {
     let resolved = false
     const promise = withMinimumDelay(Promise.resolve('fast'), 500)
 
@@ -49,7 +49,7 @@ describe(withMinimumDelay, () => {
     expect(resolved).toBe(true)
   })
 
-  test('should not add extra delay when the promise takes longer than the timeout', async () => {
+  it('should not add extra delay when the promise takes longer than the timeout', async () => {
     const promise = withMinimumDelay(slowTask(), 100)
 
     await vi.advanceTimersByTimeAsync(500)
@@ -57,7 +57,7 @@ describe(withMinimumDelay, () => {
     await expect(promise).resolves.toBe('slow')
   })
 
-  test('should use default timeout of 250ms when not specified', async () => {
+  it('should use default timeout of 250ms when not specified', async () => {
     let resolved = false
     const promise = withMinimumDelay(Promise.resolve('default'))
 

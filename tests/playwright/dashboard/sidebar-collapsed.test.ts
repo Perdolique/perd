@@ -42,7 +42,7 @@ test.describe('Shell navigation', () => {
 
     await page.goto('/')
 
-    await expect(page).toHaveURL(/\/login\?redirectTo=(%2F|\/)$/u)
+    await expect(page).toHaveURL(/\/login\?redirectTo=(?<redirectTo>%2F|\/)$/u)
 
     await page.getByRole('button', { name: 'Guest' }).click()
 

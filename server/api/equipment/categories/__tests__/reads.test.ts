@@ -1,5 +1,5 @@
 import * as h3 from 'h3'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import categoryDetailHandler from '#server/api/equipment/categories/[slug].get'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
@@ -75,7 +75,7 @@ describe('get /api/equipment/categories/[slug]', () => {
     vi.restoreAllMocks()
   })
 
-  test('should return category detail and keep enum options only for enum properties', async () => {
+  it('should return category detail and keep enum options only for enum properties', async () => {
     const category = {
       id: 1,
       name: 'Sleeping Bags',
@@ -137,7 +137,7 @@ describe('get /api/equipment/categories/[slug]', () => {
     expect(findFirstMock).toHaveBeenCalledTimes(1)
   })
 
-  test('should return 400 when route params validation fails', async () => {
+  it('should return 400 when route params validation fails', async () => {
     const routeError = h3.createError({ status: 400 })
     const { dbHttp } = createDetailDb()
     const event = createTestEvent(dbHttp)
@@ -149,7 +149,7 @@ describe('get /api/equipment/categories/[slug]', () => {
     })
   })
 
-  test('should return 404 when category slug does not exist', async () => {
+  it('should return 404 when category slug does not exist', async () => {
     const { dbHttp } = createDetailDb()
     const event = createTestEvent(dbHttp)
 

@@ -1,5 +1,5 @@
 import * as h3 from 'h3'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import createGroupHandler from '#server/api/equipment/groups/index.post'
 import type { EquipmentGroupBaseRecord } from '#server/utils/equipment/base-records'
 import { createTestEvent } from '~~/test-utils/create-test-event'
@@ -146,7 +146,7 @@ describe('post /api/equipment/groups', () => {
     vi.restoreAllMocks()
   })
 
-  test('should create a group and log a contribution', async () => {
+  it('should create a group and log a contribution', async () => {
     const createdGroup = {
       id: 7,
       name: 'Sleep',
@@ -179,7 +179,7 @@ describe('post /api/equipment/groups', () => {
     })
   })
 
-  test('should return 401 when user is unauthenticated', async () => {
+  it('should return 401 when user is unauthenticated', async () => {
     const authError = h3.createError({ status: 401 })
     const event = createTestEvent({})
 
@@ -192,7 +192,7 @@ describe('post /api/equipment/groups', () => {
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
-  test('should return 403 when user is not an admin', async () => {
+  it('should return 403 when user is not an admin', async () => {
     const authError = h3.createError({ status: 403 })
     const event = createTestEvent({})
 
@@ -205,7 +205,7 @@ describe('post /api/equipment/groups', () => {
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
-  test('should return 400 when body validation fails', async () => {
+  it('should return 400 when body validation fails', async () => {
     const bodyError = h3.createError({ status: 400 })
     const event = createTestEvent({})
 
@@ -218,7 +218,7 @@ describe('post /api/equipment/groups', () => {
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
-  test('should return 500 when group slug already exists', async () => {
+  it('should return 500 when group slug already exists', async () => {
     const { dbWrite } = createDb()
 
     dbWrite.transaction.mockRejectedValue(new Error('duplicate slug'))
@@ -234,7 +234,7 @@ describe('post /api/equipment/groups', () => {
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
-  test('should return 500 when group creation fails', async () => {
+  it('should return 500 when group creation fails', async () => {
     const { dbWrite } = createDb({
       insertError: new Error('insert failed')
     })
@@ -251,7 +251,7 @@ describe('post /api/equipment/groups', () => {
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
-  test('should return 500 when contribution logging fails after group creation', async () => {
+  it('should return 500 when contribution logging fails after group creation', async () => {
     const { dbWrite } = createDb({
       contributionError: new Error('contribution failed'),
 

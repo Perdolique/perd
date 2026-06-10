@@ -1,5 +1,5 @@
 import * as h3 from 'h3'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import itemDetailHandler from '#server/api/equipment/items/[id].get'
 import listItemsHandler from '#server/api/equipment/items/index.get'
 import { createTestEvent } from '~~/test-utils/create-test-event'
@@ -155,7 +155,7 @@ describe('item read handlers', () => {
   })
 
   describe('get /api/equipment/items', () => {
-    test('should return paginated items list', async () => {
+    it('should return paginated items list', async () => {
       const items = [{
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
         name: 'NeoAir XLite NXT Regular',
@@ -201,7 +201,7 @@ describe('item read handlers', () => {
       expect(itemsOffsetMock).toHaveBeenCalledWith(10)
     })
 
-    test('should use the clamped list limit returned by query validation', async () => {
+    it('should use the clamped list limit returned by query validation', async () => {
       const items = [{
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
         name: 'PocketRocket Deluxe',
@@ -245,7 +245,7 @@ describe('item read handlers', () => {
       expect(itemsOffsetMock).toHaveBeenCalledWith(200)
     })
 
-    test('should return 400 when query validation fails', async () => {
+    it('should return 400 when query validation fails', async () => {
       const queryError = h3.createError({ status: 400 })
       const { dbHttp } = createListDb()
       const event = createTestEvent(dbHttp)
@@ -259,7 +259,7 @@ describe('item read handlers', () => {
   })
 
   describe('get /api/equipment/items/[id]', () => {
-    test('should return item detail with normalized property values', async () => {
+    it('should return item detail with normalized property values', async () => {
       const item = {
         createdAt: '2026-04-01T00:00:00Z',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
@@ -366,7 +366,7 @@ describe('item read handlers', () => {
       expect(findFirstMock).toHaveBeenCalledTimes(1)
     })
 
-    test('should return 400 when route params validation fails', async () => {
+    it('should return 400 when route params validation fails', async () => {
       const routeError = h3.createError({ status: 400 })
       const { dbHttp } = createDetailDb()
       const event = createTestEvent(dbHttp)
@@ -378,7 +378,7 @@ describe('item read handlers', () => {
       })
     })
 
-    test('should return 404 when item id does not exist', async () => {
+    it('should return 404 when item id does not exist', async () => {
       const { dbHttp } = createDetailDb()
       const event = createTestEvent(dbHttp)
 

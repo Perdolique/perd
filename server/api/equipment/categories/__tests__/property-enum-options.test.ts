@@ -1,5 +1,5 @@
 import * as h3 from 'h3'
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import deletePropertyEnumOptionHandler from '#server/api/equipment/categories/[categoryId]/properties/[propertyId]/enum-options/[optionId]/index.delete'
 import createPropertyEnumOptionHandler from '#server/api/equipment/categories/[categoryId]/properties/[propertyId]/enum-options/index.post'
 import type { PropertyEnumOptionBaseRecord } from '#server/utils/equipment/base-records'
@@ -230,7 +230,7 @@ describe('property enum option handlers', () => {
   })
 
   describe('post /api/equipment/categories/[categoryId]/properties/[propertyId]/enum-options', () => {
-    test('should create a property enum option and log a contribution', async () => {
+    it('should create a property enum option and log a contribution', async () => {
       const createdOption: PropertyEnumOptionBaseRecord = {
         id: 21,
         name: 'Down',
@@ -291,7 +291,7 @@ describe('property enum option handlers', () => {
       })
     })
 
-    test('should return 404 when category property does not exist', async () => {
+    it('should return 404 when category property does not exist', async () => {
       readValidatedBodyMock.mockResolvedValue({
         name: 'Down',
         slug: 'down'
@@ -319,7 +319,7 @@ describe('property enum option handlers', () => {
       expect(insertMock).not.toHaveBeenCalled()
     })
 
-    test('should return 400 when property is not enum', async () => {
+    it('should return 400 when property is not enum', async () => {
       readValidatedBodyMock.mockResolvedValue({
         name: 'Down',
         slug: 'down'
@@ -351,7 +351,7 @@ describe('property enum option handlers', () => {
       expect(insertMock).not.toHaveBeenCalled()
     })
 
-    test('should return 409 when property enum option slug already exists', async () => {
+    it('should return 409 when property enum option slug already exists', async () => {
       readValidatedBodyMock.mockResolvedValue({
         name: 'Down',
         slug: 'down'
@@ -387,7 +387,7 @@ describe('property enum option handlers', () => {
       expect(insertMock).not.toHaveBeenCalled()
     })
 
-    test('should return 400 when body validation fails', async () => {
+    it('should return 400 when body validation fails', async () => {
       const bodyError = h3.createError({ status: 400 })
       const event = createTestEvent({})
 
@@ -410,7 +410,7 @@ describe('property enum option handlers', () => {
       })
     })
 
-    test('should delete a property enum option and log a contribution', async () => {
+    it('should delete a property enum option and log a contribution', async () => {
       const deletedOption: PropertyEnumOptionBaseRecord = {
         id: 21,
         name: 'Down',
@@ -458,7 +458,7 @@ describe('property enum option handlers', () => {
       })
     })
 
-    test('should return 404 when category property does not exist', async () => {
+    it('should return 404 when category property does not exist', async () => {
       const { insertMock } = createInsertMock([])
       const { selectMock } = createSelectMock([{
         rows: []
@@ -485,7 +485,7 @@ describe('property enum option handlers', () => {
       expect(deleteMock).not.toHaveBeenCalled()
     })
 
-    test('should return 404 when property enum option does not belong to property', async () => {
+    it('should return 404 when property enum option does not belong to property', async () => {
       const { insertMock } = createInsertMock([])
       const { selectMock } = createSelectMock([{
         rows: []
@@ -512,7 +512,7 @@ describe('property enum option handlers', () => {
       expect(deleteMock).not.toHaveBeenCalled()
     })
 
-    test('should return 409 when property enum option is already used by item values', async () => {
+    it('should return 409 when property enum option is already used by item values', async () => {
       const deletedOption: PropertyEnumOptionBaseRecord = {
         id: 21,
         name: 'Down',
@@ -550,7 +550,7 @@ describe('property enum option handlers', () => {
       expect(deleteMock).not.toHaveBeenCalled()
     })
 
-    test('should return 400 when route params validation fails', async () => {
+    it('should return 400 when route params validation fails', async () => {
       const routeError = h3.createError({ status: 400 })
       const event = createTestEvent({})
 

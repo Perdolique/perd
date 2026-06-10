@@ -3,5 +3,7 @@ allowBuilds:
   esbuild: false
   sharp: false
   workerd: false
+minimumReleaseAgeExclude:
+  - eslint-config-greenpie@16.3.0
 publicHoistPattern:
   - h3

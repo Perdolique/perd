@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { limits } from '#shared/constants'
 import {
   validateBrandDetailParams,
@@ -70,7 +70,7 @@ describe('validation schemas', () => {
     'sleep--bags'
   ]
 
-  test('should convert numeric brand id params to number', () => {
+  it('should convert numeric brand id params to number', () => {
     const result = validateBrandIdParams({
       id: '12'
     })
@@ -80,11 +80,11 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each([{}, { id: '' }, { id: '0' }, { id: '01' }, { id: 'msr' }])('should reject invalid brand id params: %j', (params) => {
+  it.each([{}, { id: '' }, { id: '0' }, { id: '01' }, { id: 'msr' }])('should reject invalid brand id params: %j', (params) => {
     expect(() => validateBrandIdParams(params)).toThrow(/./u)
   })
 
-  test('should trim brand detail slug params', () => {
+  it('should trim brand detail slug params', () => {
     const result = validateBrandDetailParams({
       slug: '  msr  '
     })
@@ -94,13 +94,13 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each(invalidReferenceSlugs)('should reject invalid brand detail slug params: %s', (slug) => {
+  it.each(invalidReferenceSlugs)('should reject invalid brand detail slug params: %s', (slug) => {
     expect(() => validateBrandDetailParams({
       slug
     })).toThrow(/./u)
   })
 
-  test('should trim brand mutation body fields', () => {
+  it('should trim brand mutation body fields', () => {
     const result = validateBrandMutationBody({
       name: '  MSR  ',
       slug: '  msr  '
@@ -112,7 +112,7 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each([{
+  it.each([{
     name: '   ',
     slug: 'msr'
   }, {
@@ -122,7 +122,7 @@ describe('validation schemas', () => {
     expect(() => validateBrandMutationBody(body)).toThrow(/./u)
   })
 
-  test('should accept brand mutation body at max field lengths', () => {
+  it('should accept brand mutation body at max field lengths', () => {
     const result = validateBrandMutationBody({
       name: maxBrandName,
       slug: maxBrandSlug
@@ -134,7 +134,7 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each([{
+  it.each([{
     name: tooLongBrandName,
     slug: 'msr'
   }, {
@@ -144,7 +144,7 @@ describe('validation schemas', () => {
     expect(() => validateBrandMutationBody(body)).toThrow(/./u)
   })
 
-  test.each(validReferenceSlugs)('should accept valid reference slugs in brand mutation body: %s', (slug) => {
+  it.each(validReferenceSlugs)('should accept valid reference slugs in brand mutation body: %s', (slug) => {
     const result = validateBrandMutationBody({
       name: 'MSR',
       slug
@@ -156,14 +156,14 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each(invalidReferenceSlugs)('should reject invalid brand mutation slug format: %s', (slug) => {
+  it.each(invalidReferenceSlugs)('should reject invalid brand mutation slug format: %s', (slug) => {
     expect(() => validateBrandMutationBody({
       name: 'MSR',
       slug
     })).toThrow(/./u)
   })
 
-  test('should default and trim brand list query', () => {
+  it('should default and trim brand list query', () => {
     expect(validateBrandsListQuery({})).toStrictEqual({
       search: ''
     })
@@ -175,7 +175,7 @@ describe('validation schemas', () => {
     })
   })
 
-  test('should convert numeric group id params to number', () => {
+  it('should convert numeric group id params to number', () => {
     const result = validateGroupIdParams({
       id: '7'
     })
@@ -185,11 +185,11 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each([{}, { id: '' }, { id: '0' }, { id: '01' }, { id: 'sleep' }])('should reject invalid group id params: %j', (params) => {
+  it.each([{}, { id: '' }, { id: '0' }, { id: '01' }, { id: 'sleep' }])('should reject invalid group id params: %j', (params) => {
     expect(() => validateGroupIdParams(params)).toThrow(/./u)
   })
 
-  test('should validate packing list id params', () => {
+  it('should validate packing list id params', () => {
     const result = validatePackingListIdParams({
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
     })
@@ -199,14 +199,14 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each([{}, { id: '' }, { id: '0195f6e8-8f44-64f6-bc9a-5c8f7df477d7' }, { id: 'packing-list' }])(
+  it.each([{}, { id: '' }, { id: '0195f6e8-8f44-64f6-bc9a-5c8f7df477d7' }, { id: 'packing-list' }])(
     'should reject invalid packing list id params: %j',
     (params) => {
       expect(() => validatePackingListIdParams(params)).toThrow(/./u)
     }
   )
 
-  test('should validate packing list entry params', () => {
+  it('should validate packing list entry params', () => {
     const camelCaseResult = validatePackingListEntryParams({
       entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
@@ -226,7 +226,7 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each([
+  it.each([
     {},
     { entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8' },
     { id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7' },
@@ -238,7 +238,7 @@ describe('validation schemas', () => {
     expect(() => validatePackingListEntryParams(params)).toThrow(/./u)
   })
 
-  test('should trim packing list mutation body name', () => {
+  it('should trim packing list mutation body name', () => {
     const result = validatePackingListMutationBody({
       name: '  Alpine weekend  '
     })
@@ -248,7 +248,7 @@ describe('validation schemas', () => {
     })
   })
 
-  test('should accept packing list mutation body at max name length', () => {
+  it('should accept packing list mutation body at max name length', () => {
     const result = validatePackingListMutationBody({
       name: maxPackingListName
     })
@@ -258,7 +258,7 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each([{
+  it.each([{
     name: '   '
   }, {
     name: tooLongPackingListName
@@ -266,7 +266,7 @@ describe('validation schemas', () => {
     expect(() => validatePackingListMutationBody(body)).toThrow(/./u)
   })
 
-  test('should trim packing list entry custom name', () => {
+  it('should trim packing list entry custom name', () => {
     const result = validatePackingListEntryCreateBody({
       customName: '  Rain jacket  '
     })
@@ -276,7 +276,7 @@ describe('validation schemas', () => {
     })
   })
 
-  test('should accept packing list entry custom name at max length', () => {
+  it('should accept packing list entry custom name at max length', () => {
     const result = validatePackingListEntryCreateBody({
       customName: maxPackingListEntryCustomName
     })
@@ -286,7 +286,7 @@ describe('validation schemas', () => {
     })
   })
 
-  test('should accept packing list entry inventory id', () => {
+  it('should accept packing list entry inventory id', () => {
     const result = validatePackingListEntryCreateBody({
       inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9'
     })
@@ -296,7 +296,7 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each([{
+  it.each([{
     customName: 'Rain jacket',
     inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9'
   }, {
@@ -312,7 +312,7 @@ describe('validation schemas', () => {
     expect(() => validatePackingListEntryCreateBody(body)).toThrow(/./u)
   })
 
-  test.each([true, false])('should accept packing list entry packed state: %s', (isPacked) => {
+  it.each([true, false])('should accept packing list entry packed state: %s', (isPacked) => {
     const result = validatePackingListEntryUpdateBody({
       isPacked
     })
@@ -322,14 +322,14 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each([{}, { isPacked: 'true' }, { isPacked: 1 }, { isPacked: null }])(
+  it.each([{}, { isPacked: 'true' }, { isPacked: 1 }, { isPacked: null }])(
     'should reject invalid packing list entry update body: %j',
     (body) => {
       expect(() => validatePackingListEntryUpdateBody(body)).toThrow(/./u)
     }
   )
 
-  test('should trim group mutation body fields', () => {
+  it('should trim group mutation body fields', () => {
     const result = validateGroupMutationBody({
       name: '  Sleep  ',
       slug: '  sleep  '
@@ -341,7 +341,7 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each([{
+  it.each([{
     name: '   ',
     slug: 'sleep'
   }, {
@@ -351,7 +351,7 @@ describe('validation schemas', () => {
     expect(() => validateGroupMutationBody(body)).toThrow(/./u)
   })
 
-  test('should accept group mutation body at max field lengths', () => {
+  it('should accept group mutation body at max field lengths', () => {
     const result = validateGroupMutationBody({
       name: maxGroupName,
       slug: maxGroupSlug
@@ -363,7 +363,7 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each([{
+  it.each([{
     name: tooLongGroupName,
     slug: 'sleep'
   }, {
@@ -373,7 +373,7 @@ describe('validation schemas', () => {
     expect(() => validateGroupMutationBody(body)).toThrow(/./u)
   })
 
-  test.each(validReferenceSlugs)('should accept valid reference slugs in group mutation body: %s', (slug) => {
+  it.each(validReferenceSlugs)('should accept valid reference slugs in group mutation body: %s', (slug) => {
     const result = validateGroupMutationBody({
       name: 'Sleep',
       slug
@@ -385,14 +385,14 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each(invalidReferenceSlugs)('should reject invalid group mutation slug format: %s', (slug) => {
+  it.each(invalidReferenceSlugs)('should reject invalid group mutation slug format: %s', (slug) => {
     expect(() => validateGroupMutationBody({
       name: 'Sleep',
       slug
     })).toThrow(/./u)
   })
 
-  test('should convert numeric category id params to number', () => {
+  it('should convert numeric category id params to number', () => {
     const result = validateCategoryIdParams({
       id: '5'
     })
@@ -402,11 +402,11 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each([{}, { id: '' }, { id: '0' }, { id: '01' }, { id: 'sleeping-bags' }])('should reject invalid category id params: %j', (params) => {
+  it.each([{}, { id: '' }, { id: '0' }, { id: '01' }, { id: 'sleeping-bags' }])('should reject invalid category id params: %j', (params) => {
     expect(() => validateCategoryIdParams(params)).toThrow(/./u)
   })
 
-  test('should convert nested category id params to number', () => {
+  it('should convert nested category id params to number', () => {
     const result = validateCategoryScopedParams({
       categoryId: '5'
     })
@@ -416,11 +416,11 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each([{}, { categoryId: '' }, { categoryId: '0' }, { categoryId: '01' }, { categoryId: 'sleeping-bags' }])('should reject invalid nested category id params: %j', (params) => {
+  it.each([{}, { categoryId: '' }, { categoryId: '0' }, { categoryId: '01' }, { categoryId: 'sleeping-bags' }])('should reject invalid nested category id params: %j', (params) => {
     expect(() => validateCategoryScopedParams(params)).toThrow(/./u)
   })
 
-  test('should trim category mutation body fields', () => {
+  it('should trim category mutation body fields', () => {
     const result = validateCategoryMutationBody({
       name: '  Sleeping Bags  ',
       slug: '  sleeping-bags  '
@@ -432,7 +432,7 @@ describe('validation schemas', () => {
     })
   })
 
-  test('should trim category detail slug params', () => {
+  it('should trim category detail slug params', () => {
     const result = validateCategoryDetailParams({
       slug: '  sleeping-bags  '
     })
@@ -442,13 +442,13 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each(invalidReferenceSlugs)('should reject invalid category detail slug params: %s', (slug) => {
+  it.each(invalidReferenceSlugs)('should reject invalid category detail slug params: %s', (slug) => {
     expect(() => validateCategoryDetailParams({
       slug
     })).toThrow(/./u)
   })
 
-  test.each([{
+  it.each([{
     name: '   ',
     slug: 'sleeping-bags'
   }, {
@@ -458,7 +458,7 @@ describe('validation schemas', () => {
     expect(() => validateCategoryMutationBody(body)).toThrow(/./u)
   })
 
-  test('should accept category mutation body at max field lengths', () => {
+  it('should accept category mutation body at max field lengths', () => {
     const result = validateCategoryMutationBody({
       name: maxCategoryName,
       slug: maxCategorySlug
@@ -470,7 +470,7 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each([{
+  it.each([{
     name: tooLongCategoryName,
     slug: 'sleeping-bags'
   }, {
@@ -480,7 +480,7 @@ describe('validation schemas', () => {
     expect(() => validateCategoryMutationBody(body)).toThrow(/./u)
   })
 
-  test.each(validReferenceSlugs)('should accept valid reference slugs in category mutation body: %s', (slug) => {
+  it.each(validReferenceSlugs)('should accept valid reference slugs in category mutation body: %s', (slug) => {
     const result = validateCategoryMutationBody({
       name: 'Sleeping Bags',
       slug
@@ -492,14 +492,14 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each(invalidReferenceSlugs)('should reject invalid category mutation slug format: %s', (slug) => {
+  it.each(invalidReferenceSlugs)('should reject invalid category mutation slug format: %s', (slug) => {
     expect(() => validateCategoryMutationBody({
       name: 'Sleeping Bags',
       slug
     })).toThrow(/./u)
   })
 
-  test('should convert numeric category property params to numbers', () => {
+  it('should convert numeric category property params to numbers', () => {
     const result = validateCategoryPropertyParams({
       categoryId: '5',
       propertyId: '11'
@@ -511,11 +511,11 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each([{}, { categoryId: '5' }, { categoryId: '0', propertyId: '11' }, { categoryId: '5', propertyId: '01' }])('should reject invalid category property params: %j', (params) => {
+  it.each([{}, { categoryId: '5' }, { categoryId: '0', propertyId: '11' }, { categoryId: '5', propertyId: '01' }])('should reject invalid category property params: %j', (params) => {
     expect(() => validateCategoryPropertyParams(params)).toThrow(/./u)
   })
 
-  test('should convert numeric property enum option params to numbers', () => {
+  it('should convert numeric property enum option params to numbers', () => {
     const result = validatePropertyEnumOptionParams({
       categoryId: '5',
       optionId: '21',
@@ -529,11 +529,11 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each([{}, { categoryId: '5', propertyId: '11' }, { categoryId: 'x', optionId: '21', propertyId: '11' }, { categoryId: '5', optionId: '00', propertyId: '11' }])('should reject invalid property enum option params: %j', (params) => {
+  it.each([{}, { categoryId: '5', propertyId: '11' }, { categoryId: 'x', optionId: '21', propertyId: '11' }, { categoryId: '5', optionId: '00', propertyId: '11' }])('should reject invalid property enum option params: %j', (params) => {
     expect(() => validatePropertyEnumOptionParams(params)).toThrow(/./u)
   })
 
-  test('should trim and validate number category property bodies', () => {
+  it('should trim and validate number category property bodies', () => {
     const result = validateCategoryPropertyMutationBody({
       dataType: 'number',
       name: '  Weight  ',
@@ -549,7 +549,7 @@ describe('validation schemas', () => {
     })
   })
 
-  test('should trim and validate enum category property bodies with options', () => {
+  it('should trim and validate enum category property bodies with options', () => {
     const result = validateCategoryPropertyMutationBody({
       dataType: 'enum',
 
@@ -581,7 +581,7 @@ describe('validation schemas', () => {
     })
   })
 
-  test('should accept category property body at max field lengths', () => {
+  it('should accept category property body at max field lengths', () => {
     const result = validateCategoryPropertyMutationBody({
       dataType: 'number',
       name: maxCategoryPropertyName,
@@ -597,7 +597,7 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each([{
+  it.each([{
     dataType: 'number',
     name: tooLongCategoryPropertyName,
     slug: 'weight'
@@ -614,7 +614,7 @@ describe('validation schemas', () => {
     expect(() => validateCategoryPropertyMutationBody(body)).toThrow(/./u)
   })
 
-  test.each([{
+  it.each([{
     dataType: 'enum',
     name: 'Fill Type',
     slug: 'fill-type'
@@ -648,7 +648,7 @@ describe('validation schemas', () => {
     expect(() => validateCategoryPropertyMutationBody(body)).toThrow(/./u)
   })
 
-  test('should trim property enum option mutation body fields', () => {
+  it('should trim property enum option mutation body fields', () => {
     const result = validatePropertyEnumOptionMutationBody({
       name: '  Down  ',
       slug: '  down  '
@@ -660,7 +660,7 @@ describe('validation schemas', () => {
     })
   })
 
-  test('should accept property enum option mutation body at max field lengths', () => {
+  it('should accept property enum option mutation body at max field lengths', () => {
     const result = validatePropertyEnumOptionMutationBody({
       name: maxPropertyEnumOptionName,
       slug: maxPropertyEnumOptionSlug
@@ -672,7 +672,7 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each([{
+  it.each([{
     name: '   ',
     slug: 'down'
   }, {
@@ -688,7 +688,7 @@ describe('validation schemas', () => {
     expect(() => validatePropertyEnumOptionMutationBody(body)).toThrow(/./u)
   })
 
-  test('should normalize items list query', () => {
+  it('should normalize items list query', () => {
     const result = validateItemsListQuery({
       brandSlug: '  msr  ',
       categorySlug: '  stoves  ',
@@ -706,7 +706,7 @@ describe('validation schemas', () => {
     })
   })
 
-  test('should apply default pagination and empty filters for items list query', () => {
+  it('should apply default pagination and empty filters for items list query', () => {
     const result = validateItemsListQuery({})
 
     expect(result).toStrictEqual({
@@ -716,7 +716,7 @@ describe('validation schemas', () => {
     })
   })
 
-  test('should clamp too-large items list limits to the shared maximum', () => {
+  it('should clamp too-large items list limits to the shared maximum', () => {
     const result = validateItemsListQuery({
       limit: '101'
     })
@@ -728,11 +728,11 @@ describe('validation schemas', () => {
     })
   })
 
-  test.each([{ page: 'abc' }, { page: '0' }, { limit: '0' }, { page: ['1'] }])('should reject malformed items list query: %j', (query) => {
+  it.each([{ page: 'abc' }, { page: '0' }, { limit: '0' }, { page: ['1'] }])('should reject malformed items list query: %j', (query) => {
     expect(() => validateItemsListQuery(query)).toThrow(/./u)
   })
 
-  test('should accept canonical uuid v7 item ids only', () => {
+  it('should accept canonical uuid v7 item ids only', () => {
     const result = validateItemDetailParams({
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
     })
@@ -746,7 +746,7 @@ describe('validation schemas', () => {
     })).toThrow(/./u)
   })
 
-  test('should accept canonical uuid v7 inventory create bodies only', () => {
+  it('should accept canonical uuid v7 inventory create bodies only', () => {
     const result = validateUserEquipmentCreateBody({
       itemId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
     })
@@ -760,7 +760,7 @@ describe('validation schemas', () => {
     })).toThrow(/./u)
   })
 
-  test('should accept canonical uuid v7 inventory id params only', () => {
+  it('should accept canonical uuid v7 inventory id params only', () => {
     const result = validateUserEquipmentIdParams({
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
     })
@@ -774,7 +774,7 @@ describe('validation schemas', () => {
     })).toThrow(/./u)
   })
 
-  test('should trim twitch oauth body and reject empty code', () => {
+  it('should trim twitch oauth body and reject empty code', () => {
     expect(validateTwitchOAuthBody({
       code: '  oauth-code  '
     })).toStrictEqual({
@@ -786,7 +786,7 @@ describe('validation schemas', () => {
     })).toThrow(/./u)
   })
 
-  test('should sanitize redirect query targets', () => {
+  it('should sanitize redirect query targets', () => {
     expect(validateRedirectTargetQuery({
       redirectTo: '  /api/equipment/brands?search=msr  '
     })).toStrictEqual({

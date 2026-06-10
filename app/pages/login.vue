@@ -8,24 +8,13 @@
       >
 
       <source
-        srcset="/images/login-background-desktop.webp"
-        media="(width >= 860px)"
-        type="image/webp"
-      >
-
-      <source
         srcset="/images/login-background-mobile.avif"
         type="image/avif"
       >
 
-      <source
-        srcset="/images/login-background-mobile.webp"
-        type="image/webp"
-      >
-
       <img
         :class="$style.backgroundImage"
-        src="/images/login-background-mobile.webp"
+        src="/images/login-background-mobile.avif"
         width="941"
         height="1672"
         alt=""

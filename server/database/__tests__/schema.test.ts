@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/neon-http'
-import { afterEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import * as schema from '../schema'
 
 interface RecordedQuery {
@@ -40,7 +40,7 @@ describe('equipmentItems updatedAt', () => {
     vi.restoreAllMocks()
   })
 
-  test('should append updatedAt = now() to update queries without touching createdAt', async () => {
+  it('should append updatedAt = now() to update queries without touching createdAt', async () => {
     const { client, db, queries } = createMockDatabase()
 
     await db
