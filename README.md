@@ -6,16 +6,26 @@ Perd is an outdoor equipment companion for people who plan trips, hikes, and oth
 
 ## What you can do now
 
-- sign in;
-- open the catalog;
-- browse the current list of equipment;
-- open item detail pages;
-- keep a personal inventory with "I have this" actions;
-- create packing lists for specific trips or activities;
-- add custom and inventory-backed checklist entries;
-- mark checklist entries as packed.
+- Sign in.
+- Browse equipment.
+- View item details.
+- Save gear.
+- Create packing lists.
+- Add checklist items.
+- Mark items packed.
 
-The priority is the user workflow, not internal admin tooling.
+## TODO
+
+- Catalog search.
+- Catalog filters.
+- Gear submissions.
+- Better item details.
+- Pack renaming.
+- Pack weight totals.
+- Pack duplication.
+- Pack sharing.
+- Pack export.
+- Twitch account linking.
 
 ## Similar applications
 
