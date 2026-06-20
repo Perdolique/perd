@@ -3,6 +3,7 @@
     v-model="isOpened"
     :close-disabled="loading"
     aria-labelledby="new-pack-dialog-title"
+    overlay-close-disabled
   >
     <form :class="$style.component" @submit.prevent="handleSubmit">
       <div :class="$style.header">

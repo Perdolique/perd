@@ -10,6 +10,7 @@ Perd is an outdoor equipment companion for people who plan trips, hikes, and oth
 - Browse equipment.
 - View item details.
 - Save gear.
+- Submit gear for review and use it in your inventory immediately.
 - Create packing lists.
 - Add checklist items.
 - Mark items packed.
@@ -18,7 +19,6 @@ Perd is an outdoor equipment companion for people who plan trips, hikes, and oth
 
 - Catalog search.
 - Catalog filters.
-- Gear submissions.
 - Better item details.
 - Pack renaming.
 - Pack weight totals.

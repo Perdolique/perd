@@ -1,6 +1,10 @@
 <template>
   <PageContent page-title="Inventory">
     <template #actions>
+      <PerdButton icon="tabler:plus" @click="openSubmissionDialog">
+        Add gear
+      </PerdButton>
+
       <PerdLink to="/catalog">
         Browse catalog
       </PerdLink>
@@ -25,6 +29,10 @@
       <PagePlaceholder v-else-if="isEmpty" emoji="🧺" title="No saved gear yet." />
 
       <div v-else :class="$style.list">
+        <p v-if="submittedItemName" :class="$style.successMessage" role="status">
+          Submitted {{ submittedItemName }} for review.
+        </p>
+
         <PageSummaryHeader label="My gear" :value="inventorySummaryText" />
 
         <p v-if="removeErrorMessage" :class="$style.errorMessage" role="status">
@@ -39,18 +47,24 @@
         />
       </div>
     </div>
+
+    <EquipmentItemSubmissionDialog
+      v-model="isSubmissionDialogVisible"
+      @submitted="handleSubmissionSubmitted"
+    />
   </PageContent>
 </template>
 
 <script lang="ts" setup>
   import { computed, ref } from 'vue'
-  import { $fetch } from 'ofetch'
-  import { definePageMeta, useFetch } from '#imports'
+  import { definePageMeta, useFetch, useRequestFetch } from '#imports'
+  import type { ItemSubmissionCreateResponse } from '~/types/equipment'
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PageSummaryHeader from '~/components/PageSummaryHeader.vue'
   import PerdButton from '~/components/PerdButton.vue'
   import PerdLink from '~/components/PerdLink.vue'
+  import EquipmentItemSubmissionDialog from '~/components/equipment/EquipmentItemSubmissionDialog.vue'
   import InventoryItemCard from '~/components/inventory/InventoryItemCard.vue'
   import PageContent from '~/components/layout/PageContent.vue'
 
@@ -60,6 +74,9 @@
 
   const removeErrorMessage = ref<string | null>(null)
   const removingInventoryId = ref<string | null>(null)
+  const isSubmissionDialogVisible = ref(false)
+  const submittedItemName = ref<string | null>(null)
+  const $fetch = useRequestFetch()
   const inventoryDateFormatter = new Intl.DateTimeFormat('en', {
     dateStyle: 'medium'
   })
@@ -115,6 +132,18 @@
     }
   }
 
+  function openSubmissionDialog() {
+    isSubmissionDialogVisible.value = true
+  }
+
+  function handleSubmissionSubmitted(response: ItemSubmissionCreateResponse) {
+    submittedItemName.value = response.item.name
+    inventoryResponse.value = [
+      response.inventory,
+      ...inventoryResponse.value.filter((inventoryRow) => inventoryRow.id !== response.inventory.id)
+    ]
+  }
+
   const inventoryItems = computed(() => inventoryResponse.value.map((inventoryRow) => {
     return {
       catalogPath: `/catalog/${inventoryRow.item.id}`,
@@ -136,6 +165,15 @@
   .errorMessage {
     margin: 0;
     color: var(--color-danger-primary);
+  }
+
+  .successMessage {
+    margin: 0;
+    padding: var(--spacing-12);
+    border: 1px solid var(--color-success-subtle);
+    border-radius: var(--border-radius-12);
+    background: var(--color-success-subtle);
+    color: var(--color-text-primary);
   }
 
   .list {

@@ -14,6 +14,8 @@ import {
   validateGroupIdParams,
   validateGroupMutationBody,
   validateItemDetailParams,
+  validateItemSubmissionCreateBody,
+  validateItemSubmissionModerationBody,
   validateItemsListQuery,
   validatePackingListEntryCreateBody,
   validatePackingListEntryParams,
@@ -47,6 +49,8 @@ describe('validation schemas', () => {
   const maxGroupSlug = 'g'.repeat(limits.maxEquipmentGroupSlugLength)
   const tooLongGroupName = 'G'.repeat(limits.maxEquipmentGroupNameLength + 1)
   const tooLongGroupSlug = 'g'.repeat(limits.maxEquipmentGroupSlugLength + 1)
+  const maxEquipmentItemName = 'I'.repeat(limits.maxEquipmentItemNameLength)
+  const tooLongEquipmentItemName = 'I'.repeat(limits.maxEquipmentItemNameLength + 1)
   const maxPackingListName = 'P'.repeat(limits.maxPackingListNameLength)
   const tooLongPackingListName = 'P'.repeat(limits.maxPackingListNameLength + 1)
   const maxPackingListEntryCustomName = 'E'.repeat(limits.maxPackingListEntryCustomNameLength)
@@ -744,6 +748,106 @@ describe('validation schemas', () => {
     expect(() => validateItemDetailParams({
       id: '550e8400-e29b-41d4-a716-446655440000'
     })).toThrow(/./u)
+  })
+
+  it('should trim and validate item submission create bodies', () => {
+    const result = validateItemSubmissionCreateBody({
+      brandId: 1,
+      categoryId: 2,
+      name: '  PocketRocket Deluxe  ',
+
+      properties: [{
+        propertyId: 10,
+        value: ' 83 '
+      }, {
+        propertyId: 11,
+        value: false
+      }]
+    })
+
+    expect(result).toStrictEqual({
+      brandId: 1,
+      categoryId: 2,
+      name: 'PocketRocket Deluxe',
+
+      properties: [{
+        propertyId: 10,
+        value: '83'
+      }, {
+        propertyId: 11,
+        value: false
+      }]
+    })
+  })
+
+  it('should default item submission properties to an empty array', () => {
+    const result = validateItemSubmissionCreateBody({
+      brandId: 1,
+      categoryId: 2,
+      name: maxEquipmentItemName
+    })
+
+    expect(result).toStrictEqual({
+      brandId: 1,
+      categoryId: 2,
+      name: maxEquipmentItemName,
+      properties: []
+    })
+  })
+
+  it.each([{
+    brandId: 0,
+    categoryId: 2,
+    name: 'PocketRocket Deluxe'
+  }, {
+    brandId: 1,
+    categoryId: '2',
+    name: 'PocketRocket Deluxe'
+  }, {
+    brandId: 1,
+    categoryId: 2,
+    name: '   '
+  }, {
+    brandId: 1,
+    categoryId: 2,
+    name: tooLongEquipmentItemName
+  }, {
+    brandId: 1,
+    categoryId: 2,
+    name: 'PocketRocket Deluxe',
+
+    properties: [{
+      propertyId: 10,
+      value: '83'
+    }, {
+      propertyId: 10,
+      value: '84'
+    }]
+  }, {
+    brandId: 1,
+    categoryId: 2,
+    name: 'PocketRocket Deluxe',
+
+    properties: [{
+      propertyId: 10,
+      value: ''
+    }]
+  }])('should reject invalid item submission create bodies: %j', (body) => {
+    expect(() => validateItemSubmissionCreateBody(body)).toThrow(/./u)
+  })
+
+  it.each(['approved', 'rejected'])('should accept item submission moderation status: %s', (status) => {
+    const result = validateItemSubmissionModerationBody({
+      status
+    })
+
+    expect(result).toStrictEqual({
+      status
+    })
+  })
+
+  it.each([{}, { status: 'pending' }, { status: true }])('should reject invalid item submission moderation bodies: %j', (body) => {
+    expect(() => validateItemSubmissionModerationBody(body)).toThrow(/./u)
   })
 
   it('should accept canonical uuid v7 inventory create bodies only', () => {

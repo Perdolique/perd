@@ -497,6 +497,28 @@ test.describe('Packing list shell', () => {
     await expect(page.getByText('Add custom items or pull from saved gear while you build this pack.')).toBeVisible()
   })
 
+  test('should keep the create pack dialog open after a backdrop click', async ({ context, page }) => {
+    const state: PackingListRouteState = {
+      createRequests: 0,
+      createShouldFail: false,
+      deleteShouldFail: false,
+      inventoryRows: [],
+      rows: []
+    }
+
+    await mockAuth(context)
+    await mockInventoryRoutes(context, state)
+    await mockPackingListRoutes(context, page, state)
+    await openPackingLists(page)
+
+    await page.getByRole('button', { name: 'New pack' }).first().click()
+    await page.getByLabel('Pack name').fill('Alpine weekend')
+    await page.mouse.click(10, 10)
+
+    await expect(page.getByRole('heading', { name: 'Create a pack' })).toBeVisible()
+    await expect(page.getByLabel('Pack name')).toHaveValue('Alpine weekend')
+  })
+
   test('should open pack detail in planning mode from a navigational card', async ({ context, page }) => {
     const state: PackingListRouteState = {
       createRequests: 0,

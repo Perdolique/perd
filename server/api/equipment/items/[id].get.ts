@@ -1,4 +1,5 @@
 import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
+import { validateSessionUser } from '#server/utils/session'
 import { validateItemDetailParams } from '#server/utils/validation/schemas'
 
 interface ItemDetailBrand {
@@ -32,11 +33,13 @@ interface ItemDetailResponse {
 }
 
 export default defineEventHandler(async (event) : Promise<ItemDetailResponse> => {
+  const userId = await validateSessionUser(event)
   const { id } = await getValidatedRouterParams(event, validateItemDetailParams)
 
   const item = await event.context.dbHttp.query.equipmentItems.findFirst({
     columns: {
       createdAt: true,
+      createdBy: true,
       id: true,
       name: true,
       status: true
@@ -86,6 +89,26 @@ export default defineEventHandler(async (event) : Promise<ItemDetailResponse> =>
 
   if (item === undefined) {
     throw createError({ status: 404 })
+  }
+
+  const isApproved = item.status === 'approved'
+  const isCreator = item.createdBy === userId
+
+  if (isApproved === false && isCreator === false) {
+    const currentUser = await event.context.dbHttp.query.users.findFirst({
+      columns: {
+        isAdmin: true
+      },
+
+      where: {
+        id: userId
+      }
+    })
+    const isAdmin = currentUser?.isAdmin === true
+
+    if (isAdmin === false) {
+      throw createError({ status: 404 })
+    }
   }
 
   if (item.brand === null || item.category === null) {

@@ -14,9 +14,13 @@
 
   interface Props {
     closeDisabled?: boolean;
+    overlayCloseDisabled?: boolean;
   }
 
-  const { closeDisabled = false } = defineProps<Props>()
+  const {
+    closeDisabled = false,
+    overlayCloseDisabled = false
+  } = defineProps<Props>()
   const dialogRef = useTemplateRef('dialogRef')
 
   const isOpened = defineModel<boolean>({
@@ -35,9 +39,9 @@
     isOpened.value = false
   })
 
-  // Close the dialog when clicking outside of it
+  // Close the dialog when clicking the backdrop.
   useEventListener(dialogRef, 'click', ({ target }: MouseEvent) => {
-    if (closeDisabled) {
+    if (closeDisabled || overlayCloseDisabled) {
       return
     }
 

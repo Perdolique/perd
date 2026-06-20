@@ -1,8 +1,11 @@
-import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
+import { createError, defineEventHandler, getRouterParams } from 'h3'
 import { validateCategoryDetailParams } from '#server/utils/validation/schemas'
 
 export default defineEventHandler(async (event) => {
-  const { slug } = await getValidatedRouterParams(event, validateCategoryDetailParams)
+  const params = getRouterParams(event)
+  const { slug } = validateCategoryDetailParams({
+    slug: params.slug ?? params.id
+  })
 
   const category = await event.context.dbHttp.query.equipmentCategories.findFirst({
     columns: {

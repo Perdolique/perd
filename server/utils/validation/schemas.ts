@@ -24,6 +24,12 @@ const positiveIntegerIdParamSchema = v.pipe(
   v.toNumber()
 )
 
+const positiveIntegerSchema = v.pipe(
+  v.number(),
+  v.integer(),
+  v.minValue(1)
+)
+
 const canonicalUuidV7Schema = v.pipe(
   v.string(),
   v.regex(/^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/u)
@@ -200,6 +206,38 @@ const itemDetailParamsSchema = v.object({
   id: canonicalUuidV7Schema
 })
 
+const itemSubmissionPropertySchema = v.object({
+  propertyId: positiveIntegerSchema,
+  value: v.union([
+    trimmedNonEmptyStringSchema,
+    v.boolean()
+  ])
+})
+
+const itemSubmissionCreateBodySchema = v.pipe(
+  v.object({
+    brandId: positiveIntegerSchema,
+    categoryId: positiveIntegerSchema,
+    name: v.pipe(
+      trimmedNonEmptyStringSchema,
+      v.maxLength(limits.maxEquipmentItemNameLength)
+    ),
+    properties: v.optional(v.array(itemSubmissionPropertySchema), [])
+  }),
+  v.check((body) => {
+    const propertyIds = body.properties.map((property) => property.propertyId)
+
+    return new Set(propertyIds).size === propertyIds.length
+  }, 'properties must contain unique propertyId values')
+)
+
+const itemSubmissionModerationBodySchema = v.object({
+  status: v.picklist([
+    'approved',
+    'rejected'
+  ])
+})
+
 const userEquipmentIdParamsSchema = v.object({
   id: canonicalUuidV7Schema
 })
@@ -337,6 +375,14 @@ function validateItemDetailParams(params: unknown) {
   return v.parse(itemDetailParamsSchema, params)
 }
 
+function validateItemSubmissionCreateBody(body: unknown) {
+  return v.parse(itemSubmissionCreateBodySchema, body)
+}
+
+function validateItemSubmissionModerationBody(body: unknown) {
+  return v.parse(itemSubmissionModerationBodySchema, body)
+}
+
 function validateUserEquipmentIdParams(params: unknown) {
   return v.parse(userEquipmentIdParamsSchema, params)
 }
@@ -401,6 +447,8 @@ export {
   groupIdParamsSchema,
   groupMutationSchema,
   itemDetailParamsSchema,
+  itemSubmissionCreateBodySchema,
+  itemSubmissionModerationBodySchema,
   itemsListQuerySchema,
   limitQuerySchema,
   nonEmptyStringSchema,
@@ -433,6 +481,8 @@ export {
   validateGroupIdParams,
   validateGroupMutationBody,
   validateItemDetailParams,
+  validateItemSubmissionCreateBody,
+  validateItemSubmissionModerationBody,
   validateItemsListQuery,
   validatePackingListEntryCreateBody,
   validatePackingListEntryParams,

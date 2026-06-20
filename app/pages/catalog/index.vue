@@ -1,5 +1,11 @@
 <template>
   <PageContent page-title="Catalog">
+    <template #actions>
+      <PerdButton icon="tabler:plus" @click="openSubmissionDialog">
+        Add gear
+      </PerdButton>
+    </template>
+
     <div :class="$style.component">
       <PageLoadingState
         v-if="isInitialLoading"
@@ -17,6 +23,14 @@
       </PagePlaceholder>
 
       <div v-else :class="$style.results">
+        <p v-if="submittedItem" :class="$style.successMessage" role="status">
+          Submitted
+          <PerdLink :to="submittedItemPath">
+            {{ submittedItem.name }}
+          </PerdLink>
+          for review. It is in your inventory now.
+        </p>
+
         <PageSummaryHeader label="Catalog" :value="itemsSummaryText" />
 
         <PagePlaceholder v-if="isEmpty" emoji="🧺" title="No items yet." />
@@ -40,19 +54,27 @@
         />
       </div>
     </div>
+
+    <EquipmentItemSubmissionDialog
+      v-model="isSubmissionDialogVisible"
+      @submitted="handleSubmissionSubmitted"
+    />
   </PageContent>
 </template>
 
 <script lang="ts" setup>
-  import { computed } from 'vue'
+  import { computed, ref } from 'vue'
   import { definePageMeta, navigateTo, useFetch, useRoute } from '#imports'
+  import type { ItemSubmissionCreateResponse, SubmittedCatalogItem } from '~/types/equipment'
   import { buildCatalogRouteQuery, getCatalogItemsApiQuery, getCatalogRouteState } from '~/utils/catalog'
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PageSummaryHeader from '~/components/PageSummaryHeader.vue'
   import PerdButton from '~/components/PerdButton.vue'
+  import PerdLink from '~/components/PerdLink.vue'
   import CatalogPagination from '~/components/catalog/CatalogPagination.vue'
   import CatalogResultsPanel from '~/components/catalog/CatalogResultsPanel.vue'
+  import EquipmentItemSubmissionDialog from '~/components/equipment/EquipmentItemSubmissionDialog.vue'
   import PageContent from '~/components/layout/PageContent.vue'
 
   definePageMeta({
@@ -60,6 +82,8 @@
   })
 
   const route = useRoute()
+  const isSubmissionDialogVisible = ref(false)
+  const submittedItem = ref<SubmittedCatalogItem | null>(null)
   const routeState = computed(() => getCatalogRouteState(route.query))
   const itemsApiQuery = computed(() => getCatalogItemsApiQuery(route.query))
 
@@ -104,6 +128,7 @@
   }))
   const isPreviousPageDisabled = computed(() => canGoPrevious.value === false || isRefreshing.value)
   const isNextPageDisabled = computed(() => canGoNext.value === false || isRefreshing.value)
+  const submittedItemPath = computed(() => submittedItem.value === null ? '' : `/catalog/${submittedItem.value.id}`)
 
   async function handlePageChange(page: number) {
     const currentPage = routeState.value.page
@@ -136,6 +161,14 @@
   async function handleGoToNextPage() {
     await handlePageChange(itemsResponse.value.page + 1)
   }
+
+  function openSubmissionDialog() {
+    isSubmissionDialogVisible.value = true
+  }
+
+  function handleSubmissionSubmitted(response: ItemSubmissionCreateResponse) {
+    submittedItem.value = response.item
+  }
 </script>
 
 <style module>
@@ -146,6 +179,15 @@
   .results {
     display: grid;
     gap: var(--spacing-24);
+  }
+
+  .successMessage {
+    margin: 0;
+    padding: var(--spacing-12);
+    border: 1px solid var(--color-success-subtle);
+    border-radius: var(--border-radius-12);
+    background: var(--color-success-subtle);
+    color: var(--color-text-primary);
   }
 
 </style>

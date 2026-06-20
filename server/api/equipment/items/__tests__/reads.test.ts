@@ -6,11 +6,13 @@ import { createTestEvent } from '~~/test-utils/create-test-event'
 
 const {
   getValidatedQueryMock,
-  getValidatedRouterParamsMock
+  getValidatedRouterParamsMock,
+  validateSessionUserMock
 } = vi.hoisted(() => {
   return {
     getValidatedQueryMock: vi.fn<typeof h3.getValidatedQuery>(),
-    getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>()
+    getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
+    validateSessionUserMock: vi.fn<() => Promise<string>>()
   }
 })
 
@@ -28,6 +30,12 @@ vi.mock(import('h3'), async () => {
     async getValidatedRouterParams(...args: Parameters<typeof h3.getValidatedRouterParams>) {
       return getValidatedRouterParamsMock(...args)
     }
+  }
+})
+
+vi.mock(import('#server/utils/session'), () => {
+  return {
+    validateSessionUser: validateSessionUserMock
   }
 })
 
@@ -118,18 +126,24 @@ function createListDb({
   }
 }
 
-function createDetailDb(item?: unknown) {
+function createDetailDb(item?: unknown, currentUser?: unknown) {
   const findFirstMock = vi.fn(() => item)
+  const userFindFirstMock = vi.fn(() => currentUser)
 
   return {
     dbHttp: {
       query: {
         equipmentItems: {
           findFirst: findFirstMock
+        },
+
+        users: {
+          findFirst: userFindFirstMock
         }
       }
     },
-    findFirstMock
+    findFirstMock,
+    userFindFirstMock
   }
 }
 
@@ -148,6 +162,8 @@ describe('item read handlers', () => {
     getValidatedRouterParamsMock.mockResolvedValue({
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
     })
+
+    validateSessionUserMock.mockResolvedValue('0195f6e8-8f44-74f6-bc9a-5c8f7df477aa')
   })
 
   afterEach(() => {
@@ -261,6 +277,7 @@ describe('item read handlers', () => {
   describe('get /api/equipment/items/[id]', () => {
     it('should return item detail with normalized property values', async () => {
       const item = {
+        createdBy: null,
         createdAt: '2026-04-01T00:00:00Z',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
         name: 'PocketRocket Deluxe',
@@ -364,6 +381,131 @@ describe('item read handlers', () => {
       })
 
       expect(findFirstMock).toHaveBeenCalledTimes(1)
+    })
+
+    it('should return pending item detail to the creator', async () => {
+      const item = {
+        createdBy: '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa',
+        createdAt: '2026-04-01T00:00:00Z',
+        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
+        name: 'Submitted Stove',
+        propertyValues: [],
+        status: 'pending',
+
+        brand: {
+          id: 1,
+          name: 'MSR',
+          slug: 'msr'
+        },
+
+        category: {
+          id: 2,
+          name: 'Stoves',
+          slug: 'stoves'
+        }
+      }
+
+      const { dbHttp, userFindFirstMock } = createDetailDb(item)
+      const event = createTestEvent(dbHttp)
+      const result = await itemDetailHandler(event)
+
+      expect(result.status).toBe('pending')
+      expect(result.name).toBe('Submitted Stove')
+      expect(userFindFirstMock).not.toHaveBeenCalled()
+    })
+
+    it('should return rejected item detail to the creator', async () => {
+      const item = {
+        createdBy: '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa',
+        createdAt: '2026-04-01T00:00:00Z',
+        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
+        name: 'Rejected Stove',
+        propertyValues: [],
+        status: 'rejected',
+
+        brand: {
+          id: 1,
+          name: 'MSR',
+          slug: 'msr'
+        },
+
+        category: {
+          id: 2,
+          name: 'Stoves',
+          slug: 'stoves'
+        }
+      }
+
+      const { dbHttp } = createDetailDb(item)
+      const event = createTestEvent(dbHttp)
+      const result = await itemDetailHandler(event)
+
+      expect(result.status).toBe('rejected')
+      expect(result.name).toBe('Rejected Stove')
+    })
+
+    it('should return pending item detail to an admin', async () => {
+      const item = {
+        createdBy: '0195f6e8-8f44-74f6-bc9a-5c8f7df477bb',
+        createdAt: '2026-04-01T00:00:00Z',
+        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
+        name: 'Pending Stove',
+        propertyValues: [],
+        status: 'pending',
+
+        brand: {
+          id: 1,
+          name: 'MSR',
+          slug: 'msr'
+        },
+
+        category: {
+          id: 2,
+          name: 'Stoves',
+          slug: 'stoves'
+        }
+      }
+
+      const { dbHttp, userFindFirstMock } = createDetailDb(item, {
+        isAdmin: true
+      })
+      const event = createTestEvent(dbHttp)
+      const result = await itemDetailHandler(event)
+
+      expect(result.status).toBe('pending')
+      expect(userFindFirstMock).toHaveBeenCalledTimes(1)
+    })
+
+    it('should hide pending item detail from another non-admin user', async () => {
+      const item = {
+        createdBy: '0195f6e8-8f44-74f6-bc9a-5c8f7df477bb',
+        createdAt: '2026-04-01T00:00:00Z',
+        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
+        name: 'Pending Stove',
+        propertyValues: [],
+        status: 'pending',
+
+        brand: {
+          id: 1,
+          name: 'MSR',
+          slug: 'msr'
+        },
+
+        category: {
+          id: 2,
+          name: 'Stoves',
+          slug: 'stoves'
+        }
+      }
+
+      const { dbHttp } = createDetailDb(item, {
+        isAdmin: false
+      })
+      const event = createTestEvent(dbHttp)
+
+      await expect(itemDetailHandler(event)).rejects.toMatchObject({
+        statusCode: 404
+      })
     })
 
     it('should return 400 when route params validation fails', async () => {

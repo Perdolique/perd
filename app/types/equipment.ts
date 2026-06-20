@@ -7,6 +7,25 @@ interface CatalogEntityDetail extends CatalogEntitySummary {
   id: number;
 }
 
+interface CategoryPropertyEnumOption {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+interface CategoryPropertyDetail {
+  dataType: string;
+  enumOptions?: CategoryPropertyEnumOption[];
+  id: number;
+  name: string;
+  slug: string;
+  unit: string | null;
+}
+
+interface CategoryDetailResponse extends CatalogEntityDetail {
+  properties: CategoryPropertyDetail[];
+}
+
 interface CatalogListItem {
   brand: CatalogEntitySummary;
   category: CatalogEntitySummary;
@@ -51,6 +70,28 @@ interface ItemDisplayProperty extends ItemProperty {
   displayValue: string;
 }
 
+interface ItemSubmissionPropertyInput {
+  propertyId: number;
+  value: boolean | string;
+}
+
+interface ItemSubmissionCreateBody {
+  brandId: number;
+  categoryId: number;
+  name: string;
+  properties: ItemSubmissionPropertyInput[];
+}
+
+interface SubmittedCatalogItem {
+  brand: CatalogEntitySummary;
+  category: CatalogEntitySummary;
+  createdAt: string;
+  id: string;
+  name: string;
+  properties: ItemProperty[];
+  status: string;
+}
+
 interface InventoryItem {
   brand: CatalogEntitySummary;
   category: CatalogEntitySummary;
@@ -74,7 +115,15 @@ interface InventoryRecordView {
   item: InventoryItem;
 }
 
+interface ItemSubmissionCreateResponse {
+  inventory: InventoryRecord;
+  item: SubmittedCatalogItem;
+}
+
 export type {
+  CategoryDetailResponse,
+  CategoryPropertyDetail,
+  CategoryPropertyEnumOption,
   CatalogEntityDetail,
   CatalogEntitySummary,
   CatalogItemsResponse,
@@ -83,7 +132,11 @@ export type {
   InventoryItem,
   InventoryRecord,
   InventoryRecordView,
+  ItemSubmissionCreateBody,
+  ItemSubmissionCreateResponse,
+  ItemSubmissionPropertyInput,
   ItemDetailResponse,
   ItemDisplayProperty,
-  ItemProperty
+  ItemProperty,
+  SubmittedCatalogItem
 }
