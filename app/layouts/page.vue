@@ -27,6 +27,19 @@
     </aside>
 
     <div :class="$style.main">
+      <header
+        :class="$style.mobileHeader"
+        data-testid="shell-mobile-header"
+      >
+        <NuxtLink
+          to="/"
+          :class="$style.mobileBrand"
+          aria-label="Home"
+        >
+          <span :class="$style.mobileLogo" aria-hidden="true" />
+        </NuxtLink>
+      </header>
+
       <div :class="$style.content">
         <slot />
       </div>
@@ -176,6 +189,46 @@
     @media (width >= 900px) {
       padding-block-end: var(--spacing-32);
     }
+  }
+
+  .mobileHeader {
+    inline-size: min(100%, var(--layout-content-max-width));
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    padding: calc(var(--spacing-24) + var(--layout-safe-top)) var(--spacing-16) 0;
+
+    @media (width >= 900px) {
+      display: none;
+    }
+  }
+
+  .mobileBrand {
+    display: grid;
+    place-items: center;
+    inline-size: var(--layout-touch-target);
+    block-size: var(--layout-touch-target);
+    color: var(--color-accent-primary);
+    border-radius: var(--border-radius-14);
+    text-decoration: none;
+    transition:
+      color var(--transition-duration-normal) var(--transition-easing-standard),
+      box-shadow var(--transition-duration-normal) var(--transition-easing-standard);
+
+    &:hover {
+      color: var(--color-accent-hover);
+    }
+
+    &:focus-visible {
+      box-shadow: var(--shadow-focus);
+    }
+  }
+
+  .mobileLogo {
+    inline-size: 2.5rem;
+    aspect-ratio: 1;
+    background: currentColor;
+    mask: url("/images/logo.svg") center / contain no-repeat;
   }
 
   .content {
