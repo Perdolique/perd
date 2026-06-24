@@ -1,5 +1,3 @@
-import { sampleItems } from './seed-sample-items'
-
 const referenceSeed = 1487
 
 type PropertyDataType = 'boolean' | 'enum' | 'number' | 'text'
@@ -195,6 +193,7 @@ export {
   categoryDefinitions,
   groupDefinitions,
   propertyDefinitionsByCategorySlug,
-  referenceSeed,
-  sampleItems
+  referenceSeed
 }
+
+export { sampleItems } from './seed-sample-items'
