@@ -87,11 +87,10 @@ test.describe('Shell navigation', () => {
     await expect(page).toHaveURL(/\/login$/u)
   })
 
-  test('should expose the mobile top bar and dock navigation', async ({ context, page }) => {
+  test('should expose mobile dock navigation without the top bar', async ({ context, page }) => {
     await mockGuestLogin(context)
     await mockCatalogReads(context)
     await mockPackingListReads(context)
-    await mockLogout(context)
 
     await page.setViewportSize({
       width: 390,
@@ -101,10 +100,9 @@ test.describe('Shell navigation', () => {
     await page.goto('/')
     await page.getByRole('button', { name: 'Guest' }).click()
 
-    const topbar = page.getByTestId('shell-topbar')
     const dock = page.getByTestId('shell-dock')
 
-    await expect(topbar).toBeVisible()
+    await expect(page.getByTestId('shell-topbar')).toBeHidden()
     await expect(dock).toBeVisible()
     await expect(page.getByTestId('shell-sidebar')).toBeHidden()
 
@@ -120,9 +118,5 @@ test.describe('Shell navigation', () => {
 
     await expect(page).toHaveURL(/\/account$/u)
     await expect(dockProfileLink).toHaveClass(/active/u)
-
-    await topbar.getByRole('button', { name: 'Log out' }).click()
-
-    await expect(page).toHaveURL(/\/login$/u)
   })
 })

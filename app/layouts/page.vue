@@ -27,11 +27,6 @@
     </aside>
 
     <div :class="$style.main">
-      <ShellTopbar
-        :current-section-label="currentSectionLabel"
-        @logout="removeAuthSession"
-      />
-
       <div :class="$style.content">
         <slot />
       </div>
@@ -44,42 +39,12 @@
 <script setup lang="ts">
   import { computed } from 'vue'
   import { $fetch } from 'ofetch'
-  import { navigateTo, useRoute, useUserStore } from '#imports'
+  import { navigateTo, useUserStore } from '#imports'
   import ShellDockNavigation from '~/components/layout/ShellDockNavigation.vue'
   import ShellSidebarNavigation from '~/components/layout/ShellSidebarNavigation.vue'
-  import ShellTopbar from '~/components/layout/ShellTopbar.vue'
   import ShellUserCard from '~/components/layout/ShellUserCard.vue'
 
-  const route = useRoute()
   const { resetAuthentication, user } = useUserStore()
-
-  function isRouteActive(targetPath: string) {
-    if (targetPath === '/') {
-      return route.path === '/'
-    }
-
-    return route.path === targetPath || route.path.startsWith(`${targetPath}/`)
-  }
-
-  const currentSectionLabel = computed(() => {
-    if (isRouteActive('/catalog')) {
-      return 'Catalog'
-    }
-
-    if (isRouteActive('/inventory')) {
-      return 'Gear'
-    }
-
-    if (isRouteActive('/packs')) {
-      return 'Packs'
-    }
-
-    if (isRouteActive('/account')) {
-      return 'Account'
-    }
-
-    return 'Dashboard'
-  })
 
   const userIdText = computed(() => user.value.userId ?? '')
   const userInitial = computed(() => userIdText.value.slice(0, 1).toUpperCase() || 'P')

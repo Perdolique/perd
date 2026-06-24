@@ -60,8 +60,8 @@
     grid-template-columns: repeat(4, 1fr);
     min-block-size: calc(var(--layout-dock-height) + var(--layout-safe-bottom));
     padding: var(--spacing-12) var(--spacing-16) calc(var(--spacing-12) + var(--layout-safe-bottom));
-    border-block-start: 1px solid var(--color-border-subtle);
     background: var(--color-background-elevated);
+    box-shadow: 0 -0.75rem 2rem -1.5rem color-mix(in oklch, var(--color-forest-900) 24%, transparent);
 
     @media (width >= 900px) {
       display: none;
