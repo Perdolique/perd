@@ -48,7 +48,7 @@
   .component {
     position: sticky;
     inset-block-start: 0;
-    z-index: 10;
+    z-index: var(--z-index-shell-topbar);
     display: flex;
     align-items: center;
     gap: var(--spacing-12);

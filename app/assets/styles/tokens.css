@@ -116,6 +116,9 @@
     --shadow-large: 0 18px 48px -12px color-mix(in oklch, var(--color-forest-900) 18%, transparent);
     --shadow-focus: 0 0 0 3px var(--color-focus-ring);
 
+    --z-index-shell-topbar: 10;
+    --z-index-shell-dock: 20;
+
     --transition-duration-fast: 120ms;
     --transition-duration-normal: 200ms;
     --transition-duration-slow: 320ms;
@@ -124,7 +127,7 @@
 
     --layout-content-max-width: 72rem;
     --layout-sidebar-width: 15.5rem;
-    --layout-dock-height: 4.25rem;
+    --layout-dock-height: 5.25rem;
     --layout-touch-target: 2.75rem;
     --layout-button-height-small: var(--layout-touch-target);
     --layout-button-height-medium: 3.5rem;

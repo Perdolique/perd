@@ -25,6 +25,14 @@ async function mockCatalogReads(context: BrowserContext) {
   })
 }
 
+async function mockPackingListReads(context: BrowserContext) {
+  await context.route('**/api/user/packing-lists**', async (route) => {
+    await route.fulfill({
+      json: []
+    })
+  })
+}
+
 async function mockLogout(context: BrowserContext) {
   await context.route('**/api/auth/logout**', async (route) => {
     await route.fulfill({
@@ -82,6 +90,7 @@ test.describe('Shell navigation', () => {
   test('should expose the mobile top bar and dock navigation', async ({ context, page }) => {
     await mockGuestLogin(context)
     await mockCatalogReads(context)
+    await mockPackingListReads(context)
     await mockLogout(context)
 
     await page.setViewportSize({
@@ -99,18 +108,18 @@ test.describe('Shell navigation', () => {
     await expect(dock).toBeVisible()
     await expect(page.getByTestId('shell-sidebar')).toBeHidden()
 
-    const dockCatalogLink = dock.getByRole('link', { name: 'Catalog' })
-    const dockAccountLink = dock.getByRole('link', { name: 'Account' })
+    const dockRoutesLink = dock.getByRole('link', { name: 'Routes' })
+    const dockProfileLink = dock.getByRole('link', { name: 'Profile' })
 
-    await dockCatalogLink.click()
+    await dockRoutesLink.click()
 
-    await expect(page).toHaveURL(/\/catalog$/u)
-    await expect(dockCatalogLink).toHaveClass(/active/u)
+    await expect(page).toHaveURL(/\/packs$/u)
+    await expect(dockRoutesLink).toHaveClass(/active/u)
 
-    await dockAccountLink.click()
+    await dockProfileLink.click()
 
     await expect(page).toHaveURL(/\/account$/u)
-    await expect(dockAccountLink).toHaveClass(/active/u)
+    await expect(dockProfileLink).toHaveClass(/active/u)
 
     await topbar.getByRole('button', { name: 'Log out' }).click()
 
