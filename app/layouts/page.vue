@@ -1,11 +1,7 @@
 <template>
   <div :class="$style.layout">
     <aside :class="$style.sidebar" data-testid="shell-sidebar">
-      <NuxtLink to="/" :class="$style.brand">
-        <span :class="$style.brandMark">
-          perd<em :class="$style.brandPunctuation">.</em>
-        </span>
-      </NuxtLink>
+      <ShellBrandLink :class="$style.brand" />
 
       <ShellSidebarNavigation />
 
@@ -31,13 +27,9 @@
         :class="$style.mobileHeader"
         data-testid="shell-mobile-header"
       >
-        <NuxtLink
-          to="/"
+        <ShellBrandLink
           :class="$style.mobileBrand"
-          aria-label="Home"
-        >
-          <span :class="$style.mobileLogo" aria-hidden="true" />
-        </NuxtLink>
+        />
       </header>
 
       <div :class="$style.content">
@@ -53,6 +45,7 @@
   import { computed } from 'vue'
   import { $fetch } from 'ofetch'
   import { navigateTo, useUserStore } from '#imports'
+  import ShellBrandLink from '~/components/layout/ShellBrandLink.vue'
   import ShellDockNavigation from '~/components/layout/ShellDockNavigation.vue'
   import ShellSidebarNavigation from '~/components/layout/ShellSidebarNavigation.vue'
   import ShellUserCard from '~/components/layout/ShellUserCard.vue'
@@ -107,10 +100,7 @@
   }
 
   .brand {
-    display: grid;
-    gap: var(--spacing-4);
-    color: inherit;
-    text-decoration: none;
+    min-block-size: var(--layout-touch-target);
     padding: var(--spacing-8) var(--spacing-12);
     border-radius: var(--border-radius-14);
 
@@ -121,22 +111,6 @@
     &:hover {
       background: color-mix(in oklch, var(--color-surface-primary), transparent 30%);
     }
-
-    &:focus-visible {
-      box-shadow: var(--shadow-focus);
-    }
-  }
-
-  .brandMark {
-    font-size: var(--font-size-30);
-    line-height: var(--line-height-tight);
-    letter-spacing: 0;
-    font-weight: var(--font-weight-bold);
-  }
-
-  .brandPunctuation {
-    color: var(--color-accent-primary);
-    font-style: normal;
   }
 
   .logoutButton {
@@ -204,31 +178,10 @@
   }
 
   .mobileBrand {
-    display: grid;
-    place-items: center;
-    inline-size: var(--layout-touch-target);
-    block-size: var(--layout-touch-target);
-    color: var(--color-accent-primary);
+    min-inline-size: var(--layout-touch-target);
+    min-block-size: var(--layout-touch-target);
+    padding-inline: var(--spacing-4);
     border-radius: var(--border-radius-14);
-    text-decoration: none;
-    transition:
-      color var(--transition-duration-normal) var(--transition-easing-standard),
-      box-shadow var(--transition-duration-normal) var(--transition-easing-standard);
-
-    &:hover {
-      color: var(--color-accent-hover);
-    }
-
-    &:focus-visible {
-      box-shadow: var(--shadow-focus);
-    }
-  }
-
-  .mobileLogo {
-    inline-size: 2.5rem;
-    aspect-ratio: 1;
-    background: currentColor;
-    mask: url("/images/logo.svg") center / contain no-repeat;
   }
 
   .content {
