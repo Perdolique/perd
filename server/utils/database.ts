@@ -3,7 +3,6 @@ import { drizzle as drizzleHttp } from 'drizzle-orm/neon-http'
 import { drizzle as drizzleWebsocket } from 'drizzle-orm/neon-serverless'
 import { neon, neonConfig, Pool } from '@neondatabase/serverless'
 import ws from 'ws'
-import * as schema from '../database/schema'
 import { relations } from '../database/relations'
 import type { DatabaseConfig } from './config-env'
 
@@ -24,7 +23,6 @@ function createHttpClient(config: DatabaseConfig) {
 
   const dbHttp = drizzleHttp({
     client: sql,
-    schema,
     relations,
     logger: true
   })
@@ -56,7 +54,6 @@ function createWebSocketClient(config: DatabaseConfig) {
 
   return drizzleWebsocket({
     client: pool,
-    schema,
     relations,
     logger: true
   })

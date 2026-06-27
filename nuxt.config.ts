@@ -1,4 +1,4 @@
-import { createHash, type BinaryLike } from 'node:crypto'
+import { createHash } from 'node:crypto'
 import { basename } from 'node:path'
 
 type ComponentType = 'page' | 'layout' | 'component';
@@ -123,9 +123,9 @@ export default defineNuxtConfig({
   vite: {
     css: {
       modules: {
-        generateScopedName(className: string, filename: string, data: BinaryLike) : string {
+        generateScopedName(className, filename, css) : string {
           const hash = createHash('sha256')
-            .update(data)
+            .update(css)
             .digest('hex')
             .slice(0, 6);
 
