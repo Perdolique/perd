@@ -10,15 +10,6 @@
           :user-initial="userInitial"
           :user-label="userLabel"
         />
-
-        <button
-          type="button"
-          :class="$style.logoutButton"
-          @click="removeAuthSession"
-        >
-          <Icon name="tabler:logout-2" :class="$style.navigationIcon" />
-          <span>Log out</span>
-        </button>
       </div>
     </aside>
 
@@ -43,31 +34,19 @@
 
 <script setup lang="ts">
   import { computed } from 'vue'
-  import { $fetch } from 'ofetch'
-  import { navigateTo, useUserStore } from '#imports'
+  import { useUserStore } from '#imports'
   import ShellBrandLink from '~/components/layout/ShellBrandLink.vue'
   import ShellDockNavigation from '~/components/layout/ShellDockNavigation.vue'
   import ShellSidebarNavigation from '~/components/layout/ShellSidebarNavigation.vue'
   import ShellUserCard from '~/components/layout/ShellUserCard.vue'
 
-  const { resetAuthentication, user } = useUserStore()
+  const { user } = useUserStore()
 
   const userIdText = computed(() => user.value.userId ?? '')
   const userInitial = computed(() => userIdText.value.slice(0, 1).toUpperCase() || 'P')
   const userLabel = computed(() => userIdText.value === ''
     ? 'Field user'
     : `User ${userIdText.value.slice(0, 8)}`)
-  async function removeAuthSession() {
-    await $fetch('/api/auth/logout', {
-      method: 'POST'
-    })
-
-    resetAuthentication()
-
-    await navigateTo({
-      path: '/login'
-    })
-  }
 </script>
 
 <style module>
@@ -111,49 +90,6 @@
     &:hover {
       background: color-mix(in oklch, var(--color-surface-primary), transparent 30%);
     }
-  }
-
-  .logoutButton {
-    appearance: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-12);
-    inline-size: 100%;
-    min-height: var(--layout-touch-target);
-    padding: 0 var(--spacing-12);
-    border-radius: var(--border-radius-14);
-    color: var(--color-text-secondary);
-    background: transparent;
-    text-decoration: none;
-    border: 1px solid transparent;
-    font: inherit;
-    transition:
-      background-color var(--transition-duration-normal) var(--transition-easing-standard),
-      border-color var(--transition-duration-normal) var(--transition-easing-standard),
-      color var(--transition-duration-normal) var(--transition-easing-standard),
-      box-shadow var(--transition-duration-normal) var(--transition-easing-standard);
-
-    &:focus-visible {
-      background: var(--color-surface-primary);
-      border-color: var(--color-border-subtle);
-      color: var(--color-text-primary);
-    }
-
-    &:hover {
-      background: var(--color-surface-primary);
-      border-color: var(--color-border-subtle);
-      color: var(--color-text-primary);
-    }
-
-    &:focus-visible {
-      box-shadow: var(--shadow-focus);
-    }
-  }
-
-  .navigationIcon {
-    font-size: 1rem;
-    flex-shrink: 0;
   }
 
   .main {

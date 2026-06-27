@@ -43,7 +43,7 @@ async function mockLogout(context: BrowserContext) {
 }
 
 test.describe('Shell navigation', () => {
-  test('should show the desktop sidebar, highlight the active route, and allow logout', async ({ context, page }) => {
+  test('should show the desktop sidebar, highlight the active route, and allow profile logout', async ({ context, page }) => {
     await mockGuestLogin(context)
     await mockCatalogReads(context)
     await mockLogout(context)
@@ -81,8 +81,9 @@ test.describe('Shell navigation', () => {
 
     await expect(page).toHaveURL(/\/account$/u)
     await expect(accountLink).toHaveClass(/active/u)
+    await expect(sidebar.getByRole('button', { name: 'Log out' })).toHaveCount(0)
 
-    await sidebar.getByRole('button', { name: 'Log out' }).click()
+    await page.getByRole('button', { name: 'Log out' }).click()
 
     await expect(page).toHaveURL(/\/login$/u)
   })

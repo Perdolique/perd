@@ -5,6 +5,7 @@
         :role="role"
         :user-id-text="userIdText"
         :user-initial="userInitial"
+        @logout="handleLogout"
       />
 
       <DangerActionCard
@@ -28,8 +29,7 @@
 
 <script lang="ts" setup>
   import { computed, ref } from 'vue'
-  import { $fetch } from 'ofetch'
-  import { definePageMeta, navigateTo, useUserStore } from '#imports'
+  import { definePageMeta, navigateTo, useRequestFetch, useUserStore } from '#imports'
   import AccountProfileCard from '~/components/account/AccountProfileCard.vue'
   import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue'
   import DangerActionCard from '~/components/DangerActionCard.vue'
@@ -40,6 +40,7 @@
   })
 
   const { user, resetAuthentication } = useUserStore()
+  const requestFetch = useRequestFetch()
   const showDeleteModal = ref(false)
   const isDeleting = ref(false)
   const role = computed(() => user.value.isAdmin ? 'Admin' : 'User')
@@ -50,6 +51,18 @@
     showDeleteModal.value = true
   }
 
+  async function handleLogout() {
+    await requestFetch('/api/auth/logout', {
+      method: 'POST'
+    })
+
+    resetAuthentication()
+
+    await navigateTo({
+      path: '/login'
+    })
+  }
+
   async function handleDeleteAccount() {
     if (isDeleting.value) {
       return
@@ -58,7 +71,7 @@
     try {
       isDeleting.value = true
 
-      await $fetch('/api/account', {
+      await requestFetch('/api/account', {
         method: 'DELETE'
       })
 
