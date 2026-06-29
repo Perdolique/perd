@@ -24,6 +24,7 @@
     }],
 
     "eslint/no-magic-numbers": "off",
+    "unicorn/max-nested-calls": "off",
 
     "eslint/id-length": ["error", {
       "exceptions": [
