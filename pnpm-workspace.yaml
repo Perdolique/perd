@@ -5,6 +5,7 @@ allowBuilds:
   workerd: false
 minimumReleaseAgeExclude:
   - '@nuxt/icon@2.2.5'
-  - eslint-config-greenpie@16.8.0
+  - eslint-config-greenpie@16.8.0 || 17.0.0
+  - '@types/node@26.1.0'
 publicHoistPattern:
   - h3

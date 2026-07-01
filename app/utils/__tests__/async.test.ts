@@ -26,11 +26,11 @@ describe(withMinimumDelay, () => {
 
   it('should reject when the original promise rejects', async () => {
     const promise = withMinimumDelay(Promise.reject(new Error('boom')), 100)
-    const assertion = expect(promise).rejects.toThrow('boom')
 
-    await vi.advanceTimersByTimeAsync(100)
-
-    await assertion
+    await Promise.all([
+      expect(promise).rejects.toThrow('boom'),
+      vi.advanceTimersByTimeAsync(100)
+    ])
   })
 
   it('should wait for the minimum delay even if the promise resolves instantly', async () => {
