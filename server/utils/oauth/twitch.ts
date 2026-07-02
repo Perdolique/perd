@@ -1,9 +1,8 @@
-import * as v from 'valibot'
 import { type H3Event, createError, getRequestURL } from 'h3'
 import { $fetch } from 'ofetch'
 import { joinURL } from 'ufo'
 import { useRuntimeConfig } from 'nitropack/runtime'
-import { nonEmptyStringSchema } from '#server/utils/validation/schemas'
+import { validateTwitchOAuthConfig } from './twitch-config'
 
 interface TwitchUser {
   readonly id: string;
@@ -36,12 +35,11 @@ interface TwitchOAuthConfig {
   clientSecret: string;
 }
 
-function getRuntimeTwitchConfig(event: H3Event): TwitchOAuthConfig {
+function getRuntimeTwitchConfig(event?: H3Event): TwitchOAuthConfig {
   const config = useRuntimeConfig(event)
-  const clientId = v.parse(nonEmptyStringSchema, config.oauth.twitch.clientId)
-  const clientSecret = v.parse(nonEmptyStringSchema, config.oauth.twitch.clientSecret)
+  const twitchConfig = validateTwitchOAuthConfig(config.oauth.twitch)
 
-  return { clientId, clientSecret }
+  return twitchConfig
 }
 
 function getTwitchRedirectUri(event: H3Event): string {
@@ -103,7 +101,6 @@ async function getTwitchUserInfo(accessToken: string, clientId: string): Promise
 }
 
 export {
-  type TwitchOAuthConfig,
   getRuntimeTwitchConfig,
   getTwitchRedirectUri,
   getTwitchOAuthToken,

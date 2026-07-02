@@ -26,8 +26,8 @@
     --color-white: oklch(100% 0 0);
     --color-black: oklch(12% 0.012 240);
 
-    --color-background-page: var(--color-sand-100);
-    --color-background-muted: var(--color-sand-200);
+    --color-background-page: var(--color-sand-50);
+    --color-background-muted: oklch(97.8% 0.004 67.7);
     --color-background-elevated: oklch(99% 0.003 67.7);
     --color-surface-primary: oklch(99% 0.003 67.7);
     --color-surface-secondary: var(--color-sand-50);
@@ -116,6 +116,9 @@
     --shadow-large: 0 18px 48px -12px color-mix(in oklch, var(--color-forest-900) 18%, transparent);
     --shadow-focus: 0 0 0 3px var(--color-focus-ring);
 
+    --z-index-shell-topbar: 10;
+    --z-index-shell-dock: 20;
+
     --transition-duration-fast: 120ms;
     --transition-duration-normal: 200ms;
     --transition-duration-slow: 320ms;
@@ -124,7 +127,7 @@
 
     --layout-content-max-width: 72rem;
     --layout-sidebar-width: 15.5rem;
-    --layout-dock-height: 4.25rem;
+    --layout-dock-height: 5.25rem;
     --layout-touch-target: 2.75rem;
     --layout-button-height-small: var(--layout-touch-target);
     --layout-button-height-medium: 3.5rem;
@@ -137,11 +140,11 @@
 
   @media (prefers-color-scheme: dark) {
     :root {
-      --color-background-page: oklch(20% 0.024 146.6);
-      --color-background-muted: oklch(16% 0.022 146.6);
-      --color-background-elevated: oklch(24% 0.025 146.6);
-      --color-surface-primary: oklch(25% 0.026 146.6);
-      --color-surface-secondary: oklch(29% 0.026 146.6);
+      --color-background-page: oklch(16% 0.018 146.6);
+      --color-background-muted: oklch(13% 0.016 146.6);
+      --color-background-elevated: oklch(20% 0.021 146.6);
+      --color-surface-primary: oklch(22% 0.023 146.6);
+      --color-surface-secondary: oklch(26% 0.024 146.6);
       --color-surface-tertiary: color-mix(in oklch, var(--color-forest-200) 8%, transparent);
 
       --color-border-subtle: color-mix(in oklch, var(--color-sand-50) 10%, transparent);

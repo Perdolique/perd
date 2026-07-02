@@ -24,6 +24,7 @@
     }],
 
     "eslint/no-magic-numbers": "off",
+    "unicorn/max-nested-calls": "off",
 
     "eslint/id-length": ["error", {
       "exceptions": [
@@ -32,6 +33,14 @@
     }],
 
     "eslint/no-console": "off",
+
+    "node/no-process-env": ["error", {
+      "allowedVariables": [
+        "CI",
+        "NUXT_DATABASE_URL",
+        "NUXT_LOCAL_DATABASE"
+      ]
+    }],
 
     "import/no-namespace": ["error", {
       "ignore": [

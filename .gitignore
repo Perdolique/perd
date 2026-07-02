@@ -22,4 +22,6 @@ logs
 
 playwright-report
 test-results
+.playwright-cli
 .codex
+.DS_Store

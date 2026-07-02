@@ -35,6 +35,44 @@ test.describe('Login page', () => {
     await expect(page.locator('body')).toHaveText('[]')
   })
 
+  test('should start twitch oauth from the login page', async ({ page }) => {
+    await page.route('**/api/oauth/twitch**', async (route) => {
+      await route.fulfill({
+        contentType: 'text/plain',
+        body: 'oauth start'
+      })
+    })
+
+    const twitchRequestPromise = page.waitForRequest((request) => {
+      const requestUrl = new globalThis.URL(request.url())
+
+      return requestUrl.pathname === '/api/oauth/twitch'
+    })
+
+    await page.goto('/login?redirectTo=/')
+    await page.getByRole('button', { name: 'Twitch' }).click()
+
+    const twitchRequest = await twitchRequestPromise
+    const twitchRequestUrl = new globalThis.URL(twitchRequest.url())
+
+    expect(twitchRequest.method()).toBe('GET')
+    expect(twitchRequestUrl.searchParams.get('redirectTo')).toBe('/')
+
+    await expect.poll(() => {
+      const currentUrl = new globalThis.URL(page.url())
+
+      return {
+        pathname: currentUrl.pathname,
+        redirectTo: currentUrl.searchParams.get('redirectTo')
+      }
+    }).toStrictEqual({
+      pathname: '/api/oauth/twitch',
+      redirectTo: '/'
+    })
+
+    await expect(page.locator('body')).toHaveText('oauth start')
+  })
+
   test('should restore api redirects after the twitch callback', async ({ page }) => {
     await page.route('**/api/oauth/twitch', async (route) => {
       await route.fulfill({

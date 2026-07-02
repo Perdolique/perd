@@ -35,10 +35,21 @@
         </span>
       </div>
     </div>
+
+    <div :class="$style.actions">
+      <PerdButton
+        variant="secondary"
+        icon="tabler:logout-2"
+        @click="emitLogout"
+      >
+        Log out
+      </PerdButton>
+    </div>
   </PerdCard>
 </template>
 
 <script lang="ts" setup>
+  import PerdButton from '~/components/PerdButton.vue'
   import UserAvatar from '~/components/UserAvatar.vue'
   import PerdCard from '~/components/PerdCard.vue'
   import PerdHeading from '~/components/PerdHeading.vue'
@@ -49,7 +60,15 @@
     userInitial: string;
   }
 
+  type Emits = (event: 'logout') => void
+
   defineProps<Props>()
+
+  const emit = defineEmits<Emits>()
+
+  function emitLogout() {
+    emit('logout')
+  }
 </script>
 
 <style module>
@@ -110,5 +129,10 @@
   .value {
     font-size: var(--font-size-14);
     color: var(--color-text-primary);
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-start;
   }
 </style>

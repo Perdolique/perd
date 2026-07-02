@@ -11,4 +11,5 @@ async function withMinimumDelay<PromiseType>(
   return promise
 }
 
-export { delay, withMinimumDelay }
+export { withMinimumDelay }
+export { default as delay } from 'delay'
