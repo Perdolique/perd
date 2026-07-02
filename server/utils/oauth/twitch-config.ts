@@ -15,14 +15,14 @@ const twitchOAuthConfigSchema = v.object({
 function validateTwitchOAuthConfig(config: unknown): TwitchOAuthConfig {
   const result = v.safeParse(twitchOAuthConfigSchema, config)
 
-  if (!result.success) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Twitch OAuth client credentials are not configured'
-    })
+  if (result.success) {
+    return result.output
   }
 
-  return result.output
+  throw createError({
+    statusCode: 500,
+    statusMessage: 'Twitch OAuth client credentials are not configured'
+  })
 }
 
 export {

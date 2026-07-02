@@ -5,18 +5,17 @@ import { getRuntimeTwitchConfig } from '#server/utils/oauth/twitch'
 export default defineNitroPlugin((nitroApp) => {
   const isProductionRuntime = import.meta.dev === false
 
-  if (!isProductionRuntime) {
-    return
-  }
-
   let isTwitchConfigValidated = false
 
   nitroApp.hooks.hook('request', (event) => {
-    if (isTwitchConfigValidated) {
-      return
-    }
+    if (isProductionRuntime) {
+      if (isTwitchConfigValidated) {
+        return
+      }
 
-    getRuntimeTwitchConfig(event)
-    isTwitchConfigValidated = true
+      getRuntimeTwitchConfig(event)
+
+      isTwitchConfigValidated = true
+    }
   })
 })
