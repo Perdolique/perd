@@ -39,7 +39,7 @@
     <div :class="$style.actions">
       <PerdButton
         variant="secondary"
-        icon="tabler:logout-2"
+        icon="hugeicons:logout-03"
         @click="emitLogout"
       >
         Log out

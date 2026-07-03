@@ -1,7 +1,7 @@
 <template>
   <div :class="$style.component">
     <span :class="$style.icon" aria-hidden="true">
-      <Icon name="tabler:route" />
+      <Icon name="hugeicons:maps-location-01" />
     </span>
 
     <div :class="$style.titleBlock">

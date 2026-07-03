@@ -176,7 +176,7 @@
     return isOwned.value ? 'Remove from inventory' : 'I have this'
   })
   const ownershipActionVariant = computed(() => isOwned.value ? 'danger' : 'primary')
-  const ownershipActionIcon = computed(() => isOwned.value ? 'tabler:trash' : 'tabler:backpack')
+  const ownershipActionIcon = computed(() => isOwned.value ? 'hugeicons:delete-02' : 'hugeicons:backpack-03')
   const ownershipStateText = computed(() => {
     if (isInventoryLoading.value) {
       return 'Checking saved gear'
@@ -190,14 +190,14 @@
   })
   const ownershipStateIcon = computed(() => {
     if (isInventoryLoading.value) {
-      return 'tabler:hourglass-empty'
+      return 'hugeicons:hourglass'
     }
 
     if (hasInventoryError.value) {
-      return 'tabler:alert-circle'
+      return 'hugeicons:alert-circle'
     }
 
-    return isOwned.value ? 'tabler:check' : 'tabler:circle-dashed'
+    return isOwned.value ? 'hugeicons:checkmark-circle-02' : 'hugeicons:circle'
   })
   const ownershipStateClass = computed(() => {
     if (isInventoryLoading.value) {

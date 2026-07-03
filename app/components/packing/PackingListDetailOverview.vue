@@ -13,7 +13,7 @@
             :aria-pressed="isPlanningMode"
             @click="emitModeUpdate('planning')"
           >
-            <Icon name="tabler:edit-circle" aria-hidden="true" />
+            <Icon name="hugeicons:edit-02" aria-hidden="true" />
             Planning
           </button>
 
@@ -25,7 +25,7 @@
             :aria-pressed="isChecklistMode"
             @click="emitModeUpdate('checklist')"
           >
-            <Icon name="tabler:checkbox" aria-hidden="true" />
+            <Icon name="hugeicons:checkmark-square-01" aria-hidden="true" />
             Checklist
           </button>
         </div>

@@ -4,7 +4,7 @@
       <div :class="$style.info">
         <div :class="$style.titleRow">
           <span :class="$style.icon" aria-hidden="true">
-            <Icon name="tabler:backpack" />
+            <Icon name="hugeicons:backpack-03" />
           </span>
 
           <div :class="$style.titleBlock">
@@ -37,7 +37,7 @@
         <PerdButton
           size="small"
           variant="danger"
-          icon="tabler:trash"
+          icon="hugeicons:delete-02"
           :loading="inventoryRow.isRemoving"
           :disabled="inventoryRow.isRemoveDisabled"
           @click="emitRemove"

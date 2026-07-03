@@ -71,7 +71,7 @@
         <PerdButton
           variant="danger"
           size="small"
-          icon="tabler:trash"
+          icon="hugeicons:delete-02"
           :loading="entry.isLoading"
           :disabled="entry.isDisabled"
           @click="emitDeleteEntry(entry)"

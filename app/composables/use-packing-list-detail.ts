@@ -137,7 +137,7 @@ export async function usePackingListDetail() {
     return packingListDateFormatter.format(new Date(packingList.value.updatedAt))
   })
   const detailModeTitle = computed(() => isPlanningMode.value ? 'Planning' : 'Checklist')
-  const detailModeIcon = computed(() => isPlanningMode.value ? 'tabler:edit-circle' : 'tabler:checkbox')
+  const detailModeIcon = computed(() => isPlanningMode.value ? 'hugeicons:edit-02' : 'hugeicons:checkmark-square-01')
   const detailModeSummary = computed(() => isPlanningMode.value ? entryCountText.value : packedCountText.value)
   const emptyStateCopy = computed(() => {
     if (isPlanningMode.value) {

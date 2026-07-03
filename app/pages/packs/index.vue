@@ -2,7 +2,7 @@
   <PageContent page-title="Packs">
     <template v-if="showHeaderCreateAction" #actions>
       <PerdButton
-        icon="tabler:plus"
+        icon="hugeicons:add-01"
         :disabled="creatingList"
         aria-haspopup="dialog"
         @click="openCreateDialog"
@@ -30,7 +30,7 @@
       <PagePlaceholder v-else-if="isEmpty" emoji="🧭" title="No packs yet.">
         <template #actions>
           <PerdButton
-            icon="tabler:plus"
+            icon="hugeicons:add-01"
             :disabled="creatingList"
             aria-haspopup="dialog"
             @click="openCreateDialog"

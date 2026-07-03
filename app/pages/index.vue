@@ -3,7 +3,7 @@
     <div :class="$style.component">
       <NuxtLink to="/packs" :class="$style.primaryAction">
         <span :class="$style.primaryIcon" aria-hidden="true">
-          <Icon name="tabler:route" />
+          <Icon name="hugeicons:maps-location-01" />
         </span>
 
         <span :class="$style.primaryText">
@@ -11,19 +11,19 @@
           <span :class="$style.primaryMeta">Plan and check gear</span>
         </span>
 
-        <Icon name="tabler:arrow-right" :class="$style.arrow" aria-hidden="true" />
+        <Icon name="hugeicons:arrow-right-01" :class="$style.arrow" aria-hidden="true" />
       </NuxtLink>
 
       <div :class="$style.grid" aria-label="Quick actions">
         <QuickActionLink
           to="/catalog"
-          icon="streamline-emojis:package"
+          icon="hugeicons:package"
           label="Catalog"
         />
 
         <QuickActionLink
           to="/inventory"
-          icon="streamline-emojis:school-backpack"
+          icon="hugeicons:backpack-03"
           label="Gear"
         />
       </div>

@@ -21,12 +21,9 @@ importers:
         specifier: 3.5.39
         version: 3.5.39(typescript@6.0.3)
     devDependencies:
-      '@iconify-json/streamline-emojis':
-        specifier: 1.2.4
-        version: 1.2.4
-      '@iconify-json/tabler':
-        specifier: 1.2.35
-        version: 1.2.35
+      '@iconify-json/hugeicons':
+        specifier: 1.2.30
+        version: 1.2.30
       '@neondatabase/serverless':
         specifier: 1.1.0
         version: 1.1.0
@@ -909,11 +906,8 @@ packages:
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
     engines: {node: '>=18.18'}
 
-  '@iconify-json/streamline-emojis@1.2.4':
-    resolution: {integrity: sha512-iNr9T9XuZVTyQPJO8ZlLxBzPkpi7qMl+z1l0C31vpEMqhPMelth3n7CeWQYtixdetDPdI81yeG4ROqjWpYJE6A==}
-
-  '@iconify-json/tabler@1.2.35':
-    resolution: {integrity: sha512-/sJMqHvh5ZWrEERVfDCT5NjVDeKJdhosFtKjJofAVl+P/3AzLiryOQw7WvrfDF25Xa5N/eoOQ15Y1jnhYXxBoQ==}
+  '@iconify-json/hugeicons@1.2.30':
+    resolution: {integrity: sha512-L38YPId/uZ8xZJL+rdwB5/uI/jpnbzqXetfo1b0wbBi6h2pnyEy6HpQouCJXMBUOkp2iVWu8C1VdFRG+JRFwpg==}
 
   '@iconify/collections@1.0.704':
     resolution: {integrity: sha512-rwIk2LK/wsfUY5TG3NSncyVuUzLVcYdqehtWEXatkqXpsvcFwvJLePx0CcXv4iaRhL+Y+Lo5uzPRkzVqDvf6Gg==}
@@ -6481,11 +6475,7 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@iconify-json/streamline-emojis@1.2.4':
-    dependencies:
-      '@iconify/types': 2.0.0
-
-  '@iconify-json/tabler@1.2.35':
+  '@iconify-json/hugeicons@1.2.30':
     dependencies:
       '@iconify/types': 2.0.0
 

@@ -1,7 +1,7 @@
 <template>
   <PerdCard :class="$style.component">
     <div :class="$style.sectionHeader">
-      <IconTitle icon="tabler:list-details" :level="2">
+      <IconTitle icon="hugeicons:property-view" :level="2">
         Properties
       </IconTitle>
     </div>

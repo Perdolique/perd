@@ -10,7 +10,7 @@
       :class="$style.dockItem"
     >
       <span :class="$style.dockIcon" aria-hidden="true">
-        <Icon name="tabler:home-2" />
+        <Icon name="hugeicons:tent" />
       </span>
       <span>Home</span>
     </NuxtLink>
@@ -21,7 +21,7 @@
       :class="$style.dockItem"
     >
       <span :class="$style.dockIcon" aria-hidden="true">
-        <Icon name="tabler:route" />
+        <Icon name="hugeicons:maps-location-01" />
       </span>
       <span>Routes</span>
     </NuxtLink>
@@ -32,7 +32,7 @@
       :class="$style.dockItem"
     >
       <span :class="$style.dockIcon" aria-hidden="true">
-        <Icon name="tabler:backpack" />
+        <Icon name="hugeicons:backpack-03" />
       </span>
       <span>Gear</span>
     </NuxtLink>
@@ -43,7 +43,7 @@
       :class="$style.dockItem"
     >
       <span :class="$style.dockIcon" aria-hidden="true">
-        <Icon name="tabler:user" />
+        <Icon name="hugeicons:user" />
       </span>
       <span>Profile</span>
     </NuxtLink>

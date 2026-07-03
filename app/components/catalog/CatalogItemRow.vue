@@ -3,7 +3,7 @@
     <div :class="$style.row">
       <div :class="$style.identity">
         <span :class="$style.icon" aria-hidden="true">
-          <Icon name="tabler:backpack" />
+          <Icon name="hugeicons:backpack-03" />
         </span>
 
         <div :class="$style.text">
@@ -22,7 +22,7 @@
           {{ item.category.name }}
         </PerdPill>
 
-        <Icon name="tabler:arrow-up-right" :class="$style.arrow" aria-hidden="true" />
+        <Icon name="hugeicons:arrow-up-right-01" :class="$style.arrow" aria-hidden="true" />
       </div>
     </div>
   </NuxtLink>

@@ -1,7 +1,7 @@
 <template>
   <PerdCard :class="$style.component">
     <div :class="$style.header">
-      <IconTitle icon="tabler:backpack" :level="2">
+      <IconTitle icon="hugeicons:backpack-03" :level="2">
         Ownership
       </IconTitle>
 

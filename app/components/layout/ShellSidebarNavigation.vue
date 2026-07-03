@@ -5,7 +5,7 @@
       exact-active-class="active"
       :class="$style.navigationItem"
     >
-      <Icon name="tabler:home-2" :class="$style.navigationIcon" />
+      <Icon name="hugeicons:tent" :class="$style.navigationIcon" />
       <span>Home</span>
     </NuxtLink>
 
@@ -14,7 +14,7 @@
       active-class="active"
       :class="$style.navigationItem"
     >
-      <Icon name="tabler:package" :class="$style.navigationIcon" />
+      <Icon name="hugeicons:package" :class="$style.navigationIcon" />
       <span>Catalog</span>
     </NuxtLink>
 
@@ -23,7 +23,7 @@
       active-class="active"
       :class="$style.navigationItem"
     >
-      <Icon name="tabler:backpack" :class="$style.navigationIcon" />
+      <Icon name="hugeicons:backpack-03" :class="$style.navigationIcon" />
       <span>Gear</span>
     </NuxtLink>
 
@@ -32,7 +32,7 @@
       active-class="active"
       :class="$style.navigationItem"
     >
-      <Icon name="tabler:route" :class="$style.navigationIcon" />
+      <Icon name="hugeicons:maps-location-01" :class="$style.navigationIcon" />
       <span>Packs</span>
     </NuxtLink>
   </nav>

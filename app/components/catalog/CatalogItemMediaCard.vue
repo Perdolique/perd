@@ -5,7 +5,7 @@
     </PerdPill>
 
     <span :class="$style.icon" aria-hidden="true">
-      <Icon name="tabler:backpack" />
+      <Icon name="hugeicons:backpack-03" />
     </span>
   </PerdCard>
 </template>

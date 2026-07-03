@@ -7,7 +7,7 @@
         </label>
 
         <div :class="$style.inputShell">
-          <Icon name="tabler:plus" :class="$style.inputIcon" aria-hidden="true" />
+          <Icon name="hugeicons:add-01" :class="$style.inputIcon" aria-hidden="true" />
 
           <input
             id="new-packing-list-entry-name"
@@ -24,7 +24,7 @@
 
       <PerdButton
         type="submit"
-        icon="tabler:plus"
+        icon="hugeicons:add-01"
         :loading="isCreatingCustomEntry"
         :disabled="isCreateCustomEntryDisabled"
       >
@@ -80,7 +80,7 @@
           <PerdButton
             size="small"
             variant="secondary"
-            icon="tabler:plus"
+            icon="hugeicons:add-01"
             :loading="creatingInventoryId === inventoryRow.id"
             :disabled="isInventoryActionDisabled"
             @click="emitCreateInventoryEntry(inventoryRow.id)"

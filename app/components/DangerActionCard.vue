@@ -1,7 +1,7 @@
 <template>
   <PerdCard :class="$style.component">
     <div :class="$style.content">
-      <IconTitle icon="tabler:alert-triangle" :level="2">
+      <IconTitle icon="hugeicons:alert-02" :level="2">
         {{ title }}
       </IconTitle>
 
@@ -11,7 +11,7 @@
 
       <PerdButton
         variant="danger"
-        icon="tabler:trash"
+        icon="hugeicons:delete-02"
         @click="emitAction"
       >
         {{ actionText }}

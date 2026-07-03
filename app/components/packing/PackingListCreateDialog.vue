@@ -27,7 +27,7 @@
           aria-label="Close new pack dialog"
           @click="close"
         >
-          <Icon name="tabler:x" aria-hidden="true" />
+          <Icon name="hugeicons:cancel-01" aria-hidden="true" />
         </button>
       </div>
 
@@ -37,7 +37,7 @@
         </label>
 
         <div :class="$style.inputShell">
-          <Icon name="tabler:route" :class="$style.inputIcon" aria-hidden="true" />
+          <Icon name="hugeicons:maps-location-01" :class="$style.inputIcon" aria-hidden="true" />
 
           <input
             id="new-packing-list-name"
@@ -73,7 +73,7 @@
 
         <PerdButton
           type="submit"
-          icon="tabler:plus"
+          icon="hugeicons:add-01"
           :loading="loading"
           :disabled="isCreateDisabled"
         >

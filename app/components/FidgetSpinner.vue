@@ -1,6 +1,6 @@
 <template>
   <Icon
-    name="tabler:fidget-spinner"
+    name="hugeicons:loading-03"
     :class="$style.component"
   />
 </template>
