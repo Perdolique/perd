@@ -105,8 +105,7 @@
       background-color var(--transition-duration-normal) var(--transition-easing-standard),
       border-color var(--transition-duration-normal) var(--transition-easing-standard),
       box-shadow var(--transition-duration-normal) var(--transition-easing-standard),
-      color var(--transition-duration-normal) var(--transition-easing-standard),
-      transform var(--transition-duration-fast) var(--transition-easing-standard);
+      color var(--transition-duration-normal) var(--transition-easing-standard);
 
     &:hover:not(:disabled) {
       border-color: var(--button-border-color-hover);
@@ -122,7 +121,6 @@
     &:active:not(:disabled) {
       border-color: var(--button-border-color-hover);
       background-color: var(--button-background-active);
-      transform: scale(0.98);
     }
 
     &:global(.small) {
@@ -203,7 +201,6 @@
         border-color: var(--color-border-subtle);
         color: var(--color-text-muted);
         box-shadow: inset 0 1px 0 color-mix(in oklch, var(--color-background-elevated) 48%, transparent);
-        transform: none;
       }
     }
   }
@@ -213,11 +210,4 @@
     flex-shrink: 0;
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .component {
-      &:active:not(:disabled) {
-        transform: none;
-      }
-    }
-  }
 </style>
