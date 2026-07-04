@@ -1,29 +1,31 @@
 <template>
   <PageContent page-title="Home">
     <div :class="$style.component">
-      <NuxtLink to="/packs" :class="$style.primaryAction">
+      <NuxtLink :to="appRoutes.packingLists" :class="$style.primaryAction">
         <span :class="$style.primaryIcon" aria-hidden="true">
-          <Icon name="tabler:route" />
+          <Icon :name="navigationIcons.packingLists" />
         </span>
 
         <span :class="$style.primaryText">
-          <span :class="$style.primaryLabel">Packs</span>
-          <span :class="$style.primaryMeta">Plan and check gear</span>
+          <span :class="$style.primaryLabel">{{ navigationLabels.packingLists }}</span>
+          <span :class="$style.primaryMeta">Plan and check off gear</span>
         </span>
 
-        <Icon name="tabler:arrow-right" :class="$style.arrow" aria-hidden="true" />
+        <Icon name="hugeicons:arrow-right-01" :class="$style.arrow" aria-hidden="true" />
       </NuxtLink>
 
       <div :class="$style.grid" aria-label="Quick actions">
-        <NuxtLink to="/catalog" :class="$style.card">
-          <Icon name="tabler:package" :class="$style.cardIcon" aria-hidden="true" />
-          <span>Catalog</span>
-        </NuxtLink>
+        <QuickActionLink
+          :to="appRoutes.gearLibrary"
+          :icon="navigationIcons.gearLibrary"
+          :label="navigationLabels.gearLibrary"
+        />
 
-        <NuxtLink to="/inventory" :class="$style.card">
-          <Icon name="tabler:backpack" :class="$style.cardIcon" aria-hidden="true" />
-          <span>Gear</span>
-        </NuxtLink>
+        <QuickActionLink
+          :to="appRoutes.myGear"
+          :icon="navigationIcons.myGear"
+          :label="navigationLabels.myGear"
+        />
       </div>
     </div>
   </PageContent>
@@ -32,6 +34,8 @@
 <script lang="ts" setup>
   import { definePageMeta } from '#imports'
   import PageContent from '~/components/layout/PageContent.vue'
+  import QuickActionLink from '~/components/QuickActionLink.vue'
+  import { appRoutes, navigationIcons, navigationLabels } from '~/utils/navigation'
 
   definePageMeta({
     layout: 'page'
@@ -106,40 +110,6 @@
   .grid {
     display: grid;
     gap: var(--spacing-12);
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
-  }
-
-  .card {
-    display: grid;
-    gap: var(--spacing-16);
-    min-block-size: 8rem;
-    align-content: space-between;
-    padding: var(--spacing-16);
-    border-radius: var(--border-radius-20);
-    border: 1px solid var(--color-border-subtle);
-    background: var(--color-surface-primary);
-    color: var(--color-text-primary);
-    text-decoration: none;
-    font-size: var(--font-size-17);
-    font-weight: var(--font-weight-semibold);
-    transition:
-      background-color var(--transition-duration-normal) var(--transition-easing-standard),
-      box-shadow var(--transition-duration-normal) var(--transition-easing-standard);
-
-    &:hover,
-    &:focus-visible {
-      background: var(--color-surface-secondary);
-      box-shadow: var(--shadow-small);
-    }
-
-    &:focus-visible {
-      box-shadow: var(--shadow-focus), var(--shadow-small);
-    }
-
-  }
-
-  .cardIcon {
-    color: var(--color-accent-primary);
-    font-size: var(--font-size-24);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 9.5rem));
   }
 </style>

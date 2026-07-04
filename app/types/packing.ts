@@ -6,7 +6,7 @@ interface PackingListSummary {
   updatedAt: string;
 }
 
-interface PackingListEntryInventory {
+interface PackingListEntryMyGear {
   brand: string;
   category: string;
   inventoryId: string;
@@ -17,7 +17,7 @@ interface PackingListEntry {
   createdAt: string;
   customName: string | null;
   id: string;
-  inventory?: PackingListEntryInventory;
+  inventory?: PackingListEntryMyGear;
   isPacked: boolean;
   source: 'custom' | 'inventory';
   updatedAt: string;
@@ -45,13 +45,13 @@ interface PackingListView extends PackingListSummary {
   formattedUpdatedAt: string;
 }
 
-type PackDetailMode = 'planning' | 'checklist'
+type PackingListDetailMode = 'planning' | 'checklist'
 
 export type {
-  PackDetailMode,
+  PackingListDetailMode,
   PackingListDetail,
   PackingListEntry,
-  PackingListEntryInventory,
+  PackingListEntryMyGear,
   PackingListEntryView,
   PackingListSummary,
   PackingListView

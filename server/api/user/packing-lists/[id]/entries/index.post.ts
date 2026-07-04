@@ -223,7 +223,7 @@ export default defineEventHandler(async (event) : Promise<PackingListEntryMutati
     if (isUniqueViolation(error)) {
       throw createError({
         status: 409,
-        message: 'Inventory item is already in this pack'
+        message: 'My gear item is already in this list'
       })
     }
 

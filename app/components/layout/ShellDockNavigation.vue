@@ -5,50 +5,55 @@
     aria-label="Primary navigation"
   >
     <NuxtLink
-      to="/"
+      :to="appRoutes.home"
       exact-active-class="active"
       :class="$style.dockItem"
     >
       <span :class="$style.dockIcon" aria-hidden="true">
-        <Icon name="tabler:home-2" />
+        <Icon :name="navigationIcons.home" />
       </span>
-      <span>Home</span>
+      <span>{{ navigationLabels.home }}</span>
     </NuxtLink>
 
     <NuxtLink
-      to="/packs"
+      :to="appRoutes.packingLists"
+      active-class="active"
+      :class="$style.dockItem"
+      :aria-label="navigationLabels.packingLists"
+    >
+      <span :class="$style.dockIcon" aria-hidden="true">
+        <Icon :name="navigationIcons.packingLists" />
+      </span>
+      <span>{{ navigationLabels.packingListsDock }}</span>
+    </NuxtLink>
+
+    <NuxtLink
+      :to="appRoutes.myGear"
       active-class="active"
       :class="$style.dockItem"
     >
       <span :class="$style.dockIcon" aria-hidden="true">
-        <Icon name="tabler:route" />
+        <Icon :name="navigationIcons.myGear" />
       </span>
-      <span>Routes</span>
+      <span>{{ navigationLabels.myGear }}</span>
     </NuxtLink>
 
     <NuxtLink
-      to="/inventory"
+      :to="appRoutes.account"
       active-class="active"
       :class="$style.dockItem"
     >
       <span :class="$style.dockIcon" aria-hidden="true">
-        <Icon name="tabler:backpack" />
+        <Icon :name="navigationIcons.account" />
       </span>
-      <span>Gear</span>
-    </NuxtLink>
-
-    <NuxtLink
-      to="/account"
-      active-class="active"
-      :class="$style.dockItem"
-    >
-      <span :class="$style.dockIcon" aria-hidden="true">
-        <Icon name="tabler:user" />
-      </span>
-      <span>Profile</span>
+      <span>{{ navigationLabels.account }}</span>
     </NuxtLink>
   </nav>
 </template>
+
+<script lang="ts" setup>
+  import { appRoutes, navigationIcons, navigationLabels } from '~/utils/navigation'
+</script>
 
 <style module>
   .dock {

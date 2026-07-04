@@ -40,8 +40,7 @@
     "vue": "3.5.39"
   },
   "devDependencies": {
-    "@iconify-json/streamline-emojis": "1.2.4",
-    "@iconify-json/tabler": "1.2.35",
+    "@iconify-json/hugeicons": "1.2.30",
     "@neondatabase/serverless": "1.1.0",
     "@nuxt/devtools": "4.0.0-alpha.7",
     "@nuxt/fonts": "0.14.0",

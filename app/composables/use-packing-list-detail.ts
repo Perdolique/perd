@@ -1,7 +1,8 @@
 import { computed, ref } from 'vue'
 import { navigateTo, useFetch, useRequestFetch, useRoute } from '#imports'
-import type { InventoryRecord } from '~/types/equipment'
-import type { PackDetailMode, PackingListDetail, PackingListEntry, PackingListEntryView } from '~/types/packing'
+import type { MyGearRecord } from '~/types/equipment'
+import type { PackingListDetailMode, PackingListDetail, PackingListEntry, PackingListEntryView } from '~/types/packing'
+import { appRoutes } from '~/utils/navigation'
 import { packingListDateFormatter } from '~/utils/packing'
 import {
   getEntryDetailText,
@@ -28,7 +29,7 @@ function createEmptyPackingList(): PackingListDetail {
 export async function usePackingListDetail() {
   const packingListId = getPackingListId()
   const requestFetch = useRequestFetch()
-  const detailMode = ref<PackDetailMode>('planning')
+  const detailMode = ref<PackingListDetailMode>('planning')
   const isDeleteDialogVisible = ref(false)
   const isDeleting = ref(false)
   const deleteErrorMessage = ref<string | null>(null)
@@ -36,7 +37,7 @@ export async function usePackingListDetail() {
   const createEntryErrorMessage = ref<string | null>(null)
   const entryMutationErrorMessage = ref<string | null>(null)
   const isCreatingCustomEntry = ref(false)
-  const creatingInventoryId = ref<string | null>(null)
+  const creatingMyGearId = ref<string | null>(null)
   const mutatingEntryId = ref<string | null>(null)
 
   const {
@@ -50,11 +51,11 @@ export async function usePackingListDetail() {
   })
 
   const {
-    data: inventoryResponse,
-    error: inventoryError,
-    status: inventoryStatus
-  } = await useFetch('/api/user/equipment', {
-    default: (): InventoryRecord[] => []
+    data: myGearResponse,
+    error: myGearError,
+    status: myGearStatus
+  } = await useFetch('/api/user/gear', {
+    default: (): MyGearRecord[] => []
   })
 
   function updatePackingListState(update: Partial<PackingListDetail>) {
@@ -87,17 +88,17 @@ export async function usePackingListDetail() {
 
   const hasError = computed(() => packingListError.value !== undefined)
   const isInitialLoading = computed(() => packingListStatus.value === 'pending')
-  const hasInventoryError = computed(() => inventoryError.value !== undefined)
-  const isInventoryLoading = computed(() => inventoryStatus.value === 'pending')
+  const hasMyGearError = computed(() => myGearError.value !== undefined)
+  const isMyGearLoading = computed(() => myGearStatus.value === 'pending')
   const isPlanningMode = computed(() => detailMode.value === 'planning')
-  const pageTitle = computed(() => hasError.value ? 'Pack' : packingList.value.name)
+  const pageTitle = computed(() => hasError.value ? 'Packing list' : packingList.value.name)
   const deleteDialogHeaderText = computed(() => `Delete "${packingList.value.name}"?`)
   const entryCount = computed(() => packingList.value.entries.length)
   const packedCount = computed(() => packingList.value.entries.filter((entry) => entry.isPacked).length)
-  const isInventoryEmpty = computed(() => inventoryResponse.value.length === 0)
+  const isMyGearEmpty = computed(() => myGearResponse.value.length === 0)
   const isEntryMutationPending = computed(() => mutatingEntryId.value !== null)
-  const isInventoryCreatePending = computed(() => creatingInventoryId.value !== null)
-  const isEntryCreatePending = computed(() => isCreatingCustomEntry.value || isInventoryCreatePending.value)
+  const isMyGearCreatePending = computed(() => creatingMyGearId.value !== null)
+  const isEntryCreatePending = computed(() => isCreatingCustomEntry.value || isMyGearCreatePending.value)
   const isAnyEntryActionPending = computed(() => isEntryCreatePending.value || isEntryMutationPending.value)
   const isCreateEntryErrorVisible = computed(() => createEntryErrorMessage.value !== null)
   const inventoryEntryIds = computed(() => new Set(
@@ -105,10 +106,10 @@ export async function usePackingListDetail() {
       .map((entry) => entry.inventory?.inventoryId)
       .filter((inventoryId): inventoryId is string => inventoryId !== undefined)
   ))
-  const availableInventoryRows = computed(() => inventoryResponse.value.filter(
-    (inventoryRow) => inventoryEntryIds.value.has(inventoryRow.id) === false
+  const availableMyGearRows = computed(() => myGearResponse.value.filter(
+    (myGearRow) => inventoryEntryIds.value.has(myGearRow.id) === false
   ))
-  const isAvailableInventoryEmpty = computed(() => availableInventoryRows.value.length === 0)
+  const isAvailableMyGearEmpty = computed(() => availableMyGearRows.value.length === 0)
   const isCreateCustomEntryDisabled = computed(() => {
     const trimmedName = newEntryName.value.trim()
 
@@ -137,11 +138,11 @@ export async function usePackingListDetail() {
     return packingListDateFormatter.format(new Date(packingList.value.updatedAt))
   })
   const detailModeTitle = computed(() => isPlanningMode.value ? 'Planning' : 'Checklist')
-  const detailModeIcon = computed(() => isPlanningMode.value ? 'tabler:edit-circle' : 'tabler:checkbox')
+  const detailModeIcon = computed(() => isPlanningMode.value ? 'hugeicons:edit-02' : 'hugeicons:checkmark-square-01')
   const detailModeSummary = computed(() => isPlanningMode.value ? entryCountText.value : packedCountText.value)
   const emptyStateCopy = computed(() => {
     if (isPlanningMode.value) {
-      return 'Add custom items or pull from saved gear while you build this pack.'
+      return 'Add custom items or pull from my gear while you build this list.'
     }
 
     return 'Switch to planning mode to add items before packing.'
@@ -174,9 +175,9 @@ export async function usePackingListDetail() {
     }
   }))
 
-  function isAddInventoryDisabled(inventoryId: string) {
-    const isAlreadyAdded = inventoryEntryIds.value.has(inventoryId)
-    const isLoading = creatingInventoryId.value === inventoryId
+  function isAddMyGearDisabled(myGearId: string) {
+    const isAlreadyAdded = inventoryEntryIds.value.has(myGearId)
+    const isLoading = creatingMyGearId.value === myGearId
 
     return isAlreadyAdded || isLoading || isAnyEntryActionPending.value
   }
@@ -211,20 +212,20 @@ export async function usePackingListDetail() {
     }
   }
 
-  async function handleCreateInventoryEntry(inventoryId: string) {
-    if (isAddInventoryDisabled(inventoryId)) {
+  async function handleCreateMyGearEntry(myGearId: string) {
+    if (isAddMyGearDisabled(myGearId)) {
       return
     }
 
     resetEntryMessages()
-    creatingInventoryId.value = inventoryId
+    creatingMyGearId.value = myGearId
 
     try {
       const response = await requestFetch(`/api/user/packing-lists/${packingListId}/entries`, {
         method: 'POST',
 
         body: {
-          inventoryId
+          inventoryId: myGearId
         }
       })
 
@@ -233,10 +234,10 @@ export async function usePackingListDetail() {
       const statusCode = getErrorStatusCode(error)
 
       createEntryErrorMessage.value = statusCode === 409
-        ? 'This saved item is already in the pack.'
+        ? 'This saved item is already in the list.'
         : 'Could not add saved item.'
     } finally {
-      creatingInventoryId.value = null
+      creatingMyGearId.value = null
     }
   }
 
@@ -307,7 +308,7 @@ export async function usePackingListDetail() {
     isDeleteDialogVisible.value = true
   }
 
-  async function handleDeletePack() {
+  async function handleDeletePackingList() {
     if (isDeleting.value) {
       return
     }
@@ -320,31 +321,31 @@ export async function usePackingListDetail() {
         method: 'DELETE'
       })
 
-      await navigateTo('/packs')
+      await navigateTo(appRoutes.packingLists)
     } catch (error) {
       const statusCode = getErrorStatusCode(error)
 
       if (statusCode === 404) {
-        await navigateTo('/packs')
+        await navigateTo(appRoutes.packingLists)
 
         return
       }
 
-      deleteErrorMessage.value = 'Could not delete pack.'
+      deleteErrorMessage.value = 'Could not delete list.'
     } finally {
       isDeleting.value = false
     }
   }
 
   return {
-    availableInventoryRows, createEntryDescribedBy, createEntryErrorMessage, creatingInventoryId,
+    availableMyGearRows, createEntryDescribedBy, createEntryErrorMessage, creatingMyGearId,
     deleteDialogHeaderText, deleteErrorMessage, detailMode, detailModeIcon, detailModeSummary,
     detailModeTitle, emptyStateCopy, entryCount, entryMutationErrorMessage, entryViews,
-    formattedUpdatedAt, handleCreateCustomEntry, handleCreateInventoryEntry, handleDeleteEntry,
-    handleDeletePack, handleRetry, handleToggleEntry, hasError, hasInventoryError,
-    isAnyEntryActionPending, isAvailableInventoryEmpty, isCreateCustomEntryDisabled,
-    isCreatingCustomEntry, isDeleteDialogVisible, isDeleting, isInitialLoading, isInventoryEmpty,
-    isInventoryLoading, isPlanningMode, newEntryName, packedCount, packingList, pageTitle,
+    formattedUpdatedAt, handleCreateCustomEntry, handleCreateMyGearEntry, handleDeleteEntry,
+    handleDeletePackingList, handleRetry, handleToggleEntry, hasError, hasMyGearError,
+    isAnyEntryActionPending, isAvailableMyGearEmpty, isCreateCustomEntryDisabled,
+    isCreatingCustomEntry, isDeleteDialogVisible, isDeleting, isInitialLoading, isMyGearEmpty,
+    isMyGearLoading, isPlanningMode, newEntryName, packedCount, packingList, pageTitle,
     showDeleteDialog
   }
 }

@@ -27,7 +27,7 @@
     <div :class="$style.content">
       <div :class="$style.buttons">
         <PerdButton
-          icon="tabler:brand-among-us"
+          icon="hugeicons:game"
           :class="$style.button"
           :loading="isAuthenticating"
           @click="signUp"
@@ -38,7 +38,7 @@
         <PerdButton
           variant="secondary"
           :class="$style.button"
-          icon="tabler:brand-twitch"
+          icon="hugeicons:twitch"
           :loading="isAuthenticating"
           @click="redirectToTwitch"
         >

@@ -1,7 +1,7 @@
 import { expect, test, type BrowserContext, type Page, type Response, type Route } from '@playwright/test'
 import { URL } from 'node:url'
 
-interface InventoryRecord {
+interface MyGearRecord {
   createdAt: string;
   id: string;
 
@@ -58,7 +58,7 @@ interface PackingListRouteState {
   createRequests: number;
   createShouldFail: boolean;
   deleteShouldFail: boolean;
-  inventoryRows: InventoryRecord[];
+  myGearRows: MyGearRecord[];
   rows: PackingListDetail[];
 }
 
@@ -73,13 +73,13 @@ interface ToggleEntryRequestBody {
 
 const packingListId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
 const customEntryId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1'
-const inventoryEntryId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477e2'
-const inventoryRowId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9'
+const myGearEntryId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477e2'
+const myGearRowId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9'
 
-function createInventoryRecord(): InventoryRecord {
+function createMyGearRecord(): MyGearRecord {
   return {
     createdAt: '2026-04-03T08:30:00.000Z',
-    id: inventoryRowId,
+    id: myGearRowId,
 
     item: {
       brand: {
@@ -129,17 +129,17 @@ function createCustomEntry(customName: string): PackingListEntry {
   }
 }
 
-function createInventoryEntry(inventoryRow: InventoryRecord): PackingListEntry {
+function createMyGearEntry(myGearRow: MyGearRecord): PackingListEntry {
   return {
     createdAt: '2026-04-03T09:02:00.000Z',
     customName: null,
-    id: inventoryEntryId,
+    id: myGearEntryId,
 
     inventory: {
-      brand: inventoryRow.item.brand.name,
-      category: inventoryRow.item.category.name,
-      inventoryId: inventoryRow.id,
-      itemName: inventoryRow.item.name
+      brand: myGearRow.item.brand.name,
+      category: myGearRow.item.category.name,
+      inventoryId: myGearRow.id,
+      itemName: myGearRow.item.name
     },
 
     isPacked: false,
@@ -274,18 +274,18 @@ async function fulfillPackingListDetailRoute(route: Route, page: Page, state: Pa
       return
     }
 
-    const inventoryRow = state.inventoryRows.find((row) => row.id === requestBody.inventoryId)
+    const myGearRow = state.myGearRows.find((row) => row.id === requestBody.inventoryId)
 
     expect(requestBody).toStrictEqual({
-      inventoryId: inventoryRowId
+      inventoryId: myGearRowId
     })
-    expect(inventoryRow).toBeDefined()
+    expect(myGearRow).toBeDefined()
 
-    if (inventoryRow === undefined) {
-      throw new Error('Expected inventory row to exist')
+    if (myGearRow === undefined) {
+      throw new Error('Expected my gear row to exist')
     }
 
-    const entry = createInventoryEntry(inventoryRow)
+    const entry = createMyGearEntry(myGearRow)
     packingList.entries = [...packingList.entries, entry]
     packingList.updatedAt = '2026-04-03T09:03:00.000Z'
 
@@ -418,14 +418,14 @@ async function mockPackingListRoutes(context: BrowserContext, page: Page, state:
   })
 }
 
-async function mockInventoryRoutes(context: BrowserContext, state: PackingListRouteState): Promise<void> {
-  await context.route('**/api/user/equipment**', async (route) => {
+async function mockMyGearRoutes(context: BrowserContext, state: PackingListRouteState): Promise<void> {
+  await context.route('**/api/user/gear**', async (route) => {
     const request = route.request()
     const requestUrl = new URL(request.url())
 
-    if (request.method() === 'GET' && requestUrl.pathname === '/api/user/equipment') {
+    if (request.method() === 'GET' && requestUrl.pathname === '/api/user/gear') {
       await route.fulfill({
-        json: state.inventoryRows
+        json: state.myGearRows
       })
 
       return
@@ -452,86 +452,86 @@ async function openPackingLists(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Guest' }).click()
 
   const sidebar = page.getByTestId('shell-sidebar')
-  await sidebar.getByRole('link', { name: 'Packs' }).click()
+  await sidebar.getByRole('link', { name: 'Packing lists' }).click()
 }
 
 async function openPackingListDetail(page: Page): Promise<void> {
-  await page.goto(`/login?redirectTo=/packs/${packingListId}`)
+  await page.goto(`/login?redirectTo=/packing-lists/${packingListId}`)
   await page.getByRole('button', { name: 'Guest' }).click()
 }
 
 test.describe('Packing list shell', () => {
-  test('should create an empty pack from the empty state in planning mode', async ({ context, page }) => {
+  test('should create an empty list from the empty state in planning mode', async ({ context, page }) => {
     const state: PackingListRouteState = {
       createRequests: 0,
       createShouldFail: false,
       deleteShouldFail: false,
-      inventoryRows: [],
+      myGearRows: [],
       rows: []
     }
 
     await mockAuth(context)
-    await mockInventoryRoutes(context, state)
+    await mockMyGearRoutes(context, state)
     await mockPackingListRoutes(context, page, state)
     await openPackingLists(page)
 
-    await expect(page).toHaveURL(/\/packs$/u)
-    await expect(page.getByRole('heading', { level: 1, name: 'Packs', exact: true })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'No packs yet.' })).toBeVisible()
+    await expect(page).toHaveURL(/\/packing-lists$/u)
+    await expect(page.getByRole('heading', { level: 1, name: 'Packing lists', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'No packing lists yet.' })).toBeVisible()
 
-    await page.getByRole('button', { name: 'New pack' }).first().click()
-    await expect(page.getByRole('heading', { name: 'Create a pack' })).toBeVisible()
-    await page.getByLabel('Pack name').fill('Alpine weekend')
+    await page.getByRole('button', { name: 'New list' }).first().click()
+    await expect(page.getByRole('heading', { name: 'Create a packing list' })).toBeVisible()
+    await page.getByLabel('List name').fill('Alpine weekend')
 
     const createResponsePromise = page.waitForResponse(isPackingListCreateResponse)
-    await page.getByRole('button', { name: 'Create pack' }).click()
+    await page.getByRole('button', { name: 'Create list' }).click()
     const createResponse = await createResponsePromise
 
     expect(createResponse.status()).toBe(201)
 
-    await expect(page).toHaveURL(new RegExp(`/packs/${packingListId}$`, 'u'))
+    await expect(page).toHaveURL(new RegExp(`/packing-lists/${packingListId}$`, 'u'))
     await expect(page.getByRole('heading', { level: 1, name: 'Alpine weekend' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Planning' })).toBeVisible()
     await expect(page.locator('#new-packing-list-entry-name')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Planning' })).toHaveAttribute('aria-pressed', 'true')
-    await expect(page.getByText('Add custom items or pull from saved gear while you build this pack.')).toBeVisible()
+    await expect(page.getByText('Add custom items or pull from my gear while you build this list.')).toBeVisible()
   })
 
-  test('should open pack detail in planning mode from a navigational card', async ({ context, page }) => {
+  test('should open list detail in planning mode from a navigational card', async ({ context, page }) => {
     const state: PackingListRouteState = {
       createRequests: 0,
       createShouldFail: false,
       deleteShouldFail: false,
-      inventoryRows: [createInventoryRecord()],
+      myGearRows: [createMyGearRecord()],
       rows: [createPackingList('Alpine weekend')]
     }
 
     await mockAuth(context)
-    await mockInventoryRoutes(context, state)
+    await mockMyGearRoutes(context, state)
     await mockPackingListRoutes(context, page, state)
     await openPackingLists(page)
 
     await page.getByRole('link', { name: /Alpine weekend/iu }).click()
 
-    await expect(page).toHaveURL(new RegExp(`/packs/${packingListId}$`, 'u'))
+    await expect(page).toHaveURL(new RegExp(`/packing-lists/${packingListId}$`, 'u'))
     await expect(page.getByRole('heading', { level: 1, name: 'Alpine weekend' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Planning' })).toBeVisible()
-    await expect(page.getByText('Add from inventory')).toBeVisible()
+    await expect(page.getByText('Add from my gear')).toBeVisible()
     await expect(page.getByText('PocketRocket Deluxe')).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Danger Zone' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Danger zone' })).toBeVisible()
   })
 
-  test('should add custom and inventory entries, then switch to checklist and remove them', async ({ context, page }) => {
+  test('should add custom and my gear entries, then switch to checklist and remove them', async ({ context, page }) => {
     const state: PackingListRouteState = {
       createRequests: 0,
       createShouldFail: false,
       deleteShouldFail: false,
-      inventoryRows: [createInventoryRecord()],
+      myGearRows: [createMyGearRecord()],
       rows: [createPackingList('Alpine weekend')]
     }
 
     await mockAuth(context)
-    await mockInventoryRoutes(context, state)
+    await mockMyGearRoutes(context, state)
     await mockPackingListRoutes(context, page, state)
     await openPackingListDetail(page)
 
@@ -551,17 +551,17 @@ test.describe('Packing list shell', () => {
     await expect(rainShellRow.getByText('Custom item', { exact: true })).toBeVisible()
     await expect(customItemInput).toHaveValue('')
 
-    const inventoryPickerRow = page.getByRole('listitem').filter({
+    const myGearPickerRow = page.getByRole('listitem').filter({
       has: page.getByText('PocketRocket Deluxe', { exact: true })
     })
-    const inventoryCreateResponsePromise = page.waitForResponse(isPackingListEntryCreateResponse)
-    await inventoryPickerRow.getByRole('button', { name: 'Add', exact: true }).click()
-    const inventoryCreateResponse = await inventoryCreateResponsePromise
-    expect(inventoryCreateResponse.status()).toBe(201)
+    const myGearCreateResponsePromise = page.waitForResponse(isPackingListEntryCreateResponse)
+    await myGearPickerRow.getByRole('button', { name: 'Add', exact: true }).click()
+    const myGearCreateResponse = await myGearCreateResponsePromise
+    expect(myGearCreateResponse.status()).toBe(201)
 
     await expect(page.getByText('PocketRocket Deluxe')).toBeVisible()
-    await expect(page.getByText('Saved gear · MSR · Stoves')).toBeVisible()
-    await expect(inventoryPickerRow.getByRole('button', { name: 'Add', exact: true })).toHaveCount(0)
+    await expect(page.getByText('My gear · MSR · Stoves')).toBeVisible()
+    await expect(myGearPickerRow.getByRole('button', { name: 'Add', exact: true })).toHaveCount(0)
 
     await page.getByRole('button', { name: 'Checklist' }).click()
 
@@ -583,57 +583,57 @@ test.describe('Packing list shell', () => {
     await expect(page.getByText('0 of 0 packed')).toBeVisible()
     await expect(page.getByText('Switch to planning mode to add items before packing.')).toBeVisible()
 
-    await page.getByRole('link', { name: 'Back to packs' }).click()
+    await page.getByRole('link', { name: 'Back to packing lists' }).click()
 
-    const packCard = page.getByRole('link', { name: /Alpine weekend/iu })
+    const listCard = page.getByRole('link', { name: /Alpine weekend/iu })
 
-    await expect(page).toHaveURL(/\/packs$/u)
-    await expect(packCard).toContainText('0')
+    await expect(page).toHaveURL(/\/packing-lists$/u)
+    await expect(listCard).toContainText('0')
   })
 
-  test('should keep the pack when delete is canceled', async ({ context, page }) => {
+  test('should keep the list when delete is canceled', async ({ context, page }) => {
     const state: PackingListRouteState = {
       createRequests: 0,
       createShouldFail: false,
       deleteShouldFail: false,
-      inventoryRows: [],
+      myGearRows: [],
       rows: [createPackingList('Alpine weekend')]
     }
 
     await mockAuth(context)
-    await mockInventoryRoutes(context, state)
+    await mockMyGearRoutes(context, state)
     await mockPackingListRoutes(context, page, state)
 
     await openPackingListDetail(page)
-    await page.getByRole('button', { name: 'Delete pack' }).click()
+    await page.getByRole('button', { name: 'Delete list' }).click()
     await expect(page.getByRole('heading', { name: 'Delete "Alpine weekend"?' })).toBeVisible()
     await page.getByRole('button', { name: 'Cancel' }).click()
 
-    await expect(page).toHaveURL(new RegExp(`/packs/${packingListId}$`, 'u'))
+    await expect(page).toHaveURL(new RegExp(`/packing-lists/${packingListId}$`, 'u'))
     await expect(page.getByRole('heading', { level: 1, name: 'Alpine weekend' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Delete "Alpine weekend"?' })).toBeHidden()
     expect(state.rows).toHaveLength(1)
   })
 
-  test('should delete a pack from detail and return to the list', async ({ context, page }) => {
+  test('should delete a list from detail and return to the list', async ({ context, page }) => {
     const state: PackingListRouteState = {
       createRequests: 0,
       createShouldFail: false,
       deleteShouldFail: false,
-      inventoryRows: [],
+      myGearRows: [],
       rows: [createPackingList('Alpine weekend')]
     }
 
     await mockAuth(context)
-    await mockInventoryRoutes(context, state)
+    await mockMyGearRoutes(context, state)
     await mockPackingListRoutes(context, page, state)
 
     await openPackingListDetail(page)
-    await page.getByRole('button', { name: 'Delete pack' }).click()
-    await page.getByRole('button', { name: 'Delete pack' }).last().click()
+    await page.getByRole('button', { name: 'Delete list' }).click()
+    await page.getByRole('button', { name: 'Delete list' }).last().click()
 
-    await expect(page).toHaveURL(/\/packs$/u)
-    await expect(page.getByRole('heading', { name: 'No packs yet.' })).toBeVisible()
+    await expect(page).toHaveURL(/\/packing-lists$/u)
+    await expect(page.getByRole('heading', { name: 'No packing lists yet.' })).toBeVisible()
     expect(state.rows).toHaveLength(0)
   })
 })

@@ -1,42 +1,62 @@
 <template>
   <nav :class="$style.navigationGroup" aria-label="Workspace navigation">
     <NuxtLink
-      to="/"
+      :to="appRoutes.home"
       exact-active-class="active"
       :class="$style.navigationItem"
     >
-      <Icon name="tabler:home-2" :class="$style.navigationIcon" />
-      <span>Home</span>
+      <Icon
+        :name="navigationIcons.home"
+        :class="$style.navigationIcon"
+        aria-hidden="true"
+      />
+      <span>{{ navigationLabels.home }}</span>
     </NuxtLink>
 
     <NuxtLink
-      to="/catalog"
+      :to="appRoutes.gearLibrary"
       active-class="active"
       :class="$style.navigationItem"
     >
-      <Icon name="tabler:package" :class="$style.navigationIcon" />
-      <span>Catalog</span>
+      <Icon
+        :name="navigationIcons.gearLibrary"
+        :class="$style.navigationIcon"
+        aria-hidden="true"
+      />
+      <span>{{ navigationLabels.gearLibrary }}</span>
     </NuxtLink>
 
     <NuxtLink
-      to="/inventory"
+      :to="appRoutes.myGear"
       active-class="active"
       :class="$style.navigationItem"
     >
-      <Icon name="tabler:backpack" :class="$style.navigationIcon" />
-      <span>Gear</span>
+      <Icon
+        :name="navigationIcons.myGear"
+        :class="$style.navigationIcon"
+        aria-hidden="true"
+      />
+      <span>{{ navigationLabels.myGear }}</span>
     </NuxtLink>
 
     <NuxtLink
-      to="/packs"
+      :to="appRoutes.packingLists"
       active-class="active"
       :class="$style.navigationItem"
     >
-      <Icon name="tabler:route" :class="$style.navigationIcon" />
-      <span>Packs</span>
+      <Icon
+        :name="navigationIcons.packingLists"
+        :class="$style.navigationIcon"
+        aria-hidden="true"
+      />
+      <span>{{ navigationLabels.packingLists }}</span>
     </NuxtLink>
   </nav>
 </template>
+
+<script lang="ts" setup>
+  import { appRoutes, navigationIcons, navigationLabels } from '~/utils/navigation'
+</script>
 
 <style module>
   .navigationGroup {
