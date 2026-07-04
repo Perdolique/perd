@@ -20,7 +20,7 @@ function getEntryDisplayName(entry: PackingListEntry) {
 
 function getEntryDetailText(entry: PackingListEntry) {
   if (entry.source === 'inventory' && entry.inventory !== undefined) {
-    return `Saved gear · ${entry.inventory.brand} · ${entry.inventory.category}`
+    return `My gear · ${entry.inventory.brand} · ${entry.inventory.category}`
   }
 
   return 'Custom item'

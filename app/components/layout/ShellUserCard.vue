@@ -1,9 +1,9 @@
 <template>
   <NuxtLink
-    to="/account"
+    :to="appRoutes.account"
     active-class="active"
     :class="$style.component"
-    aria-label="Account"
+    :aria-label="navigationLabels.account"
   >
     <UserAvatar :initial="userInitial" />
 
@@ -12,6 +12,7 @@
 </template>
 
 <script lang="ts" setup>
+  import { appRoutes, navigationLabels } from '~/utils/navigation'
   import UserAvatar from '~/components/UserAvatar.vue'
 
   interface Props {

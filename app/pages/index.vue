@@ -1,14 +1,14 @@
 <template>
   <PageContent page-title="Home">
     <div :class="$style.component">
-      <NuxtLink to="/packs" :class="$style.primaryAction">
+      <NuxtLink :to="appRoutes.packingLists" :class="$style.primaryAction">
         <span :class="$style.primaryIcon" aria-hidden="true">
-          <Icon name="hugeicons:maps-location-01" />
+          <Icon :name="navigationIcons.packingLists" />
         </span>
 
         <span :class="$style.primaryText">
-          <span :class="$style.primaryLabel">Packs</span>
-          <span :class="$style.primaryMeta">Plan and check gear</span>
+          <span :class="$style.primaryLabel">{{ navigationLabels.packingLists }}</span>
+          <span :class="$style.primaryMeta">Plan and check off gear</span>
         </span>
 
         <Icon name="hugeicons:arrow-right-01" :class="$style.arrow" aria-hidden="true" />
@@ -16,15 +16,15 @@
 
       <div :class="$style.grid" aria-label="Quick actions">
         <QuickActionLink
-          to="/catalog"
-          icon="hugeicons:package"
-          label="Catalog"
+          :to="appRoutes.gearLibrary"
+          :icon="navigationIcons.gearLibrary"
+          :label="navigationLabels.gearLibrary"
         />
 
         <QuickActionLink
-          to="/inventory"
-          icon="hugeicons:backpack-03"
-          label="Gear"
+          :to="appRoutes.myGear"
+          :icon="navigationIcons.myGear"
+          :label="navigationLabels.myGear"
         />
       </div>
     </div>
@@ -35,6 +35,7 @@
   import { definePageMeta } from '#imports'
   import PageContent from '~/components/layout/PageContent.vue'
   import QuickActionLink from '~/components/QuickActionLink.vue'
+  import { appRoutes, navigationIcons, navigationLabels } from '~/utils/navigation'
 
   definePageMeta({
     layout: 'page'

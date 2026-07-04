@@ -65,7 +65,7 @@ describe(shouldSkipAuth, () => {
   })
 
   it('should keep regular app routes protected', () => {
-    const route = createRoute('/catalog')
+    const route = createRoute('/gear-library')
 
     const result = shouldSkipAuth(route)
 

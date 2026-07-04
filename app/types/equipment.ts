@@ -1,29 +1,29 @@
-interface CatalogEntitySummary {
+interface GearLibraryEntitySummary {
   name: string;
   slug: string;
 }
 
-interface CatalogEntityDetail extends CatalogEntitySummary {
+interface GearLibraryEntityDetail extends GearLibraryEntitySummary {
   id: number;
 }
 
-interface CatalogListItem {
-  brand: CatalogEntitySummary;
-  category: CatalogEntitySummary;
+interface GearLibraryListItem {
+  brand: GearLibraryEntitySummary;
+  category: GearLibraryEntitySummary;
   id: string;
   name: string;
 }
 
-interface CatalogListItemView {
-  brand: CatalogEntitySummary;
-  category: CatalogEntitySummary;
+interface GearLibraryListItemView {
+  brand: GearLibraryEntitySummary;
+  category: GearLibraryEntitySummary;
   detailPath: string;
   id: string;
   name: string;
 }
 
-interface CatalogItemsResponse {
-  items: CatalogListItem[];
+interface GearLibraryItemsResponse {
+  items: GearLibraryListItem[];
   limit: number;
   page: number;
   total: number;
@@ -38,8 +38,8 @@ interface ItemProperty {
 }
 
 interface ItemDetailResponse {
-  brand: CatalogEntityDetail;
-  category: CatalogEntityDetail;
+  brand: GearLibraryEntityDetail;
+  category: GearLibraryEntityDetail;
   createdAt: string;
   id: string;
   name: string;
@@ -51,38 +51,38 @@ interface ItemDisplayProperty extends ItemProperty {
   displayValue: string;
 }
 
-interface InventoryItem {
-  brand: CatalogEntitySummary;
-  category: CatalogEntitySummary;
+interface MyGearItem {
+  brand: GearLibraryEntitySummary;
+  category: GearLibraryEntitySummary;
   id: string;
   name: string;
 }
 
-interface InventoryRecord {
+interface MyGearRecord {
   createdAt: string;
   id: string;
-  item: InventoryItem;
+  item: MyGearItem;
 }
 
-interface InventoryRecordView {
-  catalogPath: string;
+interface MyGearRecordView {
   createdAt: string;
   formattedCreatedAt: string;
+  gearLibraryPath: string;
   id: string;
   isRemoveDisabled: boolean;
   isRemoving: boolean;
-  item: InventoryItem;
+  item: MyGearItem;
 }
 
 export type {
-  CatalogEntityDetail,
-  CatalogEntitySummary,
-  CatalogItemsResponse,
-  CatalogListItem,
-  CatalogListItemView,
-  InventoryItem,
-  InventoryRecord,
-  InventoryRecordView,
+  GearLibraryEntityDetail,
+  GearLibraryEntitySummary,
+  GearLibraryItemsResponse,
+  GearLibraryListItem,
+  GearLibraryListItemView,
+  MyGearItem,
+  MyGearRecord,
+  MyGearRecordView,
   ItemDetailResponse,
   ItemDisplayProperty,
   ItemProperty

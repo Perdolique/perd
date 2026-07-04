@@ -857,7 +857,7 @@ describe('user packing list handlers', () => {
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
 
-    it('should create an inventory entry and touch the parent packing list', async () => {
+    it('should create a my gear entry and touch the parent packing list', async () => {
       const createdEntry = {
         createdAt: '2026-04-03T09:01:00.000Z',
         customName: null,
@@ -926,7 +926,7 @@ describe('user packing list handlers', () => {
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
 
-    it('should return 404 when the inventory row is missing or unowned', async () => {
+    it('should return 404 when the my gear row is missing or unowned', async () => {
       readValidatedBodyMock.mockResolvedValue({
         inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9'
       })
@@ -959,7 +959,7 @@ describe('user packing list handlers', () => {
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
 
-    it('should return 409 when the inventory item is already in the pack', async () => {
+    it('should return 409 when the my gear item is already in the list', async () => {
       readValidatedBodyMock.mockResolvedValue({
         inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9'
       })
@@ -994,7 +994,7 @@ describe('user packing list handlers', () => {
       const event = createTestEvent({})
 
       await expect(createPackingListEntryHandler(event)).rejects.toMatchObject({
-        message: 'Inventory item is already in this pack',
+        message: 'My gear item is already in this list',
         statusCode: 409
       })
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)

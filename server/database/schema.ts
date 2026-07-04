@@ -366,9 +366,9 @@ const itemPropertyValues = pgTable('item_property_values', {
 // ─── User data ──────────────────────────────────────────────────────
 
 /**
- * User's personal equipment inventory.
+ * User's saved gear rows.
  *
- * Tracks which items from the global catalog a user owns.
+ * Tracks which equipment reference items a user saved to My gear.
  */
 const userEquipment = pgTable('user_equipment', {
   id:
@@ -444,7 +444,7 @@ const packingLists = pgTable('packing_lists', {
 /**
  * Checklist entries scoped to one user-owned packing list.
  *
- * An entry is either a custom text row or a link to one owned inventory row.
+ * An entry is either a custom text row or a link to one saved gear row.
  */
 const packingListEntries = pgTable('packing_list_entries', {
   id:
