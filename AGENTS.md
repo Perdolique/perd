@@ -13,6 +13,7 @@
 ## Verification
 
 - Run applicable checks in parallel where practical.
+- If you are creating a commit, do not run the mandatory verification suite manually first; commit hooks will run it.
 - You can pass only changed file paths to the test and lint commands during development, but verify that the full suite passes at the end of the change.
 
 ## Local dev servers
