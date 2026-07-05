@@ -35,7 +35,7 @@ export default defineConfig({
 
   // Run the production preview before E2E. `preview:e2e` owns the writable temp-dir setup for Wrangler state.
   webServer: {
-    command: 'pnpm run preview:e2e',
+    command: 'vp run preview:e2e',
     url: appBaseUrl,
     reuseExistingServer: !isCI
   }
