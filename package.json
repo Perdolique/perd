@@ -59,7 +59,7 @@
     "oxlint": "1.72.0",
     "oxlint-tsgolint": "0.24.0",
     "taze": "19.14.1",
-    "tsx": "4.22.5",
+    "tsx": "4.23.0",
     "typescript": "6.0.3",
     "ufo": "1.6.4",
     "valibot": "1.4.2",
@@ -69,7 +69,7 @@
     "wrangler": "4.107.0",
     "ws": "8.21.0"
   },
-  "packageManager": "pnpm@11.9.0",
+  "packageManager": "pnpm@11.10.0",
   "overrides": {
     "@nuxt/devtools": "$@nuxt/devtools"
   }
