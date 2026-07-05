@@ -269,6 +269,7 @@
     padding: 0;
     border: 0;
     background: transparent;
+    box-shadow: none;
     color: var(--color-text-primary);
     font: inherit;
     outline: 0;
