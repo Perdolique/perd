@@ -2,7 +2,6 @@
 
 ## Chat style
 
-- Use the `caveman` skill for chat responses before any other things.
 - Keep all Markdown headings in Sentence case.
 
 ## Web baseline 2025
