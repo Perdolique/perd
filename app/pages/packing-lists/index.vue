@@ -2,8 +2,9 @@
   <PageContent :page-title="navigationLabels.packingLists">
     <template v-if="showHeaderCreateAction" #actions>
       <PerdButton
+        size="small"
         icon="hugeicons:add-01"
-        :disabled="creatingList"
+        :disabled="isHeaderCreateDisabled"
         aria-haspopup="dialog"
         @click="openCreateDialog"
       >
@@ -27,18 +28,7 @@
         </template>
       </PagePlaceholder>
 
-      <PagePlaceholder v-else-if="isEmpty" emoji="🧾" title="No packing lists yet.">
-        <template #actions>
-          <PerdButton
-            icon="hugeicons:add-01"
-            :disabled="creatingList"
-            aria-haspopup="dialog"
-            @click="openCreateDialog"
-          >
-            New list
-          </PerdButton>
-        </template>
-      </PagePlaceholder>
+      <PagePlaceholder v-else-if="isEmpty" emoji="🧾" title="No packing lists yet." />
 
       <div v-else :class="$style.list">
         <PackingListCard
@@ -96,7 +86,8 @@
   const isCreateDisabled = computed(() => newListName.value.trim() === '' || creatingList.value)
   const isEmpty = computed(() => packingLists.value.length === 0)
   const isInitialLoading = computed(() => packingListStatus.value === 'pending')
-  const showHeaderCreateAction = computed(() => isEmpty.value === false)
+  const isHeaderCreateDisabled = computed(() => isInitialLoading.value || creatingList.value)
+  const showHeaderCreateAction = computed(() => hasError.value === false)
 
   function formatUpdatedAt(updatedAt: string) {
     return packingListDateFormatter.format(new Date(updatedAt))
