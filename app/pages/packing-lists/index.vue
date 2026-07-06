@@ -51,10 +51,12 @@
 
 <script lang="ts" setup>
   import { computed, ref } from 'vue'
-  import { definePageMeta, navigateTo, useFetch, useRequestFetch } from '#imports'
+  import { storeToRefs } from 'pinia'
+  import { definePageMeta, navigateTo } from '#imports'
   import type { PackingListSummary, PackingListView } from '~/types/packing'
   import { createPackingListPath, navigationLabels } from '~/utils/navigation'
   import { packingListDateFormatter } from '~/utils/packing'
+  import { usePackingListsStore } from '~/stores/packing-lists'
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PerdButton from '~/components/PerdButton.vue'
@@ -66,26 +68,22 @@
     layout: 'page'
   })
 
-  const requestFetch = useRequestFetch()
+  const packingListsStore = usePackingListsStore()
+  const {
+    hasUnavailableError,
+    isEmpty,
+    isInitialLoading,
+    rows: packingLists
+  } = storeToRefs(packingListsStore)
   const newListName = ref('')
   const createErrorMessage = ref<string | null>(null)
   const creatingList = ref(false)
   const isCreateDialogVisible = ref(false)
 
-  const {
-    data: packingLists,
-    error: packingListError,
-    refresh: refreshPackingLists,
-    status: packingListStatus
-  } = await useFetch('/api/user/packing-lists', {
-    default: () => [],
-    lazy: true
-  })
+  void packingListsStore.fetchPackingLists()
 
-  const hasError = computed(() => packingListError.value !== undefined && packingListError.value !== null)
+  const hasError = computed(() => hasUnavailableError.value)
   const isCreateDisabled = computed(() => newListName.value.trim() === '' || creatingList.value)
-  const isEmpty = computed(() => packingLists.value.length === 0)
-  const isInitialLoading = computed(() => packingListStatus.value === 'pending')
   const isHeaderCreateDisabled = computed(() => isInitialLoading.value || creatingList.value)
   const showHeaderCreateAction = computed(() => hasError.value === false)
 
@@ -112,7 +110,7 @@
   }
 
   async function handleRetry() {
-    await refreshPackingLists()
+    await packingListsStore.fetchPackingLists()
   }
 
   async function handleCreate() {
@@ -124,23 +122,8 @@
     creatingList.value = true
 
     try {
-      const createdList = await requestFetch('/api/user/packing-lists', {
-        method: 'POST',
+      const createdList = await packingListsStore.createPackingList(newListName.value)
 
-        body: {
-          name: newListName.value
-        }
-      })
-
-      const createdListSummary = {
-        createdAt: createdList.createdAt,
-        entryCount: 0,
-        id: createdList.id,
-        name: createdList.name,
-        updatedAt: createdList.updatedAt
-      }
-
-      packingLists.value = [createdListSummary, ...packingLists.value]
       newListName.value = ''
       isCreateDialogVisible.value = false
 

@@ -30,6 +30,7 @@
 <script lang="ts" setup>
   import { computed, ref } from 'vue'
   import { definePageMeta, navigateTo, useRequestFetch, useUserStore } from '#imports'
+  import { usePackingListsStore } from '~/stores/packing-lists'
   import AccountProfileCard from '~/components/account/AccountProfileCard.vue'
   import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue'
   import DangerActionCard from '~/components/DangerActionCard.vue'
@@ -40,6 +41,7 @@
   })
 
   const { user, resetAuthentication } = useUserStore()
+  const packingListsStore = usePackingListsStore()
   const requestFetch = useRequestFetch()
   const showDeleteModal = ref(false)
   const isDeleting = ref(false)
@@ -57,6 +59,7 @@
     })
 
     resetAuthentication()
+    packingListsStore.clearPackingLists()
 
     await navigateTo({
       path: '/login'
@@ -76,6 +79,7 @@
       })
 
       resetAuthentication()
+      packingListsStore.clearPackingLists()
 
       await navigateTo({
         path: '/login'

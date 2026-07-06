@@ -12,6 +12,8 @@ interface PackingListSummary {
 interface PackingListRouteState {
   createRequests: number;
   detailRequests: number;
+  getDelayMs: number;
+  getRequests: number;
   rows: PackingListSummary[];
 }
 
@@ -24,6 +26,16 @@ function createPackingListSummary(name: string): PackingListSummary {
     id: packingListId,
     name,
     updatedAt: '2026-04-03T09:00:00.000Z'
+  }
+}
+
+function createPackingListRouteState(rows: PackingListSummary[]): PackingListRouteState {
+  return {
+    createRequests: 0,
+    detailRequests: 0,
+    getDelayMs: 0,
+    getRequests: 0,
+    rows
   }
 }
 
@@ -40,6 +52,12 @@ async function fulfillPackingListCollectionRoute(route: Route, page: Page, state
   const method = request.method()
 
   if (method === 'GET') {
+    state.getRequests += 1
+
+    if (state.getDelayMs > 0) {
+      await page.waitForTimeout(state.getDelayMs)
+    }
+
     await route.fulfill({
       json: state.rows
     })
@@ -115,11 +133,7 @@ async function openPackingLists(page: Page): Promise<void> {
 
 test.describe('Packing list shell', () => {
   test('should create a list and route to the blank detail page', async ({ context, page }) => {
-    const state: PackingListRouteState = {
-      createRequests: 0,
-      detailRequests: 0,
-      rows: []
-    }
+    const state = createPackingListRouteState([])
 
     await mockAuth(context)
     await mockPackingListRoutes(context, page, state)
@@ -149,11 +163,7 @@ test.describe('Packing list shell', () => {
   })
 
   test('should route from a list card to the blank detail page', async ({ context, page }) => {
-    const state: PackingListRouteState = {
-      createRequests: 0,
-      detailRequests: 0,
-      rows: [createPackingListSummary('Alpine weekend')]
-    }
+    const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
 
     await mockAuth(context)
     await mockPackingListRoutes(context, page, state)
@@ -165,5 +175,32 @@ test.describe('Packing list shell', () => {
     await expect(page.getByRole('heading', { name: 'Planning' })).toHaveCount(0)
     await expect(page.getByRole('heading', { name: 'Checklist' })).toHaveCount(0)
     expect(state.detailRequests).toBe(0)
+  })
+
+  test('should show cached lists while refreshing on return', async ({ context, page }) => {
+    const state = createPackingListRouteState([createPackingListSummary('Cache trail')])
+
+    await mockAuth(context)
+    await mockPackingListRoutes(context, page, state)
+    await openPackingLists(page)
+
+    const sidebar = page.getByTestId('shell-sidebar')
+
+    await expect(page.getByRole('link', { name: /Cache trail/iu })).toBeVisible()
+    expect(state.getRequests).toBe(1)
+
+    state.rows = [createPackingListSummary('Server trail')]
+    state.getDelayMs = 500
+
+    await sidebar.getByRole('link', { name: 'Home' }).click()
+    await expect(page).toHaveURL(/\/$/u)
+
+    await sidebar.getByRole('link', { name: 'Packing lists' }).click()
+
+    await expect(page).toHaveURL(/\/packing-lists$/u)
+    await expect(page.getByRole('heading', { name: 'Loading packing lists' })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: /Cache trail/iu })).toBeVisible()
+    await expect(page.getByRole('link', { name: /Server trail/iu })).toBeVisible()
+    expect(state.getRequests).toBe(2)
   })
 })
