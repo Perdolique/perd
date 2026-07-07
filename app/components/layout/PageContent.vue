@@ -52,7 +52,7 @@
   .header {
     display: flex;
     flex-wrap: wrap;
-    align-items: end;
+    align-items: start;
     justify-content: space-between;
     gap: var(--spacing-16);
     padding-block-end: var(--spacing-16);

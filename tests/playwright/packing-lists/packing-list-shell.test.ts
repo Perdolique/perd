@@ -9,8 +9,43 @@ interface PackingListSummary {
   updatedAt: string;
 }
 
+interface PackingListEntryInventory {
+  brand: string;
+  category: string;
+  inventoryId: string;
+  itemName: string;
+}
+
+interface PackingListEntryBase {
+  createdAt: string;
+  customName: string | null;
+  id: string;
+  isPacked: boolean;
+  updatedAt: string;
+}
+
+interface PackingListCustomEntry extends PackingListEntryBase {
+  source: 'custom';
+}
+
+interface PackingListInventoryEntry extends PackingListEntryBase {
+  inventory: PackingListEntryInventory;
+  source: 'inventory';
+}
+
+type PackingListEntry = PackingListCustomEntry | PackingListInventoryEntry
+
+interface PackingListDetail {
+  createdAt: string;
+  entries: PackingListEntry[];
+  id: string;
+  name: string;
+  updatedAt: string;
+}
+
 interface PackingListRouteState {
   createRequests: number;
+  detail: PackingListDetail;
   detailRequests: number;
   getDelayMs: number;
   getRequests: number;
@@ -29,9 +64,49 @@ function createPackingListSummary(name: string): PackingListSummary {
   }
 }
 
+function createPackingListDetail(name: string, entries: PackingListEntry[] = []): PackingListDetail {
+  return {
+    createdAt: '2026-04-03T09:00:00.000Z',
+    entries,
+    id: packingListId,
+    name,
+    updatedAt: '2026-04-03T09:00:00.000Z'
+  }
+}
+
+function createPackingListEntries(): PackingListEntry[] {
+  return [{
+    createdAt: '2026-04-03T09:01:00.000Z',
+    customName: 'Rain jacket',
+    id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
+    isPacked: false,
+    source: 'custom',
+    updatedAt: '2026-04-03T09:01:00.000Z'
+  }, {
+    createdAt: '2026-04-03T09:02:00.000Z',
+    customName: null,
+    id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e2',
+
+    inventory: {
+      brand: 'MSR',
+      category: 'Stoves',
+      inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
+      itemName: 'PocketRocket Deluxe'
+    },
+
+    isPacked: true,
+    source: 'inventory',
+    updatedAt: '2026-04-03T09:02:00.000Z'
+  }]
+}
+
 function createPackingListRouteState(rows: PackingListSummary[]): PackingListRouteState {
+  const [firstRow = createPackingListSummary('Alpine weekend')] = rows
+  const detailName = firstRow.name
+
   return {
     createRequests: 0,
+    detail: createPackingListDetail(detailName),
     detailRequests: 0,
     getDelayMs: 0,
     getRequests: 0,
@@ -76,6 +151,7 @@ async function fulfillPackingListCollectionRoute(route: Route, page: Page, state
 
     const createdList = createPackingListSummary('Alpine weekend')
 
+    state.detail = createPackingListDetail(createdList.name)
     state.rows = [createdList]
 
     await route.fulfill({
@@ -106,7 +182,9 @@ async function mockPackingListRoutes(context: BrowserContext, page: Page, state:
     }
 
     state.detailRequests += 1
-    await route.abort()
+    await route.fulfill({
+      json: state.detail
+    })
   })
 }
 
@@ -132,7 +210,7 @@ async function openPackingLists(page: Page): Promise<void> {
 }
 
 test.describe('Packing list shell', () => {
-  test('should create a list and route to the blank detail page', async ({ context, page }) => {
+  test('should create a list and stay on the packing lists page', async ({ context, page }) => {
     const state = createPackingListRouteState([])
 
     await mockAuth(context)
@@ -156,14 +234,16 @@ test.describe('Packing list shell', () => {
     expect(createResponse.status()).toBe(201)
     expect(state.createRequests).toBe(1)
 
-    await expect(page).toHaveURL(new RegExp(`/packing-lists/${packingListId}$`, 'u'))
-    await expect(page.getByRole('heading', { name: 'Planning' })).toHaveCount(0)
-    await expect(page.getByRole('heading', { name: 'Checklist' })).toHaveCount(0)
+    await expect(page).toHaveURL(/\/packing-lists$/u)
+    await expect(page.getByRole('heading', { name: 'Create a packing list' })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: /Alpine weekend/iu })).toBeVisible()
     expect(state.detailRequests).toBe(0)
   })
 
-  test('should route from a list card to the blank detail page', async ({ context, page }) => {
+  test('should route from a list card to the item list page', async ({ context, page }) => {
     const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
+
+    state.detail = createPackingListDetail('Alpine weekend', createPackingListEntries())
 
     await mockAuth(context)
     await mockPackingListRoutes(context, page, state)
@@ -172,9 +252,34 @@ test.describe('Packing list shell', () => {
     await page.getByRole('link', { name: /Alpine weekend/iu }).click()
 
     await expect(page).toHaveURL(new RegExp(`/packing-lists/${packingListId}$`, 'u'))
+    await expect(page.getByRole('heading', { level: 1, name: 'Alpine weekend' })).toBeVisible()
+    await expect(page.getByText('Rain jacket')).toBeVisible()
+    await expect(page.getByText('PocketRocket Deluxe')).toBeVisible()
+    await expect(page.getByText('MSR / Stoves')).toBeVisible()
+    await expect(page.getByText('Unpacked', { exact: true })).toBeVisible()
+    await expect(page.getByText('Packed', { exact: true })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Planning' })).toHaveCount(0)
     await expect(page.getByRole('heading', { name: 'Checklist' })).toHaveCount(0)
-    expect(state.detailRequests).toBe(0)
+    expect(state.detailRequests).toBe(1)
+  })
+
+  test('should show an empty item list page', async ({ context, page }) => {
+    const state = createPackingListRouteState([createPackingListSummary('Empty trail')])
+
+    state.detail = createPackingListDetail('Empty trail')
+
+    await mockAuth(context)
+    await mockPackingListRoutes(context, page, state)
+    await openPackingLists(page)
+
+    await page.getByRole('link', { name: /Empty trail/iu }).click()
+
+    await expect(page).toHaveURL(new RegExp(`/packing-lists/${packingListId}$`, 'u'))
+    await expect(page.getByRole('heading', { level: 1, name: 'Empty trail' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'No items yet.' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Planning' })).toHaveCount(0)
+    await expect(page.getByRole('heading', { name: 'Checklist' })).toHaveCount(0)
+    expect(state.detailRequests).toBe(1)
   })
 
   test('should show cached lists while refreshing on return', async ({ context, page }) => {

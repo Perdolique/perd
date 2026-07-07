@@ -52,9 +52,9 @@
 <script lang="ts" setup>
   import { computed, ref } from 'vue'
   import { storeToRefs } from 'pinia'
-  import { definePageMeta, navigateTo } from '#imports'
+  import { definePageMeta } from '#imports'
   import type { PackingListSummary, PackingListView } from '~/types/packing'
-  import { createPackingListPath, navigationLabels } from '~/utils/navigation'
+  import { navigationLabels } from '~/utils/navigation'
   import { packingListDateFormatter } from '~/utils/packing'
   import { usePackingListsStore } from '~/stores/packing-lists'
   import PageLoadingState from '~/components/PageLoadingState.vue'
@@ -122,12 +122,10 @@
     creatingList.value = true
 
     try {
-      const createdList = await packingListsStore.createPackingList(newListName.value)
+      await packingListsStore.createPackingList(newListName.value)
 
       newListName.value = ''
       isCreateDialogVisible.value = false
-
-      await navigateTo(createPackingListPath(createdList.id))
     } catch {
       createErrorMessage.value = 'Could not create list.'
     } finally {

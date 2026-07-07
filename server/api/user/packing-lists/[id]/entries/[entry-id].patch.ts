@@ -23,15 +23,24 @@ interface PackingListEntryInventory {
   itemName: string;
 }
 
-interface PackingListEntry {
+interface PackingListEntryBase {
   createdAt: Date | string;
   customName: string | null;
   id: string;
-  inventory?: PackingListEntryInventory;
   isPacked: boolean;
-  source: 'custom' | 'inventory';
   updatedAt: Date | string;
 }
+
+interface PackingListCustomEntry extends PackingListEntryBase {
+  source: 'custom';
+}
+
+interface PackingListInventoryEntry extends PackingListEntryBase {
+  inventory: PackingListEntryInventory;
+  source: 'inventory';
+}
+
+type PackingListEntry = PackingListCustomEntry | PackingListInventoryEntry
 
 interface PackingListEntryInventoryRow {
   brand: string;

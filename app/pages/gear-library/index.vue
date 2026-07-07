@@ -82,7 +82,7 @@
     query: itemsApiQuery
   })
 
-  const hasError = computed(() => itemsError.value !== undefined && itemsError.value !== null)
+  const hasError = computed(() => itemsError.value !== undefined)
   const totalPages = computed(() => Math.max(Math.ceil(itemsResponse.value.total / itemsResponse.value.limit), 1))
   const isLoading = computed(() => itemsStatus.value === 'pending')
   const hasRenderedResults = computed(() => itemsResponse.value.items.length > 0 || itemsResponse.value.total > 0)
