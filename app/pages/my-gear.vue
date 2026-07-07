@@ -74,7 +74,7 @@
     default: () => []
   })
 
-  const hasError = computed(() => myGearError.value !== undefined && myGearError.value !== null)
+  const hasError = computed(() => myGearError.value !== undefined)
   const isInitialLoading = computed(() => myGearStatus.value === 'pending')
   const isEmpty = computed(() => myGearResponse.value.length === 0)
   const myGearSummaryText = computed(() => {

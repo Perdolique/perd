@@ -35,8 +35,10 @@
   },
   "dependencies": {
     "@nuxt/hints": "1.1.3",
+    "@pinia/nuxt": "0.11.3",
     "delay": "7.0.0",
     "nuxt": "4.4.8",
+    "pinia": "3.0.4",
     "vue": "3.5.39"
   },
   "devDependencies": {
@@ -52,24 +54,24 @@
     "drizzle-kit": "1.0.0-rc.4-ca0f029",
     "drizzle-orm": "1.0.0-rc.4-5d5b77c",
     "drizzle-seed": "1.0.0-rc.4-ca0f029",
-    "eslint-config-greenpie": "17.0.0",
+    "eslint-config-greenpie": "17.1.0",
     "husky": "9.1.7",
     "markdownlint": "0.41.0",
     "markdownlint-cli": "0.49.0",
-    "oxlint": "1.72.0",
+    "oxlint": "1.73.0",
     "oxlint-tsgolint": "0.24.0",
     "taze": "19.14.1",
-    "tsx": "4.22.5",
+    "tsx": "4.23.0",
     "typescript": "6.0.3",
     "ufo": "1.6.4",
     "valibot": "1.4.2",
     "vite": "8.1.3",
-    "vitest": "4.1.9",
+    "vitest": "4.1.10",
     "vue-tsc": "3.3.6",
-    "wrangler": "4.107.0",
+    "wrangler": "4.108.0",
     "ws": "8.21.0"
   },
-  "packageManager": "pnpm@11.9.0",
+  "packageManager": "pnpm@11.10.0",
   "overrides": {
     "@nuxt/devtools": "$@nuxt/devtools"
   }

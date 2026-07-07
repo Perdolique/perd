@@ -123,10 +123,10 @@
     default: () => []
   })
 
-  const hasItemError = computed(() => itemError.value !== undefined && itemError.value !== null)
+  const hasItemError = computed(() => itemError.value !== undefined)
   const isItemLoading = computed(() => itemStatus.value === 'pending')
   const isMyGearLoading = computed(() => myGearStatus.value === 'pending')
-  const hasMyGearError = computed(() => myGearError.value !== undefined && myGearError.value !== null)
+  const hasMyGearError = computed(() => myGearError.value !== undefined)
 
   function formatStatus(status: string) {
     if (status === '') {

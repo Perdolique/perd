@@ -6,32 +6,31 @@ interface PackingListSummary {
   updatedAt: string;
 }
 
-interface PackingListEntryMyGear {
+interface PackingListEntryInventory {
   brand: string;
   category: string;
   inventoryId: string;
   itemName: string;
 }
 
-interface PackingListEntry {
+interface PackingListEntryBase {
   createdAt: string;
   customName: string | null;
   id: string;
-  inventory?: PackingListEntryMyGear;
   isPacked: boolean;
-  source: 'custom' | 'inventory';
   updatedAt: string;
 }
 
-interface PackingListEntryView extends PackingListEntry {
-  detailText: string;
-  displayName: string;
-  isDisabled: boolean;
-  isLoading: boolean;
-  stateClass: 'packed' | 'unpacked';
-  stateText: string;
-  toggleLabel: string;
+interface PackingListCustomEntry extends PackingListEntryBase {
+  source: 'custom';
 }
+
+interface PackingListInventoryEntry extends PackingListEntryBase {
+  inventory: PackingListEntryInventory;
+  source: 'inventory';
+}
+
+type PackingListEntry = PackingListCustomEntry | PackingListInventoryEntry
 
 interface PackingListDetail {
   createdAt: string;
@@ -45,13 +44,21 @@ interface PackingListView extends PackingListSummary {
   formattedUpdatedAt: string;
 }
 
-type PackingListDetailMode = 'planning' | 'checklist'
+interface PackingListEntryView {
+  id: string;
+  isPacked: boolean;
+  packedStatusText: string;
+  sourceText: string;
+  subtitle: string;
+  title: string;
+}
 
 export type {
-  PackingListDetailMode,
   PackingListDetail,
   PackingListEntry,
-  PackingListEntryMyGear,
+  PackingListCustomEntry,
+  PackingListEntryInventory,
+  PackingListInventoryEntry,
   PackingListEntryView,
   PackingListSummary,
   PackingListView
