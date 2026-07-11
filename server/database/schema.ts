@@ -1,7 +1,7 @@
 // oxlint-disable max-lines
 // oxlint-disable import/no-relative-parent-imports
 import { sql } from 'drizzle-orm'
-import { integer, serial, timestamp, boolean, varchar, unique, uuid, numeric, jsonb, pgTable, text, check } from 'drizzle-orm/pg-core'
+import { boolean, check, index, integer, jsonb, numeric, pgTable, serial, text, timestamp, unique, uuid, varchar } from 'drizzle-orm/pg-core'
 // FIXME: drizzle-kit can't handle #shared/constants, so we have to import it with a relative path
 import { limits } from '../../shared/constants'
 
@@ -251,7 +251,13 @@ const equipmentItems = pgTable('equipment_items', {
     .notNull()
     .defaultNow()
     .$onUpdate(() => sql`now()`)
-})
+}, (table) => [
+  index('equipment_items_approved_category_brand_index')
+    .on(table.categoryId, table.brandId)
+    .where(sql`${table.status} = 'approved'`)
+])
+
+const categoryPropertyDisplayOrderConstraintName = 'category_properties_categoryId_displayOrder_unique'
 
 /**
  * Property definitions per category (EAV schema layer).
@@ -283,6 +289,10 @@ const categoryProperties = pgTable('category_properties', {
     varchar({ length: 16 })
     .notNull(),
 
+  displayOrder:
+    integer()
+    .notNull(),
+
   unit:
     varchar({ length: limits.maxCategoryPropertyUnitLength }),
 
@@ -293,7 +303,8 @@ const categoryProperties = pgTable('category_properties', {
     .notNull()
     .defaultNow()
 }, (table) => [
-  unique().on(table.categoryId, table.slug)
+  unique().on(table.categoryId, table.slug),
+  unique(categoryPropertyDisplayOrderConstraintName).on(table.categoryId, table.displayOrder)
 ])
 
 /**
@@ -360,7 +371,10 @@ const itemPropertyValues = pgTable('item_property_values', {
   valueBoolean:
     boolean()
 }, (table) => [
-  unique().on(table.itemId, table.propertyId)
+  unique().on(table.itemId, table.propertyId),
+  index('item_property_values_property_number_index').on(table.propertyId, table.valueNumber, table.itemId),
+  index('item_property_values_property_text_index').on(table.propertyId, table.valueText, table.itemId),
+  index('item_property_values_property_boolean_index').on(table.propertyId, table.valueBoolean, table.itemId)
 ])
 
 // ─── User data ──────────────────────────────────────────────────────
@@ -552,5 +566,6 @@ export {
   userEquipment,
   packingLists,
   packingListEntries,
-  contributions
+  contributions,
+  categoryPropertyDisplayOrderConstraintName
 }

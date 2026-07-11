@@ -46,8 +46,19 @@ interface CategoryDetail {
   slug: string;
 }
 
+interface CategoryDetailQuery {
+  with: {
+    properties: {
+      orderBy: {
+        displayOrder: 'asc';
+        id: 'asc';
+      };
+    };
+  };
+}
+
 function createDetailDb(category?: CategoryDetail) {
-  const findFirstMock = vi.fn(() => category)
+  const findFirstMock = vi.fn((_query: CategoryDetailQuery) => category)
 
   return {
     dbHttp: {
@@ -135,6 +146,12 @@ describe('get /api/equipment/categories/[slug]', () => {
     })
 
     expect(findFirstMock).toHaveBeenCalledTimes(1)
+    const query = findFirstMock.mock.calls[0]?.[0]
+
+    expect(query?.with.properties.orderBy).toStrictEqual({
+      displayOrder: 'asc',
+      id: 'asc'
+    })
   })
 
   it('should return 400 when route params validation fails', async () => {
