@@ -1,6 +1,25 @@
-pnpm run lint:markdown
-pnpm run lint:oxlint:agent
-pnpm run test:typecheck
-pnpm run test:unit:agent
-pnpm run build
-pnpm run test:e2e:ci
+hook_log=$(mktemp)
+trap 'rm -f "$hook_log"' 0 HUP INT TERM
+
+run_quietly() {
+	label=$1
+	shift
+	: > "$hook_log"
+
+	if "$@" > "$hook_log" 2>&1; then
+		printf '✓ %s\n' "$label"
+		return 0
+	else
+		status=$?
+	fi
+
+	printf '✗ %s\n' "$label" >&2
+	cat "$hook_log" >&2
+	return "$status"
+}
+
+run_quietly 'Markdown lint' pnpm run lint:markdown
+run_quietly 'Oxlint' pnpm run lint:oxlint:agent
+run_quietly 'Typecheck' pnpm run test:typecheck
+run_quietly 'Unit tests' pnpm run test:unit:agent
+run_quietly 'Production build + E2E tests' pnpm run test:e2e:ci
