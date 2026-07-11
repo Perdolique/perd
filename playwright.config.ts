@@ -1,7 +1,11 @@
+import { env } from 'node:process'
 import { defineConfig, devices, type ReporterDescription } from '@playwright/test'
 import { appBaseUrl } from './tests/playwright/constants.ts'
 
-const isCI = Boolean(process.env.CI)
+// Playwright forces color for the web server and workers, so inherited NO_COLOR only makes Node warn.
+delete env.NO_COLOR
+
+const isCI = Boolean(env.CI)
 
 const reporters: ReporterDescription[] = [
   ['html', { open: 'never' }]

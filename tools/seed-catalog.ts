@@ -69,6 +69,28 @@ function getRequiredMapValue<ValueType>(
   return value
 }
 
+/** Maps ordered property definitions to the rows inserted by the catalog seed. */
+function buildCategoryPropertySeedRows(categoryIdBySlug: Map<string, number>) {
+  return Object.entries(propertyDefinitionsByCategorySlug).flatMap(([categorySlug, properties]) => {
+    const categoryId = getRequiredMapValue(
+      categoryIdBySlug,
+      categorySlug,
+      `Missing category ${categorySlug}`
+    )
+
+    return properties.map((property, displayOrder) => {
+      return {
+        categoryId,
+        dataType: property.dataType,
+        displayOrder,
+        name: property.name,
+        slug: property.slug,
+        unit: property.unit ?? null
+      }
+    })
+  })
+}
+
 async function seedCatalog(db: Database) {
   assertSampleItemCoverage()
 
@@ -199,23 +221,7 @@ async function seedCatalog(db: Database) {
       brandsList.map((brand) => [brand.slug, brand.id])
     )
 
-    const propertyRows = Object.entries(propertyDefinitionsByCategorySlug).flatMap(([categorySlug, properties]) => {
-      const categoryId = getRequiredMapValue(
-        categoryIdBySlug,
-        categorySlug,
-        `Missing category ${categorySlug}`
-      )
-
-      return properties.map((property) => {
-        return {
-          categoryId,
-          dataType: property.dataType,
-          name: property.name,
-          slug: property.slug,
-          unit: property.unit ?? null
-        }
-      })
-    })
+    const propertyRows = buildCategoryPropertySeedRows(categoryIdBySlug)
 
     await tx.insert(categoryProperties).values(propertyRows)
 
@@ -334,5 +340,6 @@ async function seedCatalog(db: Database) {
 }
 
 export {
+  buildCategoryPropertySeedRows,
   seedCatalog
 }

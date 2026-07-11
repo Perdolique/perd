@@ -1,7 +1,29 @@
 import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
 import { validateCategoryDetailParams } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event) => {
+interface CategoryDetailEnumOption {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+interface CategoryDetailProperty {
+  dataType: string;
+  enumOptions?: CategoryDetailEnumOption[];
+  id: number;
+  name: string;
+  slug: string;
+  unit: string | null;
+}
+
+interface CategoryDetailResponse {
+  id: number;
+  name: string;
+  properties: CategoryDetailProperty[];
+  slug: string;
+}
+
+export default defineEventHandler(async (event) : Promise<CategoryDetailResponse> => {
   const { slug } = await getValidatedRouterParams(event, validateCategoryDetailParams)
 
   const category = await event.context.dbHttp.query.equipmentCategories.findFirst({
@@ -23,6 +45,11 @@ export default defineEventHandler(async (event) => {
           name: true,
           slug: true,
           unit: true
+        },
+
+        orderBy: {
+          displayOrder: 'asc',
+          id: 'asc'
         },
 
         with: {

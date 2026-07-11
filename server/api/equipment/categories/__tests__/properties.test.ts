@@ -1,7 +1,9 @@
 import * as h3 from 'h3'
+import { DrizzleQueryError } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import deleteCategoryPropertyHandler from '#server/api/equipment/categories/[categoryId]/properties/[propertyId]/index.delete'
 import createCategoryPropertyHandler from '#server/api/equipment/categories/[categoryId]/properties/index.post'
+import { categoryPropertyDisplayOrderConstraintName } from '#server/database/schema'
 import type { CategoryPropertyBaseRecord, PropertyEnumOptionBaseRecord } from '#server/utils/equipment/base-records'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
@@ -23,6 +25,7 @@ interface MockWriteDb {
 interface SelectOperation {
   error?: Error;
   rows: unknown;
+  terminal?: 'for' | 'limit' | 'where';
 }
 
 interface InsertOperation {
@@ -84,6 +87,7 @@ vi.mock(import('#server/utils/config'), () => {
 })
 
 function createSelectMock(operations: SelectOperation[]) {
+  const forMocks: ReturnType<typeof vi.fn>[] = []
   const limitMocks: ReturnType<typeof vi.fn>[] = []
 
   const whereMock = vi.fn(() => {
@@ -93,9 +97,27 @@ function createSelectMock(operations: SelectOperation[]) {
       throw new Error('No select operation configured')
     }
 
+    if (operation.terminal === 'where') {
+      if (operation.error !== undefined) {
+        throw operation.error
+      }
+
+      return operation.rows
+    }
+
     const limitMock = vi.fn(() => {
       if (operation.error !== undefined) {
         throw operation.error
+      }
+
+      if (operation.terminal === 'for') {
+        const forMock = vi.fn(() => operation.rows)
+
+        forMocks.push(forMock)
+
+        return {
+          for: forMock
+        }
       }
 
       return operation.rows
@@ -121,6 +143,7 @@ function createSelectMock(operations: SelectOperation[]) {
   })
 
   return {
+    forMocks,
     selectMock
   }
 }
@@ -268,12 +291,18 @@ describe('category property handlers', () => {
         type: 'values'
       }])
 
-      const { selectMock } = createSelectMock([{
+      const { forMocks, selectMock } = createSelectMock([{
         rows: [{
           id: 5
-        }]
+        }],
+        terminal: 'for'
       }, {
         rows: []
+      }, {
+        rows: [{
+          displayOrder: 3
+        }],
+        terminal: 'where'
       }])
 
       const dbWrite = createDb({
@@ -298,10 +327,13 @@ describe('category property handlers', () => {
       expect(valuesMocks[0]).toHaveBeenCalledWith({
         categoryId: 5,
         dataType: 'enum',
+        displayOrder: 4,
         name: 'Fill Type',
         slug: 'fill-type',
         unit: undefined
       })
+
+      expect(forMocks[0]).toHaveBeenCalledWith('update')
 
       expect(valuesMocks[1]).toHaveBeenCalledWith([{
         name: 'Down',
@@ -355,9 +387,15 @@ describe('category property handlers', () => {
       const { selectMock } = createSelectMock([{
         rows: [{
           id: 5
-        }]
+        }],
+        terminal: 'for'
       }, {
         rows: []
+      }, {
+        rows: [{
+          displayOrder: null
+        }],
+        terminal: 'where'
       }])
 
       const dbWrite = createDb({
@@ -377,6 +415,15 @@ describe('category property handlers', () => {
       })
 
       expect(valuesMocks).toHaveLength(2)
+
+      expect(valuesMocks[0]).toHaveBeenCalledWith({
+        categoryId: 5,
+        dataType: 'number',
+        displayOrder: 0,
+        name: 'Weight',
+        slug: 'weight',
+        unit: 'g'
+      })
     })
 
     it('should return 404 when category does not exist', async () => {
@@ -390,7 +437,8 @@ describe('category property handlers', () => {
       const { insertMock } = createInsertMock([])
 
       const { selectMock } = createSelectMock([{
-        rows: []
+        rows: [],
+        terminal: 'for'
       }])
 
       const dbWrite = createDb({
@@ -423,7 +471,8 @@ describe('category property handlers', () => {
       const { selectMock } = createSelectMock([{
         rows: [{
           id: 5
-        }]
+        }],
+        terminal: 'for'
       }, {
         rows: [{
           id: 12
@@ -477,9 +526,15 @@ describe('category property handlers', () => {
       const { selectMock } = createSelectMock([{
         rows: [{
           id: 5
-        }]
+        }],
+        terminal: 'for'
       }, {
         rows: []
+      }, {
+        rows: [{
+          displayOrder: 0
+        }],
+        terminal: 'where'
       }])
 
       const dbWrite = createDb({
@@ -495,6 +550,57 @@ describe('category property handlers', () => {
       await expect(createCategoryPropertyHandler(event)).rejects.toMatchObject({
         message: 'Failed to create category property',
         statusCode: 500
+      })
+
+      expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
+    })
+
+    it('should return 409 when concurrent property creation conflicts on display order', async () => {
+      readValidatedBodyMock.mockResolvedValue({
+        dataType: 'number',
+        name: 'Weight',
+        slug: 'weight',
+        unit: 'g'
+      })
+
+      const postgresError = Object.assign(new Error('duplicate display order'), {
+        code: '23505',
+        constraint: categoryPropertyDisplayOrderConstraintName
+      })
+      const displayOrderConflict = new DrizzleQueryError('insert category property', [], postgresError)
+
+      const { insertMock } = createInsertMock([{
+        error: displayOrderConflict,
+        type: 'returning'
+      }])
+
+      const { selectMock } = createSelectMock([{
+        rows: [{
+          id: 5
+        }],
+        terminal: 'for'
+      }, {
+        rows: []
+      }, {
+        rows: [{
+          displayOrder: 0
+        }],
+        terminal: 'where'
+      }])
+
+      const dbWrite = createDb({
+        delete: vi.fn(),
+        insert: insertMock,
+        select: selectMock
+      })
+
+      createWebSocketClientMock.mockReturnValue(dbWrite)
+
+      const event = createTestEvent({})
+
+      await expect(createCategoryPropertyHandler(event)).rejects.toMatchObject({
+        message: 'Category property display order conflict',
+        statusCode: 409
       })
 
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
