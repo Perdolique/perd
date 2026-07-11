@@ -48,7 +48,7 @@
     "@nuxt/fonts": "0.14.0",
     "@nuxt/icon": "2.3.1",
     "@playwright/test": "1.61.1",
-    "@types/node": "26.1.0",
+    "@types/node": "26.1.1",
     "@types/ws": "8.18.1",
     "@vueuse/core": "14.3.0",
     "drizzle-kit": "1.0.0-rc.4-ca0f029",
@@ -65,13 +65,13 @@
     "typescript": "6.0.3",
     "ufo": "1.6.4",
     "valibot": "1.4.2",
-    "vite": "8.1.3",
+    "vite": "8.1.4",
     "vitest": "4.1.10",
-    "vue-tsc": "3.3.6",
+    "vue-tsc": "3.3.7",
     "wrangler": "4.108.0",
     "ws": "8.21.0"
   },
-  "packageManager": "pnpm@11.10.0",
+  "packageManager": "pnpm@11.11.0",
   "overrides": {
     "@nuxt/devtools": "$@nuxt/devtools"
   }
