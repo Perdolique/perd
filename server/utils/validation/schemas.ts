@@ -266,6 +266,15 @@ const packingListEntryUpdateBodySchema = v.object({
   isPacked: v.boolean()
 })
 
+const packingListAvailableGearQuerySchema = v.object({
+  page: pageQuerySchema,
+
+  search: v.pipe(
+    v.optional(trimmedStringSchema, ''),
+    v.maxLength(limits.maxPackingListEntryCustomNameLength)
+  )
+})
+
 const itemsListQuerySchema = v.object({
   brandSlug: optionalFilterQuerySchema,
   categorySlug: optionalFilterQuerySchema,
@@ -365,6 +374,10 @@ function validatePackingListEntryUpdateBody(body: unknown) {
   return v.parse(packingListEntryUpdateBodySchema, body)
 }
 
+function validatePackingListAvailableGearQuery(query: unknown) {
+  return v.parse(packingListAvailableGearQuerySchema, query)
+}
+
 function validatePropertyEnumOptionMutationBody(body: unknown) {
   return v.parse(propertyEnumOptionMutationSchema, body)
 }
@@ -405,6 +418,7 @@ export {
   limitQuerySchema,
   nonEmptyStringSchema,
   pageQuerySchema,
+  packingListAvailableGearQuerySchema,
   packingListEntryCreateBodySchema,
   packingListEntryParamsSchema,
   packingListEntryUpdateBodySchema,
@@ -434,6 +448,7 @@ export {
   validateGroupMutationBody,
   validateItemDetailParams,
   validateItemsListQuery,
+  validatePackingListAvailableGearQuery,
   validatePackingListEntryCreateBody,
   validatePackingListEntryParams,
   validatePackingListEntryUpdateBody,

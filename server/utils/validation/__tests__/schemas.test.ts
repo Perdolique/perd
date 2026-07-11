@@ -15,6 +15,7 @@ import {
   validateGroupMutationBody,
   validateItemDetailParams,
   validateItemsListQuery,
+  validatePackingListAvailableGearQuery,
   validatePackingListEntryCreateBody,
   validatePackingListEntryParams,
   validatePackingListEntryUpdateBody,
@@ -205,6 +206,37 @@ describe('validation schemas', () => {
       expect(() => validatePackingListIdParams(params)).toThrow(/./u)
     }
   )
+
+  it('should normalize available gear queries', () => {
+    const result = validatePackingListAvailableGearQuery({
+      page: '2',
+      search: '  MSR  '
+    })
+
+    expect(result).toStrictEqual({
+      page: 2,
+      search: 'MSR'
+    })
+  })
+
+  it('should use available gear query defaults', () => {
+    const result = validatePackingListAvailableGearQuery({})
+
+    expect(result).toStrictEqual({
+      page: 1,
+      search: ''
+    })
+  })
+
+  it.each([{
+    page: '0'
+  }, {
+    page: 'wat'
+  }, {
+    search: tooLongPackingListEntryCustomName
+  }])('should reject invalid available gear query: %j', (query) => {
+    expect(() => validatePackingListAvailableGearQuery(query)).toThrow(/./u)
+  })
 
   it('should validate packing list entry params', () => {
     const camelCaseResult = validatePackingListEntryParams({
