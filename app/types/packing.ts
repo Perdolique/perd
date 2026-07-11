@@ -13,6 +13,13 @@ interface PackingListEntryInventory {
   itemName: string;
 }
 
+interface PackingListAvailableGearItem {
+  brand: string;
+  category: string;
+  inventoryId: string;
+  itemName: string;
+}
+
 interface PackingListEntryBase {
   createdAt: string;
   customName: string | null;
@@ -46,14 +53,14 @@ interface PackingListView extends PackingListSummary {
 
 interface PackingListEntryView {
   id: string;
-  isPacked: boolean;
-  packedStatusText: string;
-  sourceText: string;
+  isRemoveDisabled: boolean;
+  isRemoving: boolean;
   subtitle: string;
   title: string;
 }
 
 export type {
+  PackingListAvailableGearItem,
   PackingListDetail,
   PackingListEntry,
   PackingListCustomEntry,
