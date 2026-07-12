@@ -3,6 +3,11 @@ import { basename } from 'node:path'
 
 type ComponentType = 'page' | 'layout' | 'component';
 
+const customElements = new Set([
+  'search',
+  'selectedoption'
+]);
+
 function getComponentType(filePath: string) : ComponentType {
   if (filePath.includes('/app/pages/')) {
     return 'page';
@@ -113,11 +118,11 @@ export default defineNuxtConfig({
   vue: {
     compilerOptions: {
       /**
-       * We're using new `<select>` customizations
+       * Vue does not recognize these newer platform elements yet.
        *
        * @see [RFC Customizable Select](https://developer.chrome.com/blog/rfc-customizable-select?hl=en)
        */
-      isCustomElement: (tag) => tag === 'selectedoption'
+      isCustomElement: (tag) => customElements.has(tag)
     }
   },
 

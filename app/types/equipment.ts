@@ -21,6 +21,7 @@ interface GearLibraryListItemView {
   detailPath: string;
   id: string;
   name: string;
+  properties: ItemProperty[];
 }
 
 interface GearLibraryItemsResponse {

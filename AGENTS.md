@@ -32,3 +32,8 @@
 ### Playwright test changes
 
 - `vp run test:e2e:ci`
+
+### Playwright conventions
+
+- Import `test` and `expect` from `tests/playwright/fixtures/global.fixtures.ts`, not from `@playwright/test`.
+- When a flow should cancel stale requests, assert the obsolete request fails with `requestfailed`; final UI state alone is insufficient.

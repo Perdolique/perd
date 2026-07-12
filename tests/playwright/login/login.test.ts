@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { expect, test } from '../fixtures/global.fixtures.ts'
 
 test.describe('Login page', () => {
   test('should display the login heading and auth buttons', async ({ page }) => {

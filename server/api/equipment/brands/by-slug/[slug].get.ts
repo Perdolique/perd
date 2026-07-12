@@ -1,7 +1,13 @@
 import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
 import { validateBrandDetailParams } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event) => {
+interface BrandDetailResponse {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+export default defineEventHandler(async (event) : Promise<BrandDetailResponse> => {
   const { slug } = await getValidatedRouterParams(event, validateBrandDetailParams)
 
   const brand = await event.context.dbHttp.query.brands.findFirst({

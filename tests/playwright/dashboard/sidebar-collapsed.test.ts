@@ -1,4 +1,5 @@
-import { expect, test, type BrowserContext } from '@playwright/test'
+import type { BrowserContext } from '@playwright/test'
+import { expect, test } from '../fixtures/global.fixtures.ts'
 
 async function mockGuestLogin(context: BrowserContext) {
   await context.route('**/api/auth/create-session**', async (route) => {
@@ -13,6 +14,12 @@ async function mockGuestLogin(context: BrowserContext) {
 }
 
 async function mockGearLibraryReads(context: BrowserContext) {
+  await context.route('**/api/equipment/categories**', async (route) => {
+    await route.fulfill({
+      json: []
+    })
+  })
+
   await context.route('**/api/equipment/items**', async (route) => {
     await route.fulfill({
       json: {

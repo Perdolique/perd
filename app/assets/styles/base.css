@@ -8,6 +8,10 @@
     font-family: var(--font-family-sans);
   }
 
+  html {
+    scrollbar-gutter: stable;
+  }
+
   html,
   body {
     min-height: 100%;

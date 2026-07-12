@@ -33,6 +33,8 @@ Do not use this skill for generic Vue or styling work. Use the dedicated fronten
 
 - Public read routes for reference data use `slug` in route params.
 - Admin mutation routes for reference data use stable `id` params because `slug` is editable content.
+- Nitro shares the dynamic path shape across method-specific handlers, so the parameter name must also match. Never place `[slug].get.ts` beside `[id].patch.ts` or `[id].delete.ts`; use an explicit discriminator such as `by-slug/[slug].get.ts` for the public read.
+- When moving a route behind a static discriminator, update every caller, mock, handler import, and route-description test in the same change.
 - Category-property admin routes stay nested under category ID routes so handlers can verify parent ownership from the route chain.
 - Validate every request input through the shared Valibot helpers:
   - `readValidatedBody` for request bodies

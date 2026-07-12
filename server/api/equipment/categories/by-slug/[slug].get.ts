@@ -92,3 +92,5 @@ export default defineEventHandler(async (event) : Promise<CategoryDetailResponse
     properties
   }
 })
+
+export type { CategoryDetailResponse }

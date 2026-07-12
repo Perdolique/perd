@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from '../fixtures/global.fixtures.ts'
 
 test.describe('Dashboard page', () => {
   test('should restore the dashboard after guest login', async ({ context, page }) => {

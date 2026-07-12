@@ -1,6 +1,6 @@
 ---
 name: nuxt-app
-description: Nuxt application conventions. Use whenever the task touches a Nuxt app — pages, layouts, Nuxt plugins, middleware, app composables, Nitro server routes, `useFetch`, `useAsyncData`, `useRequestFetch`, `$fetch`, `definePageMeta`, runtime config, or Nuxt-specific typing. Make sure to use this skill for any work on Nuxt code, Nitro handlers, or Nuxt-aware data fetching, even when the user only mentions Vue, SSR, typed responses, or `$fetch` without naming Nuxt explicitly.
+description: Nuxt conventions for framework routing, middleware, SSR data fetching, Nitro handlers, request cancellation, runtime config, and typing. Use whenever work touches a Nuxt app or APIs such as `useFetch`, `useAsyncData`, `useRequestFetch`, `$fetch`, or `definePageMeta`, including requests framed only as Vue SSR or typed internal API work.
 ---
 
 # Nuxt Conventions
@@ -79,3 +79,46 @@ interface ExternalUserResponse {
 
 const user = await $fetch<ExternalUserResponse>('https://example.com/api/user')
 ```
+
+### Cancel overlapping reactive requests at the transport layer
+
+When rapidly changing route state or filters should cancel stale work, keep one AsyncData entry and explicitly refresh it. A reactive key creates separate entries with separate controllers, so it does not cancel requests started under earlier keys.
+
+Rules:
+
+- Give the logical resource a stable `key` while its reactive query changes.
+- Set `watch: false` and call the returned `refresh()` from an explicit Vue `watch` when overlapping changes must cancel the in-flight request. Do not assume the `watch` option proves transport cancellation.
+- `useFetch` forwards its controller signal. In a custom `useAsyncData` handler, accept `{ signal }` from the handler context and pass it to the nested `$fetch` call.
+- Keep reactive keys when separate responses genuinely need independent cached entries; stable keys are for one replaceable resource.
+- Verify cancellation at the network boundary. A correct final UI can also result from ignoring a stale response while the obsolete request still consumes transport and server work.
+
+```ts
+const itemsRequest = useFetch('/api/items', {
+  key: 'items',
+  query,
+  watch: false
+})
+
+const { refresh } = await itemsRequest
+
+watch(query, async () => {
+  await refresh()
+})
+
+const requestFetch = useRequestFetch()
+const detailRequest = useAsyncData('item-detail', async (_nuxtApp, { signal }) => {
+  return requestFetch(`/api/items/${itemId.value}`, { signal })
+}, {
+  watch: false
+})
+
+const { refresh: refreshDetail } = await detailRequest
+
+watch(itemId, async () => {
+  await refreshDetail()
+})
+```
+
+### Register unrecognized platform elements
+
+If Vue resolves a valid platform element as a component, add it to `vue.compilerOptions.isCustomElement` in `nuxt.config.ts`. Verify the rendered page has no hydration or unresolved-component warnings in the browser console.

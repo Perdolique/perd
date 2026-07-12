@@ -1,6 +1,12 @@
 <template>
   <div :class="$style.component">
-    <PagePlaceholder v-if="isOutOfRangePage" emoji="🗺️" title="This page is out of range.">
+    <PagePlaceholder
+      v-if="isOutOfRangePage"
+      data-testid="gear-library-results-state"
+      emoji="🗺️"
+      full-width
+      title="This page is out of range."
+    >
       There are gear library items here, but this page number is no longer valid.
 
       <template #actions>
@@ -10,49 +16,33 @@
       </template>
     </PagePlaceholder>
 
-    <div
-      v-else
-      :class="$style.listShell"
-      :aria-busy="ariaBusy"
-    >
-      <div v-if="showLoadingOverlay" :class="$style.loadingOverlay">
-        <PerdPill tone="neutral" role="status" aria-label="Loading page" aria-live="polite">
-          <FidgetSpinner :class="$style.loadingSpinner" />
-          Loading page
-        </PerdPill>
-      </div>
-
-      <div :class="$style.list">
+    <div v-else :class="$style.listShell">
+      <ul :class="$style.list">
         <GearLibraryItemRow
           v-for="item in items"
           :key="item.id"
           :item="item"
         />
-      </div>
+      </ul>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-  import { computed } from 'vue'
   import type { GearLibraryListItemView } from '~/types/equipment'
-  import FidgetSpinner from '~/components/FidgetSpinner.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PerdButton from '~/components/PerdButton.vue'
-  import PerdPill from '~/components/PerdPill.vue'
   import GearLibraryItemRow from '~/components/gear-library/GearLibraryItemRow.vue'
 
   interface Props {
     isOutOfRangePage: boolean;
     items: GearLibraryListItemView[];
-    showLoadingOverlay: boolean;
   }
 
   type Emits = (event: 'go-last') => void
 
-  const props = defineProps<Props>()
+  defineProps<Props>()
   const emit = defineEmits<Emits>()
-  const ariaBusy = computed(() => props.showLoadingOverlay ? 'true' : 'false')
 
   function emitGoLast() {
     emit('go-last')
@@ -65,24 +55,15 @@
   }
 
   .listShell {
-    position: relative;
-    border-radius: var(--border-radius-24);
-    overflow: hidden;
+    overflow: clip;
     border: 1px solid var(--color-border-subtle);
+    border-radius: var(--border-radius-24);
     background-color: var(--color-surface-primary);
   }
 
-  .loadingOverlay {
-    position: absolute;
-    inset: 0;
+  .list {
     display: grid;
-    place-items: center;
-    background-color: color-mix(in oklch, var(--color-background-page), transparent 18%);
-    backdrop-filter: blur(0.35rem);
-    border-radius: inherit;
-  }
-
-  .loadingSpinner {
-    font-size: 1rem;
+    padding: 0;
+    list-style: none;
   }
 </style>
