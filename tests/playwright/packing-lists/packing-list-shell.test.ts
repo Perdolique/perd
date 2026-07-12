@@ -1,4 +1,4 @@
-import type { BrowserContext, Page, Request, Response, Route } from '@playwright/test'
+import type { BrowserContext, Locator, Page, Request, Response, Route } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
 
 interface PackingListSummary {
@@ -419,6 +419,16 @@ async function openPackingLists(page: Page): Promise<void> {
   await sidebar.getByRole('link', { name: 'Packing lists' }).click()
 }
 
+async function getElementBox(locator: Locator) {
+  const box = await locator.boundingBox()
+
+  if (box === null) {
+    throw new Error('Expected element to have a bounding box')
+  }
+
+  return box
+}
+
 test.describe('Packing list shell', () => {
   test('should create a list and stay on the packing lists page', async ({ context, page }) => {
     const state = createPackingListRouteState([])
@@ -448,6 +458,47 @@ test.describe('Packing list shell', () => {
     await expect(page.getByRole('heading', { name: 'Create a packing list' })).toHaveCount(0)
     await expect(page.getByRole('link', { name: /Alpine weekend/iu })).toBeVisible()
     expect(state.detailRequests).toBe(0)
+  })
+
+  test('should keep the create dialog centered on mobile and restore focus', async ({ context, page }) => {
+    const state = createPackingListRouteState([])
+
+    await page.setViewportSize({
+      height: 844,
+      width: 390
+    })
+    await mockAuth(context)
+    await mockPackingListRoutes(context, page, state)
+    await page.goto('/login?redirectTo=/packing-lists')
+    await page.getByRole('button', { name: 'Guest' }).click()
+    await expect(page).toHaveURL(/\/packing-lists$/u)
+
+    const opener = page.getByRole('button', { name: 'New list' }).first()
+
+    await opener.focus()
+    await page.keyboard.press('Enter')
+
+    const dialog = page.getByRole('dialog', { name: 'Create a packing list' })
+
+    await expect(dialog).toBeVisible()
+
+    await expect.poll(
+      async () => dialog.evaluate((element) => globalThis.getComputedStyle(element).opacity)
+    ).toBe('1')
+
+    const box = await getElementBox(dialog)
+    const inlineCenter = box.x + box.width / 2
+    const blockCenter = box.y + box.height / 2
+    const inlineOffset = Math.abs(inlineCenter - 390 / 2)
+    const blockOffset = Math.abs(blockCenter - 844 / 2)
+
+    expect(box.width).toBeLessThan(390)
+    expect(inlineOffset).toBeLessThan(2)
+    expect(blockOffset).toBeLessThan(2)
+
+    await page.keyboard.press('Escape')
+    await expect(dialog).toHaveCount(0)
+    await expect(opener).toBeFocused()
   })
 
   test('should route from a list card to the item list page', async ({ context, page }) => {
