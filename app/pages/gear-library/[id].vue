@@ -30,8 +30,6 @@
             <GearLibraryItemSummaryCard
               :brand-name="itemResponse.brand.name"
               :category-name="itemResponse.category.name"
-              :status-class="statusClass"
-              :status-text="statusText"
             />
           </div>
 
@@ -108,8 +106,7 @@
         createdAt: '',
         id: '',
         name: '',
-        properties: [],
-        status: ''
+        properties: []
       }
     }
   })
@@ -128,43 +125,25 @@
   const isMyGearLoading = computed(() => myGearStatus.value === 'pending')
   const hasMyGearError = computed(() => myGearError.value !== undefined)
 
-  function formatStatus(status: string) {
-    if (status === '') {
-      return 'Unknown'
-    }
-
-    return `${status.slice(0, 1).toUpperCase()}${status.slice(1)}`
-  }
-
-  function formatPropertyValue(property: ItemProperty) {
+  function formatPropertyValue(property: ItemProperty): string {
     if (property.value === null) {
       return 'Not set'
     }
 
-    if (property.dataType === 'boolean') {
-      return property.value === 'true' ? 'Yes' : 'No'
+    if (typeof property.value === 'boolean') {
+      return property.value ? 'Yes' : 'No'
     }
+
+    const value = String(property.value)
 
     if (property.unit !== null && property.unit !== '') {
-      return `${property.value} ${property.unit}`
+      return `${value} ${property.unit}`
     }
 
-    return property.value
+    return value
   }
 
   const pageTitle = computed(() => itemResponse.value.name === '' ? 'Gear item' : itemResponse.value.name)
-  const statusText = computed(() => formatStatus(itemResponse.value.status))
-  const statusClass = computed(() => {
-    if (itemResponse.value.status === 'approved') {
-      return 'approved'
-    }
-
-    if (itemResponse.value.status === 'rejected') {
-      return 'rejected'
-    }
-
-    return 'pending'
-  })
   const ownedMyGearRow = computed(() => myGearResponse.value.find((myGearRow) => myGearRow.item.id === itemResponse.value.id))
   const isOwned = computed(() => ownedMyGearRow.value !== undefined)
   const isMyGearActionLoading = computed(() => isMyGearLoading.value || isMyGearPending.value)

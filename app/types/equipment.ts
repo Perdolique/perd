@@ -12,6 +12,7 @@ interface GearLibraryListItem {
   category: GearLibraryEntitySummary;
   id: string;
   name: string;
+  properties: ItemProperty[];
 }
 
 interface GearLibraryListItemView {
@@ -29,12 +30,15 @@ interface GearLibraryItemsResponse {
   total: number;
 }
 
+type EquipmentPropertyDataType = 'boolean' | 'enum' | 'number' | 'text'
+type EquipmentPropertyValue = string | number | boolean | null
+
 interface ItemProperty {
-  dataType: string;
+  dataType: EquipmentPropertyDataType;
   name: string;
   slug: string;
   unit: string | null;
-  value: string | null;
+  value: EquipmentPropertyValue;
 }
 
 interface ItemDetailResponse {
@@ -44,7 +48,6 @@ interface ItemDetailResponse {
   id: string;
   name: string;
   properties: ItemProperty[];
-  status: string;
 }
 
 interface ItemDisplayProperty extends ItemProperty {
@@ -75,6 +78,8 @@ interface MyGearRecordView {
 }
 
 export type {
+  EquipmentPropertyDataType,
+  EquipmentPropertyValue,
   GearLibraryEntityDetail,
   GearLibraryEntitySummary,
   GearLibraryItemsResponse,

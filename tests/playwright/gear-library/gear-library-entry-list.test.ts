@@ -11,6 +11,17 @@ interface GearLibraryListItem {
   category: GearLibraryEntitySummary;
   id: string;
   name: string;
+  properties: EquipmentProperty[];
+}
+
+type EquipmentPropertyDataType = 'boolean' | 'enum' | 'number' | 'text'
+
+interface EquipmentProperty {
+  dataType: EquipmentPropertyDataType;
+  name: string;
+  slug: string;
+  unit: string | null;
+  value: string | number | boolean | null;
 }
 
 interface GearLibraryItemsResponse {
@@ -33,7 +44,9 @@ const firstPageResponse: GearLibraryItemsResponse = {
     category: {
       name: 'Stoves',
       slug: 'stoves'
-    }
+    },
+
+    properties: []
   }, {
     id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477da',
     name: 'NeoAir XLite NXT',
@@ -46,7 +59,9 @@ const firstPageResponse: GearLibraryItemsResponse = {
     category: {
       name: 'Sleeping Pads',
       slug: 'sleeping-pads'
-    }
+    },
+
+    properties: []
   }],
   limit: 2,
   page: 1,
@@ -66,7 +81,9 @@ const secondPageResponse: GearLibraryItemsResponse = {
     category: {
       name: 'Stoves',
       slug: 'stoves'
-    }
+    },
+
+    properties: []
   }],
   limit: 2,
   page: 2,

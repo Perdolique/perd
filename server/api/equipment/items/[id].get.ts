@@ -1,4 +1,10 @@
 import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
+import {
+  getEquipmentPropertyDataType,
+  normalizeEquipmentPropertyValue,
+  type EquipmentPropertyDataType,
+  type EquipmentPropertyValue
+} from '#server/utils/equipment/property-values'
 import { validateItemDetailParams } from '#server/utils/validation/schemas'
 
 interface ItemDetailBrand {
@@ -14,11 +20,11 @@ interface ItemDetailCategory {
 }
 
 interface ItemProperty {
-  dataType: string;
+  dataType: EquipmentPropertyDataType;
   name: string;
   slug: string;
   unit: string | null;
-  value: string | null;
+  value: EquipmentPropertyValue;
 }
 
 interface ItemDetailResponse {
@@ -28,7 +34,6 @@ interface ItemDetailResponse {
   id: string;
   name: string;
   properties: ItemProperty[];
-  status: string;
 }
 
 export default defineEventHandler(async (event) : Promise<ItemDetailResponse> => {
@@ -38,12 +43,12 @@ export default defineEventHandler(async (event) : Promise<ItemDetailResponse> =>
     columns: {
       createdAt: true,
       id: true,
-      name: true,
-      status: true
+      name: true
     },
 
     where: {
-      id
+      id,
+      status: 'approved'
     },
 
     with: {
@@ -74,6 +79,8 @@ export default defineEventHandler(async (event) : Promise<ItemDetailResponse> =>
           property: {
             columns: {
               dataType: true,
+              displayOrder: true,
+              id: true,
               name: true,
               slug: true,
               unit: true
@@ -96,22 +103,47 @@ export default defineEventHandler(async (event) : Promise<ItemDetailResponse> =>
   }
 
   const properties: ItemProperty[] = []
+  const propertyValues = [...item.propertyValues]
 
-  // Property values live in type-specific columns, so the response normalizes them into one `value` field.
-  for (const propertyValue of item.propertyValues) {
+  propertyValues.sort((left, right) => {
+    const leftProperty = left.property
+    const rightProperty = right.property
+
+    if (leftProperty === null && rightProperty === null) {
+      return 0
+    }
+
+    if (leftProperty === null) {
+      return 1
+    }
+
+    if (rightProperty === null) {
+      return -1
+    }
+
+    const displayOrderDifference = leftProperty.displayOrder - rightProperty.displayOrder
+
+    if (displayOrderDifference !== 0) {
+      return displayOrderDifference
+    }
+
+    return leftProperty.id - rightProperty.id
+  })
+
+  for (const propertyValue of propertyValues) {
     const { property } = propertyValue
 
     if (property !== null) {
-      let value: string | null = propertyValue.valueText
-
-      if (property.dataType === 'number') {
-        value = propertyValue.valueNumber
-      } else if (property.dataType === 'boolean') {
-        value = String(propertyValue.valueBoolean)
-      }
+      const dataType = getEquipmentPropertyDataType(property.dataType)
+      const value = normalizeEquipmentPropertyValue({
+        dataType,
+        valueBoolean: propertyValue.valueBoolean,
+        valueNumber: propertyValue.valueNumber,
+        valueText: propertyValue.valueText
+      })
 
       properties.push({
-        dataType: property.dataType,
+        dataType,
         name: property.name,
         slug: property.slug,
         unit: property.unit,
@@ -121,12 +153,21 @@ export default defineEventHandler(async (event) : Promise<ItemDetailResponse> =>
   }
 
   return {
-    brand: item.brand,
-    category: item.category,
+    brand: {
+      id: item.brand.id,
+      name: item.brand.name,
+      slug: item.brand.slug
+    },
+
+    category: {
+      id: item.category.id,
+      name: item.category.name,
+      slug: item.category.slug
+    },
+
     createdAt: item.createdAt,
     id: item.id,
     name: item.name,
-    properties,
-    status: item.status
+    properties
   }
 })

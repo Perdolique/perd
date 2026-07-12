@@ -1,14 +1,8 @@
 <template>
   <PerdCard :class="$style.component">
-    <div :class="$style.header">
-      <p :class="$style.eyebrow">
-        {{ brandName }}
-      </p>
-
-      <PerdPill :tone="statusTone">
-        {{ statusText }}
-      </PerdPill>
-    </div>
+    <p :class="$style.eyebrow">
+      {{ brandName }}
+    </p>
 
     <dl :class="$style.metadataList">
       <div :class="$style.metadataItem">
@@ -30,44 +24,17 @@
           {{ categoryName }}
         </dd>
       </div>
-
-      <div :class="$style.metadataItem">
-        <dt :class="$style.metadataLabel">
-          Status
-        </dt>
-
-        <dd :class="$style.metadataValue">
-          {{ statusText }}
-        </dd>
-      </div>
     </dl>
   </PerdCard>
 </template>
 
 <script lang="ts" setup>
-  import { computed } from 'vue'
-  import PerdPill, { type PerdPillTone } from '~/components/PerdPill.vue'
-
   interface Props {
     brandName: string;
     categoryName: string;
-    statusClass: string;
-    statusText: string;
   }
 
-  const props = defineProps<Props>()
-
-  const statusTone = computed<PerdPillTone>(() => {
-    if (props.statusClass === 'approved') {
-      return 'success'
-    }
-
-    if (props.statusClass === 'rejected') {
-      return 'danger'
-    }
-
-    return 'warning'
-  })
+  defineProps<Props>()
 </script>
 
 <style module>
@@ -75,14 +42,6 @@
     display: grid;
     gap: var(--spacing-24);
     container-type: inline-size;
-  }
-
-  .header {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: var(--spacing-12);
-    align-items: center;
   }
 
   .eyebrow {
@@ -98,7 +57,7 @@
     gap: var(--spacing-12);
 
     @container (inline-size >= 40rem) {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
