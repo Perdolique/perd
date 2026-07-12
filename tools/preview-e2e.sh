@@ -29,6 +29,7 @@ mkdir -p \
 
 NUXT_OAUTH_TWITCH_CLIENT_ID="${twitch_client_id}" \
 NUXT_OAUTH_TWITCH_CLIENT_SECRET="${twitch_client_secret}" \
+PERD_E2E_PAGES="true" \
   vp run build
 
 vp exec wrangler dev \

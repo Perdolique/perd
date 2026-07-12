@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto'
 import { basename } from 'node:path'
+import { env } from 'node:process'
+import { fileURLToPath } from 'node:url'
 
 type ComponentType = 'page' | 'layout' | 'component';
 
@@ -7,6 +9,10 @@ const customElements = new Set([
   'search',
   'selectedoption'
 ]);
+
+const modalDialogFixturePath = fileURLToPath(
+  new globalThis.URL('tests/nuxt/ModalDialog.vue', import.meta.url)
+)
 
 function getComponentType(filePath: string) : ComponentType {
   if (filePath.includes('/app/pages/')) {
@@ -99,6 +105,20 @@ export default defineNuxtConfig({
 
   imports: {
     autoImport: false
+  },
+
+  hooks: {
+    'pages:extend': (pages) => {
+      if (env.PERD_E2E_PAGES !== 'true') {
+        return
+      }
+
+      pages.push({
+        file: modalDialogFixturePath,
+        name: 'e2e-modal-dialog',
+        path: '/__e2e/modal-dialog'
+      })
+    }
   },
 
   nitro: {
