@@ -34,13 +34,6 @@ const referenceDataSlugSchema = v.pipe(
   v.regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u)
 )
 
-const optionalFilterQuerySchema = v.optional(
-  v.pipe(
-    trimmedStringSchema,
-    v.transform((value) => value === '' ? undefined : value)
-  )
-)
-
 const limitQuerySchema = v.pipe(
   v.optional(v.string(), '20'),
   v.digits(),
@@ -275,13 +268,295 @@ const packingListAvailableGearQuerySchema = v.object({
   )
 })
 
-const itemsListQuerySchema = v.object({
-  brandSlug: optionalFilterQuerySchema,
-  categorySlug: optionalFilterQuerySchema,
-  limit: limitQuerySchema,
-  page: pageQuerySchema,
-  search: v.optional(trimmedStringSchema, '')
-})
+interface ItemsListNumberFilter {
+  max: number | null;
+  min: number | null;
+  propertySlug: string;
+}
+
+interface ItemsListEnumFilter {
+  optionSlug: string;
+  propertySlug: string;
+}
+
+interface ItemsListBooleanFilter {
+  propertySlug: string;
+  value: boolean;
+}
+
+type ItemsListSort = 'brand' | 'name' | `property:${string}`
+
+const decimalNumberPattern = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/u
+
+const brandFilterSlugSchema = v.pipe(
+  referenceDataSlugSchema,
+  v.maxLength(limits.maxBrandSlugLength)
+)
+
+const categoryFilterSlugSchema = v.pipe(
+  referenceDataSlugSchema,
+  v.maxLength(limits.maxEquipmentCategorySlugLength)
+)
+
+const categoryPropertyFilterSlugSchema = v.pipe(
+  referenceDataSlugSchema,
+  v.maxLength(limits.maxCategoryPropertySlugLength)
+)
+
+const propertyEnumOptionFilterSlugSchema = v.pipe(
+  referenceDataSlugSchema,
+  v.maxLength(limits.maxPropertyEnumOptionSlugLength)
+)
+
+const numberFilterFormatMessage = 'numberFilter must use <property-slug>:<min-or-empty>:<max-or-empty>'
+
+const decimalFilterBoundSchema = v.union([
+  v.pipe(
+    v.literal(''),
+    v.transform(() => null)
+  ),
+
+  v.pipe(
+    v.string(),
+    v.regex(decimalNumberPattern),
+    v.toNumber(),
+    v.finite(),
+    v.transform((value) => Object.is(value, -0) ? 0 : value)
+  )
+])
+
+const numberFilterQueryValueSchema = v.pipe(
+  trimmedNonEmptyStringSchema,
+  v.transform((value) => value.split(':')),
+  v.strictTuple([
+    categoryPropertyFilterSlugSchema,
+    decimalFilterBoundSchema,
+    decimalFilterBoundSchema
+  ], numberFilterFormatMessage),
+  v.check(([, min, max]) => min !== null || max !== null, numberFilterFormatMessage),
+  v.check(([, min, max]) => min === null || max === null || min <= max, numberFilterFormatMessage),
+  v.transform(([propertySlug, min, max]): ItemsListNumberFilter => {
+    return {
+      max,
+      min,
+      propertySlug
+    }
+  })
+)
+
+const enumFilterQueryValueSchema = v.pipe(
+  trimmedNonEmptyStringSchema,
+  v.transform((value) => value.split(':')),
+  v.strictTuple([
+    categoryPropertyFilterSlugSchema,
+    propertyEnumOptionFilterSlugSchema
+  ], 'enumFilter must use <property-slug>:<option-slug>'),
+  v.transform(([propertySlug, optionSlug]): ItemsListEnumFilter => {
+    return {
+      optionSlug,
+      propertySlug
+    }
+  })
+)
+
+const booleanFilterQueryValueSchema = v.pipe(
+  trimmedNonEmptyStringSchema,
+  v.transform((value) => value.split(':')),
+  v.strictTuple([
+    categoryPropertyFilterSlugSchema,
+    v.picklist(['true', 'false'])
+  ], 'booleanFilter must use <property-slug>:true|false'),
+  v.transform(([propertySlug, value]): ItemsListBooleanFilter => {
+    return {
+      propertySlug,
+      value: value === 'true'
+    }
+  })
+)
+
+const propertySortPrefix = 'property:'
+const propertyItemsListSortSchema = v.pipe(
+  v.string(),
+  v.startsWith(propertySortPrefix),
+  v.transform((value) => value.slice(propertySortPrefix.length)),
+  categoryPropertyFilterSlugSchema,
+  v.transform((propertySlug): ItemsListSort => `property:${propertySlug}`)
+)
+
+const itemsListSortSchema = v.pipe(
+  v.optional(trimmedNonEmptyStringSchema, 'name'),
+  v.union([
+    v.picklist(['name', 'brand']),
+    propertyItemsListSortSchema
+  ], 'sort must be name, brand, or property:<property-slug>')
+)
+
+function deduplicateByKey<TValue>(values: TValue[], getKey: (value: TValue) => string): TValue[] {
+  const seenKeys = new Set<string>()
+  const uniqueValues: TValue[] = []
+
+  for (const value of values) {
+    const key = getKey(value)
+
+    if (!seenKeys.has(key)) {
+      seenKeys.add(key)
+      uniqueValues.push(value)
+    }
+  }
+
+  return uniqueValues
+}
+
+function getNumberFilterKey(filter: ItemsListNumberFilter): string {
+  return `${filter.propertySlug}:${filter.min ?? ''}:${filter.max ?? ''}`
+}
+
+function getEnumFilterKey(filter: ItemsListEnumFilter): string {
+  return `${filter.propertySlug}:${filter.optionSlug}`
+}
+
+function getBooleanFilterKey(filter: ItemsListBooleanFilter): string {
+  return `${filter.propertySlug}:${filter.value}`
+}
+
+function hasConflictingNumberFilters(filters: ItemsListNumberFilter[]): boolean {
+  const filtersByProperty = new Map<string, ItemsListNumberFilter>()
+
+  for (const filter of filters) {
+    const existingFilter = filtersByProperty.get(filter.propertySlug)
+
+    if (existingFilter === undefined) {
+      filtersByProperty.set(filter.propertySlug, filter)
+    } else {
+      const hasDifferentMin = existingFilter.min !== filter.min
+      const hasDifferentMax = existingFilter.max !== filter.max
+
+      if (hasDifferentMin || hasDifferentMax) {
+        return true
+      }
+    }
+  }
+
+  return false
+}
+
+function hasConflictingBooleanFilters(filters: ItemsListBooleanFilter[]): boolean {
+  const valuesByProperty = new Map<string, boolean>()
+
+  for (const filter of filters) {
+    const existingValue = valuesByProperty.get(filter.propertySlug)
+
+    if (existingValue === undefined) {
+      valuesByProperty.set(filter.propertySlug, filter.value)
+    } else if (existingValue !== filter.value) {
+      return true
+    }
+  }
+
+  return false
+}
+
+const brandSlugListQuerySchema = v.pipe(
+  v.optional(v.union([
+    brandFilterSlugSchema,
+    v.pipe(
+      v.array(brandFilterSlugSchema),
+      v.maxLength(limits.maxEquipmentItemsFilterCount)
+    )
+  ]), []),
+  v.transform((value) => {
+    const values = Array.isArray(value) ? value : [value]
+    const uniqueValues = new Set(values)
+
+    return [...uniqueValues]
+  })
+)
+
+const numberFilterListQuerySchema = v.pipe(
+  v.optional(v.union([
+    numberFilterQueryValueSchema,
+    v.pipe(
+      v.array(numberFilterQueryValueSchema),
+      v.maxLength(limits.maxEquipmentItemsFilterCount)
+    )
+  ]), []),
+  v.transform((value) => {
+    const values = Array.isArray(value) ? value : [value]
+
+    return deduplicateByKey(values, getNumberFilterKey)
+  })
+)
+
+const enumFilterListQuerySchema = v.pipe(
+  v.optional(v.union([
+    enumFilterQueryValueSchema,
+    v.pipe(
+      v.array(enumFilterQueryValueSchema),
+      v.maxLength(limits.maxEquipmentItemsFilterCount)
+    )
+  ]), []),
+  v.transform((value) => {
+    const values = Array.isArray(value) ? value : [value]
+
+    return deduplicateByKey(values, getEnumFilterKey)
+  })
+)
+
+const booleanFilterListQuerySchema = v.pipe(
+  v.optional(v.union([
+    booleanFilterQueryValueSchema,
+    v.pipe(
+      v.array(booleanFilterQueryValueSchema),
+      v.maxLength(limits.maxEquipmentItemsFilterCount)
+    )
+  ]), []),
+  v.transform((value) => {
+    const values = Array.isArray(value) ? value : [value]
+
+    return deduplicateByKey(values, getBooleanFilterKey)
+  })
+)
+
+const itemsListQuerySchema = v.pipe(
+  v.object({
+    booleanFilter: booleanFilterListQuerySchema,
+    brandSlug: brandSlugListQuerySchema,
+    categorySlug: v.optional(categoryFilterSlugSchema),
+    direction: v.optional(v.picklist(['asc', 'desc']), 'asc'),
+    enumFilter: enumFilterListQuerySchema,
+    limit: limitQuerySchema,
+    numberFilter: numberFilterListQuerySchema,
+    page: pageQuerySchema,
+    search: v.optional(trimmedStringSchema, ''),
+    sort: itemsListSortSchema
+  }),
+  v.check((query) => {
+    const hasConflict = hasConflictingNumberFilters(query.numberFilter)
+
+    return !hasConflict
+  }, 'numberFilter cannot contain different ranges for one property'),
+  v.check((query) => {
+    const hasConflict = hasConflictingBooleanFilters(query.booleanFilter)
+
+    return !hasConflict
+  }, 'booleanFilter cannot contain different values for one property'),
+  v.check((query) => {
+    const propertyFilterCount = query.numberFilter.length
+      + query.enumFilter.length
+      + query.booleanFilter.length
+
+    return propertyFilterCount <= limits.maxEquipmentItemsFilterCount
+  }, `property filters cannot contain more than ${limits.maxEquipmentItemsFilterCount} values`),
+  v.check((query) => {
+    const hasPropertyFilters = query.numberFilter.length > 0
+      || query.enumFilter.length > 0
+      || query.booleanFilter.length > 0
+    const hasPropertySort = query.sort.startsWith('property:')
+    const requiresCategory = hasPropertyFilters || hasPropertySort
+
+    return !requiresCategory || query.categorySlug !== undefined
+  }, 'categorySlug is required for property filters and sorting')
+)
 
 const redirectTargetQuerySchema = v.object({
   redirectTo: v.pipe(
@@ -460,4 +735,11 @@ export {
   validateTwitchOAuthBody,
   validateUserEquipmentCreateBody,
   validateUserEquipmentIdParams
+}
+
+export type {
+  ItemsListBooleanFilter,
+  ItemsListEnumFilter,
+  ItemsListNumberFilter,
+  ItemsListSort
 }

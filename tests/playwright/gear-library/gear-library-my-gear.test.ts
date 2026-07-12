@@ -15,6 +15,7 @@ interface GearLibraryListItem {
   category: GearLibraryEntitySummary;
   id: string;
   name: string;
+  properties: EquipmentProperty[];
 }
 
 interface GearLibraryItemsResponse {
@@ -24,12 +25,14 @@ interface GearLibraryItemsResponse {
   total: number;
 }
 
-interface ItemDetailProperty {
-  dataType: string;
+type EquipmentPropertyDataType = 'boolean' | 'enum' | 'number' | 'text'
+
+interface EquipmentProperty {
+  dataType: EquipmentPropertyDataType;
   name: string;
   slug: string;
   unit: string | null;
-  value: string | null;
+  value: string | number | boolean | null;
 }
 
 interface ItemDetailResponse {
@@ -38,8 +41,7 @@ interface ItemDetailResponse {
   createdAt: string;
   id: string;
   name: string;
-  properties: ItemDetailProperty[];
-  status: string;
+  properties: EquipmentProperty[];
 }
 
 interface MyGearItem {
@@ -71,7 +73,21 @@ const gearLibraryItemsResponse: GearLibraryItemsResponse = {
     category: {
       name: 'Stoves',
       slug: 'stoves'
-    }
+    },
+
+    properties: [{
+      dataType: 'number',
+      name: 'Weight',
+      slug: 'weight',
+      unit: 'g',
+      value: 83
+    }, {
+      dataType: 'boolean',
+      name: 'Piezo',
+      slug: 'piezo',
+      unit: null,
+      value: true
+    }]
   }],
   limit: 20,
   page: 1,
@@ -87,15 +103,14 @@ const itemDetailResponse: ItemDetailResponse = {
     name: 'Weight',
     slug: 'weight',
     unit: 'g',
-    value: '83'
+    value: 83
   }, {
     dataType: 'boolean',
     name: 'Piezo',
     slug: 'piezo',
     unit: null,
-    value: 'true'
+    value: true
   }],
-  status: 'approved',
 
   brand: {
     id: 1,
@@ -259,6 +274,7 @@ test.describe('Gear library my gear flow', () => {
     await expect(page).toHaveURL(new RegExp(`/gear-library/${itemId}$`, 'u'))
     await expect(page.getByRole('heading', { level: 1, name: 'PocketRocket Deluxe' })).toBeVisible()
     await expect(page.getByText('83 g')).toBeVisible()
+    await expect(page.getByText('Yes', { exact: true })).toBeVisible()
     const addButton = page.getByRole('button', { name: 'Save to my gear' })
     await expect(addButton).toBeVisible()
     await expect(page.getByRole('link', { name: 'View my gear' })).toBeVisible()

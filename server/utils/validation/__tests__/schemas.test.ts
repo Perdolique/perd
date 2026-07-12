@@ -723,29 +723,218 @@ describe('validation schemas', () => {
   it('should normalize items list query', () => {
     const result = validateItemsListQuery({
       brandSlug: '  msr  ',
+      booleanFilter: 'freestanding:true',
       categorySlug: '  stoves  ',
+      direction: 'desc',
+      enumFilter: 'fuel-type:isobutane-propane',
       limit: '10',
+      numberFilter: 'weight:0.08:0.12',
       page: '2',
-      search: '  pocket rocket  '
+      search: '  pocket rocket  ',
+      sort: 'property:weight'
     })
 
     expect(result).toStrictEqual({
-      brandSlug: 'msr',
+      booleanFilter: [{
+        propertySlug: 'freestanding',
+        value: true
+      }],
+      brandSlug: ['msr'],
       categorySlug: 'stoves',
+      direction: 'desc',
+      enumFilter: [{
+        optionSlug: 'isobutane-propane',
+        propertySlug: 'fuel-type'
+      }],
       limit: 10,
+      numberFilter: [{
+        max: 0.12,
+        min: 0.08,
+        propertySlug: 'weight'
+      }],
       page: 2,
-      search: 'pocket rocket'
+      search: 'pocket rocket',
+      sort: 'property:weight'
     })
   })
 
-  it('should apply default pagination and empty filters for items list query', () => {
+  it('should apply defaults for items list query', () => {
     const result = validateItemsListQuery({})
 
     expect(result).toStrictEqual({
+      booleanFilter: [],
+      brandSlug: [],
+      direction: 'asc',
+      enumFilter: [],
       limit: 20,
+      numberFilter: [],
       page: 1,
-      search: ''
+      search: '',
+      sort: 'name'
     })
+  })
+
+  it('should deduplicate repeatable items list filters while preserving first occurrence order', () => {
+    const result = validateItemsListQuery({
+      booleanFilter: [
+        'freestanding:true',
+        'waterproof:false',
+        'freestanding:true'
+      ],
+      brandSlug: ['msr', 'sea-to-summit', 'msr', 'therm-a-rest'],
+      categorySlug: 'sleeping-bags',
+      enumFilter: [
+        'fill-type:down',
+        'fill-type:synthetic',
+        'fill-type:down',
+        'shell-material:nylon'
+      ],
+      numberFilter: [
+        'weight:1:2',
+        'comfort-temperature:-10:',
+        'weight:1.0:2.00'
+      ]
+    })
+
+    expect(result.brandSlug).toStrictEqual([
+      'msr',
+      'sea-to-summit',
+      'therm-a-rest'
+    ])
+    expect(result.numberFilter).toStrictEqual([{
+      max: 2,
+      min: 1,
+      propertySlug: 'weight'
+    }, {
+      max: null,
+      min: -10,
+      propertySlug: 'comfort-temperature'
+    }])
+    expect(result.enumFilter).toStrictEqual([{
+      optionSlug: 'down',
+      propertySlug: 'fill-type'
+    }, {
+      optionSlug: 'synthetic',
+      propertySlug: 'fill-type'
+    }, {
+      optionSlug: 'nylon',
+      propertySlug: 'shell-material'
+    }])
+    expect(result.booleanFilter).toStrictEqual([{
+      propertySlug: 'freestanding',
+      value: true
+    }, {
+      propertySlug: 'waterproof',
+      value: false
+    }])
+  })
+
+  it('should normalize open and equal numeric ranges', () => {
+    const result = validateItemsListQuery({
+      categorySlug: 'tents',
+      numberFilter: [
+        'minimum-temperature:-12.5:',
+        'weight::2.75',
+        'capacity:2:2'
+      ]
+    })
+
+    expect(result.numberFilter).toStrictEqual([{
+      max: null,
+      min: -12.5,
+      propertySlug: 'minimum-temperature'
+    }, {
+      max: 2.75,
+      min: null,
+      propertySlug: 'weight'
+    }, {
+      max: 2,
+      min: 2,
+      propertySlug: 'capacity'
+    }])
+  })
+
+  it('should normalize supported decimal filter spellings', () => {
+    const result = validateItemsListQuery({
+      categorySlug: 'tents',
+      numberFilter: [
+        'minimum-temperature:-0:',
+        'weight:.5:',
+        'capacity:1.:'
+      ]
+    })
+
+    expect(result.numberFilter).toStrictEqual([{
+      max: null,
+      min: 0,
+      propertySlug: 'minimum-temperature'
+    }, {
+      max: null,
+      min: 0.5,
+      propertySlug: 'weight'
+    }, {
+      max: null,
+      min: 1,
+      propertySlug: 'capacity'
+    }])
+  })
+
+  it.each([
+    { direction: 'asc', sort: 'name' },
+    { direction: 'desc', sort: 'brand' }
+  ])('should accept non-property sort: %j', ({ direction, sort }) => {
+    const result = validateItemsListQuery({
+      direction,
+      sort
+    })
+
+    expect(result.direction).toBe(direction)
+    expect(result.sort).toBe(sort)
+  })
+
+  it('should accept brand filters without a category', () => {
+    const result = validateItemsListQuery({
+      brandSlug: ['msr', 'primus']
+    })
+
+    expect(result.brandSlug).toStrictEqual(['msr', 'primus'])
+  })
+
+  it.each([
+    ['brandSlug', Array.from(
+      { length: limits.maxEquipmentItemsFilterCount + 1 },
+      (_value, index) => `brand-${index}`
+    )],
+    ['numberFilter', Array.from(
+      { length: limits.maxEquipmentItemsFilterCount + 1 },
+      (_value, index) => `number-${index}:1:2`
+    )],
+    ['enumFilter', Array.from(
+      { length: limits.maxEquipmentItemsFilterCount + 1 },
+      (_value, index) => `enum-${index}:option-${index}`
+    )],
+    ['booleanFilter', Array.from(
+      { length: limits.maxEquipmentItemsFilterCount + 1 },
+      (_value, index) => `boolean-${index}:true`
+    )]
+  ])('should reject too many %s values', (filterName, values) => {
+    expect(() => validateItemsListQuery({
+      categorySlug: 'tents',
+      [filterName]: values
+    })).toThrow(/./u)
+  })
+
+  it('should reject too many property filters across filter types', () => {
+    const numberFilter = Array.from({ length: 7 }, (_value, index) => `number-${index}:1:2`)
+    const enumFilter = Array.from({ length: 7 }, (_value, index) => `enum-${index}:option-${index}`)
+    const booleanFilter = Array.from({ length: 7 }, (_value, index) => `boolean-${index}:true`)
+
+    expect(() => validateItemsListQuery({
+      booleanFilter,
+      categorySlug: 'tents',
+      enumFilter,
+      numberFilter
+    })).toThrow(/property filters/u)
   })
 
   it('should clamp too-large items list limits to the shared maximum', () => {
@@ -754,14 +943,114 @@ describe('validation schemas', () => {
     })
 
     expect(result).toStrictEqual({
+      booleanFilter: [],
+      brandSlug: [],
+      direction: 'asc',
+      enumFilter: [],
       limit: 100,
+      numberFilter: [],
       page: 1,
-      search: ''
+      search: '',
+      sort: 'name'
     })
   })
 
-  it.each([{ page: 'abc' }, { page: '0' }, { limit: '0' }, { page: ['1'] }])('should reject malformed items list query: %j', (query) => {
+  it.each([
+    { page: 'abc' },
+    { page: '0' },
+    { limit: '0' },
+    { page: ['1'] },
+    { direction: 'sideways' },
+    { brandSlug: 'MSR' },
+    { categorySlug: 'Sleeping-Bags' },
+    { brandSlug: ['msr', 42] }
+  ])('should reject malformed items list query: %j', (query) => {
     expect(() => validateItemsListQuery(query)).toThrow(/./u)
+  })
+
+  it.each([
+    'weight',
+    'weight:1',
+    'weight:1:2:3',
+    'weight::',
+    'weight:two:3',
+    'weight:1e2:200',
+    'weight:NaN:3',
+    'weight:1:Infinity',
+    'weight:3:2',
+    'Weight:1:2',
+    'packed_weight:1:2'
+  ])('should reject malformed number filter: %s', (numberFilter) => {
+    expect(() => validateItemsListQuery({
+      categorySlug: 'sleeping-bags',
+      numberFilter
+    })).toThrow(/./u)
+  })
+
+  it.each([
+    'fill-type',
+    'fill-type:',
+    ':down',
+    'fill-type:down:extra',
+    'Fill-Type:down',
+    'fill-type:synthetic_fill'
+  ])('should reject malformed enum filter: %s', (enumFilter) => {
+    expect(() => validateItemsListQuery({
+      categorySlug: 'sleeping-bags',
+      enumFilter
+    })).toThrow(/./u)
+  })
+
+  it.each([
+    'freestanding',
+    'freestanding:',
+    ':true',
+    'freestanding:TRUE',
+    'freestanding:1',
+    'freestanding:true:extra',
+    'FreeStanding:true'
+  ])('should reject malformed boolean filter: %s', (booleanFilter) => {
+    expect(() => validateItemsListQuery({
+      booleanFilter,
+      categorySlug: 'tents'
+    })).toThrow(/./u)
+  })
+
+  it.each([
+    '',
+    'price',
+    'property:',
+    'property:Weight',
+    'property:packed_weight',
+    'property:weight:extra'
+  ])('should reject malformed items list sort: %s', (sort) => {
+    expect(() => validateItemsListQuery({
+      categorySlug: 'sleeping-bags',
+      sort
+    })).toThrow(/./u)
+  })
+
+  it.each([
+    { numberFilter: 'weight::2' },
+    { enumFilter: 'fill-type:down' },
+    { booleanFilter: 'freestanding:true' },
+    { sort: 'property:weight' }
+  ])('should require category slug for category-dependent query: %j', (query) => {
+    expect(() => validateItemsListQuery(query)).toThrow(/categorySlug/u)
+  })
+
+  it('should reject different number ranges for one property', () => {
+    expect(() => validateItemsListQuery({
+      categorySlug: 'sleeping-bags',
+      numberFilter: ['weight:1:2', 'weight:1:3']
+    })).toThrow(/numberFilter/u)
+  })
+
+  it('should reject different boolean values for one property', () => {
+    expect(() => validateItemsListQuery({
+      booleanFilter: ['freestanding:true', 'freestanding:false'],
+      categorySlug: 'tents'
+    })).toThrow(/booleanFilter/u)
   })
 
   it('should accept canonical uuid v7 item ids only', () => {

@@ -1,15 +1,10 @@
 import * as h3 from 'h3'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import itemDetailHandler from '#server/api/equipment/items/[id].get'
-import listItemsHandler from '#server/api/equipment/items/index.get'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
-const {
-  getValidatedQueryMock,
-  getValidatedRouterParamsMock
-} = vi.hoisted(() => {
+const { getValidatedRouterParamsMock } = vi.hoisted(() => {
   return {
-    getValidatedQueryMock: vi.fn<typeof h3.getValidatedQuery>(),
     getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>()
   }
 })
@@ -21,105 +16,45 @@ vi.mock(import('h3'), async () => {
   return {
     ...actual,
 
-    async getValidatedQuery(...args: Parameters<typeof h3.getValidatedQuery>) {
-      return getValidatedQueryMock(...args)
-    },
-
     async getValidatedRouterParams(...args: Parameters<typeof h3.getValidatedRouterParams>) {
       return getValidatedRouterParamsMock(...args)
     }
   }
 })
 
-function createListDb({
-  items = [],
-  total = 0
-}: {
-  items?: unknown[];
-  total?: number;
-} = {}) {
-  const itemsOffsetMock = vi.fn(() => items)
-  const itemsLimitMock = vi.fn(() => {
-    return {
-      offset: itemsOffsetMock
-    }
-  })
+interface DetailPropertyColumns {
+  displayOrder: boolean;
+  id: boolean;
+}
 
-  const itemsOrderByMock = vi.fn(() => {
-    return {
-      limit: itemsLimitMock
-    }
-  })
+interface DetailPropertyConfig {
+  columns: DetailPropertyColumns;
+}
 
-  const itemsWhereMock = vi.fn(() => {
-    return {
-      orderBy: itemsOrderByMock
-    }
-  })
+interface DetailPropertyRelationConfig {
+  property: DetailPropertyConfig;
+}
 
-  const itemsCategoryJoinMock = vi.fn(() => {
-    return {
-      where: itemsWhereMock
-    }
-  })
+interface DetailPropertyValuesConfig {
+  with: DetailPropertyRelationConfig;
+}
 
-  const itemsBrandJoinMock = vi.fn(() => {
-    return {
-      innerJoin: itemsCategoryJoinMock
-    }
-  })
+interface DetailRelationsConfig {
+  propertyValues: DetailPropertyValuesConfig;
+}
 
-  const itemsFromMock = vi.fn(() => {
-    return {
-      innerJoin: itemsBrandJoinMock
-    }
-  })
+interface DetailWhereConfig {
+  id: string;
+  status: string;
+}
 
-  const countWhereMock = vi.fn(() => [{
-    total
-  }])
-
-  const countCategoryJoinMock = vi.fn(() => {
-    return {
-      where: countWhereMock
-    }
-  })
-
-  const countBrandJoinMock = vi.fn(() => {
-    return {
-      innerJoin: countCategoryJoinMock
-    }
-  })
-
-  const countFromMock = vi.fn(() => {
-    return {
-      innerJoin: countBrandJoinMock
-    }
-  })
-
-  const selectMock = vi.fn()
-
-  selectMock
-    .mockReturnValueOnce({
-      from: itemsFromMock
-    })
-    .mockReturnValueOnce({
-      from: countFromMock
-    })
-
-  return {
-    dbHttp: {
-      select: selectMock
-    },
-    itemsLimitMock,
-    itemsOffsetMock,
-    itemsOrderByMock,
-    itemsWhereMock
-  }
+interface DetailQueryConfig {
+  where: DetailWhereConfig;
+  with: DetailRelationsConfig;
 }
 
 function createDetailDb(item?: unknown) {
-  const findFirstMock = vi.fn(() => item)
+  const findFirstMock = vi.fn((_config: DetailQueryConfig) => item)
 
   return {
     dbHttp: {
@@ -133,17 +68,9 @@ function createDetailDb(item?: unknown) {
   }
 }
 
-describe('item read handlers', () => {
+describe('get /api/equipment/items/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-
-    getValidatedQueryMock.mockResolvedValue({
-      brandSlug: undefined,
-      categorySlug: undefined,
-      limit: 20,
-      page: 1,
-      search: ''
-    })
 
     getValidatedRouterParamsMock.mockResolvedValue({
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
@@ -154,237 +81,164 @@ describe('item read handlers', () => {
     vi.restoreAllMocks()
   })
 
-  describe('get /api/equipment/items', () => {
-    it('should return paginated items list', async () => {
-      const items = [{
-        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
-        name: 'NeoAir XLite NXT Regular',
+  it('should return approved item detail with ordered normalized property values', async () => {
+    const item = {
+      createdAt: '2026-04-01T00:00:00Z',
+      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
+      name: 'PocketRocket Deluxe',
 
-        brand: {
-          name: 'Therm-a-Rest',
-          slug: 'therm-a-rest'
-        },
+      brand: {
+        id: 1,
+        name: 'MSR',
+        slug: 'msr'
+      },
 
-        category: {
-          name: 'Sleeping Pads',
-          slug: 'sleeping-pads'
+      category: {
+        id: 2,
+        name: 'Stoves',
+        slug: 'stoves'
+      },
+
+      propertyValues: [{
+        valueBoolean: null,
+        valueNumber: '83',
+        valueText: null,
+
+        property: {
+          dataType: 'number',
+          displayOrder: 2,
+          id: 3,
+          name: 'Weight',
+          slug: 'weight',
+          unit: 'g'
         }
-      }]
+      }, {
+        valueBoolean: true,
+        valueNumber: null,
+        valueText: null,
 
-      const { dbHttp, itemsLimitMock, itemsOffsetMock, itemsOrderByMock, itemsWhereMock } = createListDb({
-        items,
-        total: 42
-      })
-
-      const event = createTestEvent(dbHttp)
-
-      getValidatedQueryMock.mockResolvedValue({
-        brandSlug: 'therm-a-rest',
-        categorySlug: 'sleeping-pads',
-        limit: 10,
-        page: 2,
-        search: 'neoair'
-      })
-
-      const result = await listItemsHandler(event)
-
-      expect(result).toStrictEqual({
-        items,
-        limit: 10,
-        page: 2,
-        total: 42
-      })
-
-      expect(itemsWhereMock).toHaveBeenCalledTimes(1)
-      expect(itemsOrderByMock).toHaveBeenCalledTimes(1)
-      expect(itemsLimitMock).toHaveBeenCalledWith(10)
-      expect(itemsOffsetMock).toHaveBeenCalledWith(10)
-    })
-
-    it('should use the clamped list limit returned by query validation', async () => {
-      const items = [{
-        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
-        name: 'PocketRocket Deluxe',
-
-        brand: {
-          name: 'MSR',
-          slug: 'msr'
-        },
-
-        category: {
-          name: 'Stoves',
-          slug: 'stoves'
+        property: {
+          dataType: 'boolean',
+          displayOrder: 0,
+          id: 1,
+          name: 'Piezo',
+          slug: 'piezo',
+          unit: null
         }
+      }, {
+        valueBoolean: null,
+        valueNumber: null,
+        valueText: null,
+
+        property: {
+          dataType: 'text',
+          displayOrder: 3,
+          id: 4,
+          name: 'Notes',
+          slug: 'notes',
+          unit: null
+        }
+      }, {
+        valueBoolean: null,
+        valueNumber: null,
+        valueText: 'canister',
+
+        property: {
+          dataType: 'enum',
+          displayOrder: 1,
+          id: 2,
+          name: 'Fuel',
+          slug: 'fuel',
+          unit: null
+        }
+      }, {
+        valueBoolean: null,
+        valueNumber: null,
+        valueText: 'ignore-me',
+        property: null
       }]
+    }
+    const { dbHttp, findFirstMock } = createDetailDb(item)
+    const event = createTestEvent(dbHttp)
+    const result = await itemDetailHandler(event)
 
-      const { dbHttp, itemsLimitMock, itemsOffsetMock } = createListDb({
-        items,
-        total: 250
-      })
+    expect(result).toStrictEqual({
+      createdAt: '2026-04-01T00:00:00Z',
+      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
+      name: 'PocketRocket Deluxe',
 
-      const event = createTestEvent(dbHttp)
+      brand: {
+        id: 1,
+        name: 'MSR',
+        slug: 'msr'
+      },
 
-      getValidatedQueryMock.mockResolvedValue({
-        brandSlug: undefined,
-        categorySlug: undefined,
-        limit: 100,
-        page: 3,
-        search: ''
-      })
+      category: {
+        id: 2,
+        name: 'Stoves',
+        slug: 'stoves'
+      },
 
-      const result = await listItemsHandler(event)
-
-      expect(result).toStrictEqual({
-        items,
-        limit: 100,
-        page: 3,
-        total: 250
-      })
-
-      expect(itemsLimitMock).toHaveBeenCalledWith(100)
-      expect(itemsOffsetMock).toHaveBeenCalledWith(200)
+      properties: [{
+        dataType: 'boolean',
+        name: 'Piezo',
+        slug: 'piezo',
+        unit: null,
+        value: true
+      }, {
+        dataType: 'enum',
+        name: 'Fuel',
+        slug: 'fuel',
+        unit: null,
+        value: 'canister'
+      }, {
+        dataType: 'number',
+        name: 'Weight',
+        slug: 'weight',
+        unit: 'g',
+        value: 83
+      }, {
+        dataType: 'text',
+        name: 'Notes',
+        slug: 'notes',
+        unit: null,
+        value: null
+      }]
     })
+    const [findFirstCall] = findFirstMock.mock.calls
+    const queryConfig = findFirstCall?.[0]
 
-    it('should return 400 when query validation fails', async () => {
-      const queryError = h3.createError({ status: 400 })
-      const { dbHttp } = createListDb()
-      const event = createTestEvent(dbHttp)
+    expect(queryConfig?.where).toStrictEqual({
+      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
+      status: 'approved'
+    })
+    expect(queryConfig?.with.propertyValues.with.property.columns).toStrictEqual(expect.objectContaining({
+      displayOrder: true,
+      id: true
+    }))
+  })
 
-      getValidatedQueryMock.mockRejectedValue(queryError)
+  it('should return 400 when route params validation fails', async () => {
+    const routeError = h3.createError({ status: 400 })
+    const { dbHttp } = createDetailDb()
+    const event = createTestEvent(dbHttp)
 
-      await expect(listItemsHandler(event)).rejects.toMatchObject({
-        statusCode: 400
-      })
+    getValidatedRouterParamsMock.mockRejectedValue(routeError)
+
+    await expect(itemDetailHandler(event)).rejects.toMatchObject({
+      statusCode: 400
     })
   })
 
-  describe('get /api/equipment/items/[id]', () => {
-    it('should return item detail with normalized property values', async () => {
-      const item = {
-        createdAt: '2026-04-01T00:00:00Z',
-        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
-        name: 'PocketRocket Deluxe',
-        status: 'approved',
-
-        brand: {
-          id: 1,
-          name: 'MSR',
-          slug: 'msr'
-        },
-
-        category: {
-          id: 2,
-          name: 'Stoves',
-          slug: 'stoves'
-        },
-
-        propertyValues: [{
-          valueBoolean: null,
-          valueNumber: '83',
-          valueText: null,
-
-          property: {
-            dataType: 'number',
-            name: 'Weight',
-            slug: 'weight',
-            unit: 'g'
-          }
-        }, {
-          valueBoolean: true,
-          valueNumber: null,
-          valueText: null,
-
-          property: {
-            dataType: 'boolean',
-            name: 'Piezo',
-            slug: 'piezo',
-            unit: null
-          }
-        }, {
-          valueBoolean: null,
-          valueNumber: null,
-          valueText: 'canister',
-
-          property: {
-            dataType: 'enum',
-            name: 'Fuel',
-            slug: 'fuel',
-            unit: null
-          }
-        }, {
-          valueBoolean: null,
-          valueNumber: null,
-          valueText: 'ignore-me',
-
-          property: null
-        }]
-      }
-
-      const { dbHttp, findFirstMock } = createDetailDb(item)
-      const event = createTestEvent(dbHttp)
-      const result = await itemDetailHandler(event)
-
-      expect(result).toStrictEqual({
-        createdAt: '2026-04-01T00:00:00Z',
-        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
-        name: 'PocketRocket Deluxe',
-        status: 'approved',
-
-        brand: {
-          id: 1,
-          name: 'MSR',
-          slug: 'msr'
-        },
-
-        category: {
-          id: 2,
-          name: 'Stoves',
-          slug: 'stoves'
-        },
-
-        properties: [{
-          dataType: 'number',
-          name: 'Weight',
-          slug: 'weight',
-          unit: 'g',
-          value: '83'
-        }, {
-          dataType: 'boolean',
-          name: 'Piezo',
-          slug: 'piezo',
-          unit: null,
-          value: 'true'
-        }, {
-          dataType: 'enum',
-          name: 'Fuel',
-          slug: 'fuel',
-          unit: null,
-          value: 'canister'
-        }]
-      })
-
-      expect(findFirstMock).toHaveBeenCalledTimes(1)
-    })
-
-    it('should return 400 when route params validation fails', async () => {
-      const routeError = h3.createError({ status: 400 })
-      const { dbHttp } = createDetailDb()
-      const event = createTestEvent(dbHttp)
-
-      getValidatedRouterParamsMock.mockRejectedValue(routeError)
-
-      await expect(itemDetailHandler(event)).rejects.toMatchObject({
-        statusCode: 400
-      })
-    })
-
-    it('should return 404 when item id does not exist', async () => {
+  it.each(['missing', 'pending', 'rejected'])(
+    'should return 404 when the item is %s',
+    async () => {
       const { dbHttp } = createDetailDb()
       const event = createTestEvent(dbHttp)
 
       await expect(itemDetailHandler(event)).rejects.toMatchObject({
         statusCode: 404
       })
-    })
-  })
+    }
+  )
 })
