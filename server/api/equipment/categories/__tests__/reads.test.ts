@@ -1,6 +1,6 @@
 import * as h3 from 'h3'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import categoryDetailHandler from '#server/api/equipment/categories/[slug].get'
+import categoryDetailHandler from '#server/api/equipment/categories/by-slug/[slug].get'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
 const {
@@ -73,7 +73,7 @@ function createDetailDb(category?: CategoryDetail) {
   }
 }
 
-describe('get /api/equipment/categories/[slug]', () => {
+describe('get /api/equipment/categories/by-slug/[slug]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 

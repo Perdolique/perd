@@ -1,69 +1,92 @@
 <template>
-  <NuxtLink :to="item.detailPath" :class="$style.component">
-    <div :class="$style.row">
+  <li :class="$style.component">
+    <article :class="$style.row">
+      <div :class="$style.media" aria-hidden="true">
+        <Icon name="hugeicons:package" />
+      </div>
+
       <div :class="$style.identity">
-        <span :class="$style.icon" aria-hidden="true">
-          <Icon name="hugeicons:package" />
-        </span>
+        <p :class="$style.brand">
+          {{ item.brand.name }}
+        </p>
 
-        <div :class="$style.text">
-          <div :class="$style.brand">
-            {{ item.brand.name }}
-          </div>
-
-          <span :class="$style.name">
+        <h2 :class="$style.heading">
+          <PerdLink :to="item.detailPath">
             {{ item.name }}
-          </span>
-        </div>
-      </div>
+          </PerdLink>
+        </h2>
 
-      <div :class="$style.meta">
-        <PerdPill :class="$style.tag">
+        <p :class="$style.category">
           {{ item.category.name }}
-        </PerdPill>
-
-        <Icon name="hugeicons:arrow-up-right-01" :class="$style.arrow" aria-hidden="true" />
+        </p>
       </div>
-    </div>
-  </NuxtLink>
+
+      <dl v-if="hasProperties" :class="$style.properties">
+        <div
+          v-for="property in displayProperties"
+          :key="property.slug"
+          :class="$style.property"
+        >
+          <dt :class="$style.propertyName">
+            {{ property.name }}
+          </dt>
+
+          <dd :class="$style.propertyValue">
+            {{ property.displayValue }}
+          </dd>
+        </div>
+      </dl>
+    </article>
+  </li>
 </template>
 
 <script lang="ts" setup>
-  import type { GearLibraryListItemView } from '~/types/equipment'
-  import PerdPill from '~/components/PerdPill.vue'
+  import { computed } from 'vue'
+  import type { GearLibraryListItemView, ItemDisplayProperty, ItemProperty } from '~/types/equipment'
+  import PerdLink from '~/components/PerdLink.vue'
 
   interface Props {
     item: GearLibraryListItemView;
   }
 
-  defineProps<Props>()
+  const props = defineProps<Props>()
+
+  function getPropertyDisplayValue(property: ItemProperty) {
+    if (property.value === null) {
+      return 'Not set'
+    }
+
+    if (typeof property.value === 'boolean') {
+      return property.value ? 'Yes' : 'No'
+    }
+
+    if (typeof property.value === 'number' && property.unit !== null) {
+      return `${property.value} ${property.unit}`
+    }
+
+    return String(property.value)
+  }
+
+  const hasProperties = computed(() => props.item.properties.length > 0)
+
+  const displayProperties = computed<ItemDisplayProperty[]>(() => props.item.properties.map((property) => {
+    const displayValue = getPropertyDisplayValue(property)
+
+    return {
+      displayValue,
+      dataType: property.dataType,
+      name: property.name,
+      slug: property.slug,
+      unit: property.unit,
+      value: property.value
+    }
+  }))
 </script>
 
 <style module>
   .component {
-    display: grid;
     container-type: inline-size;
-    padding: var(--spacing-12) var(--spacing-16);
     border-block-end: 1px solid var(--color-border-subtle);
-    color: inherit;
-    text-decoration: none;
-    transition:
-      background-color var(--transition-duration-fast) var(--transition-easing-standard),
-      box-shadow var(--transition-duration-fast) var(--transition-easing-standard);
-
-    &:hover {
-      background-color: var(--color-surface-secondary);
-    }
-
-    &:focus-visible {
-      background-color: var(--color-surface-secondary);
-      box-shadow: inset 0 0 0 2px var(--color-focus-ring);
-      outline: none;
-    }
-
-    &:active {
-      background-color: color-mix(in oklch, var(--color-surface-secondary), var(--color-accent-subtle) 24%);
-    }
 
     &:last-child {
       border-block-end: 0;
@@ -72,39 +95,40 @@
 
   .row {
     display: grid;
-    gap: var(--spacing-12);
+    grid-template-columns: 3rem minmax(0, 1fr);
+    grid-template-areas:
+      "media identity"
+      "properties properties";
+    align-items: start;
+    gap: var(--spacing-16);
+    padding: var(--spacing-16);
 
-    @container (inline-size >= 40rem) {
-      grid-template-columns: minmax(0, 1fr) auto;
+    @container (inline-size >= 44rem) {
+      grid-template-columns: 3rem minmax(10rem, 0.7fr) minmax(0, 1fr);
+      grid-template-areas: "media identity properties";
       align-items: center;
+      padding: var(--spacing-20) var(--spacing-24);
     }
   }
 
-  .identity {
+  .media {
+    grid-area: media;
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: center;
-    gap: var(--spacing-12);
-    min-inline-size: 0;
-  }
-
-  .icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    inline-size: 2.25rem;
-    block-size: 2.25rem;
-    border-radius: var(--border-radius-12);
-    background-color: var(--color-surface-secondary);
-    color: var(--color-text-secondary);
+    place-items: center;
+    inline-size: 3rem;
+    aspect-ratio: 1;
     border: 1px solid var(--color-border-subtle);
-    font-size: 1rem;
+    border-radius: var(--border-radius-14);
+    background-color: var(--color-surface-secondary);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-20);
   }
 
-  .text {
-    min-inline-size: 0;
+  .identity {
+    grid-area: identity;
     display: grid;
-    gap: 0.15rem;
+    align-content: center;
+    gap: var(--spacing-4);
   }
 
   .brand {
@@ -114,36 +138,44 @@
     text-transform: uppercase;
   }
 
-  .name {
-    color: var(--color-text-primary);
-    font-size: var(--font-size-16);
+  .heading {
+    font-size: var(--font-size-17);
     line-height: var(--line-height-snug);
-    font-weight: var(--font-weight-medium);
     overflow-wrap: anywhere;
   }
 
-  .meta {
-    display: flex;
-    align-items: center;
+  .category {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-14);
+  }
+
+  .properties {
+    grid-area: properties;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
     gap: var(--spacing-8);
-
-    @container (inline-size >= 40rem) {
-      justify-content: end;
-    }
   }
 
-  .tag {
-    max-inline-size: 100%;
+  .property {
+    display: grid;
+    align-content: start;
+    gap: var(--spacing-4);
+    padding: var(--spacing-12);
+    border-radius: var(--border-radius-12);
+    background-color: var(--color-surface-secondary);
   }
 
-  .arrow {
+  .propertyName {
     color: var(--color-text-muted);
+    font-size: var(--font-size-12);
+    line-height: var(--line-height-snug);
   }
 
-  @container (inline-size < 40rem) {
-    .meta {
-      inline-size: 100%;
-      justify-content: space-between;
-    }
+  .propertyValue {
+    color: var(--color-text-primary);
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-snug);
+    overflow-wrap: anywhere;
   }
 </style>

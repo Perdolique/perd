@@ -1,5 +1,5 @@
-import { expect, test, type BrowserContext, type Page, type Response, type Route } from '@playwright/test'
-import { URL } from 'node:url'
+import type { BrowserContext, Page, Response, Route } from '@playwright/test'
+import { expect, test } from '../fixtures/global.fixtures.ts'
 
 interface GearLibraryEntitySummary {
   name: string;
@@ -153,7 +153,7 @@ function createMyGearRow(): MyGearRecord {
 }
 
 function isMyGearCreateResponse(response: Response): boolean {
-  const responseUrl = new URL(response.url())
+  const responseUrl = new globalThis.URL(response.url())
   const isMyGearCollectionResponse = responseUrl.pathname === '/api/user/gear'
   const isPostRequest = response.request().method() === 'POST'
 
@@ -161,7 +161,7 @@ function isMyGearCreateResponse(response: Response): boolean {
 }
 
 function isMyGearDeleteResponse(response: Response): boolean {
-  const responseUrl = new URL(response.url())
+  const responseUrl = new globalThis.URL(response.url())
   const isMyGearItemResponse = responseUrl.pathname === `/api/user/gear/${myGearId}`
   const isDeleteRequest = response.request().method() === 'DELETE'
 
@@ -257,6 +257,16 @@ test.describe('Gear library my gear flow', () => {
       })
     })
 
+    await context.route('**/api/equipment/categories**', async (route) => {
+      await route.fulfill({
+        json: [{
+          id: 2,
+          name: 'Stoves',
+          slug: 'stoves'
+        }]
+      })
+    })
+
     await context.route('**/api/equipment/items/*', async (route) => {
       await route.fulfill({
         json: itemDetailResponse
@@ -264,13 +274,10 @@ test.describe('Gear library my gear flow', () => {
     })
 
     await mockMyGearRoutes(context, page, myGearState)
-
     await page.goto('/login?redirectTo=/gear-library')
     await page.getByRole('button', { name: 'Guest' }).click()
-
     await expect(page).toHaveURL(/\/gear-library$/u)
     await page.getByRole('link', { name: 'PocketRocket Deluxe' }).click()
-
     await expect(page).toHaveURL(new RegExp(`/gear-library/${itemId}$`, 'u'))
     await expect(page.getByRole('heading', { level: 1, name: 'PocketRocket Deluxe' })).toBeVisible()
     await expect(page.getByText('83 g')).toBeVisible()
@@ -287,15 +294,16 @@ test.describe('Gear library my gear flow', () => {
     const addResponse = await addResponsePromise
 
     expect(addResponse.status()).toBe(201)
-
     expect(myGearState.getRequestCount).toBe(1)
 
     const removeFromDetailButton = page.getByRole('button', { name: 'Remove from my gear' })
+
     await expect(removeFromDetailButton).toBeVisible()
     await page.getByRole('link', { name: 'View my gear' }).click()
 
     await expect(page).toHaveURL(/\/my-gear$/u)
     await expect(page.getByRole('link', { name: 'PocketRocket Deluxe' })).toBeVisible()
+
     expect(myGearState.getRequestCount).toBe(2)
 
     const removeFromMyGearButton = page.getByRole('button', { name: 'Remove' })
@@ -306,8 +314,8 @@ test.describe('Gear library my gear flow', () => {
     const removeResponse = await removeResponsePromise
 
     expect(removeResponse.status()).toBe(204)
-
     expect(myGearState.getRequestCount).toBe(2)
+
     await expect(page.getByRole('heading', { name: 'No saved gear yet.' })).toBeVisible()
     await page.getByRole('link', { name: 'Find gear' }).click()
     await page.getByRole('link', { name: 'PocketRocket Deluxe' }).click()

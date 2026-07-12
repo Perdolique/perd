@@ -1,6 +1,6 @@
 import * as h3 from 'h3'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import brandDetailHandler from '#server/api/equipment/brands/[slug].get'
+import brandDetailHandler from '#server/api/equipment/brands/by-slug/[slug].get'
 import listBrandsHandler from '#server/api/equipment/brands/index.get'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
@@ -168,7 +168,7 @@ describe('brand read handlers', () => {
     })
   })
 
-  describe('get /api/equipment/brands/[slug]', () => {
+  describe('get /api/equipment/brands/by-slug/[slug]', () => {
     it('should return brand detail for a known slug', async () => {
       const brand = {
         id: 1,

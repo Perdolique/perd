@@ -1,6 +1,6 @@
 <template>
   <div :class="$style.component">
-    <PerdCard :class="$style.card">
+    <PerdCard :class="[$style.card, { isFullWidth: fullWidth }]">
       <div :class="$style.body">
         <div :class="$style.emojiMark" aria-hidden="true">
           {{ emoji }}
@@ -28,10 +28,15 @@
 
   interface Props {
     emoji: string;
+    fullWidth?: boolean;
     title: string;
   }
 
-  defineProps<Props>()
+  const {
+    emoji,
+    fullWidth,
+    title
+  } = defineProps<Props>()
 </script>
 
 <style module>
@@ -46,6 +51,10 @@
     margin: 0 auto;
     background:
       linear-gradient(180deg, var(--color-surface-primary), var(--color-surface-secondary));
+
+    &:global(.isFullWidth) {
+      max-inline-size: none;
+    }
   }
 
   .body {

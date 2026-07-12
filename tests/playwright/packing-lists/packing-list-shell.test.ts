@@ -1,4 +1,5 @@
-import { expect, test, type BrowserContext, type Page, type Request, type Response, type Route } from '@playwright/test'
+import type { BrowserContext, Page, Request, Response, Route } from '@playwright/test'
+import { expect, test } from '../fixtures/global.fixtures.ts'
 
 interface PackingListSummary {
   createdAt: string;

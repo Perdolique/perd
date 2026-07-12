@@ -28,6 +28,7 @@
 
     "eslint/id-length": ["error", {
       "exceptions": [
+        "q", // Catalog search query key
         "v" // Valibot
       ]
     }],

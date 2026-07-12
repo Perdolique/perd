@@ -17,6 +17,19 @@ const publicApiPaths = [
   '/oauth/twitch'
 ] as const
 
+const publicApiPathPrefixes = ['/api/_nuxt_icon/'] as const
+
+function isPublicApiPath(pathname: string) {
+  const hasExactPublicPath = publicApiPaths.some((path) => {
+    const apiPath = withBase(path, apiBase)
+
+    return isSamePath(apiPath, pathname)
+  })
+  const hasPublicPrefix = publicApiPathPrefixes.some((pathPrefix) => pathname.startsWith(pathPrefix))
+
+  return hasExactPublicPath || hasPublicPrefix
+}
+
 /**
  * Detects whether an unauthenticated `/api/*` request came from a browser page
  * navigation, not from programmatic API usage.
@@ -51,17 +64,11 @@ export default defineEventHandler(async (event) => {
   const url = getRequestURL(event)
   const isApiPath = url.pathname.startsWith(apiBase)
 
-  if (isApiPath) {
+  if (isApiPath && !isPublicApiPath(url.pathname)) {
     const session = await getAppSession(event)
     const { userId } = session.data
 
-    const isPublic = publicApiPaths.some((path) => {
-      const apiPath = withBase(path, apiBase)
-
-      return isSamePath(apiPath, url.pathname)
-    })
-
-    if (isPublic === false && userId === undefined) {
+    if (userId === undefined) {
       const isBrowserNavigation = isBrowserNavigationRequest(event)
 
       if (isBrowserNavigation) {

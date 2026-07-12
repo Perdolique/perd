@@ -94,5 +94,20 @@ describe('api session check middleware', () => {
 
     await expect(apiSessionCheckHandler(event)).resolves.toBeUndefined()
     expect(event.node.res.getHeader('location')).toBeUndefined()
+    expect(getAppSessionMock).not.toHaveBeenCalled()
+  })
+
+  it('should allow Nuxt Icon collection requests without a session', async () => {
+    const event = createMiddlewareEvent({
+      path: '/api/_nuxt_icon/hugeicons.json?icons=tent',
+
+      headers: {
+        accept: 'application/json',
+        host: 'localhost'
+      }
+    })
+
+    await expect(apiSessionCheckHandler(event)).resolves.toBeUndefined()
+    expect(getAppSessionMock).not.toHaveBeenCalled()
   })
 })
