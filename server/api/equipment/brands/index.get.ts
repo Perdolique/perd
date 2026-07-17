@@ -3,7 +3,15 @@ import { defineEventHandler, getValidatedQuery } from 'h3'
 import { brands } from '#server/database/schema'
 import { validateBrandsListQuery } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event) => {
+interface BrandListItem {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+type BrandsListResponse = BrandListItem[]
+
+export default defineEventHandler(async (event): Promise<BrandsListResponse> => {
   const { dbHttp } = event.context
   const { search } = await getValidatedQuery(event, validateBrandsListQuery)
 
@@ -28,3 +36,5 @@ export default defineEventHandler(async (event) => {
 
   return filteredBrandsQuery
 })
+
+export type { BrandsListResponse }

@@ -6,13 +6,20 @@ import {
   getGearLibraryItemsApiQuery,
   getGearLibraryRouteState,
   type GearLibraryDirection,
+  type GearLibraryOrdering,
   type GearLibraryRouteState,
   type GearLibrarySort
 } from '~/utils/gear-library'
+import type { GearLibraryAppliedFilters } from '~/utils/gear-library-filters'
 
 interface GearLibraryRouteStateChanges {
+  batch?: number;
+  boolean?: string[];
+  brand?: string[];
   category?: string | null;
   direction?: GearLibraryDirection;
+  enum?: string[];
+  number?: string[];
   q?: string;
   sort?: GearLibrarySort;
 }
@@ -50,13 +57,13 @@ function useGearLibraryRoute() {
     return {
       q: changes.q ?? currentState.q,
       category,
-      brand: currentState.brand,
-      number: currentState.number,
-      enum: currentState.enum,
-      boolean: currentState.boolean,
-      sort: changes.sort ?? currentState.sort,
-      direction: changes.direction ?? currentState.direction,
-      batch: currentState.batch,
+      brand: changes.brand ?? currentState.brand,
+      number: hasCategoryChange ? [] : changes.number ?? currentState.number,
+      enum: hasCategoryChange ? [] : changes.enum ?? currentState.enum,
+      boolean: hasCategoryChange ? [] : changes.boolean ?? currentState.boolean,
+      sort: hasCategoryChange ? 'name' : changes.sort ?? currentState.sort,
+      direction: hasCategoryChange ? 'asc' : changes.direction ?? currentState.direction,
+      batch: changes.batch ?? currentState.batch,
       compare: currentState.compare
     }
   }
@@ -85,7 +92,7 @@ function useGearLibraryRoute() {
     await writeRouteState(nextState, true)
   }
 
-  async function handleCategoryChange(value: string) {
+  async function handleCategoryChange(value: string, replace = false) {
     const category = value === '' ? null : value
     const normalizedCategory = category ?? undefined
 
@@ -93,31 +100,46 @@ function useGearLibraryRoute() {
       return
     }
 
-    const currentSort = routeState.value.sort
-    const sort = currentSort.startsWith('property:') ? 'name' : currentSort
-    const nextState = createNextRouteState({ category, sort })
+    const nextState = createNextRouteState({ category })
+
+    await writeRouteState(nextState, replace)
+  }
+
+  async function handleFiltersChange(filters: GearLibraryAppliedFilters) {
+    const currentFilters = {
+      boolean: routeState.value.boolean,
+      brand: routeState.value.brand,
+      enum: routeState.value.enum,
+      number: routeState.value.number
+    }
+
+    if (JSON.stringify(filters) === JSON.stringify(currentFilters) && routeState.value.batch === 1) {
+      return
+    }
+
+    const nextState = createNextRouteState({
+      ...filters,
+      batch: 1
+    })
 
     await writeRouteState(nextState, false)
   }
 
-  async function handleSortChange(value: GearLibrarySort) {
-    if (value === routeState.value.sort) {
+  async function handleOrderingChange(ordering: GearLibraryOrdering, replace = false) {
+    const currentState = routeState.value
+    const hasSameSort = ordering.sort === currentState.sort
+    const hasSameDirection = ordering.direction === currentState.direction
+
+    if (hasSameSort && hasSameDirection) {
       return
     }
 
-    const nextState = createNextRouteState({ sort: value })
+    const nextState = createNextRouteState({
+      direction: ordering.direction,
+      sort: ordering.sort
+    })
 
-    await writeRouteState(nextState, false)
-  }
-
-  async function handleDirectionChange(value: GearLibraryDirection) {
-    if (value === routeState.value.direction) {
-      return
-    }
-
-    const nextState = createNextRouteState({ direction: value })
-
-    await writeRouteState(nextState, false)
+    await writeRouteState(nextState, replace)
   }
 
   watch(itemsRequestSignature, () => {
@@ -142,8 +164,8 @@ function useGearLibraryRoute() {
   return {
     currentPage,
     handleCategoryChange,
-    handleDirectionChange,
-    handleSortChange,
+    handleFiltersChange,
+    handleOrderingChange,
     itemsApiQuery,
     itemsApiQuerySignature,
     routeState,

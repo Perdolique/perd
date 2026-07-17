@@ -1,51 +1,11 @@
 import type { BrowserContext, Locator, Page, Request, Route } from '@playwright/test'
+import type {
+  GearLibraryEntityDetail,
+  GearLibraryItemsResponse,
+  GearLibraryListItem
+} from '../../../app/types/equipment'
+import type { CategoryDetailResponse } from '../../../server/api/equipment/categories/by-slug/[slug].get'
 import { expect, test } from '../fixtures/global.fixtures.ts'
-
-interface GearLibraryEntitySummary {
-  name: string;
-  slug: string;
-}
-
-interface GearLibraryCategorySummary extends GearLibraryEntitySummary {
-  id: number;
-}
-
-type EquipmentPropertyDataType = 'boolean' | 'enum' | 'number' | 'text'
-
-interface EquipmentProperty {
-  dataType: EquipmentPropertyDataType;
-  name: string;
-  slug: string;
-  unit: string | null;
-  value: string | number | boolean | null;
-}
-
-interface GearLibraryListItem {
-  brand: GearLibraryEntitySummary;
-  category: GearLibraryEntitySummary;
-  id: string;
-  name: string;
-  properties: EquipmentProperty[];
-}
-
-interface GearLibraryItemsResponse {
-  items: GearLibraryListItem[];
-  limit: number;
-  page: number;
-  total: number;
-}
-
-interface CategoryDetailProperty {
-  dataType: EquipmentPropertyDataType;
-  id: number;
-  name: string;
-  slug: string;
-  unit: string | null;
-}
-
-interface GearLibraryCategoryDetail extends GearLibraryCategorySummary {
-  properties: CategoryDetailProperty[];
-}
 
 interface ApiMockResponse {
   json: object;
@@ -63,12 +23,14 @@ interface CatalogRequest {
 type CatalogResponder = (request: CatalogRequest) => ApiMockResponse | Promise<ApiMockResponse>
 
 interface CatalogMockConfig {
+  brands?: CatalogResponder;
   categories?: CatalogResponder;
   categoryDetail?: CatalogResponder;
   items?: CatalogResponder;
 }
 
 interface CatalogRequestTracker {
+  brands: ParsedUrl[];
   categories: ParsedUrl[];
   categoryDetails: ParsedUrl[];
   items: ParsedUrl[];
@@ -100,17 +62,18 @@ const stoveItem: GearLibraryListItem = {
   },
 
   properties: [{
+    dataType: 'enum',
+    enumOptionName: 'Liquid fuel',
+    name: 'Fuel type',
+    slug: 'fuel-type',
+    unit: null,
+    value: 'liquid-fuel'
+  }, {
     dataType: 'number',
     name: 'Weight',
     slug: 'weight',
     unit: 'g',
     value: 83
-  }, {
-    dataType: 'enum',
-    name: 'Fuel type',
-    slug: 'fuel-type',
-    unit: null,
-    value: 'Canister'
   }, {
     dataType: 'boolean',
     name: 'Piezo ignition',
@@ -168,6 +131,19 @@ const firstPageResponse: GearLibraryItemsResponse = {
   total: 3
 }
 
+const scrollableItemsResponse: GearLibraryItemsResponse = {
+  items: Array.from({ length: 8 }, (_value, index) => {
+    return {
+      ...stoveItem,
+      id: `0195f6e8-8f44-74f6-bc9a-${String(index).padStart(12, '0')}`,
+      name: `PocketRocket Deluxe ${index + 1}`
+    }
+  }),
+  limit: 20,
+  page: 1,
+  total: 8
+}
+
 const secondPageResponse: GearLibraryItemsResponse = {
   items: [secondPageItem],
   limit: 2,
@@ -196,7 +172,7 @@ const emptyResponse: GearLibraryItemsResponse = {
   total: 0
 }
 
-const categoriesResponse: GearLibraryCategorySummary[] = [{
+const categoriesResponse: GearLibraryEntityDetail[] = [{
   id: 2,
   name: 'Stoves',
   slug: 'stoves'
@@ -206,7 +182,70 @@ const categoriesResponse: GearLibraryCategorySummary[] = [{
   slug: 'sleeping-pads'
 }]
 
-const stovesCategoryResponse: GearLibraryCategoryDetail = {
+const brandsResponse: GearLibraryEntityDetail[] = [{
+  id: 12,
+  name: 'Therm-a-Rest',
+  slug: 'therm-a-rest'
+}, {
+  id: 10,
+  name: 'MSR',
+  slug: 'msr'
+}, {
+  id: 1,
+  name: 'Alpkit',
+  slug: 'alpkit'
+}, {
+  id: 2,
+  name: 'Big Agnes',
+  slug: 'big-agnes'
+}, {
+  id: 3,
+  name: 'Black Diamond',
+  slug: 'black-diamond'
+}, {
+  id: 4,
+  name: 'Coleman',
+  slug: 'coleman'
+}, {
+  id: 5,
+  name: 'Exped',
+  slug: 'exped'
+}, {
+  id: 6,
+  name: 'Fjällräven',
+  slug: 'fjallraven'
+}, {
+  id: 7,
+  name: 'GSI Outdoors',
+  slug: 'gsi-outdoors'
+}, {
+  id: 8,
+  name: 'Jetboil',
+  slug: 'jetboil'
+}, {
+  id: 9,
+  name: 'Marmot',
+  slug: 'marmot'
+}, {
+  id: 11,
+  name: 'NEMO',
+  slug: 'nemo'
+}]
+
+const filterLimitBrandsResponse: GearLibraryEntityDetail[] = Array.from(
+  { length: 21 },
+  (_value, index) => {
+    const number = String(index + 1).padStart(2, '0')
+
+    return {
+      id: 100 + index,
+      name: `Brand ${number}`,
+      slug: `brand-${number}`
+    }
+  }
+)
+
+const stovesCategoryResponse: CategoryDetailResponse = {
   id: 2,
   name: 'Stoves',
   slug: 'stoves',
@@ -218,6 +257,23 @@ const stovesCategoryResponse: GearLibraryCategoryDetail = {
     slug: 'weight',
     unit: 'g'
   }, {
+    dataType: 'enum',
+
+    enumOptions: [{
+      id: 31,
+      name: 'Canister',
+      slug: 'canister'
+    }, {
+      id: 32,
+      name: 'Liquid fuel',
+      slug: 'liquid-fuel'
+    }],
+
+    id: 23,
+    name: 'Fuel type',
+    slug: 'fuel-type',
+    unit: null
+  }, {
     dataType: 'boolean',
     id: 22,
     name: 'Piezo ignition',
@@ -226,7 +282,7 @@ const stovesCategoryResponse: GearLibraryCategoryDetail = {
   }]
 }
 
-const sleepingPadsCategoryResponse: GearLibraryCategoryDetail = {
+const sleepingPadsCategoryResponse: CategoryDetailResponse = {
   id: 1,
   name: 'Sleeping Pads',
   slug: 'sleeping-pads',
@@ -240,12 +296,80 @@ const sleepingPadsCategoryResponse: GearLibraryCategoryDetail = {
   }]
 }
 
+const filterLimitCategoryResponse: CategoryDetailResponse = {
+  id: 2,
+  name: 'Stoves',
+  slug: 'stoves',
+
+  properties: [{
+    dataType: 'number',
+    id: 101,
+    name: 'Active number',
+    slug: 'active-number',
+    unit: null
+  }, {
+    dataType: 'number',
+    id: 102,
+    name: 'Available number',
+    slug: 'available-number',
+    unit: null
+  }, {
+    dataType: 'enum',
+
+    enumOptions: Array.from({ length: 19 }, (_value, index) => {
+      const number = String(index + 1).padStart(2, '0')
+
+      return {
+        id: 200 + index,
+        name: `Option ${number}`,
+        slug: `option-${number}`
+      }
+    }),
+
+    id: 103,
+    name: 'Filter option',
+    slug: 'filter-option',
+    unit: null
+  }, {
+    dataType: 'boolean',
+    id: 104,
+    name: 'Active boolean',
+    slug: 'active-boolean',
+    unit: null
+  }, {
+    dataType: 'boolean',
+    id: 105,
+    name: 'Available boolean',
+    slug: 'available-boolean',
+    unit: null
+  }]
+}
+
 const serverErrorResponse: ApiMockResponse = {
   status: 500,
 
   json: {
     statusCode: 500
   }
+}
+
+const malformedNumberFilter = 'invalid'
+
+function respondToMalformedNumberFilter(request: CatalogRequest): ApiMockResponse {
+  const numberFilters = request.url.searchParams.getAll('numberFilter')
+  const hasMalformedNumberFilter = numberFilters.includes(malformedNumberFilter)
+
+  if (hasMalformedNumberFilter) {
+    return {
+      status: 400,
+
+      json: {
+        statusCode: 400
+      }
+    }
+  }
+
+  return { json: firstPageResponse }
 }
 
 function respondWithPagination(request: CatalogRequest): ApiMockResponse {
@@ -355,10 +479,27 @@ async function resolveMockResponse(
 
 async function mockCatalogApi(context: BrowserContext, config: CatalogMockConfig = {}): Promise<CatalogRequestTracker> {
   const tracker: CatalogRequestTracker = {
+    brands: [],
     categories: [],
     categoryDetails: [],
     items: []
   }
+
+  await context.route((url) => url.pathname === '/api/equipment/brands', async (route) => {
+    const requestUrl = new globalThis.URL(route.request().url())
+
+    tracker.brands.push(requestUrl)
+
+    const request = {
+      count: tracker.brands.length,
+      url: requestUrl
+    }
+
+    const fallback = { json: brandsResponse }
+    const response = await resolveMockResponse(config.brands, request, fallback)
+
+    await fulfillMockResponse(route, response)
+  })
 
   await context.route((url) => url.pathname === '/api/equipment/categories', async (route) => {
     const requestUrl = new globalThis.URL(route.request().url())
@@ -386,7 +527,10 @@ async function mockCatalogApi(context: BrowserContext, config: CatalogMockConfig
       url: requestUrl
     }
 
-    const fallback = { json: stovesCategoryResponse }
+    const fallbackCategory = requestUrl.pathname.endsWith('/sleeping-pads')
+      ? sleepingPadsCategoryResponse
+      : stovesCategoryResponse
+    const fallback = { json: fallbackCategory }
     const response = await resolveMockResponse(config.categoryDetail, request, fallback)
 
     await fulfillMockResponse(route, response)
@@ -434,6 +578,18 @@ async function openGearLibrary(page: Page, path = '/gear-library'): Promise<void
 
     return currentUrl.pathname
   }).toBe('/gear-library')
+}
+
+async function openFilterDialog(page: Page): Promise<Locator> {
+  const filtersButton = page.getByRole('button', { name: /^Filters(?: \d+)?$/u })
+
+  await filtersButton.click()
+
+  const filterDialog = page.getByRole('dialog', { name: 'Filters' })
+
+  await expect(filterDialog).toBeVisible()
+
+  return filterDialog
 }
 
 async function expectRouteSearch(page: Page, expectedSearch: string): Promise<void> {
@@ -496,6 +652,30 @@ async function getElementBox(locator: Locator) {
   return box
 }
 
+async function hasVisibleFocusOutline(locator: Locator): Promise<boolean> {
+  return locator.evaluate((element) => {
+    const style = globalThis.getComputedStyle(element)
+
+    return style.outlineStyle !== 'none' && style.outlineWidth !== '0px'
+  })
+}
+
+async function waitForInlineEndAnchoring(locator: Locator, inlineEnd: number): Promise<void> {
+  await expect.poll(async () => {
+    const box = await getElementBox(locator)
+
+    return Math.round(box.x + box.width)
+  }).toBe(inlineEnd)
+}
+
+async function waitForBlockEndAnchoring(locator: Locator, blockEnd: number): Promise<void> {
+  await expect.poll(async () => {
+    const box = await getElementBox(locator)
+
+    return Math.round(box.y + box.height)
+  }).toBe(blockEnd)
+}
+
 test.describe('Gear library page', () => {
   test.beforeEach(async ({ context }) => {
     await mockGuestLogin(context)
@@ -514,13 +694,19 @@ test.describe('Gear library page', () => {
     const searchRegion = page.getByRole('search', { name: 'Gear library search' })
     const categorySelect = searchRegion.getByLabel('Category')
     const sortSelect = searchRegion.getByLabel('Sort by')
-    const directionSelect = searchRegion.getByLabel('Direction')
 
     await expect(page.getByRole('heading', { name: 'Gear library', exact: true })).toBeVisible()
     await expect(searchRegion.getByLabel('Search gear')).toHaveAttribute('type', 'search')
     await expect(categorySelect).toHaveValue('')
-    await expect(sortSelect).toHaveValue('name')
-    await expect(directionSelect).toHaveValue('asc')
+    await expect(sortSelect).toHaveValue('name:asc')
+    await expect(sortSelect.locator('option')).toHaveText([
+      'Name: A–Z',
+      'Name: Z–A',
+      'Brand: A–Z',
+      'Brand: Z–A'
+    ])
+    await expect(page.getByRole('complementary', { name: 'Catalog filters' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Filters' })).toBeVisible()
 
     await expect(categorySelect.locator('option')).toHaveText([
       'All categories',
@@ -539,7 +725,8 @@ test.describe('Gear library page', () => {
     await expect(itemRow.getByText('Weight', { exact: true })).toBeVisible()
     await expect(itemRow.getByText('83 g', { exact: true })).toBeVisible()
     await expect(itemRow.getByText('Fuel type', { exact: true })).toBeVisible()
-    await expect(itemRow.getByText('Canister', { exact: true })).toBeVisible()
+    await expect(itemRow.getByText('Liquid fuel', { exact: true })).toBeVisible()
+    await expect(itemRow.getByText('liquid-fuel', { exact: true })).toHaveCount(0)
     await expect(itemRow.getByText('Piezo ignition', { exact: true })).toBeVisible()
     await expect(itemRow.getByText('Yes', { exact: true })).toBeVisible()
 
@@ -558,6 +745,275 @@ test.describe('Gear library page', () => {
     expect(tracker.categories).toHaveLength(1)
   })
 
+  test('should keep separated items with three properties in one compact row', async ({ context, page }) => {
+    await page.setViewportSize({
+      height: 768,
+      width: 1024
+    })
+
+    await mockCatalogApi(context)
+    await openGearLibrary(page)
+
+    const detailLink = page.getByRole('link', { name: 'PocketRocket Deluxe' })
+    const itemRow = page.getByRole('listitem').filter({ has: detailLink })
+    const secondDetailLink = page.getByRole('link', { name: 'NeoAir XLite NXT' })
+    const secondItemRow = page.getByRole('listitem').filter({ has: secondDetailLink })
+    const resultsList = page.getByRole('list').filter({ has: detailLink })
+    const weightLabel = itemRow.getByText('Weight', { exact: true })
+    const fuelTypeLabel = itemRow.getByText('Fuel type', { exact: true })
+    const piezoIgnitionLabel = itemRow.getByText('Piezo ignition', { exact: true })
+    const weightProperty = weightLabel.locator('..')
+    const weightValue = itemRow.getByText('83 g', { exact: true })
+    const fuelTypeValue = itemRow.getByText('Liquid fuel', { exact: true })
+    const piezoIgnitionValue = itemRow.getByText('Yes', { exact: true })
+
+    await expect(resultsList).toHaveAttribute('role', 'list')
+    await expect(itemRow.getByRole('link')).toHaveCount(1)
+    await expect(itemRow.locator('dt')).toHaveText(['Weight', 'Fuel type', 'Piezo ignition'])
+    await expect(secondItemRow.locator('dt')).toHaveText(['R-value', 'Insulation', 'Pump sack'])
+
+    await detailLink.hover()
+    await expect(detailLink).toHaveCSS('text-decoration-line', 'none')
+    await expect(weightProperty).toHaveCSS('border-left-width', '1px')
+
+    const desktopRowBox = await getElementBox(itemRow)
+    const desktopSecondRowBox = await getElementBox(secondItemRow)
+    const desktopWeightBox = await getElementBox(weightLabel)
+    const desktopFuelTypeBox = await getElementBox(fuelTypeLabel)
+    const desktopPiezoIgnitionBox = await getElementBox(piezoIgnitionLabel)
+    const desktopWeightValueBox = await getElementBox(weightValue)
+    const desktopFuelTypeValueBox = await getElementBox(fuelTypeValue)
+    const desktopPiezoIgnitionValueBox = await getElementBox(piezoIgnitionValue)
+    const desktopItemGap = desktopSecondRowBox.y - desktopRowBox.y - desktopRowBox.height
+
+    expect(desktopRowBox.height).toBeLessThan(120)
+    expect(desktopItemGap).toBeCloseTo(8, 0)
+    expect(desktopFuelTypeBox.y).toBeCloseTo(desktopWeightBox.y, 0)
+    expect(desktopPiezoIgnitionBox.y).toBeCloseTo(desktopWeightBox.y, 0)
+    expect(desktopFuelTypeValueBox.y).toBeCloseTo(desktopWeightValueBox.y, 0)
+    expect(desktopPiezoIgnitionValueBox.y).toBeCloseTo(desktopWeightValueBox.y, 0)
+
+    await page.setViewportSize({
+      height: 844,
+      width: 390
+    })
+
+    await expect.poll(async () => page.evaluate(() => globalThis.innerWidth)).toBe(390)
+
+    const mobileRowBox = await getElementBox(itemRow)
+    const mobileSecondRowBox = await getElementBox(secondItemRow)
+    const mobileWeightBox = await getElementBox(weightLabel)
+    const mobileFuelTypeBox = await getElementBox(fuelTypeLabel)
+    const mobilePiezoIgnitionBox = await getElementBox(piezoIgnitionLabel)
+    const mobileWeightValueBox = await getElementBox(weightValue)
+    const mobileFuelTypeValueBox = await getElementBox(fuelTypeValue)
+    const mobilePiezoIgnitionValueBox = await getElementBox(piezoIgnitionValue)
+    const mobileItemGap = mobileSecondRowBox.y - mobileRowBox.y - mobileRowBox.height
+
+    expect(mobileRowBox.height).toBeLessThan(160)
+    expect(mobileItemGap).toBeCloseTo(8, 0)
+    expect(mobileFuelTypeBox.y).toBeCloseTo(mobileWeightBox.y, 0)
+    expect(mobilePiezoIgnitionBox.y).toBeCloseTo(mobileWeightBox.y, 0)
+    expect(mobileFuelTypeValueBox.y).toBeCloseTo(mobileWeightValueBox.y, 0)
+    expect(mobilePiezoIgnitionValueBox.y).toBeCloseTo(mobileWeightValueBox.y, 0)
+    await expect(weightProperty).toHaveCSS('border-left-width', '0px')
+
+    await detailLink.focus()
+    await page.keyboard.press('Shift+Tab')
+    await page.keyboard.press('Tab')
+    await expect(detailLink).toBeFocused()
+    await expect(detailLink).toHaveCSS('text-decoration-line', 'none')
+
+    const focusedCardShadow = await itemRow.evaluate(
+      (element) => globalThis.getComputedStyle(element).boxShadow
+    )
+
+    expect(focusedCardShadow).not.toBe('none')
+
+    await detailLink.evaluate((element) => {
+      element.addEventListener('click', (event) => {
+        event.preventDefault()
+        element.toggleAttribute('data-card-clicked', true)
+      }, { once: true })
+    })
+
+    const cardClickBox = await getElementBox(itemRow)
+    const cardClickInlinePosition = cardClickBox.x + 8
+    const cardClickBlockPosition = cardClickBox.y + 8
+
+    await page.mouse.click(cardClickInlinePosition, cardClickBlockPosition)
+    await expect(detailLink).toHaveAttribute('data-card-clicked')
+  })
+
+  test('should keep the filter side sheet and sticky trigger on every desktop width', async ({ context, page }) => {
+    await page.setViewportSize({
+      height: 768,
+      width: 1024
+    })
+
+    const tracker = await mockCatalogApi(context, {
+      items: () => {
+        return { json: scrollableItemsResponse }
+      }
+    })
+
+    await openGearLibrary(page)
+
+    const itemsBeforeCategory = tracker.items.length
+
+    await page.getByLabel('Category').selectOption('stoves')
+    await waitForNextItemsRequest(tracker, itemsBeforeCategory)
+
+    const filtersButton = page.getByRole('button', { name: 'Filters', exact: true })
+
+    await expect(page.getByRole('complementary', { name: 'Catalog filters' })).toHaveCount(0)
+    await page.evaluate(() => {
+      globalThis.scrollTo({
+        top: globalThis.document.documentElement.scrollHeight
+      })
+    })
+    await expect.poll(async () => page.evaluate(() => globalThis.scrollY)).toBeGreaterThan(0)
+    await expect(filtersButton).toBeInViewport()
+
+    const stickyFiltersButtonBox = await getElementBox(filtersButton)
+
+    expect(stickyFiltersButtonBox.y).toBeGreaterThanOrEqual(0)
+    expect(stickyFiltersButtonBox.y + stickyFiltersButtonBox.height).toBeLessThanOrEqual(768)
+
+    await filtersButton.click()
+
+    const filterDialog = page.getByRole('dialog', { name: 'Filters' })
+    const filterTitle = filterDialog.getByRole('heading', { name: 'Filters' })
+
+    await expect(filterTitle).toBeFocused()
+    await waitForInlineEndAnchoring(filterDialog, 1024)
+
+    const firstSideSheetBox = await getElementBox(filterDialog)
+
+    expect(firstSideSheetBox.x + firstSideSheetBox.width).toBeCloseTo(1024, 0)
+    expect(firstSideSheetBox.y).toBeCloseTo(0)
+    expect(firstSideSheetBox.width).toBeCloseTo(384)
+    expect(firstSideSheetBox.height).toBeCloseTo(768)
+
+    const titleBoxBeforeScroll = await getElementBox(filterTitle)
+    const pageScrollBeforeSideSheetScroll = await page.evaluate(() => globalThis.scrollY)
+
+    await filterDialog.evaluate((element) => {
+      element.scrollTop = element.scrollHeight
+    })
+
+    const titleBoxAfterScroll = await getElementBox(filterTitle)
+    const sideSheetApplyButton = filterDialog.getByRole('button', { name: 'Apply filters' })
+    const sideSheetApplyButtonBox = await getElementBox(sideSheetApplyButton)
+    const pageScrollAfterSideSheetScroll = await page.evaluate(() => globalThis.scrollY)
+
+    expect(titleBoxAfterScroll.y).toBeCloseTo(titleBoxBeforeScroll.y, 0)
+    expect(sideSheetApplyButtonBox.y + sideSheetApplyButtonBox.height).toBeLessThanOrEqual(768)
+    expect(pageScrollAfterSideSheetScroll).toBe(pageScrollBeforeSideSheetScroll)
+
+    await filterDialog.getByRole('button', { name: 'Close filters' }).click()
+    await page.setViewportSize({
+      height: 800,
+      width: 1280
+    })
+    await filtersButton.click()
+
+    await waitForInlineEndAnchoring(filterDialog, 1280)
+
+    const secondSideSheetBox = await getElementBox(filterDialog)
+
+    expect(secondSideSheetBox.x + secondSideSheetBox.width).toBeCloseTo(1280, 0)
+    expect(secondSideSheetBox.height).toBeCloseTo(800)
+
+    const dialogBrandSearch = filterDialog.getByRole('searchbox', { name: 'Search brands' })
+    const closeButton = filterDialog.getByRole('button', { name: 'Close filters' })
+
+    await filterDialog.getByRole('button', { name: 'Show all 12 brands' }).click()
+    await dialogBrandSearch.fill('msr')
+    await filterDialog.getByLabel('MSR').check()
+
+    const itemsBeforeResize = tracker.items.length
+
+    await dialogBrandSearch.press('Enter')
+    await expect(filterDialog).toBeVisible()
+    await expectRouteSearch(page, '?category=stoves')
+    await page.waitForTimeout(100)
+    expect(tracker.items).toHaveLength(itemsBeforeResize)
+
+    await page.setViewportSize({
+      height: 900,
+      width: 1440
+    })
+
+    await waitForInlineEndAnchoring(filterDialog, 1440)
+
+    const wideSideSheetBox = await getElementBox(filterDialog)
+
+    expect(wideSideSheetBox.x + wideSideSheetBox.width).toBeCloseTo(1440, 0)
+    expect(wideSideSheetBox.y).toBeCloseTo(0)
+    expect(wideSideSheetBox.width).toBeCloseTo(384)
+    expect(wideSideSheetBox.height).toBeCloseTo(900)
+    await expect(filterDialog).toBeVisible()
+    await expect(dialogBrandSearch).toHaveValue('msr')
+    await expect(filterDialog.getByLabel('MSR')).toBeChecked()
+    await expect(filterDialog.getByText('1 filter selected', { exact: true })).toBeVisible()
+    await expect(page.getByRole('complementary', { name: 'Catalog filters' })).toHaveCount(0)
+    await expectRouteSearch(page, '?category=stoves')
+
+    await page.waitForTimeout(100)
+    expect(tracker.items).toHaveLength(itemsBeforeResize)
+
+    await closeButton.click()
+    await expect(filterDialog).not.toBeVisible()
+    await expect(filtersButton).toBeVisible()
+    await expect(filtersButton).toBeFocused()
+    await expectRouteSearch(page, '?category=stoves')
+
+    await filtersButton.click()
+    await expect(dialogBrandSearch).toHaveValue('')
+    await expect(filterDialog.getByLabel('MSR')).toHaveCount(0)
+    await closeButton.click()
+
+    await page.evaluate(() => {
+      globalThis.scrollTo({ top: globalThis.document.documentElement.scrollHeight })
+    })
+    await expect.poll(async () => page.evaluate(() => globalThis.scrollY)).toBeGreaterThan(0)
+    await expect(filtersButton).toBeInViewport()
+
+    const wideStickyFiltersButtonBox = await getElementBox(filtersButton)
+
+    expect(wideStickyFiltersButtonBox.y).toBeGreaterThanOrEqual(0)
+    expect(wideStickyFiltersButtonBox.y + wideStickyFiltersButtonBox.height)
+      .toBeLessThanOrEqual(900)
+  })
+
+  test('should keep a short wide-desktop result list directly below the search controls', async ({ context, page }) => {
+    await page.setViewportSize({
+      height: 900,
+      width: 1440
+    })
+
+    await mockCatalogApi(context, {
+      items: () => {
+        return { json: refreshedSearchResponse }
+      }
+    })
+
+    await openGearLibrary(page)
+
+    const searchControls = page.getByRole('search', { name: 'Gear library search' })
+    const resultsLabel = page.getByText('Results', { exact: true })
+
+    await expect(page.getByRole('link', { name: 'WhisperLite Universal' })).toBeVisible()
+    await expect(page.getByText('1 item', { exact: true })).toBeVisible()
+
+    const searchControlsBox = await getElementBox(searchControls)
+    const resultsLabelBox = await getElementBox(resultsLabel)
+    const searchControlsBlockEnd = searchControlsBox.y + searchControlsBox.height
+
+    expect(resultsLabelBox.y - searchControlsBlockEnd).toBeCloseTo(24, 0)
+  })
+
   test('should canonicalize supported state and keep the mobile keyboard order usable', async ({ context, page }) => {
     await page.setViewportSize({
       width: 390,
@@ -565,7 +1021,7 @@ test.describe('Gear library page', () => {
     })
 
     const tracker = await mockCatalogApi(context)
-    const route = '/gear-library?direction=sideways&sort=property%3Aweight&brand=zeta&brand=alpha&brand=alpha&q=%20stove%20&category=stoves&number=b&number=a&enum=z&boolean=b&boolean=a&batch=0&compare=second&compare=first&page=999&debug=1'
+    const route = '/gear-library?direction=sideways&sort=property%3Aweight&brand=zeta&brand=alpha&brand=alpha&q=%20stove%20&category=stoves&number=weight%3A80%3A100&enum=fuel-type%3Acanister&boolean=piezo-ignition%3Atrue&batch=0&compare=second&compare=first&page=999&debug=1'
 
     await openGearLibrary(page, route)
 
@@ -574,11 +1030,9 @@ test.describe('Gear library page', () => {
       ['category', 'stoves'],
       ['brand', 'alpha'],
       ['brand', 'zeta'],
-      ['number', 'a'],
-      ['number', 'b'],
-      ['enum', 'z'],
-      ['boolean', 'a'],
-      ['boolean', 'b'],
+      ['number', 'weight:80:100'],
+      ['enum', 'fuel-type:canister'],
+      ['boolean', 'piezo-ignition:true'],
       ['sort', 'property:weight'],
       ['compare', 'second'],
       ['compare', 'first']
@@ -590,12 +1044,12 @@ test.describe('Gear library page', () => {
     const itemsRequest = getLastRequest(tracker.items)
 
     expectQueryValues(itemsRequest, {
-      booleanFilter: ['a', 'b'],
+      booleanFilter: ['piezo-ignition:true'],
       brandSlug: ['alpha', 'zeta'],
       categorySlug: 'stoves',
       direction: 'asc',
-      enumFilter: ['z'],
-      numberFilter: ['a', 'b'],
+      enumFilter: ['fuel-type:canister'],
+      numberFilter: ['weight:80:100'],
       page: '1',
       search: 'stove',
       sort: 'property:weight'
@@ -608,11 +1062,16 @@ test.describe('Gear library page', () => {
     const searchInput = searchRegion.getByLabel('Search gear')
     const categorySelect = searchRegion.getByLabel('Category')
     const sortSelect = searchRegion.getByLabel('Sort by')
-    const directionSelect = searchRegion.getByLabel('Direction')
     const clearButton = searchRegion.getByRole('button', { name: 'Clear search' })
+    const filtersButton = page.getByRole('button', { name: 'Filters 5' })
+    const appliedFilterButtons = page
+      .getByRole('list', { name: 'Applied filters' })
+      .getByRole('button')
+    const clearAllButton = page.getByRole('button', { name: 'Clear all' })
     const detailLink = page.getByRole('link', { name: 'PocketRocket Deluxe' })
+    const resultsBody = page.getByTestId('gear-library-results-body')
 
-    await expect(sortSelect.getByRole('option', { name: 'Weight (g)' })).toHaveCount(1)
+    await expect(sortSelect.getByRole('option', { name: 'Weight (g): Low to high' })).toHaveCount(1)
     await searchInput.focus()
     await page.keyboard.press('Tab')
     await expect(clearButton).toBeFocused()
@@ -621,12 +1080,81 @@ test.describe('Gear library page', () => {
     await page.keyboard.press('Tab')
     await expect(sortSelect).toBeFocused()
     await page.keyboard.press('Tab')
-    await expect(directionSelect).toBeFocused()
+    await expect(filtersButton).toBeFocused()
+    await page.keyboard.press('Tab')
+    await expect(appliedFilterButtons).toHaveCount(5)
+    await expect(appliedFilterButtons.first()).toBeFocused()
+    await page.keyboard.press('Tab')
+    await page.keyboard.press('Tab')
+    await page.keyboard.press('Tab')
+    await page.keyboard.press('Tab')
+    await expect(appliedFilterButtons.last()).toBeFocused()
+    await page.keyboard.press('Tab')
+    await expect(clearAllButton).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(detailLink).toBeFocused()
-    await expect(page.getByText('83 g', { exact: true })).toBeVisible()
-    await expect(page.getByText('Canister', { exact: true })).toBeVisible()
-    await expect(page.getByText('Yes', { exact: true })).toBeVisible()
+    await expect(resultsBody.getByText('83 g', { exact: true })).toBeVisible()
+    await expect(resultsBody.getByText('Liquid fuel', { exact: true })).toBeVisible()
+    await expect(resultsBody.getByText('Yes', { exact: true })).toBeVisible()
+  })
+
+  test('should expose and recover from a malformed direct URL filter', async ({ context, page }) => {
+    const tracker = await mockCatalogApi(context, {
+      items: respondToMalformedNumberFilter
+    })
+
+    const route = `/gear-library?category=stoves&number=${malformedNumberFilter}`
+
+    await openGearLibrary(page, route)
+
+    await expect(page.getByRole('heading', { name: 'Gear library unavailable.' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Filters 1' })).toBeVisible()
+
+    const itemsBeforeRemoval = tracker.items.length
+    const removeFilterButton = page.getByRole('button', {
+      name: `Remove Number: ${malformedNumberFilter} filter`
+    })
+
+    await removeFilterButton.click()
+    await waitForNextItemsRequest(tracker, itemsBeforeRemoval)
+
+    await expectRouteSearch(page, '?category=stoves')
+    await expect(page.getByRole('link', { name: 'PocketRocket Deluxe' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Filters' })).toBeVisible()
+  })
+
+  test('should keep filter focus indicators visible in forced colors', async ({ context, page }) => {
+    await page.emulateMedia({ forcedColors: 'active' })
+    await mockCatalogApi(context)
+    await openGearLibrary(page, '/gear-library?category=stoves&brand=msr')
+
+    const appliedBrandFilter = page.getByRole('button', { name: 'Remove Brand: MSR filter' })
+    const categorySelect = page.getByLabel('Category')
+    const sortSelect = page.getByLabel('Sort by')
+    const detailLink = page.getByRole('link', { name: 'PocketRocket Deluxe' })
+    const itemRow = page.getByRole('listitem').filter({ has: detailLink })
+
+    await appliedBrandFilter.focus()
+    await expect.poll(async () => hasVisibleFocusOutline(appliedBrandFilter)).toBe(true)
+
+    await categorySelect.focus()
+    await expect.poll(async () => hasVisibleFocusOutline(categorySelect)).toBe(true)
+
+    await sortSelect.focus()
+    await expect.poll(async () => hasVisibleFocusOutline(sortSelect)).toBe(true)
+
+    await detailLink.focus()
+    await expect.poll(async () => hasVisibleFocusOutline(itemRow)).toBe(true)
+
+    const filterDialog = await openFilterDialog(page)
+    const brandCheckbox = filterDialog.getByLabel('Alpkit')
+    const minimumInput = filterDialog.getByRole('group', { name: 'Weight (g)' }).getByLabel('Minimum')
+
+    await brandCheckbox.focus()
+    await expect.poll(async () => hasVisibleFocusOutline(brandCheckbox)).toBe(true)
+
+    await minimumInput.focus()
+    await expect.poll(async () => hasVisibleFocusOutline(minimumInput)).toBe(true)
   })
 
   test('should expose a touch-sized clear search action and restore input focus', async ({ context, page }) => {
@@ -655,14 +1183,17 @@ test.describe('Gear library page', () => {
     await expectRouteSearch(page, '')
   })
 
-  test('should map search and sorting to the API while preserving route history and future state', async ({ context, page }) => {
+  test('should map search and sorting to the API while preserving global route state', async ({ context, page }) => {
     const tracker = await mockCatalogApi(context)
+
+    const propertyFilterEntries: QueryEntry[] = [
+      ['number', 'weight:gte:80'],
+      ['enum', 'fuel-type:canister'],
+      ['boolean', 'piezo-ignition:true']
+    ]
 
     const preservedEntries: QueryEntry[] = [
       ['brand', 'msr'],
-      ['number', 'weight:gte:80'],
-      ['enum', 'fuel-type:canister'],
-      ['boolean', 'piezo-ignition:true'],
       ['batch', '2'],
       ['compare', 'second'],
       ['compare', 'first']
@@ -670,7 +1201,9 @@ test.describe('Gear library page', () => {
 
     const initialSearch = buildRouteSearch([
       ['q', 'old'],
-      ...preservedEntries
+      ['brand', 'msr'],
+      ...propertyFilterEntries,
+      ...preservedEntries.slice(1)
     ])
 
     await openGearLibrary(page, `/gear-library${initialSearch}`)
@@ -679,7 +1212,6 @@ test.describe('Gear library page', () => {
     const searchInput = searchRegion.getByLabel('Search gear')
     const categorySelect = searchRegion.getByLabel('Category')
     const sortSelect = searchRegion.getByLabel('Sort by')
-    const directionSelect = searchRegion.getByLabel('Direction')
 
     const itemsBeforeCategory = tracker.items.length
 
@@ -693,7 +1225,7 @@ test.describe('Gear library page', () => {
     ])
 
     await expectRouteSearch(page, categorySearch)
-    await expect(sortSelect.getByRole('option', { name: 'Weight (g)' })).toHaveCount(1)
+    await expect(sortSelect.getByRole('option', { name: 'Weight (g): Low to high' })).toHaveCount(1)
 
     const itemsBeforeSearch = tracker.items.length
 
@@ -714,12 +1246,12 @@ test.describe('Gear library page', () => {
     await expectRouteSearch(page, searchedRoute)
 
     expectQueryValues(searchedRequest, {
-      booleanFilter: ['piezo-ignition:true'],
+      booleanFilter: [],
       brandSlug: ['msr'],
       categorySlug: 'stoves',
       direction: 'asc',
-      enumFilter: ['fuel-type:canister'],
-      numberFilter: ['weight:gte:80'],
+      enumFilter: [],
+      numberFilter: [],
       page: '1',
       search: 'rocket',
       sort: 'name'
@@ -734,44 +1266,39 @@ test.describe('Gear library page', () => {
     await expectRouteSearch(page, searchedRoute)
     await expect(searchInput).toHaveValue('rocket')
     await expect(categorySelect).toHaveValue('stoves')
-    await expect(sortSelect.getByRole('option', { name: 'Weight (g)' })).toHaveCount(1)
+    await expect(sortSelect.getByRole('option', { name: 'Weight (g): Low to high' })).toHaveCount(1)
 
-    const itemsBeforeSort = tracker.items.length
+    const itemsBeforeOrdering = tracker.items.length
 
-    await sortSelect.selectOption('property:weight')
-    await waitForNextItemsRequest(tracker, itemsBeforeSort)
+    await sortSelect.selectOption('property:weight:desc')
+    const orderedRequest = await waitForNextItemsRequest(tracker, itemsBeforeOrdering)
 
-    const sortedRoute = buildRouteSearch([
+    const orderedRoute = buildRouteSearch([
       ['q', 'rocket'],
       ['category', 'stoves'],
-      ...preservedEntries.slice(0, 4),
-      ['sort', 'property:weight'],
-      ...preservedEntries.slice(4)
-    ])
-
-    await expectRouteSearch(page, sortedRoute)
-
-    const itemsBeforeDirection = tracker.items.length
-
-    await directionSelect.selectOption('desc')
-    const directedRequest = await waitForNextItemsRequest(tracker, itemsBeforeDirection)
-    const directedRoute = buildRouteSearch([
-      ['q', 'rocket'],
-      ['category', 'stoves'],
-      ...preservedEntries.slice(0, 4),
+      ['brand', 'msr'],
       ['sort', 'property:weight'],
       ['direction', 'desc'],
-      ...preservedEntries.slice(4)
+      ...preservedEntries.slice(1)
     ])
 
-    await expectRouteSearch(page, directedRoute)
+    await expectRouteSearch(page, orderedRoute)
+    expect(tracker.items).toHaveLength(itemsBeforeOrdering + 1)
 
-    expectQueryValues(directedRequest, {
+    expectQueryValues(orderedRequest, {
       direction: 'desc',
       page: '1',
       search: 'rocket',
       sort: 'property:weight'
     })
+
+    await page.goBack()
+    await expectRouteSearch(page, searchedRoute)
+    await expect(sortSelect).toHaveValue('name:asc')
+
+    await page.goForward()
+    await expectRouteSearch(page, orderedRoute)
+    await expect(sortSelect).toHaveValue('property:weight:desc')
 
     await page.reload()
 
@@ -781,7 +1308,7 @@ test.describe('Gear library page', () => {
     expect(redirectTarget).not.toBeNull()
 
     const redirectUrl = new globalThis.URL(String(redirectTarget), loginUrl.origin)
-    const expectedRedirectSearch = new globalThis.URLSearchParams(directedRoute).toString()
+    const expectedRedirectSearch = new globalThis.URLSearchParams(orderedRoute).toString()
 
     expect(loginUrl.pathname).toBe('/login')
     expect(redirectUrl.pathname).toBe('/gear-library')
@@ -791,31 +1318,38 @@ test.describe('Gear library page', () => {
 
     await page.getByRole('button', { name: 'Guest' }).click()
     await waitForNextItemsRequest(tracker, requestsBeforeRestore)
-    await expectRouteSearch(page, directedRoute)
+    await expectRouteSearch(page, orderedRoute)
     await expect(searchInput).toHaveValue('rocket')
     await expect(categorySelect).toHaveValue('stoves')
-    await expect(sortSelect).toHaveValue('property:weight')
-    await expect(directionSelect).toHaveValue('desc')
+    await expect(sortSelect).toHaveValue('property:weight:desc')
   })
 
-  test('should reset property sorting when the category changes', async ({ context, page }) => {
+  test('should reset ordering when the category changes', async ({ context, page }) => {
     const tracker = await mockCatalogApi(context)
 
     await openGearLibrary(page)
 
     const categorySelect = page.getByLabel('Category')
     const sortSelect = page.getByLabel('Sort by')
+    const itemsBeforeBrandOrdering = tracker.items.length
+
+    await sortSelect.selectOption('brand:desc')
+    await waitForNextItemsRequest(tracker, itemsBeforeBrandOrdering)
+    await expectRouteSearch(page, '?sort=brand&direction=desc')
+
     const itemsBeforeCategory = tracker.items.length
 
     await categorySelect.selectOption('stoves')
     await waitForNextItemsRequest(tracker, itemsBeforeCategory)
-    await expect(sortSelect.getByRole('option', { name: 'Weight (g)' })).toHaveCount(1)
+    await expectRouteSearch(page, '?category=stoves')
+    await expect(sortSelect).toHaveValue('name:asc')
+    await expect(sortSelect.getByRole('option', { name: 'Weight (g): Low to high' })).toHaveCount(1)
 
-    const itemsBeforePropertySort = tracker.items.length
+    const itemsBeforePropertyOrdering = tracker.items.length
 
-    await sortSelect.selectOption('property:weight')
-    await waitForNextItemsRequest(tracker, itemsBeforePropertySort)
-    await expectRouteSearch(page, '?category=stoves&sort=property%3Aweight')
+    await sortSelect.selectOption('property:weight:desc')
+    await waitForNextItemsRequest(tracker, itemsBeforePropertyOrdering)
+    await expectRouteSearch(page, '?category=stoves&sort=property%3Aweight&direction=desc')
 
     const itemsBeforeClearingCategory = tracker.items.length
 
@@ -823,12 +1357,681 @@ test.describe('Gear library page', () => {
     const clearedCategoryRequest = await waitForNextItemsRequest(tracker, itemsBeforeClearingCategory)
 
     await expectRouteSearch(page, '')
-    await expect(sortSelect).toHaveValue('name')
+    await expect(sortSelect).toHaveValue('name:asc')
 
     expect(clearedCategoryRequest.searchParams.get('categorySlug')).toBeNull()
     expect(clearedCategoryRequest.searchParams.get('sort')).toBe('name')
+    expect(clearedCategoryRequest.searchParams.get('direction')).toBe('asc')
 
     await expect(page.getByText('Could not refresh results.')).toHaveCount(0)
+  })
+
+  test('should normalize unsupported metadata after definitive responses', async ({ context, page }) => {
+    const categoriesGate = createDeferred()
+    const tracker = await mockCatalogApi(context, {
+      categories: () => {
+        return {
+          json: categoriesResponse,
+          waitFor: categoriesGate.promise
+        }
+      },
+      categoryDetail: () => serverErrorResponse
+    })
+
+    const route = '/gear-library?category=unknown-category&sort=property%3Aunknown-property&direction=desc'
+
+    await openGearLibrary(page, route)
+
+    const categorySelect = page.getByLabel('Category')
+    const orderingSelect = page.getByLabel('Sort by')
+
+    await expect(categorySelect).toBeDisabled()
+    await expect(categorySelect.getByRole('option', { name: 'unknown-category' })).toHaveCount(0)
+    await expect(orderingSelect).toBeEnabled()
+    await expect(orderingSelect).toHaveValue('property:unknown-property:desc')
+    await expect(orderingSelect.getByRole('option', {
+      name: 'Current property sorting unavailable'
+    })).toBeDisabled()
+    await expect(orderingSelect.getByRole('option', { name: /unknown-property/u })).toHaveCount(0)
+
+    const itemsBeforeNormalization = tracker.items.length
+
+    categoriesGate.resolve()
+
+    await expectRouteSearch(page, '')
+    await waitForNextItemsRequest(tracker, itemsBeforeNormalization)
+    await expect(categorySelect).toHaveValue('')
+    await expect(orderingSelect).toHaveValue('name:asc')
+
+    const propertyTracker = await mockCatalogApi(context)
+
+    await openGearLibrary(page, '/gear-library?category=stoves&sort=property%3Amissing&direction=desc')
+    await expectRouteSearch(page, '?category=stoves')
+    await expect.poll(() => propertyTracker.categoryDetails.length).toBeGreaterThan(0)
+    await expect(orderingSelect).toHaveValue('name:asc')
+    await expect(orderingSelect.getByRole('option', { name: /missing/u })).toHaveCount(0)
+  })
+
+  test('should search and progressively reveal a long desktop brand list without requests', async ({ context, page }) => {
+    await page.setViewportSize({
+      width: 1440,
+      height: 900
+    })
+
+    const tracker = await mockCatalogApi(context)
+
+    await openGearLibrary(page)
+
+    const filterDialog = await openFilterDialog(page)
+    const brandSearchInput = filterDialog.getByRole('searchbox', { name: 'Search brands' })
+    const brandGroup = filterDialog.getByRole('group', { name: /^Brands/u })
+    const brandCheckboxes = brandGroup.getByRole('checkbox')
+    const brandLabels = brandGroup.locator('label:has(input[type="checkbox"])')
+    const initialBrandNames = [
+      'Alpkit',
+      'Big Agnes',
+      'Black Diamond',
+      'Coleman',
+      'Exped',
+      'Fjällräven',
+      'GSI Outdoors',
+      'Jetboil'
+    ]
+
+    await expect.poll(() => tracker.items.length).toBeGreaterThan(0)
+
+    const initialBrandsRequestCount = tracker.brands.length
+    const initialItemsRequestCount = tracker.items.length
+
+    await test.step('show the collapsed alphabetical list', async () => {
+      const showAllButton = brandGroup.getByRole('button', { name: 'Show all 12 brands' })
+
+      await expect(filterDialog.getByText('0 filters selected', { exact: true })).toBeVisible()
+      await expect(brandSearchInput).toBeVisible()
+      await expect(brandCheckboxes).toHaveCount(8)
+      await expect(brandLabels).toHaveText(initialBrandNames)
+      await expect(brandGroup).toHaveCSS('border-bottom-style', 'none')
+      await expect(brandGroup.getByLabel('Marmot')).toHaveCount(0)
+      await expect(brandGroup.getByLabel('MSR')).toHaveCount(0)
+      await expect(showAllButton).toHaveAttribute('aria-expanded', 'false')
+      await expect(showAllButton).toHaveAttribute('aria-controls', /.+/u)
+    })
+
+    await test.step('keep the brand controls stable when the draft count changes', async () => {
+      const alpkitCheckbox = brandGroup.getByLabel('Alpkit')
+      const searchBoxBeforeSelection = await getElementBox(brandSearchInput)
+
+      await alpkitCheckbox.check()
+      await expect(filterDialog.getByText('1 filter selected', { exact: true })).toBeVisible()
+
+      const searchBoxAfterSelection = await getElementBox(brandSearchInput)
+
+      expect(searchBoxAfterSelection.y).toBeCloseTo(searchBoxBeforeSelection.y, 0)
+
+      await alpkitCheckbox.uncheck()
+      await expect(filterDialog.getByText('0 filters selected', { exact: true })).toBeVisible()
+
+      const searchBoxAfterClearing = await getElementBox(brandSearchInput)
+
+      expect(searchBoxAfterClearing.y).toBeCloseTo(searchBoxBeforeSelection.y, 0)
+    })
+
+    await test.step('search case-insensitively and clear without losing focus', async () => {
+      await brandSearchInput.fill('mSr')
+      await expect(brandCheckboxes).toHaveCount(1)
+      await expect(brandGroup.getByLabel('MSR')).toBeVisible()
+      await expect(brandGroup.getByRole('button', { name: 'Show all 12 brands' })).toHaveCount(0)
+
+      await brandSearchInput.fill('missing brand')
+      await expect(brandCheckboxes).toHaveCount(0)
+      await expect(brandGroup.getByText('No matching brands.', { exact: true })).toBeVisible()
+
+      const clearBrandSearchButton = brandGroup.getByRole('button', { name: 'Clear brand search' })
+
+      await clearBrandSearchButton.focus()
+      await page.keyboard.press('Enter')
+      await expect(brandSearchInput).toHaveValue('')
+      await expect(brandSearchInput).toBeFocused()
+      await expect(brandCheckboxes).toHaveCount(8)
+      await expect(brandGroup.getByText('No matching brands.', { exact: true })).toHaveCount(0)
+    })
+
+    await test.step('expand and collapse the full list', async () => {
+      await brandGroup.getByRole('button', { name: 'Show all 12 brands' }).click()
+
+      const showFewerButton = brandGroup.getByRole('button', { name: 'Show fewer' })
+
+      await expect(brandCheckboxes).toHaveCount(12)
+      await expect(showFewerButton).toHaveAttribute('aria-expanded', 'true')
+
+      await showFewerButton.click()
+      await expect(brandCheckboxes).toHaveCount(8)
+      await expect(brandGroup.getByRole('button', { name: 'Show all 12 brands' }))
+        .toHaveAttribute('aria-expanded', 'false')
+    })
+
+    await test.step('keep an additional selection ordered and focused when it is removed', async () => {
+      await brandSearchInput.fill('MSR')
+
+      const msrCheckbox = brandGroup.getByLabel('MSR')
+
+      await msrCheckbox.check()
+      await expect(brandGroup.getByText('1 selected', { exact: true })).toBeVisible()
+
+      await brandGroup.getByRole('button', { name: 'Clear brand search' }).click()
+      await expect(brandLabels).toHaveText([...initialBrandNames, 'MSR'])
+
+      await msrCheckbox.focus()
+      await page.keyboard.press('Space')
+
+      await expect(msrCheckbox).not.toBeChecked()
+      await expect(msrCheckbox).toBeFocused()
+      await expect(brandCheckboxes).toHaveCount(12)
+      await expect(brandGroup.getByText('1 selected', { exact: true })).toHaveCount(0)
+      await expect(brandGroup.getByRole('button', { name: 'Show fewer' }))
+        .toHaveAttribute('aria-expanded', 'true')
+    })
+
+    expect(tracker.brands).toHaveLength(initialBrandsRequestCount)
+    expect(tracker.items).toHaveLength(initialItemsRequestCount)
+    await expectRouteSearch(page, '')
+  })
+
+  test('should prevent selecting more brands than the API accepts', async ({ context, page }) => {
+    await page.setViewportSize({
+      height: 900,
+      width: 1440
+    })
+
+    const tracker = await mockCatalogApi(context, {
+      brands: () => {
+        return { json: filterLimitBrandsResponse }
+      }
+    })
+
+    await openGearLibrary(page)
+
+    const filterDialog = await openFilterDialog(page)
+    const brandGroup = filterDialog.getByRole('group', { name: /^Brands/u })
+    const brandSearchInput = filterDialog.getByRole('searchbox', { name: 'Search brands' })
+    const applyButton = filterDialog.getByRole('button', { name: 'Apply filters' })
+
+    await brandGroup.getByRole('button', { name: 'Show all 21 brands' }).click()
+    await expect.poll(() => tracker.items.length).toBeGreaterThan(0)
+
+    const initialBrandsRequestCount = tracker.brands.length
+    const initialItemsRequestCount = tracker.items.length
+
+    for (let index = 1; index <= 19; index += 1) {
+      const number = String(index).padStart(2, '0')
+
+      // oxlint-disable-next-line no-await-in-loop -- Each reactive checkbox update must finish before the next one.
+      await brandGroup.getByLabel(`Brand ${number}`).check()
+    }
+
+    await filterDialog.evaluate((element) => {
+      element.scrollTop = 0
+    })
+
+    const searchBoxBeforeLimit = await getElementBox(brandSearchInput)
+
+    await brandGroup.getByLabel('Brand 20').check()
+    await filterDialog.evaluate((element) => {
+      element.scrollTop = 0
+    })
+
+    const searchBoxAtLimit = await getElementBox(brandSearchInput)
+
+    expect(searchBoxAtLimit.y).toBeCloseTo(searchBoxBeforeLimit.y, 0)
+    await expect(filterDialog.getByText(
+      'Limit of 20 brands reached. Deselect one to choose another.',
+      { exact: true }
+    )).toBeVisible()
+    await expect(brandGroup.getByLabel('Brand 20')).toBeEnabled()
+    await expect(brandGroup.getByLabel('Brand 21')).toBeDisabled()
+
+    await page.waitForTimeout(100)
+    expect(tracker.brands).toHaveLength(initialBrandsRequestCount)
+    expect(tracker.items).toHaveLength(initialItemsRequestCount)
+    await expectRouteSearch(page, '')
+
+    await brandGroup.getByLabel('Brand 01').uncheck()
+    await expect(brandGroup.getByLabel('Brand 21')).toBeEnabled()
+
+    const searchBoxAfterLimit = await getElementBox(brandSearchInput)
+
+    expect(searchBoxAfterLimit.y).toBeCloseTo(searchBoxBeforeLimit.y, 0)
+    await brandGroup.getByLabel('Brand 21').check()
+
+    const itemsBeforeApply = tracker.items.length
+
+    await applyButton.click()
+
+    const appliedRequest = await waitForNextItemsRequest(tracker, itemsBeforeApply)
+    const expectedBrandSlugs = Array.from({ length: 20 }, (_value, index) => {
+      const number = String(index + 2).padStart(2, '0')
+
+      return `brand-${number}`
+    })
+    const expectedRouteEntries: QueryEntry[] = expectedBrandSlugs.map(
+      (slug) => ['brand', slug]
+    )
+
+    expectQueryValues(appliedRequest, {
+      brandSlug: expectedBrandSlugs
+    })
+    await expectRouteSearch(page, buildRouteSearch(expectedRouteEntries))
+  })
+
+  test('should enforce the combined property filter limit without blocking edits', async ({ context, page }) => {
+    await page.setViewportSize({
+      height: 900,
+      width: 1440
+    })
+
+    const tracker = await mockCatalogApi(context, {
+      categoryDetail: () => {
+        return { json: filterLimitCategoryResponse }
+      }
+    })
+
+    await openGearLibrary(page)
+
+    const itemsBeforeCategory = tracker.items.length
+
+    await page.getByLabel('Category').selectOption('stoves')
+    await waitForNextItemsRequest(tracker, itemsBeforeCategory)
+
+    const filterDialog = await openFilterDialog(page)
+    const activeNumberGroup = filterDialog.getByRole('group', { name: 'Active number' })
+    const availableNumberGroup = filterDialog.getByRole('group', { name: 'Available number' })
+    const enumGroup = filterDialog.getByRole('group', { name: 'Filter option' })
+    const activeBooleanGroup = filterDialog.getByRole('group', { name: 'Active boolean' })
+    const availableBooleanGroup = filterDialog.getByRole('group', { name: 'Available boolean' })
+
+    await activeNumberGroup.getByLabel('Minimum').fill('1')
+    await activeBooleanGroup.getByLabel('Yes').check()
+
+    for (let index = 1; index <= 18; index += 1) {
+      const number = String(index).padStart(2, '0')
+
+      // oxlint-disable-next-line no-await-in-loop -- Each reactive checkbox update must finish before the next one.
+      await enumGroup.getByLabel(`Option ${number}`).check()
+    }
+
+    await expect(filterDialog.getByText(
+      'Limit of 20 property filters reached. Remove one to add another.',
+      { exact: true }
+    )).toBeVisible()
+    await expect(enumGroup.getByLabel('Option 01')).toBeEnabled()
+    await expect(enumGroup.getByLabel('Option 19')).toBeDisabled()
+    await expect(activeNumberGroup.getByLabel('Minimum')).toBeEnabled()
+    await expect(activeNumberGroup.getByLabel('Maximum')).toBeEnabled()
+    await expect(availableNumberGroup.getByLabel('Minimum')).toBeDisabled()
+    await expect(availableNumberGroup.getByLabel('Maximum')).toBeDisabled()
+    await expect(activeBooleanGroup.getByLabel('Any')).toBeEnabled()
+    await expect(activeBooleanGroup.getByLabel('No')).toBeEnabled()
+    await expect(availableBooleanGroup.getByLabel('Any')).toBeEnabled()
+    await expect(availableBooleanGroup.getByLabel('Yes')).toBeDisabled()
+    await expect(availableBooleanGroup.getByLabel('No')).toBeDisabled()
+
+    const itemsBeforeDraftChange = tracker.items.length
+
+    await enumGroup.getByLabel('Option 01').uncheck()
+    await expect(enumGroup.getByLabel('Option 19')).toBeEnabled()
+    await expect(availableNumberGroup.getByLabel('Minimum')).toBeEnabled()
+    await expect(availableBooleanGroup.getByLabel('Yes')).toBeEnabled()
+    await enumGroup.getByLabel('Option 19').check()
+
+    await page.waitForTimeout(100)
+    expect(tracker.items).toHaveLength(itemsBeforeDraftChange)
+    await expectRouteSearch(page, '?category=stoves')
+
+    const itemsBeforeApply = tracker.items.length
+
+    await filterDialog.getByRole('button', { name: 'Apply filters' }).click()
+
+    const appliedRequest = await waitForNextItemsRequest(tracker, itemsBeforeApply)
+    const expectedEnumFilters = Array.from({ length: 18 }, (_value, index) => {
+      const number = String(index + 2).padStart(2, '0')
+
+      return `filter-option:option-${number}`
+    })
+    const expectedRouteEntries: QueryEntry[] = [
+      ['category', 'stoves'],
+      ['number', 'active-number:1:'],
+      ...expectedEnumFilters.map((filter): QueryEntry => ['enum', filter]),
+      ['boolean', 'active-boolean:true']
+    ]
+
+    expectQueryValues(appliedRequest, {
+      booleanFilter: ['active-boolean:true'],
+      enumFilter: expectedEnumFilters,
+      numberFilter: ['active-number:1:']
+    })
+    await expectRouteSearch(page, buildRouteSearch(expectedRouteEntries))
+  })
+
+  test('should apply, validate, label, and remove desktop filters through route history', async ({ context, page }) => {
+    await page.setViewportSize({
+      width: 1440,
+      height: 900
+    })
+
+    const tracker = await mockCatalogApi(context)
+
+    await openGearLibrary(page)
+
+    const categorySelect = page.getByLabel('Category')
+    const itemsBeforeCategory = tracker.items.length
+
+    await categorySelect.selectOption('stoves')
+    await waitForNextItemsRequest(tracker, itemsBeforeCategory)
+
+    const filterDialog = await openFilterDialog(page)
+    const weightGroup = filterDialog.getByRole('group', { name: 'Weight (g)' })
+    const fuelGroup = filterDialog.getByRole('group', { name: 'Fuel type' })
+    const piezoGroup = filterDialog.getByRole('group', { name: 'Piezo ignition' })
+    const brandGroup = filterDialog.getByRole('group', { name: /^Brands/u })
+    const brandSearchInput = filterDialog.getByRole('searchbox', { name: 'Search brands' })
+    const showAllBrandsButton = filterDialog.getByRole('button', { name: 'Show all 12 brands' })
+    const applyButton = filterDialog.getByRole('button', { name: 'Apply filters' })
+    const closeButton = filterDialog.getByRole('button', { name: 'Close filters' })
+    const minimumInput = weightGroup.getByLabel('Minimum')
+    const maximumInput = weightGroup.getByLabel('Maximum')
+    const rangeError = weightGroup.locator('[aria-live="polite"]')
+
+    await expect(brandGroup).toHaveCSS('border-bottom-style', 'solid')
+    await expect(piezoGroup).toHaveCSS('border-bottom-style', 'none')
+    await expect(rangeError).toHaveCount(1)
+    await expect(rangeError).toHaveAttribute('aria-atomic', 'true')
+    await expect(rangeError).toBeEmpty()
+
+    await showAllBrandsButton.click()
+    await brandSearchInput.fill('msr')
+    await filterDialog.getByLabel('MSR').check()
+    await minimumInput.fill('100')
+    await maximumInput.fill('80')
+    await expect(rangeError).toHaveText('Minimum must not exceed maximum.')
+    await expect(minimumInput).toHaveAttribute('aria-invalid', 'true')
+    await expect(maximumInput).toHaveAttribute('aria-invalid', 'true')
+
+    const rangeErrorId = await rangeError.getAttribute('id')
+    const minimumDescribedBy = await minimumInput.getAttribute('aria-describedby')
+    const maximumDescribedBy = await maximumInput.getAttribute('aria-describedby')
+
+    expect(rangeErrorId).not.toBeNull()
+    expect(minimumDescribedBy).toBe(rangeErrorId)
+    expect(maximumDescribedBy).toBe(rangeErrorId)
+    await expect(applyButton).toBeDisabled()
+
+    await minimumInput.fill('80')
+    await maximumInput.fill('100')
+    await expect(rangeError).toBeEmpty()
+    await expect(minimumInput).not.toHaveAttribute('aria-invalid', 'true')
+    await expect(maximumInput).not.toHaveAttribute('aria-invalid', 'true')
+    await expect(minimumInput).not.toHaveAttribute('aria-describedby', /.+/u)
+    await expect(maximumInput).not.toHaveAttribute('aria-describedby', /.+/u)
+    await fuelGroup.getByLabel('Canister').check()
+    await piezoGroup.getByLabel('Yes').check()
+
+    const itemsBeforeApply = tracker.items.length
+
+    await applyButton.click()
+
+    const appliedRequest = await waitForNextItemsRequest(tracker, itemsBeforeApply)
+    const appliedSearch = buildRouteSearch([
+      ['category', 'stoves'],
+      ['brand', 'msr'],
+      ['number', 'weight:80:100'],
+      ['enum', 'fuel-type:canister'],
+      ['boolean', 'piezo-ignition:true']
+    ])
+
+    await expectRouteSearch(page, appliedSearch)
+    await page.waitForTimeout(100)
+    expect(tracker.items).toHaveLength(itemsBeforeApply + 1)
+    await expect(filterDialog).not.toBeVisible()
+
+    expectQueryValues(appliedRequest, {
+      booleanFilter: ['piezo-ignition:true'],
+      brandSlug: ['msr'],
+      enumFilter: ['fuel-type:canister'],
+      numberFilter: ['weight:80:100'],
+      page: '1'
+    })
+
+    const appliedFilters = page.getByRole('list', { name: 'Applied filters' })
+
+    await expect(appliedFilters.getByRole('button')).toHaveCount(4)
+    await expect(appliedFilters.getByText('Brand: MSR', { exact: true })).toBeVisible()
+    await expect(appliedFilters.getByText('Weight: 80–100 g', { exact: true })).toBeVisible()
+    await expect(appliedFilters.getByText('Fuel type: Canister', { exact: true })).toBeVisible()
+    await expect(appliedFilters.getByText('Piezo ignition: Yes', { exact: true })).toBeVisible()
+
+    await page.getByRole('button', { name: 'Filters 4' }).click()
+    await expect(brandSearchInput).toHaveValue('')
+    await expect(filterDialog.getByLabel('MSR')).toBeChecked()
+    await expect(showAllBrandsButton).toHaveAttribute('aria-expanded', 'false')
+
+    await filterDialog.getByLabel('Alpkit').check()
+    await expect(filterDialog.getByRole('button', { name: 'Reset changes' })).toHaveCount(0)
+    await closeButton.click()
+    await expectRouteSearch(page, appliedSearch)
+
+    const itemsBeforeRemove = tracker.items.length
+
+    await appliedFilters.getByRole('button', { name: 'Remove Fuel type: Canister filter' }).click()
+    await waitForNextItemsRequest(tracker, itemsBeforeRemove)
+
+    const removedSearch = buildRouteSearch([
+      ['category', 'stoves'],
+      ['brand', 'msr'],
+      ['number', 'weight:80:100'],
+      ['boolean', 'piezo-ignition:true']
+    ])
+
+    await expectRouteSearch(page, removedSearch)
+    await expect(appliedFilters.getByRole('button')).toHaveCount(3)
+    await expect(appliedFilters.getByRole('button', {
+      name: 'Remove Piezo ignition: Yes filter'
+    })).toBeFocused()
+
+    await page.getByRole('button', { name: 'Filters 3' }).click()
+    await expect(brandSearchInput).toHaveValue('')
+    await expect(filterDialog.getByLabel('MSR')).toBeChecked()
+    await expect(fuelGroup.getByLabel('Canister')).not.toBeChecked()
+    await closeButton.click()
+
+    await page.goBack()
+    await expectRouteSearch(page, appliedSearch)
+    await expect(appliedFilters.getByRole('button')).toHaveCount(4)
+
+    await page.getByRole('button', { name: 'Filters 4' }).click()
+    await expect(fuelGroup.getByLabel('Canister')).toBeChecked()
+    await closeButton.click()
+
+    const itemsBeforeRemoveLast = tracker.items.length
+
+    await appliedFilters.getByRole('button', {
+      name: 'Remove Piezo ignition: Yes filter'
+    }).click()
+    await waitForNextItemsRequest(tracker, itemsBeforeRemoveLast)
+    await expect(appliedFilters.getByRole('button')).toHaveCount(3)
+    await expect(appliedFilters.getByRole('button', {
+      name: 'Remove Fuel type: Canister filter'
+    })).toBeFocused()
+
+    const itemsBeforeClearAll = tracker.items.length
+
+    await page.getByRole('button', { name: 'Clear all' }).click()
+    await waitForNextItemsRequest(tracker, itemsBeforeClearAll)
+    await page.waitForTimeout(100)
+    expect(tracker.items).toHaveLength(itemsBeforeClearAll + 1)
+    await expectRouteSearch(page, '?category=stoves')
+    await expect(appliedFilters).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Filters' })).toBeFocused()
+  })
+
+  test('should keep mobile filter drafts isolated and apply cleared filters immediately', async ({ context, page }) => {
+    await page.setViewportSize({
+      width: 390,
+      height: 844
+    })
+
+    const tracker = await mockCatalogApi(context)
+
+    await openGearLibrary(page)
+
+    const categorySelect = page.getByLabel('Category')
+    const itemsBeforeCategory = tracker.items.length
+
+    await categorySelect.selectOption('stoves')
+    await waitForNextItemsRequest(tracker, itemsBeforeCategory)
+
+    const filtersButton = page.getByRole('button', { name: 'Filters' })
+
+    await filtersButton.click()
+
+    const filterDialog = page.getByRole('dialog', { name: 'Filters' })
+    const brandSearchInput = filterDialog.getByRole('searchbox', { name: 'Search brands' })
+    const msrCheckbox = filterDialog.getByLabel('MSR')
+    const showAllButton = filterDialog.getByRole('button', { name: 'Show all 12 brands' })
+    const filterTitle = filterDialog.getByRole('heading', { name: 'Filters' })
+    const applyButton = filterDialog.getByRole('button', { name: 'Apply filters' })
+    const closeButton = filterDialog.getByRole('button', { name: 'Close filters' })
+
+    await expect(filterTitle).toBeFocused()
+    await expect(closeButton).toBeVisible()
+    await expect(applyButton).toBeDisabled()
+    await expect(filterDialog.getByRole('button', { name: 'Clear filters' })).toBeDisabled()
+    await waitForBlockEndAnchoring(filterDialog, 844)
+
+    const filterDialogBox = await getElementBox(filterDialog)
+    const titleBoxBeforeScroll = await getElementBox(filterTitle)
+    const pageScrollBeforeBottomSheetScroll = await page.evaluate(() => globalThis.scrollY)
+
+    expect(filterDialogBox.x).toBeCloseTo(0)
+    expect(filterDialogBox.width).toBeCloseTo(390)
+    expect(filterDialogBox.height).toBeCloseTo(844 * 0.9, 0)
+    expect(filterDialogBox.y + filterDialogBox.height).toBeCloseTo(844, 0)
+
+    await brandSearchInput.fill('msr')
+
+    const narrowedFilterDialogBox = await getElementBox(filterDialog)
+
+    expect(narrowedFilterDialogBox.height).toBeCloseTo(filterDialogBox.height, 0)
+
+    await filterDialog.getByRole('button', { name: 'Clear brand search' }).click()
+
+    const restoredFilterDialogBox = await getElementBox(filterDialog)
+
+    expect(restoredFilterDialogBox.height).toBeCloseTo(filterDialogBox.height, 0)
+
+    await filterDialog.evaluate((element) => {
+      element.scrollTop = element.scrollHeight
+    })
+
+    const titleBoxAfterScroll = await getElementBox(filterTitle)
+    const applyButtonBox = await getElementBox(applyButton)
+    const pageScrollAfterBottomSheetScroll = await page.evaluate(() => globalThis.scrollY)
+
+    expect(titleBoxAfterScroll.y).toBeCloseTo(titleBoxBeforeScroll.y, 0)
+    expect(applyButtonBox.y + applyButtonBox.height).toBeLessThanOrEqual(844)
+    expect(pageScrollAfterBottomSheetScroll).toBe(pageScrollBeforeBottomSheetScroll)
+
+    await test.step('discard a cancelled draft and reset the brand view', async () => {
+      await expect(filterDialog).toBeVisible()
+      await expect(showAllButton).toHaveAttribute('aria-expanded', 'false')
+
+      await brandSearchInput.fill('msr')
+      await msrCheckbox.check()
+      await expect(filterDialog.getByText('1 selected', { exact: true })).toBeVisible()
+
+      await closeButton.click()
+      await expect(filterDialog).not.toBeVisible()
+      await expectRouteSearch(page, '?category=stoves')
+
+      await filtersButton.click()
+      await expect(brandSearchInput).toHaveValue('')
+      await expect(showAllButton).toHaveAttribute('aria-expanded', 'false')
+      await expect(msrCheckbox).toHaveCount(0)
+    })
+
+    await test.step('apply a searched brand and reset the next dialog view', async () => {
+      await brandSearchInput.fill('MSR')
+      await msrCheckbox.check()
+
+      const itemsBeforeApply = tracker.items.length
+
+      await filterDialog.getByRole('button', { name: 'Apply filters' }).click()
+      await waitForNextItemsRequest(tracker, itemsBeforeApply)
+      await page.waitForTimeout(100)
+      expect(tracker.items).toHaveLength(itemsBeforeApply + 1)
+      await expect(filterDialog).not.toBeVisible()
+      await expectRouteSearch(page, '?category=stoves&brand=msr')
+
+      const appliedFiltersButton = page.getByRole('button', { name: 'Filters 1' })
+
+      await expect(appliedFiltersButton).toBeVisible()
+      await appliedFiltersButton.click()
+      await expect(brandSearchInput).toHaveValue('')
+      await expect(showAllButton).toHaveAttribute('aria-expanded', 'false')
+      await expect(msrCheckbox).toBeChecked()
+    })
+
+    await test.step('discard an escaped draft and reset the expanded view', async () => {
+      await msrCheckbox.uncheck()
+      await expect(filterDialog.getByRole('button', { name: 'Show fewer' }))
+        .toHaveAttribute('aria-expanded', 'true')
+
+      await brandSearchInput.fill('nemo')
+      await closeButton.focus()
+      await page.keyboard.press('Escape')
+      await expect(filterDialog).not.toBeVisible()
+      await expectRouteSearch(page, '?category=stoves&brand=msr')
+
+      await page.getByRole('button', { name: 'Filters 1' }).click()
+      await expect(brandSearchInput).toHaveValue('')
+      await expect(showAllButton).toHaveAttribute('aria-expanded', 'false')
+      await expect(msrCheckbox).toBeChecked()
+    })
+
+    await test.step('discard a backdrop-closed draft and reset the search', async () => {
+      await brandSearchInput.fill('nemo')
+      await filterDialog.getByLabel('NEMO').check()
+      await page.mouse.click(1, 1)
+      await expect(filterDialog).not.toBeVisible()
+      await expectRouteSearch(page, '?category=stoves&brand=msr')
+
+      await page.getByRole('button', { name: 'Filters 1' }).click()
+      await expect(brandSearchInput).toHaveValue('')
+      await expect(showAllButton).toHaveAttribute('aria-expanded', 'false')
+      await expect(msrCheckbox).toBeChecked()
+      await expect(filterDialog.getByLabel('NEMO')).toHaveCount(0)
+    })
+
+    await test.step('clear and apply the empty state in one action', async () => {
+      await brandSearchInput.fill('msr')
+
+      const itemsBeforeClear = tracker.items.length
+
+      await filterDialog.getByRole('button', { name: 'Clear filters' }).click()
+      await waitForNextItemsRequest(tracker, itemsBeforeClear)
+      await page.waitForTimeout(100)
+      expect(tracker.items).toHaveLength(itemsBeforeClear + 1)
+      await expectRouteSearch(page, '?category=stoves')
+      await expect(filterDialog).not.toBeVisible()
+
+      await page.goBack()
+      await expectRouteSearch(page, '?category=stoves&brand=msr')
+
+      await page.getByRole('button', { name: 'Filters 1' }).click()
+      await expect(brandSearchInput).toHaveValue('')
+      await expect(showAllButton).toHaveAttribute('aria-expanded', 'false')
+      await brandSearchInput.fill('msr')
+      await expect(msrCheckbox).toBeChecked()
+    })
   })
 
   test('should abort stale category requests when the selection changes', async ({ context, page }) => {
@@ -878,7 +2081,8 @@ test.describe('Gear library page', () => {
 
     await expect(page.getByRole('link', { name: 'NeoAir XLite NXT' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'PocketRocket Deluxe' })).toHaveCount(0)
-    await expect(page.getByLabel('Sort by').getByRole('option', { name: 'R-value' })).toHaveCount(1)
+    await expect(page.getByLabel('Sort by').getByRole('option', { name: 'R-value: Low to high' }))
+      .toHaveCount(1)
   })
 
   test('should keep pagination local and drop unsupported query keys on the next legitimate write', async ({ context, page }) => {
@@ -921,7 +2125,7 @@ test.describe('Gear library page', () => {
 
     const itemsBeforeSort = tracker.items.length
 
-    await page.getByLabel('Sort by').selectOption('brand')
+    await page.getByLabel('Sort by').selectOption('brand:asc')
 
     const sortedRequest = await waitForNextItemsRequest(tracker, itemsBeforeSort)
 
@@ -1022,7 +2226,7 @@ test.describe('Gear library page', () => {
     categoryDetailGate.resolve()
 
     await expect(sortSelect).toBeEnabled()
-    await expect(sortSelect.getByRole('option', { name: 'Weight (g)' })).toHaveCount(1)
+    await expect(sortSelect.getByRole('option', { name: 'Weight (g): Low to high' })).toHaveCount(1)
   })
 
   test('should expose the initial loading state and recover from an initial items failure', async ({ context, page }) => {
@@ -1047,6 +2251,7 @@ test.describe('Gear library page', () => {
 
     const initialProgress = page.getByTestId('gear-library-initial-progress')
     const resultsSkeleton = page.getByTestId('gear-library-results-skeleton')
+    const resultsSkeletonRow = page.getByTestId('gear-library-results-skeleton-row')
 
     await expect(initialProgress).toBeVisible()
     await expect(resultsSkeleton).toBeVisible()
@@ -1054,9 +2259,10 @@ test.describe('Gear library page', () => {
 
     const initialProgressBox = await getElementBox(initialProgress)
     const resultsSkeletonBox = await getElementBox(resultsSkeleton)
+    const resultsSkeletonRowBox = await getElementBox(resultsSkeletonRow)
 
     expect(initialProgressBox.height).toBeLessThanOrEqual(2)
-    expect(resultsSkeletonBox.height).toBeLessThan(240)
+    expect(resultsSkeletonBox.height).toBeCloseTo(resultsSkeletonRowBox.height, 0)
 
     initialRequestGate.resolve()
 
@@ -1071,7 +2277,18 @@ test.describe('Gear library page', () => {
 
     await page.getByRole('button', { name: 'Retry' }).click()
     await waitForNextItemsRequest(tracker, itemsBeforeRetry)
+
+    const resultsBody = page.getByTestId('gear-library-results-body')
+    const firstResultRow = resultsBody.getByRole('list').getByRole('listitem').first()
+
     await expect(page.getByRole('link', { name: 'PocketRocket Deluxe' })).toBeVisible()
+
+    const firstResultRowBox = await getElementBox(firstResultRow)
+    const verticalShift = Math.abs(firstResultRowBox.y - resultsSkeletonRowBox.y)
+    const heightDifference = Math.abs(firstResultRowBox.height - resultsSkeletonRowBox.height)
+
+    expect(verticalShift).toBeLessThanOrEqual(4)
+    expect(heightDifference).toBeLessThanOrEqual(1)
   })
 
   test('should preserve rendered rows through refresh and recover from a refresh failure', async ({ context, page }) => {
@@ -1178,6 +2395,174 @@ test.describe('Gear library page', () => {
     await expect(page.getByTestId('gear-library-refresh-progress')).toBeHidden()
   })
 
+  test('should keep cached category metadata usable when revalidation fails', async ({ context, page }) => {
+    const categoriesState: MutableResponseState = {
+      response: { json: categoriesResponse }
+    }
+
+    const categoryDetailState: MutableResponseState = {
+      response: { json: stovesCategoryResponse }
+    }
+
+    await mockCatalogApi(context, {
+      categories: respondFromState(categoriesState),
+      categoryDetail: respondFromState(categoryDetailState)
+    })
+
+    await openGearLibrary(page, '/gear-library?category=stoves')
+
+    const initialSortSelect = page.getByLabel('Sort by')
+
+    await expect(initialSortSelect.getByRole('option', { name: 'Weight (g): Low to high' }))
+      .toHaveCount(1)
+
+    await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Home' }).click()
+    await expect.poll(() => new globalThis.URL(page.url()).pathname).toBe('/')
+
+    categoriesState.response = serverErrorResponse
+    categoryDetailState.response = serverErrorResponse
+
+    const categoriesFailurePromise = page.waitForResponse('**/api/equipment/categories')
+
+    await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Gear library' }).click()
+    await expect.poll(() => new globalThis.URL(page.url()).pathname).toBe('/gear-library')
+
+    const categoriesFailure = await categoriesFailurePromise
+
+    expect(categoriesFailure.status()).toBe(500)
+
+    const categorySelect = page.getByLabel('Category')
+    const categoriesAlert = page.getByRole('alert').filter({ hasText: 'Categories unavailable.' })
+
+    await expect(categorySelect).toBeEnabled()
+    await expect(categorySelect.getByRole('option', { name: 'Stoves' })).toHaveCount(1)
+    await expect(categoriesAlert).toHaveCount(0)
+
+    const categoryDetailFailurePromise = page.waitForResponse(
+      '**/api/equipment/categories/by-slug/stoves'
+    )
+
+    await categorySelect.selectOption('stoves')
+
+    const categoryDetailFailure = await categoryDetailFailurePromise
+
+    expect(categoryDetailFailure.status()).toBe(500)
+
+    const sortSelect = page.getByLabel('Sort by')
+    const categoryDetailAlert = page.getByRole('alert').filter({
+      hasText: 'Category filters and property sorting unavailable.'
+    })
+
+    await expect(sortSelect).toBeEnabled()
+    await expect(sortSelect.getByRole('option', { name: 'Weight (g): Low to high' })).toHaveCount(1)
+    await expect(categoryDetailAlert).toHaveCount(0)
+
+    const filterDialog = await openFilterDialog(page)
+
+    await expect(filterDialog.getByRole('group', { name: 'Weight (g)' })).toBeVisible()
+    await expect(filterDialog.getByRole('alert').filter({
+      hasText: 'Category filters unavailable.'
+    })).toHaveCount(0)
+  })
+
+  test('should retry brands after their initial request fails', async ({ context, page }) => {
+    const brandsState: MutableResponseState = {
+      response: serverErrorResponse
+    }
+
+    const tracker = await mockCatalogApi(context, {
+      brands: respondFromState(brandsState)
+    })
+
+    await openGearLibrary(page)
+
+    const filterDialog = await openFilterDialog(page)
+    const brandsAlert = filterDialog.getByRole('alert').filter({ hasText: 'Brands unavailable.' })
+
+    await expect(brandsAlert).toBeVisible()
+
+    const brandsBeforeRetry = tracker.brands.length
+
+    brandsState.response = { json: brandsResponse }
+
+    const brandsRetryPromise = page.waitForResponse('**/api/equipment/brands')
+
+    await brandsAlert.getByRole('button', { name: 'Retry' }).click()
+
+    const brandsRetryResponse = await brandsRetryPromise
+
+    expect(brandsRetryResponse.status()).toBe(200)
+    await expect.poll(() => tracker.brands.length).toBeGreaterThan(brandsBeforeRetry)
+    await expect(brandsAlert).toHaveCount(0)
+    await expect(filterDialog.getByLabel('Alpkit')).toBeVisible()
+    await expect(filterDialog.getByRole('button', { name: 'Show all 12 brands' })).toBeVisible()
+  })
+
+  test('should let users clear a selected category while category metadata is unavailable', async ({ context, page }) => {
+    const tracker = await mockCatalogApi(context, {
+      categories: () => serverErrorResponse
+    })
+
+    await openGearLibrary(page, '/gear-library?category=stoves')
+
+    const categorySelect = page.getByLabel('Category')
+    const currentCategoryOption = categorySelect.getByRole('option', {
+      name: 'Stoves (current selection)'
+    })
+
+    await expect(page.getByRole('alert').filter({ hasText: 'Categories unavailable.' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'PocketRocket Deluxe' })).toBeVisible()
+    await expect(categorySelect).toBeEnabled()
+    await expect(categorySelect).toHaveValue('stoves')
+    await expect(currentCategoryOption).toBeDisabled()
+
+    const itemsBeforeClear = tracker.items.length
+
+    await categorySelect.selectOption('')
+
+    const clearedRequest = await waitForNextItemsRequest(tracker, itemsBeforeClear)
+
+    await expectRouteSearch(page, '')
+    await expect(categorySelect).toBeDisabled()
+    expect(clearedRequest.searchParams.get('categorySlug')).toBeNull()
+  })
+
+  test('should keep base ordering usable while property sorting metadata is unavailable', async ({ context, page }) => {
+    const tracker = await mockCatalogApi(context, {
+      categoryDetail: () => serverErrorResponse
+    })
+
+    const route = '/gear-library?category=stoves&sort=property%3Aweight&direction=desc'
+
+    await openGearLibrary(page, route)
+
+    const orderingSelect = page.getByLabel('Sort by')
+    const unavailableOrderingOption = orderingSelect.getByRole('option', {
+      name: 'Current property sorting unavailable'
+    })
+
+    await expect(page.getByRole('alert').filter({
+      hasText: 'Category filters and property sorting unavailable.'
+    })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'PocketRocket Deluxe' })).toBeVisible()
+    await expect(orderingSelect).toBeEnabled()
+    await expect(orderingSelect).toHaveValue('property:weight:desc')
+    await expect(unavailableOrderingOption).toBeDisabled()
+
+    const itemsBeforeOrdering = tracker.items.length
+
+    await orderingSelect.selectOption('brand:desc')
+
+    const orderedRequest = await waitForNextItemsRequest(tracker, itemsBeforeOrdering)
+
+    await expectRouteSearch(page, '?category=stoves&sort=brand&direction=desc')
+    expectQueryValues(orderedRequest, {
+      categorySlug: 'stoves',
+      direction: 'desc',
+      sort: 'brand'
+    })
+  })
+
   test('should keep results usable while category requests fail and retry each request independently', async ({ context, page }) => {
     const categoriesState: MutableResponseState = {
       response: serverErrorResponse
@@ -1212,7 +2597,8 @@ test.describe('Gear library page', () => {
     await expect(categorySelect.getByRole('option', { name: 'Stoves' })).toHaveCount(1)
     await categorySelect.selectOption('stoves')
 
-    const propertySortAlert = page.getByRole('alert').filter({ hasText: 'Property sorting unavailable.' })
+    const propertySortAlert = page.getByRole('alert')
+      .filter({ hasText: 'Category filters and property sorting unavailable.' })
 
     await expect(propertySortAlert).toBeVisible()
     await expect(itemLink).toBeVisible()
@@ -1224,6 +2610,7 @@ test.describe('Gear library page', () => {
     await propertySortAlert.getByRole('button', { name: 'Retry' }).click()
     await expect.poll(() => tracker.categoryDetails.length).toBeGreaterThan(categoryDetailsBeforeRetry)
 
-    await expect(page.getByLabel('Sort by').getByRole('option', { name: 'Weight (g)' })).toHaveCount(1)
+    await expect(page.getByLabel('Sort by').getByRole('option', { name: 'Weight (g): Low to high' }))
+      .toHaveCount(1)
   })
 })

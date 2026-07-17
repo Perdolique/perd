@@ -5,12 +5,10 @@
     data-testid="gear-library-results-skeleton"
     aria-hidden="true"
   >
-    <div :class="$style.summary">
-      <span :class="$style.summaryLabel" />
-      <span :class="$style.summaryValue" />
-    </div>
-
-    <div :class="$style.listShell">
+    <div
+      :class="$style.listShell"
+      data-testid="gear-library-results-skeleton-row"
+    >
       <div :class="$style.row">
         <span :class="$style.media" />
 
@@ -60,7 +58,6 @@
 
   .component {
     display: grid;
-    gap: var(--spacing-24);
     opacity: 1;
     transition: opacity var(--transition-duration-fast) var(--transition-easing-standard);
     container-type: inline-size;
@@ -70,15 +67,6 @@
     }
   }
 
-  .summary {
-    display: grid;
-    align-content: start;
-    gap: var(--spacing-8);
-    block-size: 2.75rem;
-  }
-
-  .summaryLabel,
-  .summaryValue,
   .media,
   .brand,
   .name,
@@ -104,21 +92,11 @@
     }
   }
 
-  .summaryLabel {
-    inline-size: 4rem;
-    block-size: var(--font-size-12);
-  }
-
-  .summaryValue {
-    inline-size: 6rem;
-    block-size: var(--font-size-24);
-  }
-
   .listShell {
-    block-size: 9.5rem;
+    block-size: 8.75rem;
     overflow: clip;
     border: 1px solid var(--color-border-subtle);
-    border-radius: var(--border-radius-24);
+    border-radius: var(--border-radius-16);
     background-color: var(--color-surface-primary);
 
     @container (inline-size >= 44rem) {
@@ -133,15 +111,14 @@
       "media identity"
       "properties properties";
     align-items: start;
-    gap: var(--spacing-16);
+    gap: var(--spacing-12);
     block-size: 100%;
-    padding: var(--spacing-16);
+    padding: var(--spacing-12) var(--spacing-16);
 
     @container (inline-size >= 44rem) {
       grid-template-columns: 3rem minmax(10rem, 0.7fr) minmax(0, 1fr);
       grid-template-areas: "media identity properties";
       align-items: center;
-      padding: var(--spacing-20) var(--spacing-24);
     }
   }
 
@@ -178,17 +155,29 @@
     grid-area: properties;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--spacing-8);
+    grid-template-rows: auto auto;
+    align-items: start;
+    row-gap: var(--spacing-4);
   }
 
   .property {
     display: grid;
+    grid-row: span 2;
+    grid-template-rows: subgrid;
     align-content: start;
-    gap: var(--spacing-4);
-    min-block-size: 3.5rem;
-    padding: var(--spacing-12);
-    border-radius: var(--border-radius-12);
-    background-color: var(--color-surface-secondary);
+    min-inline-size: 0;
+    padding-inline: var(--spacing-12);
+    border-inline-start: 1px solid var(--color-border-subtle);
+
+    &:first-child {
+      border-inline-start-width: 0;
+    }
+
+    @container (inline-size >= 44rem) {
+      &:first-child {
+        border-inline-start-width: 1px;
+      }
+    }
   }
 
   .propertyName {
@@ -202,8 +191,6 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .summaryLabel,
-    .summaryValue,
     .media,
     .brand,
     .name,

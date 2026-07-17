@@ -1,6 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import { buildCategoryPropertySeedRows } from '../seed-catalog'
-import { propertyDefinitionsByCategorySlug } from '../seed-data'
+import {
+  propertyDefinitionsByCategorySlug,
+  sampleItems
+} from '../seed-data'
+
+describe('catalog sample data', () => {
+  it('should seed exactly 50 uniquely named catalog items', () => {
+    const uniqueItemNames = new Set(sampleItems.map((item) => item.name))
+
+    expect(sampleItems).toHaveLength(50)
+    expect(uniqueItemNames.size).toBe(50)
+  })
+})
 
 describe(buildCategoryPropertySeedRows, () => {
   it('should derive zero-based display order from each category definition array', () => {

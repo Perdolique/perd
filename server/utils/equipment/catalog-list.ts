@@ -194,11 +194,11 @@ function addNumberConditions(
     const valueConditions: SQL[] = []
 
     if (filter.min !== null) {
-      valueConditions.push(gte(filterValues.valueNumber, String(filter.min)))
+      valueConditions.push(gte(filterValues.valueNumber, filter.min))
     }
 
     if (filter.max !== null) {
-      valueConditions.push(lte(filterValues.valueNumber, String(filter.max)))
+      valueConditions.push(lte(filterValues.valueNumber, filter.max))
     }
 
     conditions.push(createPropertyExistsCondition(property.id, valueConditions))

@@ -8,6 +8,11 @@ import type {
 type GearLibrarySort = 'name' | 'brand' | `property:${string}`
 type GearLibraryDirection = 'asc' | 'desc'
 
+interface GearLibraryOrdering {
+  direction: GearLibraryDirection;
+  sort: GearLibrarySort;
+}
+
 interface GearLibraryRouteState {
   q: string;
   category?: string;
@@ -264,6 +269,7 @@ function isGearLibraryRouteQueryCanonical(query: LocationQuery) {
 export type {
   GearLibraryDirection,
   GearLibraryItemsApiQuery,
+  GearLibraryOrdering,
   GearLibraryRouteState,
   GearLibrarySort
 }

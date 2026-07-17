@@ -15,12 +15,13 @@ interface CachedGearLibraryItems extends GearLibraryItemsSnapshot {
 }
 
 interface GearLibraryCacheState {
+  brands?: GearLibraryEntityDetail[];
   categories?: GearLibraryEntityDetail[];
   categoryDetails: CategoryDetailResponse[];
   items?: CachedGearLibraryItems;
 }
 
-/** Keeps category data and the latest items response for this app session. */
+/** Keeps filter reference data and the latest items response for this app session. */
 function useGearLibraryCache() {
   const cache = useState<GearLibraryCacheState>('gear-library-cache', () => {
     return {
@@ -30,6 +31,10 @@ function useGearLibraryCache() {
 
   function getCategories() {
     return cache.value.categories
+  }
+
+  function getBrands() {
+    return cache.value.brands
   }
 
   function getCategoryDetail(slug: string) {
@@ -48,6 +53,10 @@ function useGearLibraryCache() {
 
   function storeCategories(categories: GearLibraryEntityDetail[]) {
     cache.value.categories = categories
+  }
+
+  function storeBrands(brands: GearLibraryEntityDetail[]) {
+    cache.value.brands = brands
   }
 
   function storeCategoryDetail(categoryDetail: CategoryDetailResponse) {
@@ -71,9 +80,11 @@ function useGearLibraryCache() {
   }
 
   return {
+    getBrands,
     getCategories,
     getCategoryDetail,
     getItemsSnapshot,
+    storeBrands,
     storeCategories,
     storeCategoryDetail,
     storeItemsSnapshot

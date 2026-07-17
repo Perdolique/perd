@@ -80,12 +80,14 @@ function createJoinChain(terminal: object) {
 function createListDb({
   categoryMetadata,
   definitions = [],
+  enumOptions = [],
   items = [],
   total = 0,
   values = []
 }: {
   categoryMetadata?: unknown;
   definitions?: unknown[];
+  enumOptions?: unknown[];
   items?: unknown[];
   total?: number;
   values?: unknown[];
@@ -113,6 +115,13 @@ function createListDb({
   const definitionsFromMock = vi.fn(() => {
     return { where: definitionsWhereMock }
   })
+  const enumOptionsWhereMock = vi.fn(() => enumOptions)
+  const enumOptionsInnerJoinMock = vi.fn(() => {
+    return { where: enumOptionsWhereMock }
+  })
+  const enumOptionsFromMock = vi.fn(() => {
+    return { innerJoin: enumOptionsInnerJoinMock }
+  })
   const valuesWhereMock = vi.fn(() => values)
   const valuesFromMock = vi.fn(() => {
     return { where: valuesWhereMock }
@@ -129,6 +138,10 @@ function createListDb({
 
     if ('itemId' in selection) {
       return { from: valuesFromMock }
+    }
+
+    if ('propertyId' in selection) {
+      return { from: enumOptionsFromMock }
     }
 
     return { from: itemsFromMock }
@@ -202,11 +215,15 @@ describe('get /api/equipment/items', () => {
       { categoryId: 2, dataType: 'text', displayOrder: 3, id: 13, name: 'Notes', slug: 'notes', unit: null },
       { categoryId: 3, dataType: 'number', displayOrder: 0, id: 20, name: 'Volume', slug: 'volume', unit: 'ml' }
     ]
+    const enumOptions = [
+      { name: 'Liquid fuel', propertyId: 11, slug: 'liquid-fuel' }
+    ]
     const values = [
       { itemId: id, propertyId: 10, valueBoolean: null, valueNumber: '83', valueText: null },
-      { itemId: id, propertyId: 12, valueBoolean: true, valueNumber: null, valueText: null }
+      { itemId: id, propertyId: 12, valueBoolean: true, valueNumber: null, valueText: null },
+      { itemId: id, propertyId: 11, valueBoolean: null, valueNumber: null, valueText: 'liquid-fuel' }
     ]
-    const db = createListDb({ definitions, items: itemRows, total: 42, values })
+    const db = createListDb({ definitions, enumOptions, items: itemRows, total: 42, values })
     const event = createTestEvent(db.dbHttp)
 
     getValidatedQueryMock.mockResolvedValue(createQuery({ limit: 10, page: 2 }))
@@ -223,7 +240,14 @@ describe('get /api/equipment/items', () => {
         properties: [
           { dataType: 'number', name: 'Weight', slug: 'weight', unit: 'g', value: 83 },
           { dataType: 'boolean', name: 'Piezo', slug: 'piezo', unit: null, value: true },
-          { dataType: 'enum', name: 'Fuel', slug: 'fuel', unit: null, value: null }
+          {
+            dataType: 'enum',
+            enumOptionName: 'Liquid fuel',
+            name: 'Fuel',
+            slug: 'fuel',
+            unit: null,
+            value: 'liquid-fuel'
+          }
         ]
       }, {
         id: secondId,
@@ -249,8 +273,37 @@ describe('get /api/equipment/items', () => {
       '"category_properties"."displayOrder" asc',
       '"category_properties"."id" asc'
     ])
-    expect(db.selectMock).toHaveBeenCalledTimes(4)
+    expect(db.selectMock).toHaveBeenCalledTimes(5)
     expect(db.countWhereMock.mock.calls[0]?.[0]).toBe(db.itemsWhereMock.mock.calls[0]?.[0])
+  })
+
+  it('should preserve an enum slug when its display name is unavailable', async () => {
+    const id = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+    const itemRows = [{
+      categoryId: 2,
+      id,
+      name: 'PocketRocket Deluxe',
+      brand: { name: 'MSR', slug: 'msr' },
+      category: { name: 'Stoves', slug: 'stoves' }
+    }]
+    const definitions = [
+      { categoryId: 2, dataType: 'enum', displayOrder: 0, id: 11, name: 'Fuel', slug: 'fuel', unit: null }
+    ]
+    const values = [
+      { itemId: id, propertyId: 11, valueBoolean: null, valueNumber: null, valueText: 'legacy-fuel' }
+    ]
+    const db = createListDb({ definitions, items: itemRows, values })
+    const event = createTestEvent(db.dbHttp)
+
+    const result = await listItemsHandler(event)
+
+    expect(result.items[0]?.properties).toStrictEqual([{
+      dataType: 'enum',
+      name: 'Fuel',
+      slug: 'fuel',
+      unit: null,
+      value: 'legacy-fuel'
+    }])
   })
 
   it('should compile grouped search, brand, enum, numeric, and boolean predicates', async () => {
@@ -263,7 +316,11 @@ describe('get /api/equipment/items', () => {
         { optionSlug: 'canister', propertySlug: 'fuel' },
         { optionSlug: 'alcohol', propertySlug: 'fuel' }
       ],
-      numberFilter: [{ max: 100, min: 80, propertySlug: 'weight' }],
+      numberFilter: [{
+        max: '9007199254740993',
+        min: '0.10000000000000001',
+        propertySlug: 'weight'
+      }],
       search: String.raw`Neo\%_`
     })
 
@@ -285,8 +342,8 @@ describe('get /api/equipment/items', () => {
       'therm-a-rest',
       escapedSearch,
       10,
-      '80',
-      '100',
+      '0.10000000000000001',
+      '9007199254740993',
       11,
       'canister',
       'alcohol',
@@ -356,9 +413,9 @@ describe('get /api/equipment/items', () => {
   })
 
   it.each([
-    ['unknown category', undefined, createQuery({ categorySlug: 'unknown', numberFilter: [{ min: 1, max: null, propertySlug: 'weight' }] })],
-    ['wrong data type', createCategoryMetadata(), createQuery({ categorySlug: 'stoves', numberFilter: [{ min: 1, max: null, propertySlug: 'fuel' }] })],
-    ['unknown property', createCategoryMetadata(), createQuery({ categorySlug: 'stoves', numberFilter: [{ min: 1, max: null, propertySlug: 'capacity' }] })],
+    ['unknown category', undefined, createQuery({ categorySlug: 'unknown', numberFilter: [{ min: '1', max: null, propertySlug: 'weight' }] })],
+    ['wrong data type', createCategoryMetadata(), createQuery({ categorySlug: 'stoves', numberFilter: [{ min: '1', max: null, propertySlug: 'fuel' }] })],
+    ['unknown property', createCategoryMetadata(), createQuery({ categorySlug: 'stoves', numberFilter: [{ min: '1', max: null, propertySlug: 'capacity' }] })],
     ['unknown enum option', createCategoryMetadata(), createQuery({ categorySlug: 'stoves', enumFilter: [{ optionSlug: 'gasoline', propertySlug: 'fuel' }] })],
     ['non-numeric property sort', createCategoryMetadata(), createQuery({ categorySlug: 'stoves', sort: 'property:fuel' })]
   ])('should reject %s metadata', async (_name, categoryMetadata, query) => {

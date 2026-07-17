@@ -13,6 +13,10 @@
         Open bottom sheet
       </PerdButton>
 
+      <PerdButton @click="openSideSheet">
+        Open side sheet
+      </PerdButton>
+
       <PerdButton @click="openLongBottomSheet">
         Open long bottom sheet
       </PerdButton>
@@ -33,6 +37,28 @@
 
         <PerdButton @click="closeCenteredDialog">
           Close centered dialog
+        </PerdButton>
+      </section>
+    </ModalDialog>
+
+    <ModalDialog
+      v-model="sideSheetOpened"
+      aria-labelledby="side-sheet-title"
+      desktop-presentation="side-sheet"
+    >
+      <section :class="$style.sideSheetSurface">
+        <h2 id="side-sheet-title" tabindex="-1" autofocus>
+          Side sheet
+        </h2>
+
+        <label for="side-sheet-filter">
+          Side filter name
+        </label>
+
+        <input id="side-sheet-filter" :class="$style.input" name="side-filter">
+
+        <PerdButton @click="closeSideSheet">
+          Close side sheet
         </PerdButton>
       </section>
     </ModalDialog>
@@ -119,6 +145,7 @@
 
   const centeredOpened = ref(false)
   const bottomSheetOpened = ref(false)
+  const sideSheetOpened = ref(false)
   const longBottomSheetOpened = ref(false)
   const lockedBottomSheetOpened = ref(false)
 
@@ -136,6 +163,14 @@
 
   function closeBottomSheet() {
     bottomSheetOpened.value = false
+  }
+
+  function openSideSheet() {
+    sideSheetOpened.value = true
+  }
+
+  function closeSideSheet() {
+    sideSheetOpened.value = false
   }
 
   function openLongBottomSheet() {
@@ -176,7 +211,8 @@
   }
 
   .centeredSurface,
-  .sheetSurface {
+  .sheetSurface,
+  .sideSheetSurface {
     display: grid;
     gap: var(--spacing-16);
     inline-size: min(100vw - var(--spacing-32), 30rem);
@@ -198,6 +234,14 @@
       border-radius: inherit;
       box-shadow: none;
     }
+  }
+
+  .sideSheetSurface {
+    min-block-size: 100%;
+    inline-size: 100%;
+    border: none;
+    border-radius: inherit;
+    box-shadow: none;
   }
 
   .input {

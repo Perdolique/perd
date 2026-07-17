@@ -16,15 +16,13 @@
       </template>
     </PagePlaceholder>
 
-    <div v-else :class="$style.listShell">
-      <ul :class="$style.list">
-        <GearLibraryItemRow
-          v-for="item in items"
-          :key="item.id"
-          :item="item"
-        />
-      </ul>
-    </div>
+    <ul v-else :class="$style.list" role="list">
+      <GearLibraryItemRow
+        v-for="item in items"
+        :key="item.id"
+        :item="item"
+      />
+    </ul>
   </div>
 </template>
 
@@ -54,15 +52,9 @@
     display: grid;
   }
 
-  .listShell {
-    overflow: clip;
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--border-radius-24);
-    background-color: var(--color-surface-primary);
-  }
-
   .list {
     display: grid;
+    gap: var(--spacing-8);
     padding: 0;
     list-style: none;
   }

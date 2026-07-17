@@ -15,13 +15,14 @@
         type="search"
         autocomplete="off"
         enterkeyhint="search"
+        @keydown="emit('keydown', $event)"
       >
 
       <button
         type="button"
         :class="$style.clearButton"
         :hidden="isClearButtonHidden"
-        aria-label="Clear search"
+        :aria-label="clearLabel"
         @click="clear"
       >
         <Icon
@@ -38,16 +39,23 @@
   import { computed, nextTick, useId, useTemplateRef } from 'vue'
 
   interface Props {
+    clearLabel?: string;
     label: string;
     name: string;
     placeholder: string;
   }
 
+  interface Emits {
+    keydown: [event: KeyboardEvent];
+  }
+
   const {
+    clearLabel = 'Clear search',
     label,
     name,
     placeholder
   } = defineProps<Props>()
+  const emit = defineEmits<Emits>()
 
   const value = defineModel<string>({
     required: true
@@ -108,7 +116,8 @@
     &:focus-visible {
       border-color: var(--color-accent-primary);
       box-shadow: var(--shadow-focus);
-      outline: none;
+      outline: 2px solid var(--color-accent-primary);
+      outline-offset: 2px;
     }
 
     &::-webkit-search-cancel-button {
@@ -148,8 +157,9 @@
     &:focus-visible {
       background-color: var(--color-surface-tertiary);
       color: var(--color-text-primary);
-      outline: none;
       box-shadow: var(--shadow-focus);
+      outline: 2px solid var(--color-accent-primary);
+      outline-offset: 2px;
     }
 
     &[hidden] {
@@ -168,5 +178,13 @@
 
   .clearIcon {
     font-size: var(--font-size-20);
+  }
+
+  @media (forced-colors: active) {
+    .input:focus,
+    .clearButton:focus {
+      outline: 2px solid Highlight;
+      outline-offset: 2px;
+    }
   }
 </style>

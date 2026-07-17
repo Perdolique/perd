@@ -16,9 +16,11 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
   const requestFetch = useRequestFetch()
 
   const {
+    getBrands,
     getCategories,
     getCategoryDetail,
     getItemsSnapshot,
+    storeBrands,
     storeCategories,
     storeCategoryDetail,
     storeItemsSnapshot
@@ -32,6 +34,7 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
     return getCategoryDetail(slug) ?? null
   }
 
+  const cachedBrands = getBrands()
   const cachedCategories = getCategories()
   const initialItemsSnapshot = getItemsSnapshot(options.itemsApiQuerySignature.value)
   const initialCategorySlug = options.selectedCategory.value
@@ -43,6 +46,11 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
     page: 1,
     total: 0
   }
+
+  const brandsRequest = useFetch('/api/equipment/brands', {
+    default: () => cachedBrands ?? [],
+    lazy: true
+  })
 
   const categoriesRequest = useFetch('/api/equipment/categories', {
     default: () => cachedCategories ?? [],
@@ -64,19 +72,28 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
       return null
     }
 
-    const categoryDetailPath = `/api/equipment/categories/by-slug/${categorySlug}`
+    const categoryDetailPath = `/api/equipment/categories/by-slug/${categorySlug}` as const
+    const categoryDetail = await requestFetch(categoryDetailPath, { signal })
 
-    return requestFetch<CategoryDetailResponse, string>(categoryDetailPath, { signal })
+    return categoryDetail
   }, {
     default: () => initialCategoryDetail,
     lazy: true
   })
 
-  const [categoriesAsyncData, itemsAsyncData, categoryDetailAsyncData] = await Promise.all([
+  const [brandsAsyncData, categoriesAsyncData, itemsAsyncData, categoryDetailAsyncData] = await Promise.all([
+    brandsRequest,
     categoriesRequest,
     itemsRequest,
     categoryDetailRequest
   ])
+
+  const {
+    data: brandsResponse,
+    error: brandsError,
+    refresh: refreshBrands,
+    status: brandsStatus
+  } = brandsAsyncData
 
   const {
     data: categoriesResponse,
@@ -99,6 +116,7 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
     status: categoryDetailStatus
   } = categoryDetailAsyncData
 
+  const hasBrandsData = ref(cachedBrands !== undefined || brandsStatus.value === 'success')
   const hasCategoriesData = ref(cachedCategories !== undefined || categoriesStatus.value === 'success')
 
   const hasSuccessfulItemsRequest = ref(
@@ -126,6 +144,17 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
     activeCategoryDetail.value = getCachedDetailForSlug(categorySlug)
 
     await refreshCategoryDetail()
+  })
+
+  watch(brandsStatus, (status) => {
+    if (status !== 'success') {
+      return
+    }
+
+    hasBrandsData.value = true
+    storeBrands(brandsResponse.value)
+  }, {
+    immediate: true
   })
 
   watch(categoriesStatus, (status) => {
@@ -178,17 +207,22 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
 
   return {
     activeCategoryDetail,
+    brandsError,
+    brandsResponse,
+    brandsStatus,
     categoriesError,
     categoriesResponse,
     categoriesStatus,
     categoryDetailError,
     categoryDetailStatus,
+    hasBrandsData,
     hasCategoriesData,
     hasSuccessfulItemsRequest,
     itemsError,
     itemsStatus,
     lastSuccessfulHasNarrowingState,
     lastSuccessfulItemsResponse,
+    refreshBrands,
     refreshCategories,
     refreshCategoryDetail,
     refreshItems

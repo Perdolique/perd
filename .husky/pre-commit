@@ -1,3 +1,5 @@
+set -e
+
 hook_log=$(mktemp)
 trap 'rm -f "$hook_log"' 0 HUP INT TERM
 
@@ -18,8 +20,8 @@ run_quietly() {
 	return "$status"
 }
 
-run_quietly 'Markdown lint' pnpm run lint:markdown
-run_quietly 'Oxlint' pnpm run lint:oxlint:agent
-run_quietly 'Typecheck' pnpm run test:typecheck
-run_quietly 'Unit tests' pnpm run test:unit:agent
-run_quietly 'Production build + E2E tests' pnpm run test:e2e:ci
+run_quietly 'Markdown lint' vp run lint:markdown
+run_quietly 'Oxlint' vp run lint:oxlint:agent
+run_quietly 'Typecheck' vp run test:typecheck
+run_quietly 'Unit tests' vp run test:unit:agent
+run_quietly 'Production build + E2E tests' vp run test:e2e:ci

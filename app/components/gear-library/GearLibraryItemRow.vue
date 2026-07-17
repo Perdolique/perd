@@ -11,7 +11,7 @@
         </p>
 
         <h2 :class="$style.heading">
-          <PerdLink :to="item.detailPath">
+          <PerdLink :class="$style.detailLink" :to="item.detailPath">
             {{ item.name }}
           </PerdLink>
         </h2>
@@ -42,18 +42,27 @@
 
 <script lang="ts" setup>
   import { computed } from 'vue'
-  import type { GearLibraryListItemView, ItemDisplayProperty, ItemProperty } from '~/types/equipment'
+  import type {
+    GearLibraryListItemView,
+    GearLibraryListProperty,
+    ItemDisplayProperty
+  } from '~/types/equipment'
   import PerdLink from '~/components/PerdLink.vue'
 
   interface Props {
     item: GearLibraryListItemView;
   }
 
+  const weightPropertySlug = 'weight'
   const props = defineProps<Props>()
 
-  function getPropertyDisplayValue(property: ItemProperty) {
+  function getPropertyDisplayValue(property: GearLibraryListProperty) {
     if (property.value === null) {
       return 'Not set'
+    }
+
+    if (property.dataType === 'enum' && property.enumOptionName !== undefined) {
+      return property.enumOptionName
     }
 
     if (typeof property.value === 'boolean') {
@@ -69,27 +78,53 @@
 
   const hasProperties = computed(() => props.item.properties.length > 0)
 
-  const displayProperties = computed<ItemDisplayProperty[]>(() => props.item.properties.map((property) => {
-    const displayValue = getPropertyDisplayValue(property)
+  const displayProperties = computed<ItemDisplayProperty[]>(() => {
+    const orderedProperties = props.item.properties.toSorted((left, right) => {
+      const leftPriority = left.slug === weightPropertySlug ? 0 : 1
+      const rightPriority = right.slug === weightPropertySlug ? 0 : 1
 
-    return {
-      displayValue,
-      dataType: property.dataType,
-      name: property.name,
-      slug: property.slug,
-      unit: property.unit,
-      value: property.value
-    }
-  }))
+      return leftPriority - rightPriority
+    })
+
+    return orderedProperties.map((property) => {
+      const displayValue = getPropertyDisplayValue(property)
+
+      return {
+        displayValue,
+        dataType: property.dataType,
+        name: property.name,
+        slug: property.slug,
+        unit: property.unit,
+        value: property.value
+      }
+    })
+  })
 </script>
 
 <style module>
   .component {
+    position: relative;
     container-type: inline-size;
-    border-block-end: 1px solid var(--color-border-subtle);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--border-radius-16);
+    background-color: var(--color-surface-primary);
+    transition:
+      background-color var(--transition-duration-fast) var(--transition-easing-standard),
+      border-color var(--transition-duration-fast) var(--transition-easing-standard),
+      box-shadow var(--transition-duration-fast) var(--transition-easing-standard);
 
-    &:last-child {
-      border-block-end: 0;
+    &:has(.detailLink:hover) {
+      border-color: var(--color-border-strong);
+      background-color: var(--color-surface-secondary);
+    }
+
+    &:has(.detailLink:focus-visible) {
+      border-color: var(--color-border-strong);
+      box-shadow: var(--shadow-focus);
+    }
+
+    &:has(.detailLink:active) {
+      background-color: var(--color-accent-subtle);
     }
   }
 
@@ -100,14 +135,13 @@
       "media identity"
       "properties properties";
     align-items: start;
-    gap: var(--spacing-16);
-    padding: var(--spacing-16);
+    gap: var(--spacing-12);
+    padding: var(--spacing-12) var(--spacing-16);
 
     @container (inline-size >= 44rem) {
       grid-template-columns: 3rem minmax(10rem, 0.7fr) minmax(0, 1fr);
       grid-template-areas: "media identity properties";
       align-items: center;
-      padding: var(--spacing-20) var(--spacing-24);
     }
   }
 
@@ -144,6 +178,26 @@
     overflow-wrap: anywhere;
   }
 
+  .detailLink {
+    position: static;
+
+    &:hover,
+    &:focus-visible {
+      text-decoration: none;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      z-index: 1;
+      inset: 0;
+    }
+
+    &:focus-visible {
+      box-shadow: none;
+    }
+  }
+
   .category {
     color: var(--color-text-secondary);
     font-size: var(--font-size-14);
@@ -152,23 +206,45 @@
   .properties {
     grid-area: properties;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
-    gap: var(--spacing-8);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: auto auto;
+    align-items: start;
+    row-gap: var(--spacing-4);
+
+    &:has(> .property:only-child) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    &:has(> .property:nth-child(2):last-child) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
   .property {
     display: grid;
+    grid-row: span 2;
+    grid-template-rows: subgrid;
     align-content: start;
-    gap: var(--spacing-4);
-    padding: var(--spacing-12);
-    border-radius: var(--border-radius-12);
-    background-color: var(--color-surface-secondary);
+    min-inline-size: 0;
+    padding-inline: var(--spacing-12);
+    border-inline-start: 1px solid var(--color-border-subtle);
+
+    &:first-child {
+      border-inline-start-width: 0;
+    }
+
+    @container (inline-size >= 44rem) {
+      &:first-child {
+        border-inline-start-width: 1px;
+      }
+    }
   }
 
   .propertyName {
     color: var(--color-text-muted);
     font-size: var(--font-size-12);
     line-height: var(--line-height-snug);
+    overflow-wrap: anywhere;
   }
 
   .propertyValue {
@@ -177,5 +253,12 @@
     font-weight: var(--font-weight-medium);
     line-height: var(--line-height-snug);
     overflow-wrap: anywhere;
+  }
+
+  @media (forced-colors: active) {
+    .component:has(.detailLink:focus) {
+      outline: 2px solid Highlight;
+      outline-offset: 2px;
+    }
   }
 </style>

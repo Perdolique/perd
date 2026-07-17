@@ -32,10 +32,18 @@ export default defineConfig({
     screenshot: 'only-on-failure'
   },
 
-  projects: [{
-    name: 'Chrome Desktop',
-    use: { ...devices['Desktop Chrome'] }
-  }],
+  projects: [
+    {
+      name: 'Chrome Desktop',
+      use: { ...devices['Desktop Chrome'] }
+    },
+    {
+      name: 'WebKit dialogs',
+      grep: /@dialog-compatibility/u,
+      testMatch: '**/dialogs/modal-dialog.test.ts',
+      use: { ...devices['Desktop Safari'] }
+    }
+  ],
 
   // Run the production preview before E2E. `preview:e2e` owns the writable temp-dir setup for Wrangler state.
   webServer: {
