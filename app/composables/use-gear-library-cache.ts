@@ -1,5 +1,6 @@
 import { useState } from '#imports'
 import type { CategoryDetailResponse } from '#server/api/equipment/categories/by-slug/[slug].get'
+
 import type {
   GearLibraryEntityDetail,
   GearLibraryItemsResponse

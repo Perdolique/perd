@@ -9,6 +9,7 @@ declare module 'h3' {
 }
 
 export default defineEventHandler((event) => {
+  // Database access belongs only to unhandled application API requests, not page or Nuxt Icon rendering.
   if (event.handled) {
     return
   }

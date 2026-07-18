@@ -7,6 +7,12 @@ interface GearLibraryEntityDetail extends GearLibraryEntitySummary {
   id: number;
 }
 
+interface GearLibraryFilterProperty extends GearLibraryEntitySummary {
+  dataType: EquipmentPropertyDataType;
+  enumOptions?: GearLibraryEntitySummary[];
+  unit: string | null;
+}
+
 interface GearLibraryListItem {
   brand: GearLibraryEntitySummary;
   category: GearLibraryEntitySummary;
@@ -87,6 +93,7 @@ export type {
   EquipmentPropertyValue,
   GearLibraryEntityDetail,
   GearLibraryEntitySummary,
+  GearLibraryFilterProperty,
   GearLibraryItemsResponse,
   GearLibraryListItem,
   GearLibraryListProperty,

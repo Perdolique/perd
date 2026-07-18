@@ -76,6 +76,7 @@ test.describe('Gear library states', () => {
     const placeholderCard = page.getByTestId('gear-library-results-state').locator(':scope > *')
     const placeholderBox = await getElementBox(placeholderCard)
     const emptyResultsBox = await getElementBox(resultsBody)
+
     const scrollbarGutter = await page.evaluate(() => (
       globalThis.getComputedStyle(globalThis.document.documentElement).scrollbarGutter
     ))
@@ -115,6 +116,7 @@ test.describe('Gear library states', () => {
 
     expect(searchBoxDuring.height).toBeCloseTo(searchBoxBefore.height, 1)
     expect(resultsBoxDuring.y).toBeCloseTo(resultsBoxBefore.y, 1)
+
     await expect(page.getByText('Loading category details', { exact: true })).toHaveCount(0)
 
     categoryDetailGate.resolve()
@@ -343,6 +345,7 @@ test.describe('Gear library states', () => {
     expect(categoryDetailFailure.status()).toBe(500)
 
     const sortSelect = getGearLibrarySelect(page, 'Sort by')
+
     const categoryDetailAlert = page.getByRole('alert').filter({
       hasText: 'Category filters and property sorting unavailable.'
     })
@@ -386,6 +389,7 @@ test.describe('Gear library states', () => {
     const brandsRetryResponse = await brandsRetryPromise
 
     expect(brandsRetryResponse.status()).toBe(200)
+
     await expect.poll(() => tracker.brands.length).toBeGreaterThan(brandsBeforeRetry)
     await expect(brandsAlert).toHaveCount(0)
     await expect(filterDialog.getByLabel('Alpkit')).toBeVisible()
@@ -416,6 +420,7 @@ test.describe('Gear library states', () => {
 
     await expectRouteSearch(page, '')
     await expect(categorySelect).toBeDisabled()
+
     expect(clearedRequest.searchParams.get('categorySlug')).toBeNull()
   })
 
@@ -434,6 +439,7 @@ test.describe('Gear library states', () => {
     await expect(page.getByRole('alert').filter({
       hasText: 'Category filters and property sorting unavailable.'
     })).toBeVisible()
+
     await expect(page.getByRole('link', { name: 'PocketRocket Deluxe' })).toBeVisible()
     await expect(orderingSelect).toBeEnabled()
     await expectPerdSelectValue(orderingSelect, 'property:weight:desc')
@@ -446,6 +452,7 @@ test.describe('Gear library states', () => {
     const orderedRequest = await waitForNextItemsRequest(tracker, itemsBeforeOrdering)
 
     await expectRouteSearch(page, '?category=stoves&sort=brand&direction=desc')
+
     expectQueryValues(orderedRequest, {
       categorySlug: 'stoves',
       direction: 'desc',

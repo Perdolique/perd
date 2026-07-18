@@ -1,10 +1,12 @@
 import type { BrowserContext, Locator, Page, Request, Route } from '@playwright/test'
+
 import type {
   GearLibraryEntityDetail,
   GearLibraryItemsResponse,
   GearLibraryListItem,
   ItemDetailResponse
 } from '../../../app/types/equipment'
+
 import type { CategoryDetailResponse } from '../../../server/api/equipment/categories/by-slug/[slug].get'
 import { expect } from './global.fixtures.ts'
 
@@ -732,16 +734,6 @@ function getRequiredLoadMoreItem(index: number): GearLibraryListItem {
   return item
 }
 
-async function getRequiredHref(locator: Locator): Promise<string> {
-  const href = await locator.getAttribute('href')
-
-  if (href === null) {
-    throw new Error('Expected the element to have an href')
-  }
-
-  return href
-}
-
 async function hasHistoryStateKey(page: Page, key: string): Promise<boolean> {
   const historyState = await page.evaluate((): unknown => (
     globalThis.history.state as unknown
@@ -775,13 +767,22 @@ async function clearGearLibraryItemsSnapshot(page: Page): Promise<void> {
     const nuxtPayload = getRequiredProperty(nuxtApp, 'payload')
     const nuxtState = getRequiredProperty(nuxtPayload, 'state')
     const gearLibraryCache = getRequiredProperty(nuxtState, '$sgear-library-cache')
-    const hasCache = typeof gearLibraryCache === 'object' && gearLibraryCache !== null
-
-    if (hasCache === false) {
+    if (
+      typeof nuxtState !== 'object'
+      || nuxtState === null
+      || typeof gearLibraryCache !== 'object'
+      || gearLibraryCache === null
+    ) {
       throw new Error('Expected the Nuxt gear library cache state')
     }
 
-    Reflect.deleteProperty(gearLibraryCache, 'items')
+    const cacheWithoutItems = Object.fromEntries(
+      Object.entries(gearLibraryCache).filter(([key]) => key !== 'items')
+    )
+
+    Object.assign(nuxtState, {
+      '$sgear-library-cache': cacheWithoutItems
+    })
   })
 }
 
@@ -920,7 +921,6 @@ export {
   expectRouteSearch,
   getLastRequest,
   getRequiredLoadMoreItem,
-  getRequiredHref,
   hasHistoryStateKey,
   clearGearLibraryItemsSnapshot,
   getScrollDistance,

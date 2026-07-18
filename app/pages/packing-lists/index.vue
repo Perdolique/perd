@@ -2,7 +2,6 @@
   <PageContent :page-title="navigationLabels.packingLists">
     <template v-if="showHeaderCreateAction" #actions>
       <PerdButton
-        id="new-packing-list-dialog-invoker"
         size="small"
         icon="hugeicons:add-01"
         :disabled="isHeaderCreateDisabled"
@@ -45,7 +44,6 @@
       v-model:name="newListName"
       :loading="creatingList"
       :error-message="createErrorMessage"
-      invoker-id="new-packing-list-dialog-invoker"
       @create="handleCreate"
     />
   </PageContent>

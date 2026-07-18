@@ -77,11 +77,13 @@ describe(createGearLibraryFilterDraft, () => {
       ['toString', 'false'],
       ['__proto__', 'true']
     ])
+
     expect(Object.entries(result.enum)).toStrictEqual([
       ['constructor', ['first', 'second']],
       ['toString', ['third']],
       ['__proto__', ['fourth']]
     ])
+
     expect(Object.entries(result.number)).toStrictEqual([
       ['constructor', { max: '2', min: '1' }],
       ['toString', { max: '4', min: '3' }],
@@ -97,15 +99,19 @@ describe(normalizeGearLibraryFilterDraft, () => {
         freestanding: 'any',
         'piezo-ignition': 'false'
       },
+
       brand: ['therm-a-rest', 'msr', 'msr'],
+
       enum: {
         'fuel-type': ['wood', 'canister', 'wood']
       },
+
       number: {
         capacity: {
           max: '',
           min: ''
         },
+
         weight: {
           max: ' 100.0 ',
           min: '080'
@@ -128,15 +134,18 @@ describe(normalizeGearLibraryFilterDraft, () => {
       boolean: {},
       brand: [],
       enum: {},
+
       number: {
         large: {
           max: '',
           min: '1000000000000000000000'
         },
+
         small: {
           max: '+001.2300',
           min: '0.0000001'
         },
+
         zero: {
           max: '000.000',
           min: '-0'
@@ -160,15 +169,18 @@ describe(getGearLibraryNumberRangeErrors, () => {
       boolean: {},
       brand: [],
       enum: {},
+
       number: {
         capacity: {
           max: '10',
           min: 'many'
         },
+
         weight: {
           max: '80',
           min: '100'
         },
+
         precise: {
           max: '9007199254740992',
           min: '9007199254740993'
@@ -188,23 +200,28 @@ describe(getGearLibraryNumberRangeErrors, () => {
       boolean: {},
       brand: [],
       enum: {},
+
       number: {
         exponent: {
           max: '',
           min: '1e-7'
         },
+
         hexadecimal: {
           max: '',
           min: '0x10'
         },
+
         overflow: {
           max: '',
           min: '9'.repeat(400)
         },
+
         signed: {
           max: '+001.2300',
           min: '-0'
         },
+
         small: {
           max: '',
           min: '0.0000001'
@@ -248,6 +265,7 @@ describe(removeGearLibraryAppliedFilter, () => {
       ...appliedFilters,
       enum: []
     })
+
     expect(appliedFilters.enum).toStrictEqual(['fuel-type:canister'])
   })
 })
@@ -256,6 +274,7 @@ describe(createGearLibraryAppliedFilterChips, () => {
   it('should create one labeled removable chip for every applied filter', () => {
     const result = createGearLibraryAppliedFilterChips(appliedFilters, {
       brands: [{ name: 'MSR', slug: 'msr' }],
+
       properties: [{
         name: 'Weight',
         slug: 'weight',
@@ -278,6 +297,7 @@ describe(createGearLibraryAppliedFilterChips, () => {
       'Fuel type: Canister',
       'Piezo ignition: Yes'
     ])
+
     expect(result).toHaveLength(getGearLibraryAppliedFilterCount(appliedFilters))
     expect(result[0]?.removeLabel).toBe('Remove Brand: MSR filter')
   })

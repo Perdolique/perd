@@ -1,6 +1,7 @@
 import { computed, ref, watch, type ComputedRef } from 'vue'
 import { limits } from '#shared/constants'
 import type { GearLibraryRouteState } from '~/utils/gear-library'
+
 import {
   createEmptyGearLibraryAppliedFilters,
   createEmptyGearLibraryFilterDraft,
@@ -22,10 +23,12 @@ interface UseGearLibraryFiltersOptions {
 /** Owns editable filter state separately from the filters applied through the URL. */
 function useGearLibraryFilters(options: UseGearLibraryFiltersOptions) {
   const appliedFilters = computed(() => getGearLibraryAppliedFilters(options.routeState.value))
+
   const appliedFiltersSignature = computed(() => JSON.stringify({
     category: options.routeState.value.category,
     filters: appliedFilters.value
   }))
+
   const draftFilters = ref(createGearLibraryFilterDraft(appliedFilters.value))
   const isFilterDialogOpen = ref(false)
   const numberRangeErrors = computed(() => getGearLibraryNumberRangeErrors(draftFilters.value))
@@ -34,6 +37,7 @@ function useGearLibraryFilters(options: UseGearLibraryFiltersOptions) {
   const draftAppliedFilters = computed(() => normalizeGearLibraryFilterDraft(draftFilters.value))
   const draftFilterCount = computed(() => getGearLibraryAppliedFilterCount(draftAppliedFilters.value))
   const hasDraftFilters = computed(() => draftFilterCount.value > 0)
+
   const hasDraftChanges = computed(
     () => JSON.stringify(draftAppliedFilters.value) !== JSON.stringify(appliedFilters.value)
   )
@@ -54,6 +58,7 @@ function useGearLibraryFilters(options: UseGearLibraryFiltersOptions) {
   async function handleApplyFilters() {
     const filters = draftAppliedFilters.value
     const propertyFilterCount = filters.boolean.length + filters.enum.length + filters.number.length
+
     const hasFilterLimitErrors = filters.brand.length > limits.maxEquipmentItemsFilterCount
       || propertyFilterCount > limits.maxEquipmentItemsFilterCount
 

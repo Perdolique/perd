@@ -40,7 +40,10 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] }
+
+      use: {
+        ...devices['Desktop Chrome']
+      }
     },
     {
       name: 'webkit',
@@ -65,6 +68,7 @@ export default defineConfig({
     url: appBaseUrl,
     reuseExistingServer: false,
     timeout: 60_000,
+
     gracefulShutdown: {
       signal: 'SIGINT',
       timeout: 5000

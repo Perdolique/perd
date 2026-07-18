@@ -6,16 +6,18 @@ import { useGearLibraryCache } from '~/composables/use-gear-library-cache'
 import { useGearLibraryItemsData } from '~/composables/use-gear-library-items-data'
 
 interface UseGearLibraryDataOptions {
-  desiredPageCount: Ref<number>;
+  hasSavedBrowsingState: boolean;
+  loadedPageCount: Ref<number>;
   hasNarrowingState: ComputedRef<boolean>;
   itemsApiQuery: ComputedRef<GearLibraryItemsApiQuery>;
   itemsApiQuerySignature: ComputedRef<string>;
   selectedCategory: ComputedRef<string | undefined>;
 }
 
-/** Owns gear library reference-data requests alongside continuous item batches. */
+/** Owns gear library reference-data requests alongside the loaded item-page prefix. */
 async function useGearLibraryData(options: UseGearLibraryDataOptions) {
   const requestFetch = useRequestFetch()
+
   const {
     getBrands,
     getCategories,
@@ -37,6 +39,7 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
   const cachedCategories = getCategories()
   const initialCategorySlug = options.selectedCategory.value
   const initialCategoryDetail: CategoryDetailResponse | null = getCachedDetailForSlug(initialCategorySlug)
+
   const brandsRequest = useAsyncData('gear-library-brands', async (_nuxtApp, { signal }) => {
     const response = await requestFetch('/api/equipment/brands', {
       method: 'get',
@@ -48,6 +51,7 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
     default: () => cachedBrands ?? [],
     lazy: true
   })
+
   const categoriesRequest = useAsyncData('gear-library-categories', async (_nuxtApp, { signal }) => {
     const response = await requestFetch('/api/equipment/categories', {
       method: 'get',
@@ -59,6 +63,7 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
     default: () => cachedCategories ?? [],
     lazy: true
   })
+
   const categoryDetailRequest = useAsyncData('gear-library-category-detail', async (_nuxtApp, { signal }) => {
     const categorySlug = options.selectedCategory.value
 
@@ -67,6 +72,7 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
     }
 
     const categoryDetailPath = `/api/equipment/categories/by-slug/${categorySlug}` as const
+
     const categoryDetail = await requestFetch(categoryDetailPath, {
       method: 'get',
       signal
@@ -77,25 +83,30 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
     default: () => initialCategoryDetail,
     lazy: true
   })
+
   const itemsData = useGearLibraryItemsData(options)
+
   const {
     data: brandsResponse,
     error: brandsError,
     refresh: refreshBrands,
     status: brandsStatus
   } = brandsRequest
+
   const {
     data: categoriesResponse,
     error: categoriesError,
     refresh: refreshCategories,
     status: categoriesStatus
   } = categoriesRequest
+
   const {
     data: categoryDetailResponse,
     error: categoryDetailError,
     refresh: refreshCategoryDetail,
     status: categoryDetailStatus
   } = categoryDetailRequest
+
   const hasBrandsData = ref(cachedBrands !== undefined || brandsStatus.value === 'success')
   const hasCategoriesData = ref(cachedCategories !== undefined || categoriesStatus.value === 'success')
   const activeCategoryDetail = shallowRef<CategoryDetailResponse | null>(initialCategoryDetail)
@@ -112,6 +123,7 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
     }
 
     hasBrandsData.value = true
+
     storeBrands(brandsResponse.value)
   }, {
     flush: 'sync',
@@ -124,6 +136,7 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
     }
 
     hasCategoriesData.value = true
+
     storeCategories(categoriesResponse.value)
   }, {
     flush: 'sync',
@@ -142,6 +155,7 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
     }
 
     activeCategoryDetail.value = categoryDetail
+
     storeCategoryDetail(categoryDetail)
   }, {
     flush: 'sync',
@@ -160,7 +174,6 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
     brandsError,
     brandsResponse,
     brandsStatus,
-    canLoadMore: itemsData.canLoadMore,
     categoriesError,
     categoriesResponse,
     categoriesStatus,
@@ -168,6 +181,11 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
     categoryDetailStatus,
     hasBrandsData,
     hasCategoriesData,
+    refreshBrands,
+    refreshCategories,
+    refreshCategoryDetail,
+    canLoadMore: itemsData.canLoadMore,
+    canRestoreSavedBrowsingState: itemsData.canRestoreSavedBrowsingState,
     hasLoadMoreError: itemsData.hasLoadMoreError,
     hasSuccessfulItemsRequest: itemsData.hasSuccessfulItemsRequest,
     isBrowsingStateReady: itemsData.isBrowsingStateReady,
@@ -178,9 +196,6 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
     lastSuccessfulItemsResponse: itemsData.lastSuccessfulItemsResponse,
     loadMore: itemsData.loadMore,
     loadMoreAnnouncement: itemsData.loadMoreAnnouncement,
-    refreshBrands,
-    refreshCategories,
-    refreshCategoryDetail,
     refreshItems: itemsData.refreshItems,
     retryLoadMore: itemsData.retryLoadMore
   }

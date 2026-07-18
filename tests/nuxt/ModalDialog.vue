@@ -5,23 +5,23 @@
     </h1>
 
     <div :class="$style.actions">
-      <PerdButton id="centered-dialog-invoker" @click="openCenteredDialog">
+      <PerdButton @click="openCenteredDialog">
         Open centered dialog
       </PerdButton>
 
-      <PerdButton id="bottom-sheet-invoker" @click="openBottomSheet">
+      <PerdButton @click="openBottomSheet">
         Open bottom sheet
       </PerdButton>
 
-      <PerdButton id="side-sheet-invoker" @click="openSideSheet">
+      <PerdButton @click="openSideSheet">
         Open side sheet
       </PerdButton>
 
-      <PerdButton id="long-bottom-sheet-invoker" @click="openLongBottomSheet">
+      <PerdButton @click="openLongBottomSheet">
         Open long bottom sheet
       </PerdButton>
 
-      <PerdButton id="locked-bottom-sheet-invoker" @click="openLockedBottomSheet">
+      <PerdButton @click="openLockedBottomSheet">
         Open locked bottom sheet
       </PerdButton>
     </div>
@@ -29,7 +29,6 @@
     <ModalDialog
       v-model="centeredOpened"
       aria-labelledby="centered-dialog-title"
-      invoker-id="centered-dialog-invoker"
     >
       <section :class="$style.centeredSurface">
         <h2 id="centered-dialog-title">
@@ -46,7 +45,6 @@
       v-model="sideSheetOpened"
       aria-labelledby="side-sheet-title"
       desktop-presentation="side-sheet"
-      invoker-id="side-sheet-invoker"
     >
       <section :class="$style.sideSheetSurface">
         <h2 id="side-sheet-title" tabindex="-1" autofocus>
@@ -68,7 +66,6 @@
     <ModalDialog
       v-model="bottomSheetOpened"
       aria-labelledby="bottom-sheet-title"
-      invoker-id="bottom-sheet-invoker"
       mobile-presentation="bottom-sheet"
     >
       <section :class="$style.sheetSurface">
@@ -91,7 +88,6 @@
     <ModalDialog
       v-model="longBottomSheetOpened"
       aria-labelledby="long-bottom-sheet-title"
-      invoker-id="long-bottom-sheet-invoker"
       mobile-presentation="bottom-sheet"
     >
       <section :class="[$style.sheetSurface, 'isLong']">
@@ -117,7 +113,6 @@
       v-model="lockedBottomSheetOpened"
       aria-labelledby="locked-bottom-sheet-title"
       close-disabled
-      invoker-id="locked-bottom-sheet-invoker"
       mobile-presentation="bottom-sheet"
     >
       <section :class="$style.sheetSurface">
@@ -215,9 +210,7 @@
     gap: var(--spacing-16);
   }
 
-  .centeredSurface,
-  .sheetSurface,
-  .sideSheetSurface {
+  .centeredSurface {
     display: grid;
     gap: var(--spacing-16);
     inline-size: min(100vw - var(--spacing-32), 30rem);
@@ -229,6 +222,15 @@
   }
 
   .sheetSurface {
+    display: grid;
+    gap: var(--spacing-16);
+    inline-size: min(100vw - var(--spacing-32), 30rem);
+    padding: var(--spacing-24);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--border-radius-24);
+    background-color: var(--color-surface-primary);
+    box-shadow: var(--shadow-large);
+
     &:global(.isLong) {
       min-block-size: 42rem;
     }
@@ -242,10 +244,14 @@
   }
 
   .sideSheetSurface {
+    display: grid;
+    gap: var(--spacing-16);
     min-block-size: 100%;
     inline-size: 100%;
+    padding: var(--spacing-24);
     border: none;
     border-radius: inherit;
+    background-color: var(--color-surface-primary);
     box-shadow: none;
   }
 

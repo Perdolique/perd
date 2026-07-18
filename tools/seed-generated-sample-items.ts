@@ -59,6 +59,7 @@ const generatedSampleCategoryDefinitions: GeneratedSampleCategoryDefinition[] = 
   }
 ]
 
+/** Creates one generated boolean property value. */
 function createBooleanProperty(
   propertySlug: string,
   valueBoolean: boolean
@@ -71,6 +72,7 @@ function createBooleanProperty(
   }
 }
 
+/** Creates one generated numeric property value. */
 function createNumberProperty(
   propertySlug: string,
   value: number
@@ -85,6 +87,7 @@ function createNumberProperty(
   }
 }
 
+/** Creates one generated text or enum property value. */
 function createTextProperty(
   propertySlug: string,
   valueText: string
@@ -97,6 +100,7 @@ function createTextProperty(
   }
 }
 
+/** Selects a deterministic value from a non-empty repeating sequence. */
 function getCycledValue<ValueType>(
   values: readonly [ValueType, ...ValueType[]],
   sequence: number
@@ -111,6 +115,7 @@ function getCycledValue<ValueType>(
   return value
 }
 
+/** Creates deterministic sample properties for one category item sequence. */
 function createGeneratedProperties(
   categorySlug: SampleCategorySlug,
   sequence: number

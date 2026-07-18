@@ -10,15 +10,19 @@ import {
   sql,
   type SQL
 } from 'drizzle-orm'
+
 import { alias } from 'drizzle-orm/pg-core'
 import { createError } from 'h3'
+
 import {
   brands,
   equipmentCategories,
   equipmentItems,
   itemPropertyValues
 } from '#server/database/schema'
+
 import type { createHttpClient } from '#server/utils/database'
+
 import type {
   ItemsListBooleanFilter,
   ItemsListEnumFilter,
@@ -77,6 +81,7 @@ interface EnumFilterGroup {
 const filterValues = alias(itemPropertyValues, 'filter_values')
 const catalogPropertySortValues = alias(itemPropertyValues, 'property_sort_values')
 
+/** Escapes user text for a literal SQL LIKE substring search. */
 function escapeLikePattern(value: string) {
   return value
     .replaceAll('\\', String.raw`\\`)
@@ -84,6 +89,7 @@ function escapeLikePattern(value: string) {
     .replaceAll('_', String.raw`\_`)
 }
 
+/** Creates an EXISTS predicate for one item property and its value constraints. */
 function createPropertyExistsCondition(propertyId: number, valueConditions: SQL[]) : SQL {
   const filterCondition = and(
     eq(filterValues.itemId, equipmentItems.id),
@@ -98,6 +104,7 @@ function createPropertyExistsCondition(propertyId: number, valueConditions: SQL[
   )`
 }
 
+/** Creates catalog predicates that do not require category property metadata. */
 function createBaseConditions(query: ItemsListQuery) : SQL[] {
   const conditions: SQL[] = [eq(equipmentItems.status, 'approved')]
 
@@ -116,6 +123,7 @@ function createBaseConditions(query: ItemsListQuery) : SQL[] {
   if (query.search !== '') {
     const escapedSearch = escapeLikePattern(query.search)
     const containsPattern = `%${escapedSearch}%`
+
     const searchCondition = or(
       ilike(equipmentItems.name, containsPattern),
       ilike(brands.name, containsPattern),
@@ -130,10 +138,12 @@ function createBaseConditions(query: ItemsListQuery) : SQL[] {
   return conditions
 }
 
+/** Loads category property metadata only when filtering or sorting requires it. */
 async function loadCategoryMetadata(dbHttp: DbHttp, query: ItemsListQuery) : Promise<CategoryMetadata | undefined> {
   const hasPropertyFilters = query.numberFilter.length > 0
     || query.enumFilter.length > 0
     || query.booleanFilter.length > 0
+
   const requiresMetadata = hasPropertyFilters || query.sort.startsWith('property:')
 
   if (!requiresMetadata) {
@@ -179,6 +189,7 @@ async function loadCategoryMetadata(dbHttp: DbHttp, query: ItemsListQuery) : Pro
   return metadata
 }
 
+/** Adds validated numeric property predicates to the catalog query. */
 function addNumberConditions(
   conditions: SQL[],
   filters: ItemsListNumberFilter[],
@@ -205,6 +216,7 @@ function addNumberConditions(
   }
 }
 
+/** Validates and groups enum filters so options of one property use OR semantics. */
 function groupEnumFilters(
   filters: ItemsListEnumFilter[],
   propertiesBySlug: Map<string, CategoryMetadataProperty>
@@ -239,6 +251,7 @@ function groupEnumFilters(
   return groups
 }
 
+/** Adds grouped enum property predicates to the catalog query. */
 function addEnumConditions(conditions: SQL[], groups: Map<number, EnumFilterGroup>) {
   for (const group of groups.values()) {
     const optionCondition = or(
@@ -251,6 +264,7 @@ function addEnumConditions(conditions: SQL[], groups: Map<number, EnumFilterGrou
   }
 }
 
+/** Adds validated boolean property predicates to the catalog query. */
 function addBooleanConditions(
   conditions: SQL[],
   filters: ItemsListBooleanFilter[],
@@ -264,10 +278,12 @@ function addBooleanConditions(
     }
 
     const valueCondition = eq(filterValues.valueBoolean, filter.value)
+
     conditions.push(createPropertyExistsCondition(property.id, [valueCondition]))
   }
 }
 
+/** Resolves and validates the numeric property used for property sorting. */
 function resolveSortPropertyId(
   sort: ItemsListSort,
   propertiesBySlug: Map<string, CategoryMetadataProperty>
@@ -286,14 +302,17 @@ function resolveSortPropertyId(
   return property.id
 }
 
+/** Creates stable catalog ordering with item ID as the final tie-breaker. */
 function createOrderBy(query: ItemsListQuery, sortPropertyId: number | undefined) : SQL[] {
   if (query.sort === 'brand') {
     const brandOrder = query.direction === 'asc' ? asc(brands.name) : desc(brands.name)
+
     return [brandOrder, asc(equipmentItems.name), asc(equipmentItems.id)]
   }
 
   if (sortPropertyId === undefined) {
     const nameOrder = query.direction === 'asc' ? asc(equipmentItems.name) : desc(equipmentItems.name)
+
     return [nameOrder, asc(equipmentItems.id)]
   }
 
@@ -312,7 +331,9 @@ async function buildCatalogListSql(dbHttp: DbHttp, query: ItemsListQuery) : Prom
   const propertiesBySlug = new Map(metadataProperties)
 
   addNumberConditions(conditions, query.numberFilter, propertiesBySlug)
+
   const enumGroups = groupEnumFilters(query.enumFilter, propertiesBySlug)
+
   addEnumConditions(conditions, enumGroups)
   addBooleanConditions(conditions, query.booleanFilter, propertiesBySlug)
 

@@ -55,21 +55,24 @@ type GearLibraryNumberRangeErrors = Partial<Record<string, string>>
 
 const filterKinds = ['brand', 'number', 'enum', 'boolean'] as const
 
-function createEmptyRecord<TValue>(): Record<string, TValue> {
+/** Creates a dictionary without inherited keys such as `constructor` or `toString`. */
+function createEmptyDictionary<TValue>(): Record<string, TValue> {
   // Object.create has no generic overload for a null-prototype dictionary.
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   return Object.create(null) as Record<string, TValue>
 }
 
+/** Creates an empty editable filter state. */
 function createEmptyGearLibraryFilterDraft(): GearLibraryFilterDraft {
   return {
-    boolean: createEmptyRecord<GearLibraryBooleanDraftValue>(),
+    boolean: createEmptyDictionary<GearLibraryBooleanDraftValue>(),
     brand: [],
-    enum: createEmptyRecord<string[]>(),
-    number: createEmptyRecord<GearLibraryNumberRangeDraft>()
+    enum: createEmptyDictionary<string[]>(),
+    number: createEmptyDictionary<GearLibraryNumberRangeDraft>()
   }
 }
 
+/** Creates an empty normalized filter collection. */
 function createEmptyGearLibraryAppliedFilters(): GearLibraryAppliedFilters {
   return {
     boolean: [],
@@ -79,6 +82,7 @@ function createEmptyGearLibraryAppliedFilters(): GearLibraryAppliedFilters {
   }
 }
 
+/** Copies filter values from route state into a mutable applied-filter collection. */
 function getGearLibraryAppliedFilters(
   routeState: Pick<GearLibraryRouteState, 'boolean' | 'brand' | 'enum' | 'number'>
 ): GearLibraryAppliedFilters {
@@ -90,6 +94,7 @@ function getGearLibraryAppliedFilters(
   }
 }
 
+/** Parses a serialized number-range filter. */
 function parseNumberFilter(value: string) {
   const parts = value.split(':')
 
@@ -110,6 +115,7 @@ function parseNumberFilter(value: string) {
   }
 }
 
+/** Parses a serialized property and value pair. */
 function parsePropertyValueFilter(value: string) {
   const separatorIndex = value.indexOf(':')
 
@@ -123,6 +129,7 @@ function parsePropertyValueFilter(value: string) {
   }
 }
 
+/** Converts normalized applied filters into editable form values. */
 function createGearLibraryFilterDraft(filters: GearLibraryAppliedFilters): GearLibraryFilterDraft {
   const draft = createEmptyGearLibraryFilterDraft()
 
@@ -161,8 +168,9 @@ function createGearLibraryFilterDraft(filters: GearLibraryAppliedFilters): GearL
   return draft
 }
 
+/** Validates numeric ranges and returns messages keyed by property slug. */
 function getGearLibraryNumberRangeErrors(draft: GearLibraryFilterDraft): GearLibraryNumberRangeErrors {
-  const errors: GearLibraryNumberRangeErrors = createEmptyRecord<string>()
+  const errors: GearLibraryNumberRangeErrors = createEmptyDictionary<string>()
 
   for (const [propertySlug, range] of Object.entries(draft.number)) {
     const min = range.min.trim()
@@ -171,6 +179,7 @@ function getGearLibraryNumberRangeErrors(draft: GearLibraryFilterDraft): GearLib
     const hasInvalidMax = max !== '' && isFiniteDecimalNumber(max) === false
     const hasBothBounds = min !== '' && max !== ''
     const hasValidBounds = hasInvalidMin === false && hasInvalidMax === false
+
     const hasReversedRange = hasBothBounds && hasValidBounds
       && compareDecimalNumbers(min, max) > 0
 
@@ -184,6 +193,7 @@ function getGearLibraryNumberRangeErrors(draft: GearLibraryFilterDraft): GearLib
   return errors
 }
 
+/** Normalizes editable filters into stable route and API values. */
 function normalizeGearLibraryFilterDraft(draft: GearLibraryFilterDraft): GearLibraryAppliedFilters {
   const filters = createEmptyGearLibraryAppliedFilters()
   const uniqueBrands = new Set(draft.brand)
@@ -231,10 +241,12 @@ function normalizeGearLibraryFilterDraft(draft: GearLibraryFilterDraft): GearLib
   return filters
 }
 
+/** Counts all independently removable applied filters. */
 function getGearLibraryAppliedFilterCount(filters: GearLibraryAppliedFilters) {
   return filterKinds.reduce((count, kind) => count + filters[kind].length, 0)
 }
 
+/** Removes one exact applied filter without mutating the source collection. */
 function removeGearLibraryAppliedFilter(
   filters: GearLibraryAppliedFilters,
   filterToRemove: GearLibraryAppliedFilter
@@ -248,6 +260,7 @@ function removeGearLibraryAppliedFilter(
   return nextFilters
 }
 
+/** Resolves a human-readable metadata name with the slug as fallback. */
 function getMetadataName(
   values: GearLibraryFilterEnumOptionMetadata[],
   slug: string
@@ -255,6 +268,7 @@ function getMetadataName(
   return values.find((value) => value.slug === slug)?.name ?? slug
 }
 
+/** Formats one serialized numeric filter for an applied-filter chip. */
 function formatNumberFilterLabel(
   rawValue: string,
   metadata: GearLibraryFilterMetadata
@@ -267,6 +281,7 @@ function formatNumberFilterLabel(
 
   const property = metadata.properties.find(({ slug }) => slug === parsedFilter.propertySlug)
   const propertyName = property?.name ?? parsedFilter.propertySlug
+
   const unitSuffix = property?.unit === null || property?.unit === undefined || property.unit === ''
     ? ''
     : ` ${property.unit}`
@@ -286,6 +301,7 @@ function formatNumberFilterLabel(
   return `${propertyName}: any value`
 }
 
+/** Formats one boolean or enum filter for an applied-filter chip. */
 function formatPropertyValueFilterLabel(
   kind: 'boolean' | 'enum',
   rawValue: string,
@@ -319,6 +335,7 @@ function formatPropertyValueFilterLabel(
   return `${propertyName}: ${optionName}`
 }
 
+/** Creates the visible label for one applied filter. */
 function getAppliedFilterChipLabel(
   kind: GearLibraryAppliedFilterKind,
   value: string,
@@ -335,6 +352,7 @@ function getAppliedFilterChipLabel(
   return formatPropertyValueFilterLabel(kind, value, metadata)
 }
 
+/** Builds accessible removable chips for all applied filters. */
 function createGearLibraryAppliedFilterChips(
   filters: GearLibraryAppliedFilters,
   metadata: GearLibraryFilterMetadata

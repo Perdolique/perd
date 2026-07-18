@@ -1,6 +1,8 @@
 import { computed, ref, shallowRef, watch } from 'vue'
 import { watchDebounced } from '@vueuse/core'
 import { navigateTo, useRoute } from '#imports'
+import type { GearLibraryAppliedFilters } from '~/utils/gear-library-filters'
+
 import {
   buildGearLibraryRouteQuery,
   getGearLibraryItemsApiQuery,
@@ -10,7 +12,6 @@ import {
   type GearLibraryRouteState,
   type GearLibrarySort
 } from '~/utils/gear-library'
-import type { GearLibraryAppliedFilters } from '~/utils/gear-library-filters'
 
 interface GearLibraryRouteStateChanges {
   boolean?: string[];
@@ -53,8 +54,8 @@ function useGearLibraryRoute() {
     const category = hasCategoryChange ? changedCategory : currentState.category
 
     return {
-      q: changes.q ?? currentState.q,
       category,
+      q: changes.q ?? currentState.q,
       brand: changes.brand ?? currentState.brand,
       number: hasCategoryChange ? [] : changes.number ?? currentState.number,
       enum: hasCategoryChange ? [] : changes.enum ?? currentState.enum,

@@ -10,9 +10,9 @@
           <slot name="results-summary" />
         </div>
 
-        <div ref="filterAction" :class="$style.filterAction">
+        <div :class="$style.filterAction">
           <PerdButton
-            :id="filterTriggerId"
+            ref="filterTrigger"
             variant="secondary"
             aria-haspopup="dialog"
             :aria-expanded="isDialogOpen"
@@ -20,18 +20,20 @@
           >
             Filters
 
-            <span v-if="appliedFilterCount > 0" :class="$style.badge">
+            <span v-if="hasAppliedFilterCount" :class="$style.badge">
               {{ appliedFilterCount }}
             </span>
           </PerdButton>
         </div>
       </div>
 
-      <div v-if="appliedFilterChips.length > 0" :class="$style.appliedFilters">
-        <ul ref="chipsList" :class="$style.chips" aria-label="Applied filters">
+      <div v-if="hasAppliedFilterChips" :class="$style.appliedFilters">
+        <ul :class="$style.chips" aria-label="Applied filters">
           <li v-for="(chip, chipIndex) in appliedFilterChips" :key="chip.id">
             <button
+              ref="chipRefs"
               :class="$style.chip"
+              :data-chip-id="chip.id"
               type="button"
               :aria-label="chip.removeLabel"
               @click="emitRemove(chip, chipIndex)"
@@ -56,7 +58,6 @@
       v-model="isDialogOpen"
       :class="$style.filterDialog"
       :aria-labelledby="filterTitleId"
-      :invoker-id="filterTriggerId"
       desktop-presentation="side-sheet"
       mobile-presentation="bottom-sheet"
     >
@@ -88,26 +89,30 @@
 </template>
 
 <script lang="ts" setup>
-  import { nextTick, ref, useId, useTemplateRef, watch } from 'vue'
+  import {
+    computed,
+    nextTick,
+    ref,
+    useId,
+    useTemplateRef,
+    watch
+  } from 'vue'
+
   import type {
-    EquipmentPropertyDataType,
-    GearLibraryEntitySummary
+    GearLibraryEntitySummary,
+    GearLibraryFilterProperty
   } from '~/types/equipment'
+
   import type {
     GearLibraryAppliedFilter,
     GearLibraryAppliedFilterChip,
     GearLibraryFilterDraft,
     GearLibraryNumberRangeErrors
   } from '~/utils/gear-library-filters'
+
   import ModalDialog from '~/components/dialogs/ModalDialog.vue'
   import GearLibraryFilterEditor from '~/components/gear-library/GearLibraryFilterEditor.vue'
   import PerdButton from '~/components/PerdButton.vue'
-
-  interface GearLibraryFilterProperty extends GearLibraryEntitySummary {
-    dataType: EquipmentPropertyDataType;
-    enumOptions?: GearLibraryEntitySummary[];
-    unit: string | null;
-  }
 
   interface Props {
     appliedFilterChips: GearLibraryAppliedFilterChip[];
@@ -127,26 +132,9 @@
   }
 
   interface Emits {
-    (event: 'apply'
-      | 'cancel'
-      | 'clear-applied'
-      | 'open'
-      | 'retry-brands'
-      | 'retry-properties'): void;
+    (event: 'apply' | 'cancel' | 'clear-applied' | 'open' | 'retry-brands' | 'retry-properties'): void;
     (event: 'remove', filter: GearLibraryAppliedFilter): void;
   }
-
-  interface RemoveFocusTarget {
-    chipId: string;
-    index: number;
-    type: 'remove';
-  }
-
-  interface ClearFocusTarget {
-    type: 'clear';
-  }
-
-  type PendingFocusTarget = ClearFocusTarget | RemoveFocusTarget
 
   const props = defineProps<Props>()
   const emit = defineEmits<Emits>()
@@ -154,30 +142,30 @@
   const isDialogOpen = defineModel<boolean>('isDialogOpen', { required: true })
   const brandSearchValue = ref('')
   const isBrandListExpanded = ref(false)
-  const pendingFocusTarget = ref<PendingFocusTarget>()
+  const pendingFocusTarget = ref<string | null>()
   const componentId = useId()
   const filterTitleId = `${componentId}-filter-title`
-  const filterTriggerId = `${componentId}-filter-trigger`
-  const filterAction = useTemplateRef('filterAction')
-  const chipsList = useTemplateRef('chipsList')
+  const filterTrigger = useTemplateRef('filterTrigger')
+  const chipRefs = useTemplateRef('chipRefs')
+  const appliedFilterIds = computed(() => props.appliedFilterChips.map((chip) => chip.id))
+  const hasAppliedFilterCount = computed(() => props.appliedFilterCount > 0)
+  const hasAppliedFilterChips = computed(() => props.appliedFilterChips.length > 0)
 
   function focusFilterTrigger() {
-    const filterTrigger = filterAction.value?.querySelector('button')
-
-    filterTrigger?.focus()
+    filterTrigger.value?.focus()
   }
 
   function emitRemove(chip: GearLibraryAppliedFilterChip, index: number) {
-    pendingFocusTarget.value = {
-      chipId: chip.id,
-      index,
-      type: 'remove'
-    }
+    const nextChip = props.appliedFilterChips[index + 1] ?? props.appliedFilterChips[index - 1]
+
+    pendingFocusTarget.value = nextChip?.id ?? null
+
     emit('remove', chip)
   }
 
   function emitClearApplied() {
-    pendingFocusTarget.value = { type: 'clear' }
+    pendingFocusTarget.value = null
+
     emit('clear-applied')
   }
 
@@ -192,42 +180,31 @@
     }
   })
 
-  watch(
-    () => props.appliedFilterChips.map((chip) => chip.id),
-    async (chipIds) => {
-      const focusTarget = pendingFocusTarget.value
+  watch(appliedFilterIds, async () => {
+    const focusTarget = pendingFocusTarget.value
 
-      if (focusTarget === undefined) {
-        return
-      }
-
-      const isRemovalPending = focusTarget.type === 'remove'
-        && chipIds.includes(focusTarget.chipId)
-      const isClearPending = focusTarget.type === 'clear' && chipIds.length > 0
-
-      if (isRemovalPending || isClearPending) {
-        return
-      }
-
-      pendingFocusTarget.value = undefined
-
-      await nextTick()
-
-      if (focusTarget.type === 'remove' && chipIds.length > 0) {
-        const nextChipIndex = Math.min(focusTarget.index, chipIds.length - 1)
-        const chipElements = chipsList.value?.querySelectorAll('button')
-        const nextChip = chipElements?.[nextChipIndex]
-
-        if (nextChip !== undefined) {
-          nextChip.focus()
-
-          return
-        }
-      }
-
-      focusFilterTrigger()
+    if (focusTarget === undefined) {
+      return
     }
-  )
+
+    pendingFocusTarget.value = undefined
+
+    await nextTick()
+
+    if (focusTarget !== null) {
+      const nextChip = chipRefs.value?.find(
+        (chipElement) => chipElement.dataset.chipId === focusTarget
+      )
+
+      if (nextChip !== undefined) {
+        nextChip.focus()
+
+        return
+      }
+    }
+
+    focusFilterTrigger()
+  })
 
   function emitApply() {
     resetBrandListView()
@@ -246,27 +223,25 @@
 </script>
 
 <style module>
-  .component,
-  .controls,
-  .main,
-  .results,
-  .resultsSummary {
-    min-inline-size: 0;
-  }
-
   .component {
     display: grid;
     gap: var(--spacing-16);
+    min-inline-size: 0;
   }
 
   /* Keep open select options above the sticky results toolbar. */
-  .controls:has([aria-expanded='true']) {
-    z-index: 4;
+  .controls {
+    min-inline-size: 0;
+
+    &:has([aria-expanded='true']) {
+      z-index: 4;
+    }
   }
 
   .main {
     display: grid;
     gap: var(--spacing-16);
+    min-inline-size: 0;
   }
 
   .resultsToolbar {
@@ -337,13 +312,21 @@
       outline: 2px solid var(--color-accent-primary);
       outline-offset: 2px;
     }
+
+    @media (forced-colors: active) {
+      &:focus {
+        outline: 2px solid Highlight;
+        outline-offset: 2px;
+      }
+    }
   }
 
-  @media (forced-colors: active) {
-    .chip:focus {
-      outline: 2px solid Highlight;
-      outline-offset: 2px;
-    }
+  .results {
+    min-inline-size: 0;
+  }
+
+  .resultsSummary {
+    min-inline-size: 0;
   }
 
   .filterDialog {

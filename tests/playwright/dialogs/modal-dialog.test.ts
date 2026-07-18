@@ -246,6 +246,7 @@ test.describe('Modal dialog', () => {
       height: 900,
       width: 1440
     })
+
     await waitForDialogTransition(dialog)
 
     const wideBox = await expectInlineEndAnchored(dialog, page)
@@ -259,7 +260,6 @@ test.describe('Modal dialog', () => {
     await page.keyboard.press('Escape')
     await expect(dialog).toHaveCount(0)
     await expect(opener).toBeFocused()
-
     await opener.click()
     await waitForDialogTransition(dialog)
     await page.mouse.click(1, 1)
@@ -285,10 +285,8 @@ test.describe('Modal dialog', () => {
     await waitForDialogTransition(dialog)
     await page.keyboard.press('Escape')
     await expect(dialog).toBeVisible()
-
     await page.mouse.click(1, 1)
     await expect(dialog).toBeVisible()
-
     await dialog.getByRole('button', { name: 'Complete locked bottom sheet' }).click()
     await expect(dialog).toHaveCount(0)
     await expect(opener).toBeFocused()
@@ -338,6 +336,7 @@ test.describe('Modal dialog', () => {
 
   test('should remove dialog motion when reduced motion is preferred', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
+
     await page.setViewportSize({
       height: 844,
       width: 390
@@ -351,6 +350,7 @@ test.describe('Modal dialog', () => {
 
     const motionStyles = await dialog.evaluate((element) => {
       const computedStyle = globalThis.getComputedStyle(element)
+
       const transitionDurations = computedStyle.transitionDuration
         .split(',')
         .map((duration) => duration.trim())
@@ -365,10 +365,12 @@ test.describe('Modal dialog', () => {
     expect(motionStyles.transitionDurations.every((duration) => duration === '0s')).toBe(true)
 
     await dialog.getByRole('button', { name: 'Close bottom sheet' }).click()
+
     await page.setViewportSize({
       height: 768,
       width: 1024
     })
+
     await page.getByRole('button', { name: 'Open side sheet' }).click()
 
     const sideSheet = page.getByRole('dialog', { name: 'Side sheet' })

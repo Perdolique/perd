@@ -58,10 +58,13 @@ function useGearLibraryControls(options: UseGearLibraryControlsOptions) {
         }
       })
       .toSorted((left, right) => categoryNameCollator.compare(left.name, right.name))
+
     const selectedCategory = options.selectedCategory.value
+
     const hasSelectedCategoryOption = categoryValues.some(
       (category) => category.slug === selectedCategory
     )
+
     const shouldShowCurrentSelection = options.categoriesStatus() === 'error'
       && selectedCategory !== undefined
       && hasSelectedCategoryOption === false
@@ -71,6 +74,7 @@ function useGearLibraryControls(options: UseGearLibraryControlsOptions) {
     }
 
     const categoryDetail = options.categoryDetail()
+
     const currentCategoryName = categoryDetail?.slug === selectedCategory
       ? categoryDetail.name
       : selectedCategory
@@ -128,14 +132,14 @@ function useGearLibraryControls(options: UseGearLibraryControlsOptions) {
         const descendingValue = getOrderingValue(sort, 'desc')
 
         orderingValues.push({
+          sort,
           direction: 'asc',
           label: `${propertyLabel}: Low to high`,
-          sort,
           value: ascendingValue
         }, {
+          sort,
           direction: 'desc',
           label: `${propertyLabel}: High to low`,
-          sort,
           value: descendingValue
         })
       }
@@ -143,9 +147,11 @@ function useGearLibraryControls(options: UseGearLibraryControlsOptions) {
 
     const state = options.routeState.value
     const currentOrderingValue = getOrderingValue(state.sort, state.direction)
+
     const hasCurrentOrderingOption = orderingValues.some(
       (ordering) => ordering.value === currentOrderingValue
     )
+
     const shouldShowUnavailablePropertySort = options.categoryDetailStatus() === 'error'
       && state.sort.startsWith('property:')
       && hasCurrentOrderingOption === false
@@ -165,6 +171,7 @@ function useGearLibraryControls(options: UseGearLibraryControlsOptions) {
 
   watch(
     [options.categoriesStatus, options.categories, () => options.selectedCategory.value],
+
     async ([status, categories, categorySlug]) => {
       if (status !== 'success' || categorySlug === undefined) {
         return
@@ -190,6 +197,7 @@ function useGearLibraryControls(options: UseGearLibraryControlsOptions) {
       () => options.selectedCategory.value,
       () => options.routeState.value.sort
     ],
+
     async ([status, categoryDetail, categorySlug, sort]) => {
       const isPropertySort = sort.startsWith('property:')
 

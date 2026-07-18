@@ -123,6 +123,13 @@
     &::-webkit-search-cancel-button {
       appearance: none;
     }
+
+    @media (forced-colors: active) {
+      &:focus {
+        outline: 2px solid Highlight;
+        outline-offset: 2px;
+      }
+    }
   }
 
   .clearButton {
@@ -167,12 +174,17 @@
       opacity: 0;
       scale: 0.8;
     }
-  }
 
-  @starting-style {
-    .clearButton {
+    @starting-style {
       opacity: 0;
       scale: 0.8;
+    }
+
+    @media (forced-colors: active) {
+      &:focus {
+        outline: 2px solid Highlight;
+        outline-offset: 2px;
+      }
     }
   }
 
@@ -180,11 +192,4 @@
     font-size: var(--font-size-20);
   }
 
-  @media (forced-colors: active) {
-    .input:focus,
-    .clearButton:focus {
-      outline: 2px solid Highlight;
-      outline-offset: 2px;
-    }
-  }
 </style>

@@ -11,7 +11,7 @@
     ]"
     :data-value="value"
     :aria-disabled="disabled"
-    :aria-selected="selected"
+    :aria-selected="visuallySelected"
     @click="selectOption"
     @mousedown.prevent
     @pointerenter="activateOption"
@@ -27,7 +27,7 @@
     id: string;
     index: number;
     label: string;
-    selected: boolean;
+    visuallySelected: boolean;
     value: string;
   }
 
@@ -42,7 +42,7 @@
     id,
     index,
     label,
-    selected,
+    visuallySelected,
     value
   } = defineProps<Props>()
 
@@ -69,6 +69,9 @@
     padding: var(--spacing-8) var(--spacing-12);
     border-radius: var(--border-radius-6);
     cursor: pointer;
+    transition:
+      background-color var(--transition-duration-fast) var(--transition-easing-standard),
+      color var(--transition-duration-fast) var(--transition-easing-standard);
 
     &:hover:not(:global(.isDisabled)),
     &:global(.isActive) {
@@ -78,17 +81,17 @@
     &:global(.isDisabled) {
       color: var(--color-text-muted);
       cursor: not-allowed;
-    }
-  }
 
-  @media (forced-colors: active) {
-    .component:global(.isActive) {
-      outline: 2px solid Highlight;
-      outline-offset: -2px;
+      @media (forced-colors: active) {
+        color: GrayText;
+      }
     }
 
-    .component:global(.isDisabled) {
-      color: GrayText;
+    @media (forced-colors: active) {
+      &:global(.isActive) {
+        outline: 2px solid Highlight;
+        outline-offset: -2px;
+      }
     }
   }
 </style>

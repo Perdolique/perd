@@ -1,12 +1,14 @@
 // oxlint-disable max-lines
 import * as v from 'valibot'
 import { limits, startPagePath } from '#shared/constants'
+
 import {
   compareDecimalNumbers,
   decimalNumberPattern,
   isFiniteDecimalNumber,
   normalizeDecimalNumber
-} from '#shared/utils/decimal-number'
+}
+ from '#shared/utils/decimal-number'
 import { sanitizeRedirectPath } from '#shared/utils/redirect'
 
 const nonEmptyStringSchema = v.pipe(

@@ -13,9 +13,10 @@
       type="button"
       role="combobox"
       :class="$style.button"
-      :disabled="isControlDisabled"
+      :disabled="isNativelyDisabled"
       :data-value="modelValue"
       :aria-busy="pending"
+      :aria-disabled="ariaDisabled"
       :aria-controls="listboxId"
       :aria-expanded="isOpen"
       :aria-activedescendant="activeOptionId"
@@ -69,7 +70,7 @@
 </script>
 
 <script lang="ts" setup>
-  import { computed, ref, useId, useTemplateRef, watch } from 'vue'
+  import { computed, nextTick, ref, useId, useTemplateRef, watch } from 'vue'
   import { onClickOutside } from '@vueuse/core'
   import { useDelayedPendingIndicator } from '~/composables/use-delayed-pending-indicator'
   import FidgetSpinner from '~/components/FidgetSpinner.vue'
@@ -101,6 +102,7 @@
   const valueId = `${componentId}-value`
   const isOpen = ref(false)
   const activeOptionIndex = ref(-1)
+
   const enabledOptionIndexes = computed(() => {
     const indexes: number[] = []
 
@@ -112,15 +114,21 @@
 
     return indexes
   })
+
+  const firstEnabledOptionIndex = computed(() => enabledOptionIndexes.value[0] ?? -1)
+  const lastEnabledOptionIndex = computed(() => enabledOptionIndexes.value.at(-1) ?? -1)
   const hasOptions = computed(() => options.length > 0)
   const hasEnabledOptions = computed(() => enabledOptionIndexes.value.length > 0)
-  const isControlDisabled = computed(() => (
-    disabled === true || pending === true || hasEnabledOptions.value === false
-  ))
+  const isNativelyDisabled = computed(() => disabled === true || hasEnabledOptions.value === false)
+  const isControlDisabled = computed(() => isNativelyDisabled.value || pending === true)
+  const ariaDisabled = computed(() => pending === true || undefined)
+
   const selectedOption = computed(() => (
     options.find((option) => option.value === modelValue.value)
   ))
+
   const selectedLabel = computed(() => selectedOption.value?.label ?? '')
+
   const activeOptionId = computed(() => {
     if (isOpen.value === false || activeOptionIndex.value === -1) {
       return
@@ -128,8 +136,10 @@
 
     return `${listboxId}-option-${activeOptionIndex.value}`
   })
+
   const buttonLabelledBy = computed(() => `${labelId} ${valueId}`)
   const isListboxHidden = computed(() => isOpen.value === false)
+
   const showPendingIndicator = useDelayedPendingIndicator(() => pending === true, {
     delayMs: 300,
     minimumVisibleMs: 180
@@ -141,7 +151,7 @@
     return option !== undefined && option.disabled !== true
   }
 
-  function getInitialOptionIndex(fallbackIndex: number) {
+  function getInitialOptionIndex(fallbackIndex = firstEnabledOptionIndex.value) {
     const selectedIndex = options.findIndex((option) => option.value === modelValue.value)
 
     return isOptionEnabled(selectedIndex) ? selectedIndex : fallbackIndex
@@ -153,7 +163,7 @@
     }
   }
 
-  function openDropdown(fallbackIndex: number) {
+  function openDropdown(fallbackIndex = firstEnabledOptionIndex.value) {
     if (isControlDisabled.value) {
       return
     }
@@ -170,30 +180,31 @@
   function toggleDropdown() {
     if (isOpen.value) {
       closeDropdown()
+
       return
     }
 
-    const firstOptionIndex = enabledOptionIndexes.value[0] ?? -1
-
-    openDropdown(firstOptionIndex)
+    openDropdown()
   }
 
   function activateRelativeOption(offset: number) {
-    const activePosition = enabledOptionIndexes.value.indexOf(activeOptionIndex.value)
-    const fallbackPosition = offset > 0 ? -1 : enabledOptionIndexes.value.length
-    const nextPosition = Math.min(
-      Math.max((activePosition === -1 ? fallbackPosition : activePosition) + offset, 0),
-      enabledOptionIndexes.value.length - 1
-    )
+    const enabledIndexes = enabledOptionIndexes.value
+    const activePosition = enabledIndexes.indexOf(activeOptionIndex.value)
+    let startingPosition = activePosition + offset
 
-    activeOptionIndex.value = enabledOptionIndexes.value[nextPosition] ?? -1
+    if (activePosition === -1) {
+      startingPosition = offset > 0 ? 0 : enabledIndexes.length - 1
+    }
+
+    const nextPosition = Math.min(Math.max(startingPosition, 0), enabledIndexes.length - 1)
+
+    activeOptionIndex.value = enabledIndexes[nextPosition] ?? -1
   }
 
   function activateNextOption() {
     if (isOpen.value === false) {
-      const firstOptionIndex = enabledOptionIndexes.value[0] ?? -1
+      openDropdown()
 
-      openDropdown(firstOptionIndex)
       return
     }
 
@@ -202,9 +213,8 @@
 
   function activatePreviousOption() {
     if (isOpen.value === false) {
-      const lastOptionIndex = enabledOptionIndexes.value.at(-1) ?? -1
+      openDropdown(lastEnabledOptionIndex.value)
 
-      openDropdown(lastOptionIndex)
       return
     }
 
@@ -219,6 +229,7 @@
     }
 
     modelValue.value = value
+
     closeDropdown()
   }
 
@@ -232,9 +243,8 @@
 
   function handleConfirmKey() {
     if (isOpen.value === false) {
-      const firstOptionIndex = enabledOptionIndexes.value[0] ?? -1
+      openDropdown()
 
-      openDropdown(firstOptionIndex)
       return
     }
 
@@ -247,6 +257,7 @@
     }
 
     event.preventDefault()
+
     closeDropdown()
   }
 
@@ -256,25 +267,21 @@
     }
   }
 
-  function handleFocusOut(event: FocusEvent) {
-    const nextFocusedElement = event.relatedTarget
-    const isNextFocusInside = nextFocusedElement instanceof globalThis.Node
-      && component.value?.contains(nextFocusedElement) === true
+  async function handleFocusOut() {
+    await nextTick()
 
-    if (isNextFocusInside === false) {
+    if (component.value?.contains(component.value.ownerDocument.activeElement) === false) {
       closeDropdown()
     }
   }
 
   onClickOutside(component, closeDropdown)
 
-  watch(() => options, () => {
-    if (isOpen.value && isOptionEnabled(activeOptionIndex.value) === false) {
-      const firstOptionIndex = enabledOptionIndexes.value[0] ?? -1
-
-      activeOptionIndex.value = getInitialOptionIndex(firstOptionIndex)
+  watch(enabledOptionIndexes, (enabledIndexes) => {
+    if (isOpen.value && enabledIndexes.includes(activeOptionIndex.value) === false) {
+      activeOptionIndex.value = getInitialOptionIndex()
     }
-  }, { deep: true })
+  })
 
   watch(isControlDisabled, (controlIsDisabled) => {
     if (controlIsDisabled) {
@@ -319,7 +326,7 @@
       border-color var(--transition-duration-fast) var(--transition-easing-standard),
       box-shadow var(--transition-duration-fast) var(--transition-easing-standard);
 
-    &:hover:not(:disabled) {
+    &:hover:not(:disabled, [aria-disabled='true']) {
       border-color: var(--color-accent-primary);
     }
 
@@ -330,11 +337,19 @@
       outline-offset: 2px;
     }
 
-    &:disabled {
+    &:disabled,
+    &[aria-disabled='true'] {
       border-color: var(--color-border-subtle);
       background-color: var(--color-surface-secondary);
       color: var(--color-text-muted);
       cursor: not-allowed;
+    }
+
+    @media (forced-colors: active) {
+      &:focus {
+        outline: 2px solid Highlight;
+        outline-offset: 2px;
+      }
     }
   }
 
@@ -352,12 +367,12 @@
     pointer-events: none;
   }
 
-  .spinner,
-  .chevron {
+  .spinner {
     font-size: var(--font-size-16);
   }
 
   .chevron {
+    font-size: var(--font-size-24);
     rotate: 0deg;
     transition: rotate var(--transition-duration-fast) var(--transition-easing-standard);
 
@@ -366,10 +381,4 @@
     }
   }
 
-  @media (forced-colors: active) {
-    .button:focus {
-      outline: 2px solid Highlight;
-      outline-offset: 2px;
-    }
-  }
 </style>

@@ -8,9 +8,11 @@ on:
   pull_request:
     branches:
       - master
+
     types:
       - opened
       - synchronize
+
   push:
     branches:
       - master
@@ -23,18 +25,22 @@ jobs:
   e2e:
     name: End-to-end tests
     runs-on: ubuntu-24.04
+
     steps:
       - uses: Perdolique/automations/.github/actions/setup-pnpm@v2
         with:
           install-dependencies: true
+
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium webkit
+
       - name: Run end-to-end tests
         run: pnpm run test:e2e:ci
 
   deploy:
     needs: e2e
     uses: Perdolique/automations/.github/workflows/deploy.yml@v2
+
     with:
       test-typecheck-command: test:typecheck
       lint-markdown-command: lint:markdown
@@ -42,6 +48,7 @@ jobs:
       test-unit-command: test:unit:ci
       deploy-to-staging-command: deploy:versions:staging
       deploy-to-production-command: deploy:production
+
     secrets:
       cloudflare-account-id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       cloudflare-api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}

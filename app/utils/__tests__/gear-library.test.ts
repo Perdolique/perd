@@ -4,17 +4,13 @@ import type { GearLibraryItemsResponse, GearLibraryListItem } from '../../types/
 import {
   type GearLibraryRouteState,
   buildGearLibraryRouteQuery,
-  clampGearLibraryPageCount,
   getGearLibraryItemsApiQuery,
   getGearLibraryRouteState,
+  getRestorableGearLibraryPages,
   getGearLibraryTotalPages,
   getUniqueGearLibraryItems,
   isGearLibraryRouteQueryCanonical
 } from '../gear-library'
-import {
-  getCanonicalGearLibraryReturnPath,
-  sanitizeGearLibraryReturnPath
-} from '../gear-library-return-path'
 
 function createRouteState(overrides: Partial<GearLibraryRouteState> = {}): GearLibraryRouteState {
   return {
@@ -182,13 +178,29 @@ describe(getGearLibraryTotalPages, () => {
   })
 })
 
-describe(clampGearLibraryPageCount, () => {
+describe(getRestorableGearLibraryPages, () => {
+  const cachedPages = [
+    createItemsResponse(1, ['first'], 30),
+    createItemsResponse(2, ['second'], 30),
+    createItemsResponse(3, ['third'], 30)
+  ]
+
+  it('should return the exact complete cached prefix', () => {
+    expect(getRestorableGearLibraryPages(cachedPages, 2)).toStrictEqual(cachedPages.slice(0, 2))
+  })
+
   it.each([
-    [1, 3, 1],
-    [2, 3, 2],
-    [99, 3, 3]
-  ])('should clamp desired page count %i against %i pages to %i', (pageCount, totalPages, expectedCount) => {
-    expect(clampGearLibraryPageCount(pageCount, totalPages)).toBe(expectedCount)
+    { loadedPageCount: 100, pages: cachedPages },
+    { loadedPageCount: 3, pages: cachedPages.slice(0, 2) },
+    {
+      loadedPageCount: 2,
+      pages: [
+        createItemsResponse(1, ['first'], 30),
+        createItemsResponse(3, ['third'], 30)
+      ]
+    }
+  ])('should reject an unsafe cached prefix', ({ loadedPageCount, pages }) => {
+    expect(getRestorableGearLibraryPages(pages, loadedPageCount)).toStrictEqual([])
   })
 })
 
@@ -202,44 +214,6 @@ describe(getUniqueGearLibraryItems, () => {
     const result = getUniqueGearLibraryItems(pages)
 
     expect(result.map((item) => item.id)).toStrictEqual(['first', 'duplicate', 'last'])
-  })
-})
-
-describe(sanitizeGearLibraryReturnPath, () => {
-  it('should keep only canonical supported catalog query state', () => {
-    const result = sanitizeGearLibraryReturnPath(
-      '/gear-library?brand=zeta&brand=alpha&brand=alpha&debug=1&q=%20pad%20&direction=desc'
-    )
-
-    expect(result).toBe('/gear-library?q=pad&brand=alpha&brand=zeta&direction=desc')
-  })
-
-  it('should use the router query encoding while dropping unsupported state', () => {
-    const result = sanitizeGearLibraryReturnPath('/gear-library?q=foo~bar&debug=1')
-
-    expect(result).toBe('/gear-library?q=foo~bar')
-  })
-
-  it.each([
-    ['/gear-library?debug=1', '/gear-library'],
-    ['/gear-library?q=foo~bar', '/gear-library?q=foo~bar'],
-    ['/settings', null]
-  ])('should expose the canonical match for history path %j', (returnPath, expectedPath) => {
-    expect(getCanonicalGearLibraryReturnPath(returnPath)).toBe(expectedPath)
-  })
-
-  it.each([
-    undefined,
-    null,
-    '',
-    ['gear-library', '/gear-library'],
-    'https://evil.example/gear-library',
-    '//evil.example/gear-library',
-    '/my-gear',
-    '/gear-library/item-id',
-    '/gear-library#results'
-  ])('should fall back for an unsafe return path %j', (returnPath) => {
-    expect(sanitizeGearLibraryReturnPath(returnPath)).toBe('/gear-library')
   })
 })
 

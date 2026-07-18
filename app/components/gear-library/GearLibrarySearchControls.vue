@@ -21,7 +21,6 @@
         v-model="orderingSelectValue"
         label="Sort by"
         :options="orderingSelectOptions"
-        :disabled="isOrderingDisabled"
         :pending="isOrderingPending"
       />
     </div>
@@ -77,7 +76,6 @@
     hasCategoryDetailUnavailable: boolean;
     isCategoryDisabled: boolean;
     isCategoryPending: boolean;
-    isOrderingDisabled: boolean;
     isOrderingPending: boolean;
     orderingOptions: GearLibraryOrderingOption[];
     orderingValue: string;

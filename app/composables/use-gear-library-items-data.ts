@@ -1,6 +1,5 @@
 import {
   computed,
-  onMounted,
   onScopeDispose,
   ref,
   shallowRef,
@@ -8,24 +7,28 @@ import {
   type ComputedRef,
   type Ref
 } from 'vue'
+
 import { onBeforeRouteLeave } from 'vue-router'
 import { useAsyncData, useRequestFetch } from '#imports'
 import type { GearLibraryItemsResponse } from '~/types/equipment'
+
 import {
-  clampGearLibraryPageCount,
   gearLibraryPageSize,
+  getRestorableGearLibraryPages,
   getGearLibraryTotalPages,
   getUniqueGearLibraryItems,
   type GearLibraryItemsApiQuery
 } from '~/utils/gear-library'
+
 import { useGearLibraryCache } from '~/composables/use-gear-library-cache'
+
 import {
-  useGearLibraryBatchLoader,
-  type GearLibraryBatchRestoration
-} from '~/composables/use-gear-library-batch-loader'
+  useGearLibraryPageLoader
+} from '~/composables/use-gear-library-page-loader'
 
 interface UseGearLibraryItemsDataOptions {
-  desiredPageCount: Ref<number>;
+  hasSavedBrowsingState: boolean;
+  loadedPageCount: Ref<number>;
   hasNarrowingState: ComputedRef<boolean>;
   itemsApiQuery: ComputedRef<GearLibraryItemsApiQuery>;
   itemsApiQuerySignature: ComputedRef<string>;
@@ -44,9 +47,23 @@ function useGearLibraryItemsData(options: UseGearLibraryItemsDataOptions) {
   const { getItemsSnapshot, storeItemsSnapshot } = useGearLibraryCache()
   const initialSignature = options.itemsApiQuerySignature.value
   const initialItemsSnapshot = getItemsSnapshot(initialSignature)
-  const initialPages = initialItemsSnapshot?.pages.slice(0, options.desiredPageCount.value) ?? []
+
+  const restoredPages = options.hasSavedBrowsingState
+    ? getRestorableGearLibraryPages(
+        initialItemsSnapshot?.pages ?? [],
+        options.loadedPageCount.value
+      )
+    : []
+
+  const hasRestorableInitialSnapshot = restoredPages.length > 0
+
+  const initialPages = hasRestorableInitialSnapshot
+    ? restoredPages
+    : initialItemsSnapshot?.pages.slice(0, 1) ?? []
+
   const initialItemsResponse = initialPages[0] ?? emptyItemsResponse
   const itemsPath = '/api/equipment/items' as const
+
   const itemsAsyncData = useAsyncData('gear-library-items', async (_nuxtApp, { signal }) => {
     const response = await requestFetch(itemsPath, {
       method: 'get',
@@ -59,23 +76,23 @@ function useGearLibraryItemsData(options: UseGearLibraryItemsDataOptions) {
     default: () => initialItemsResponse,
     lazy: true
   })
+
   const {
     data: itemsResponse,
     error: itemsError,
     refresh: refreshItemsRequest,
     status: itemsStatus
   } = itemsAsyncData
+
   const hasSuccessfulItemsRequest = ref(initialPages.length > 0 || itemsStatus.value === 'success')
   const lastSuccessfulHasNarrowingState = ref(initialItemsSnapshot?.hasNarrowingState ?? false)
   const loadedPages = shallowRef<GearLibraryItemsResponse[]>(initialPages)
   const isBrowsingStateReady = ref(false)
-  let pendingBatchRestoration: GearLibraryBatchRestoration | null = null
+  const canRestoreSavedBrowsingState = ref(hasRestorableInitialSnapshot)
   let activeItemsGeneration = 0
   let activeItemsSignature = initialSignature
   let activeHasNarrowingState = options.hasNarrowingState.value
-  let isPageMounted = false
-  let shouldPreserveInitialSnapshot = initialPages.length > 1
-    && initialPages.length >= options.desiredPageCount.value
+  let shouldPreserveInitialSnapshot = hasRestorableInitialSnapshot
 
   const lastSuccessfulItemsResponse = computed<GearLibraryItemsResponse>(() => {
     const firstPage = loadedPages.value[0] ?? emptyItemsResponse
@@ -84,17 +101,18 @@ function useGearLibraryItemsData(options: UseGearLibraryItemsDataOptions) {
 
     return {
       items,
-      limit: firstPage.limit,
       page,
+      limit: firstPage.limit,
       total: firstPage.total
     }
   })
-  const loadedBatch = computed(() => loadedPages.value.length)
+  const currentLoadedPageCount = computed(() => loadedPages.value.length)
   const totalPages = computed(() => getGearLibraryTotalPages(lastSuccessfulItemsResponse.value))
+
   const canLoadMore = computed(() => {
     const hasResults = lastSuccessfulItemsResponse.value.total > 0
 
-    return hasResults && loadedBatch.value < totalPages.value
+    return hasResults && currentLoadedPageCount.value < totalPages.value
   })
 
   function storeCurrentPages(signature: string, hasNarrowingState: boolean) {
@@ -108,6 +126,7 @@ function useGearLibraryItemsData(options: UseGearLibraryItemsDataOptions) {
     const baseQuery = options.itemsApiQuery.value
 
     return {
+      page,
       booleanFilter: baseQuery.booleanFilter,
       brandSlug: baseQuery.brandSlug,
       categorySlug: baseQuery.categorySlug,
@@ -115,7 +134,6 @@ function useGearLibraryItemsData(options: UseGearLibraryItemsDataOptions) {
       enumFilter: baseQuery.enumFilter,
       limit: baseQuery.limit,
       numberFilter: baseQuery.numberFilter,
-      page,
       search: baseQuery.search,
       sort: baseQuery.sort
     }
@@ -137,12 +155,10 @@ function useGearLibraryItemsData(options: UseGearLibraryItemsDataOptions) {
     cancelRequest: cancelAdditionalRequest,
     hasLoadMoreError,
     isLoadingMore,
-    loadAdditionalPages,
+    loadPage,
     loadMoreAnnouncement,
-    restoreBatch,
     retryLoadMore
-  } = useGearLibraryBatchLoader({
-    desiredPageCount: options.desiredPageCount,
+  } = useGearLibraryPageLoader({
     fetchPage: fetchAdditionalPage,
     getActiveRequest: () => {
       return {
@@ -151,8 +167,9 @@ function useGearLibraryItemsData(options: UseGearLibraryItemsDataOptions) {
         signature: activeItemsSignature
       }
     },
-    isBrowsingStateReady,
+
     isCurrentRequest: isCurrentItemsRequest,
+    loadedPageCount: options.loadedPageCount,
     loadedPages,
     storeCurrentPages
   })
@@ -160,59 +177,31 @@ function useGearLibraryItemsData(options: UseGearLibraryItemsDataOptions) {
   function cancelAdditionalRequests() {
     activeItemsGeneration += 1
     cancelAdditionalRequest()
-    pendingBatchRestoration = null
   }
 
   function handleSuccessfulFirstPage() {
-    const generation = activeItemsGeneration
     const signature = activeItemsSignature
     const [cachedFirstPage] = loadedPages.value
-    const shouldPreserveSnapshot = shouldPreserveInitialSnapshot
-      && cachedFirstPage !== undefined
+    const shouldPreserveSnapshot = shouldPreserveInitialSnapshot && cachedFirstPage !== undefined
     const firstPage = shouldPreserveSnapshot ? cachedFirstPage : itemsResponse.value
-    const realLastPage = getGearLibraryTotalPages(firstPage)
-    const desiredPageCount = options.desiredPageCount.value
-    const targetPageCount = clampGearLibraryPageCount(desiredPageCount, realLastPage)
 
     shouldPreserveInitialSnapshot = false
-
     hasSuccessfulItemsRequest.value = true
     lastSuccessfulHasNarrowingState.value = activeHasNarrowingState
 
     if (shouldPreserveSnapshot === false) {
       loadedPages.value = [firstPage]
+      options.loadedPageCount.value = 1
     }
 
     storeCurrentPages(signature, activeHasNarrowingState)
-    isBrowsingStateReady.value = loadedPages.value.length >= targetPageCount
 
-    const needsRestoration = targetPageCount !== desiredPageCount
-      || loadedPages.value.length < targetPageCount
-
-    if (needsRestoration === false) {
-      pendingBatchRestoration = null
-      return
-    }
-
-    const restoration: GearLibraryBatchRestoration = {
-      desiredPageCount,
-      generation,
-      signature,
-      targetPageCount
-    }
-
-    pendingBatchRestoration = restoration
-
-    if (import.meta.client === false || isPageMounted === false) {
-      return
-    }
-
-    pendingBatchRestoration = null
-    void restoreBatch(restoration)
+    isBrowsingStateReady.value = true
   }
 
   async function refreshItems() {
     cancelAdditionalRequests()
+
     isBrowsingStateReady.value = false
 
     await refreshItemsRequest()
@@ -230,15 +219,18 @@ function useGearLibraryItemsData(options: UseGearLibraryItemsDataOptions) {
 
     const targetPageCount = loadedPages.value.length + 1
 
-    await loadAdditionalPages(targetPageCount, true, true)
+    await loadPage(targetPageCount)
   }
 
   watch(options.itemsApiQuerySignature, async (signature) => {
     activeItemsSignature = signature
     activeHasNarrowingState = options.hasNarrowingState.value
+
     cancelAdditionalRequests()
-    options.desiredPageCount.value = 1
+
+    options.loadedPageCount.value = 1
     isBrowsingStateReady.value = false
+    canRestoreSavedBrowsingState.value = false
     loadMoreAnnouncement.value = ''
     shouldPreserveInitialSnapshot = false
 
@@ -266,22 +258,12 @@ function useGearLibraryItemsData(options: UseGearLibraryItemsDataOptions) {
     immediate: true
   })
 
-  onMounted(() => {
-    isPageMounted = true
-    const restoration = pendingBatchRestoration
-
-    pendingBatchRestoration = null
-
-    if (restoration !== null) {
-      void restoreBatch(restoration)
-    }
-  })
-
   onBeforeRouteLeave(cancelAdditionalRequests)
   onScopeDispose(cancelAdditionalRequests)
 
   return {
     canLoadMore,
+    canRestoreSavedBrowsingState,
     hasLoadMoreError,
     hasSuccessfulItemsRequest,
     isBrowsingStateReady,

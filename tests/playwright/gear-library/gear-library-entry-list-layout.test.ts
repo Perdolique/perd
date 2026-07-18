@@ -253,6 +253,7 @@ test.describe('Gear library layout and accessibility', () => {
     const filtersButton = page.getByRole('button', { name: 'Filters', exact: true })
 
     await expect(page.getByRole('complementary', { name: 'Catalog filters' })).toHaveCount(0)
+
     await page.evaluate(() => {
       globalThis.scrollTo({
         top: globalThis.document.documentElement.scrollHeight
@@ -298,6 +299,7 @@ test.describe('Gear library layout and accessibility', () => {
     expect(pageScrollAfterSideSheetScroll).toBe(pageScrollBeforeSideSheetScroll)
 
     await filterDialog.getByRole('button', { name: 'Close filters' }).click()
+
     await page.setViewportSize({
       height: 800,
       width: 1280
@@ -324,6 +326,7 @@ test.describe('Gear library layout and accessibility', () => {
     await expect(filterDialog).toBeVisible()
     await expectRouteSearch(page, '?category=stoves')
     await page.waitForTimeout(100)
+
     expect(tracker.items).toHaveLength(itemsBeforeResize)
 
     await page.setViewportSize({
@@ -339,6 +342,7 @@ test.describe('Gear library layout and accessibility', () => {
     expect(wideSideSheetBox.y).toBeCloseTo(0)
     expect(wideSideSheetBox.width).toBeCloseTo(384)
     expect(wideSideSheetBox.height).toBeCloseTo(900)
+
     await expect(filterDialog).toBeVisible()
     await expect(dialogBrandSearch).toHaveValue('msr')
     await expect(filterDialog.getByLabel('MSR')).toBeChecked()
@@ -347,6 +351,7 @@ test.describe('Gear library layout and accessibility', () => {
     await expectRouteSearch(page, '?category=stoves')
 
     await page.waitForTimeout(100)
+
     expect(tracker.items).toHaveLength(itemsBeforeResize)
 
     await closeButton.click()
@@ -363,6 +368,7 @@ test.describe('Gear library layout and accessibility', () => {
     await page.evaluate(() => {
       globalThis.scrollTo({ top: globalThis.document.documentElement.scrollHeight })
     })
+
     await expect.poll(async () => page.evaluate(() => globalThis.scrollY)).toBeGreaterThan(0)
     await expect(filtersButton).toBeInViewport()
 
@@ -450,9 +456,11 @@ test.describe('Gear library layout and accessibility', () => {
     const sortSelect = getGearLibrarySelect(searchRegion, 'Sort by')
     const clearButton = searchRegion.getByRole('button', { name: 'Clear search' })
     const filtersButton = page.getByRole('button', { name: 'Filters 5' })
+
     const appliedFilterButtons = page
       .getByRole('list', { name: 'Applied filters' })
       .getByRole('button')
+
     const clearAllButton = page.getByRole('button', { name: 'Clear all' })
     const detailLink = page.getByRole('link', { name: 'PocketRocket Deluxe' })
     const resultsBody = page.getByTestId('gear-library-results-body')
@@ -497,6 +505,7 @@ test.describe('Gear library layout and accessibility', () => {
     await expect(page.getByRole('button', { name: 'Filters 1' })).toBeVisible()
 
     const itemsBeforeRemoval = tracker.items.length
+
     const removeFilterButton = page.getByRole('button', {
       name: `Remove Number: ${malformedNumberFilter} filter`
     })

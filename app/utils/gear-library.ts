@@ -62,16 +62,19 @@ const routeQueryKeys = [
 const routeQueryKeySet: ReadonlySet<string> = new Set(routeQueryKeys)
 const gearLibraryPageSize = 10
 
+/** Returns the first scalar value from a Vue Router query entry. */
 function getSingleQueryValue(value: LocationQueryValue | LocationQueryValue[] | undefined) {
   return Array.isArray(value) ? value[0] : value
 }
 
+/** Normalizes a scalar query entry to a trimmed string. */
 function normalizeScalarQueryValue(value: LocationQueryValue | LocationQueryValue[] | undefined) {
   const singleValue = getSingleQueryValue(value)
 
   return singleValue?.trim() ?? ''
 }
 
+/** Returns all non-empty strings from a scalar or repeated query entry. */
 function getNonEmptyQueryValues(value: LocationQueryValue | LocationQueryValue[] | undefined) {
   if (value === undefined) {
     return []
@@ -82,6 +85,7 @@ function getNonEmptyQueryValues(value: LocationQueryValue | LocationQueryValue[]
   return values.filter((queryValue): queryValue is string => queryValue !== null && queryValue !== '')
 }
 
+/** Deduplicates and sorts repeated query values for canonical comparison. */
 function normalizeSortedQueryValues(value: LocationQueryValue | LocationQueryValue[] | undefined) {
   const nonEmptyValues = getNonEmptyQueryValues(value)
   const uniqueValues = new Set(nonEmptyValues)
@@ -89,6 +93,7 @@ function normalizeSortedQueryValues(value: LocationQueryValue | LocationQueryVal
   return [...uniqueValues].toSorted()
 }
 
+/** Reports whether a string is a supported catalog sort expression. */
 function isGearLibrarySort(value: string): value is GearLibrarySort {
   const isNamedSort = value === 'name' || value === 'brand'
   const propertySortPrefix = 'property:'
@@ -97,6 +102,7 @@ function isGearLibrarySort(value: string): value is GearLibrarySort {
   return isNamedSort || hasPropertySlug
 }
 
+/** Normalizes an optional sort query entry to a supported catalog sort. */
 function normalizeSortQueryValue(value: LocationQueryValue | LocationQueryValue[] | undefined): GearLibrarySort {
   const normalizedValue = normalizeScalarQueryValue(value)
   const isSupportedSort = isGearLibrarySort(normalizedValue)
@@ -108,6 +114,7 @@ function normalizeSortQueryValue(value: LocationQueryValue | LocationQueryValue[
   return 'name'
 }
 
+/** Normalizes an optional direction query entry to ascending or descending. */
 function normalizeDirectionQueryValue(
   value: LocationQueryValue | LocationQueryValue[] | undefined
 ): GearLibraryDirection {
@@ -120,6 +127,7 @@ function normalizeDirectionQueryValue(
   return 'asc'
 }
 
+/** Parses a Vue Router query into normalized gear-library state. */
 function getGearLibraryRouteState(query: LocationQuery): GearLibraryRouteState {
   const category = normalizeScalarQueryValue(query.category)
 
@@ -141,6 +149,7 @@ function getGearLibraryRouteState(query: LocationQuery): GearLibraryRouteState {
   return routeState
 }
 
+/** Converts normalized route state into the equipment items API query. */
 function getGearLibraryItemsApiQuery(
   routeState: GearLibraryRouteState,
   page: number
@@ -159,14 +168,35 @@ function getGearLibraryItemsApiQuery(
   }
 }
 
+/** Calculates the total number of API pages, with one page for an empty result. */
 function getGearLibraryTotalPages(response: GearLibraryItemsResponse) {
   return Math.max(Math.ceil(response.total / response.limit), 1)
 }
 
-function clampGearLibraryPageCount(desiredPageCount: number, totalPages: number) {
-  return Math.min(Math.max(desiredPageCount, 1), totalPages)
+/** Returns a complete continuous cached prefix or an empty array when restoration is unsafe. */
+function getRestorableGearLibraryPages(
+  pages: GearLibraryItemsResponse[],
+  loadedPageCount: number
+) {
+  const [firstPage] = pages
+  const hasValidPageCount = Number.isInteger(loadedPageCount) && loadedPageCount > 0
+
+  if (
+    firstPage === undefined
+    || hasValidPageCount === false
+    || loadedPageCount > getGearLibraryTotalPages(firstPage)
+  ) {
+    return []
+  }
+
+  const prefix = pages.slice(0, loadedPageCount)
+  const hasCompleteContinuousPrefix = prefix.length === loadedPageCount
+    && prefix.every((page, index) => page.page === index + 1)
+
+  return hasCompleteContinuousPrefix ? prefix : []
 }
 
+/** Flattens a continuous page prefix while keeping the first occurrence of each item. */
 function getUniqueGearLibraryItems(pages: GearLibraryItemsResponse[]): GearLibraryListItem[] {
   const itemIds = new Set<string>()
   const items: GearLibraryListItem[] = []
@@ -185,6 +215,7 @@ function getUniqueGearLibraryItems(pages: GearLibraryItemsResponse[]): GearLibra
   return items
 }
 
+/** Serializes normalized gear-library state into a minimal canonical route query. */
 function buildGearLibraryRouteQuery(routeState: GearLibraryRouteState): LocationQueryRaw {
   const query: LocationQueryRaw = {}
 
@@ -227,6 +258,7 @@ function buildGearLibraryRouteQuery(routeState: GearLibraryRouteState): Location
   return query
 }
 
+/** Extracts canonical entries for query keys supported by the gear library. */
 function getSupportedQueryEntries(query: LocationQuery | LocationQueryRaw): SupportedQueryEntry[] {
   const entries: SupportedQueryEntry[] = []
 
@@ -244,6 +276,7 @@ function getSupportedQueryEntries(query: LocationQuery | LocationQueryRaw): Supp
   return entries
 }
 
+/** Compares supported query entries by key and ordered normalized values. */
 function areSupportedQueryEntriesEqual(
   currentEntries: SupportedQueryEntry[],
   canonicalEntries: SupportedQueryEntry[]
@@ -275,6 +308,7 @@ function areSupportedQueryEntriesEqual(
   return true
 }
 
+/** Reports whether a route query already matches its canonical representation. */
 function isGearLibraryRouteQueryCanonical(query: LocationQuery) {
   if (query.batch !== undefined) {
     return false
@@ -298,9 +332,9 @@ export type {
 
 export {
   buildGearLibraryRouteQuery,
-  clampGearLibraryPageCount,
   gearLibraryPageSize,
   getGearLibraryItemsApiQuery,
+  getRestorableGearLibraryPages,
   getGearLibraryRouteState,
   getGearLibraryTotalPages,
   getUniqueGearLibraryItems,

@@ -23,6 +23,7 @@ describe(buildCategoryPropertySeedRows, () => {
     for (const [categorySlug, definitions] of Object.entries(propertyDefinitionsByCategorySlug)) {
       const categoryId = categoryIdBySlug.get(categorySlug)
       const categoryRows = rows.filter((row) => row.categoryId === categoryId)
+
       const orderedProperties = categoryRows.map((row) => {
         return {
           displayOrder: row.displayOrder,

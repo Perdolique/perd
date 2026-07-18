@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { limits } from '#shared/constants'
+
 import {
   validateBrandDetailParams,
   validateBrandIdParams,
@@ -56,11 +57,13 @@ describe('validation schemas', () => {
   const maxPropertyEnumOptionSlug = 'o'.repeat(limits.maxPropertyEnumOptionSlugLength)
   const tooLongPropertyEnumOptionName = 'O'.repeat(limits.maxPropertyEnumOptionNameLength + 1)
   const tooLongPropertyEnumOptionSlug = 'o'.repeat(limits.maxPropertyEnumOptionSlugLength + 1)
+
   const validReferenceSlugs = [
     'sleep',
     'sleeping-bags',
     'bag-2'
   ]
+
   const invalidReferenceSlugs = [
     'Sleeping-Bags',
     'sleep bags',
@@ -243,6 +246,7 @@ describe('validation schemas', () => {
       entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
     })
+
     const kebabCaseResult = validatePackingListEntryParams({
       'entry-id': '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
@@ -252,6 +256,7 @@ describe('validation schemas', () => {
       entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
     })
+
     expect(kebabCaseResult).toStrictEqual({
       entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
@@ -801,6 +806,7 @@ describe('validation schemas', () => {
       'sea-to-summit',
       'therm-a-rest'
     ])
+
     expect(result.numberFilter).toStrictEqual([{
       max: '2',
       min: '1',
@@ -810,6 +816,7 @@ describe('validation schemas', () => {
       min: '-10',
       propertySlug: 'comfort-temperature'
     }])
+
     expect(result.enumFilter).toStrictEqual([{
       optionSlug: 'down',
       propertySlug: 'fill-type'
@@ -820,6 +827,7 @@ describe('validation schemas', () => {
       optionSlug: 'nylon',
       propertySlug: 'shell-material'
     }])
+
     expect(result.booleanFilter).toStrictEqual([{
       propertySlug: 'freestanding',
       value: true

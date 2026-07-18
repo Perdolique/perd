@@ -17,19 +17,16 @@
   interface Props {
     closeDisabled?: boolean;
     desktopPresentation?: 'centered' | 'side-sheet';
-    invokerId: string;
     mobilePresentation?: 'bottom-sheet' | 'centered';
   }
 
   const {
     closeDisabled,
     desktopPresentation = 'centered',
-    invokerId,
     mobilePresentation = 'centered'
   } = defineProps<Props>()
 
   const dialogRef = useTemplateRef('dialogRef')
-  let invokingElement: HTMLElement | null = null
 
   const isOpened = defineModel<boolean>({
     required: true
@@ -52,7 +49,7 @@
       return
     }
 
-    const supportsClosedBy = Reflect.has(dialog, 'closedBy')
+    const supportsClosedBy = 'closedBy' in dialog.constructor.prototype
     const isDialogTarget = event.target === dialog
 
     if (closeDisabled || supportsClosedBy || !isDialogTarget) {
@@ -60,6 +57,7 @@
     }
 
     const bounds = dialog.getBoundingClientRect()
+
     const isWithinDialog = event.clientX >= bounds.left
       && event.clientX <= bounds.right
       && event.clientY >= bounds.top
@@ -68,14 +66,6 @@
     if (!isWithinDialog) {
       dialog.close()
     }
-  }
-
-  function getInvokingElement(dialog: HTMLDialogElement): HTMLElement | null {
-    const escapedInvokerId = globalThis.CSS.escape(invokerId)
-    const invokerSelector = `#${escapedInvokerId}`
-    const configuredInvoker = dialog.ownerDocument.querySelector(invokerSelector)
-
-    return configuredInvoker instanceof globalThis.HTMLElement ? configuredInvoker : null
   }
 
   watchEffect(() => {
@@ -90,7 +80,6 @@
         return
       }
 
-      invokingElement = getInvokingElement(dialog)
       dialog.showModal()
 
       return
@@ -102,14 +91,7 @@
   })
 
   useEventListener(dialogRef, 'close', () => {
-    const elementToRestore = invokingElement
-
-    invokingElement = null
     isOpened.value = false
-
-    if (elementToRestore?.isConnected === true) {
-      elementToRestore.focus()
-    }
   })
 </script>
 
@@ -142,6 +124,18 @@
         opacity: 0;
         translate: var(--dialog-closed-inline-translate) var(--dialog-closed-block-translate);
       }
+
+      &::backdrop {
+        background-color: var(--color-overlay-background);
+        backdrop-filter: blur(10px);
+      }
+
+      @starting-style {
+        &::backdrop {
+          background-color: transparent;
+          backdrop-filter: blur(0);
+        }
+      }
     }
 
     &:global(.isBottomSheet) {
@@ -164,6 +158,11 @@
         border-start-end-radius: var(--border-radius-24);
         background-color: var(--color-surface-primary);
         box-shadow: var(--shadow-large);
+
+        @media (prefers-reduced-motion: reduce) {
+          --dialog-closed-inline-translate: var(--dialog-open-inline-translate);
+          --dialog-closed-block-translate: 0;
+        }
       }
     }
 
@@ -187,6 +186,11 @@
         border-end-start-radius: var(--border-radius-24);
         background-color: var(--color-surface-primary);
         box-shadow: var(--shadow-large);
+
+        @media (prefers-reduced-motion: reduce) {
+          --dialog-closed-inline-translate: var(--dialog-open-inline-translate);
+          --dialog-closed-block-translate: 0;
+        }
       }
     }
 
@@ -199,29 +203,7 @@
         display var(--transition-duration-normal) var(--transition-easing-standard) allow-discrete;
     }
 
-    &[open] {
-      &::backdrop {
-        background-color: var(--color-overlay-background);
-        backdrop-filter: blur(10px);
-      }
-    }
-  }
-
-  @starting-style {
-    .component {
-      &[open] {
-        &::backdrop {
-          background-color: transparent;
-          backdrop-filter: blur(0);
-        }
-      }
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .component,
-    .component:global(.isBottomSheet),
-    .component:global(.isSideSheet) {
+    @media (prefers-reduced-motion: reduce) {
       --dialog-closed-inline-translate: var(--dialog-open-inline-translate);
       --dialog-closed-block-translate: 0;
     }

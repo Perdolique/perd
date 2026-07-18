@@ -1,15 +1,19 @@
 import { asc, eq, inArray } from 'drizzle-orm'
+
 import {
   categoryProperties,
   itemPropertyValues,
   propertyEnumOptions
 } from '#server/database/schema'
+
 import type { createHttpClient } from '#server/utils/database'
+
 import type {
   CatalogListBrand,
   CatalogListCategory,
   CatalogListItemRow
 } from '#server/utils/equipment/catalog-list'
+
 import {
   getEquipmentPropertyDataType,
   normalizeEquipmentPropertyValue,
@@ -60,6 +64,7 @@ interface PropertyEnumOptionRow {
   slug: string;
 }
 
+/** Groups the first three ordered list-property definitions by category. */
 function groupDefinitions(rows: PropertyDefinitionRow[]) {
   const definitionsByCategoryId = new Map<number, PropertyDefinitionRow[]>()
 
@@ -76,6 +81,7 @@ function groupDefinitions(rows: PropertyDefinitionRow[]) {
   return definitionsByCategoryId
 }
 
+/** Indexes property values by item and property ID. */
 function groupValues(rows: PropertyValueRow[]) {
   const valuesByItemId = new Map<string, Map<number, PropertyValueRow>>()
 
@@ -92,6 +98,7 @@ function groupValues(rows: PropertyValueRow[]) {
   return valuesByItemId
 }
 
+/** Indexes enum option names by property ID and option slug. */
 function groupEnumOptionNames(rows: PropertyEnumOptionRow[]) {
   const optionNamesByPropertyId = new Map<number, Map<string, string>>()
 
@@ -118,6 +125,7 @@ async function enrichCatalogItemRows(dbHttp: DbHttp, itemRows: CatalogListItemRo
   const uniqueCategoryIds = new Set(categoryIdValues)
   const categoryIds = [...uniqueCategoryIds]
   const itemIds = itemRows.map((item) => item.id)
+
   const definitionsPromise = dbHttp
     .select({
       categoryId: categoryProperties.categoryId,
@@ -137,6 +145,7 @@ async function enrichCatalogItemRows(dbHttp: DbHttp, itemRows: CatalogListItemRo
       asc(categoryProperties.displayOrder),
       asc(categoryProperties.id)
     )
+
   const valuesPromise = dbHttp
     .select({
       itemId: itemPropertyValues.itemId,
@@ -149,6 +158,7 @@ async function enrichCatalogItemRows(dbHttp: DbHttp, itemRows: CatalogListItemRo
     .where(
       inArray(itemPropertyValues.itemId, itemIds)
     )
+
   const enumOptionsPromise = dbHttp
     .select({
       name: propertyEnumOptions.name,
@@ -160,11 +170,13 @@ async function enrichCatalogItemRows(dbHttp: DbHttp, itemRows: CatalogListItemRo
     .where(
       inArray(categoryProperties.categoryId, categoryIds)
     )
+
   const [definitionRows, enumOptionRows, valueRows] = await Promise.all([
     definitionsPromise,
     enumOptionsPromise,
     valuesPromise
   ])
+
   const definitionsByCategoryId = groupDefinitions(definitionRows)
   const enumOptionNamesByPropertyId = groupEnumOptionNames(enumOptionRows)
   const valuesByItemId = groupValues(valueRows)
@@ -172,9 +184,11 @@ async function enrichCatalogItemRows(dbHttp: DbHttp, itemRows: CatalogListItemRo
   return itemRows.map((item) => {
     const definitions = definitionsByCategoryId.get(item.categoryId) ?? []
     const itemValues = valuesByItemId.get(item.id)
+
     const properties = definitions.map((definition): CatalogListProperty => {
       const dataType = getEquipmentPropertyDataType(definition.dataType)
       const storedValue = itemValues?.get(definition.id)
+
       const value = storedValue === undefined
         ? null
         : normalizeEquipmentPropertyValue({

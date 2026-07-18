@@ -13,7 +13,7 @@
         :has-draft-filters="hasDraftFilters"
         :has-number-range-errors="hasNumberRangeErrors"
         :has-properties-unavailable="hasCategoryDetailUnavailable"
-        :has-selected-category="selectedCategory !== undefined"
+        :has-selected-category="hasSelectedCategory"
         :is-brands-pending="isBrandsPending"
         :is-properties-pending="isCategoryDetailPending"
         :number-range-errors="numberRangeErrors"
@@ -35,7 +35,6 @@
             :has-category-detail-unavailable="hasCategoryDetailUnavailable"
             :is-category-disabled="isCategoryDisabled"
             :is-category-pending="isCategoryPending"
-            :is-ordering-disabled="isCategoryDetailPending"
             :is-ordering-pending="isCategoryDetailPending"
             :ordering-options="orderingOptions"
             :ordering-value="orderingValue"
@@ -180,17 +179,15 @@
 
 <script lang="ts" setup>
   import { computed } from 'vue'
-  import { definePageMeta, useRouter } from '#imports'
-
+  import { definePageMeta } from '#imports'
   import { useDelayedPendingIndicator } from '~/composables/use-delayed-pending-indicator'
   import { useGearLibraryControls } from '~/composables/use-gear-library-controls'
   import { useGearLibraryData } from '~/composables/use-gear-library-data'
   import { useGearLibraryFilters } from '~/composables/use-gear-library-filters'
   import { useGearLibraryRoute } from '~/composables/use-gear-library-route'
   import { useGearLibraryBrowsingRestoration } from '~/composables/use-gear-library-browsing-restoration'
-  import { buildGearLibraryRouteQuery } from '~/utils/gear-library'
   import { createGearLibraryAppliedFilterChips } from '~/utils/gear-library-filters'
-  import { appRoutes, createGearLibraryItemPath, navigationLabels } from '~/utils/navigation'
+  import { createGearLibraryItemPath, navigationLabels } from '~/utils/navigation'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PageSummaryHeader from '~/components/PageSummaryHeader.vue'
   import PerdButton from '~/components/PerdButton.vue'
@@ -205,10 +202,9 @@
   definePageMeta({
     layout: 'page',
     middleware: ['gear-library-query'],
-    scrollToTop: false
+    scrollToTop: false,
+    viewTransition: false
   })
-
-  const router = useRouter()
 
   const {
     handleCategoryChange,
@@ -223,8 +219,9 @@
   } = useGearLibraryRoute()
 
   const {
-    connectBrowsingStateReady,
-    desiredPageCount
+    connectBrowsingState,
+    hasSavedBrowsingState,
+    loadedPageCount
   } = useGearLibraryBrowsingRestoration()
 
   const {
@@ -258,12 +255,15 @@
       || state.boolean.length > 0
   })
 
+  const hasSelectedCategory = computed(() => selectedCategory.value !== undefined)
+
   const {
     activeCategoryDetail,
     brandsError,
     brandsResponse,
     brandsStatus,
     canLoadMore,
+    canRestoreSavedBrowsingState,
     categoriesError,
     categoriesResponse,
     categoriesStatus,
@@ -287,14 +287,15 @@
     refreshItems,
     retryLoadMore
   } = await useGearLibraryData({
-    desiredPageCount,
+    hasSavedBrowsingState,
+    loadedPageCount,
     hasNarrowingState,
     itemsApiQuery,
     itemsApiQuerySignature,
     selectedCategory
   })
 
-  connectBrowsingStateReady(isBrowsingStateReady)
+  connectBrowsingState(isBrowsingStateReady, canRestoreSavedBrowsingState)
 
   const {
     categoryOptions,
@@ -312,21 +313,23 @@
   })
 
   const hasItemsError = computed(() => itemsError.value !== undefined && itemsError.value !== null)
+
   const hasBrandsUnavailable = computed(() => {
     const hasRequestError = brandsError.value !== undefined && brandsError.value !== null
 
     return hasRequestError && hasBrandsData.value === false
   })
+
   const hasCategoriesError = computed(() => categoriesError.value !== undefined && categoriesError.value !== null)
+
   const hasCategoriesUnavailable = computed(
     () => hasCategoriesError.value && hasCategoriesData.value === false
   )
 
   const hasCategoryDetailError = computed(() => {
-    const hasSelectedCategory = selectedCategory.value !== undefined
     const hasRequestError = categoryDetailError.value !== undefined && categoryDetailError.value !== null
 
-    return hasSelectedCategory && hasRequestError
+    return hasSelectedCategory.value && hasRequestError
   })
 
   const isItemsPending = computed(() => itemsStatus.value === 'idle' || itemsStatus.value === 'pending')
@@ -335,22 +338,23 @@
   const hasInitialItemsError = computed(() => hasItemsError.value && hasSuccessfulItemsRequest.value === false)
   const hasRefreshItemsError = computed(() => hasItemsError.value && hasSuccessfulItemsRequest.value)
   const isCategoriesLoading = computed(() => categoriesStatus.value === 'idle' || categoriesStatus.value === 'pending')
+
   const isBrandsPending = computed(() => {
     const isRequestPending = brandsStatus.value === 'idle' || brandsStatus.value === 'pending'
 
     return isRequestPending && hasBrandsData.value === false
   })
+
   const isCategoryPending = computed(() => isCategoriesLoading.value && hasCategoriesData.value === false)
+
   const isCategoryDisabled = computed(
-    () => isCategoryPending.value
-      || (hasCategoriesUnavailable.value && selectedCategory.value === undefined)
+    () => isCategoryPending.value || (hasCategoriesUnavailable.value && selectedCategory.value === undefined)
   )
 
   const isCategoryDetailLoading = computed(() => {
-    const hasSelectedCategory = selectedCategory.value !== undefined
     const isRequestPending = categoryDetailStatus.value === 'idle' || categoryDetailStatus.value === 'pending'
 
-    return hasSelectedCategory && isRequestPending
+    return hasSelectedCategory.value && isRequestPending
   })
 
   const hasActiveCategoryDetail = computed(() => {
@@ -417,18 +421,8 @@
     () => isBrowsingStateReady.value && (canLoadMore.value || isLoadingMore.value)
   )
 
-  const gearLibraryReturnPath = computed(() => {
-    const query = buildGearLibraryRouteQuery(routeState.value)
-    const resolvedRoute = router.resolve({
-      path: appRoutes.gearLibrary,
-      query
-    })
-
-    return resolvedRoute.fullPath
-  })
-
   const gearLibraryItems = computed(() => lastSuccessfulItemsResponse.value.items.map((item) => {
-    const detailPath = createGearLibraryItemPath(item.id, gearLibraryReturnPath.value)
+    const detailPath = createGearLibraryItemPath(item.id)
 
     return {
       brand: item.brand,

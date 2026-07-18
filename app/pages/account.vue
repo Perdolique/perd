@@ -9,7 +9,6 @@
       />
 
       <DangerActionCard
-        action-id="delete-account-dialog-invoker"
         title="Danger"
         action-text="Delete Account"
         @action="onDeleteClick"
@@ -21,7 +20,6 @@
       header-text="Delete account"
       confirm-button-text="Delete account"
       confirm-variant="danger"
-      invoker-id="delete-account-dialog-invoker"
       @confirm="handleDeleteAccount"
     >
       Are you sure you want to delete your account? This action cannot be undone.

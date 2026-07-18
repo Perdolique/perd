@@ -14,7 +14,7 @@
       :disabled="option.isDisabled"
       :index="option.index"
       :label="option.label"
-      :selected="option.isSelected"
+      :visually-selected="option.isVisuallySelected"
       :value="option.value"
       @activate="activateOption"
       @select="selectOption"
@@ -44,7 +44,7 @@
     index: number;
     isActive: boolean;
     isDisabled: boolean;
-    isSelected: boolean;
+    isVisuallySelected: boolean;
   }
 
   const {
@@ -56,6 +56,7 @@
 
   const emit = defineEmits<Emits>()
   const listbox = useTemplateRef('listbox')
+
   const renderedOptions = computed<RenderedSelectOption[]>(() => (
     options.map((option, index) => {
       return {
@@ -64,7 +65,7 @@
         index,
         isActive: index === activeIndex,
         isDisabled: option.disabled === true,
-        isSelected: index === activeIndex,
+        isVisuallySelected: index === activeIndex,
         label: option.label,
         value: option.value
       }
