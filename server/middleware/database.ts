@@ -1,4 +1,4 @@
-import { defineEventHandler } from 'h3'
+import { defineEventHandler, getRequestURL } from 'h3'
 import { createHttpClient } from '#server/utils/database'
 import { getRuntimeDatabaseConfig } from '#server/utils/config'
 
@@ -9,6 +9,18 @@ declare module 'h3' {
 }
 
 export default defineEventHandler((event) => {
+  if (event.handled) {
+    return
+  }
+
+  const { pathname } = getRequestURL(event)
+  const isApiRequest = pathname === '/api' || pathname.startsWith('/api/')
+  const isNuxtIconRequest = pathname.startsWith('/api/_nuxt_icon/')
+
+  if (!isApiRequest || isNuxtIconRequest) {
+    return
+  }
+
   const dbConfig = getRuntimeDatabaseConfig(event)
 
   event.context.dbHttp = createHttpClient(dbConfig)

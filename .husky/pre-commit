@@ -24,4 +24,4 @@ run_quietly 'Markdown lint' vp run lint:markdown
 run_quietly 'Oxlint' vp run lint:oxlint:agent
 run_quietly 'Typecheck' vp run test:typecheck
 run_quietly 'Unit tests' vp run test:unit:agent
-run_quietly 'Production build + E2E tests' vp run test:e2e:ci
+run_quietly 'Production build + E2E tests' vp run test:e2e

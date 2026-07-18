@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "nuxt build",
+    "build:e2e": "nuxt build --dotenv tests/playwright/runtime.env",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "tsx --env-file=.env ./tools/migrate.ts",
     "db:migrate": "tsx ./tools/migrate.ts",
@@ -23,8 +24,9 @@
     "lint:oxlint:agent": "oxlint --format agent",
     "postinstall": "nuxt prepare",
     "preview": "wrangler dev",
-    "preview:e2e": "sh tools/preview-e2e.sh",
-    "test:e2e": "playwright test",
+    "preview:e2e": "XDG_CONFIG_HOME=.output/e2e/config XDG_CACHE_HOME=.output/e2e/cache XDG_STATE_HOME=.output/e2e/state WRANGLER_LOG_PATH=.output/e2e/logs WRANGLER_CACHE_DIR=.output/e2e/cache/wrangler wrangler dev --local --env-file tests/playwright/runtime.env --persist-to .output/e2e/wrangler-state --ip 127.0.0.1 --port 8888 --log-level warn",
+    "test:e2e": "playwright test --project=chromium",
+    "test:e2e:all": "playwright test",
     "test:e2e:ci": "CI=true playwright test",
     "test:typecheck": "nuxi typecheck",
     "test:unit": "vitest",
@@ -39,7 +41,8 @@
     "delay": "7.0.0",
     "nuxt": "4.4.8",
     "pinia": "4.0.2",
-    "vue": "3.5.39"
+    "vue": "3.5.39",
+    "vue-router": "5.1.0"
   },
   "devDependencies": {
     "@iconify-json/hugeicons": "1.2.31",

@@ -6,6 +6,9 @@ import { appBaseUrl } from './tests/playwright/constants.ts'
 delete env.NO_COLOR
 
 const isCI = Boolean(env.CI)
+const e2eWebServerCommand = isCI
+  ? 'pnpm run build:e2e && pnpm run preview:e2e'
+  : 'vp run build:e2e && vp run preview:e2e'
 
 const reporters: ReporterDescription[] = [
   ['html', { open: 'never' }]
@@ -18,37 +21,53 @@ if (isCI) {
 export default defineConfig({
   testDir: './tests/playwright',
   fullyParallel: true,
+  globalTimeout: 300_000,
 
   // Fail the build on CI if you accidentally left test.only in the source code
   forbidOnly: isCI,
 
   // Retry on CI only
-  retries: isCI ? 2 : 0,
+  retries: isCI ? 1 : 0,
+  failOnFlakyTests: isCI,
   reporter: reporters,
 
   use: {
     baseURL: appBaseUrl,
-    trace: 'on-first-retry',
+    trace: isCI ? 'on-first-retry' : 'retain-on-failure',
     screenshot: 'only-on-failure'
   },
 
   projects: [
     {
-      name: 'Chrome Desktop',
+      name: 'chromium',
       use: { ...devices['Desktop Chrome'] }
     },
     {
-      name: 'WebKit dialogs',
+      name: 'webkit',
+      fullyParallel: false,
       grep: /@dialog-compatibility/u,
       testMatch: '**/dialogs/modal-dialog.test.ts',
-      use: { ...devices['Desktop Safari'] }
+      workers: 1,
+
+      use: {
+        ...devices['Desktop Safari'],
+
+        launchOptions: {
+          timeout: 30_000
+        }
+      }
     }
   ],
 
-  // Run the production preview before E2E. `preview:e2e` owns the writable temp-dir setup for Wrangler state.
+  // Build the same Cloudflare Worker artifact that is deployed, then run it locally in workerd.
   webServer: {
-    command: 'vp run preview:e2e',
+    command: e2eWebServerCommand,
     url: appBaseUrl,
-    reuseExistingServer: !isCI
+    reuseExistingServer: false,
+    timeout: 60_000,
+    gracefulShutdown: {
+      signal: 'SIGINT',
+      timeout: 5000
+    }
   }
 })

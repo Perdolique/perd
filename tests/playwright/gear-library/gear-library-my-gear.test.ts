@@ -267,6 +267,16 @@ test.describe('Gear library my gear flow', () => {
       })
     })
 
+    await context.route('**/api/equipment/brands**', async (route) => {
+      await route.fulfill({
+        json: [{
+          id: 1,
+          name: 'MSR',
+          slug: 'msr'
+        }]
+      })
+    })
+
     await context.route('**/api/equipment/items/*', async (route) => {
       await route.fulfill({
         json: itemDetailResponse

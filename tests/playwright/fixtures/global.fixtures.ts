@@ -37,6 +37,35 @@ function isUnexpectedConsoleMessage(message: ConsoleMessage) {
 }
 
 const test = base.extend({
+  context: async ({ context }, use) => {
+    const unmockedApiRequests = new Set<string>()
+
+    await context.route((url) => {
+      const isApplicationOrigin = url.origin === appOrigin
+      const isApiRequest = url.pathname.startsWith('/api/')
+      const isNuxtIconRequest = url.pathname.startsWith('/api/_nuxt_icon/')
+
+      return isApplicationOrigin && isApiRequest && !isNuxtIconRequest
+    }, async (route) => {
+      const request = route.request()
+      const requestUrlValue = request.url()
+      const requestUrl = new globalThis.URL(requestUrlValue)
+      const requestTarget = `${request.method()} ${requestUrl.pathname}${requestUrl.search}`
+
+      unmockedApiRequests.add(requestTarget)
+
+      await route.abort('blockedbyclient')
+    })
+
+    await use(context)
+
+    if (unmockedApiRequests.size > 0) {
+      const requestList = [...unmockedApiRequests].join('\n')
+
+      throw new Error(`Unmocked application API requests reached the E2E server:\n${requestList}`)
+    }
+  },
+
   page: async ({ page }, use) => {
     const runtimeIssues: BrowserRuntimeIssue[] = []
 
