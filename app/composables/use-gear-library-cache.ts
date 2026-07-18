@@ -7,7 +7,7 @@ import type {
 
 interface GearLibraryItemsSnapshot {
   hasNarrowingState: boolean;
-  response: GearLibraryItemsResponse;
+  pages: GearLibraryItemsResponse[];
 }
 
 interface CachedGearLibraryItems extends GearLibraryItemsSnapshot {
@@ -21,7 +21,7 @@ interface GearLibraryCacheState {
   items?: CachedGearLibraryItems;
 }
 
-/** Keeps filter reference data and the latest items response for this app session. */
+/** Keeps filter reference data and the latest continuous item-page prefix for this app session. */
 function useGearLibraryCache() {
   const cache = useState<GearLibraryCacheState>('gear-library-cache', () => {
     return {
@@ -74,7 +74,8 @@ function useGearLibraryCache() {
 
   function storeItemsSnapshot(signature: string, snapshot: GearLibraryItemsSnapshot) {
     cache.value.items = {
-      ...snapshot,
+      hasNarrowingState: snapshot.hasNarrowingState,
+      pages: snapshot.pages,
       signature
     }
   }

@@ -4,6 +4,10 @@ import type {
   LocationQueryValue,
   LocationQueryValueRaw
 } from 'vue-router'
+import type {
+  GearLibraryItemsResponse,
+  GearLibraryListItem
+} from '~/types/equipment'
 
 type GearLibrarySort = 'name' | 'brand' | `property:${string}`
 type GearLibraryDirection = 'asc' | 'desc'
@@ -22,7 +26,6 @@ interface GearLibraryRouteState {
   boolean: string[];
   sort: GearLibrarySort;
   direction: GearLibraryDirection;
-  batch: number;
   compare: string[];
 }
 
@@ -35,6 +38,7 @@ interface GearLibraryItemsApiQuery {
   booleanFilter: string[];
   sort: GearLibrarySort;
   direction: GearLibraryDirection;
+  limit: number;
   page: number;
 }
 
@@ -52,11 +56,11 @@ const routeQueryKeys = [
   'boolean',
   'sort',
   'direction',
-  'batch',
   'compare'
 ] as const
 
 const routeQueryKeySet: ReadonlySet<string> = new Set(routeQueryKeys)
+const gearLibraryPageSize = 10
 
 function getSingleQueryValue(value: LocationQueryValue | LocationQueryValue[] | undefined) {
   return Array.isArray(value) ? value[0] : value
@@ -116,19 +120,10 @@ function normalizeDirectionQueryValue(
   return 'asc'
 }
 
-function normalizeBatchQueryValue(value: LocationQueryValue | LocationQueryValue[] | undefined) {
-  const normalizedValue = normalizeScalarQueryValue(value)
-  const parsedValue = Number(normalizedValue)
-  const isPositiveInteger = normalizedValue !== '' && Number.isInteger(parsedValue) && parsedValue > 0
-
-  return isPositiveInteger ? parsedValue : 1
-}
-
 function getGearLibraryRouteState(query: LocationQuery): GearLibraryRouteState {
   const category = normalizeScalarQueryValue(query.category)
 
   const routeState: GearLibraryRouteState = {
-    batch: normalizeBatchQueryValue(query.batch),
     boolean: normalizeSortedQueryValues(query.boolean),
     brand: normalizeSortedQueryValues(query.brand),
     compare: getNonEmptyQueryValues(query.compare),
@@ -156,11 +151,38 @@ function getGearLibraryItemsApiQuery(
     categorySlug: routeState.category,
     direction: routeState.direction,
     enumFilter: routeState.enum,
+    limit: gearLibraryPageSize,
     numberFilter: routeState.number,
     page,
     search: routeState.q,
     sort: routeState.sort
   }
+}
+
+function getGearLibraryTotalPages(response: GearLibraryItemsResponse) {
+  return Math.max(Math.ceil(response.total / response.limit), 1)
+}
+
+function clampGearLibraryPageCount(desiredPageCount: number, totalPages: number) {
+  return Math.min(Math.max(desiredPageCount, 1), totalPages)
+}
+
+function getUniqueGearLibraryItems(pages: GearLibraryItemsResponse[]): GearLibraryListItem[] {
+  const itemIds = new Set<string>()
+  const items: GearLibraryListItem[] = []
+
+  for (const page of pages) {
+    for (const item of page.items) {
+      const isNewItem = itemIds.has(item.id) === false
+
+      if (isNewItem) {
+        itemIds.add(item.id)
+        items.push(item)
+      }
+    }
+  }
+
+  return items
 }
 
 function buildGearLibraryRouteQuery(routeState: GearLibraryRouteState): LocationQueryRaw {
@@ -196,10 +218,6 @@ function buildGearLibraryRouteQuery(routeState: GearLibraryRouteState): Location
 
   if (routeState.direction !== 'asc') {
     query.direction = routeState.direction
-  }
-
-  if (routeState.batch !== 1) {
-    query.batch = String(routeState.batch)
   }
 
   if (routeState.compare.length > 0) {
@@ -258,6 +276,10 @@ function areSupportedQueryEntriesEqual(
 }
 
 function isGearLibraryRouteQueryCanonical(query: LocationQuery) {
+  if (query.batch !== undefined) {
+    return false
+  }
+
   const routeState = getGearLibraryRouteState(query)
   const canonicalQuery = buildGearLibraryRouteQuery(routeState)
   const currentEntries = getSupportedQueryEntries(query)
@@ -276,7 +298,11 @@ export type {
 
 export {
   buildGearLibraryRouteQuery,
+  clampGearLibraryPageCount,
+  gearLibraryPageSize,
   getGearLibraryItemsApiQuery,
   getGearLibraryRouteState,
+  getGearLibraryTotalPages,
+  getUniqueGearLibraryItems,
   isGearLibraryRouteQueryCanonical
 }

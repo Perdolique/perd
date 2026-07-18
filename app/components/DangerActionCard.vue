@@ -10,6 +10,7 @@
       </p>
 
       <PerdButton
+        :id="actionId"
         variant="danger"
         icon="hugeicons:delete-02"
         @click="emitAction"
@@ -26,6 +27,7 @@
   import PerdCard from '~/components/PerdCard.vue'
 
   interface Props {
+    actionId?: string;
     actionText: string;
     copy?: string;
     title: string;

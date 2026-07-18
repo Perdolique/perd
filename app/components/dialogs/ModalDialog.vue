@@ -17,12 +17,14 @@
   interface Props {
     closeDisabled?: boolean;
     desktopPresentation?: 'centered' | 'side-sheet';
+    invokerId: string;
     mobilePresentation?: 'bottom-sheet' | 'centered';
   }
 
   const {
     closeDisabled,
     desktopPresentation = 'centered',
+    invokerId,
     mobilePresentation = 'centered'
   } = defineProps<Props>()
 
@@ -68,6 +70,14 @@
     }
   }
 
+  function getInvokingElement(dialog: HTMLDialogElement): HTMLElement | null {
+    const escapedInvokerId = globalThis.CSS.escape(invokerId)
+    const invokerSelector = `#${escapedInvokerId}`
+    const configuredInvoker = dialog.ownerDocument.querySelector(invokerSelector)
+
+    return configuredInvoker instanceof globalThis.HTMLElement ? configuredInvoker : null
+  }
+
   watchEffect(() => {
     const dialog = dialogRef.value
 
@@ -80,9 +90,7 @@
         return
       }
 
-      const { activeElement } = dialog.ownerDocument
-
-      invokingElement = activeElement instanceof globalThis.HTMLElement ? activeElement : null
+      invokingElement = getInvokingElement(dialog)
       dialog.showModal()
 
       return

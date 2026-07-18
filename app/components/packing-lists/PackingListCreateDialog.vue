@@ -2,6 +2,7 @@
   <ModalDialog
     v-model="isOpened"
     :close-disabled="loading"
+    :invoker-id="invokerId"
     aria-labelledby="new-packing-list-dialog-title"
   >
     <form :class="$style.component" @submit.prevent="handleSubmit">
@@ -92,6 +93,7 @@
 
   interface Props {
     errorMessage?: string | null;
+    invokerId: string;
     loading?: boolean;
   }
 

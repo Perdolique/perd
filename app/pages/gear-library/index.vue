@@ -151,20 +151,26 @@
               <GearLibraryResultsPanel
                 v-else
                 :items="gearLibraryItems"
-                :is-out-of-range-page="isOutOfRangePage"
-                @go-last="handleGoToLastPage"
               />
             </div>
 
-            <GearLibraryPagination
-              :is-visible="showPagination"
-              :page="lastSuccessfulItemsResponse.page"
-              :total-pages="totalPages"
-              :is-previous-disabled="isPreviousPageDisabled"
-              :is-next-disabled="isNextPageDisabled"
-              @previous="handleGoToPreviousPage"
-              @next="handleGoToNextPage"
+            <GearLibraryLoadMore
+              :has-error="hasLoadMoreError"
+              :is-loading="isLoadingMore"
+              :is-visible="showLoadMore"
+              @load-more="loadMore"
+              @retry="retryLoadMore"
             />
+
+            <p
+              :class="$style.visuallyHidden"
+              data-testid="gear-library-load-more-status"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {{ loadMoreAnnouncement }}
+            </p>
           </template>
         </div>
       </GearLibraryFilters>
@@ -174,21 +180,23 @@
 
 <script lang="ts" setup>
   import { computed } from 'vue'
-  import { definePageMeta } from '#imports'
+  import { definePageMeta, useRouter } from '#imports'
 
   import { useDelayedPendingIndicator } from '~/composables/use-delayed-pending-indicator'
   import { useGearLibraryControls } from '~/composables/use-gear-library-controls'
   import { useGearLibraryData } from '~/composables/use-gear-library-data'
   import { useGearLibraryFilters } from '~/composables/use-gear-library-filters'
   import { useGearLibraryRoute } from '~/composables/use-gear-library-route'
+  import { useGearLibraryBrowsingRestoration } from '~/composables/use-gear-library-browsing-restoration'
+  import { buildGearLibraryRouteQuery } from '~/utils/gear-library'
   import { createGearLibraryAppliedFilterChips } from '~/utils/gear-library-filters'
-  import { createGearLibraryItemPath, navigationLabels } from '~/utils/navigation'
+  import { appRoutes, createGearLibraryItemPath, navigationLabels } from '~/utils/navigation'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PageSummaryHeader from '~/components/PageSummaryHeader.vue'
   import PerdButton from '~/components/PerdButton.vue'
   import PerdProgressBar from '~/components/PerdProgressBar.vue'
-  import GearLibraryPagination from '~/components/gear-library/GearLibraryPagination.vue'
   import GearLibraryFilters from '~/components/gear-library/GearLibraryFilters.vue'
+  import GearLibraryLoadMore from '~/components/gear-library/GearLibraryLoadMore.vue'
   import GearLibraryResultsPanel from '~/components/gear-library/GearLibraryResultsPanel.vue'
   import GearLibraryResultsSkeleton from '~/components/gear-library/GearLibraryResultsSkeleton.vue'
   import GearLibrarySearchControls from '~/components/gear-library/GearLibrarySearchControls.vue'
@@ -196,11 +204,13 @@
 
   definePageMeta({
     layout: 'page',
-    middleware: ['gear-library-query']
+    middleware: ['gear-library-query'],
+    scrollToTop: false
   })
 
+  const router = useRouter()
+
   const {
-    currentPage,
     handleCategoryChange,
     handleFiltersChange,
     handleOrderingChange,
@@ -211,6 +221,11 @@
     selectedCategory,
     selectedCategoryValue
   } = useGearLibraryRoute()
+
+  const {
+    connectBrowsingStateReady,
+    desiredPageCount
+  } = useGearLibraryBrowsingRestoration()
 
   const {
     appliedFilterCount,
@@ -248,6 +263,7 @@
     brandsError,
     brandsResponse,
     brandsStatus,
+    canLoadMore,
     categoriesError,
     categoriesResponse,
     categoriesStatus,
@@ -255,21 +271,30 @@
     categoryDetailStatus,
     hasBrandsData,
     hasCategoriesData,
+    hasLoadMoreError,
     hasSuccessfulItemsRequest,
+    isBrowsingStateReady,
+    isLoadingMore,
     itemsError,
     itemsStatus,
     lastSuccessfulHasNarrowingState,
     lastSuccessfulItemsResponse,
+    loadMore,
+    loadMoreAnnouncement,
     refreshBrands,
     refreshCategories,
     refreshCategoryDetail,
-    refreshItems
+    refreshItems,
+    retryLoadMore
   } = await useGearLibraryData({
+    desiredPageCount,
     hasNarrowingState,
     itemsApiQuery,
     itemsApiQuerySignature,
     selectedCategory
   })
+
+  connectBrowsingStateReady(isBrowsingStateReady)
 
   const {
     categoryOptions,
@@ -373,12 +398,6 @@
     () => isRefreshing.value ? 'Refreshing results' : 'Results refreshed'
   )
 
-  const totalPages = computed(() => {
-    const response = lastSuccessfulItemsResponse.value
-
-    return Math.max(Math.ceil(response.total / response.limit), 1)
-  })
-
   const isEmptyCatalog = computed(
     () => lastSuccessfulItemsResponse.value.total === 0 && lastSuccessfulHasNarrowingState.value === false
   )
@@ -387,12 +406,6 @@
     () => lastSuccessfulItemsResponse.value.total === 0 && lastSuccessfulHasNarrowingState.value
   )
 
-  const isOutOfRangePage = computed(() => {
-    const response = lastSuccessfulItemsResponse.value
-
-    return response.total > 0 && response.items.length === 0
-  })
-
   const itemsSummaryText = computed(() => {
     const itemCount = lastSuccessfulItemsResponse.value.total
     const itemLabel = itemCount === 1 ? 'item' : 'items'
@@ -400,14 +413,22 @@
     return `${itemCount} ${itemLabel}`
   })
 
-  const canGoPrevious = computed(() => lastSuccessfulItemsResponse.value.page > 1)
-  const canGoNext = computed(() => lastSuccessfulItemsResponse.value.page < totalPages.value)
-  const showPagination = computed(() => totalPages.value > 1 && lastSuccessfulItemsResponse.value.total > 0)
-  const isPreviousPageDisabled = computed(() => canGoPrevious.value === false || isRefreshing.value)
-  const isNextPageDisabled = computed(() => canGoNext.value === false || isRefreshing.value)
+  const showLoadMore = computed(
+    () => isBrowsingStateReady.value && (canLoadMore.value || isLoadingMore.value)
+  )
+
+  const gearLibraryReturnPath = computed(() => {
+    const query = buildGearLibraryRouteQuery(routeState.value)
+    const resolvedRoute = router.resolve({
+      path: appRoutes.gearLibrary,
+      query
+    })
+
+    return resolvedRoute.fullPath
+  })
 
   const gearLibraryItems = computed(() => lastSuccessfulItemsResponse.value.items.map((item) => {
-    const detailPath = createGearLibraryItemPath(item.id)
+    const detailPath = createGearLibraryItemPath(item.id, gearLibraryReturnPath.value)
 
     return {
       brand: item.brand,
@@ -444,27 +465,6 @@
     }
   ))
 
-  function handlePageChange(page: number) {
-    const isSamePage = page === currentPage.value
-
-    if (isSamePage || isRefreshing.value) {
-      return
-    }
-
-    currentPage.value = page
-  }
-
-  function handleGoToLastPage() {
-    handlePageChange(totalPages.value)
-  }
-
-  function handleGoToPreviousPage() {
-    handlePageChange(lastSuccessfulItemsResponse.value.page - 1)
-  }
-
-  function handleGoToNextPage() {
-    handlePageChange(lastSuccessfulItemsResponse.value.page + 1)
-  }
 </script>
 
 <style module>

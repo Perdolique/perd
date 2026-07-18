@@ -12,6 +12,7 @@
 
         <div ref="filterAction" :class="$style.filterAction">
           <PerdButton
+            :id="filterTriggerId"
             variant="secondary"
             aria-haspopup="dialog"
             :aria-expanded="isDialogOpen"
@@ -55,6 +56,7 @@
       v-model="isDialogOpen"
       :class="$style.filterDialog"
       :aria-labelledby="filterTitleId"
+      :invoker-id="filterTriggerId"
       desktop-presentation="side-sheet"
       mobile-presentation="bottom-sheet"
     >
@@ -155,6 +157,7 @@
   const pendingFocusTarget = ref<PendingFocusTarget>()
   const componentId = useId()
   const filterTitleId = `${componentId}-filter-title`
+  const filterTriggerId = `${componentId}-filter-trigger`
   const filterAction = useTemplateRef('filterAction')
   const chipsList = useTemplateRef('chipsList')
 

@@ -89,7 +89,7 @@ const gearLibraryItemsResponse: GearLibraryItemsResponse = {
       value: true
     }]
   }],
-  limit: 20,
+  limit: 10,
   page: 1,
   total: 1
 }
@@ -278,7 +278,11 @@ test.describe('Gear library my gear flow', () => {
     await page.getByRole('button', { name: 'Guest' }).click()
     await expect(page).toHaveURL(/\/gear-library$/u)
     await page.getByRole('link', { name: 'PocketRocket Deluxe' }).click()
-    await expect(page).toHaveURL(new RegExp(`/gear-library/${itemId}$`, 'u'))
+    await expect.poll(() => new globalThis.URL(page.url()).pathname).toBe(`/gear-library/${itemId}`)
+
+    const detailUrl = new globalThis.URL(page.url())
+
+    expect(detailUrl.searchParams.get('returnTo')).toBe('/gear-library')
     await expect(page.getByRole('heading', { level: 1, name: 'PocketRocket Deluxe' })).toBeVisible()
     await expect(page.getByText('83 g')).toBeVisible()
     await expect(page.getByText('Yes', { exact: true })).toBeVisible()

@@ -1,29 +1,28 @@
-import { ref, shallowRef, watch, type ComputedRef } from 'vue'
-import { useAsyncData, useFetch, useRequestFetch } from '#imports'
+import { ref, shallowRef, watch, type ComputedRef, type Ref } from 'vue'
+import { useAsyncData, useRequestFetch } from '#imports'
 import type { CategoryDetailResponse } from '#server/api/equipment/categories/by-slug/[slug].get'
 import type { GearLibraryItemsApiQuery } from '~/utils/gear-library'
 import { useGearLibraryCache } from '~/composables/use-gear-library-cache'
+import { useGearLibraryItemsData } from '~/composables/use-gear-library-items-data'
 
 interface UseGearLibraryDataOptions {
+  desiredPageCount: Ref<number>;
   hasNarrowingState: ComputedRef<boolean>;
   itemsApiQuery: ComputedRef<GearLibraryItemsApiQuery>;
   itemsApiQuerySignature: ComputedRef<string>;
   selectedCategory: ComputedRef<string | undefined>;
 }
 
-/** Owns gear library requests, transport cancellation, and session-cache synchronization. */
+/** Owns gear library reference-data requests alongside continuous item batches. */
 async function useGearLibraryData(options: UseGearLibraryDataOptions) {
   const requestFetch = useRequestFetch()
-
   const {
     getBrands,
     getCategories,
     getCategoryDetail,
-    getItemsSnapshot,
     storeBrands,
     storeCategories,
-    storeCategoryDetail,
-    storeItemsSnapshot
+    storeCategoryDetail
   } = useGearLibraryCache()
 
   function getCachedDetailForSlug(slug: string | undefined) {
@@ -36,35 +35,30 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
 
   const cachedBrands = getBrands()
   const cachedCategories = getCategories()
-  const initialItemsSnapshot = getItemsSnapshot(options.itemsApiQuerySignature.value)
   const initialCategorySlug = options.selectedCategory.value
   const initialCategoryDetail: CategoryDetailResponse | null = getCachedDetailForSlug(initialCategorySlug)
+  const brandsRequest = useAsyncData('gear-library-brands', async (_nuxtApp, { signal }) => {
+    const response = await requestFetch('/api/equipment/brands', {
+      method: 'get',
+      signal
+    })
 
-  const initialItemsResponse = initialItemsSnapshot?.response ?? {
-    items: [],
-    limit: 20,
-    page: 1,
-    total: 0
-  }
-
-  const brandsRequest = useFetch('/api/equipment/brands', {
+    return response
+  }, {
     default: () => cachedBrands ?? [],
     lazy: true
   })
+  const categoriesRequest = useAsyncData('gear-library-categories', async (_nuxtApp, { signal }) => {
+    const response = await requestFetch('/api/equipment/categories', {
+      method: 'get',
+      signal
+    })
 
-  const categoriesRequest = useFetch('/api/equipment/categories', {
+    return response
+  }, {
     default: () => cachedCategories ?? [],
     lazy: true
   })
-
-  const itemsRequest = useFetch('/api/equipment/items', {
-    default: () => initialItemsResponse,
-    key: 'gear-library-items',
-    lazy: true,
-    query: options.itemsApiQuery,
-    watch: false
-  })
-
   const categoryDetailRequest = useAsyncData('gear-library-category-detail', async (_nuxtApp, { signal }) => {
     const categorySlug = options.selectedCategory.value
 
@@ -73,72 +67,38 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
     }
 
     const categoryDetailPath = `/api/equipment/categories/by-slug/${categorySlug}` as const
-    const categoryDetail = await requestFetch(categoryDetailPath, { signal })
+    const categoryDetail = await requestFetch(categoryDetailPath, {
+      method: 'get',
+      signal
+    })
 
     return categoryDetail
   }, {
     default: () => initialCategoryDetail,
     lazy: true
   })
-
-  const [brandsAsyncData, categoriesAsyncData, itemsAsyncData, categoryDetailAsyncData] = await Promise.all([
-    brandsRequest,
-    categoriesRequest,
-    itemsRequest,
-    categoryDetailRequest
-  ])
-
+  const itemsData = useGearLibraryItemsData(options)
   const {
     data: brandsResponse,
     error: brandsError,
     refresh: refreshBrands,
     status: brandsStatus
-  } = brandsAsyncData
-
+  } = brandsRequest
   const {
     data: categoriesResponse,
     error: categoriesError,
     refresh: refreshCategories,
     status: categoriesStatus
-  } = categoriesAsyncData
-
-  const {
-    data: itemsResponse,
-    error: itemsError,
-    refresh: refreshItems,
-    status: itemsStatus
-  } = itemsAsyncData
-
+  } = categoriesRequest
   const {
     data: categoryDetailResponse,
     error: categoryDetailError,
     refresh: refreshCategoryDetail,
     status: categoryDetailStatus
-  } = categoryDetailAsyncData
-
+  } = categoryDetailRequest
   const hasBrandsData = ref(cachedBrands !== undefined || brandsStatus.value === 'success')
   const hasCategoriesData = ref(cachedCategories !== undefined || categoriesStatus.value === 'success')
-
-  const hasSuccessfulItemsRequest = ref(
-    initialItemsSnapshot !== undefined || itemsStatus.value === 'success'
-  )
-
-  const lastSuccessfulHasNarrowingState = ref(initialItemsSnapshot?.hasNarrowingState ?? false)
-  const lastSuccessfulItemsResponse = shallowRef(initialItemsSnapshot?.response ?? itemsResponse.value)
   const activeCategoryDetail = shallowRef<CategoryDetailResponse | null>(initialCategoryDetail)
-
-  watch(options.itemsApiQuery, async () => {
-    const signature = options.itemsApiQuerySignature.value
-    const cachedSnapshot = getItemsSnapshot(signature)
-
-    if (cachedSnapshot !== undefined) {
-      hasSuccessfulItemsRequest.value = true
-      lastSuccessfulHasNarrowingState.value = cachedSnapshot.hasNarrowingState
-      lastSuccessfulItemsResponse.value = cachedSnapshot.response
-    }
-
-    await refreshItems()
-  })
 
   watch(options.selectedCategory, async (categorySlug) => {
     activeCategoryDetail.value = getCachedDetailForSlug(categorySlug)
@@ -154,6 +114,7 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
     hasBrandsData.value = true
     storeBrands(brandsResponse.value)
   }, {
+    flush: 'sync',
     immediate: true
   })
 
@@ -165,26 +126,7 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
     hasCategoriesData.value = true
     storeCategories(categoriesResponse.value)
   }, {
-    immediate: true
-  })
-
-  watch(itemsStatus, (status) => {
-    if (status !== 'success') {
-      return
-    }
-
-    hasSuccessfulItemsRequest.value = true
-    lastSuccessfulHasNarrowingState.value = options.hasNarrowingState.value
-    lastSuccessfulItemsResponse.value = itemsResponse.value
-
-    const signature = options.itemsApiQuerySignature.value
-    const snapshot = {
-      hasNarrowingState: options.hasNarrowingState.value,
-      response: itemsResponse.value
-    }
-
-    storeItemsSnapshot(signature, snapshot)
-  }, {
+    flush: 'sync',
     immediate: true
   })
 
@@ -202,14 +144,23 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
     activeCategoryDetail.value = categoryDetail
     storeCategoryDetail(categoryDetail)
   }, {
+    flush: 'sync',
     immediate: true
   })
+
+  await Promise.all([
+    brandsRequest,
+    categoriesRequest,
+    categoryDetailRequest,
+    itemsData.initialItemsRequest
+  ])
 
   return {
     activeCategoryDetail,
     brandsError,
     brandsResponse,
     brandsStatus,
+    canLoadMore: itemsData.canLoadMore,
     categoriesError,
     categoriesResponse,
     categoriesStatus,
@@ -217,15 +168,21 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
     categoryDetailStatus,
     hasBrandsData,
     hasCategoriesData,
-    hasSuccessfulItemsRequest,
-    itemsError,
-    itemsStatus,
-    lastSuccessfulHasNarrowingState,
-    lastSuccessfulItemsResponse,
+    hasLoadMoreError: itemsData.hasLoadMoreError,
+    hasSuccessfulItemsRequest: itemsData.hasSuccessfulItemsRequest,
+    isBrowsingStateReady: itemsData.isBrowsingStateReady,
+    isLoadingMore: itemsData.isLoadingMore,
+    itemsError: itemsData.itemsError,
+    itemsStatus: itemsData.itemsStatus,
+    lastSuccessfulHasNarrowingState: itemsData.lastSuccessfulHasNarrowingState,
+    lastSuccessfulItemsResponse: itemsData.lastSuccessfulItemsResponse,
+    loadMore: itemsData.loadMore,
+    loadMoreAnnouncement: itemsData.loadMoreAnnouncement,
     refreshBrands,
     refreshCategories,
     refreshCategoryDetail,
-    refreshItems
+    refreshItems: itemsData.refreshItems,
+    retryLoadMore: itemsData.retryLoadMore
   }
 }
 

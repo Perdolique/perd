@@ -23,8 +23,16 @@ const navigationIcons = {
   packingLists: 'hugeicons:check-list'
 } as const
 
-function createGearLibraryItemPath(itemId: string) {
-  return `${appRoutes.gearLibrary}/${itemId}`
+function createGearLibraryItemPath(itemId: string, returnTo?: string) {
+  const itemPath = `${appRoutes.gearLibrary}/${itemId}`
+
+  if (returnTo === undefined) {
+    return itemPath
+  }
+
+  const searchParams = new globalThis.URLSearchParams({ returnTo })
+
+  return `${itemPath}?${searchParams.toString()}`
 }
 
 function createPackingListPath(packingListId: string) {

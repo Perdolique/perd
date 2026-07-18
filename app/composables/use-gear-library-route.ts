@@ -13,7 +13,6 @@ import {
 import type { GearLibraryAppliedFilters } from '~/utils/gear-library-filters'
 
 interface GearLibraryRouteStateChanges {
-  batch?: number;
   boolean?: string[];
   brand?: string[];
   category?: string | null;
@@ -24,10 +23,9 @@ interface GearLibraryRouteStateChanges {
   sort?: GearLibrarySort;
 }
 
-/** Owns catalog URL writes and the temporary local API page. */
+/** Owns catalog URL writes and the stable first-page API query. */
 function useGearLibraryRoute() {
   const route = useRoute()
-  const currentPage = ref(1)
   const routeState = computed(() => getGearLibraryRouteState(route.query))
   const selectedCategory = computed(() => routeState.value.category)
   const selectedCategoryValue = computed(() => selectedCategory.value ?? '')
@@ -43,7 +41,7 @@ function useGearLibraryRoute() {
 
   const itemsApiQuery = computed(() => getGearLibraryItemsApiQuery(
     itemsRequestRouteState.value,
-    currentPage.value
+    1
   ))
 
   const itemsApiQuerySignature = computed(() => JSON.stringify(itemsApiQuery.value))
@@ -63,7 +61,6 @@ function useGearLibraryRoute() {
       boolean: hasCategoryChange ? [] : changes.boolean ?? currentState.boolean,
       sort: hasCategoryChange ? 'name' : changes.sort ?? currentState.sort,
       direction: hasCategoryChange ? 'asc' : changes.direction ?? currentState.direction,
-      batch: changes.batch ?? currentState.batch,
       compare: currentState.compare
     }
   }
@@ -113,14 +110,11 @@ function useGearLibraryRoute() {
       number: routeState.value.number
     }
 
-    if (JSON.stringify(filters) === JSON.stringify(currentFilters) && routeState.value.batch === 1) {
+    if (JSON.stringify(filters) === JSON.stringify(currentFilters)) {
       return
     }
 
-    const nextState = createNextRouteState({
-      ...filters,
-      batch: 1
-    })
+    const nextState = createNextRouteState(filters)
 
     await writeRouteState(nextState, false)
   }
@@ -143,7 +137,6 @@ function useGearLibraryRoute() {
   }
 
   watch(itemsRequestSignature, () => {
-    currentPage.value = 1
     itemsRequestRouteState.value = routeState.value
   }, {
     flush: 'sync'
@@ -162,7 +155,6 @@ function useGearLibraryRoute() {
   })
 
   return {
-    currentPage,
     handleCategoryChange,
     handleFiltersChange,
     handleOrderingChange,

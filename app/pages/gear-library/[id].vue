@@ -1,7 +1,7 @@
 <template>
   <PageContent :page-title="pageTitle">
     <template #actions>
-      <PerdLink :to="appRoutes.gearLibrary">
+      <PerdLink :to="gearLibraryReturnPath" @click.capture="handleGearLibraryBackClick">
         Back to gear library
       </PerdLink>
     </template>
@@ -57,9 +57,12 @@
 
 <script lang="ts" setup>
   import { computed, ref } from 'vue'
-  import { definePageMeta, useFetch, useRequestFetch, useRoute } from '#imports'
+  import { definePageMeta, useFetch, useRequestFetch, useRoute, useRouter } from '#imports'
   import type { ItemProperty } from '~/types/equipment'
-  import { appRoutes } from '~/utils/navigation'
+  import {
+    getCanonicalGearLibraryReturnPath,
+    sanitizeGearLibraryReturnPath
+  } from '~/utils/gear-library-return-path'
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PerdButton from '~/components/PerdButton.vue'
@@ -75,6 +78,8 @@
   })
 
   const route = useRoute()
+  const router = useRouter()
+  const gearLibraryReturnPath = computed(() => sanitizeGearLibraryReturnPath(route.query.returnTo))
   const itemId = Array.isArray(route.params.id)
     ? route.params.id[0] ?? ''
     : route.params.id
@@ -82,6 +87,26 @@
   const myGearErrorMessage = ref<string | null>(null)
   const isMyGearPending = ref(false)
   const $fetch = useRequestFetch()
+
+  function handleGearLibraryBackClick(event: MouseEvent) {
+    const hasModifierKey = event.altKey || event.ctrlKey || event.metaKey || event.shiftKey
+    const isPrimaryUnmodifiedClick = event.button === 0 && hasModifierKey === false
+    const historyState: unknown = globalThis.history.state
+    const historyBackPath = typeof historyState === 'object'
+      && historyState !== null
+      && 'back' in historyState
+      ? getCanonicalGearLibraryReturnPath(historyState.back)
+      : null
+    const hasMatchingHistoryEntry = historyBackPath !== null
+      && historyBackPath === gearLibraryReturnPath.value
+
+    if (isPrimaryUnmodifiedClick === false || hasMatchingHistoryEntry === false) {
+      return
+    }
+
+    event.preventDefault()
+    router.back()
+  }
 
   const {
     data: itemResponse,

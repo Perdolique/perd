@@ -5,23 +5,23 @@
     </h1>
 
     <div :class="$style.actions">
-      <PerdButton @click="openCenteredDialog">
+      <PerdButton id="centered-dialog-invoker" @click="openCenteredDialog">
         Open centered dialog
       </PerdButton>
 
-      <PerdButton @click="openBottomSheet">
+      <PerdButton id="bottom-sheet-invoker" @click="openBottomSheet">
         Open bottom sheet
       </PerdButton>
 
-      <PerdButton @click="openSideSheet">
+      <PerdButton id="side-sheet-invoker" @click="openSideSheet">
         Open side sheet
       </PerdButton>
 
-      <PerdButton @click="openLongBottomSheet">
+      <PerdButton id="long-bottom-sheet-invoker" @click="openLongBottomSheet">
         Open long bottom sheet
       </PerdButton>
 
-      <PerdButton @click="openLockedBottomSheet">
+      <PerdButton id="locked-bottom-sheet-invoker" @click="openLockedBottomSheet">
         Open locked bottom sheet
       </PerdButton>
     </div>
@@ -29,6 +29,7 @@
     <ModalDialog
       v-model="centeredOpened"
       aria-labelledby="centered-dialog-title"
+      invoker-id="centered-dialog-invoker"
     >
       <section :class="$style.centeredSurface">
         <h2 id="centered-dialog-title">
@@ -45,6 +46,7 @@
       v-model="sideSheetOpened"
       aria-labelledby="side-sheet-title"
       desktop-presentation="side-sheet"
+      invoker-id="side-sheet-invoker"
     >
       <section :class="$style.sideSheetSurface">
         <h2 id="side-sheet-title" tabindex="-1" autofocus>
@@ -66,6 +68,7 @@
     <ModalDialog
       v-model="bottomSheetOpened"
       aria-labelledby="bottom-sheet-title"
+      invoker-id="bottom-sheet-invoker"
       mobile-presentation="bottom-sheet"
     >
       <section :class="$style.sheetSurface">
@@ -88,6 +91,7 @@
     <ModalDialog
       v-model="longBottomSheetOpened"
       aria-labelledby="long-bottom-sheet-title"
+      invoker-id="long-bottom-sheet-invoker"
       mobile-presentation="bottom-sheet"
     >
       <section :class="[$style.sheetSurface, 'isLong']">
@@ -113,6 +117,7 @@
       v-model="lockedBottomSheetOpened"
       aria-labelledby="locked-bottom-sheet-title"
       close-disabled
+      invoker-id="locked-bottom-sheet-invoker"
       mobile-presentation="bottom-sheet"
     >
       <section :class="$style.sheetSurface">

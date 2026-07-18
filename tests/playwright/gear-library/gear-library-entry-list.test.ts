@@ -2,7 +2,8 @@ import type { BrowserContext, Locator, Page, Request, Route } from '@playwright/
 import type {
   GearLibraryEntityDetail,
   GearLibraryItemsResponse,
-  GearLibraryListItem
+  GearLibraryListItem,
+  ItemDetailResponse
 } from '../../../app/types/equipment'
 import type { CategoryDetailResponse } from '../../../server/api/equipment/categories/by-slug/[slug].get'
 import { expect, test } from '../fixtures/global.fixtures.ts'
@@ -43,6 +44,10 @@ interface Deferred {
 
 interface MutableResponseState {
   response: ApiMockResponse;
+}
+
+interface LoadMoreFailureState {
+  shouldFail: boolean;
 }
 
 type QueryEntry = readonly [key: string, value: string]
@@ -126,7 +131,7 @@ const secondPageItem: GearLibraryListItem = {
 
 const firstPageResponse: GearLibraryItemsResponse = {
   items: [stoveItem, sleepingPadItem],
-  limit: 2,
+  limit: 10,
   page: 1,
   total: 3
 }
@@ -139,38 +144,62 @@ const scrollableItemsResponse: GearLibraryItemsResponse = {
       name: `PocketRocket Deluxe ${index + 1}`
     }
   }),
-  limit: 20,
+  limit: 10,
   page: 1,
   total: 8
 }
 
-const secondPageResponse: GearLibraryItemsResponse = {
-  items: [secondPageItem],
-  limit: 2,
-  page: 2,
-  total: 3
-}
-
 const refreshedSearchResponse: GearLibraryItemsResponse = {
   items: [secondPageItem],
-  limit: 20,
+  limit: 10,
   page: 1,
   total: 1
 }
 
 const sleepingPadsResponse: GearLibraryItemsResponse = {
   items: [sleepingPadItem],
-  limit: 20,
+  limit: 10,
   page: 1,
   total: 1
 }
 
 const emptyResponse: GearLibraryItemsResponse = {
   items: [],
-  limit: 20,
+  limit: 10,
   page: 1,
   total: 0
 }
+
+const loadMoreItems: GearLibraryListItem[] = Array.from({ length: 23 }, (_value, index) => {
+  const itemNumber = index + 1
+
+  return {
+    ...stoveItem,
+    id: `0195f6e8-8f44-74f6-bc9a-${String(100 + index).padStart(12, '0')}`,
+    name: `Catalog item ${String(itemNumber).padStart(2, '0')}`
+  }
+})
+
+const loadMoreResponses: GearLibraryItemsResponse[] = [
+  {
+    items: loadMoreItems.slice(0, 10),
+    limit: 10,
+    page: 1,
+    total: loadMoreItems.length
+  },
+  {
+    items: loadMoreItems.slice(10, 20),
+    limit: 10,
+    page: 2,
+    total: loadMoreItems.length
+  },
+  {
+    items: loadMoreItems.slice(20),
+    limit: 10,
+    page: 3,
+    total: loadMoreItems.length
+  }
+]
 
 const categoriesResponse: GearLibraryEntityDetail[] = [{
   id: 2,
@@ -372,15 +401,66 @@ function respondToMalformedNumberFilter(request: CatalogRequest): ApiMockRespons
   return { json: firstPageResponse }
 }
 
-function respondWithPagination(request: CatalogRequest): ApiMockResponse {
-  const requestedPage = request.url.searchParams.get('page')
-  const response = requestedPage === '2' ? secondPageResponse : firstPageResponse
+function respondWithEmptyItems(): ApiMockResponse {
+  return { json: emptyResponse }
+}
+
+function respondWithLoadMore(request: CatalogRequest): ApiMockResponse {
+  const requestedPage = Number(request.url.searchParams.get('page') ?? '1')
+  const response = loadMoreResponses[requestedPage - 1] ?? emptyResponse
 
   return { json: response }
 }
 
-function respondWithEmptyItems(): ApiMockResponse {
-  return { json: emptyResponse }
+function createGatedLoadMoreResponder(gatedPage: string, gate: Deferred): CatalogResponder {
+  return (request) => {
+    const response = respondWithLoadMore(request)
+    const requestedPage = request.url.searchParams.get('page')
+    const shouldWait = requestedPage === gatedPage
+
+    if (shouldWait) {
+      return { ...response, waitFor: gate.promise }
+    }
+
+    return response
+  }
+}
+
+function createFailingLoadMoreResponder(
+  failingPage: string,
+  state: LoadMoreFailureState
+): CatalogResponder {
+  return (request) => {
+    const requestedPage = request.url.searchParams.get('page')
+    const shouldFail = requestedPage === failingPage && state.shouldFail
+
+    if (shouldFail) {
+      return serverErrorResponse
+    }
+
+    return respondWithLoadMore(request)
+  }
+}
+
+function createStaleLoadMoreResponder(secondPageGate: Deferred): CatalogResponder {
+  return (request) => {
+    const response = respondWithLoadMore(request)
+    const requestedPage = request.url.searchParams.get('page')
+    const search = request.url.searchParams.get('search')
+    const isSecondPage = requestedPage === '2'
+
+    if (isSecondPage) {
+      return { ...response, waitFor: secondPageGate.promise }
+    }
+
+    const isRefreshedSearch = search === 'whisper'
+
+    if (isRefreshedSearch) {
+      return { json: refreshedSearchResponse }
+    }
+
+    return response
+  }
 }
 
 function respondFromState(state: MutableResponseState): CatalogResponder {
@@ -567,6 +647,35 @@ async function mockGuestLogin(context: BrowserContext): Promise<void> {
   })
 }
 
+async function mockItemDetailApi(context: BrowserContext, item: GearLibraryListItem): Promise<void> {
+  const itemDetailResponse: ItemDetailResponse = {
+    createdAt: '2026-07-18T00:00:00.000Z',
+    id: item.id,
+    name: item.name,
+    properties: item.properties,
+
+    brand: {
+      id: 1,
+      name: item.brand.name,
+      slug: item.brand.slug
+    },
+
+    category: {
+      id: 2,
+      name: item.category.name,
+      slug: item.category.slug
+    }
+  }
+
+  await context.route((url) => url.pathname === `/api/equipment/items/${item.id}`, async (route) => {
+    await route.fulfill({ json: itemDetailResponse })
+  })
+
+  await context.route((url) => url.pathname === '/api/user/gear', async (route) => {
+    await route.fulfill({ json: [] })
+  })
+}
+
 async function openGearLibrary(page: Page, path = '/gear-library'): Promise<void> {
   const redirectTo = encodeURIComponent(path)
 
@@ -613,11 +722,88 @@ function getLastRequest(requests: ParsedUrl[]): ParsedUrl {
   return request
 }
 
+function getRequiredLoadMoreItem(index: number): GearLibraryListItem {
+  const item = loadMoreItems.at(index)
+
+  if (item === undefined) {
+    throw new Error('Expected a load-more item fixture')
+  }
+
+  return item
+}
+
+async function getRequiredHref(locator: Locator): Promise<string> {
+  const href = await locator.getAttribute('href')
+
+  if (href === null) {
+    throw new Error('Expected the element to have an href')
+  }
+
+  return href
+}
+
+async function hasHistoryStateKey(page: Page, key: string): Promise<boolean> {
+  const historyState = await page.evaluate((): unknown => (
+    globalThis.history.state as unknown
+  ))
+
+  return typeof historyState === 'object'
+    && historyState !== null
+    && key in historyState
+}
+
+async function clearGearLibraryItemsSnapshot(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    // oxlint-disable-next-line unicorn/consistent-function-scoping -- page.evaluate callbacks must be self-contained.
+    function getRequiredProperty(value: unknown, key: string): unknown {
+      const isObject = typeof value === 'object' && value !== null
+
+      if (isObject === false) {
+        throw new Error(`Expected an object containing ${key}`)
+      }
+
+      return Reflect.get(value, key)
+    }
+
+    const nuxtRoot = globalThis.document.querySelector('#__nuxt')
+    const vueApp: unknown = nuxtRoot === null
+      ? undefined
+      : Reflect.get(nuxtRoot, '__vue_app__')
+    const vueAppConfig = getRequiredProperty(vueApp, 'config')
+    const globalProperties = getRequiredProperty(vueAppConfig, 'globalProperties')
+    const nuxtApp = getRequiredProperty(globalProperties, '$nuxt')
+    const nuxtPayload = getRequiredProperty(nuxtApp, 'payload')
+    const nuxtState = getRequiredProperty(nuxtPayload, 'state')
+    const gearLibraryCache = getRequiredProperty(nuxtState, '$sgear-library-cache')
+    const hasCache = typeof gearLibraryCache === 'object' && gearLibraryCache !== null
+
+    if (hasCache === false) {
+      throw new Error('Expected the Nuxt gear library cache state')
+    }
+
+    Reflect.deleteProperty(gearLibraryCache, 'items')
+  })
+}
+
+async function getScrollDistance(page: Page, expectedScrollTop: number): Promise<number> {
+  const scrollTop = await page.evaluate(() => globalThis.scrollY)
+
+  return Math.abs(scrollTop - expectedScrollTop)
+}
+
 function isStovesItemsRequest(request: Request): boolean {
   const requestUrl = new globalThis.URL(request.url())
 
   return requestUrl.pathname === '/api/equipment/items'
     && requestUrl.searchParams.get('categorySlug') === 'stoves'
+}
+
+function isSecondPageItemsRequest(request: Request): boolean {
+  const requestUrl = new globalThis.URL(request.url())
+  const isItemsRequest = requestUrl.pathname === '/api/equipment/items'
+  const isSecondPage = requestUrl.searchParams.get('page') === '2'
+
+  return isItemsRequest && isSecondPage
 }
 
 function isStovesCategoryDetailRequest(request: Request): boolean {
@@ -1021,7 +1207,7 @@ test.describe('Gear library page', () => {
     })
 
     const tracker = await mockCatalogApi(context)
-    const route = '/gear-library?direction=sideways&sort=property%3Aweight&brand=zeta&brand=alpha&brand=alpha&q=%20stove%20&category=stoves&number=weight%3A80%3A100&enum=fuel-type%3Acanister&boolean=piezo-ignition%3Atrue&batch=0&compare=second&compare=first&page=999&debug=1'
+    const route = '/gear-library?direction=sideways&sort=property%3Aweight&brand=zeta&brand=alpha&brand=alpha&q=%20stove%20&category=stoves&number=weight%3A80%3A100&enum=fuel-type%3Acanister&boolean=piezo-ignition%3Atrue&compare=second&compare=first&debug=1'
 
     await openGearLibrary(page, route)
 
@@ -1184,7 +1370,9 @@ test.describe('Gear library page', () => {
   })
 
   test('should map search and sorting to the API while preserving global route state', async ({ context, page }) => {
-    const tracker = await mockCatalogApi(context)
+    const tracker = await mockCatalogApi(context, {
+      items: respondWithLoadMore
+    })
 
     const propertyFilterEntries: QueryEntry[] = [
       ['number', 'weight:gte:80'],
@@ -1194,7 +1382,6 @@ test.describe('Gear library page', () => {
 
     const preservedEntries: QueryEntry[] = [
       ['brand', 'msr'],
-      ['batch', '2'],
       ['compare', 'second'],
       ['compare', 'first']
     ]
@@ -2085,56 +2272,349 @@ test.describe('Gear library page', () => {
       .toHaveCount(1)
   })
 
-  test('should keep pagination local and drop unsupported query keys on the next legitimate write', async ({ context, page }) => {
+  test('should append ten-item batches without exposing browsing depth in the URL', async ({ context, page }) => {
+    const secondPageGate = createDeferred()
     const tracker = await mockCatalogApi(context, {
-      items: respondWithPagination
+      items: createGatedLoadMoreResponder('2', secondPageGate)
     })
 
-    await openGearLibrary(page, '/gear-library?page=999&debug=1')
-    await expectRouteSearch(page, '?page=999&debug=1')
+    await openGearLibrary(page)
     await expect.poll(() => tracker.items.length).toBeGreaterThan(0)
 
+    const results = page.getByTestId('gear-library-results-body')
+    const loadMoreButton = page.getByRole('button', { name: 'Load more' })
+    const liveRegion = page.getByTestId('gear-library-load-more-status')
     const initialRequest = getLastRequest(tracker.items)
 
-    expect(initialRequest.searchParams.get('page')).toBe('1')
+    expectQueryValues(initialRequest, {
+      limit: '10',
+      page: '1'
+    })
+    await expect(results.getByRole('listitem')).toHaveCount(10)
+    await expect(loadMoreButton).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Previous' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Next' })).toHaveCount(0)
 
-    await expect(page.getByText('PocketRocket Deluxe')).toBeVisible()
-    await expect(page.getByText('Page 1 of 2')).toBeVisible()
+    const requestsBeforeSecondPage = tracker.items.length
 
-    const itemsBeforeNextPage = tracker.items.length
+    await loadMoreButton.click()
 
-    await page.getByRole('button', { name: 'Next' }).click()
+    const secondPageRequest = await waitForNextItemsRequest(tracker, requestsBeforeSecondPage)
 
-    const nextPageRequest = await waitForNextItemsRequest(tracker, itemsBeforeNextPage)
+    expectQueryValues(secondPageRequest, {
+      limit: '10',
+      page: '2'
+    })
+    await expectRouteSearch(page, '')
 
-    expect(nextPageRequest.searchParams.get('page')).toBe('2')
+    secondPageGate.resolve()
 
-    await expectRouteSearch(page, '?page=999&debug=1')
-    await expect(page.getByText('WhisperLite Universal')).toBeVisible()
-    await expect(page.getByText('Page 2 of 2')).toBeVisible()
+    await expect(results.getByRole('listitem')).toHaveCount(20)
+    await expectRouteSearch(page, '')
+    await expect(liveRegion).toHaveText('10 more items loaded')
 
-    const itemsBeforePreviousPage = tracker.items.length
+    const requestsBeforeThirdPage = tracker.items.length
 
-    await page.getByRole('button', { name: 'Previous' }).click()
+    await loadMoreButton.click()
 
-    const previousPageRequest = await waitForNextItemsRequest(tracker, itemsBeforePreviousPage)
+    const thirdPageRequest = await waitForNextItemsRequest(tracker, requestsBeforeThirdPage)
 
-    expect(previousPageRequest.searchParams.get('page')).toBe('1')
+    expectQueryValues(thirdPageRequest, {
+      limit: '10',
+      page: '3'
+    })
+    await expect(results.getByRole('listitem')).toHaveCount(23)
+    await expectRouteSearch(page, '')
+    await expect(liveRegion).toHaveText('3 more items loaded')
+    await expect(loadMoreButton).toHaveCount(0)
+  })
 
-    await expectRouteSearch(page, '?page=999&debug=1')
-
-    const itemsBeforeSort = tracker.items.length
-
-    await page.getByLabel('Sort by').selectOption('brand:asc')
-
-    const sortedRequest = await waitForNextItemsRequest(tracker, itemsBeforeSort)
-
-    expectQueryValues(sortedRequest, {
-      page: '1',
-      sort: 'brand'
+  test('should ignore removed batch URL state and reset to ten items in a fresh document', async ({ context, page }) => {
+    const tracker = await mockCatalogApi(context, {
+      items: respondWithLoadMore
     })
 
-    await expectRouteSearch(page, '?sort=brand')
+    await openGearLibrary(page, '/gear-library?batch=99')
+
+    const results = page.getByTestId('gear-library-results-body')
+    const loadMoreButton = page.getByRole('button', { name: 'Load more' })
+
+    await expectRouteSearch(page, '')
+    await expect(results.getByRole('listitem')).toHaveCount(10)
+    expect(tracker.items.map((request) => request.searchParams.get('page'))).toStrictEqual(['1'])
+
+    await loadMoreButton.click()
+    await expect(results.getByRole('listitem')).toHaveCount(20)
+    await loadMoreButton.click()
+    await expect(results.getByRole('listitem')).toHaveCount(23)
+    await expectRouteSearch(page, '')
+
+    const requestsBeforeFreshDocument = tracker.items.length
+
+    await openGearLibrary(page)
+    await expectRouteSearch(page, '')
+    await expect(results.getByRole('listitem')).toHaveCount(10)
+    expect(tracker.items.slice(requestsBeforeFreshDocument).every((request) => (
+      request.searchParams.get('page') === '1'
+    ))).toBe(true)
+  })
+
+  test('should keep existing rows when Load more fails and append them after Retry', async ({ context, page }) => {
+    const failureState: LoadMoreFailureState = {
+      shouldFail: true
+    }
+    const tracker = await mockCatalogApi(context, {
+      items: createFailingLoadMoreResponder('2', failureState)
+    })
+
+    await openGearLibrary(page)
+
+    const results = page.getByTestId('gear-library-results-body')
+
+    await page.getByRole('button', { name: 'Load more' }).click()
+    await expect(page.getByText('Could not load more results.')).toBeVisible()
+    await expect(results.getByRole('listitem')).toHaveCount(10)
+    await expectRouteSearch(page, '')
+
+    failureState.shouldFail = false
+    const requestsBeforeRetry = tracker.items.length
+
+    await page.getByRole('button', { name: 'Retry' }).click()
+
+    const retryRequest = await waitForNextItemsRequest(tracker, requestsBeforeRetry)
+
+    expect(retryRequest.searchParams.get('page')).toBe('2')
+    await expect(results.getByRole('listitem')).toHaveCount(20)
+    await expectRouteSearch(page, '')
+    await expect(page.getByTestId('gear-library-load-more-status')).toHaveText('10 more items loaded')
+  })
+
+  test('should Retry the first missing later page without exposing browsing depth', async ({ context, page }) => {
+    const failureState: LoadMoreFailureState = {
+      shouldFail: true
+    }
+    const tracker = await mockCatalogApi(context, {
+      items: createFailingLoadMoreResponder('3', failureState)
+    })
+
+    await openGearLibrary(page)
+
+    const results = page.getByTestId('gear-library-results-body')
+    const liveRegion = page.getByTestId('gear-library-load-more-status')
+
+    await page.getByRole('button', { name: 'Load more' }).click()
+    await expect(results.getByRole('listitem')).toHaveCount(20)
+    await expect(liveRegion).toHaveText('10 more items loaded')
+    await page.getByRole('button', { name: 'Load more' }).click()
+    await expect(page.getByText('Could not load more results.')).toBeVisible()
+    await expect(results.getByRole('listitem')).toHaveCount(20)
+    await expectRouteSearch(page, '')
+    await expect(liveRegion).toHaveText('')
+
+    failureState.shouldFail = false
+    const requestsBeforeRetry = tracker.items.length
+
+    await page.getByRole('button', { name: 'Retry' }).click()
+
+    const retryRequest = await waitForNextItemsRequest(tracker, requestsBeforeRetry)
+
+    expect(retryRequest.searchParams.get('page')).toBe('3')
+    await expect(results.getByRole('listitem')).toHaveCount(23)
+    await expectRouteSearch(page, '')
+    await expect(liveRegion).toHaveText('3 more items loaded')
+  })
+
+  test('should abort a stale Load more request when the search query changes', async ({ context, page }) => {
+    const secondPageGate = createDeferred()
+    const tracker = await mockCatalogApi(context, {
+      items: createStaleLoadMoreResponder(secondPageGate)
+    })
+
+    await openGearLibrary(page)
+
+    const requestsBeforeLoadMore = tracker.items.length
+
+    await page.getByRole('button', { name: 'Load more' }).click()
+    await waitForNextItemsRequest(tracker, requestsBeforeLoadMore)
+
+    const staleRequestFailure = page.waitForEvent('requestfailed', isSecondPageItemsRequest)
+
+    await page.getByLabel('Search gear').fill('whisper')
+
+    const failedRequest = await staleRequestFailure
+
+    expect(failedRequest.failure()?.errorText).toContain('ERR_ABORTED')
+
+    secondPageGate.resolve()
+
+    await expectRouteSearch(page, '?q=whisper')
+    await expect(page.getByRole('link', { name: 'WhisperLite Universal' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Catalog item 11' })).toHaveCount(0)
+  })
+
+  test('should abort a pending Load more request when opening an item', async ({ context, page }) => {
+    const secondPageGate = createDeferred()
+    const detailItem = getRequiredLoadMoreItem(4)
+    const tracker = await mockCatalogApi(context, {
+      items: createGatedLoadMoreResponder('2', secondPageGate)
+    })
+
+    await mockItemDetailApi(context, detailItem)
+    await openGearLibrary(page)
+
+    const requestsBeforeLoadMore = tracker.items.length
+
+    await page.getByRole('button', { name: 'Load more' }).click()
+    await waitForNextItemsRequest(tracker, requestsBeforeLoadMore)
+
+    const staleRequestFailure = page.waitForEvent('requestfailed', isSecondPageItemsRequest)
+
+    const detailNavigation = page.waitForURL((url) => url.pathname === `/gear-library/${detailItem.id}`)
+
+    await page.getByRole('link', { name: detailItem.name }).click()
+
+    const failedRequest = await staleRequestFailure
+
+    expect(failedRequest.failure()?.errorText).toContain('ERR_ABORTED')
+
+    secondPageGate.resolve()
+    await detailNavigation
+    await expect(page.getByRole('link', { name: 'Back to gear library' })).toBeVisible()
+
+    const detailUrl = new globalThis.URL(page.url())
+
+    expect(detailUrl.pathname).toBe(`/gear-library/${detailItem.id}`)
+    expect(detailUrl.searchParams.get('batch')).toBeNull()
+    expect(detailUrl.searchParams.get('returnTo')).toBe('/gear-library')
+  })
+
+  test('should restore loaded rows and scroll on Back without sharing browsing depth', async ({ context, page }) => {
+    const detailItem = getRequiredLoadMoreItem(17)
+    const catalogPath = '/gear-library?q=catalog'
+
+    await page.setViewportSize({
+      height: 600,
+      width: 1280
+    })
+    await mockCatalogApi(context, {
+      items: respondWithLoadMore
+    })
+    await mockItemDetailApi(context, detailItem)
+    await openGearLibrary(page, catalogPath)
+
+    const results = page.getByTestId('gear-library-results-body')
+
+    await page.getByRole('button', { name: 'Load more' }).click()
+    await expect(results.getByRole('listitem')).toHaveCount(20)
+
+    const detailLink = page.getByRole('link', { name: detailItem.name })
+
+    await detailLink.evaluate((element) => {
+      element.scrollIntoView({ block: 'center' })
+    })
+
+    const savedScrollTop = await page.evaluate(() => globalThis.scrollY)
+    const detailHref = await getRequiredHref(detailLink)
+
+    expect(savedScrollTop).toBeGreaterThan(0)
+
+    const pageUrl = page.url()
+    const detailUrl = new globalThis.URL(detailHref, pageUrl)
+
+    expect(detailUrl.pathname).toBe(`/gear-library/${detailItem.id}`)
+    expect(detailUrl.searchParams.get('returnTo')).toBe(catalogPath)
+
+    await detailLink.click()
+
+    const backLink = page.getByRole('link', { name: 'Back to gear library' })
+
+    await expect(backLink).toHaveAttribute('href', catalogPath)
+
+    await backLink.click()
+    await expectRouteSearch(page, '?q=catalog')
+    await expect(results.getByRole('listitem')).toHaveCount(20)
+
+    await expect.poll(async () => getScrollDistance(page, savedScrollTop)).toBeLessThanOrEqual(2)
+
+    const hasUnconsumedBrowsingState = await hasHistoryStateKey(page, 'gearLibraryBrowsing')
+
+    expect(hasUnconsumedBrowsingState).toBe(false)
+
+    const sharedPage = await context.newPage()
+
+    await openGearLibrary(sharedPage, catalogPath)
+    await expectRouteSearch(sharedPage, '?q=catalog')
+    await expect(sharedPage.getByTestId('gear-library-results-body').getByRole('listitem')).toHaveCount(10)
+    await expect.poll(async () => sharedPage.evaluate(() => globalThis.scrollY)).toBe(0)
+
+    await sharedPage.close()
+  })
+
+  test('should Retry the first missing Back restoration page before restoring scroll', async ({ context, page }) => {
+    const detailItem = getRequiredLoadMoreItem(22)
+    const failureState: LoadMoreFailureState = {
+      shouldFail: false
+    }
+    const tracker = await mockCatalogApi(context, {
+      items: createFailingLoadMoreResponder('2', failureState)
+    })
+
+    await page.setViewportSize({
+      height: 600,
+      width: 1280
+    })
+    await mockItemDetailApi(context, detailItem)
+    await openGearLibrary(page)
+
+    const results = page.getByTestId('gear-library-results-body')
+    const loadMoreButton = page.getByRole('button', { name: 'Load more' })
+
+    await loadMoreButton.click()
+    await expect(results.getByRole('listitem')).toHaveCount(20)
+    await loadMoreButton.click()
+    await expect(results.getByRole('listitem')).toHaveCount(23)
+
+    const detailLink = page.getByRole('link', { name: detailItem.name })
+
+    await detailLink.evaluate((element) => {
+      element.scrollIntoView({ block: 'center' })
+    })
+
+    const savedScrollTop = await page.evaluate(() => globalThis.scrollY)
+
+    expect(savedScrollTop).toBeGreaterThan(0)
+
+    await detailLink.click()
+
+    const backLink = page.getByRole('link', { name: 'Back to gear library' })
+
+    await expect(backLink).toBeVisible()
+    await clearGearLibraryItemsSnapshot(page)
+
+    failureState.shouldFail = true
+    const requestsBeforeBack = tracker.items.length
+
+    await backLink.click()
+    await expect(page.getByText('Could not load more results.')).toBeVisible()
+    await expect(results.getByRole('listitem')).toHaveCount(10)
+    await expect.poll(() => tracker.items.slice(requestsBeforeBack).map((request) => (
+      request.searchParams.get('page')
+    ))).toContain('2')
+    await expect.poll(async () => getScrollDistance(page, savedScrollTop)).toBeGreaterThan(2)
+
+    failureState.shouldFail = false
+    const requestsBeforeRetry = tracker.items.length
+
+    await page.getByRole('button', { name: 'Retry' }).click()
+    await expect(results.getByRole('listitem')).toHaveCount(23)
+    await expect.poll(() => tracker.items.slice(requestsBeforeRetry).map((request) => (
+      request.searchParams.get('page')
+    ))).toStrictEqual(['2', '3'])
+    await expect.poll(async () => getScrollDistance(page, savedScrollTop)).toBeLessThanOrEqual(2)
+
+    const hasUnconsumedBrowsingState = await hasHistoryStateKey(page, 'gearLibraryBrowsing')
+
+    expect(hasUnconsumedBrowsingState).toBe(false)
   })
 
   test('should distinguish an empty catalog from an empty filtered result', async ({ context, page }) => {

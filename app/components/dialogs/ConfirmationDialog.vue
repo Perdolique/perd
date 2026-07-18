@@ -1,5 +1,9 @@
 <template>
-  <ModalDialog v-model="isOpened" :close-disabled="confirmLoading">
+  <ModalDialog
+    v-model="isOpened"
+    :close-disabled="confirmLoading"
+    :invoker-id="invokerId"
+  >
     <div :class="$style.content">
       <PerdHeading
         :class="$style.header"
@@ -49,6 +53,7 @@
     confirmVariant?: 'danger' | 'primary';
     headerText: string;
     confirmButtonText: string;
+    invokerId: string;
   }
 
   type Emits = (event: 'confirm') => void
