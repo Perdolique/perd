@@ -838,6 +838,31 @@ async function getElementBox(locator: Locator) {
   return box
 }
 
+function getGearLibrarySelect(root: Locator | Page, label: 'Category' | 'Sort by') {
+  const accessibleName = label === 'Category' ? /^Category/u : /^Sort by/u
+
+  return root.getByRole('combobox', { name: accessibleName })
+}
+
+function getPerdSelectOptions(select: Locator) {
+  return select.locator('..').locator('[role="option"]')
+}
+
+function getPerdSelectOption(select: Locator, value: string) {
+  return select.locator('..').locator(`[role="option"][data-value="${value}"]`)
+}
+
+async function selectPerdOption(select: Locator, value: string) {
+  const option = getPerdSelectOption(select, value)
+
+  await select.click()
+  await option.click()
+}
+
+async function expectPerdSelectValue(select: Locator, value: string) {
+  await expect(select).toHaveAttribute('data-value', value)
+}
+
 async function hasVisibleFocusOutline(locator: Locator): Promise<boolean> {
   return locator.evaluate((element) => {
     const style = globalThis.getComputedStyle(element)
@@ -878,27 +903,30 @@ test.describe('Gear library page', () => {
     await openGearLibrary(page)
 
     const searchRegion = page.getByRole('search', { name: 'Gear library search' })
-    const categorySelect = searchRegion.getByLabel('Category')
-    const sortSelect = searchRegion.getByLabel('Sort by')
+    const categorySelect = getGearLibrarySelect(searchRegion, 'Category')
+    const sortSelect = getGearLibrarySelect(searchRegion, 'Sort by')
 
     await expect(page.getByRole('heading', { name: 'Gear library', exact: true })).toBeVisible()
     await expect(searchRegion.getByLabel('Search gear')).toHaveAttribute('type', 'search')
-    await expect(categorySelect).toHaveValue('')
-    await expect(sortSelect).toHaveValue('name:asc')
-    await expect(sortSelect.locator('option')).toHaveText([
-      'Name: A–Z',
-      'Name: Z–A',
-      'Brand: A–Z',
-      'Brand: Z–A'
-    ])
+    await expectPerdSelectValue(categorySelect, '')
+    await expectPerdSelectValue(sortSelect, 'name:asc')
+
+    const sortOptions = getPerdSelectOptions(sortSelect)
+
+    await expect(sortOptions).toHaveCount(4)
+    await expect(sortOptions.nth(0)).toContainText('Name: A–Z')
+    await expect(sortOptions.nth(1)).toContainText('Name: Z–A')
+    await expect(sortOptions.nth(2)).toContainText('Brand: A–Z')
+    await expect(sortOptions.nth(3)).toContainText('Brand: Z–A')
     await expect(page.getByRole('complementary', { name: 'Catalog filters' })).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Filters' })).toBeVisible()
 
-    await expect(categorySelect.locator('option')).toHaveText([
-      'All categories',
-      'Sleeping Pads',
-      'Stoves'
-    ])
+    const categoryOptions = getPerdSelectOptions(categorySelect)
+
+    await expect(categoryOptions).toHaveCount(3)
+    await expect(categoryOptions.nth(0)).toContainText('All categories')
+    await expect(categoryOptions.nth(1)).toContainText('Sleeping Pads')
+    await expect(categoryOptions.nth(2)).toContainText('Stoves')
 
     await expect(page.getByText('3 items')).toBeVisible()
 
@@ -1031,6 +1059,41 @@ test.describe('Gear library page', () => {
     await expect(detailLink).toHaveAttribute('data-card-clicked')
   })
 
+  test('should commit the active select option with Tab', async ({ context, page }) => {
+    const tracker = await mockCatalogApi(context)
+
+    await openGearLibrary(page)
+
+    const categorySelect = getGearLibrarySelect(page, 'Category')
+    const sortSelect = getGearLibrarySelect(page, 'Sort by')
+    const allCategoriesOption = getPerdSelectOption(categorySelect, '')
+    const sleepingPadsOption = getPerdSelectOption(categorySelect, 'sleeping-pads')
+
+    await categorySelect.focus()
+    await page.keyboard.press('Enter')
+
+    await expect(categorySelect).toHaveAttribute('aria-expanded', 'true')
+    await expect(allCategoriesOption).toHaveAttribute('aria-selected', 'true')
+
+    await page.keyboard.press('ArrowDown')
+
+    await expect(categorySelect).toHaveAttribute('aria-activedescendant', /-option-1$/u)
+    await expect(categorySelect).toHaveAttribute('data-value', '')
+    await expect(allCategoriesOption).toHaveAttribute('aria-selected', 'false')
+    await expect(sleepingPadsOption).toHaveAttribute('aria-selected', 'true')
+
+    const itemsBeforeCategory = tracker.items.length
+
+    await page.keyboard.press('Tab')
+    await expect(sortSelect).toBeFocused()
+
+    const categoryRequest = await waitForNextItemsRequest(tracker, itemsBeforeCategory)
+
+    await expect(categorySelect).toHaveAttribute('aria-expanded', 'false')
+    await expectPerdSelectValue(categorySelect, 'sleeping-pads')
+    expect(categoryRequest.searchParams.get('categorySlug')).toBe('sleeping-pads')
+  })
+
   test('should keep the filter side sheet and sticky trigger on every desktop width', async ({ context, page }) => {
     await page.setViewportSize({
       height: 768,
@@ -1046,8 +1109,9 @@ test.describe('Gear library page', () => {
     await openGearLibrary(page)
 
     const itemsBeforeCategory = tracker.items.length
+    const categorySelect = getGearLibrarySelect(page, 'Category')
 
-    await page.getByLabel('Category').selectOption('stoves')
+    await selectPerdOption(categorySelect, 'stoves')
     await waitForNextItemsRequest(tracker, itemsBeforeCategory)
 
     const filtersButton = page.getByRole('button', { name: 'Filters', exact: true })
@@ -1246,8 +1310,8 @@ test.describe('Gear library page', () => {
 
     const searchRegion = page.getByRole('search', { name: 'Gear library search' })
     const searchInput = searchRegion.getByLabel('Search gear')
-    const categorySelect = searchRegion.getByLabel('Category')
-    const sortSelect = searchRegion.getByLabel('Sort by')
+    const categorySelect = getGearLibrarySelect(searchRegion, 'Category')
+    const sortSelect = getGearLibrarySelect(searchRegion, 'Sort by')
     const clearButton = searchRegion.getByRole('button', { name: 'Clear search' })
     const filtersButton = page.getByRole('button', { name: 'Filters 5' })
     const appliedFilterButtons = page
@@ -1257,7 +1321,7 @@ test.describe('Gear library page', () => {
     const detailLink = page.getByRole('link', { name: 'PocketRocket Deluxe' })
     const resultsBody = page.getByTestId('gear-library-results-body')
 
-    await expect(sortSelect.getByRole('option', { name: 'Weight (g): Low to high' })).toHaveCount(1)
+    await expect(getPerdSelectOption(sortSelect, 'property:weight:asc')).toHaveCount(1)
     await searchInput.focus()
     await page.keyboard.press('Tab')
     await expect(clearButton).toBeFocused()
@@ -1315,8 +1379,8 @@ test.describe('Gear library page', () => {
     await openGearLibrary(page, '/gear-library?category=stoves&brand=msr')
 
     const appliedBrandFilter = page.getByRole('button', { name: 'Remove Brand: MSR filter' })
-    const categorySelect = page.getByLabel('Category')
-    const sortSelect = page.getByLabel('Sort by')
+    const categorySelect = getGearLibrarySelect(page, 'Category')
+    const sortSelect = getGearLibrarySelect(page, 'Sort by')
     const detailLink = page.getByRole('link', { name: 'PocketRocket Deluxe' })
     const itemRow = page.getByRole('listitem').filter({ has: detailLink })
 
@@ -1397,12 +1461,12 @@ test.describe('Gear library page', () => {
 
     const searchRegion = page.getByRole('search', { name: 'Gear library search' })
     const searchInput = searchRegion.getByLabel('Search gear')
-    const categorySelect = searchRegion.getByLabel('Category')
-    const sortSelect = searchRegion.getByLabel('Sort by')
+    const categorySelect = getGearLibrarySelect(searchRegion, 'Category')
+    const sortSelect = getGearLibrarySelect(searchRegion, 'Sort by')
 
     const itemsBeforeCategory = tracker.items.length
 
-    await categorySelect.selectOption('stoves')
+    await selectPerdOption(categorySelect, 'stoves')
     await waitForNextItemsRequest(tracker, itemsBeforeCategory)
 
     const categorySearch = buildRouteSearch([
@@ -1412,7 +1476,7 @@ test.describe('Gear library page', () => {
     ])
 
     await expectRouteSearch(page, categorySearch)
-    await expect(sortSelect.getByRole('option', { name: 'Weight (g): Low to high' })).toHaveCount(1)
+    await expect(getPerdSelectOption(sortSelect, 'property:weight:asc')).toHaveCount(1)
 
     const itemsBeforeSearch = tracker.items.length
 
@@ -1447,17 +1511,17 @@ test.describe('Gear library page', () => {
     await page.goBack()
     await expectRouteSearch(page, initialSearch)
     await expect(searchInput).toHaveValue('old')
-    await expect(categorySelect).toHaveValue('')
+    await expectPerdSelectValue(categorySelect, '')
 
     await page.goForward()
     await expectRouteSearch(page, searchedRoute)
     await expect(searchInput).toHaveValue('rocket')
-    await expect(categorySelect).toHaveValue('stoves')
-    await expect(sortSelect.getByRole('option', { name: 'Weight (g): Low to high' })).toHaveCount(1)
+    await expectPerdSelectValue(categorySelect, 'stoves')
+    await expect(getPerdSelectOption(sortSelect, 'property:weight:asc')).toHaveCount(1)
 
     const itemsBeforeOrdering = tracker.items.length
 
-    await sortSelect.selectOption('property:weight:desc')
+    await selectPerdOption(sortSelect, 'property:weight:desc')
     const orderedRequest = await waitForNextItemsRequest(tracker, itemsBeforeOrdering)
 
     const orderedRoute = buildRouteSearch([
@@ -1481,11 +1545,11 @@ test.describe('Gear library page', () => {
 
     await page.goBack()
     await expectRouteSearch(page, searchedRoute)
-    await expect(sortSelect).toHaveValue('name:asc')
+    await expectPerdSelectValue(sortSelect, 'name:asc')
 
     await page.goForward()
     await expectRouteSearch(page, orderedRoute)
-    await expect(sortSelect).toHaveValue('property:weight:desc')
+    await expectPerdSelectValue(sortSelect, 'property:weight:desc')
 
     await page.reload()
 
@@ -1507,8 +1571,8 @@ test.describe('Gear library page', () => {
     await waitForNextItemsRequest(tracker, requestsBeforeRestore)
     await expectRouteSearch(page, orderedRoute)
     await expect(searchInput).toHaveValue('rocket')
-    await expect(categorySelect).toHaveValue('stoves')
-    await expect(sortSelect).toHaveValue('property:weight:desc')
+    await expectPerdSelectValue(categorySelect, 'stoves')
+    await expectPerdSelectValue(sortSelect, 'property:weight:desc')
   })
 
   test('should reset ordering when the category changes', async ({ context, page }) => {
@@ -1516,35 +1580,35 @@ test.describe('Gear library page', () => {
 
     await openGearLibrary(page)
 
-    const categorySelect = page.getByLabel('Category')
-    const sortSelect = page.getByLabel('Sort by')
+    const categorySelect = getGearLibrarySelect(page, 'Category')
+    const sortSelect = getGearLibrarySelect(page, 'Sort by')
     const itemsBeforeBrandOrdering = tracker.items.length
 
-    await sortSelect.selectOption('brand:desc')
+    await selectPerdOption(sortSelect, 'brand:desc')
     await waitForNextItemsRequest(tracker, itemsBeforeBrandOrdering)
     await expectRouteSearch(page, '?sort=brand&direction=desc')
 
     const itemsBeforeCategory = tracker.items.length
 
-    await categorySelect.selectOption('stoves')
+    await selectPerdOption(categorySelect, 'stoves')
     await waitForNextItemsRequest(tracker, itemsBeforeCategory)
     await expectRouteSearch(page, '?category=stoves')
-    await expect(sortSelect).toHaveValue('name:asc')
-    await expect(sortSelect.getByRole('option', { name: 'Weight (g): Low to high' })).toHaveCount(1)
+    await expectPerdSelectValue(sortSelect, 'name:asc')
+    await expect(getPerdSelectOption(sortSelect, 'property:weight:asc')).toHaveCount(1)
 
     const itemsBeforePropertyOrdering = tracker.items.length
 
-    await sortSelect.selectOption('property:weight:desc')
+    await selectPerdOption(sortSelect, 'property:weight:desc')
     await waitForNextItemsRequest(tracker, itemsBeforePropertyOrdering)
     await expectRouteSearch(page, '?category=stoves&sort=property%3Aweight&direction=desc')
 
     const itemsBeforeClearingCategory = tracker.items.length
 
-    await categorySelect.selectOption('')
+    await selectPerdOption(categorySelect, '')
     const clearedCategoryRequest = await waitForNextItemsRequest(tracker, itemsBeforeClearingCategory)
 
     await expectRouteSearch(page, '')
-    await expect(sortSelect).toHaveValue('name:asc')
+    await expectPerdSelectValue(sortSelect, 'name:asc')
 
     expect(clearedCategoryRequest.searchParams.get('categorySlug')).toBeNull()
     expect(clearedCategoryRequest.searchParams.get('sort')).toBe('name')
@@ -1569,17 +1633,21 @@ test.describe('Gear library page', () => {
 
     await openGearLibrary(page, route)
 
-    const categorySelect = page.getByLabel('Category')
-    const orderingSelect = page.getByLabel('Sort by')
+    const categorySelect = getGearLibrarySelect(page, 'Category')
+    const orderingSelect = getGearLibrarySelect(page, 'Sort by')
 
     await expect(categorySelect).toBeDisabled()
-    await expect(categorySelect.getByRole('option', { name: 'unknown-category' })).toHaveCount(0)
+    await expect(getPerdSelectOption(categorySelect, 'unknown-category')).toHaveCount(0)
     await expect(orderingSelect).toBeEnabled()
-    await expect(orderingSelect).toHaveValue('property:unknown-property:desc')
-    await expect(orderingSelect.getByRole('option', {
-      name: 'Current property sorting unavailable'
-    })).toBeDisabled()
-    await expect(orderingSelect.getByRole('option', { name: /unknown-property/u })).toHaveCount(0)
+    await expectPerdSelectValue(orderingSelect, 'property:unknown-property:desc')
+
+    const unavailableOrderingOption = getPerdSelectOption(
+      orderingSelect,
+      'property:unknown-property:desc'
+    )
+
+    await expect(unavailableOrderingOption).toBeDisabled()
+    await expect(unavailableOrderingOption).toContainText('Current property sorting unavailable')
 
     const itemsBeforeNormalization = tracker.items.length
 
@@ -1587,16 +1655,16 @@ test.describe('Gear library page', () => {
 
     await expectRouteSearch(page, '')
     await waitForNextItemsRequest(tracker, itemsBeforeNormalization)
-    await expect(categorySelect).toHaveValue('')
-    await expect(orderingSelect).toHaveValue('name:asc')
+    await expectPerdSelectValue(categorySelect, '')
+    await expectPerdSelectValue(orderingSelect, 'name:asc')
 
     const propertyTracker = await mockCatalogApi(context)
 
     await openGearLibrary(page, '/gear-library?category=stoves&sort=property%3Amissing&direction=desc')
     await expectRouteSearch(page, '?category=stoves')
     await expect.poll(() => propertyTracker.categoryDetails.length).toBeGreaterThan(0)
-    await expect(orderingSelect).toHaveValue('name:asc')
-    await expect(orderingSelect.getByRole('option', { name: /missing/u })).toHaveCount(0)
+    await expectPerdSelectValue(orderingSelect, 'name:asc')
+    await expect(getPerdSelectOptions(orderingSelect).filter({ hasText: /missing/u })).toHaveCount(0)
   })
 
   test('should search and progressively reveal a long desktop brand list without requests', async ({ context, page }) => {
@@ -1825,8 +1893,9 @@ test.describe('Gear library page', () => {
     await openGearLibrary(page)
 
     const itemsBeforeCategory = tracker.items.length
+    const categorySelect = getGearLibrarySelect(page, 'Category')
 
-    await page.getByLabel('Category').selectOption('stoves')
+    await selectPerdOption(categorySelect, 'stoves')
     await waitForNextItemsRequest(tracker, itemsBeforeCategory)
 
     const filterDialog = await openFilterDialog(page)
@@ -1909,10 +1978,10 @@ test.describe('Gear library page', () => {
 
     await openGearLibrary(page)
 
-    const categorySelect = page.getByLabel('Category')
+    const categorySelect = getGearLibrarySelect(page, 'Category')
     const itemsBeforeCategory = tracker.items.length
 
-    await categorySelect.selectOption('stoves')
+    await selectPerdOption(categorySelect, 'stoves')
     await waitForNextItemsRequest(tracker, itemsBeforeCategory)
 
     const filterDialog = await openFilterDialog(page)
@@ -2070,10 +2139,10 @@ test.describe('Gear library page', () => {
 
     await openGearLibrary(page)
 
-    const categorySelect = page.getByLabel('Category')
+    const categorySelect = getGearLibrarySelect(page, 'Category')
     const itemsBeforeCategory = tracker.items.length
 
-    await categorySelect.selectOption('stoves')
+    await selectPerdOption(categorySelect, 'stoves')
     await waitForNextItemsRequest(tracker, itemsBeforeCategory)
 
     const filtersButton = page.getByRole('button', { name: 'Filters' })
@@ -2229,9 +2298,9 @@ test.describe('Gear library page', () => {
 
     await openGearLibrary(page)
 
-    const categorySelect = page.getByLabel('Category')
+    const categorySelect = getGearLibrarySelect(page, 'Category')
 
-    await categorySelect.selectOption('stoves')
+    await selectPerdOption(categorySelect, 'stoves')
 
     await expect.poll(() => {
       const hasItemsRequest = tracker.items.some((request) => (
@@ -2253,7 +2322,7 @@ test.describe('Gear library page', () => {
     const itemsFailurePromise = page.waitForEvent('requestfailed', isStovesItemsRequest)
     const categoryDetailFailurePromise = page.waitForEvent('requestfailed', isStovesCategoryDetailRequest)
 
-    await categorySelect.selectOption('sleeping-pads')
+    await selectPerdOption(categorySelect, 'sleeping-pads')
 
     const [itemsFailure, categoryDetailFailure] = await Promise.all([
       itemsFailurePromise,
@@ -2268,8 +2337,10 @@ test.describe('Gear library page', () => {
 
     await expect(page.getByRole('link', { name: 'NeoAir XLite NXT' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'PocketRocket Deluxe' })).toHaveCount(0)
-    await expect(page.getByLabel('Sort by').getByRole('option', { name: 'R-value: Low to high' }))
-      .toHaveCount(1)
+
+    const sortSelect = getGearLibrarySelect(page, 'Sort by')
+
+    await expect(getPerdSelectOption(sortSelect, 'property:r-value:asc')).toHaveCount(1)
   })
 
   test('should append ten-item batches without exposing browsing depth in the URL', async ({ context, page }) => {
@@ -2688,13 +2759,14 @@ test.describe('Gear library page', () => {
 
     const searchRegion = page.getByRole('search', { name: 'Gear library search' })
     const resultsBody = page.getByTestId('gear-library-results-body')
-    const sortSelect = searchRegion.getByLabel('Sort by')
+    const categorySelect = getGearLibrarySelect(searchRegion, 'Category')
+    const sortSelect = getGearLibrarySelect(searchRegion, 'Sort by')
     const searchBoxBefore = await getElementBox(searchRegion)
     const resultsBoxBefore = await getElementBox(resultsBody)
 
-    await searchRegion.getByLabel('Category').selectOption('stoves')
+    await selectPerdOption(categorySelect, 'stoves')
     await expect(sortSelect).toBeDisabled()
-    await expect(page.getByTestId('gear-library-sort-progress')).toBeVisible()
+    await expect(sortSelect.locator('..').getByTestId('perd-select-progress')).toBeVisible()
 
     const searchBoxDuring = await getElementBox(searchRegion)
     const resultsBoxDuring = await getElementBox(resultsBody)
@@ -2706,7 +2778,7 @@ test.describe('Gear library page', () => {
     categoryDetailGate.resolve()
 
     await expect(sortSelect).toBeEnabled()
-    await expect(sortSelect.getByRole('option', { name: 'Weight (g): Low to high' })).toHaveCount(1)
+    await expect(getPerdSelectOption(sortSelect, 'property:weight:asc')).toHaveCount(1)
   })
 
   test('should expose the initial loading state and recover from an initial items failure', async ({ context, page }) => {
@@ -2891,9 +2963,9 @@ test.describe('Gear library page', () => {
 
     await openGearLibrary(page, '/gear-library?category=stoves')
 
-    const initialSortSelect = page.getByLabel('Sort by')
+    const initialSortSelect = getGearLibrarySelect(page, 'Sort by')
 
-    await expect(initialSortSelect.getByRole('option', { name: 'Weight (g): Low to high' }))
+    await expect(getPerdSelectOption(initialSortSelect, 'property:weight:asc'))
       .toHaveCount(1)
 
     await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Home' }).click()
@@ -2911,30 +2983,30 @@ test.describe('Gear library page', () => {
 
     expect(categoriesFailure.status()).toBe(500)
 
-    const categorySelect = page.getByLabel('Category')
+    const categorySelect = getGearLibrarySelect(page, 'Category')
     const categoriesAlert = page.getByRole('alert').filter({ hasText: 'Categories unavailable.' })
 
     await expect(categorySelect).toBeEnabled()
-    await expect(categorySelect.getByRole('option', { name: 'Stoves' })).toHaveCount(1)
+    await expect(getPerdSelectOption(categorySelect, 'stoves')).toHaveCount(1)
     await expect(categoriesAlert).toHaveCount(0)
 
     const categoryDetailFailurePromise = page.waitForResponse(
       '**/api/equipment/categories/by-slug/stoves'
     )
 
-    await categorySelect.selectOption('stoves')
+    await selectPerdOption(categorySelect, 'stoves')
 
     const categoryDetailFailure = await categoryDetailFailurePromise
 
     expect(categoryDetailFailure.status()).toBe(500)
 
-    const sortSelect = page.getByLabel('Sort by')
+    const sortSelect = getGearLibrarySelect(page, 'Sort by')
     const categoryDetailAlert = page.getByRole('alert').filter({
       hasText: 'Category filters and property sorting unavailable.'
     })
 
     await expect(sortSelect).toBeEnabled()
-    await expect(sortSelect.getByRole('option', { name: 'Weight (g): Low to high' })).toHaveCount(1)
+    await expect(getPerdSelectOption(sortSelect, 'property:weight:asc')).toHaveCount(1)
     await expect(categoryDetailAlert).toHaveCount(0)
 
     const filterDialog = await openFilterDialog(page)
@@ -2985,20 +3057,18 @@ test.describe('Gear library page', () => {
 
     await openGearLibrary(page, '/gear-library?category=stoves')
 
-    const categorySelect = page.getByLabel('Category')
-    const currentCategoryOption = categorySelect.getByRole('option', {
-      name: 'Stoves (current selection)'
-    })
+    const categorySelect = getGearLibrarySelect(page, 'Category')
+    const currentCategoryOption = getPerdSelectOption(categorySelect, 'stoves')
 
     await expect(page.getByRole('alert').filter({ hasText: 'Categories unavailable.' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'PocketRocket Deluxe' })).toBeVisible()
     await expect(categorySelect).toBeEnabled()
-    await expect(categorySelect).toHaveValue('stoves')
+    await expectPerdSelectValue(categorySelect, 'stoves')
     await expect(currentCategoryOption).toBeDisabled()
 
     const itemsBeforeClear = tracker.items.length
 
-    await categorySelect.selectOption('')
+    await selectPerdOption(categorySelect, '')
 
     const clearedRequest = await waitForNextItemsRequest(tracker, itemsBeforeClear)
 
@@ -3016,22 +3086,20 @@ test.describe('Gear library page', () => {
 
     await openGearLibrary(page, route)
 
-    const orderingSelect = page.getByLabel('Sort by')
-    const unavailableOrderingOption = orderingSelect.getByRole('option', {
-      name: 'Current property sorting unavailable'
-    })
+    const orderingSelect = getGearLibrarySelect(page, 'Sort by')
+    const unavailableOrderingOption = getPerdSelectOption(orderingSelect, 'property:weight:desc')
 
     await expect(page.getByRole('alert').filter({
       hasText: 'Category filters and property sorting unavailable.'
     })).toBeVisible()
     await expect(page.getByRole('link', { name: 'PocketRocket Deluxe' })).toBeVisible()
     await expect(orderingSelect).toBeEnabled()
-    await expect(orderingSelect).toHaveValue('property:weight:desc')
+    await expectPerdSelectValue(orderingSelect, 'property:weight:desc')
     await expect(unavailableOrderingOption).toBeDisabled()
 
     const itemsBeforeOrdering = tracker.items.length
 
-    await orderingSelect.selectOption('brand:desc')
+    await selectPerdOption(orderingSelect, 'brand:desc')
 
     const orderedRequest = await waitForNextItemsRequest(tracker, itemsBeforeOrdering)
 
@@ -3072,10 +3140,10 @@ test.describe('Gear library page', () => {
     await categoriesAlert.getByRole('button', { name: 'Retry' }).click()
     await expect.poll(() => tracker.categories.length).toBeGreaterThan(categoriesBeforeRetry)
 
-    const categorySelect = page.getByLabel('Category')
+    const categorySelect = getGearLibrarySelect(page, 'Category')
 
-    await expect(categorySelect.getByRole('option', { name: 'Stoves' })).toHaveCount(1)
-    await categorySelect.selectOption('stoves')
+    await expect(getPerdSelectOption(categorySelect, 'stoves')).toHaveCount(1)
+    await selectPerdOption(categorySelect, 'stoves')
 
     const propertySortAlert = page.getByRole('alert')
       .filter({ hasText: 'Category filters and property sorting unavailable.' })
@@ -3090,7 +3158,8 @@ test.describe('Gear library page', () => {
     await propertySortAlert.getByRole('button', { name: 'Retry' }).click()
     await expect.poll(() => tracker.categoryDetails.length).toBeGreaterThan(categoryDetailsBeforeRetry)
 
-    await expect(page.getByLabel('Sort by').getByRole('option', { name: 'Weight (g): Low to high' }))
-      .toHaveCount(1)
+    const sortSelect = getGearLibrarySelect(page, 'Sort by')
+
+    await expect(getPerdSelectOption(sortSelect, 'property:weight:asc')).toHaveCount(1)
   })
 })

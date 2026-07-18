@@ -9,75 +9,21 @@
         placeholder="Search by name, brand, or category"
       />
 
-      <div :class="$style.field">
-        <label :for="categorySelectId" :class="$style.label">
-          Category
-        </label>
+      <PerdSelect
+        v-model="categorySelectValue"
+        label="Category"
+        :options="categorySelectOptions"
+        :disabled="isCategoryDisabled"
+        :pending="isCategoryPending"
+      />
 
-        <div :class="$style.controlShell">
-          <select
-            :id="categorySelectId"
-            :class="$style.control"
-            :value="categoryValue"
-            :disabled="isCategoryDisabled"
-            :aria-busy="categoriesAriaBusy"
-            @change="handleCategoryChange"
-          >
-            <option value="">
-              All categories
-            </option>
-
-            <option
-              v-for="category in categories"
-              :key="category.slug"
-              :value="category.slug"
-              :disabled="category.isDisabled"
-            >
-              {{ category.name }}
-            </option>
-          </select>
-
-          <FidgetSpinner
-            v-if="showCategoryIndicator"
-            :class="$style.controlSpinner"
-            data-testid="gear-library-category-progress"
-            aria-hidden="true"
-          />
-        </div>
-      </div>
-
-      <div :class="$style.field">
-        <label :for="orderingSelectId" :class="$style.label">
-          Sort by
-        </label>
-
-        <div :class="$style.controlShell">
-          <select
-            :id="orderingSelectId"
-            :class="$style.control"
-            :value="orderingValue"
-            :disabled="isOrderingDisabled"
-            :aria-busy="orderingAriaBusy"
-            @change="handleOrderingChange"
-          >
-            <option
-              v-for="option in orderingOptions"
-              :key="option.value"
-              :value="option.value"
-              :disabled="option.isDisabled"
-            >
-              {{ option.label }}
-            </option>
-          </select>
-
-          <FidgetSpinner
-            v-if="showOrderingIndicator"
-            :class="$style.controlSpinner"
-            data-testid="gear-library-sort-progress"
-            aria-hidden="true"
-          />
-        </div>
-      </div>
+      <PerdSelect
+        v-model="orderingSelectValue"
+        label="Sort by"
+        :options="orderingSelectOptions"
+        :disabled="isOrderingDisabled"
+        :pending="isOrderingPending"
+      />
     </div>
 
     <div
@@ -107,13 +53,12 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, useId } from 'vue'
+  import { computed } from 'vue'
   import type { GearLibraryEntitySummary } from '~/types/equipment'
   import type { GearLibraryOrdering } from '~/utils/gear-library'
-  import { useDelayedPendingIndicator } from '~/composables/use-delayed-pending-indicator'
-  import FidgetSpinner from '~/components/FidgetSpinner.vue'
   import PerdButton from '~/components/PerdButton.vue'
   import PerdSearchInput from '~/components/PerdSearchInput.vue'
+  import PerdSelect, { type PerdSelectOption } from '~/components/perd-select/PerdSelect.vue'
 
   interface GearLibraryCategoryOption extends GearLibraryEntitySummary {
     isDisabled?: boolean;
@@ -151,32 +96,38 @@
     required: true
   })
 
-  const categorySelectId = useId()
-  const orderingSelectId = useId()
-  const categoryPending = computed(() => props.isCategoryPending)
-  const orderingPending = computed(() => props.isOrderingPending)
-  const categoriesAriaBusy = computed(() => props.isCategoryPending || undefined)
-  const orderingAriaBusy = computed(() => props.isOrderingPending || undefined)
+  const categorySelectOptions = computed<PerdSelectOption[]>(() => {
+    const categoryOptions = props.categories.map((category) => {
+      return {
+        disabled: category.isDisabled,
+        label: category.name,
+        value: category.slug
+      }
+    })
 
-  const showCategoryIndicator = useDelayedPendingIndicator(categoryPending, {
-    delayMs: 300,
-    minimumVisibleMs: 180
+    return [{
+      label: 'All categories',
+      value: ''
+    }, ...categoryOptions]
   })
 
-  const showOrderingIndicator = useDelayedPendingIndicator(orderingPending, {
-    delayMs: 300,
-    minimumVisibleMs: 180
+  const orderingSelectOptions = computed<PerdSelectOption[]>(() => (
+    props.orderingOptions.map((option) => {
+      return {
+        disabled: option.isDisabled,
+        label: option.label,
+        value: option.value
+      }
+    })
+  ))
+
+  const categorySelectValue = computed({
+    get: () => props.categoryValue,
+    set: (value: string) => emit('category-change', value)
   })
 
-  function handleCategoryChange(event: Event) {
-    const select = event.currentTarget as HTMLSelectElement
-
-    emit('category-change', select.value)
-  }
-
-  function handleOrderingChange(event: Event) {
-    const select = event.currentTarget as HTMLSelectElement
-    const selectedOption = props.orderingOptions.find((option) => option.value === select.value)
+  function handleOrderingChange(value: string) {
+    const selectedOption = props.orderingOptions.find((option) => option.value === value)
 
     if (selectedOption === undefined) {
       return
@@ -189,6 +140,11 @@
 
     emit('ordering-change', ordering)
   }
+
+  const orderingSelectValue = computed({
+    get: () => props.orderingValue,
+    set: handleOrderingChange
+  })
 </script>
 
 <style module>
@@ -218,75 +174,6 @@
     }
   }
 
-  /* Grid items and native controls otherwise keep intrinsic minimum widths and can overflow their tracks. */
-  .field,
-  .control,
-  .controlShell {
-    min-inline-size: 0;
-  }
-
-  .field {
-    display: grid;
-    align-content: start;
-    gap: var(--spacing-8);
-  }
-
-  .label {
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-14);
-    font-weight: var(--font-weight-semibold);
-  }
-
-  .control {
-    inline-size: 100%;
-    min-block-size: var(--layout-button-height-medium);
-    padding-inline: var(--spacing-12);
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--layout-button-radius-small);
-    background-color: var(--color-background-elevated);
-    color: var(--color-text-primary);
-    line-height: var(--line-height-snug);
-    transition:
-      background-color var(--transition-duration-fast) var(--transition-easing-standard),
-      border-color var(--transition-duration-fast) var(--transition-easing-standard),
-      box-shadow var(--transition-duration-fast) var(--transition-easing-standard);
-
-    &:hover:not(:disabled) {
-      border-color: var(--color-accent-primary);
-    }
-
-    &:focus-visible {
-      border-color: var(--color-accent-primary);
-      box-shadow: var(--shadow-focus);
-      outline: none;
-    }
-
-    &:disabled {
-      cursor: not-allowed;
-      border-color: var(--color-border-subtle);
-      background-color: var(--color-surface-secondary);
-      color: var(--color-text-muted);
-    }
-  }
-
-  .controlShell {
-    position: relative;
-
-    .control {
-      padding-inline-end: var(--spacing-48);
-    }
-  }
-
-  .controlSpinner {
-    position: absolute;
-    inset-block-start: 50%;
-    inset-inline-end: var(--spacing-32);
-    color: var(--color-text-muted);
-    font-size: var(--font-size-16);
-    pointer-events: none;
-    translate: 0 -50%;
-  }
-
   .alert {
     display: flex;
     flex-wrap: wrap;
@@ -299,12 +186,5 @@
     background-color: var(--color-danger-subtle);
     color: var(--color-danger-primary);
     font-size: var(--font-size-14);
-  }
-
-  @media (forced-colors: active) {
-    .control:focus {
-      outline: 2px solid Highlight;
-      outline-offset: 2px;
-    }
   }
 </style>

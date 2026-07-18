@@ -259,6 +259,11 @@
     gap: var(--spacing-16);
   }
 
+  /* Keep open select options above the sticky results toolbar. */
+  .controls:has([aria-expanded='true']) {
+    z-index: 4;
+  }
+
   .main {
     display: grid;
     gap: var(--spacing-16);
