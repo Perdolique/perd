@@ -9,6 +9,10 @@
 - The project targets **Baseline 2025** across all web technologies, including CSS, HTML, and JS browser APIs.
 - We do not chase legacy browser support. Always choose modern native features over polyfills, fallbacks, or compatibility workarounds when they simplify the code.
 
+## Technical debt
+
+- Compatibility workarounds and their removal conditions are documented in [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md). Consult it when changing framework configuration or dependency overrides.
+
 ## Verification
 
 - Run applicable checks in parallel where practical.
