@@ -31,7 +31,7 @@ function getComponentName(componentName: string, componentType: ComponentType) :
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  compatibilityDate: '2025-12-02',
+  compatibilityDate: '2026-07-18',
 
   runtimeConfig: {
     databaseUrl: '',
@@ -59,9 +59,6 @@ export default defineNuxtConfig({
 
   experimental: {
     viewTransition: true,
-    scanPageMeta: true,
-    granularCachedData: true,
-    viteEnvironmentApi: true,
 
     /**
      * FIXME: Disable once @nuxt/icon and other modules
@@ -77,17 +74,25 @@ export default defineNuxtConfig({
   },
 
   typescript: {
-    typeCheck: true,
-
     tsConfig: {
       compilerOptions: {
         noFallthroughCasesInSwitch: true,
         noImplicitReturns: true,
         noUnusedLocals: true,
-        noUnusedParameters: true,
-        noUncheckedSideEffectImports: true
+        noUnusedParameters: true
       }
     }
+  },
+
+  /**
+   * FIXME: Re-enable after @unhead/bundler stops replacing the assignment target
+   * in `head.ssr = false` with `false = false` during client builds.
+   *
+   * Unhead 3.2.0 fixes the Nitro failure from this issue, but not this Vite transform:
+   * https://github.com/nuxt/nuxt/issues/35670
+   */
+  unhead: {
+    vite: false
   },
 
   app: {

@@ -4,8 +4,14 @@ allowBuilds:
   sharp: false
   workerd: false
 minimumReleaseAgeExclude:
-  - '@iconify-json/hugeicons@1.2.31'
-  - markdownlint-cli@0.49.1
-  - pinia@4.0.2
+  - '@nuxt/kit@4.5.0'
+  - '@nuxt/nitro-server@4.5.0'
+  - '@nuxt/schema@4.5.0'
+  - '@nuxt/vite-builder@4.5.0'
+  - nuxt@4.5.0
+  - '@nuxt/rspack-builder@4.5.0'
+  - '@unhead/bundler@3.2.0'
+  - '@unhead/vue@3.2.0'
+  - unhead@3.2.0
 publicHoistPattern:
   - h3
