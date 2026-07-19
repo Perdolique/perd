@@ -1,17 +1,23 @@
 <template>
-  <li :class="$style.component">
-    <article :class="$style.row">
-      <div :class="$style.media" aria-hidden="true">
+  <GearLibraryItemRowShell
+    :class="$style.component"
+    root-tag="li"
+    row-tag="article"
+  >
+    <template #media="{ className }">
+      <div :class="[className, $style.media]" aria-hidden="true">
         <Icon name="hugeicons:package" />
       </div>
+    </template>
 
-      <div :class="$style.identity">
+    <template #identity="{ className }">
+      <div :class="className">
         <p :class="$style.brand">
           {{ item.brand.name }}
         </p>
 
         <h2 :class="$style.heading">
-          <PerdLink :to="item.detailPath">
+          <PerdLink :class="$style.detailLink" :to="item.detailPath">
             {{ item.name }}
           </PerdLink>
         </h2>
@@ -20,12 +26,14 @@
           {{ item.category.name }}
         </p>
       </div>
+    </template>
 
-      <dl v-if="hasProperties" :class="$style.properties">
+    <template #properties="{ propertiesClass, propertyClass }">
+      <dl v-if="hasProperties" :class="propertiesClass">
         <div
           v-for="property in displayProperties"
           :key="property.slug"
-          :class="$style.property"
+          :class="propertyClass"
         >
           <dt :class="$style.propertyName">
             {{ property.name }}
@@ -36,24 +44,37 @@
           </dd>
         </div>
       </dl>
-    </article>
-  </li>
+    </template>
+  </GearLibraryItemRowShell>
 </template>
 
 <script lang="ts" setup>
   import { computed } from 'vue'
-  import type { GearLibraryListItemView, ItemDisplayProperty, ItemProperty } from '~/types/equipment'
+
+  import type {
+    GearLibraryListItemView,
+    GearLibraryListProperty,
+    ItemDisplayProperty
+  } from '~/types/equipment'
+
   import PerdLink from '~/components/PerdLink.vue'
+  import GearLibraryItemRowShell from './GearLibraryItemRowShell.vue'
 
   interface Props {
     item: GearLibraryListItemView;
   }
 
+  const weightPropertySlug = 'weight'
   const props = defineProps<Props>()
 
-  function getPropertyDisplayValue(property: ItemProperty) {
+  /** Formats one list property for compact catalog display. */
+  function getPropertyDisplayValue(property: GearLibraryListProperty) {
     if (property.value === null) {
       return 'Not set'
+    }
+
+    if (property.dataType === 'enum' && property.enumOptionName !== undefined) {
+      return property.enumOptionName
     }
 
     if (typeof property.value === 'boolean') {
@@ -69,66 +90,59 @@
 
   const hasProperties = computed(() => props.item.properties.length > 0)
 
-  const displayProperties = computed<ItemDisplayProperty[]>(() => props.item.properties.map((property) => {
-    const displayValue = getPropertyDisplayValue(property)
+  const displayProperties = computed<ItemDisplayProperty[]>(() => {
+    const orderedProperties = props.item.properties.toSorted((left, right) => {
+      const leftPriority = left.slug === weightPropertySlug ? 0 : 1
+      const rightPriority = right.slug === weightPropertySlug ? 0 : 1
 
-    return {
-      displayValue,
-      dataType: property.dataType,
-      name: property.name,
-      slug: property.slug,
-      unit: property.unit,
-      value: property.value
-    }
-  }))
+      return leftPriority - rightPriority
+    })
+
+    return orderedProperties.map((property) => {
+      return {
+        dataType: property.dataType,
+        displayValue: getPropertyDisplayValue(property),
+        name: property.name,
+        slug: property.slug,
+        unit: property.unit,
+        value: property.value
+      }
+    })
+  })
 </script>
 
 <style module>
   .component {
-    container-type: inline-size;
-    border-block-end: 1px solid var(--color-border-subtle);
+    transition:
+      background-color var(--transition-duration-fast) var(--transition-easing-standard),
+      border-color var(--transition-duration-fast) var(--transition-easing-standard),
+      box-shadow var(--transition-duration-fast) var(--transition-easing-standard);
 
-    &:last-child {
-      border-block-end: 0;
+    &:has(.detailLink:hover) {
+      border-color: var(--color-border-strong);
+      background-color: var(--color-surface-secondary);
     }
-  }
 
-  .row {
-    display: grid;
-    grid-template-columns: 3rem minmax(0, 1fr);
-    grid-template-areas:
-      "media identity"
-      "properties properties";
-    align-items: start;
-    gap: var(--spacing-16);
-    padding: var(--spacing-16);
+    &:has(.detailLink:focus-visible) {
+      border-color: var(--color-border-strong);
+      box-shadow: var(--shadow-focus);
+    }
 
-    @container (inline-size >= 44rem) {
-      grid-template-columns: 3rem minmax(10rem, 0.7fr) minmax(0, 1fr);
-      grid-template-areas: "media identity properties";
-      align-items: center;
-      padding: var(--spacing-20) var(--spacing-24);
+    &:has(.detailLink:active) {
+      background-color: var(--color-accent-subtle);
+    }
+
+    @media (forced-colors: active) {
+      &:has(.detailLink:focus) {
+        outline: 2px solid Highlight;
+        outline-offset: 2px;
+      }
     }
   }
 
   .media {
-    grid-area: media;
-    display: grid;
-    place-items: center;
-    inline-size: 3rem;
-    aspect-ratio: 1;
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--border-radius-14);
-    background-color: var(--color-surface-secondary);
     color: var(--color-text-muted);
     font-size: var(--font-size-20);
-  }
-
-  .identity {
-    grid-area: identity;
-    display: grid;
-    align-content: center;
-    gap: var(--spacing-4);
   }
 
   .brand {
@@ -144,31 +158,36 @@
     overflow-wrap: anywhere;
   }
 
+  .detailLink {
+    position: static;
+
+    &:hover,
+    &:focus-visible {
+      text-decoration: none;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      z-index: 1;
+      inset: 0;
+    }
+
+    &:focus-visible {
+      box-shadow: none;
+    }
+  }
+
   .category {
     color: var(--color-text-secondary);
     font-size: var(--font-size-14);
-  }
-
-  .properties {
-    grid-area: properties;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
-    gap: var(--spacing-8);
-  }
-
-  .property {
-    display: grid;
-    align-content: start;
-    gap: var(--spacing-4);
-    padding: var(--spacing-12);
-    border-radius: var(--border-radius-12);
-    background-color: var(--color-surface-secondary);
   }
 
   .propertyName {
     color: var(--color-text-muted);
     font-size: var(--font-size-12);
     line-height: var(--line-height-snug);
+    overflow-wrap: anywhere;
   }
 
   .propertyValue {

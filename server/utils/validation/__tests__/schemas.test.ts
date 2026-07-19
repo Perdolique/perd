@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { limits } from '#shared/constants'
+
 import {
   validateBrandDetailParams,
   validateBrandIdParams,
@@ -56,11 +57,13 @@ describe('validation schemas', () => {
   const maxPropertyEnumOptionSlug = 'o'.repeat(limits.maxPropertyEnumOptionSlugLength)
   const tooLongPropertyEnumOptionName = 'O'.repeat(limits.maxPropertyEnumOptionNameLength + 1)
   const tooLongPropertyEnumOptionSlug = 'o'.repeat(limits.maxPropertyEnumOptionSlugLength + 1)
+
   const validReferenceSlugs = [
     'sleep',
     'sleeping-bags',
     'bag-2'
   ]
+
   const invalidReferenceSlugs = [
     'Sleeping-Bags',
     'sleep bags',
@@ -243,6 +246,7 @@ describe('validation schemas', () => {
       entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
     })
+
     const kebabCaseResult = validatePackingListEntryParams({
       'entry-id': '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
@@ -252,6 +256,7 @@ describe('validation schemas', () => {
       entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
     })
+
     expect(kebabCaseResult).toStrictEqual({
       entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
@@ -748,8 +753,8 @@ describe('validation schemas', () => {
       }],
       limit: 10,
       numberFilter: [{
-        max: 0.12,
-        min: 0.08,
+        max: '0.12',
+        min: '0.08',
         propertySlug: 'weight'
       }],
       page: 2,
@@ -801,15 +806,17 @@ describe('validation schemas', () => {
       'sea-to-summit',
       'therm-a-rest'
     ])
+
     expect(result.numberFilter).toStrictEqual([{
-      max: 2,
-      min: 1,
+      max: '2',
+      min: '1',
       propertySlug: 'weight'
     }, {
       max: null,
-      min: -10,
+      min: '-10',
       propertySlug: 'comfort-temperature'
     }])
+
     expect(result.enumFilter).toStrictEqual([{
       optionSlug: 'down',
       propertySlug: 'fill-type'
@@ -820,6 +827,7 @@ describe('validation schemas', () => {
       optionSlug: 'nylon',
       propertySlug: 'shell-material'
     }])
+
     expect(result.booleanFilter).toStrictEqual([{
       propertySlug: 'freestanding',
       value: true
@@ -841,15 +849,15 @@ describe('validation schemas', () => {
 
     expect(result.numberFilter).toStrictEqual([{
       max: null,
-      min: -12.5,
+      min: '-12.5',
       propertySlug: 'minimum-temperature'
     }, {
-      max: 2.75,
+      max: '2.75',
       min: null,
       propertySlug: 'weight'
     }, {
-      max: 2,
-      min: 2,
+      max: '2',
+      min: '2',
       propertySlug: 'capacity'
     }])
   })
@@ -860,23 +868,51 @@ describe('validation schemas', () => {
       numberFilter: [
         'minimum-temperature:-0:',
         'weight:.5:',
-        'capacity:1.:'
+        'capacity:1.:',
+        'packed-weight:+001.2300:',
+        'thickness:0.0000001:'
       ]
     })
 
     expect(result.numberFilter).toStrictEqual([{
       max: null,
-      min: 0,
+      min: '0',
       propertySlug: 'minimum-temperature'
     }, {
       max: null,
-      min: 0.5,
+      min: '0.5',
       propertySlug: 'weight'
     }, {
       max: null,
-      min: 1,
+      min: '1',
       propertySlug: 'capacity'
+    }, {
+      max: null,
+      min: '1.23',
+      propertySlug: 'packed-weight'
+    }, {
+      max: null,
+      min: '0.0000001',
+      propertySlug: 'thickness'
     }])
+  })
+
+  it('should preserve precise bounds and reject an exactly reversed range', () => {
+    const result = validateItemsListQuery({
+      categorySlug: 'tents',
+      numberFilter: 'weight:9007199254740992:9007199254740993'
+    })
+
+    expect(result.numberFilter).toStrictEqual([{
+      max: '9007199254740993',
+      min: '9007199254740992',
+      propertySlug: 'weight'
+    }])
+
+    expect(() => validateItemsListQuery({
+      categorySlug: 'tents',
+      numberFilter: 'weight:9007199254740993:9007199254740992'
+    })).toThrow(/Invalid type/u)
   })
 
   it.each([
@@ -975,6 +1011,8 @@ describe('validation schemas', () => {
     'weight::',
     'weight:two:3',
     'weight:1e2:200',
+    'weight:0x10:20',
+    `weight:${'9'.repeat(400)}:`,
     'weight:NaN:3',
     'weight:1:Infinity',
     'weight:3:2',

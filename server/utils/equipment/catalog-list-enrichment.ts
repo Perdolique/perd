@@ -1,11 +1,19 @@
-import { asc, inArray } from 'drizzle-orm'
-import { categoryProperties, itemPropertyValues } from '#server/database/schema'
+import { asc, eq, inArray } from 'drizzle-orm'
+
+import {
+  categoryProperties,
+  itemPropertyValues,
+  propertyEnumOptions
+} from '#server/database/schema'
+
 import type { createHttpClient } from '#server/utils/database'
+
 import type {
   CatalogListBrand,
   CatalogListCategory,
   CatalogListItemRow
 } from '#server/utils/equipment/catalog-list'
+
 import {
   getEquipmentPropertyDataType,
   normalizeEquipmentPropertyValue,
@@ -17,6 +25,7 @@ type DbHttp = ReturnType<typeof createHttpClient>
 
 interface CatalogListProperty {
   dataType: EquipmentPropertyDataType;
+  enumOptionName?: string;
   name: string;
   slug: string;
   unit: string | null;
@@ -49,6 +58,13 @@ interface PropertyValueRow {
   valueText: string | null;
 }
 
+interface PropertyEnumOptionRow {
+  name: string;
+  propertyId: number;
+  slug: string;
+}
+
+/** Groups the first three ordered list-property definitions by category. */
 function groupDefinitions(rows: PropertyDefinitionRow[]) {
   const definitionsByCategoryId = new Map<number, PropertyDefinitionRow[]>()
 
@@ -65,6 +81,7 @@ function groupDefinitions(rows: PropertyDefinitionRow[]) {
   return definitionsByCategoryId
 }
 
+/** Indexes property values by item and property ID. */
 function groupValues(rows: PropertyValueRow[]) {
   const valuesByItemId = new Map<string, Map<number, PropertyValueRow>>()
 
@@ -81,6 +98,23 @@ function groupValues(rows: PropertyValueRow[]) {
   return valuesByItemId
 }
 
+/** Indexes enum option names by property ID and option slug. */
+function groupEnumOptionNames(rows: PropertyEnumOptionRow[]) {
+  const optionNamesByPropertyId = new Map<number, Map<string, string>>()
+
+  for (const row of rows) {
+    const optionNames = optionNamesByPropertyId.get(row.propertyId)
+
+    if (optionNames === undefined) {
+      optionNamesByPropertyId.set(row.propertyId, new Map([[row.slug, row.name]]))
+    } else {
+      optionNames.set(row.slug, row.name)
+    }
+  }
+
+  return optionNamesByPropertyId
+}
+
 /** Loads ordered key-property definitions and shapes catalog rows without per-item queries. */
 async function enrichCatalogItemRows(dbHttp: DbHttp, itemRows: CatalogListItemRow[]) : Promise<CatalogListItem[]> {
   if (itemRows.length === 0) {
@@ -91,6 +125,7 @@ async function enrichCatalogItemRows(dbHttp: DbHttp, itemRows: CatalogListItemRo
   const uniqueCategoryIds = new Set(categoryIdValues)
   const categoryIds = [...uniqueCategoryIds]
   const itemIds = itemRows.map((item) => item.id)
+
   const definitionsPromise = dbHttp
     .select({
       categoryId: categoryProperties.categoryId,
@@ -110,6 +145,7 @@ async function enrichCatalogItemRows(dbHttp: DbHttp, itemRows: CatalogListItemRo
       asc(categoryProperties.displayOrder),
       asc(categoryProperties.id)
     )
+
   const valuesPromise = dbHttp
     .select({
       itemId: itemPropertyValues.itemId,
@@ -122,16 +158,37 @@ async function enrichCatalogItemRows(dbHttp: DbHttp, itemRows: CatalogListItemRo
     .where(
       inArray(itemPropertyValues.itemId, itemIds)
     )
-  const [definitionRows, valueRows] = await Promise.all([definitionsPromise, valuesPromise])
+
+  const enumOptionsPromise = dbHttp
+    .select({
+      name: propertyEnumOptions.name,
+      propertyId: propertyEnumOptions.propertyId,
+      slug: propertyEnumOptions.slug
+    })
+    .from(propertyEnumOptions)
+    .innerJoin(categoryProperties, eq(propertyEnumOptions.propertyId, categoryProperties.id))
+    .where(
+      inArray(categoryProperties.categoryId, categoryIds)
+    )
+
+  const [definitionRows, enumOptionRows, valueRows] = await Promise.all([
+    definitionsPromise,
+    enumOptionsPromise,
+    valuesPromise
+  ])
+
   const definitionsByCategoryId = groupDefinitions(definitionRows)
+  const enumOptionNamesByPropertyId = groupEnumOptionNames(enumOptionRows)
   const valuesByItemId = groupValues(valueRows)
 
   return itemRows.map((item) => {
     const definitions = definitionsByCategoryId.get(item.categoryId) ?? []
     const itemValues = valuesByItemId.get(item.id)
+
     const properties = definitions.map((definition): CatalogListProperty => {
       const dataType = getEquipmentPropertyDataType(definition.dataType)
       const storedValue = itemValues?.get(definition.id)
+
       const value = storedValue === undefined
         ? null
         : normalizeEquipmentPropertyValue({
@@ -141,13 +198,24 @@ async function enrichCatalogItemRows(dbHttp: DbHttp, itemRows: CatalogListItemRo
             valueText: storedValue.valueText
           })
 
-      return {
+      const property: CatalogListProperty = {
         dataType,
         name: definition.name,
         slug: definition.slug,
         unit: definition.unit,
         value
       }
+
+      if (dataType === 'enum' && typeof value === 'string') {
+        const optionNames = enumOptionNamesByPropertyId.get(definition.id)
+        const enumOptionName = optionNames?.get(value)
+
+        if (enumOptionName !== undefined) {
+          property.enumOptionName = enumOptionName
+        }
+      }
+
+      return property
     })
 
     return {

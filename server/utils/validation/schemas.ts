@@ -1,6 +1,14 @@
 // oxlint-disable max-lines
 import * as v from 'valibot'
 import { limits, startPagePath } from '#shared/constants'
+
+import {
+  compareDecimalNumbers,
+  decimalNumberPattern,
+  isFiniteDecimalNumber,
+  normalizeDecimalNumber
+}
+ from '#shared/utils/decimal-number'
 import { sanitizeRedirectPath } from '#shared/utils/redirect'
 
 const nonEmptyStringSchema = v.pipe(
@@ -269,8 +277,8 @@ const packingListAvailableGearQuerySchema = v.object({
 })
 
 interface ItemsListNumberFilter {
-  max: number | null;
-  min: number | null;
+  max: string | null;
+  min: string | null;
   propertySlug: string;
 }
 
@@ -285,8 +293,6 @@ interface ItemsListBooleanFilter {
 }
 
 type ItemsListSort = 'brand' | 'name' | `property:${string}`
-
-const decimalNumberPattern = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/u
 
 const brandFilterSlugSchema = v.pipe(
   referenceDataSlugSchema,
@@ -319,9 +325,8 @@ const decimalFilterBoundSchema = v.union([
   v.pipe(
     v.string(),
     v.regex(decimalNumberPattern),
-    v.toNumber(),
-    v.finite(),
-    v.transform((value) => Object.is(value, -0) ? 0 : value)
+    v.check(isFiniteDecimalNumber),
+    v.transform(normalizeDecimalNumber)
   )
 ])
 
@@ -334,7 +339,10 @@ const numberFilterQueryValueSchema = v.pipe(
     decimalFilterBoundSchema
   ], numberFilterFormatMessage),
   v.check(([, min, max]) => min !== null || max !== null, numberFilterFormatMessage),
-  v.check(([, min, max]) => min === null || max === null || min <= max, numberFilterFormatMessage),
+  v.check(
+    ([, min, max]) => min === null || max === null || compareDecimalNumbers(min, max) <= 0,
+    numberFilterFormatMessage
+  ),
   v.transform(([propertySlug, min, max]): ItemsListNumberFilter => {
     return {
       max,

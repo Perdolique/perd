@@ -1,4 +1,11 @@
+import type { Route } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
+
+const brandsApiRoute = '**/api/equipment/brands'
+
+async function continueRoute(route: Route) {
+  await route.continue()
+}
 
 test.describe('Login page', () => {
   test('should display the login heading and auth buttons', async ({ page }) => {
@@ -9,7 +16,9 @@ test.describe('Login page', () => {
   })
 
   test('should return to the api document after guest login', async ({ page }) => {
+    await page.route(brandsApiRoute, continueRoute)
     await page.goto('/api/equipment/brands')
+    await page.unroute(brandsApiRoute, continueRoute)
 
     await expect(page).toHaveURL(/\/login\?redirectTo=\/api\/equipment\/brands$/u)
 
@@ -23,7 +32,7 @@ test.describe('Login page', () => {
       })
     })
 
-    await page.route('**/api/equipment/brands', async (route) => {
+    await page.route(brandsApiRoute, async (route) => {
       await route.fulfill({
         json: []
       })

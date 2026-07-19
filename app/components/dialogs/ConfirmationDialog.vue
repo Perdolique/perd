@@ -1,5 +1,8 @@
 <template>
-  <ModalDialog v-model="isOpened" :close-disabled="confirmLoading">
+  <ModalDialog
+    v-model="isOpened"
+    :close-disabled="confirmLoading"
+  >
     <div :class="$style.content">
       <PerdHeading
         :class="$style.header"

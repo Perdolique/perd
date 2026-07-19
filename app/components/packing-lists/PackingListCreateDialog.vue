@@ -103,14 +103,16 @@
   } = defineProps<Props>()
 
   const emit = defineEmits<Emits>()
+
   const isOpened = defineModel<boolean>({
     required: true
   })
+
   const listName = defineModel<string>('name', {
     required: true
   })
-  const nameInput = useTemplateRef<HTMLInputElement>('nameInput')
 
+  const nameInput = useTemplateRef('nameInput')
   const errorMessageId = computed(() => errorMessage === null ? undefined : 'new-packing-list-create-error')
   const isCreateDisabled = computed(() => listName.value.trim() === '' || loading)
   const isErrorVisible = computed(() => errorMessage !== null)
@@ -121,6 +123,7 @@
     }
 
     await nextTick()
+
     nameInput.value?.focus()
   })
 

@@ -13,6 +13,10 @@
         Open bottom sheet
       </PerdButton>
 
+      <PerdButton @click="openSideSheet">
+        Open side sheet
+      </PerdButton>
+
       <PerdButton @click="openLongBottomSheet">
         Open long bottom sheet
       </PerdButton>
@@ -33,6 +37,28 @@
 
         <PerdButton @click="closeCenteredDialog">
           Close centered dialog
+        </PerdButton>
+      </section>
+    </ModalDialog>
+
+    <ModalDialog
+      v-model="sideSheetOpened"
+      aria-labelledby="side-sheet-title"
+      desktop-presentation="side-sheet"
+    >
+      <section :class="$style.sideSheetSurface">
+        <h2 id="side-sheet-title" tabindex="-1" autofocus>
+          Side sheet
+        </h2>
+
+        <label for="side-sheet-filter">
+          Side filter name
+        </label>
+
+        <input id="side-sheet-filter" :class="$style.input" name="side-filter">
+
+        <PerdButton @click="closeSideSheet">
+          Close side sheet
         </PerdButton>
       </section>
     </ModalDialog>
@@ -119,6 +145,7 @@
 
   const centeredOpened = ref(false)
   const bottomSheetOpened = ref(false)
+  const sideSheetOpened = ref(false)
   const longBottomSheetOpened = ref(false)
   const lockedBottomSheetOpened = ref(false)
 
@@ -136,6 +163,14 @@
 
   function closeBottomSheet() {
     bottomSheetOpened.value = false
+  }
+
+  function openSideSheet() {
+    sideSheetOpened.value = true
+  }
+
+  function closeSideSheet() {
+    sideSheetOpened.value = false
   }
 
   function openLongBottomSheet() {
@@ -175,8 +210,7 @@
     gap: var(--spacing-16);
   }
 
-  .centeredSurface,
-  .sheetSurface {
+  .centeredSurface {
     display: grid;
     gap: var(--spacing-16);
     inline-size: min(100vw - var(--spacing-32), 30rem);
@@ -188,6 +222,15 @@
   }
 
   .sheetSurface {
+    display: grid;
+    gap: var(--spacing-16);
+    inline-size: min(100vw - var(--spacing-32), 30rem);
+    padding: var(--spacing-24);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--border-radius-24);
+    background-color: var(--color-surface-primary);
+    box-shadow: var(--shadow-large);
+
     &:global(.isLong) {
       min-block-size: 42rem;
     }
@@ -198,6 +241,18 @@
       border-radius: inherit;
       box-shadow: none;
     }
+  }
+
+  .sideSheetSurface {
+    display: grid;
+    gap: var(--spacing-16);
+    min-block-size: 100%;
+    inline-size: 100%;
+    padding: var(--spacing-24);
+    border: none;
+    border-radius: inherit;
+    background-color: var(--color-surface-primary);
+    box-shadow: none;
   }
 
   .input {

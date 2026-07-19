@@ -1,5 +1,6 @@
 <template>
   <button
+    ref="buttonRef"
     :type="type"
     :disabled="isButtonDisabled"
     :aria-busy="ariaBusy"
@@ -35,7 +36,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed } from 'vue'
+  import { computed, useTemplateRef } from 'vue'
   import FidgetSpinner from '~/components/FidgetSpinner.vue'
 
   interface Props {
@@ -58,6 +59,7 @@
     type = 'button',
     variant = 'primary'
   } = defineProps<Props>()
+  const buttonRef = useTemplateRef('buttonRef')
 
   const ariaBusy = computed(() => loading || undefined)
   const isButtonDisabled = computed(() => disabled || loading)
@@ -69,6 +71,12 @@
   const isDangerVariant = computed(() => variant === 'danger')
   const rightIconName = computed(() => iconRight ?? '')
   const showRightIcon = computed(() => iconRight !== undefined && iconRight !== '' && loading === false)
+
+  function focus() {
+    buttonRef.value?.focus()
+  }
+
+  defineExpose({ focus })
 </script>
 
 <style module>

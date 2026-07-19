@@ -23,10 +23,12 @@ const navigationIcons = {
   packingLists: 'hugeicons:check-list'
 } as const
 
+/** Creates the detail path for one gear-library item. */
 function createGearLibraryItemPath(itemId: string) {
   return `${appRoutes.gearLibrary}/${itemId}`
 }
 
+/** Creates the detail path for one packing list. */
 function createPackingListPath(packingListId: string) {
   return `${appRoutes.packingLists}/${packingListId}`
 }

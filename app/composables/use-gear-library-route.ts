@@ -1,26 +1,32 @@
 import { computed, ref, shallowRef, watch } from 'vue'
 import { watchDebounced } from '@vueuse/core'
 import { navigateTo, useRoute } from '#imports'
+import type { GearLibraryAppliedFilters } from '~/utils/gear-library-filters'
+
 import {
   buildGearLibraryRouteQuery,
   getGearLibraryItemsApiQuery,
   getGearLibraryRouteState,
   type GearLibraryDirection,
+  type GearLibraryOrdering,
   type GearLibraryRouteState,
   type GearLibrarySort
 } from '~/utils/gear-library'
 
 interface GearLibraryRouteStateChanges {
+  boolean?: string[];
+  brand?: string[];
   category?: string | null;
   direction?: GearLibraryDirection;
+  enum?: string[];
+  number?: string[];
   q?: string;
   sort?: GearLibrarySort;
 }
 
-/** Owns catalog URL writes and the temporary local API page. */
+/** Owns catalog URL writes and the stable first-page API query. */
 function useGearLibraryRoute() {
   const route = useRoute()
-  const currentPage = ref(1)
   const routeState = computed(() => getGearLibraryRouteState(route.query))
   const selectedCategory = computed(() => routeState.value.category)
   const selectedCategoryValue = computed(() => selectedCategory.value ?? '')
@@ -36,7 +42,7 @@ function useGearLibraryRoute() {
 
   const itemsApiQuery = computed(() => getGearLibraryItemsApiQuery(
     itemsRequestRouteState.value,
-    currentPage.value
+    1
   ))
 
   const itemsApiQuerySignature = computed(() => JSON.stringify(itemsApiQuery.value))
@@ -48,15 +54,14 @@ function useGearLibraryRoute() {
     const category = hasCategoryChange ? changedCategory : currentState.category
 
     return {
-      q: changes.q ?? currentState.q,
       category,
-      brand: currentState.brand,
-      number: currentState.number,
-      enum: currentState.enum,
-      boolean: currentState.boolean,
-      sort: changes.sort ?? currentState.sort,
-      direction: changes.direction ?? currentState.direction,
-      batch: currentState.batch,
+      q: changes.q ?? currentState.q,
+      brand: changes.brand ?? currentState.brand,
+      number: hasCategoryChange ? [] : changes.number ?? currentState.number,
+      enum: hasCategoryChange ? [] : changes.enum ?? currentState.enum,
+      boolean: hasCategoryChange ? [] : changes.boolean ?? currentState.boolean,
+      sort: hasCategoryChange ? 'name' : changes.sort ?? currentState.sort,
+      direction: hasCategoryChange ? 'asc' : changes.direction ?? currentState.direction,
       compare: currentState.compare
     }
   }
@@ -85,7 +90,7 @@ function useGearLibraryRoute() {
     await writeRouteState(nextState, true)
   }
 
-  async function handleCategoryChange(value: string) {
+  async function handleCategoryChange(value: string, replace = false) {
     const category = value === '' ? null : value
     const normalizedCategory = category ?? undefined
 
@@ -93,35 +98,46 @@ function useGearLibraryRoute() {
       return
     }
 
-    const currentSort = routeState.value.sort
-    const sort = currentSort.startsWith('property:') ? 'name' : currentSort
-    const nextState = createNextRouteState({ category, sort })
+    const nextState = createNextRouteState({ category })
+
+    await writeRouteState(nextState, replace)
+  }
+
+  async function handleFiltersChange(filters: GearLibraryAppliedFilters) {
+    const currentFilters = {
+      boolean: routeState.value.boolean,
+      brand: routeState.value.brand,
+      enum: routeState.value.enum,
+      number: routeState.value.number
+    }
+
+    if (JSON.stringify(filters) === JSON.stringify(currentFilters)) {
+      return
+    }
+
+    const nextState = createNextRouteState(filters)
 
     await writeRouteState(nextState, false)
   }
 
-  async function handleSortChange(value: GearLibrarySort) {
-    if (value === routeState.value.sort) {
+  async function handleOrderingChange(ordering: GearLibraryOrdering, replace = false) {
+    const currentState = routeState.value
+    const hasSameSort = ordering.sort === currentState.sort
+    const hasSameDirection = ordering.direction === currentState.direction
+
+    if (hasSameSort && hasSameDirection) {
       return
     }
 
-    const nextState = createNextRouteState({ sort: value })
+    const nextState = createNextRouteState({
+      direction: ordering.direction,
+      sort: ordering.sort
+    })
 
-    await writeRouteState(nextState, false)
-  }
-
-  async function handleDirectionChange(value: GearLibraryDirection) {
-    if (value === routeState.value.direction) {
-      return
-    }
-
-    const nextState = createNextRouteState({ direction: value })
-
-    await writeRouteState(nextState, false)
+    await writeRouteState(nextState, replace)
   }
 
   watch(itemsRequestSignature, () => {
-    currentPage.value = 1
     itemsRequestRouteState.value = routeState.value
   }, {
     flush: 'sync'
@@ -140,10 +156,9 @@ function useGearLibraryRoute() {
   })
 
   return {
-    currentPage,
     handleCategoryChange,
-    handleDirectionChange,
-    handleSortChange,
+    handleFiltersChange,
+    handleOrderingChange,
     itemsApiQuery,
     itemsApiQuerySignature,
     routeState,

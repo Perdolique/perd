@@ -1,5 +1,9 @@
 import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
 import { validateCategoryDetailParams } from '#server/utils/validation/schemas'
+import {
+  getEquipmentPropertyDataType,
+  type EquipmentPropertyDataType
+} from '#server/utils/equipment/property-values'
 
 interface CategoryDetailEnumOption {
   id: number;
@@ -8,7 +12,7 @@ interface CategoryDetailEnumOption {
 }
 
 interface CategoryDetailProperty {
-  dataType: string;
+  dataType: EquipmentPropertyDataType;
   enumOptions?: CategoryDetailEnumOption[];
   id: number;
   name: string;
@@ -72,12 +76,17 @@ export default defineEventHandler(async (event) : Promise<CategoryDetailResponse
   type Property = (typeof category.properties)[number]
 
   const properties = category.properties.map((property: Property) => {
-    if (property.dataType === 'enum') {
-      return property
+    const dataType = getEquipmentPropertyDataType(property.dataType)
+
+    if (dataType === 'enum') {
+      return {
+        ...property,
+        dataType
+      }
     }
 
     return {
-      dataType: property.dataType,
+      dataType,
       id: property.id,
       name: property.name,
       slug: property.slug,

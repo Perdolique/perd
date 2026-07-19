@@ -1,5 +1,6 @@
 import { useState } from '#imports'
 import type { CategoryDetailResponse } from '#server/api/equipment/categories/by-slug/[slug].get'
+
 import type {
   GearLibraryEntityDetail,
   GearLibraryItemsResponse
@@ -7,7 +8,7 @@ import type {
 
 interface GearLibraryItemsSnapshot {
   hasNarrowingState: boolean;
-  response: GearLibraryItemsResponse;
+  pages: GearLibraryItemsResponse[];
 }
 
 interface CachedGearLibraryItems extends GearLibraryItemsSnapshot {
@@ -15,12 +16,13 @@ interface CachedGearLibraryItems extends GearLibraryItemsSnapshot {
 }
 
 interface GearLibraryCacheState {
+  brands?: GearLibraryEntityDetail[];
   categories?: GearLibraryEntityDetail[];
   categoryDetails: CategoryDetailResponse[];
   items?: CachedGearLibraryItems;
 }
 
-/** Keeps category data and the latest items response for this app session. */
+/** Keeps filter reference data and the latest continuous item-page prefix for this app session. */
 function useGearLibraryCache() {
   const cache = useState<GearLibraryCacheState>('gear-library-cache', () => {
     return {
@@ -30,6 +32,10 @@ function useGearLibraryCache() {
 
   function getCategories() {
     return cache.value.categories
+  }
+
+  function getBrands() {
+    return cache.value.brands
   }
 
   function getCategoryDetail(slug: string) {
@@ -50,6 +56,10 @@ function useGearLibraryCache() {
     cache.value.categories = categories
   }
 
+  function storeBrands(brands: GearLibraryEntityDetail[]) {
+    cache.value.brands = brands
+  }
+
   function storeCategoryDetail(categoryDetail: CategoryDetailResponse) {
     const existingIndex = cache.value.categoryDetails.findIndex(
       (category) => category.slug === categoryDetail.slug
@@ -65,15 +75,18 @@ function useGearLibraryCache() {
 
   function storeItemsSnapshot(signature: string, snapshot: GearLibraryItemsSnapshot) {
     cache.value.items = {
-      ...snapshot,
+      hasNarrowingState: snapshot.hasNarrowingState,
+      pages: snapshot.pages,
       signature
     }
   }
 
   return {
+    getBrands,
     getCategories,
     getCategoryDetail,
     getItemsSnapshot,
+    storeBrands,
     storeCategories,
     storeCategoryDetail,
     storeItemsSnapshot

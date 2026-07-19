@@ -67,6 +67,28 @@ async function expectBottomAnchored(dialog: Locator, page: Page): Promise<Elemen
   return box
 }
 
+async function expectInlineEndAnchored(dialog: Locator, page: Page): Promise<ElementBox> {
+  const box = await getElementBox(dialog)
+  const viewport = getViewportSize(page)
+  const inlineEndOffset = Math.abs(box.inlineStart + box.width - viewport.width)
+
+  expect(inlineEndOffset).toBeLessThan(2)
+
+  return box
+}
+
+async function expectSymmetricInlineInsets(container: Locator, content: Locator): Promise<void> {
+  const containerBox = await getElementBox(container)
+  const contentBox = await getElementBox(content)
+  const containerInlineEnd = containerBox.inlineStart + containerBox.width
+  const contentInlineEnd = contentBox.inlineStart + contentBox.width
+  const inlineStartInset = contentBox.inlineStart - containerBox.inlineStart
+  const inlineEndInset = containerInlineEnd - contentInlineEnd
+  const insetDifference = Math.abs(inlineStartInset - inlineEndInset)
+
+  expect(insetDifference).toBeLessThan(1)
+}
+
 test.describe('Modal dialog', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(fixturePath)
@@ -146,8 +168,10 @@ test.describe('Modal dialog', () => {
       overscrollBehaviorY: 'contain',
       paddingBlockEnd: '24px',
       position: 'fixed',
-      scrollbarGutter: 'stable'
+      scrollbarGutter: 'stable both-edges'
     })
+
+    await expectSymmetricInlineInsets(dialog, filterInput)
 
     await expect(filterInput).toBeFocused()
     await page.keyboard.press('Tab')
@@ -171,7 +195,81 @@ test.describe('Modal dialog', () => {
     await expect(opener).toBeFocused()
   })
 
-  test('should block close requests while close is disabled', async ({ page }) => {
+  test('should present an accessible side sheet on medium desktop', {
+    tag: '@dialog-compatibility'
+  }, async ({ page }) => {
+    await page.setViewportSize({
+      height: 768,
+      width: 1024
+    })
+
+    const opener = page.getByRole('button', { name: 'Open side sheet' })
+
+    await opener.focus()
+    await page.keyboard.press('Enter')
+
+    const dialog = page.getByRole('dialog', { name: 'Side sheet' })
+    const title = dialog.getByRole('heading', { name: 'Side sheet' })
+    const filterInput = dialog.getByLabel('Side filter name')
+
+    await waitForDialogTransition(dialog)
+    await expect(title).toBeFocused()
+
+    const box = await expectInlineEndAnchored(dialog, page)
+    const viewport = getViewportSize(page)
+
+    expect(box.blockStart).toBeCloseTo(0)
+    expect(box.height).toBeCloseTo(viewport.height)
+    expect(box.width).toBeCloseTo(384)
+
+    const styles = await dialog.evaluate((element) => {
+      const computedStyle = globalThis.getComputedStyle(element)
+
+      return {
+        overflowY: computedStyle.overflowY,
+        overscrollBehaviorY: computedStyle.overscrollBehaviorY,
+        position: computedStyle.position,
+        scrollbarGutter: computedStyle.scrollbarGutter
+      }
+    })
+
+    expect(styles).toStrictEqual({
+      overflowY: 'auto',
+      overscrollBehaviorY: 'contain',
+      position: 'fixed',
+      scrollbarGutter: 'stable both-edges'
+    })
+
+    await expectSymmetricInlineInsets(dialog, filterInput)
+
+    await page.setViewportSize({
+      height: 900,
+      width: 1440
+    })
+
+    await waitForDialogTransition(dialog)
+
+    const wideBox = await expectInlineEndAnchored(dialog, page)
+
+    expect(wideBox.blockStart).toBeCloseTo(0)
+    expect(wideBox.height).toBeCloseTo(900)
+    expect(wideBox.width).toBeCloseTo(384)
+
+    await page.keyboard.press('Tab')
+    await expect(filterInput).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expect(dialog).toHaveCount(0)
+    await expect(opener).toBeFocused()
+    await opener.click()
+    await waitForDialogTransition(dialog)
+    await page.mouse.click(1, 1)
+    await expect(dialog).toHaveCount(0)
+    await expect(opener).toBeFocused()
+  })
+
+  test('should block close requests while close is disabled', {
+    tag: '@dialog-compatibility'
+  }, async ({ page }) => {
     await page.setViewportSize({
       height: 844,
       width: 390
@@ -187,10 +285,8 @@ test.describe('Modal dialog', () => {
     await waitForDialogTransition(dialog)
     await page.keyboard.press('Escape')
     await expect(dialog).toBeVisible()
-
     await page.mouse.click(1, 1)
     await expect(dialog).toBeVisible()
-
     await dialog.getByRole('button', { name: 'Complete locked bottom sheet' }).click()
     await expect(dialog).toHaveCount(0)
     await expect(opener).toBeFocused()
@@ -240,6 +336,7 @@ test.describe('Modal dialog', () => {
 
   test('should remove dialog motion when reduced motion is preferred', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
+
     await page.setViewportSize({
       height: 844,
       width: 390
@@ -253,17 +350,47 @@ test.describe('Modal dialog', () => {
 
     const motionStyles = await dialog.evaluate((element) => {
       const computedStyle = globalThis.getComputedStyle(element)
+
       const transitionDurations = computedStyle.transitionDuration
         .split(',')
         .map((duration) => duration.trim())
 
       return {
-        closedTranslate: computedStyle.getPropertyValue('--dialog-closed-translate').trim(),
+        closedTranslate: computedStyle.getPropertyValue('--dialog-closed-block-translate').trim(),
         transitionDurations
       }
     })
 
     expect(motionStyles.closedTranslate).toBe('0')
     expect(motionStyles.transitionDurations.every((duration) => duration === '0s')).toBe(true)
+
+    await dialog.getByRole('button', { name: 'Close bottom sheet' }).click()
+
+    await page.setViewportSize({
+      height: 768,
+      width: 1024
+    })
+
+    await page.getByRole('button', { name: 'Open side sheet' }).click()
+
+    const sideSheet = page.getByRole('dialog', { name: 'Side sheet' })
+
+    await expect(sideSheet).toBeVisible()
+
+    const sideSheetMotionStyles = await sideSheet.evaluate((element) => {
+      const computedStyle = globalThis.getComputedStyle(element)
+      const transitionDurations = computedStyle.transitionDuration
+        .split(',')
+        .map((duration) => duration.trim())
+
+      return {
+        closedInlineTranslate: computedStyle.getPropertyValue('--dialog-closed-inline-translate').trim(),
+        openInlineTranslate: computedStyle.getPropertyValue('--dialog-open-inline-translate').trim(),
+        transitionDurations
+      }
+    })
+
+    expect(sideSheetMotionStyles.closedInlineTranslate).toBe(sideSheetMotionStyles.openInlineTranslate)
+    expect(sideSheetMotionStyles.transitionDurations.every((duration) => duration === '0s')).toBe(true)
   })
 })

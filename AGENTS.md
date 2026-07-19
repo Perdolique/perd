@@ -31,7 +31,7 @@
 
 ### Playwright test changes
 
-- `vp run test:e2e:ci`
+- `vp run test:e2e`
 
 ### Playwright conventions
 

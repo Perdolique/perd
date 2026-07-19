@@ -1,18 +1,9 @@
-interface SampleItemPropertyValue {
-  propertySlug: string;
-  valueBoolean: boolean | null;
-  valueNumber: string | null;
-  valueText: string | null;
-}
+import {
+  generatedSampleItems,
+  type SampleItemDefinition
+} from './seed-generated-sample-items'
 
-interface SampleItemDefinition {
-  brandSlug: string;
-  categorySlug: string;
-  name: string;
-  properties: SampleItemPropertyValue[];
-}
-
-const sampleItems: SampleItemDefinition[] = [
+const curatedSampleItems: SampleItemDefinition[] = [
   {
     brandSlug: 'therm-a-rest',
     categorySlug: 'sleeping-pads',
@@ -181,6 +172,11 @@ const sampleItems: SampleItemDefinition[] = [
       }
     ]
   }
+]
+
+const sampleItems: SampleItemDefinition[] = [
+  ...curatedSampleItems,
+  ...generatedSampleItems
 ]
 
 export {

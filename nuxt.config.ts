@@ -5,10 +5,7 @@ import { fileURLToPath } from 'node:url'
 
 type ComponentType = 'page' | 'layout' | 'component';
 
-const customElements = new Set([
-  'search',
-  'selectedoption'
-]);
+const customElements = new Set(['search']);
 
 const modalDialogFixturePath = fileURLToPath(
   new globalThis.URL('tests/nuxt/ModalDialog.vue', import.meta.url)
@@ -139,8 +136,6 @@ export default defineNuxtConfig({
     compilerOptions: {
       /**
        * Vue does not recognize these newer platform elements yet.
-       *
-       * @see [RFC Customizable Select](https://developer.chrome.com/blog/rfc-customizable-select?hl=en)
        */
       isCustomElement: (tag) => customElements.has(tag)
     }

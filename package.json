@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "nuxt build",
+    "build:e2e": "nuxt build --dotenv tests/playwright/runtime.env",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "tsx --env-file=.env ./tools/migrate.ts",
     "db:migrate": "tsx ./tools/migrate.ts",
@@ -23,8 +24,9 @@
     "lint:oxlint:agent": "oxlint --format agent",
     "postinstall": "nuxt prepare",
     "preview": "wrangler dev",
-    "preview:e2e": "sh tools/preview-e2e.sh",
-    "test:e2e": "playwright test",
+    "preview:e2e": "XDG_CONFIG_HOME=.output/e2e/config XDG_CACHE_HOME=.output/e2e/cache XDG_STATE_HOME=.output/e2e/state WRANGLER_LOG_PATH=.output/e2e/logs WRANGLER_CACHE_DIR=.output/e2e/cache/wrangler wrangler dev --local --env-file tests/playwright/runtime.env --persist-to .output/e2e/wrangler-state --ip 127.0.0.1 --port 8888 --log-level warn",
+    "test:e2e": "playwright test --project=chromium",
+    "test:e2e:all": "playwright test",
     "test:e2e:ci": "CI=true playwright test",
     "test:typecheck": "nuxi typecheck",
     "test:unit": "vitest",
@@ -35,14 +37,15 @@
   },
   "dependencies": {
     "@nuxt/hints": "1.1.3",
-    "@pinia/nuxt": "0.11.3",
+    "@pinia/nuxt": "1.0.0",
     "delay": "7.0.0",
     "nuxt": "4.4.8",
-    "pinia": "3.0.4",
-    "vue": "3.5.39"
+    "pinia": "4.0.2",
+    "vue": "3.5.39",
+    "vue-router": "5.1.0"
   },
   "devDependencies": {
-    "@iconify-json/hugeicons": "1.2.30",
+    "@iconify-json/hugeicons": "1.2.31",
     "@neondatabase/serverless": "1.1.0",
     "@nuxt/devtools": "4.0.0-alpha.7",
     "@nuxt/fonts": "0.14.0",
@@ -54,14 +57,14 @@
     "drizzle-kit": "1.0.0-rc.4",
     "drizzle-orm": "1.0.0-rc.4",
     "drizzle-seed": "1.0.0-rc.4",
-    "eslint-config-greenpie": "17.1.0",
+    "eslint-config-greenpie": "17.2.0",
     "husky": "9.1.7",
-    "markdownlint": "0.41.0",
-    "markdownlint-cli": "0.49.0",
-    "oxlint": "1.73.0",
+    "markdownlint": "0.41.1",
+    "markdownlint-cli": "0.49.1",
+    "oxlint": "1.74.0",
     "oxlint-tsgolint": "0.24.0",
     "taze": "19.14.1",
-    "tsx": "4.23.0",
+    "tsx": "4.23.1",
     "typescript": "6.0.3",
     "ufo": "1.6.4",
     "valibot": "1.4.2",
@@ -69,9 +72,9 @@
     "vitest": "4.1.10",
     "vue-tsc": "3.3.7",
     "wrangler": "4.108.0",
-    "ws": "8.21.0"
+    "ws": "8.21.1"
   },
-  "packageManager": "pnpm@11.11.0",
+  "packageManager": "pnpm@11.13.0",
   "overrides": {
     "@nuxt/devtools": "$@nuxt/devtools"
   }
