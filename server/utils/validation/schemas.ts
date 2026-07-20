@@ -201,6 +201,20 @@ const itemDetailParamsSchema = v.object({
   id: canonicalUuidV7Schema
 })
 
+const minimumEquipmentComparisonItemCount = 2
+const maximumEquipmentComparisonItemCount = 4
+
+const equipmentComparisonItemIdsQuerySchema = v.pipe(
+  v.array(canonicalUuidV7Schema),
+  v.minLength(minimumEquipmentComparisonItemCount),
+  v.maxLength(maximumEquipmentComparisonItemCount),
+  v.check((itemIds) => new Set(itemIds).size === itemIds.length, 'itemId must contain unique values')
+)
+
+const equipmentComparisonQuerySchema = v.object({
+  itemId: equipmentComparisonItemIdsQuerySchema
+})
+
 const userEquipmentIdParamsSchema = v.object({
   id: canonicalUuidV7Schema
 })
@@ -629,6 +643,10 @@ function validateItemDetailParams(params: unknown) {
   return v.parse(itemDetailParamsSchema, params)
 }
 
+function validateEquipmentComparisonQuery(query: unknown) {
+  return v.parse(equipmentComparisonQuerySchema, query)
+}
+
 function validateUserEquipmentIdParams(params: unknown) {
   return v.parse(userEquipmentIdParamsSchema, params)
 }
@@ -697,6 +715,7 @@ export {
   groupIdParamsSchema,
   groupMutationSchema,
   itemDetailParamsSchema,
+  equipmentComparisonQuerySchema,
   itemsListQuerySchema,
   limitQuerySchema,
   nonEmptyStringSchema,
@@ -730,6 +749,7 @@ export {
   validateGroupIdParams,
   validateGroupMutationBody,
   validateItemDetailParams,
+  validateEquipmentComparisonQuery,
   validateItemsListQuery,
   validatePackingListAvailableGearQuery,
   validatePackingListEntryCreateBody,

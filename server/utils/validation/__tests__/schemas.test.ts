@@ -15,6 +15,7 @@ import {
   validateGroupIdParams,
   validateGroupMutationBody,
   validateItemDetailParams,
+  validateEquipmentComparisonQuery,
   validateItemsListQuery,
   validatePackingListAvailableGearQuery,
   validatePackingListEntryCreateBody,
@@ -761,6 +762,55 @@ describe('validation schemas', () => {
       search: 'pocket rocket',
       sort: 'property:weight'
     })
+  })
+
+  it('should preserve comparison item ID order from two to four values', () => {
+    const itemId = [
+      '0195f6e8-8f44-74f6-bc9a-5c8f7df477da',
+      '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
+      '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
+      '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+    ]
+    const result = validateEquipmentComparisonQuery({ itemId })
+
+    expect(result).toStrictEqual({ itemId })
+  })
+
+  it.each([
+    {},
+    { itemId: '' },
+    { itemId: [] },
+    { itemId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7' },
+    { itemId: ['0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'] },
+    {
+      itemId: [
+        '0195f6e8-8f44-44f6-bc9a-5c8f7df477d7',
+        '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8'
+      ]
+    },
+    {
+      itemId: [
+        '0195F6E8-8F44-74F6-BC9A-5C8F7DF477D7',
+        '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8'
+      ]
+    },
+    {
+      itemId: [
+        '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
+        '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+      ]
+    },
+    {
+      itemId: [
+        '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
+        '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
+        '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
+        '0195f6e8-8f44-74f6-bc9a-5c8f7df477da',
+        '0195f6e8-8f44-74f6-bc9a-5c8f7df477db'
+      ]
+    }
+  ])('should reject invalid comparison query: %j', (query) => {
+    expect(() => validateEquipmentComparisonQuery(query)).toThrow(/./u)
   })
 
   it('should apply defaults for items list query', () => {
