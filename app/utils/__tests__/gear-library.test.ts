@@ -11,6 +11,13 @@ import {
   getUniqueGearLibraryItems,
   isGearLibraryRouteQueryCanonical
 } from '../gear-library'
+import { normalizeGearLibraryComparisonQuery } from '../gear-library-comparison'
+
+const firstComparisonId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d1'
+const secondComparisonId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d2'
+const thirdComparisonId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d3'
+const fourthComparisonId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d4'
+const fifthComparisonId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d5'
 
 function createRouteState(overrides: Partial<GearLibraryRouteState> = {}): GearLibraryRouteState {
   return {
@@ -63,7 +70,7 @@ describe(getGearLibraryRouteState, () => {
       boolean: ['windproof:true', '', 'freestanding:false', 'windproof:true', null],
       brand: ['therm-a-rest', 'msr', '', 'msr', null],
       category: ['  sleeping-pads  ', 'ignored'],
-      compare: ['second-id', '', null, 'first-id', 'second-id'],
+      compare: [secondComparisonId, '', null, firstComparisonId, secondComparisonId],
       direction: [' desc ', 'asc'],
       enum: ['fuel:wood', 'fuel:gas', 'fuel:wood'],
       number: ['weight:1:2', null, 'capacity:3:4', 'weight:1:2'],
@@ -76,7 +83,7 @@ describe(getGearLibraryRouteState, () => {
       boolean: ['freestanding:false', 'windproof:true'],
       brand: ['msr', 'therm-a-rest'],
       category: 'sleeping-pads',
-      compare: ['second-id', 'first-id', 'second-id'],
+      compare: [secondComparisonId, firstComparisonId],
       direction: 'desc',
       enum: ['fuel:gas', 'fuel:wood'],
       number: ['capacity:3:4', 'weight:1:2'],
@@ -114,13 +121,81 @@ describe(getGearLibraryRouteState, () => {
   })
 })
 
+describe(normalizeGearLibraryComparisonQuery, () => {
+  it('should preserve the first four unique canonical UUIDv7 IDs in order', () => {
+    const result = normalizeGearLibraryComparisonQuery([
+      secondComparisonId,
+      firstComparisonId,
+      secondComparisonId,
+      thirdComparisonId,
+      fourthComparisonId,
+      fifthComparisonId
+    ], 'stoves')
+
+    expect(result).toStrictEqual({
+      ids: [
+        secondComparisonId,
+        firstComparisonId,
+        thirdComparisonId,
+        fourthComparisonId
+      ],
+      hasDuplicateIds: true,
+      hasInvalidIds: false,
+      hasOverLimitIds: true,
+      wasClearedForMissingCategory: false
+    })
+  })
+
+  it('should reject malformed, uppercase, empty, and null IDs', () => {
+    const result = normalizeGearLibraryComparisonQuery([
+      'item-id',
+      firstComparisonId.toUpperCase(),
+      '',
+      null,
+      firstComparisonId
+    ], 'stoves')
+
+    expect(result).toStrictEqual({
+      ids: [firstComparisonId],
+      hasDuplicateIds: false,
+      hasInvalidIds: true,
+      hasOverLimitIds: false,
+      wasClearedForMissingCategory: false
+    })
+  })
+
+  it('should clear comparison state when no category is selected', () => {
+    const result = normalizeGearLibraryComparisonQuery(firstComparisonId)
+
+    expect(result).toStrictEqual({
+      ids: [],
+      hasDuplicateIds: false,
+      hasInvalidIds: false,
+      hasOverLimitIds: false,
+      wasClearedForMissingCategory: true
+    })
+  })
+
+  it('should report no adjustment when comparison state is absent', () => {
+    const result = normalizeGearLibraryComparisonQuery()
+
+    expect(result).toStrictEqual({
+      ids: [],
+      hasDuplicateIds: false,
+      hasInvalidIds: false,
+      hasOverLimitIds: false,
+      wasClearedForMissingCategory: false
+    })
+  })
+})
+
 describe(getGearLibraryItemsApiQuery, () => {
   it('should map route state to the equipment items API query', () => {
     const routeState = createRouteState({
       boolean: ['freestanding:true'],
       brand: ['msr'],
       category: 'stoves',
-      compare: ['item-id'],
+      compare: [firstComparisonId],
       direction: 'desc',
       enum: ['fuel:gas'],
       number: ['weight:1:2'],
@@ -146,7 +221,7 @@ describe(getGearLibraryItemsApiQuery, () => {
 
   it('should keep empty API values and exclude route-only state', () => {
     const result = getGearLibraryItemsApiQuery(createRouteState({
-      compare: ['item-id']
+      compare: [firstComparisonId]
     }), 1)
 
     expect(result).toStrictEqual({
@@ -223,7 +298,7 @@ describe(buildGearLibraryRouteQuery, () => {
       boolean: ['freestanding:true'],
       brand: ['msr'],
       category: 'stoves',
-      compare: ['second-id', 'first-id', 'second-id'],
+      compare: [secondComparisonId, firstComparisonId],
       direction: 'desc',
       enum: ['fuel:gas'],
       number: ['weight:1:2'],
@@ -248,7 +323,7 @@ describe(buildGearLibraryRouteQuery, () => {
       boolean: ['freestanding:true'],
       brand: ['msr'],
       category: 'stoves',
-      compare: ['second-id', 'first-id', 'second-id'],
+      compare: [secondComparisonId, firstComparisonId],
       direction: 'desc',
       enum: ['fuel:gas'],
       number: ['weight:1:2'],
@@ -276,7 +351,7 @@ describe(isGearLibraryRouteQueryCanonical, () => {
       boolean: 'insulated:true',
       sort: 'property:weight',
       direction: 'desc',
-      compare: ['second-id', 'first-id', 'second-id']
+      compare: [secondComparisonId, firstComparisonId]
     })
 
     expect(result).toBe(true)
@@ -299,7 +374,10 @@ describe(isGearLibraryRouteQueryCanonical, () => {
     [{ batch: '100' }, 'removed browsing depth state'],
     [{ brand: ['therm-a-rest', 'msr'] }, 'unsorted filters'],
     [{ brand: ['msr', 'msr'] }, 'duplicate filters'],
-    [{ compare: ['item-id', ''] }, 'empty compare values'],
+    [{ compare: [firstComparisonId, ''] }, 'empty compare values'],
+    [{ compare: [firstComparisonId, firstComparisonId] }, 'duplicate compare values'],
+    [{ compare: ['item-id'] }, 'malformed compare values'],
+    [{ compare: firstComparisonId }, 'comparison without a category'],
     [{ brand: 'msr', q: 'pad' }, 'supported keys in the wrong order'],
     [{ sort: 'property:' }, 'a property sort without a property'],
     [{ sort: 'recent' }, 'an invalid sort']

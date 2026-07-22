@@ -1,10 +1,12 @@
 <template>
   <ModalDialog
     v-model="isOpened"
+    :aria-labelledby="headingId"
     :close-disabled="confirmLoading"
   >
     <div :class="$style.content">
       <PerdHeading
+        :id="headingId"
         :class="$style.header"
         :level="2"
       >
@@ -40,6 +42,7 @@
 </template>
 
 <script lang="ts" setup>
+  import { useId } from 'vue'
   import PerdButton from '~/components/PerdButton.vue'
   import PerdHeading from '~/components/PerdHeading.vue'
   import ModalDialog from './ModalDialog.vue'
@@ -69,6 +72,7 @@
   } = defineProps<Props>()
 
   const emit = defineEmits<Emits>()
+  const headingId = useId()
 
   function close() {
     if (confirmLoading) {

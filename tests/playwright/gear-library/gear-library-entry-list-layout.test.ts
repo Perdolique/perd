@@ -1,9 +1,14 @@
 import { expect, test } from '../fixtures/global.fixtures.ts'
 import {
+  type MutableResponseState,
+  type QueryEntry,
   scrollableItemsResponse,
   refreshedSearchResponse,
+  secondPageItem,
+  stoveItem,
   malformedNumberFilter,
   respondToMalformedNumberFilter,
+  respondFromState,
   buildRouteSearch,
   mockCatalogApi,
   openGearLibrary,
@@ -109,6 +114,7 @@ test.describe('Gear library layout and accessibility', () => {
     const secondDetailLink = page.getByRole('link', { name: 'NeoAir XLite NXT' })
     const secondItemRow = page.getByRole('listitem').filter({ has: secondDetailLink })
     const resultsList = page.getByRole('list').filter({ has: detailLink })
+    const detailHeading = detailLink.locator('..')
     const weightLabel = itemRow.getByText('Weight', { exact: true })
     const fuelTypeLabel = itemRow.getByText('Fuel type', { exact: true })
     const piezoIgnitionLabel = itemRow.getByText('Piezo ignition', { exact: true })
@@ -121,6 +127,8 @@ test.describe('Gear library layout and accessibility', () => {
     await expect(itemRow.getByRole('link')).toHaveCount(1)
     await expect(itemRow.locator('dt')).toHaveText(['Weight', 'Fuel type', 'Piezo ignition'])
     await expect(secondItemRow.locator('dt')).toHaveText(['R-value', 'Insulation', 'Pump sack'])
+    await expect(detailHeading).toHaveCSS('text-overflow', 'ellipsis')
+    await expect(detailHeading).toHaveCSS('white-space', 'nowrap')
 
     await detailLink.hover()
     await expect(detailLink).toHaveCSS('text-decoration-line', 'none')
@@ -160,13 +168,15 @@ test.describe('Gear library layout and accessibility', () => {
     const mobilePiezoIgnitionValueBox = await getElementBox(piezoIgnitionValue)
     const mobileItemGap = mobileSecondRowBox.y - mobileRowBox.y - mobileRowBox.height
 
-    expect(mobileRowBox.height).toBeLessThan(160)
+    expect(mobileRowBox.height).toBeLessThan(240)
     expect(mobileItemGap).toBeCloseTo(8, 0)
     expect(mobileFuelTypeBox.y).toBeCloseTo(mobileWeightBox.y, 0)
     expect(mobilePiezoIgnitionBox.y).toBeCloseTo(mobileWeightBox.y, 0)
     expect(mobileFuelTypeValueBox.y).toBeCloseTo(mobileWeightValueBox.y, 0)
     expect(mobilePiezoIgnitionValueBox.y).toBeCloseTo(mobileWeightValueBox.y, 0)
     await expect(weightProperty).toHaveCSS('border-left-width', '0px')
+    await expect(detailHeading).toHaveCSS('text-overflow', 'clip')
+    await expect(detailHeading).toHaveCSS('white-space', 'normal')
 
     await detailLink.focus()
     await page.keyboard.press('Shift+Tab')
@@ -193,6 +203,61 @@ test.describe('Gear library layout and accessibility', () => {
 
     await page.mouse.click(cardClickInlinePosition, cardClickBlockPosition)
     await expect(detailLink).toHaveAttribute('data-card-clicked')
+  })
+
+  test('should keep desktop item row dimensions stable when a category shortens the result list', async ({ context, page }) => {
+    await page.setViewportSize({
+      height: 768,
+      width: 1024
+    })
+
+    const itemsState: MutableResponseState = {
+      response: { json: scrollableItemsResponse }
+    }
+    const tracker = await mockCatalogApi(context, { items: respondFromState(itemsState) })
+
+    await openGearLibrary(page)
+
+    const initialLink = page.getByRole('link', { name: 'PocketRocket Deluxe 1' })
+    const initialRow = page.getByRole('listitem').filter({ has: initialLink })
+
+    await expect(initialLink).toBeVisible()
+
+    const initialRowBox = await getElementBox(initialRow)
+    const initialViewport = await page.evaluate(() => {
+      return {
+        clientWidth: globalThis.document.documentElement.clientWidth,
+        innerWidth: globalThis.innerWidth,
+        scrollHeight: globalThis.document.documentElement.scrollHeight
+      }
+    })
+    const itemsBeforeCategory = tracker.items.length
+
+    itemsState.response = { json: refreshedSearchResponse }
+
+    await selectPerdOption(getGearLibrarySelect(page, 'Category'), 'stoves')
+    await waitForNextItemsRequest(tracker, itemsBeforeCategory)
+
+    const filteredLink = page.getByRole('link', { name: 'WhisperLite Universal' })
+    const filteredRow = page.getByRole('listitem').filter({ has: filteredLink })
+
+    await expect(filteredLink).toBeVisible()
+
+    const filteredRowBox = await getElementBox(filteredRow)
+    const filteredViewport = await page.evaluate(() => {
+      return {
+        clientWidth: globalThis.document.documentElement.clientWidth,
+        innerWidth: globalThis.innerWidth,
+        scrollHeight: globalThis.document.documentElement.scrollHeight
+      }
+    })
+
+    expect(initialViewport.scrollHeight).toBeGreaterThan(768)
+    expect(filteredViewport.scrollHeight).toBeLessThan(initialViewport.scrollHeight)
+    expect(filteredViewport.clientWidth).toBe(initialViewport.clientWidth)
+    expect(filteredViewport.innerWidth).toBe(initialViewport.innerWidth)
+    expect(filteredRowBox.width).toBeCloseTo(initialRowBox.width, 0)
+    expect(filteredRowBox.height).toBeCloseTo(initialRowBox.height, 0)
   })
 
   test('should commit the active select option with Tab', async ({ context, page }) => {
@@ -413,7 +478,22 @@ test.describe('Gear library layout and accessibility', () => {
     })
 
     const tracker = await mockCatalogApi(context)
-    const route = '/gear-library?direction=sideways&sort=property%3Aweight&brand=zeta&brand=alpha&brand=alpha&q=%20stove%20&category=stoves&number=weight%3A80%3A100&enum=fuel-type%3Acanister&boolean=piezo-ignition%3Atrue&compare=second&compare=first&debug=1'
+    const routeEntries: QueryEntry[] = [
+      ['direction', 'sideways'],
+      ['sort', 'property:weight'],
+      ['brand', 'zeta'],
+      ['brand', 'alpha'],
+      ['brand', 'alpha'],
+      ['q', ' stove '],
+      ['category', 'stoves'],
+      ['number', 'weight:80:100'],
+      ['enum', 'fuel-type:canister'],
+      ['boolean', 'piezo-ignition:true'],
+      ['compare', secondPageItem.id],
+      ['compare', stoveItem.id],
+      ['debug', '1']
+    ]
+    const route = `/gear-library${buildRouteSearch(routeEntries)}`
 
     await openGearLibrary(page, route)
 
@@ -426,8 +506,8 @@ test.describe('Gear library layout and accessibility', () => {
       ['enum', 'fuel-type:canister'],
       ['boolean', 'piezo-ignition:true'],
       ['sort', 'property:weight'],
-      ['compare', 'second'],
-      ['compare', 'first']
+      ['compare', secondPageItem.id],
+      ['compare', stoveItem.id]
     ])
 
     await expectRouteSearch(page, expectedSearch)
@@ -473,6 +553,8 @@ test.describe('Gear library layout and accessibility', () => {
     await expect(categorySelect).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(sortSelect).toBeFocused()
+    await page.keyboard.press('Tab')
+    await expect(page.getByRole('button', { name: 'Cancel comparison' })).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(filtersButton).toBeFocused()
     await page.keyboard.press('Tab')

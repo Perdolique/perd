@@ -6,7 +6,11 @@ import {
 } from '~/utils/gear-library'
 
 export default defineNuxtRouteMiddleware(async (to) => {
-  const isCanonical = isGearLibraryRouteQueryCanonical(to.query)
+  const {
+    compare: comparisonQuery,
+    ...browsingQuery
+  } = to.query
+  const isCanonical = isGearLibraryRouteQueryCanonical(browsingQuery)
 
   if (isCanonical) {
     return
@@ -14,6 +18,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const routeState = getGearLibraryRouteState(to.query)
   const query = buildGearLibraryRouteQuery(routeState)
+
+  if (comparisonQuery !== undefined) {
+    query.compare = comparisonQuery
+  }
 
   return navigateTo({
     hash: to.hash,

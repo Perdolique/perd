@@ -1,6 +1,7 @@
 <template>
   <GearLibraryItemRowShell
     :class="$style.component"
+    has-action
     root-tag="li"
     row-tag="article"
   >
@@ -45,6 +46,36 @@
         </div>
       </dl>
     </template>
+
+    <template #action="{ className }">
+      <label
+        v-if="isComparisonModeActive"
+        :for="comparisonControlId"
+        :class="[className, $style.comparisonControl]"
+      >
+        <input
+          :id="comparisonControlId"
+          :checked="isComparisonSelected"
+          :class="$style.comparisonCheckbox"
+          :disabled="isComparisonDisabled"
+          type="checkbox"
+          @change="handleComparisonChange"
+        >
+
+        <span :class="$style.comparisonLabel">Select</span>
+        <span :class="$style.visuallyHidden"> {{ item.name }}</span>
+      </label>
+
+      <GearLibraryMyGearAction
+        v-else
+        :class="className"
+        :has-error="hasMyGearError"
+        :is-saved="isInMyGear"
+        :is-saving="isMyGearSaving"
+        :item-name="item.name"
+        @add="emit('myGearAdd', item)"
+      />
+    </template>
   </GearLibraryItemRowShell>
 </template>
 
@@ -59,13 +90,47 @@
 
   import PerdLink from '~/components/PerdLink.vue'
   import GearLibraryItemRowShell from './GearLibraryItemRowShell.vue'
+  import GearLibraryMyGearAction from './GearLibraryMyGearAction.vue'
 
   interface Props {
+    isComparisonDisabled: boolean;
+    isComparisonLimitReached: boolean;
+    isComparisonModeActive: boolean;
+    isComparisonSelected: boolean;
+    hasMyGearError: boolean;
+    isInMyGear: boolean;
+    isMyGearSaving: boolean;
     item: GearLibraryListItemView;
+  }
+
+  interface Emits {
+    comparisonChange: [item: GearLibraryListItemView, selected: boolean];
+    myGearAdd: [item: GearLibraryListItemView];
   }
 
   const weightPropertySlug = 'weight'
   const props = defineProps<Props>()
+  const emit = defineEmits<Emits>()
+  const comparisonControlId = computed(() => `compare-${props.item.id}`)
+
+  function handleComparisonChange(event: Event) {
+    const checkbox = event.currentTarget
+
+    if ((checkbox instanceof globalThis.HTMLInputElement) === false) {
+      return
+    }
+
+    const selected = checkbox.checked
+    const shouldRejectSelection = selected
+      && props.isComparisonSelected === false
+      && props.isComparisonLimitReached
+
+    if (shouldRejectSelection) {
+      checkbox.checked = false
+    }
+
+    emit('comparisonChange', props.item, selected)
+  }
 
   /** Formats one list property for compact catalog display. */
   function getPropertyDisplayValue(property: GearLibraryListProperty) {
@@ -156,6 +221,12 @@
     font-size: var(--font-size-17);
     line-height: var(--line-height-snug);
     overflow-wrap: anywhere;
+
+    @container (inline-size >= 44rem) {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 
   .detailLink {
@@ -181,6 +252,81 @@
   .category {
     color: var(--color-text-secondary);
     font-size: var(--font-size-14);
+  }
+
+  .comparisonControl {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-8);
+    min-inline-size: var(--layout-touch-target);
+    min-block-size: var(--layout-touch-target);
+    background-color: transparent;
+    color: var(--color-text-primary);
+    cursor: pointer;
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-medium);
+    transition:
+      background-color var(--transition-duration-fast) var(--transition-easing-standard),
+      color var(--transition-duration-fast) var(--transition-easing-standard);
+
+    &:hover:not(:has(.comparisonCheckbox:disabled)) {
+      background-color: var(--color-surface-secondary);
+    }
+
+    &:active:not(:has(.comparisonCheckbox:disabled)) {
+      background-color: var(--color-accent-subtle-active);
+    }
+
+    &:has(.comparisonCheckbox:checked) {
+      background-color: var(--color-accent-subtle);
+      color: var(--color-accent-primary);
+
+      &:hover:not(:has(.comparisonCheckbox:disabled)) {
+        background-color: var(--color-accent-subtle-hover);
+      }
+
+      &:active:not(:has(.comparisonCheckbox:disabled)) {
+        background-color: var(--color-accent-subtle-active);
+      }
+    }
+
+    &:has(.comparisonCheckbox:focus-visible) {
+      box-shadow: var(--shadow-focus);
+    }
+
+    &:has(.comparisonCheckbox:disabled) {
+      background-color: var(--color-surface-secondary);
+      color: var(--color-text-muted);
+      cursor: not-allowed;
+    }
+
+    @container (inline-size >= 44rem) {
+      justify-content: center;
+    }
+  }
+
+  .comparisonCheckbox {
+    inline-size: 1.125rem;
+    block-size: 1.125rem;
+    margin: 0;
+    accent-color: var(--color-accent-primary);
+    cursor: pointer;
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+
+  .visuallyHidden {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    padding: 0;
+    border: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .propertyName {

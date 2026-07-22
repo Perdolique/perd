@@ -14,6 +14,10 @@ async function mockGuestLogin(context: BrowserContext) {
 }
 
 async function mockGearLibraryReads(context: BrowserContext) {
+  await context.route('**/api/user/gear**', async (route) => {
+    await route.fulfill({ json: [] })
+  })
+
   await context.route('**/api/equipment/brands**', async (route) => {
     await route.fulfill({
       json: []

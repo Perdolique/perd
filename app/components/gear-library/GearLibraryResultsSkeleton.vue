@@ -5,9 +5,18 @@
     data-testid="gear-library-results-skeleton"
     aria-hidden="true"
   >
-    <GearLibraryItemRowShell data-testid="gear-library-results-skeleton-row">
+    <GearLibraryItemRowShell
+      data-testid="gear-library-results-skeleton-row"
+      has-action
+    >
       <template #media="{ className }">
         <span :class="[className, $style.shimmer]" />
+      </template>
+
+      <template #action="{ className }">
+        <div :class="className">
+          <span :class="[$style.action, $style.shimmer]" />
+        </div>
       </template>
 
       <template #identity="{ className }">
@@ -111,5 +120,10 @@
   .propertyValue {
     inline-size: 46%;
     block-size: calc(var(--font-size-14) * var(--line-height-snug));
+  }
+
+  .action {
+    inline-size: 8.5rem;
+    block-size: var(--layout-button-height-small);
   }
 </style>

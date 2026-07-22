@@ -37,6 +37,15 @@ interface GearLibraryItemsResponse {
   total: number;
 }
 
+type GearLibraryComparisonSelectionStatus = 'error' | 'loading' | 'resolved'
+
+interface GearLibraryComparisonSelectionItem {
+  brandName?: string;
+  id: string;
+  name?: string;
+  status: GearLibraryComparisonSelectionStatus;
+}
+
 type EquipmentPropertyDataType = 'boolean' | 'enum' | 'number' | 'text'
 type EquipmentPropertyValue = string | number | boolean | null
 
@@ -93,6 +102,8 @@ export type {
   EquipmentPropertyValue,
   GearLibraryEntityDetail,
   GearLibraryEntitySummary,
+  GearLibraryComparisonSelectionItem,
+  GearLibraryComparisonSelectionStatus,
   GearLibraryFilterProperty,
   GearLibraryItemsResponse,
   GearLibraryListItem,

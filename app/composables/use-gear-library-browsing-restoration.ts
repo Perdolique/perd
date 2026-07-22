@@ -3,6 +3,7 @@ import { onBeforeRouteLeave } from 'vue-router'
 import { useRoute } from '#imports'
 
 interface GearLibraryBrowsingState {
+  isComparisonModeActive: boolean;
   loadedPageCount: number;
   left: number;
   path: string;
@@ -32,9 +33,16 @@ function takeSavedBrowsingState(path: string): GearLibraryBrowsingState | null {
     return null
   }
 
-  const { loadedPageCount, left, path: savedPath, top } = savedState
+  const {
+    isComparisonModeActive,
+    loadedPageCount,
+    left,
+    path: savedPath,
+    top
+  } = savedState
 
   const hasValidState = savedPath === path
+    && typeof isComparisonModeActive === 'boolean'
     && typeof loadedPageCount === 'number'
     && Number.isInteger(loadedPageCount)
     && loadedPageCount > 0
@@ -46,6 +54,7 @@ function takeSavedBrowsingState(path: string): GearLibraryBrowsingState | null {
   }
 
   return {
+    isComparisonModeActive,
     loadedPageCount,
     left,
     path: savedPath,
@@ -64,11 +73,13 @@ function useGearLibraryBrowsingRestoration() {
 
   const hasSavedBrowsingState = savedBrowsingState !== null
   const loadedPageCount = ref(savedBrowsingState?.loadedPageCount ?? 1)
+  const savedComparisonModeActive = savedBrowsingState?.isComparisonModeActive ?? false
   let hasHandledInitialScroll = false
   let isBrowsingStateReady: Readonly<Ref<boolean>> | null = null
   let canRestoreSavedBrowsingState: Readonly<Ref<boolean>> | null = null
   let isPageMounted = false
   let isRestoreScheduled = false
+  let comparisonModeActive: Readonly<Ref<boolean>> | null = null
 
   /** Applies the saved scroll only when the complete matching page prefix came from cache. */
   function applyInitialScrollPosition() {
@@ -122,6 +133,10 @@ function useGearLibraryBrowsingRestoration() {
     })
   }
 
+  function connectComparisonMode(modeActive: Readonly<Ref<boolean>>) {
+    comparisonModeActive = modeActive
+  }
+
   onMounted(async () => {
     isPageMounted = true
 
@@ -133,6 +148,7 @@ function useGearLibraryBrowsingRestoration() {
     const preservedHistoryState = isRecord(historyState) ? historyState : {}
 
     const gearLibraryBrowsing: GearLibraryBrowsingState = {
+      isComparisonModeActive: comparisonModeActive?.value ?? false,
       loadedPageCount: loadedPageCount.value,
       left: globalThis.scrollX,
       path: route.fullPath,
@@ -158,8 +174,10 @@ function useGearLibraryBrowsingRestoration() {
 
   return {
     connectBrowsingState,
+    connectComparisonMode,
     hasSavedBrowsingState,
-    loadedPageCount
+    loadedPageCount,
+    savedComparisonModeActive
   }
 }
 
