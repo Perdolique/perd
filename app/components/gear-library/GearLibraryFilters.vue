@@ -10,7 +10,9 @@
           <slot name="results-summary" />
         </div>
 
-        <div :class="$style.filterAction">
+        <div :class="$style.resultsActions">
+          <slot name="results-actions" />
+
           <PerdButton
             ref="filterTrigger"
             variant="secondary"
@@ -257,7 +259,11 @@
     backdrop-filter: blur(12px);
   }
 
-  .filterAction {
+  .resultsActions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--spacing-8);
     flex: none;
   }
 

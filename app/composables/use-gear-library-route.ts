@@ -12,11 +12,13 @@ import {
   type GearLibraryRouteState,
   type GearLibrarySort
 } from '~/utils/gear-library'
+import { normalizeGearLibraryComparisonQuery } from '~/utils/gear-library-comparison'
 
 interface GearLibraryRouteStateChanges {
   boolean?: string[];
   brand?: string[];
   category?: string | null;
+  compare?: string[];
   direction?: GearLibraryDirection;
   enum?: string[];
   number?: string[];
@@ -30,6 +32,10 @@ function useGearLibraryRoute() {
   const routeState = computed(() => getGearLibraryRouteState(route.query))
   const selectedCategory = computed(() => routeState.value.category)
   const selectedCategoryValue = computed(() => selectedCategory.value ?? '')
+  const comparisonNormalization = computed(() => normalizeGearLibraryComparisonQuery(
+    route.query.compare,
+    selectedCategory.value
+  ))
   const routeSearch = computed(() => routeState.value.q)
   const searchValue = ref(routeSearch.value)
   const itemsRequestRouteState = shallowRef<GearLibraryRouteState>(routeState.value)
@@ -62,7 +68,7 @@ function useGearLibraryRoute() {
       boolean: hasCategoryChange ? [] : changes.boolean ?? currentState.boolean,
       sort: hasCategoryChange ? 'name' : changes.sort ?? currentState.sort,
       direction: hasCategoryChange ? 'asc' : changes.direction ?? currentState.direction,
-      compare: currentState.compare
+      compare: hasCategoryChange ? [] : changes.compare ?? currentState.compare
     }
   }
 
@@ -120,6 +126,27 @@ function useGearLibraryRoute() {
     await writeRouteState(nextState, false)
   }
 
+  async function handleComparisonChange(compare: string[]) {
+    const currentComparison = routeState.value.compare
+    const hasSameComparison = JSON.stringify(compare) === JSON.stringify(currentComparison)
+
+    if (hasSameComparison) {
+      return
+    }
+
+    const nextState = createNextRouteState({ compare })
+
+    await writeRouteState(nextState, true)
+  }
+
+  async function canonicalizeComparisonQuery() {
+    const nextState = createNextRouteState({
+      compare: comparisonNormalization.value.ids
+    })
+
+    await writeRouteState(nextState, true)
+  }
+
   async function handleOrderingChange(ordering: GearLibraryOrdering, replace = false) {
     const currentState = routeState.value
     const hasSameSort = ordering.sort === currentState.sort
@@ -156,7 +183,10 @@ function useGearLibraryRoute() {
   })
 
   return {
+    canonicalizeComparisonQuery,
+    comparisonNormalization,
     handleCategoryChange,
+    handleComparisonChange,
     handleFiltersChange,
     handleOrderingChange,
     itemsApiQuery,

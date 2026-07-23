@@ -73,11 +73,17 @@ test.describe('Gear library item detail', () => {
 
     await context.route('**/api/user/gear**', async (route) => {
       myGearRequestCount += 1
-      await route.abort()
+      await route.fulfill({ json: [] })
     })
 
     await page.goto('/login?redirectTo=/gear-library')
     await page.getByRole('button', { name: 'Guest' }).click()
+    await expect(page.getByRole('button', {
+      name: `Add to My gear ${itemSummary.name}`
+    })).toBeVisible()
+
+    const catalogMyGearRequestCount = myGearRequestCount
+
     await page.getByRole('link', { name: itemSummary.name }).click()
 
     await expect(page).toHaveURL(new RegExp(`/gear-library/${itemId}`, 'u'))
@@ -86,6 +92,6 @@ test.describe('Gear library item detail', () => {
     await expect(page.getByText('83 g')).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Save to my gear' })).toHaveCount(0)
 
-    expect(myGearRequestCount).toBe(0)
+    expect(myGearRequestCount).toBe(catalogMyGearRequestCount)
   })
 })

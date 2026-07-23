@@ -8,6 +8,7 @@ import type {
   GearLibraryItemsResponse,
   GearLibraryListItem
 } from '~/types/equipment'
+import { normalizeGearLibraryComparisonQuery } from '~/utils/gear-library-comparison'
 
 type GearLibrarySort = 'name' | 'brand' | `property:${string}`
 type GearLibraryDirection = 'asc' | 'desc'
@@ -130,11 +131,13 @@ function normalizeDirectionQueryValue(
 /** Parses a Vue Router query into normalized gear-library state. */
 function getGearLibraryRouteState(query: LocationQuery): GearLibraryRouteState {
   const category = normalizeScalarQueryValue(query.category)
+  const normalizedCategory = category === '' ? undefined : category
+  const comparison = normalizeGearLibraryComparisonQuery(query.compare, normalizedCategory)
 
   const routeState: GearLibraryRouteState = {
     boolean: normalizeSortedQueryValues(query.boolean),
     brand: normalizeSortedQueryValues(query.brand),
-    compare: getNonEmptyQueryValues(query.compare),
+    compare: comparison.ids,
     direction: normalizeDirectionQueryValue(query.direction),
     enum: normalizeSortedQueryValues(query.enum),
     number: normalizeSortedQueryValues(query.number),
@@ -142,8 +145,8 @@ function getGearLibraryRouteState(query: LocationQuery): GearLibraryRouteState {
     sort: normalizeSortQueryValue(query.sort)
   }
 
-  if (category !== '') {
-    routeState.category = category
+  if (normalizedCategory !== undefined) {
+    routeState.category = normalizedCategory
   }
 
   return routeState
