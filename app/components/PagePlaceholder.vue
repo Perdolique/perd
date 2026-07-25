@@ -10,9 +10,9 @@
           {{ title }}
         </PerdHeading>
 
-        <p v-if="$slots.default" :class="$style.content">
+        <div v-if="$slots.default" :class="$style.content">
           <slot />
-        </p>
+        </div>
 
         <div v-if="$slots.actions" :class="$style.actions">
           <slot name="actions" />
@@ -70,7 +70,6 @@
   }
 
   .content {
-    margin: 0;
     max-inline-size: 32rem;
     color: var(--color-text-tertiary);
     line-height: var(--line-height-body);

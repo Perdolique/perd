@@ -82,7 +82,7 @@
           <button
             v-if="showCustomAction"
             type="button"
-            :class="[$style.resultButton, $style.customButton]"
+            :class="[$style.resultButton, 'isCustomEntry']"
             :disabled="isResultActionDisabled"
             @click="handleCreateCustomEntry"
           >
@@ -441,12 +441,6 @@
     font-weight: var(--font-weight-semibold);
   }
 
-  .inputHint,
-  .helperMessage,
-  .errorMessage {
-    margin: 0;
-  }
-
   .inputShell {
     display: flex;
     align-items: center;
@@ -531,17 +525,17 @@
       cursor: not-allowed;
       opacity: 0.68;
     }
+
+    &:global(.isCustomEntry) {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      border-style: dashed;
+    }
   }
 
   .resultAction {
     color: var(--color-accent-primary);
     font-size: var(--font-size-14);
     font-weight: var(--font-weight-semibold);
-  }
-
-  .customButton {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    border-style: dashed;
   }
 
   .helperMessage {

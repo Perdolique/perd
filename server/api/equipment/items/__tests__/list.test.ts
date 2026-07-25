@@ -8,9 +8,10 @@ import { createTestEvent } from '~~/test-utils/create-test-event'
 
 type ItemsListQuery = ReturnType<typeof validateItemsListQuery>
 
-const { getValidatedQueryMock } = vi.hoisted(() => {
+const { getValidatedQueryMock, validateSessionUserMock } = vi.hoisted(() => {
   return {
-    getValidatedQueryMock: vi.fn<typeof h3.getValidatedQuery>()
+    getValidatedQueryMock: vi.fn<typeof h3.getValidatedQuery>(),
+    validateSessionUserMock: vi.fn<(event: unknown) => Promise<string>>()
   }
 })
 
@@ -24,6 +25,12 @@ vi.mock(import('h3'), async () => {
     async getValidatedQuery(...args: Parameters<typeof h3.getValidatedQuery>) {
       return getValidatedQueryMock(...args)
     }
+  }
+})
+
+vi.mock(import('#server/utils/session'), () => {
+  return {
+    validateSessionUser: validateSessionUserMock
   }
 })
 
@@ -141,7 +148,7 @@ function createListDb({
 
   const findFirstMock = vi.fn(() => categoryMetadata)
 
-  const selectMock = vi.fn((selection: Record<string, unknown>) => {
+  const selectMock = vi.fn((selection: Record<string, unknown> & { isInMyGear?: SQL }) => {
     if ('total' in selection) {
       return { from: countFromMock }
     }
@@ -202,6 +209,7 @@ describe('get /api/equipment/items', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     getValidatedQueryMock.mockResolvedValue(createQuery())
+    validateSessionUserMock.mockResolvedValue('0195f6e8-8f44-74f6-bc9a-5c8f7df477d0')
   })
 
   afterEach(() => {
@@ -215,12 +223,14 @@ describe('get /api/equipment/items', () => {
     const itemRows = [{
       categoryId: 2,
       id,
+      isInMyGear: true,
       name: 'PocketRocket Deluxe',
       brand: { name: 'MSR', slug: 'msr' },
       category: { name: 'Stoves', slug: 'stoves' }
     }, {
       categoryId: 3,
       id: secondId,
+      isInMyGear: false,
       name: 'Solo Pot',
       brand: { name: 'Solo', slug: 'solo' },
       category: { name: 'Cookware', slug: 'cookware' }
@@ -254,6 +264,7 @@ describe('get /api/equipment/items', () => {
     expect(result).toStrictEqual({
       items: [{
         id,
+        isInMyGear: true,
         name: 'PocketRocket Deluxe',
         brand: { name: 'MSR', slug: 'msr' },
         category: { name: 'Stoves', slug: 'stoves' },
@@ -272,6 +283,7 @@ describe('get /api/equipment/items', () => {
         ]
       }, {
         id: secondId,
+        isInMyGear: false,
         name: 'Solo Pot',
         brand: { name: 'Solo', slug: 'solo' },
         category: { name: 'Cookware', slug: 'cookware' },
@@ -299,6 +311,22 @@ describe('get /api/equipment/items', () => {
 
     expect(db.selectMock).toHaveBeenCalledTimes(5)
     expect(db.countWhereMock.mock.calls[0]?.[0]).toBe(db.itemsWhereMock.mock.calls[0]?.[0])
+
+    const itemSelection = db.selectMock.mock.calls
+      .map(([selection]) => selection)
+      .find((selection) => 'isInMyGear' in selection)
+    const countSelection = db.selectMock.mock.calls
+      .map(([selection]) => selection)
+      .find((selection) => 'total' in selection)
+    const membershipSql = itemSelection?.isInMyGear
+    const compiledMembership = compileSql(membershipSql)
+
+    expect(validateSessionUserMock).toHaveBeenCalledWith(event)
+    expect(compiledMembership.sql).toContain('exists')
+    expect(compiledMembership.sql).toContain('"user_equipment"."userId"')
+    expect(compiledMembership.sql).toContain('"user_equipment"."itemId" = "equipment_items"."id"')
+    expect(compiledMembership.params).toContain('0195f6e8-8f44-74f6-bc9a-5c8f7df477d0')
+    expect(countSelection).not.toHaveProperty('isInMyGear')
   })
 
   it('should preserve an enum slug when its display name is unavailable', async () => {
@@ -307,6 +335,7 @@ describe('get /api/equipment/items', () => {
     const itemRows = [{
       categoryId: 2,
       id,
+      isInMyGear: false,
       name: 'PocketRocket Deluxe',
       brand: { name: 'MSR', slug: 'msr' },
       category: { name: 'Stoves', slug: 'stoves' }

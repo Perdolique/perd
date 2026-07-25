@@ -196,7 +196,6 @@
   }
 
   .errorMessage {
-    margin: 0;
     color: var(--color-danger-primary);
     font-size: var(--font-size-14);
   }

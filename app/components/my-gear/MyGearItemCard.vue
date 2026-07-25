@@ -8,9 +8,9 @@
           </span>
 
           <div :class="$style.titleBlock">
-            <p :class="$style.brand">
+            <div :class="$style.brand">
               {{ myGearRow.item.brand.name }}
-            </p>
+            </div>
 
             <PerdLink :to="myGearRow.gearLibraryPath">
               {{ myGearRow.item.name }}
@@ -30,9 +30,9 @@
       </div>
 
       <div :class="$style.actions">
-        <p :class="$style.meta">
+        <div :class="$style.meta">
           Added <time :datetime="myGearRow.createdAt">{{ myGearRow.formattedCreatedAt }}</time>
-        </p>
+        </div>
 
         <PerdButton
           size="small"
@@ -111,7 +111,6 @@
   }
 
   .brand {
-    margin: 0;
     color: var(--color-text-muted);
     font-size: var(--font-size-12);
     letter-spacing: var(--letter-spacing-label);
@@ -149,7 +148,6 @@
   }
 
   .meta {
-    margin: 0;
     color: var(--color-text-tertiary);
   }
 </style>

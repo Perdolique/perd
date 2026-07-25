@@ -4,9 +4,9 @@
       <UserAvatar :initial="userInitial" size="large" />
 
       <div :class="$style.intro">
-        <p :class="$style.eyebrow">
+        <div :class="$style.eyebrow">
           Field profile
-        </p>
+        </div>
 
         <PerdHeading :level="2">
           Profile Information
@@ -91,7 +91,6 @@
   }
 
   .eyebrow {
-    margin: 0;
     color: var(--color-text-muted);
     font-size: var(--font-size-12);
     letter-spacing: var(--letter-spacing-label);

@@ -1,6 +1,7 @@
 import { expect, test } from '../fixtures/global.fixtures.ts'
 import {
   type LoadMoreFailureState,
+  buildRouteSearch,
   respondWithLoadMore,
   createGatedLoadMoreResponder,
   createFailingLoadMoreResponder,
@@ -308,6 +309,59 @@ test.describe('Gear library Load more', () => {
 
     await expect.poll(async () => sharedPage.evaluate(() => globalThis.scrollY)).toBe(0)
     await sharedPage.close()
+  })
+
+  test('should preserve loaded rows and scroll on Back after comparison selection changes', async ({
+    context,
+    page
+  }) => {
+    const selectedItem = getRequiredLoadMoreItem(0)
+    const detailItem = getRequiredLoadMoreItem(17)
+    const catalogPath = '/gear-library?category=stoves'
+
+    await page.setViewportSize({
+      height: 600,
+      width: 1280
+    })
+
+    await mockCatalogApi(context, {
+      items: respondWithLoadMore
+    })
+    await mockItemDetailApi(context, detailItem)
+    await openGearLibrary(page, catalogPath)
+
+    const results = page.getByTestId('gear-library-results-body')
+
+    await page.getByRole('button', { name: 'Load more' }).click()
+    await expect(results.getByRole('listitem')).toHaveCount(20)
+
+    await page.getByRole('button', { name: 'Compare items' }).click()
+    await page.getByRole('checkbox', { name: `Select ${selectedItem.name}` }).check()
+
+    const selectedSearch = buildRouteSearch([
+      ['category', 'stoves'],
+      ['compare', selectedItem.id]
+    ])
+
+    await expectRouteSearch(page, selectedSearch)
+
+    const detailLink = page.getByRole('link', { name: detailItem.name })
+
+    await detailLink.evaluate((element) => {
+      element.scrollIntoView({ block: 'center' })
+    })
+
+    const savedScrollTop = await page.evaluate(() => globalThis.scrollY)
+
+    expect(savedScrollTop).toBeGreaterThan(0)
+
+    await detailLink.click()
+    await expect(page.getByRole('heading', { level: 1, name: detailItem.name })).toBeVisible()
+
+    await page.goBack()
+    await expectRouteSearch(page, selectedSearch)
+    await expect(results.getByRole('listitem')).toHaveCount(20)
+    await expect.poll(async () => getScrollDistance(page, savedScrollTop)).toBeLessThanOrEqual(2)
   })
 
   test('should fall back to page one at the top when the cached Back prefix is missing', async ({ context, page }) => {

@@ -1,13 +1,13 @@
 <template>
   <li :class="$style.component">
     <div :class="$style.body">
-      <p :class="$style.title">
+      <div :class="$style.title">
         {{ entry.title }}
-      </p>
+      </div>
 
-      <p v-if="hasSubtitle" :class="$style.subtitle">
+      <div v-if="hasSubtitle" :class="$style.subtitle">
         {{ entry.subtitle }}
-      </p>
+      </div>
     </div>
 
     <PerdIconButton
@@ -63,7 +63,6 @@
   }
 
   .title {
-    margin: 0;
     color: var(--color-text-primary);
     font-size: var(--font-size-14);
     font-weight: var(--font-weight-semibold);
@@ -72,7 +71,6 @@
   }
 
   .subtitle {
-    margin: 0;
     color: var(--color-text-tertiary);
     font-size: var(--font-size-12);
     line-height: var(--line-height-snug);

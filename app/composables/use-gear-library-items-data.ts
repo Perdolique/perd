@@ -20,7 +20,10 @@ import {
   type GearLibraryItemsApiQuery
 } from '~/utils/gear-library'
 
-import { useGearLibraryCache } from '~/composables/use-gear-library-cache'
+import {
+  gearLibraryItemsAsyncDataKey,
+  useGearLibraryStore
+} from '~/stores/gear-library'
 
 import {
   useGearLibraryPageLoader
@@ -44,9 +47,9 @@ const emptyItemsResponse: GearLibraryItemsResponse = {
 /** Owns the catalog page prefix, retries, cancellation, and item-response cache. */
 function useGearLibraryItemsData(options: UseGearLibraryItemsDataOptions) {
   const requestFetch = useRequestFetch()
-  const { getItemsSnapshot, storeItemsSnapshot } = useGearLibraryCache()
+  const gearLibraryStore = useGearLibraryStore()
   const initialSignature = options.itemsApiQuerySignature.value
-  const initialItemsSnapshot = getItemsSnapshot(initialSignature)
+  const initialItemsSnapshot = gearLibraryStore.getItemsSnapshot(initialSignature)
 
   const restoredPages = options.hasSavedBrowsingState
     ? getRestorableGearLibraryPages(
@@ -64,7 +67,7 @@ function useGearLibraryItemsData(options: UseGearLibraryItemsDataOptions) {
   const initialItemsResponse = initialPages[0] ?? emptyItemsResponse
   const itemsPath = '/api/equipment/items' as const
 
-  const itemsAsyncData = useAsyncData('gear-library-items', async (_nuxtApp, { signal }) => {
+  const itemsAsyncData = useAsyncData(gearLibraryItemsAsyncDataKey, async (_nuxtApp, { signal }) => {
     const response = await requestFetch(itemsPath, {
       method: 'get',
       query: options.itemsApiQuery.value,
@@ -116,7 +119,7 @@ function useGearLibraryItemsData(options: UseGearLibraryItemsDataOptions) {
   })
 
   function storeCurrentPages(signature: string, hasNarrowingState: boolean) {
-    storeItemsSnapshot(signature, {
+    gearLibraryStore.storeItemsSnapshot(signature, {
       hasNarrowingState,
       pages: [...loadedPages.value]
     })
@@ -234,7 +237,7 @@ function useGearLibraryItemsData(options: UseGearLibraryItemsDataOptions) {
     loadMoreAnnouncement.value = ''
     shouldPreserveInitialSnapshot = false
 
-    const cachedSnapshot = getItemsSnapshot(signature)
+    const cachedSnapshot = gearLibraryStore.getItemsSnapshot(signature)
 
     if (cachedSnapshot !== undefined) {
       hasSuccessfulItemsRequest.value = true

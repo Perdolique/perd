@@ -44,16 +44,13 @@ test.describe('Gear library filters', () => {
     ]
 
     const preservedEntries: QueryEntry[] = [
-      ['brand', 'msr'],
-      ['compare', 'second'],
-      ['compare', 'first']
+      ['brand', 'msr']
     ]
 
     const initialSearch = buildRouteSearch([
       ['q', 'old'],
       ['brand', 'msr'],
-      ...propertyFilterEntries,
-      ...preservedEntries.slice(1)
+      ...propertyFilterEntries
     ])
 
     await openGearLibrary(page, `/gear-library${initialSearch}`)

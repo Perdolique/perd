@@ -17,6 +17,7 @@ interface GearLibraryListItem {
   brand: GearLibraryEntitySummary;
   category: GearLibraryEntitySummary;
   id: string;
+  isInMyGear: boolean;
   name: string;
   properties: GearLibraryListProperty[];
 }
@@ -26,6 +27,7 @@ interface GearLibraryListItemView {
   category: GearLibraryEntitySummary;
   detailPath: string;
   id: string;
+  isInMyGear: boolean;
   name: string;
   properties: GearLibraryListProperty[];
 }
@@ -35,6 +37,15 @@ interface GearLibraryItemsResponse {
   limit: number;
   page: number;
   total: number;
+}
+
+type GearLibraryComparisonSelectionStatus = 'error' | 'loading' | 'resolved'
+
+interface GearLibraryComparisonSelectionItem {
+  brandName?: string;
+  id: string;
+  name?: string;
+  status: GearLibraryComparisonSelectionStatus;
 }
 
 type EquipmentPropertyDataType = 'boolean' | 'enum' | 'number' | 'text'
@@ -93,6 +104,8 @@ export type {
   EquipmentPropertyValue,
   GearLibraryEntityDetail,
   GearLibraryEntitySummary,
+  GearLibraryComparisonSelectionItem,
+  GearLibraryComparisonSelectionStatus,
   GearLibraryFilterProperty,
   GearLibraryItemsResponse,
   GearLibraryListItem,

@@ -59,7 +59,6 @@
   }
 
   .copy {
-    margin: 0;
     color: var(--color-text-tertiary);
     line-height: var(--line-height-body);
   }

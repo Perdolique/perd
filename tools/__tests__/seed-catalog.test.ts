@@ -1,16 +1,25 @@
 import { describe, expect, it } from 'vitest'
 import { buildCategoryPropertySeedRows } from '../seed-catalog'
 import {
+  categoryDefinitions,
   propertyDefinitionsByCategorySlug,
   sampleItems
 } from '../seed-data'
 
 describe('catalog sample data', () => {
-  it('should seed exactly 50 uniquely named catalog items', () => {
+  it('should seed exactly 25 uniquely named catalog items per category', () => {
+    const itemCountPerCategory = 25
+    const expectedItemCount = categoryDefinitions.length * itemCountPerCategory
     const uniqueItemNames = new Set(sampleItems.map((item) => item.name))
 
-    expect(sampleItems).toHaveLength(50)
-    expect(uniqueItemNames.size).toBe(50)
+    expect(sampleItems).toHaveLength(expectedItemCount)
+    expect(uniqueItemNames.size).toBe(expectedItemCount)
+
+    for (const category of categoryDefinitions) {
+      const categoryItems = sampleItems.filter((item) => item.categorySlug === category.slug)
+
+      expect(categoryItems).toHaveLength(itemCountPerCategory)
+    }
   })
 })
 

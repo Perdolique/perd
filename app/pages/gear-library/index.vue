@@ -1,6 +1,25 @@
 <template>
   <PageContent :page-title="navigationLabels.gearLibrary">
     <div :class="$style.component">
+      <p
+        v-if="showPageComparisonNotice"
+        :class="$style.comparisonNotice"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {{ comparisonAnnouncement }}
+      </p>
+
+      <div
+        :class="$style.visuallyHidden"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {{ myGearAnnouncement }}
+      </div>
+
       <GearLibraryFilters
         v-model:draft-filters="draftFilters"
         v-model:is-dialog-open="isFilterDialogOpen"
@@ -53,6 +72,17 @@
           />
         </template>
 
+        <template #results-actions>
+          <PerdButton
+            v-if="showComparisonModeAction"
+            ref="comparisonModeAction"
+            variant="secondary"
+            @click="handleComparisonModeToggle"
+          >
+            {{ comparisonModeActionText }}
+          </PerdButton>
+        </template>
+
         <div :class="$style.results">
           <div
             v-if="showInitialLoadingSurface"
@@ -69,14 +99,14 @@
               aria-hidden="true"
             />
 
-            <p
+            <div
               v-if="showInitialLoadingIndicator"
               :class="$style.visuallyHidden"
               role="status"
               aria-live="polite"
             >
               Loading gear library
-            </p>
+            </div>
           </div>
 
           <PagePlaceholder
@@ -119,7 +149,7 @@
                 aria-hidden="true"
               />
 
-              <p
+              <div
                 v-if="showRefreshIndicator"
                 :class="$style.visuallyHidden"
                 role="status"
@@ -127,7 +157,7 @@
                 aria-atomic="true"
               >
                 {{ refreshStatusText }}
-              </p>
+              </div>
 
               <PagePlaceholder
                 v-if="isEmptyCatalog"
@@ -149,7 +179,15 @@
 
               <GearLibraryResultsPanel
                 v-else
+                :is-comparison-limit-reached="isComparisonLimitReached"
+                :is-comparison-mode-active="isComparisonModeActive"
                 :items="gearLibraryItems"
+                :my-gear-failed-item-ids="myGearFailedItemIds"
+                :my-gear-saving-item-ids="myGearSavingItemIds"
+                :selected-category="selectedCategory"
+                :selected-comparison-ids="selectedComparisonIds"
+                @comparison-change="handleResultComparisonChange"
+                @my-gear-add="handleMyGearAdd"
               />
             </div>
 
@@ -161,7 +199,7 @@
               @retry="retryLoadMore"
             />
 
-            <p
+            <div
               :class="$style.visuallyHidden"
               data-testid="gear-library-load-more-status"
               role="status"
@@ -169,22 +207,47 @@
               aria-atomic="true"
             >
               {{ loadMoreAnnouncement }}
-            </p>
+            </div>
           </template>
         </div>
       </GearLibraryFilters>
+
+      <GearLibraryComparisonTray
+        v-if="showComparisonTray"
+        :announcement="comparisonAnnouncement"
+        :has-restore-errors="hasComparisonRestoreErrors"
+        :items="selectedComparisonItems"
+        :limit-announcement="comparisonLimitAnnouncement"
+        @remove="handleComparisonTrayRemove"
+        @retry="retryComparisonRestore"
+      />
     </div>
   </PageContent>
+
+  <ConfirmationDialog
+    v-model="isCategoryConfirmationOpen"
+    cancel-button-text="Keep current category"
+    :confirm-button-text="categoryConfirmationButtonText"
+    header-text="Clear comparison selection?"
+    @confirm="confirmCategoryChange"
+  >
+    {{ categoryConfirmationBody }}
+  </ConfirmationDialog>
 </template>
 
 <script lang="ts" setup>
-  import { computed } from 'vue'
+  /* oxlint-disable max-lines -- The catalog page composes the existing data, filter, action, and restoration flows. */
+  import { computed, nextTick, ref, useTemplateRef } from 'vue'
   import { definePageMeta } from '#imports'
+  import type { GearLibraryListItemView } from '~/types/equipment'
   import { useDelayedPendingIndicator } from '~/composables/use-delayed-pending-indicator'
   import { useGearLibraryControls } from '~/composables/use-gear-library-controls'
+  import { useGearLibraryComparison } from '~/composables/use-gear-library-comparison'
   import { useGearLibraryData } from '~/composables/use-gear-library-data'
   import { useGearLibraryFilters } from '~/composables/use-gear-library-filters'
+  import { useGearLibraryMyGear } from '~/composables/use-gear-library-my-gear'
   import { useGearLibraryRoute } from '~/composables/use-gear-library-route'
+  import { useGearLibraryStore } from '~/stores/gear-library'
   import { useGearLibraryBrowsingRestoration } from '~/composables/use-gear-library-browsing-restoration'
   import { createGearLibraryAppliedFilterChips } from '~/utils/gear-library-filters'
   import { createGearLibraryItemPath, navigationLabels } from '~/utils/navigation'
@@ -192,6 +255,8 @@
   import PageSummaryHeader from '~/components/PageSummaryHeader.vue'
   import PerdButton from '~/components/PerdButton.vue'
   import PerdProgressBar from '~/components/PerdProgressBar.vue'
+  import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue'
+  import GearLibraryComparisonTray from '~/components/gear-library/GearLibraryComparisonTray.vue'
   import GearLibraryFilters from '~/components/gear-library/GearLibraryFilters.vue'
   import GearLibraryLoadMore from '~/components/gear-library/GearLibraryLoadMore.vue'
   import GearLibraryResultsPanel from '~/components/gear-library/GearLibraryResultsPanel.vue'
@@ -207,7 +272,10 @@
   })
 
   const {
-    handleCategoryChange,
+    canonicalizeComparisonQuery,
+    comparisonNormalization,
+    handleCategoryChange: applyCategoryChange,
+    handleComparisonChange,
     handleFiltersChange,
     handleOrderingChange,
     itemsApiQuery,
@@ -219,9 +287,11 @@
   } = useGearLibraryRoute()
 
   const {
+    connectComparisonMode,
     connectBrowsingState,
     hasSavedBrowsingState,
-    loadedPageCount
+    loadedPageCount,
+    savedComparisonModeActive
   } = useGearLibraryBrowsingRestoration()
 
   const {
@@ -256,6 +326,16 @@
   })
 
   const hasSelectedCategory = computed(() => selectedCategory.value !== undefined)
+  const myGear = useGearLibraryMyGear()
+  const gearLibraryStore = useGearLibraryStore()
+  const gearLibraryData = await useGearLibraryData({
+    hasSavedBrowsingState,
+    loadedPageCount,
+    hasNarrowingState,
+    itemsApiQuery,
+    itemsApiQuerySignature,
+    selectedCategory
+  })
 
   const {
     activeCategoryDetail,
@@ -286,14 +366,14 @@
     refreshCategoryDetail,
     refreshItems,
     retryLoadMore
-  } = await useGearLibraryData({
-    hasSavedBrowsingState,
-    loadedPageCount,
-    hasNarrowingState,
-    itemsApiQuery,
-    itemsApiQuerySignature,
-    selectedCategory
-  })
+  } = gearLibraryData
+
+  const {
+    addItem: addMyGearItem,
+    announcement: myGearAnnouncement,
+    failedItemIds: myGearFailedItemIds,
+    savingItemIds: myGearSavingItemIds
+  } = myGear
 
   connectBrowsingState(isBrowsingStateReady, canRestoreSavedBrowsingState)
 
@@ -306,7 +386,7 @@
     categoriesStatus: () => categoriesStatus.value,
     categoryDetail: () => activeCategoryDetail.value,
     categoryDetailStatus: () => categoryDetailStatus.value,
-    handleCategoryChange,
+    handleCategoryChange: applyCategoryChange,
     handleOrderingChange,
     routeState,
     selectedCategory
@@ -423,16 +503,136 @@
 
   const gearLibraryItems = computed(() => lastSuccessfulItemsResponse.value.items.map((item) => {
     const detailPath = createGearLibraryItemPath(item.id)
+    const isInMyGear = gearLibraryStore.resolveIsInMyGear(item)
 
     return {
       brand: item.brand,
       category: item.category,
       detailPath,
       id: item.id,
+      isInMyGear,
       name: item.name,
       properties: item.properties
     }
   }))
+
+  const selectedComparisonIds = computed(() => routeState.value.compare)
+  const isComparisonLimitReached = computed(() => selectedComparisonIds.value.length >= 4)
+
+  const {
+    addItem: addComparisonItem,
+    announcement: comparisonAnnouncement,
+    enterMode: enterComparisonMode,
+    exitMode: exitComparisonMode,
+    hasRestoreErrors: hasComparisonRestoreErrors,
+    hasSelection: hasComparisonSelection,
+    isModeActive: isComparisonModeActive,
+    limitAnnouncement: comparisonLimitAnnouncement,
+    removeItem: removeComparisonItem,
+    retryRestore: retryComparisonRestore,
+    selectedItems: selectedComparisonItems
+  } = useGearLibraryComparison({
+    canonicalizeComparisonQuery,
+    comparisonNormalization,
+    handleComparisonChange,
+    items: gearLibraryItems,
+    initiallyActive: savedComparisonModeActive,
+    selectedCategory,
+    selectedIds: selectedComparisonIds
+  })
+
+  connectComparisonMode(isComparisonModeActive)
+
+  const comparisonModeAction = useTemplateRef('comparisonModeAction')
+  const isCategoryConfirmationOpen = ref(false)
+  const pendingCategoryValue = ref<string | null>(null)
+  const showComparisonTray = computed(
+    () => isComparisonModeActive.value && hasComparisonSelection.value
+  )
+  const showPageComparisonNotice = computed(
+    () => comparisonAnnouncement.value !== '' && showComparisonTray.value === false
+  )
+  const comparisonModeActionText = computed(
+    () => isComparisonModeActive.value ? 'Cancel comparison' : 'Compare items'
+  )
+  const showComparisonModeAction = computed(
+    () => hasSelectedCategory.value
+      && (hasSuccessfulItemsRequest.value || isComparisonModeActive.value)
+  )
+  const categoryConfirmationBody = computed(
+    () => `Changing the category removes ${selectedComparisonIds.value.length} selected items.`
+  )
+  const categoryConfirmationButtonText = computed(
+    () => pendingCategoryValue.value === '' ? 'Clear category' : 'Change category'
+  )
+  async function handleResultComparisonChange(item: GearLibraryListItemView, selected: boolean) {
+    if (selected) {
+      await addComparisonItem(item)
+
+      return
+    }
+
+    await removeComparisonItem(item.id)
+  }
+
+  async function handleComparisonTrayRemove(id: string, restoreFocus: boolean) {
+    const shouldFocusModeAction = restoreFocus && selectedComparisonIds.value.length === 1
+
+    await removeComparisonItem(id)
+
+    if (shouldFocusModeAction === false) {
+      return
+    }
+
+    await nextTick()
+
+    comparisonModeAction.value?.focus()
+  }
+
+  async function handleComparisonModeToggle() {
+    if (isComparisonModeActive.value) {
+      await exitComparisonMode()
+
+      return
+    }
+
+    enterComparisonMode()
+  }
+
+  async function handleMyGearAdd(item: GearLibraryListItemView) {
+    await addMyGearItem(item.id, item.name)
+  }
+
+  async function handleCategoryChange(value: string) {
+    if (hasComparisonSelection.value === false) {
+      await applyCategoryChange(value)
+
+      if (value === '') {
+        await exitComparisonMode()
+      }
+
+      return
+    }
+
+    pendingCategoryValue.value = value
+    isCategoryConfirmationOpen.value = true
+  }
+
+  async function confirmCategoryChange() {
+    const categoryValue = pendingCategoryValue.value
+
+    if (categoryValue === null) {
+      return
+    }
+
+    pendingCategoryValue.value = null
+
+    await applyCategoryChange(categoryValue)
+
+    if (categoryValue === '') {
+      await exitComparisonMode()
+    }
+  }
 
   const brandOptions = computed(() => brandsResponse.value.map((brand) => {
     return {
@@ -466,6 +666,14 @@
     display: grid;
     gap: var(--spacing-32);
     container-type: inline-size;
+  }
+
+  .comparisonNotice {
+    padding: var(--spacing-12) var(--spacing-16);
+    border: 1px solid var(--color-info-primary);
+    border-radius: var(--border-radius-14);
+    background-color: var(--color-info-subtle);
+    color: var(--color-text-primary);
   }
 
   .results {

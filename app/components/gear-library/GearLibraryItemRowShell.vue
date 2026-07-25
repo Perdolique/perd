@@ -1,25 +1,31 @@
 <template>
   <component :is="rootTag" :class="$style.component">
-    <component :is="rowTag" :class="$style.row">
-      <slot name="media" :class-name="$style.media" />
-      <slot name="identity" :class-name="$style.identity" />
+    <component :is="rowTag" :class="[$style.row, { hasAction }]">
+      <div :class="$style.content">
+        <slot name="media" :class-name="$style.media" />
+        <slot name="identity" :class-name="$style.identity" />
 
-      <slot
-        name="properties"
-        :properties-class="$style.properties"
-        :property-class="$style.property"
-      />
+        <slot
+          name="properties"
+          :properties-class="$style.properties"
+          :property-class="$style.property"
+        />
+      </div>
+
+      <slot v-if="hasAction" name="action" :class-name="$style.action" />
     </component>
   </component>
 </template>
 
 <script lang="ts" setup>
   interface Props {
+    hasAction?: boolean;
     rootTag?: 'div' | 'li';
     rowTag?: 'article' | 'div';
   }
 
   const {
+    hasAction,
     rootTag = 'div',
     rowTag = 'div'
   } = defineProps<Props>()
@@ -27,6 +33,8 @@
 
 <style module>
   .component {
+    --action-rail-inline-size: 12rem;
+
     position: relative;
     container-type: inline-size;
     border: 1px solid var(--color-border-subtle);
@@ -35,6 +43,11 @@
   }
 
   .row {
+    display: grid;
+  }
+
+  .content {
+    position: relative;
     display: grid;
     grid-template-columns: 3rem minmax(0, 1fr);
     grid-template-areas:
@@ -67,6 +80,34 @@
     display: grid;
     align-content: center;
     gap: var(--spacing-4);
+    /* Let desktop item names shrink into their ellipsis instead of widening the grid track. */
+    min-inline-size: 0;
+  }
+
+  .action {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-12) var(--spacing-16);
+    border-block-start: 1px solid var(--color-border-subtle);
+    border-end-start-radius: var(--border-radius-16);
+    border-end-end-radius: var(--border-radius-16);
+
+    @container (inline-size >= 44rem) {
+      justify-content: center;
+      inline-size: var(--action-rail-inline-size);
+      border-block-start: 0;
+      border-inline-start: 1px solid var(--color-border-subtle);
+      border-start-end-radius: var(--border-radius-16);
+      border-end-start-radius: 0;
+    }
+  }
+
+  .row:global(.hasAction) {
+    @container (inline-size >= 44rem) {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
   }
 
   .properties {
