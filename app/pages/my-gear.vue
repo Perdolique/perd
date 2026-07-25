@@ -45,6 +45,7 @@
 <script lang="ts" setup>
   import { computed, ref } from 'vue'
   import { definePageMeta, useFetch, useRequestFetch } from '#imports'
+  import { useGearLibraryStore } from '~/stores/gear-library'
   import { appRoutes, createGearLibraryItemPath, navigationLabels } from '~/utils/navigation'
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
@@ -64,6 +65,7 @@
     dateStyle: 'medium'
   })
   const requestFetch = useRequestFetch()
+  const gearLibraryStore = useGearLibraryStore()
 
   const {
     data: myGearResponse,
@@ -103,10 +105,16 @@
     removeErrorMessage.value = null
     removingMyGearId.value = myGearId
 
+    const itemId = myGearResponse.value.find((myGearRow) => myGearRow.id === myGearId)?.item.id
+
     try {
       await requestFetch(`/api/user/gear/${myGearId}`, {
         method: 'DELETE'
       })
+
+      if (itemId !== undefined) {
+        gearLibraryStore.markItemRemoved(itemId)
+      }
 
       myGearResponse.value = myGearResponse.value.filter((myGearRow) => myGearRow.id !== myGearId)
     } catch {
@@ -135,7 +143,6 @@
   }
 
   .errorMessage {
-    margin: 0;
     color: var(--color-danger-primary);
   }
 

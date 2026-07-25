@@ -47,7 +47,6 @@
   }
 
   .text {
-    margin: 0;
     max-inline-size: 28rem;
     color: var(--color-text-tertiary);
     font-size: var(--font-size-14);

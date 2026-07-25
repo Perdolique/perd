@@ -1,13 +1,13 @@
 <template>
   <div :class="$style.component">
     <div>
-      <p :class="$style.label">
+      <div :class="$style.label">
         {{ label }}
-      </p>
+      </div>
 
-      <p :class="$style.value">
+      <div :class="$style.value">
         {{ value }}
-      </p>
+      </div>
     </div>
   </div>
 </template>
@@ -31,7 +31,7 @@
   }
 
   .label {
-    margin: 0 0 var(--spacing-8);
+    margin-block-end: var(--spacing-8);
     color: var(--color-text-muted);
     font-size: var(--font-size-12);
     letter-spacing: var(--letter-spacing-label);
@@ -39,7 +39,6 @@
   }
 
   .value {
-    margin: 0;
     color: var(--color-text-primary);
     font-size: var(--font-size-24);
     line-height: var(--line-height-snug);

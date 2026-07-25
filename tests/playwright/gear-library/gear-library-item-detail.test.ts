@@ -4,6 +4,7 @@ const itemId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
 
 const itemSummary = {
   id: itemId,
+  isInMyGear: false,
   name: 'PocketRocket Deluxe',
   brand: {
     name: 'MSR',
@@ -78,6 +79,10 @@ test.describe('Gear library item detail', () => {
 
     await page.goto('/login?redirectTo=/gear-library')
     await page.getByRole('button', { name: 'Guest' }).click()
+    await expect(page.getByRole('button', {
+      name: `Add to My gear ${itemSummary.name}`
+    })).toBeVisible()
+
     await page.getByRole('link', { name: itemSummary.name }).click()
 
     await expect(page).toHaveURL(new RegExp(`/gear-library/${itemId}`, 'u'))

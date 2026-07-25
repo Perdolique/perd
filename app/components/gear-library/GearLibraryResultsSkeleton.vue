@@ -5,16 +5,25 @@
     data-testid="gear-library-results-skeleton"
     aria-hidden="true"
   >
-    <GearLibraryItemRowShell data-testid="gear-library-results-skeleton-row">
+    <GearLibraryItemRowShell
+      data-testid="gear-library-results-skeleton-row"
+      has-action
+    >
       <template #media="{ className }">
-        <span :class="[className, $style.shimmer]" />
+        <span :class="[className, $style.media, 'isShimmering']" />
+      </template>
+
+      <template #action="{ className }">
+        <div :class="className">
+          <span :class="[$style.action, 'isShimmering']" />
+        </div>
       </template>
 
       <template #identity="{ className }">
         <div :class="className">
-          <span :class="[$style.brand, $style.shimmer]" />
-          <span :class="[$style.name, $style.shimmer]" />
-          <span :class="[$style.category, $style.shimmer]" />
+          <span :class="[$style.brand, 'isShimmering']" />
+          <span :class="[$style.name, 'isShimmering']" />
+          <span :class="[$style.category, 'isShimmering']" />
         </div>
       </template>
 
@@ -25,8 +34,8 @@
             :key="propertyIndex"
             :class="propertyClass"
           >
-            <span :class="[$style.propertyName, $style.shimmer]" />
-            <span :class="[$style.propertyValue, $style.shimmer]" />
+            <span :class="[$style.propertyName, 'isShimmering']" />
+            <span :class="[$style.propertyValue, 'isShimmering']" />
           </div>
         </div>
       </template>
@@ -63,28 +72,36 @@
     }
   }
 
-  .shimmer {
-    display: block;
-    border-radius: var(--border-radius-6);
-    background:
-      linear-gradient(
-        100deg,
-        var(--color-surface-secondary) 20%,
-        var(--color-surface-tertiary) 50%,
-        var(--color-surface-secondary) 80%
-      );
-    background-position: 100% 0;
-    background-size: 200% 100%;
-    animation: shimmer 1.6s linear infinite;
-    animation-play-state: paused;
+  .media,
+  .action,
+  .brand,
+  .name,
+  .category,
+  .propertyName,
+  .propertyValue {
+    &:global(.isShimmering) {
+      display: block;
+      border-radius: var(--border-radius-6);
+      background:
+        linear-gradient(
+          100deg,
+          var(--color-surface-secondary) 20%,
+          var(--color-surface-tertiary) 50%,
+          var(--color-surface-secondary) 80%
+        );
+      background-position: 100% 0;
+      background-size: 200% 100%;
+      animation: shimmer 1.6s linear infinite;
+      animation-play-state: paused;
 
-    .component[data-visible="true"] & {
-      animation-play-state: running;
-    }
+      .component[data-visible="true"] & {
+        animation-play-state: running;
+      }
 
-    @media (prefers-reduced-motion: reduce) {
-      background: var(--color-surface-secondary);
-      animation: none;
+      @media (prefers-reduced-motion: reduce) {
+        background: var(--color-surface-secondary);
+        animation: none;
+      }
     }
   }
 
@@ -111,5 +128,10 @@
   .propertyValue {
     inline-size: 46%;
     block-size: calc(var(--font-size-14) * var(--line-height-snug));
+  }
+
+  .action {
+    inline-size: 8.5rem;
+    block-size: var(--layout-button-height-small);
   }
 </style>

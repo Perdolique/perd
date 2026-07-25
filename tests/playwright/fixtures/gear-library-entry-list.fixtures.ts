@@ -26,9 +26,11 @@ interface CatalogRequest {
 type CatalogResponder = (request: CatalogRequest) => ApiMockResponse | Promise<ApiMockResponse>
 
 interface CatalogMockConfig {
+  addMyGear?: (request: Request) => ApiMockResponse | Promise<ApiMockResponse>;
   brands?: CatalogResponder;
   categories?: CatalogResponder;
   categoryDetail?: CatalogResponder;
+  itemDetails?: CatalogResponder;
   items?: CatalogResponder;
 }
 
@@ -36,7 +38,9 @@ interface CatalogRequestTracker {
   brands: ParsedUrl[];
   categories: ParsedUrl[];
   categoryDetails: ParsedUrl[];
+  itemDetails: ParsedUrl[];
   items: ParsedUrl[];
+  myGear: Request[];
 }
 
 interface Deferred {
@@ -56,6 +60,7 @@ type QueryEntry = readonly [key: string, value: string]
 
 const stoveItem: GearLibraryListItem = {
   id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
+  isInMyGear: false,
   name: 'PocketRocket Deluxe',
 
   brand: {
@@ -92,6 +97,7 @@ const stoveItem: GearLibraryListItem = {
 
 const sleepingPadItem: GearLibraryListItem = {
   id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477da',
+  isInMyGear: false,
   name: 'NeoAir XLite NXT',
 
   brand: {
@@ -201,6 +207,14 @@ const loadMoreResponses: GearLibraryItemsResponse[] = [
     page: 3,
     total: loadMoreItems.length
   }
+]
+
+const fixtureItems = [
+  stoveItem,
+  sleepingPadItem,
+  secondPageItem,
+  ...scrollableItemsResponse.items,
+  ...loadMoreItems
 ]
 
 const categoriesResponse: GearLibraryEntityDetail[] = [{
@@ -407,6 +421,41 @@ function respondWithEmptyItems(): ApiMockResponse {
   return { json: emptyResponse }
 }
 
+function createItemDetailResponse(item: GearLibraryListItem): ItemDetailResponse {
+  return {
+    createdAt: '2026-07-18T00:00:00.000Z',
+    id: item.id,
+    name: item.name,
+    properties: item.properties,
+
+    brand: {
+      id: 1,
+      name: item.brand.name,
+      slug: item.brand.slug
+    },
+
+    category: {
+      id: item.category.slug === 'stoves' ? 2 : 1,
+      name: item.category.name,
+      slug: item.category.slug
+    }
+  }
+}
+
+function respondWithItemDetail(request: CatalogRequest): ApiMockResponse {
+  const itemId = request.url.pathname.split('/').at(-1)
+  const item = fixtureItems.find((fixtureItem) => fixtureItem.id === itemId)
+
+  if (item === undefined) {
+    return {
+      status: 404,
+      json: { statusCode: 404 }
+    }
+  }
+
+  return { json: createItemDetailResponse(item) }
+}
+
 function respondWithLoadMore(request: CatalogRequest): ApiMockResponse {
   const requestedPage = Number(request.url.searchParams.get('page') ?? '1')
   const response = loadMoreResponses[requestedPage - 1] ?? emptyResponse
@@ -564,8 +613,36 @@ async function mockCatalogApi(context: BrowserContext, config: CatalogMockConfig
     brands: [],
     categories: [],
     categoryDetails: [],
-    items: []
+    itemDetails: [],
+    items: [],
+    myGear: []
   }
+
+  await context.route((url) => url.pathname === '/api/user/gear', async (route) => {
+    const request = route.request()
+
+    tracker.myGear.push(request)
+
+    if (request.method() !== 'POST') {
+      await route.abort()
+      return
+    }
+
+    const fallback = {
+      status: 201,
+
+      json: {
+        createdAt: '2026-07-23T00:00:00.000Z',
+        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477ab',
+        item: createItemDetailResponse(stoveItem)
+      }
+    }
+    const response = config.addMyGear === undefined
+      ? fallback
+      : await config.addMyGear(request)
+
+    await fulfillMockResponse(route, response)
+  })
 
   await context.route((url) => url.pathname === '/api/equipment/brands', async (route) => {
     const requestUrl = new globalThis.URL(route.request().url())
@@ -634,6 +711,22 @@ async function mockCatalogApi(context: BrowserContext, config: CatalogMockConfig
     await fulfillMockResponse(route, response)
   })
 
+  await context.route((url) => /^\/api\/equipment\/items\/[^/]+$/u.test(url.pathname), async (route) => {
+    const requestUrl = new globalThis.URL(route.request().url())
+
+    tracker.itemDetails.push(requestUrl)
+
+    const request = {
+      count: tracker.itemDetails.length,
+      url: requestUrl
+    }
+
+    const fallback = respondWithItemDetail(request)
+    const response = await resolveMockResponse(config.itemDetails, request, fallback)
+
+    await fulfillMockResponse(route, response)
+  })
+
   return tracker
 }
 
@@ -650,31 +743,10 @@ async function mockGuestLogin(context: BrowserContext): Promise<void> {
 }
 
 async function mockItemDetailApi(context: BrowserContext, item: GearLibraryListItem): Promise<void> {
-  const itemDetailResponse: ItemDetailResponse = {
-    createdAt: '2026-07-18T00:00:00.000Z',
-    id: item.id,
-    name: item.name,
-    properties: item.properties,
-
-    brand: {
-      id: 1,
-      name: item.brand.name,
-      slug: item.brand.slug
-    },
-
-    category: {
-      id: 2,
-      name: item.category.name,
-      slug: item.category.slug
-    }
-  }
+  const itemDetailResponse = createItemDetailResponse(item)
 
   await context.route((url) => url.pathname === `/api/equipment/items/${item.id}`, async (route) => {
     await route.fulfill({ json: itemDetailResponse })
-  })
-
-  await context.route((url) => url.pathname === '/api/user/gear', async (route) => {
-    await route.fulfill({ json: [] })
   })
 }
 
@@ -763,26 +835,19 @@ async function clearGearLibraryItemsSnapshot(page: Page): Promise<void> {
       : Reflect.get(nuxtRoot, '__vue_app__')
     const vueAppConfig = getRequiredProperty(vueApp, 'config')
     const globalProperties = getRequiredProperty(vueAppConfig, 'globalProperties')
-    const nuxtApp = getRequiredProperty(globalProperties, '$nuxt')
-    const nuxtPayload = getRequiredProperty(nuxtApp, 'payload')
-    const nuxtState = getRequiredProperty(nuxtPayload, 'state')
-    const gearLibraryCache = getRequiredProperty(nuxtState, '$sgear-library-cache')
+    const pinia = getRequiredProperty(globalProperties, '$pinia')
+    const piniaStateRef = getRequiredProperty(pinia, 'state')
+    const piniaState = getRequiredProperty(piniaStateRef, 'value')
+    const gearLibraryState = getRequiredProperty(piniaState, 'gear-library')
+
     if (
-      typeof nuxtState !== 'object'
-      || nuxtState === null
-      || typeof gearLibraryCache !== 'object'
-      || gearLibraryCache === null
+      typeof gearLibraryState !== 'object'
+      || gearLibraryState === null
     ) {
-      throw new Error('Expected the Nuxt gear library cache state')
+      throw new Error('Expected the Pinia Gear Library state')
     }
 
-    const cacheWithoutItems = Object.fromEntries(
-      Object.entries(gearLibraryCache).filter(([key]) => key !== 'items')
-    )
-
-    Object.assign(nuxtState, {
-      '$sgear-library-cache': cacheWithoutItems
-    })
+    Reflect.set(gearLibraryState, 'itemsSnapshot', undefined)
   })
 }
 
@@ -893,6 +958,9 @@ export {
   type LoadMoreFailureState,
   type QueryEntry,
   firstPageResponse,
+  sleepingPadItem,
+  stoveItem,
+  secondPageItem,
   scrollableItemsResponse,
   refreshedSearchResponse,
   emptyResponse,
@@ -905,6 +973,7 @@ export {
   malformedNumberFilter,
   respondToMalformedNumberFilter,
   respondWithEmptyItems,
+  respondWithItemDetail,
   respondWithLoadMore,
   createGatedLoadMoreResponder,
   createFailingLoadMoreResponder,

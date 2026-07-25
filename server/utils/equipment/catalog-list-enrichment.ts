@@ -36,6 +36,7 @@ interface CatalogListItem {
   brand: CatalogListBrand;
   category: CatalogListCategory;
   id: string;
+  isInMyGear: boolean;
   name: string;
   properties: CatalogListProperty[];
 }
@@ -222,6 +223,7 @@ async function enrichCatalogItemRows(dbHttp: DbHttp, itemRows: CatalogListItemRo
       brand: item.brand,
       category: item.category,
       id: item.id,
+      isInMyGear: item.isInMyGear,
       name: item.name,
       properties
     }

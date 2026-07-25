@@ -1,9 +1,9 @@
 <template>
   <div :class="$style.component">
     <div :class="$style.card">
-      <p :class="$style.label">
+      <div :class="$style.label">
         Twitch
-      </p>
+      </div>
 
       <div :class="$style.progress">
         <div
@@ -108,7 +108,6 @@
   }
 
   .label {
-    margin: 0;
     color: var(--color-text-muted);
     font-size: var(--font-size-12);
     letter-spacing: var(--letter-spacing-label);

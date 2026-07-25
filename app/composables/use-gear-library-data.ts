@@ -2,8 +2,8 @@ import { ref, shallowRef, watch, type ComputedRef, type Ref } from 'vue'
 import { useAsyncData, useRequestFetch } from '#imports'
 import type { CategoryDetailResponse } from '#server/api/equipment/categories/by-slug/[slug].get'
 import type { GearLibraryItemsApiQuery } from '~/utils/gear-library'
-import { useGearLibraryCache } from '~/composables/use-gear-library-cache'
 import { useGearLibraryItemsData } from '~/composables/use-gear-library-items-data'
+import { useGearLibraryStore } from '~/stores/gear-library'
 
 interface UseGearLibraryDataOptions {
   hasSavedBrowsingState: boolean;
@@ -17,26 +17,18 @@ interface UseGearLibraryDataOptions {
 /** Owns gear library reference-data requests alongside the loaded item-page prefix. */
 async function useGearLibraryData(options: UseGearLibraryDataOptions) {
   const requestFetch = useRequestFetch()
-
-  const {
-    getBrands,
-    getCategories,
-    getCategoryDetail,
-    storeBrands,
-    storeCategories,
-    storeCategoryDetail
-  } = useGearLibraryCache()
+  const gearLibraryStore = useGearLibraryStore()
 
   function getCachedDetailForSlug(slug: string | undefined) {
     if (slug === undefined) {
       return null
     }
 
-    return getCategoryDetail(slug) ?? null
+    return gearLibraryStore.getCategoryDetail(slug) ?? null
   }
 
-  const cachedBrands = getBrands()
-  const cachedCategories = getCategories()
+  const cachedBrands = gearLibraryStore.brands
+  const cachedCategories = gearLibraryStore.categories
   const initialCategorySlug = options.selectedCategory.value
   const initialCategoryDetail: CategoryDetailResponse | null = getCachedDetailForSlug(initialCategorySlug)
 
@@ -124,7 +116,7 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
 
     hasBrandsData.value = true
 
-    storeBrands(brandsResponse.value)
+    gearLibraryStore.storeBrands(brandsResponse.value)
   }, {
     flush: 'sync',
     immediate: true
@@ -137,7 +129,7 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
 
     hasCategoriesData.value = true
 
-    storeCategories(categoriesResponse.value)
+    gearLibraryStore.storeCategories(categoriesResponse.value)
   }, {
     flush: 'sync',
     immediate: true
@@ -156,7 +148,7 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
 
     activeCategoryDetail.value = categoryDetail
 
-    storeCategoryDetail(categoryDetail)
+    gearLibraryStore.storeCategoryDetail(categoryDetail)
   }, {
     flush: 'sync',
     immediate: true

@@ -30,31 +30,31 @@ const generatedSampleCategoryDefinitions: GeneratedSampleCategoryDefinition[] = 
   {
     brandSlugs: ['enlightened-equipment', 'nemo', 'sea-to-summit'],
     categorySlug: 'sleeping-bags',
-    count: 9,
+    count: 24,
     namePrefix: 'Seed Sleeping Bag'
   },
   {
     brandSlugs: ['therm-a-rest', 'nemo', 'sea-to-summit'],
     categorySlug: 'sleeping-pads',
-    count: 8,
+    count: 23,
     namePrefix: 'Seed Sleeping Pad'
   },
   {
     brandSlugs: ['big-agnes', 'zpacks', 'gossamer-gear'],
     categorySlug: 'tents',
-    count: 9,
+    count: 24,
     namePrefix: 'Seed Tent'
   },
   {
     brandSlugs: ['msr', 'sea-to-summit', 'gossamer-gear'],
     categorySlug: 'stoves',
-    count: 9,
+    count: 24,
     namePrefix: 'Seed Stove'
   },
   {
     brandSlugs: ['msr', 'sea-to-summit', 'therm-a-rest'],
     categorySlug: 'water-filters',
-    count: 9,
+    count: 24,
     namePrefix: 'Seed Water Filter'
   }
 ]

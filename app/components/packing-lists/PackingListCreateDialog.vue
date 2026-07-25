@@ -287,7 +287,6 @@
   }
 
   .errorMessage {
-    margin: 0;
     color: var(--color-danger-primary);
     overflow-wrap: anywhere;
   }

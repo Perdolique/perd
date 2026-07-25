@@ -49,6 +49,7 @@ interface CatalogListItemRow {
   category: CatalogListCategory;
   categoryId: number;
   id: string;
+  isInMyGear: boolean;
   name: string;
 }
 
