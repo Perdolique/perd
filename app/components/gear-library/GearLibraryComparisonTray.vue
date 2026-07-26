@@ -43,6 +43,14 @@
 
           <div v-if="hasItems" :class="$style.actions">
             <PerdButton
+              :disabled="isCompareDisabled"
+              size="small"
+              @click="emit('compare')"
+            >
+              Compare
+            </PerdButton>
+
+            <PerdButton
               v-if="hasRestoreErrors"
               size="small"
               variant="secondary"
@@ -134,6 +142,7 @@
   }
 
   interface Emits {
+    compare: [];
     remove: [id: string, restoreFocus: boolean];
     retry: [];
   }
@@ -152,6 +161,7 @@
 
   const hasItems = computed(() => props.items.length > 0)
   const hasNoItems = computed(() => hasItems.value === false)
+  const isCompareDisabled = computed(() => props.items.length < 2)
   const selectedItemIds = computed(() => props.items.map((item) => item.id))
   const selectionCountText = computed(() => `${props.items.length} of 4 selected`)
 

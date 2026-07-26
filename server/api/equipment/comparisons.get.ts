@@ -303,3 +303,7 @@ export default defineEventHandler(async (event) : Promise<ComparisonResponse> =>
     properties
   }
 })
+
+export type {
+  ComparisonResponse
+}

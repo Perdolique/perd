@@ -66,7 +66,7 @@ export default defineConfig({
   webServer: {
     command: e2eWebServerCommand,
     url: appBaseUrl,
-    reuseExistingServer: false,
+    reuseExistingServer: isCI === false,
     timeout: 60_000,
 
     gracefulShutdown: {

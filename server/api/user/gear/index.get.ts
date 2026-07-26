@@ -108,3 +108,5 @@ export default defineEventHandler(async (event) : Promise<MyGearRecord[]> => {
       }
     })
 })
+
+export type { MyGearRecord }

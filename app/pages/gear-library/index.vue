@@ -218,6 +218,7 @@
         :has-restore-errors="hasComparisonRestoreErrors"
         :items="selectedComparisonItems"
         :limit-announcement="comparisonLimitAnnouncement"
+        @compare="handleComparisonStart"
         @remove="handleComparisonTrayRemove"
         @retry="retryComparisonRestore"
       />
@@ -238,7 +239,7 @@
 <script lang="ts" setup>
   /* oxlint-disable max-lines -- The catalog page composes the existing data, filter, action, and restoration flows. */
   import { computed, nextTick, ref, useTemplateRef } from 'vue'
-  import { definePageMeta } from '#imports'
+  import { definePageMeta, navigateTo } from '#imports'
   import type { GearLibraryListItemView } from '~/types/equipment'
   import { useDelayedPendingIndicator } from '~/composables/use-delayed-pending-indicator'
   import { useGearLibraryControls } from '~/composables/use-gear-library-controls'
@@ -587,6 +588,17 @@
     await nextTick()
 
     comparisonModeAction.value?.focus()
+  }
+
+  async function handleComparisonStart() {
+    const comparisonQuery = {
+      item: selectedComparisonIds.value
+    }
+
+    await navigateTo({
+      path: '/gear-library/compare',
+      query: comparisonQuery
+    })
   }
 
   async function handleComparisonModeToggle() {

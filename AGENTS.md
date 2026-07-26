@@ -16,8 +16,9 @@
 ## Verification
 
 - Run applicable checks in parallel where practical.
+- During development, run only focused checks for the code changed. Do not run full suites manually unless the user explicitly asks; commit hooks run the mandatory verification suite.
 - If you are creating a commit, do not run the mandatory verification suite manually first; commit hooks will run it.
-- You can pass only changed file paths to the test and lint commands during development, but verify that the full suite passes at the end of the change.
+- Pass changed file paths to test and lint commands when supported; otherwise use the narrowest applicable focused command.
 
 ## Local dev servers
 
