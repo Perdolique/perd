@@ -201,6 +201,15 @@ const itemDetailParamsSchema = v.object({
   id: canonicalUuidV7Schema
 })
 
+const itemImageParamsSchema = v.object({
+  id: canonicalUuidV7Schema,
+  'image-id': canonicalUuidV7Schema
+})
+
+const itemImageOrderBodySchema = v.object({
+  imageIds: v.array(canonicalUuidV7Schema)
+})
+
 const minimumEquipmentComparisonItemCount = 2
 const maximumEquipmentComparisonItemCount = 4
 
@@ -643,6 +652,14 @@ function validateItemDetailParams(params: unknown) {
   return v.parse(itemDetailParamsSchema, params)
 }
 
+function validateItemImageParams(params: unknown) {
+  return v.parse(itemImageParamsSchema, params)
+}
+
+function validateItemImageOrderBody(body: unknown) {
+  return v.parse(itemImageOrderBodySchema, body)
+}
+
 function validateEquipmentComparisonQuery(query: unknown) {
   return v.parse(equipmentComparisonQuerySchema, query)
 }
@@ -715,6 +732,8 @@ export {
   groupIdParamsSchema,
   groupMutationSchema,
   itemDetailParamsSchema,
+  itemImageOrderBodySchema,
+  itemImageParamsSchema,
   equipmentComparisonQuerySchema,
   itemsListQuerySchema,
   limitQuerySchema,
@@ -749,6 +768,8 @@ export {
   validateGroupIdParams,
   validateGroupMutationBody,
   validateItemDetailParams,
+  validateItemImageOrderBody,
+  validateItemImageParams,
   validateEquipmentComparisonQuery,
   validateItemsListQuery,
   validatePackingListAvailableGearQuery,

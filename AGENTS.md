@@ -36,7 +36,9 @@
 
 ### Playwright test changes
 
-- `vp run test:e2e`
+- Run the changed test files with `vp run test:e2e <file>`.
+- Use `vp run test:e2e --grep "<test name>"` when only specific scenarios are affected.
+- Do not run the whole end-to-end test suite unless explicitly asked.
 
 ### Playwright conventions
 

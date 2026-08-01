@@ -91,4 +91,49 @@ describe('equipment catalog research schema', () => {
     expect(indexColumns).toStrictEqual(['categoryId', 'brandId'])
     expect(approvedItemIndex.config.where).toBeDefined()
   })
+
+  it('should keep ordered images linked to each item', () => {
+    const tableConfig = getTableConfig(schema.equipmentItemImages)
+    const columnNames = tableConfig.columns.map((column) => column.name)
+    const cloudflareImageIdColumn = tableConfig.columns.find(
+      (column) => column.name === 'cloudflareImageId'
+    )
+    const displayOrderColumn = tableConfig.columns.find(
+      (column) => column.name === 'displayOrder'
+    )
+    const displayOrderConstraint = tableConfig.uniqueConstraints.find(
+      (constraint) => constraint.getName() === schema.equipmentItemImageDisplayOrderConstraintName
+    )
+    const [itemForeignKey] = tableConfig.foreignKeys
+
+    expect(columnNames).toStrictEqual([
+      'id',
+      'itemId',
+      'cloudflareImageId',
+      'displayOrder',
+      'createdAt',
+      'updatedAt'
+    ])
+
+    expect(cloudflareImageIdColumn?.isUnique).toBe(true)
+    expect(displayOrderColumn?.notNull).toBe(true)
+
+    expect(displayOrderConstraint?.columns.map((column) => column.name)).toStrictEqual([
+      'itemId',
+      'displayOrder'
+    ])
+
+    expect(tableConfig.checks.map((check) => check.name)).toContain(
+      'equipment_item_images_displayOrder_check'
+    )
+
+    expect(itemForeignKey?.reference().foreignTable).toBe(schema.equipmentItems)
+    expect(itemForeignKey?.onDelete).toBe('restrict')
+
+    const equipmentItemColumnNames = getTableConfig(schema.equipmentItems)
+      .columns
+      .map((column) => column.name)
+
+    expect(equipmentItemColumnNames).not.toContain('cloudflareImageId')
+  })
 })

@@ -6,7 +6,8 @@
   ],
 
   "ignorePatterns": [
-    "new-design-assets/"
+    "new-design-assets/",
+    "server/types/worker-configuration.d.ts"
   ],
 
   "options": {

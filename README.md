@@ -1,6 +1,6 @@
 # Perd
 
-<https://perd.perd.workers.dev/>
+<https://metsik.app/>
 
 Perd is an outdoor equipment companion for people who plan trips, hikes, and other outdoor outings and do not want to forget important gear.
 

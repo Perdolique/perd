@@ -75,6 +75,10 @@ export default defineNuxtConfig({
 
   typescript: {
     tsConfig: {
+      files: [
+        '../server/types/worker-configuration.d.ts'
+      ],
+
       compilerOptions: {
         noFallthroughCasesInSwitch: true,
         noImplicitReturns: true,

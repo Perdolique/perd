@@ -9,6 +9,7 @@
   "scripts": {
     "build": "nuxt build",
     "build:e2e": "nuxt build --dotenv tests/playwright/runtime.env",
+    "cf-typegen": "wrangler types server/types/worker-configuration.d.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "tsx --env-file=.env ./tools/migrate.ts",
     "db:migrate": "tsx ./tools/migrate.ts",
