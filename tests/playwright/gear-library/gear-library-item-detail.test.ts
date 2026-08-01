@@ -24,7 +24,7 @@ const itemSummary = {
 }
 
 test.describe('Gear library item detail', () => {
-  test('should keep the placeholder page to the item title only', async ({
+  test('should hide image management from guests', async ({
     context,
     page
   }) => {
@@ -87,10 +87,48 @@ test.describe('Gear library item detail', () => {
 
     await expect(page).toHaveURL(new RegExp(`/gear-library/${itemId}`, 'u'))
     await expect(page.getByRole('heading', { level: 1, name: itemSummary.name })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Manage images' })).toHaveCount(0)
     await expect(page.getByRole('link', { name: 'Back to gear library' })).toHaveCount(0)
     await expect(page.getByText('83 g')).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Save to my gear' })).toHaveCount(0)
 
     expect(myGearRequestCount).toBe(0)
+  })
+
+  test('should show the image management link to admins', async ({ context, page }) => {
+    await context.route('**/api/oauth/twitch**', async (route) => {
+      await route.fulfill({
+        json: {
+          isAdmin: true,
+          userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
+        }
+      })
+    })
+
+    await context.route(
+      new RegExp(`/api/equipment/items/${itemId}(?:\\?.*)?$`, 'u'),
+      async (route) => {
+        await route.fulfill({
+          json: {
+            ...itemSummary,
+            brand: { id: 1, ...itemSummary.brand },
+            category: { id: 2, ...itemSummary.category },
+            createdAt: '2026-04-01T09:00:00.000Z'
+          }
+        })
+      }
+    )
+
+    await page.goto(`/auth/twitch?code=oauth-code&state=${encodeURIComponent(`/gear-library/${itemId}`)}`)
+
+    await expect(page).toHaveURL(new RegExp(`/gear-library/${itemId}$`, 'u'))
+
+    const imageManagementLink = page.getByRole('link', { name: 'Manage images' })
+
+    await expect(imageManagementLink).toBeVisible()
+    await expect(imageManagementLink).toHaveAttribute(
+      'href',
+      `/admin/equipment/items/${itemId}/images`
+    )
   })
 })

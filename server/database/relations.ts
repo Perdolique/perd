@@ -82,6 +82,11 @@ export const relations = defineRelations(schema, (relation) => {
       userEquipment: relation.many.userEquipment({
         from: relation.equipmentItems.id,
         to: relation.userEquipment.itemId
+      }),
+
+      images: relation.many.equipmentItemImages({
+        from: relation.equipmentItems.id,
+        to: relation.equipmentItemImages.itemId
       })
     },
 
@@ -166,6 +171,13 @@ export const relations = defineRelations(schema, (relation) => {
       user: relation.one.users({
         from: relation.contributions.userId,
         to: relation.users.id
+      })
+    },
+
+    equipmentItemImages: {
+      item: relation.one.equipmentItems({
+        from: relation.equipmentItemImages.itemId,
+        to: relation.equipmentItems.id
       })
     }
   }

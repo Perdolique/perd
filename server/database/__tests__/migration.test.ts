@@ -1,8 +1,16 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
-const migrationUrl = new URL('../migrations/20260711222621_stormy_captain_marvel/migration.sql', import.meta.url)
+const migrationUrl = new URL(
+  '../migrations/20260711222621_stormy_captain_marvel/migration.sql',
+  import.meta.url
+)
 const migrationSql = readFileSync(migrationUrl, 'utf8')
+const imagesMigrationUrl = new URL(
+  '../migrations/20260730184011_uneven_karma/migration.sql',
+  import.meta.url
+)
+const imagesMigrationSql = readFileSync(imagesMigrationUrl, 'utf8')
 
 describe('category property display order migration', () => {
   it('should backfill a zero-based order before making the column required', () => {
@@ -41,5 +49,14 @@ describe('category property display order migration', () => {
     expect(migrationSql).toContain(
       'INDEX "item_property_values_property_boolean_index" ON "item_property_values" ("propertyId","valueBoolean","itemId")'
     )
+  })
+})
+
+describe('equipment item image migration', () => {
+  it('should create the final equipment item image table', () => {
+    expect(imagesMigrationSql).toContain('CREATE TABLE "equipment_item_images"')
+    expect(imagesMigrationSql).toContain('"equipment_item_images_itemId_displayOrder_unique"')
+    expect(imagesMigrationSql).toContain('"equipment_item_images_displayOrder_check"')
+    expect(imagesMigrationSql).toContain('ON DELETE RESTRICT')
   })
 })

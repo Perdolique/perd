@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "perd",
+  "name": "metsik",
+  "account_id": "e19b9bdd14629a58c3f213b37a58281e",
   "compatibility_date": "2026-07-18",
   "main": ".output/server/index.mjs",
   "upload_source_maps": true,
@@ -22,24 +23,50 @@
     "mode": "smart"
   },
 
+  "images": {
+    "binding": "IMAGES"
+  },
+
   "env": {
     "production": {
-      "name": "perd",
+      "name": "metsik",
       "preview_urls": false,
       "workers_dev": true,
 
+      "routes": [
+        {
+          "pattern": "metsik.app",
+          "custom_domain": true
+        }
+      ],
+
       "vars": {
         "NUXT_OAUTH_TWITCH_CLIENT_ID": "76z9coffucmezuwxx68iurur0vnigy"
+      },
+
+      "images": {
+        "binding": "IMAGES"
       }
     },
 
     "staging": {
-      "name": "perd-staging",
+      "name": "metsik-staging",
       "preview_urls": true,
       "workers_dev": true,
 
+      "routes": [
+        {
+          "pattern": "staging.metsik.app",
+          "custom_domain": true
+        }
+      ],
+
       "vars": {
         "NUXT_OAUTH_TWITCH_CLIENT_ID": "58vwcqcpjpf7iz530v11z3sovtgfc5"
+      },
+
+      "images": {
+        "binding": "IMAGES"
       }
     }
   }

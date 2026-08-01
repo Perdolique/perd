@@ -2,10 +2,21 @@ import { createHash } from 'node:crypto'
 import { basename } from 'node:path'
 import { env } from 'node:process'
 import { fileURLToPath } from 'node:url'
+import type { NuxtOptions } from 'nuxt/schema'
 
 type ComponentType = 'page' | 'layout' | 'component';
+type TypeScriptCompilerOptions = NonNullable<
+  NuxtOptions['typescript']['tsConfig']['compilerOptions']
+>;
 
 const customElements = new Set(['search']);
+
+const projectTypeScriptCompilerOptions = {
+  noFallthroughCasesInSwitch: true,
+  noImplicitReturns: true,
+  noUnusedLocals: true,
+  noUnusedParameters: true
+} satisfies TypeScriptCompilerOptions
 
 const modalDialogFixturePath = fileURLToPath(
   new globalThis.URL('tests/nuxt/ModalDialog.vue', import.meta.url)
@@ -75,24 +86,26 @@ export default defineNuxtConfig({
 
   typescript: {
     tsConfig: {
+      files: [
+        '../server/types/worker-configuration.d.ts'
+      ],
+
       compilerOptions: {
-        noFallthroughCasesInSwitch: true,
-        noImplicitReturns: true,
-        noUnusedLocals: true,
-        noUnusedParameters: true
+        ...projectTypeScriptCompilerOptions
+      }
+    },
+
+    sharedTsConfig: {
+      compilerOptions: {
+        ...projectTypeScriptCompilerOptions
+      }
+    },
+
+    nodeTsConfig: {
+      compilerOptions: {
+        ...projectTypeScriptCompilerOptions
       }
     }
-  },
-
-  /**
-   * FIXME: Re-enable after @unhead/bundler stops replacing the assignment target
-   * in `head.ssr = false` with `false = false` during client builds.
-   *
-   * Unhead 3.2.0 fixes the Nitro failure from this issue, but not this Vite transform:
-   * https://github.com/nuxt/nuxt/issues/35670
-   */
-  unhead: {
-    vite: false
   },
 
   app: {
@@ -125,6 +138,14 @@ export default defineNuxtConfig({
 
   nitro: {
     preset: 'cloudflare_module',
+
+    typescript: {
+      tsConfig: {
+        compilerOptions: {
+          ...projectTypeScriptCompilerOptions
+        }
+      }
+    },
 
     cloudflare: {
       deployConfig: false

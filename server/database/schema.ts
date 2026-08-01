@@ -257,6 +257,56 @@ const equipmentItems = pgTable('equipment_items', {
     .where(sql`${table.status} = 'approved'`)
 ])
 
+const equipmentItemImageDisplayOrderConstraintName = 'equipment_item_images_itemId_displayOrder_unique'
+
+/**
+ * Ordered Cloudflare-hosted images for equipment items.
+ *
+ * The first image (`displayOrder = 0`) is the item's primary image.
+ */
+const equipmentItemImages = pgTable('equipment_item_images', {
+  id:
+    uuid()
+    .notNull()
+    .default(sql`uuidv7()`)
+    .primaryKey(),
+
+  itemId:
+    uuid()
+    .notNull()
+    .references(() => equipmentItems.id, {
+      onDelete: 'restrict',
+      onUpdate: 'cascade'
+    }),
+
+  cloudflareImageId:
+    text()
+    .notNull()
+    .unique(),
+
+  displayOrder:
+    integer()
+    .notNull(),
+
+  createdAt:
+    timestamp({
+      withTimezone: true
+    })
+    .notNull()
+    .defaultNow(),
+
+  updatedAt:
+    timestamp({
+      withTimezone: true
+    })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => sql`now()`)
+}, (table) => [
+  unique(equipmentItemImageDisplayOrderConstraintName).on(table.itemId, table.displayOrder),
+  check('equipment_item_images_displayOrder_check', sql`${table.displayOrder} >= 0`)
+])
+
 const categoryPropertyDisplayOrderConstraintName = 'category_properties_categoryId_displayOrder_unique'
 
 /**
@@ -560,6 +610,7 @@ export {
   equipmentCategories,
   brands,
   equipmentItems,
+  equipmentItemImages,
   categoryProperties,
   propertyEnumOptions,
   itemPropertyValues,
@@ -567,5 +618,6 @@ export {
   packingLists,
   packingListEntries,
   contributions,
-  categoryPropertyDisplayOrderConstraintName
+  categoryPropertyDisplayOrderConstraintName,
+  equipmentItemImageDisplayOrderConstraintName
 }
