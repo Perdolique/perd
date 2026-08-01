@@ -22,30 +22,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  e2e:
-    name: End-to-end tests
-    runs-on: ubuntu-24.04
-
-    steps:
-      - uses: Perdolique/automations/.github/actions/setup-pnpm@v2
-        with:
-          install-dependencies: true
-
-      - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium webkit
-
-      - name: Run end-to-end tests
-        run: pnpm run test:e2e:ci
-
   deploy:
-    needs: e2e
-    uses: Perdolique/automations/.github/workflows/deploy.yml@v2
+    uses: Perdolique/automations/.github/workflows/deploy.yml@v3
 
     with:
       test-typecheck-command: test:typecheck
       lint-markdown-command: lint:markdown
       lint-oxlint-command: lint:oxlint
       test-unit-command: test:unit:ci
+      test-e2e-command: test:e2e:ci
+      playwright-browsers: chromium webkit
       deploy-to-staging-command: deploy:versions:staging
       deploy-to-production-command: deploy:production
 
