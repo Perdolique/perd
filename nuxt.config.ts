@@ -49,6 +49,10 @@ export default defineNuxtConfig({
     localDatabase: '',
     sessionSecret: '',
 
+    public: {
+      buildCommitSha: env.GITHUB_SHA ?? ''
+    },
+
     oauth: {
       twitch: {
         clientId: '',

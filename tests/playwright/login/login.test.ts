@@ -2,17 +2,35 @@ import type { Route } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
 
 const brandsApiRoute = '**/api/equipment/brands'
+const buildCommitSha = 'abc1234567890abcdef1234567890abcdef12345'
+const buildCommitShortSha = buildCommitSha.slice(0, 7)
+const repositoryUrl = 'https://github.com/Perdolique/perd'
+const buildCommitUrl = `${repositoryUrl}/commit/${buildCommitSha}`
 
 async function continueRoute(route: Route) {
   await route.continue()
 }
 
 test.describe('Login page', () => {
-  test('should display the login heading and auth buttons', async ({ page }) => {
+  test('should display auth buttons and build links', async ({ page }) => {
     await page.goto('/login')
 
     await expect(page.getByRole('button', { name: 'Guest' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Twitch' })).toBeVisible()
+
+    const githubLink = page.getByRole('link', { name: 'GitHub', exact: true })
+    const commitLink = page.getByRole('link', { name: `#${buildCommitShortSha}`, exact: true })
+
+    await expect(githubLink).toBeVisible()
+    await expect(githubLink).toHaveAttribute('href', repositoryUrl)
+    await expect(githubLink).toHaveAttribute('target', '_blank')
+    await expect(githubLink).toHaveAttribute('rel', 'noreferrer')
+
+    await expect(page.locator('footer')).toContainText(`Commit #${buildCommitShortSha}`)
+    await expect(commitLink).toBeVisible()
+    await expect(commitLink).toHaveAttribute('href', buildCommitUrl)
+    await expect(commitLink).toHaveAttribute('target', '_blank')
+    await expect(commitLink).toHaveAttribute('rel', 'noreferrer')
   })
 
   test('should return to the api document after guest login', async ({ page }) => {
