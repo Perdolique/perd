@@ -1,5 +1,5 @@
 <template>
-  <main :class="$style.component">
+  <div :class="$style.component">
     <picture :class="$style.backgroundMedia" aria-hidden="true">
       <source
         srcset="/images/login-background-desktop.avif"
@@ -24,7 +24,7 @@
       >
     </picture>
 
-    <div :class="$style.content">
+    <main :class="$style.content">
       <div :class="$style.buttons">
         <PerdButton
           icon="hugeicons:game"
@@ -45,14 +45,37 @@
           Twitch
         </PerdButton>
       </div>
-    </div>
-  </main>
+    </main>
+
+    <footer :class="$style.footer">
+      <a
+        :class="$style.footerLink"
+        href="https://github.com/Perdolique/perd"
+        target="_blank"
+        rel="noreferrer"
+      >
+        GitHub
+      </a>
+
+      <span v-if="buildCommitSha" :class="$style.commit">
+        Commit
+        <a
+          :class="$style.footerLink"
+          :href="buildCommitUrl"
+          target="_blank"
+          rel="noreferrer"
+        >
+          #{{ buildCommitShortSha }}
+        </a>
+      </span>
+    </footer>
+  </div>
 </template>
 
 <script lang="ts" setup>
   import { ref } from 'vue'
   import { $fetch } from 'ofetch'
-  import { definePageMeta, navigateTo, useHead, useRoute, useUserStore, withMinimumDelay } from '#imports'
+  import { definePageMeta, navigateTo, useHead, useRoute, useRuntimeConfig, useUserStore, withMinimumDelay } from '#imports'
   import { getRedirectNavigationTarget } from '~/utils/router'
   import PerdButton from '~/components/PerdButton.vue'
 
@@ -81,6 +104,9 @@
   const { user } = useUserStore()
   const route = useRoute()
   const isAuthenticating = ref(false)
+  const { public: { buildCommitSha } } = useRuntimeConfig()
+  const buildCommitShortSha = buildCommitSha.slice(0, 7)
+  const buildCommitUrl = `https://github.com/Perdolique/perd/commit/${buildCommitSha}`
 
   function startAuthenticating() {
     isAuthenticating.value = true
@@ -145,6 +171,7 @@
     isolation: isolate;
     min-block-size: 100dvh;
     display: grid;
+    grid-template-rows: 1fr auto;
     place-items: center;
     overflow: hidden;
     padding:
@@ -190,6 +217,7 @@
   .content {
     position: relative;
     z-index: 2;
+    grid-row: 1;
     inline-size: min(100%, 24rem);
     margin-inline: auto;
     display: grid;
@@ -203,5 +231,44 @@
 
   .button {
     inline-size: 100%;
+  }
+
+  .footer {
+    position: relative;
+    z-index: 2;
+    grid-row: 2;
+    inline-size: min(100%, 24rem);
+    margin-inline: auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-8) var(--spacing-16);
+    padding-block: var(--spacing-8);
+    color: color-mix(in oklch, var(--color-white) 82%, transparent);
+    font-size: var(--font-size-14);
+    text-align: center;
+  }
+
+  .commit {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--spacing-4);
+  }
+
+  .footerLink {
+    color: var(--color-white);
+    font-weight: var(--font-weight-semibold);
+    text-decoration: none;
+    text-underline-offset: var(--spacing-4);
+
+    &:hover,
+    &:focus-visible {
+      text-decoration: underline;
+    }
+
+    &:active {
+      color: var(--color-sand-100);
+    }
   }
 </style>
