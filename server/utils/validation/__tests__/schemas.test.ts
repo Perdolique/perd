@@ -15,6 +15,7 @@ import {
   validateGroupIdParams,
   validateGroupMutationBody,
   validateItemDetailParams,
+  validateItemImageUploadQuery,
   validateEquipmentComparisonQuery,
   validateItemsListQuery,
   validatePackingListAvailableGearQuery,
@@ -50,6 +51,7 @@ describe('validation schemas', () => {
   const maxGroupSlug = 'g'.repeat(limits.maxEquipmentGroupSlugLength)
   const tooLongGroupName = 'G'.repeat(limits.maxEquipmentGroupNameLength + 1)
   const tooLongGroupSlug = 'g'.repeat(limits.maxEquipmentGroupSlugLength + 1)
+  const tooLongImageFilename = 'i'.repeat(limits.maxEquipmentItemImageFilenameLength + 1)
   const maxPackingListName = 'P'.repeat(limits.maxPackingListNameLength)
   const tooLongPackingListName = 'P'.repeat(limits.maxPackingListNameLength + 1)
   const maxPackingListEntryCustomName = 'E'.repeat(limits.maxPackingListEntryCustomNameLength)
@@ -1167,6 +1169,23 @@ describe('validation schemas', () => {
     expect(() => validateUserEquipmentCreateBody({
       itemId: '550e8400-e29b-41d4-a716-446655440000'
     })).toThrow(/./u)
+  })
+
+  it('should trim an equipment image upload filename', () => {
+    expect(validateItemImageUploadQuery({
+      filename: '  pocketrocket front.webp  '
+    })).toStrictEqual({
+      filename: 'pocketrocket front.webp'
+    })
+  })
+
+  it.each([
+    {},
+    { filename: '' },
+    { filename: '   ' },
+    { filename: tooLongImageFilename }
+  ])('should reject invalid equipment image upload filename: %j', (query) => {
+    expect(() => validateItemImageUploadQuery(query)).toThrow(/./u)
   })
 
   it('should accept canonical uuid v7 inventory id params only', () => {

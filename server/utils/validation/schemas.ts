@@ -210,6 +210,13 @@ const itemImageOrderBodySchema = v.object({
   imageIds: v.array(canonicalUuidV7Schema)
 })
 
+const itemImageUploadQuerySchema = v.object({
+  filename: v.pipe(
+    trimmedNonEmptyStringSchema,
+    v.maxLength(limits.maxEquipmentItemImageFilenameLength)
+  )
+})
+
 const minimumEquipmentComparisonItemCount = 2
 const maximumEquipmentComparisonItemCount = 4
 
@@ -660,6 +667,10 @@ function validateItemImageOrderBody(body: unknown) {
   return v.parse(itemImageOrderBodySchema, body)
 }
 
+function validateItemImageUploadQuery(query: unknown) {
+  return v.parse(itemImageUploadQuerySchema, query)
+}
+
 function validateEquipmentComparisonQuery(query: unknown) {
   return v.parse(equipmentComparisonQuerySchema, query)
 }
@@ -734,6 +745,7 @@ export {
   itemDetailParamsSchema,
   itemImageOrderBodySchema,
   itemImageParamsSchema,
+  itemImageUploadQuerySchema,
   equipmentComparisonQuerySchema,
   itemsListQuerySchema,
   limitQuerySchema,
@@ -770,6 +782,7 @@ export {
   validateItemDetailParams,
   validateItemImageOrderBody,
   validateItemImageParams,
+  validateItemImageUploadQuery,
   validateEquipmentComparisonQuery,
   validateItemsListQuery,
   validatePackingListAvailableGearQuery,

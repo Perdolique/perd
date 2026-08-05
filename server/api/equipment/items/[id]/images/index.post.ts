@@ -2,6 +2,7 @@ import { eq, max } from 'drizzle-orm'
 import {
   createError,
   defineEventHandler,
+  getValidatedQuery,
   getValidatedRouterParams,
   isError,
   setResponseStatus
@@ -23,7 +24,10 @@ import {
   type EquipmentItemImageBody
 } from '#server/utils/equipment/item-images'
 
-import { validateItemDetailParams } from '#server/utils/validation/schemas'
+import {
+  validateItemDetailParams,
+  validateItemImageUploadQuery
+} from '#server/utils/validation/schemas'
 
 interface EquipmentItemImageResponse {
   cloudflareImageId: string;
@@ -34,6 +38,7 @@ interface EquipmentItemImageResponse {
 interface UploadEquipmentItemImageOptions {
   binding: Env['IMAGES'];
   body: EquipmentItemImageBody;
+  filename: string;
   itemId: string;
   userId: string;
 }
@@ -41,11 +46,12 @@ interface UploadEquipmentItemImageOptions {
 async function uploadEquipmentItemImage(
   options: UploadEquipmentItemImageOptions
 ): Promise<string> {
-  const { binding, body, itemId, userId } = options
+  const { binding, body, filename, itemId, userId } = options
 
   try {
     const image = await binding.hosted.upload(body.stream, {
       creator: userId,
+      filename,
 
       metadata: {
         itemId
@@ -96,6 +102,7 @@ async function deleteUnattachedImage(
 export default defineEventHandler(async (event) : Promise<EquipmentItemImageResponse> => {
   const userId = await validateAdminUser(event)
   const { id: itemId } = await getValidatedRouterParams(event, validateItemDetailParams)
+  const { filename } = await getValidatedQuery(event, validateItemImageUploadQuery)
 
   validateEquipmentItemImageRequest(event)
 
@@ -122,6 +129,7 @@ export default defineEventHandler(async (event) : Promise<EquipmentItemImageResp
   const cloudflareImageId = await uploadEquipmentItemImage({
     binding: imagesBinding,
     body: imageBody,
+    filename,
     itemId,
     userId
   })

@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import type { BrowserContext, Page, Request } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
 
 const itemId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
@@ -53,7 +53,64 @@ const secondImage = {
   id: secondImageId
 }
 
+async function mockImageUploadApi(context: BrowserContext): Promise<Request[]> {
+  const uploadRequests: Request[] = []
+
+  await context.route(`**${imagesPath}**`, async (route) => {
+    const request = route.request()
+
+    if (request.method() === 'POST') {
+      uploadRequests.push(request)
+
+      await route.fulfill({
+        json: firstImage,
+        status: 201
+      })
+
+      return
+    }
+
+    await route.fulfill({ json: [] })
+  })
+
+  return uploadRequests
+}
+
 test.describe('Equipment image management', () => {
+  test('should send the original filename with an image upload', async ({
+    context,
+    page
+  }) => {
+    const filename = 'equipment-item-placeholder.webp'
+
+    await context.route('**/api/oauth/twitch**', async (route) => {
+      await route.fulfill({
+        json: {
+          isAdmin: true,
+          userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
+        }
+      })
+    })
+
+    const uploadRequests = await mockImageUploadApi(context)
+
+    const pagePath = `/admin/equipment/items/${itemId}/images`
+    const authPath = `/auth/twitch?code=oauth-code&state=${encodeURIComponent(pagePath)}`
+
+    await page.goto(authPath)
+    await page.getByLabel('Choose images').setInputFiles(`public/${filename}`)
+    await page.getByRole('button', { name: 'Upload' }).click()
+
+    await expect.poll(() => uploadRequests).toHaveLength(1)
+
+    const [uploadRequest] = uploadRequests
+    const requestUrl = new globalThis.URL(uploadRequest.url())
+    const contentType = await uploadRequest.headerValue('content-type')
+
+    expect(requestUrl.searchParams.get('filename')).toBe(filename)
+    expect(contentType).toBe('image/webp')
+  })
+
   test('should delete an image and refresh the gallery order', async ({
     context,
     page

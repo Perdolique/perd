@@ -245,7 +245,11 @@
           headers: {
             'content-type': file.type
           },
-          method: 'POST'
+          method: 'POST',
+
+          query: {
+            filename: file.name
+          }
         })
 
         uploadedFileCount += 1
