@@ -84,11 +84,15 @@
           @dragover.prevent
           @drop="handleDrop(image.id)"
         >
-          <img
-            :src="image.previewUrl"
+          <EquipmentItemImage
             :alt="image.altText"
             :class="$style.image"
-          >
+            :cloudflare-image-id="image.cloudflareImageId"
+            fit="cover"
+            :height="320"
+            loading="lazy"
+            :width="320"
+          />
 
           <div :class="$style.imageFooter">
             <span
@@ -133,6 +137,7 @@
   import PerdButton from '~/components/PerdButton.vue'
   import PerdCard from '~/components/PerdCard.vue'
   import PageContent from '~/components/layout/PageContent.vue'
+  import EquipmentItemImage from '~/components/equipment/EquipmentItemImage.vue'
 
   definePageMeta({
     layout: 'page'
@@ -199,11 +204,11 @@
 
     return {
       altText: `Equipment image ${position}`,
+      cloudflareImageId: image.cloudflareImageId,
       deleteLabel: `Delete equipment image ${position}`,
       id: image.id,
       isDeleting: deletingImageId.value === image.id,
-      isPrimary: index === 0,
-      previewUrl: image.previewUrl
+      isPrimary: index === 0
     }
   }))
 
@@ -240,7 +245,11 @@
           headers: {
             'content-type': file.type
           },
-          method: 'POST'
+          method: 'POST',
+
+          query: {
+            filename: file.name
+          }
         })
 
         uploadedFileCount += 1

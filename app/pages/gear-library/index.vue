@@ -509,6 +509,7 @@
     return {
       brand: item.brand,
       category: item.category,
+      cloudflareImageId: item.cloudflareImageId,
       detailPath,
       id: item.id,
       isInMyGear,

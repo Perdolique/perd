@@ -253,6 +253,7 @@
       brand: {
         name: item.brand.name
       },
+      cloudflareImageId: item.cloudflareImageId,
       detailPath: createGearLibraryItemPath(itemId),
       id: itemId,
       name: item.name

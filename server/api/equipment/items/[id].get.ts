@@ -1,10 +1,13 @@
 import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
+import { getPrimaryEquipmentImageIds } from '#server/utils/equipment/primary-images'
+
 import {
   getEquipmentPropertyDataType,
   normalizeEquipmentPropertyValue,
   type EquipmentPropertyDataType,
   type EquipmentPropertyValue
 } from '#server/utils/equipment/property-values'
+
 import { validateItemDetailParams } from '#server/utils/validation/schemas'
 
 interface ItemDetailBrand {
@@ -30,6 +33,7 @@ interface ItemProperty {
 interface ItemDetailResponse {
   brand: ItemDetailBrand;
   category: ItemDetailCategory;
+  cloudflareImageId: string | null;
   createdAt: Date | string;
   id: string;
   name: string;
@@ -39,7 +43,7 @@ interface ItemDetailResponse {
 export default defineEventHandler(async (event) : Promise<ItemDetailResponse> => {
   const { id } = await getValidatedRouterParams(event, validateItemDetailParams)
 
-  const item = await event.context.dbHttp.query.equipmentItems.findFirst({
+  const itemPromise = event.context.dbHttp.query.equipmentItems.findFirst({
     columns: {
       createdAt: true,
       id: true,
@@ -91,6 +95,13 @@ export default defineEventHandler(async (event) : Promise<ItemDetailResponse> =>
     }
   })
 
+  const imageIdsPromise = getPrimaryEquipmentImageIds({
+    dbHttp: event.context.dbHttp,
+    itemIds: [id]
+  })
+
+  const [imageIdsByItemId, item] = await Promise.all([imageIdsPromise, itemPromise])
+
   if (item === undefined) {
     throw createError({ status: 404 })
   }
@@ -135,6 +146,7 @@ export default defineEventHandler(async (event) : Promise<ItemDetailResponse> =>
 
     if (property !== null) {
       const dataType = getEquipmentPropertyDataType(property.dataType)
+
       const value = normalizeEquipmentPropertyValue({
         dataType,
         valueBoolean: propertyValue.valueBoolean,
@@ -152,6 +164,8 @@ export default defineEventHandler(async (event) : Promise<ItemDetailResponse> =>
     }
   }
 
+  const cloudflareImageId = imageIdsByItemId.get(item.id) ?? null
+
   return {
     brand: {
       id: item.brand.id,
@@ -165,6 +179,7 @@ export default defineEventHandler(async (event) : Promise<ItemDetailResponse> =>
       slug: item.category.slug
     },
 
+    cloudflareImageId,
     createdAt: item.createdAt,
     id: item.id,
     name: item.name,

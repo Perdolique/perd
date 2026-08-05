@@ -6,7 +6,6 @@ interface EquipmentItemImageResponse {
   cloudflareImageId: string;
   displayOrder: number;
   id: string;
-  previewUrl: string;
 }
 
 interface EquipmentItemImageRow {
@@ -40,8 +39,7 @@ export default defineEventHandler(async (event) : Promise<EquipmentItemImageResp
     return {
       cloudflareImageId: image.cloudflareImageId,
       displayOrder: image.displayOrder,
-      id: image.id,
-      previewUrl: `/api/equipment/items/${itemId}/images/${image.id}`
+      id: image.id
     }
   })
 })

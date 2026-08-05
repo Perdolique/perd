@@ -37,6 +37,7 @@ function createRouteState(overrides: Partial<GearLibraryRouteState> = {}): GearL
 
 function createListItem(id: string): GearLibraryListItem {
   return {
+    cloudflareImageId: null,
     id,
     isInMyGear: false,
     name: `Item ${id}`,

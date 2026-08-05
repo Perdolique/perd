@@ -16,6 +16,7 @@ interface GearLibraryFilterProperty extends GearLibraryEntitySummary {
 interface GearLibraryListItem {
   brand: GearLibraryEntitySummary;
   category: GearLibraryEntitySummary;
+  cloudflareImageId: string | null;
   id: string;
   isInMyGear: boolean;
   name: string;
@@ -25,6 +26,7 @@ interface GearLibraryListItem {
 interface GearLibraryListItemView {
   brand: GearLibraryEntitySummary;
   category: GearLibraryEntitySummary;
+  cloudflareImageId: string | null;
   detailPath: string;
   id: string;
   isInMyGear: boolean;
@@ -66,6 +68,7 @@ interface GearLibraryListProperty extends ItemProperty {
 interface ItemDetailResponse {
   brand: GearLibraryEntityDetail;
   category: GearLibraryEntityDetail;
+  cloudflareImageId: string | null;
   createdAt: string;
   id: string;
   name: string;
