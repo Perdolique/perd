@@ -59,6 +59,7 @@ interface LoadMoreFailureState {
 type QueryEntry = readonly [key: string, value: string]
 
 const stoveItem: GearLibraryListItem = {
+  cloudflareImageId: null,
   id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
   isInMyGear: false,
   name: 'PocketRocket Deluxe',
@@ -96,6 +97,7 @@ const stoveItem: GearLibraryListItem = {
 }
 
 const sleepingPadItem: GearLibraryListItem = {
+  cloudflareImageId: null,
   id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477da',
   isInMyGear: false,
   name: 'NeoAir XLite NXT',
@@ -425,6 +427,7 @@ function createItemDetailResponse(item: GearLibraryListItem): ItemDetailResponse
   return {
     createdAt: '2026-07-18T00:00:00.000Z',
     id: item.id,
+    cloudflareImageId: item.cloudflareImageId,
     name: item.name,
     properties: item.properties,
 

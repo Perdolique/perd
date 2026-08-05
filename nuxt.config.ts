@@ -69,8 +69,15 @@ export default defineNuxtConfig({
     '@nuxt/fonts',
     '@nuxt/icon',
     '@nuxt/hints',
+    '@nuxt/image',
     '@pinia/nuxt'
   ],
+
+  image: {
+    cloudflareimages: {
+      accountHash: 'mCIRaHLLCfuPRvd-hC9t5g'
+    }
+  },
 
   experimental: {
     viewTransition: true,

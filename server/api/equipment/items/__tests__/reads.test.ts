@@ -53,12 +53,17 @@ interface DetailQueryConfig {
   with: DetailRelationsConfig;
 }
 
-function createDetailDb(item?: unknown) {
+function createDetailDb(item?: unknown, images: unknown[] = []) {
   const findFirstMock = vi.fn((_config: DetailQueryConfig) => item)
+  const findImagesMock = vi.fn(() => images)
 
   return {
     dbHttp: {
       query: {
+        equipmentItemImages: {
+          findMany: findImagesMock
+        },
+
         equipmentItems: {
           findFirst: findFirstMock
         }
@@ -158,11 +163,16 @@ describe('get /api/equipment/items/[id]', () => {
         property: null
       }]
     }
-    const { dbHttp, findFirstMock } = createDetailDb(item)
+    const images = [{
+      cloudflareImageId: 'detail-primary-image',
+      itemId: item.id
+    }]
+    const { dbHttp, findFirstMock } = createDetailDb(item, images)
     const event = createTestEvent(dbHttp)
     const result = await itemDetailHandler(event)
 
     expect(result).toStrictEqual({
+      cloudflareImageId: 'detail-primary-image',
       createdAt: '2026-04-01T00:00:00Z',
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
       name: 'PocketRocket Deluxe',

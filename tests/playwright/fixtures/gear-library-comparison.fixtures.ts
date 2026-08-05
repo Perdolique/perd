@@ -24,6 +24,7 @@ const comparisonItemIds = [
 
 const comparisonItems: ComparisonResponse['items'] = [
   {
+    cloudflareImageId: null,
     id: comparisonItemIds[0],
     name: 'PocketRocket Deluxe',
     brand: {
@@ -32,6 +33,7 @@ const comparisonItems: ComparisonResponse['items'] = [
     }
   },
   {
+    cloudflareImageId: null,
     id: comparisonItemIds[1],
     name: 'WindBurner',
     brand: {
@@ -40,6 +42,7 @@ const comparisonItems: ComparisonResponse['items'] = [
     }
   },
   {
+    cloudflareImageId: null,
     id: comparisonItemIds[2],
     name: 'Lite Plus',
     brand: {
@@ -48,6 +51,7 @@ const comparisonItems: ComparisonResponse['items'] = [
     }
   },
   {
+    cloudflareImageId: null,
     id: comparisonItemIds[3],
     name: 'Flash',
     brand: {

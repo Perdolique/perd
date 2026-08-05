@@ -57,11 +57,13 @@ function createItemRow(id: string, categoryId = 2) {
 function createComparisonDb({
   definitions = [],
   enumOptions = [],
+  images = [],
   items = [],
   values = []
 }: {
   definitions?: unknown[];
   enumOptions?: unknown[];
+  images?: unknown[];
   items?: unknown[];
   values?: unknown[];
 } = {}) {
@@ -109,6 +111,8 @@ function createComparisonDb({
     return { innerJoin: enumOptionsInnerJoinMock }
   })
 
+  const findImagesMock = vi.fn(() => images)
+
   const selectMock = vi.fn((selection: Record<string, unknown>) => {
     if ('brand' in selection) {
       return { from: itemsFromMock }
@@ -127,10 +131,17 @@ function createComparisonDb({
 
   return {
     dbHttp: {
+      query: {
+        equipmentItemImages: {
+          findMany: findImagesMock
+        }
+      },
+
       select: selectMock
     },
     definitionsOrderByMock,
     enumOptionsWhereMock,
+    findImagesMock,
     itemsWhereMock,
     selectMock,
     valuesWhereMock
@@ -183,6 +194,11 @@ describe('get /api/equipment/comparisons', () => {
       createItemRow(fourthItemId),
       createItemRow(secondItemId)
     ]
+
+    const images = [{
+      cloudflareImageId: 'compare-primary-image',
+      itemId: firstItemId
+    }]
 
     const definitions = [{
       dataType: 'number',
@@ -286,12 +302,19 @@ describe('get /api/equipment/comparisons', () => {
       dbHttp,
       definitionsOrderByMock,
       enumOptionsWhereMock,
+      findImagesMock,
       itemsWhereMock,
       selectMock,
       valuesWhereMock
-    } = createComparisonDb({ definitions, enumOptions, items: itemRows, values })
+    } = createComparisonDb({ definitions, enumOptions, images, items: itemRows, values })
     const event = createTestEvent(dbHttp)
     const result = await comparisonsHandler(event)
+    const expectedImageIds = new Map([
+      [firstItemId, 'compare-primary-image'],
+      [secondItemId, null],
+      [thirdItemId, null],
+      [fourthItemId, null]
+    ])
 
     expect(result).toStrictEqual({
       category: {
@@ -302,6 +325,7 @@ describe('get /api/equipment/comparisons', () => {
 
       items: comparisonItemIds.map((itemId) => {
         return {
+          cloudflareImageId: expectedImageIds.get(itemId),
           id: itemId,
           name: `Item ${itemId.at(-1)}`,
           brand: {
@@ -368,6 +392,20 @@ describe('get /api/equipment/comparisons', () => {
     })
 
     expect(selectMock).toHaveBeenCalledTimes(4)
+    expect(findImagesMock).toHaveBeenCalledWith({
+      columns: {
+        cloudflareImageId: true,
+        itemId: true
+      },
+
+      where: {
+        displayOrder: 0,
+
+        itemId: {
+          in: comparisonItemIds
+        }
+      }
+    })
     expect(valuesWhereMock).toHaveBeenCalledTimes(1)
     expect(enumOptionsWhereMock).toHaveBeenCalledTimes(1)
 

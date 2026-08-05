@@ -7,6 +7,7 @@ import {
 } from '#server/database/schema'
 
 import type { createHttpClient } from '#server/utils/database'
+import { getPrimaryEquipmentImageIds } from '#server/utils/equipment/primary-images'
 
 import type {
   CatalogListBrand,
@@ -35,6 +36,7 @@ interface CatalogListProperty {
 interface CatalogListItem {
   brand: CatalogListBrand;
   category: CatalogListCategory;
+  cloudflareImageId: string | null;
   id: string;
   isInMyGear: boolean;
   name: string;
@@ -117,7 +119,10 @@ function groupEnumOptionNames(rows: PropertyEnumOptionRow[]) {
 }
 
 /** Loads ordered key-property definitions and shapes catalog rows without per-item queries. */
-async function enrichCatalogItemRows(dbHttp: DbHttp, itemRows: CatalogListItemRow[]) : Promise<CatalogListItem[]> {
+async function enrichCatalogItemRows(
+  dbHttp: DbHttp,
+  itemRows: CatalogListItemRow[]
+): Promise<CatalogListItem[]> {
   if (itemRows.length === 0) {
     return []
   }
@@ -172,9 +177,15 @@ async function enrichCatalogItemRows(dbHttp: DbHttp, itemRows: CatalogListItemRo
       inArray(categoryProperties.categoryId, categoryIds)
     )
 
-  const [definitionRows, enumOptionRows, valueRows] = await Promise.all([
+  const imageIdsPromise = getPrimaryEquipmentImageIds({
+    dbHttp,
+    itemIds
+  })
+
+  const [definitionRows, enumOptionRows, imageIdsByItemId, valueRows] = await Promise.all([
     definitionsPromise,
     enumOptionsPromise,
+    imageIdsPromise,
     valuesPromise
   ])
 
@@ -219,9 +230,12 @@ async function enrichCatalogItemRows(dbHttp: DbHttp, itemRows: CatalogListItemRo
       return property
     })
 
+    const cloudflareImageId = imageIdsByItemId.get(item.id) ?? null
+
     return {
       brand: item.brand,
       category: item.category,
+      cloudflareImageId,
       id: item.id,
       isInMyGear: item.isInMyGear,
       name: item.name,

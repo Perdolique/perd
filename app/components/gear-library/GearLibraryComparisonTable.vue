@@ -33,6 +33,17 @@
             scope="col"
           >
             <div :class="$style.itemHeaderContent">
+              <EquipmentItemImage
+                :class="$style.image"
+                alt=""
+                :cloudflare-image-id="item.cloudflareImageId"
+                fit="contain"
+                :height="216"
+                loading="lazy"
+                :sizes="imageSizes"
+                :width="288"
+              />
+
               <span :class="$style.brand">{{ item.brand.name }}</span>
 
               <button
@@ -86,6 +97,7 @@
 
   interface GearLibraryComparisonTableItem {
     brand: GearLibraryComparisonTableItemBrand;
+    cloudflareImageId: string | null;
     detailPath: string;
     id: string;
     name: string;
@@ -108,6 +120,7 @@
   import { computed, type CSSProperties, useTemplateRef } from 'vue'
 
   import PerdLink from '~/components/PerdLink.vue'
+  import EquipmentItemImage from '~/components/equipment/EquipmentItemImage.vue'
 
   interface Emits {
     remove: [itemId: string, focusTargetId?: string];
@@ -120,6 +133,18 @@
   const scrollRegionLabel = computed(
     () => `${props.caption}. Scroll horizontally to view all items.`
   )
+
+  const imageSizes = computed(() => {
+    if (props.items.length === 2) {
+      return '320:176px 600:33vw 900:25vw xl:288px'
+    }
+
+    if (props.items.length === 3) {
+      return '320:176px 800:23vw 900:176px 1050:20vw 1440:288px'
+    }
+
+    return '320:176px 1250:15vw 1536:220px'
+  })
 
   const componentStyle = computed<CSSProperties>(() => {
     return {
@@ -168,6 +193,10 @@
     background-color: var(--color-background-elevated);
     transition:
       inline-size var(--transition-duration-normal) var(--transition-easing-standard);
+
+    @media (width < 900px) {
+      max-block-size: none;
+    }
 
     &:focus-visible {
       box-shadow: var(--shadow-focus);
@@ -248,6 +277,15 @@
     color: var(--color-text-muted);
     font-size: var(--font-size-12);
     font-weight: var(--font-weight-regular);
+  }
+
+  .image {
+    grid-column: 1 / -1;
+    inline-size: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--border-radius-10);
+    background-color: var(--color-surface-primary);
+    object-fit: contain;
   }
 
   .itemName {

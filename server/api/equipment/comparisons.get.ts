@@ -18,6 +18,7 @@ import {
 } from '#server/utils/equipment/property-values'
 
 import { validateEquipmentComparisonQuery } from '#server/utils/validation/schemas'
+import { getPrimaryEquipmentImageIds } from '#server/utils/equipment/primary-images'
 
 interface ComparisonCategory {
   id: number;
@@ -32,6 +33,7 @@ interface ComparisonItemBrand {
 
 interface ComparisonItemSummary {
   brand: ComparisonItemBrand;
+  cloudflareImageId: string | null;
   id: string;
   name: string;
 }
@@ -227,9 +229,15 @@ export default defineEventHandler(async (event) : Promise<ComparisonResponse> =>
       eq(categoryProperties.categoryId, categoryId)
     )
 
-  const [definitionRows, enumOptionRows, valueRows] = await Promise.all([
+  const imageIdsPromise = getPrimaryEquipmentImageIds({
+    dbHttp,
+    itemIds
+  })
+
+  const [definitionRows, enumOptionRows, imageIdsByItemId, valueRows] = await Promise.all([
     definitionsPromise,
     enumOptionsPromise,
+    imageIdsPromise,
     valuesPromise
   ])
 
@@ -238,11 +246,14 @@ export default defineEventHandler(async (event) : Promise<ComparisonResponse> =>
   const items: ComparisonItemSummary[] = []
 
   for (const itemRow of orderedItemRows) {
+    const cloudflareImageId = imageIdsByItemId.get(itemRow.id) ?? null
+
     items.push({
       brand: {
         name: itemRow.brand.name,
         slug: itemRow.brand.slug
       },
+      cloudflareImageId,
       id: itemRow.id,
       name: itemRow.name
     })
@@ -257,6 +268,7 @@ export default defineEventHandler(async (event) : Promise<ComparisonResponse> =>
     for (const itemRow of orderedItemRows) {
       const itemValues = valuesByItemId.get(itemRow.id)
       const storedValue = itemValues?.get(definition.id)
+
       const value = storedValue === undefined
         ? null
         : normalizeEquipmentPropertyValue({

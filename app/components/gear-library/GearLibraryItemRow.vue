@@ -6,8 +6,16 @@
     row-tag="article"
   >
     <template #media="{ className }">
-      <div :class="[className, $style.media]" aria-hidden="true">
-        <Icon name="hugeicons:package" />
+      <div :class="[className, $style.media]">
+        <EquipmentItemImage
+          :class="$style.image"
+          alt=""
+          :cloudflare-image-id="item.cloudflareImageId"
+          fit="cover"
+          :height="48"
+          loading="lazy"
+          :width="48"
+        />
       </div>
     </template>
 
@@ -89,6 +97,7 @@
   } from '~/types/equipment'
 
   import PerdLink from '~/components/PerdLink.vue'
+  import EquipmentItemImage from '~/components/equipment/EquipmentItemImage.vue'
   import GearLibraryItemRowShell from './GearLibraryItemRowShell.vue'
   import GearLibraryMyGearAction from './GearLibraryMyGearAction.vue'
 
@@ -206,8 +215,13 @@
   }
 
   .media {
-    color: var(--color-text-muted);
-    font-size: var(--font-size-20);
+    overflow: hidden;
+  }
+
+  .image {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
   }
 
   .brand {

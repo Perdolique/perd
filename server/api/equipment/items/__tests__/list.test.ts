@@ -88,6 +88,7 @@ function createListDb({
   categoryMetadata,
   definitions = [],
   enumOptions = [],
+  images = [],
   items = [],
   total = 0,
   values = []
@@ -95,6 +96,7 @@ function createListDb({
   categoryMetadata?: unknown;
   definitions?: unknown[];
   enumOptions?: unknown[];
+  images?: unknown[];
   items?: unknown[];
   total?: number;
   values?: unknown[];
@@ -146,6 +148,8 @@ function createListDb({
     return { where: valuesWhereMock }
   })
 
+  const findImagesMock = vi.fn(() => images)
+
   const findFirstMock = vi.fn(() => categoryMetadata)
 
   const selectMock = vi.fn((selection: Record<string, unknown> & { isInMyGear?: SQL }) => {
@@ -173,6 +177,10 @@ function createListDb({
       query: {
         equipmentCategories: {
           findFirst: findFirstMock
+        },
+
+        equipmentItemImages: {
+          findMany: findImagesMock
         }
       },
 
@@ -182,6 +190,7 @@ function createListDb({
     countWhereMock,
     definitionsOrderByMock,
     findFirstMock,
+    findImagesMock,
     itemsLeftJoinMock,
     itemsLimitMock,
     itemsOffsetMock,
@@ -254,7 +263,11 @@ describe('get /api/equipment/items', () => {
       { itemId: id, propertyId: 11, valueBoolean: null, valueNumber: null, valueText: 'liquid-fuel' }
     ]
 
-    const db = createListDb({ definitions, enumOptions, items: itemRows, total: 42, values })
+    const images = [{
+      cloudflareImageId: 'catalog-primary-image',
+      itemId: id
+    }]
+    const db = createListDb({ definitions, enumOptions, images, items: itemRows, total: 42, values })
     const event = createTestEvent(db.dbHttp)
 
     getValidatedQueryMock.mockResolvedValue(createQuery({ limit: 10, page: 2 }))
@@ -263,6 +276,7 @@ describe('get /api/equipment/items', () => {
 
     expect(result).toStrictEqual({
       items: [{
+        cloudflareImageId: 'catalog-primary-image',
         id,
         isInMyGear: true,
         name: 'PocketRocket Deluxe',
@@ -282,6 +296,7 @@ describe('get /api/equipment/items', () => {
           }
         ]
       }, {
+        cloudflareImageId: null,
         id: secondId,
         isInMyGear: false,
         name: 'Solo Pot',
@@ -300,6 +315,20 @@ describe('get /api/equipment/items', () => {
     expect(db.itemsLimitMock).toHaveBeenCalledWith(10)
     expect(db.itemsOffsetMock).toHaveBeenCalledWith(10)
     expect(db.definitionsOrderByMock).toHaveBeenCalledTimes(1)
+    expect(db.findImagesMock).toHaveBeenCalledWith({
+      columns: {
+        cloudflareImageId: true,
+        itemId: true
+      },
+
+      where: {
+        displayOrder: 0,
+
+        itemId: {
+          in: [id, secondId]
+        }
+      }
+    })
 
     const [definitionOrderFragments] = db.definitionsOrderByMock.mock.calls
 

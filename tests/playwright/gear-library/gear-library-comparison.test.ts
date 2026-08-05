@@ -92,6 +92,7 @@ function createComparisonCatalogItemDetail(itemId?: string) {
         name: comparisonResponse.category.name,
         slug: comparisonResponse.category.slug
       },
+      cloudflareImageId: null,
       createdAt: '2088-04-20T12:00:00.000Z',
       id: item.id,
       name: item.name,
@@ -210,6 +211,7 @@ test.describe('Gear library comparison page', () => {
       items: selectedItems.map((item) => {
         return {
           brand: item.brand,
+          cloudflareImageId: item.cloudflareImageId,
           id: item.id,
           name: item.name
         }
