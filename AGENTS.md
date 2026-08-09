@@ -44,3 +44,11 @@
 
 - Import `test` and `expect` from `tests/playwright/fixtures/global.fixtures.ts`, not from `@playwright/test`.
 - When a flow should cancel stale requests, assert the obsolete request fails with `requestfailed`; final UI state alone is insufficient.
+
+## Local database
+
+- During local development, agents may use `psql` with `NUXT_DATABASE_URL` to inspect actual database state whenever it helps diagnose, implement, or verify the current task, even when the task did not begin as database work.
+- Before changing data directly, verify that `NUXT_LOCAL_DATABASE` is enabled. Local development data is disposable: agents may insert, update, or delete it without additional approval when doing so supports the current task.
+- This permission applies only to the local database. Never infer the same permission for staging or production.
+- Never print database URLs, credentials, or secret values.
+- Report material data mutations and what was removed or changed.

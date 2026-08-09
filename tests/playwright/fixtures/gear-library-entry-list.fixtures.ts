@@ -739,6 +739,7 @@ async function mockGuestLogin(context: BrowserContext): Promise<void> {
       status: 201,
 
       json: {
+        isGuest: true,
         userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
       }
     })

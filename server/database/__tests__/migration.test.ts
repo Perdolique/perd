@@ -11,6 +11,11 @@ const imagesMigrationUrl = new URL(
   import.meta.url
 )
 const imagesMigrationSql = readFileSync(imagesMigrationUrl, 'utf8')
+const negativeValuesMigrationUrl = new URL(
+  '../migrations/20260808152209_stiff_ultragirl/migration.sql',
+  import.meta.url
+)
+const negativeValuesMigrationSql = readFileSync(negativeValuesMigrationUrl, 'utf8')
 
 describe('category property display order migration', () => {
   it('should backfill a zero-based order before making the column required', () => {
@@ -58,5 +63,22 @@ describe('equipment item image migration', () => {
     expect(imagesMigrationSql).toContain('"equipment_item_images_itemId_displayOrder_unique"')
     expect(imagesMigrationSql).toContain('"equipment_item_images_displayOrder_check"')
     expect(imagesMigrationSql).toContain('ON DELETE RESTRICT')
+  })
+})
+
+describe('category property negative value migration', () => {
+  it('should forbid negative values by default and preserve temperature ratings', () => {
+    const addColumnPosition = negativeValuesMigrationSql.indexOf(
+      'ADD COLUMN "allowsNegativeValues" boolean DEFAULT false NOT NULL'
+    )
+    const temperatureUpdatePosition = negativeValuesMigrationSql.indexOf(
+      'SET "allowsNegativeValues" = true'
+    )
+
+    expect(addColumnPosition).toBeGreaterThanOrEqual(0)
+    expect(temperatureUpdatePosition).toBeGreaterThan(addColumnPosition)
+    expect(negativeValuesMigrationSql).toContain('property."categoryId" = category.id')
+    expect(negativeValuesMigrationSql).toContain("category.slug = 'sleeping-bags'")
+    expect(negativeValuesMigrationSql).toContain("property.slug = 'temperature-rating'")
   })
 })

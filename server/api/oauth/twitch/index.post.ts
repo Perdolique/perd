@@ -5,7 +5,13 @@ import { updateAppSession } from '#server/utils/session'
 import { getTwitchOAuthToken, getTwitchUserInfo, getRuntimeTwitchConfig } from '#server/utils/oauth/twitch'
 import { validateTwitchOAuthBody } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event) => {
+interface TwitchOAuthResponse {
+  isAdmin: boolean;
+  isGuest: boolean;
+  userId: string;
+}
+
+export default defineEventHandler(async (event): Promise<TwitchOAuthResponse> => {
   const twitchConfig = getRuntimeTwitchConfig(event)
 
   const { code } = await readValidatedBody(event, validateTwitchOAuthBody)
@@ -32,7 +38,11 @@ export default defineEventHandler(async (event) => {
       userId: foundUser.userId
     })
 
-    return foundUser
+    return {
+      isAdmin: foundUser.isAdmin,
+      isGuest: foundUser.isGuest,
+      userId: foundUser.userId
+    }
   }
 
   // TODO (#104): Link the Twitch account to the current user

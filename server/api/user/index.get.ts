@@ -1,6 +1,6 @@
 import { defineEventHandler } from 'h3'
-import { getSessionUser } from '#server/utils/user'
+import { getSessionUser, type SessionUser } from '#server/utils/user'
 
 export default defineEventHandler(
-  async (event) => getSessionUser(event)
+  async (event): Promise<SessionUser> => getSessionUser(event)
 )

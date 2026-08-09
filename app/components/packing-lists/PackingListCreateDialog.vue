@@ -2,7 +2,7 @@
   <ModalDialog
     v-model="isOpened"
     :close-disabled="loading"
-    aria-labelledby="new-packing-list-dialog-title"
+    :aria-labelledby="headingId"
   >
     <form :class="$style.component" @submit.prevent="handleSubmit">
       <div :class="$style.header">
@@ -12,7 +12,7 @@
           </div>
 
           <PerdHeading
-            id="new-packing-list-dialog-title"
+            :id="headingId"
             :class="$style.heading"
             :level="2"
           >
@@ -32,7 +32,7 @@
       </div>
 
       <div :class="$style.field">
-        <label :class="$style.inputLabel" for="new-packing-list-name">
+        <label :class="$style.inputLabel" :for="nameInputId">
           List name
         </label>
 
@@ -40,7 +40,7 @@
           <Icon name="hugeicons:check-list" :class="$style.inputIcon" aria-hidden="true" />
 
           <input
-            id="new-packing-list-name"
+            :id="nameInputId"
             ref="nameInput"
             v-model="listName"
             :disabled="loading"
@@ -55,7 +55,7 @@
 
       <p
         v-if="isErrorVisible"
-        id="new-packing-list-create-error"
+        :id="errorId"
         :class="$style.errorMessage"
         role="alert"
       >
@@ -85,7 +85,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, nextTick, useTemplateRef, watch } from 'vue'
+  import { computed, nextTick, useId, useTemplateRef, watch } from 'vue'
   import PerdButton from '~/components/PerdButton.vue'
   import PerdHeading from '~/components/PerdHeading.vue'
   import ModalDialog from '~/components/dialogs/ModalDialog.vue'
@@ -103,6 +103,10 @@
   } = defineProps<Props>()
 
   const emit = defineEmits<Emits>()
+  const componentId = useId()
+  const errorId = `${componentId}-error`
+  const headingId = `${componentId}-heading`
+  const nameInputId = `${componentId}-name-input`
 
   const isOpened = defineModel<boolean>({
     required: true
@@ -113,7 +117,7 @@
   })
 
   const nameInput = useTemplateRef('nameInput')
-  const errorMessageId = computed(() => errorMessage === null ? undefined : 'new-packing-list-create-error')
+  const errorMessageId = computed(() => errorMessage === null ? undefined : errorId)
   const isCreateDisabled = computed(() => listName.value.trim() === '' || loading)
   const isErrorVisible = computed(() => errorMessage !== null)
 

@@ -22,6 +22,7 @@ interface MockWriteDb {
 
 interface SelectOperation {
   error?: Error;
+  lock?: boolean;
   rows: unknown;
 }
 
@@ -84,6 +85,8 @@ vi.mock(import('#server/utils/config'), () => {
 })
 
 function createSelectMock(operations: SelectOperation[]) {
+  const forMocks: ReturnType<typeof vi.fn>[] = []
+
   const whereMock = vi.fn(() => {
     const operation = operations.shift()
 
@@ -91,14 +94,24 @@ function createSelectMock(operations: SelectOperation[]) {
       throw new Error('No select operation configured')
     }
 
-    return {
-      limit: vi.fn(() => {
-        if (operation.error !== undefined) {
-          throw operation.error
-        }
+    const limitMock = vi.fn(() => {
+      if (operation.error !== undefined) {
+        throw operation.error
+      }
 
-        return operation.rows
-      })
+      if (operation.lock === true) {
+        const forMock = vi.fn(() => operation.rows)
+
+        forMocks.push(forMock)
+
+        return { for: forMock }
+      }
+
+      return operation.rows
+    })
+
+    return {
+      limit: limitMock
     }
   })
 
@@ -122,6 +135,7 @@ function createSelectMock(operations: SelectOperation[]) {
   })
 
   return {
+    forMocks,
     selectMock
   }
 }
@@ -421,7 +435,8 @@ describe('property enum option handlers', () => {
         type: 'values'
       }])
 
-      const { selectMock } = createSelectMock([{
+      const { forMocks, selectMock } = createSelectMock([{
+        lock: true,
         rows: [deletedOption]
       }, {
         rows: []
@@ -442,6 +457,18 @@ describe('property enum option handlers', () => {
       const event = createTestEvent({})
       await deletePropertyEnumOptionHandler(event)
 
+      const [propertyLockMock] = forMocks
+
+      expect(forMocks).toHaveLength(1)
+      expect(propertyLockMock).toHaveBeenCalledWith('update')
+      expect(selectMock).toHaveBeenCalledTimes(2)
+
+      const propertyLockCallOrder = Math.min(
+        ...forMocks.flatMap((forMock) => forMock.mock.invocationCallOrder)
+      )
+      const usageReadCallOrder = Math.max(...selectMock.mock.invocationCallOrder)
+
+      expect(propertyLockCallOrder).toBeLessThan(usageReadCallOrder)
       expect(setResponseStatusMock).toHaveBeenCalledWith(event, 204)
       expect(valuesMocks[0]).toHaveBeenCalledWith({
         action: 'delete_property_enum_option',
@@ -461,6 +488,7 @@ describe('property enum option handlers', () => {
     it('should return 404 when category property does not exist', async () => {
       const { insertMock } = createInsertMock([])
       const { selectMock } = createSelectMock([{
+        lock: true,
         rows: []
       }])
 
@@ -488,6 +516,7 @@ describe('property enum option handlers', () => {
     it('should return 404 when property enum option does not belong to property', async () => {
       const { insertMock } = createInsertMock([])
       const { selectMock } = createSelectMock([{
+        lock: true,
         rows: []
       }])
 
@@ -521,6 +550,7 @@ describe('property enum option handlers', () => {
 
       const { insertMock } = createInsertMock([])
       const { selectMock } = createSelectMock([{
+        lock: true,
         rows: [deletedOption]
       }, {
         rows: [{

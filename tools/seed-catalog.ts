@@ -80,6 +80,7 @@ function buildCategoryPropertySeedRows(categoryIdBySlug: Map<string, number>) {
 
     return properties.map((property, displayOrder) => {
       return {
+        allowsNegativeValues: property.allowsNegativeValues ?? false,
         categoryId,
         dataType: property.dataType,
         displayOrder,

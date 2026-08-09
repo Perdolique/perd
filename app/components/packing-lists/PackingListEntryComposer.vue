@@ -21,11 +21,11 @@
 
       <div :class="$style.panel" @keydown.esc.prevent.stop="handleEscape">
         <form :class="$style.searchForm" role="search" @submit.prevent="handleSearchSubmit">
-          <label :class="$style.inputLabel" for="packing-list-entry-search">
+          <label :class="$style.inputLabel" :for="searchInputId">
             Find an item
           </label>
 
-          <p id="packing-list-entry-search-hint" :class="$style.inputHint">
+          <p :id="searchHintId" :class="$style.inputHint">
             Search by item, brand, or category. Your text can also become a custom item.
           </p>
 
@@ -33,13 +33,13 @@
             <Icon name="hugeicons:search-01" :class="$style.inputIcon" aria-hidden="true" />
 
             <input
-              id="packing-list-entry-search"
+              :id="searchInputId"
               ref="searchInput"
               v-model="searchQuery"
               :class="$style.input"
               :disabled="isMutationPending"
               :maxlength="maxCustomNameLength"
-              aria-describedby="packing-list-entry-search-hint"
+              :aria-describedby="searchHintId"
               name="search"
               type="text"
               autocomplete="off"
@@ -129,7 +129,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, nextTick, onMounted, useTemplateRef } from 'vue'
+  import { computed, nextTick, onMounted, useId, useTemplateRef } from 'vue'
   import { limits } from '#shared/constants'
   import type { PackingListAvailableGearItem, PackingListEntry } from '~/types/packing'
   import { usePackingListEntryComposer } from '~/composables/use-packing-list-entry-composer'
@@ -154,6 +154,9 @@
   } = defineProps<Props>()
 
   const emit = defineEmits<Emits>()
+  const componentId = useId()
+  const searchHintId = `${componentId}-search-hint`
+  const searchInputId = `${componentId}-search-input`
   const detailsRef = useTemplateRef('details')
   const summaryRef = useTemplateRef('summary')
   const searchInput = useTemplateRef('searchInput')

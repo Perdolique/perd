@@ -65,6 +65,7 @@
 
       user.value.userId = result.userId
       user.value.isAdmin = result.isAdmin
+      user.value.isGuest = result.isGuest
       user.value.hasData = true
 
       const navigationTarget = getRedirectNavigationTarget(route.query.state)

@@ -1,20 +1,22 @@
-import type { H3Event } from 'h3'
+import { createError, type H3Event } from 'h3'
 import { and, eq } from 'drizzle-orm'
 import type { OAuthProvider } from '#shared/types/oauth'
 import { clearAppSession, useAppSession } from '#server/utils/session'
 import { oauthAccounts, oauthProviders, users } from '#server/database/schema'
 
-interface ReturnUser {
+interface SessionUser {
   readonly userId: string | null;
   readonly isAdmin: boolean;
+  readonly isGuest: boolean;
 }
 
-const defaultUser : ReturnUser = {
+const defaultUser : SessionUser = {
   userId: null,
-  isAdmin: false
+  isAdmin: false,
+  isGuest: false
 }
 
-async function getSessionUser(event: H3Event) : Promise<ReturnUser> {
+async function getSessionUser(event: H3Event) : Promise<SessionUser> {
   const session = await useAppSession(event)
   const { userId } = session.data
 
@@ -32,6 +34,16 @@ async function getSessionUser(event: H3Event) : Promise<ReturnUser> {
 
       where: {
         id: userId
+      },
+
+      with: {
+        oauthAccounts: {
+          columns: {
+            id: true
+          },
+
+          limit: 1
+        }
       }
     })
 
@@ -41,9 +53,12 @@ async function getSessionUser(event: H3Event) : Promise<ReturnUser> {
     return defaultUser
   }
 
+  const isGuest = foundUser.oauthAccounts.length === 0
+
   return {
     userId: foundUser.id,
-    isAdmin: foundUser.isAdmin
+    isAdmin: foundUser.isAdmin,
+    isGuest
   }
 }
 
@@ -51,7 +66,7 @@ async function getUserByOAuthAccount(
   provider: OAuthProvider,
   accountId: string,
   event: H3Event
-) : Promise<ReturnUser> {
+) : Promise<SessionUser> {
   const [foundUser] = await event.context.dbHttp
     .select({
       userId: oauthAccounts.userId,
@@ -74,7 +89,30 @@ async function getUserByOAuthAccount(
       eq(oauthAccounts.accountId, accountId)
     )
 
-  return foundUser ?? defaultUser
+  if (foundUser === undefined) {
+    return defaultUser
+  }
+
+  return {
+    userId: foundUser.userId,
+    isAdmin: foundUser.isAdmin,
+    isGuest: false
+  }
 }
 
-export { getSessionUser, getUserByOAuthAccount }
+async function validateRegisteredUser(event: H3Event): Promise<string> {
+  const user = await getSessionUser(event)
+
+  if (user.userId === null) {
+    throw createError({ status: 401 })
+  }
+
+  if (user.isGuest) {
+    throw createError({ status: 403 })
+  }
+
+  return user.userId
+}
+
+export { getSessionUser, getUserByOAuthAccount, validateRegisteredUser }
+export type { SessionUser }
