@@ -53,7 +53,7 @@
     "@nuxt/fonts": "0.14.0",
     "@nuxt/icon": "2.4.1",
     "@playwright/test": "1.62.1",
-    "@types/node": "26.1.2",
+    "@types/node": "26.2.0",
     "@types/ws": "8.18.1",
     "@vueuse/core": "14.4.0",
     "drizzle-kit": "1.0.0-rc.4",
@@ -66,15 +66,15 @@
     "oxlint": "1.77.0",
     "oxlint-tsgolint": "7.0.2001",
     "taze": "20.0.0",
-    "tsx": "4.23.9",
+    "tsx": "4.23.11",
     "typescript": "6.0.3",
     "ufo": "1.6.4",
     "valibot": "1.4.2",
     "vite": "8.2.1",
     "vitest": "4.1.10",
     "vue-tsc": "3.3.9",
-    "wrangler": "4.119.0",
-    "ws": "8.21.2"
+    "wrangler": "4.120.0",
+    "ws": "8.21.3"
   },
   "packageManager": "pnpm@11.20.0"
 }
