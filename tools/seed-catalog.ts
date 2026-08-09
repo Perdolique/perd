@@ -92,7 +92,7 @@ function buildCategoryPropertySeedRows(categoryIdBySlug: Map<string, number>) {
   })
 }
 
-async function seedCatalog(db: Database) {
+async function resetAndSeedCatalog(db: Database) {
   assertSampleItemCoverage()
 
   await reset(db, catalogSchemaForReset)
@@ -342,5 +342,5 @@ async function seedCatalog(db: Database) {
 
 export {
   buildCategoryPropertySeedRows,
-  seedCatalog
+  resetAndSeedCatalog
 }
