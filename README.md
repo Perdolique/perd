@@ -36,3 +36,12 @@ The priority is the user workflow, not internal admin tooling.
 - [Cloudflare Workers](https://developers.cloudflare.com/workers/)
 - [Neon](https://neon.tech/)
 - [Drizzle ORM](https://orm.drizzle.team/)
+
+## Database changes
+
+Migrations are the only automatic way to change existing environments. Run the
+destructive catalog reset only for a local or new empty database with
+`vp run db:reset:catalog:local` or `vp run db:reset:catalog`.
+
+Every canonical catalog or reference-data change must include a targeted,
+one-time SQL migration and the matching update to the seed definitions.

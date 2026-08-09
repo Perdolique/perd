@@ -1,6 +1,11 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
+const databaseMigrationWorkflowUrl = new URL(
+  '../../../.github/workflows/database-migration.yml',
+  import.meta.url
+)
+const databaseMigrationWorkflow = readFileSync(databaseMigrationWorkflowUrl, 'utf8')
 const migrationUrl = new URL(
   '../migrations/20260711222621_stormy_captain_marvel/migration.sql',
   import.meta.url
@@ -16,6 +21,15 @@ const negativeValuesMigrationUrl = new URL(
   import.meta.url
 )
 const negativeValuesMigrationSql = readFileSync(negativeValuesMigrationUrl, 'utf8')
+
+describe('database migration workflow', () => {
+  it('should migrate pull request databases without resetting catalog data', () => {
+    expect(databaseMigrationWorkflow).toContain('pull_request:')
+    expect(databaseMigrationWorkflow).toContain('pnpm run db:migrate')
+    expect(databaseMigrationWorkflow).not.toContain('db:seed')
+    expect(databaseMigrationWorkflow).not.toContain('db:reset:catalog')
+  })
+})
 
 describe('category property display order migration', () => {
   it('should backfill a zero-based order before making the column required', () => {
@@ -80,5 +94,20 @@ describe('category property negative value migration', () => {
     expect(negativeValuesMigrationSql).toContain('property."categoryId" = category.id')
     expect(negativeValuesMigrationSql).toContain("category.slug = 'sleeping-bags'")
     expect(negativeValuesMigrationSql).toContain("property.slug = 'temperature-rating'")
+  })
+
+  it('should preserve equipment items and their images', () => {
+    expect(negativeValuesMigrationSql).not.toMatch(
+      /(?:CREATE|DROP|TRUNCATE) TABLE (?:IF (?:NOT )?EXISTS )?"equipment_items"/iu
+    )
+    expect(negativeValuesMigrationSql).not.toMatch(
+      /DELETE FROM "equipment_items"/iu
+    )
+    expect(negativeValuesMigrationSql).not.toMatch(
+      /(?:CREATE|DROP|TRUNCATE) TABLE (?:IF (?:NOT )?EXISTS )?"equipment_item_images"/iu
+    )
+    expect(negativeValuesMigrationSql).not.toMatch(
+      /DELETE FROM "equipment_item_images"/iu
+    )
   })
 })

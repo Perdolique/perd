@@ -15,6 +15,7 @@
 
 ## Verification
 
+- Local development uses Vite+. When documenting or running local commands, use `vp` instead of `pnpm`.
 - Run applicable checks in parallel where practical.
 - During development, run only focused checks for the code changed. Do not run full suites manually unless the user explicitly asks; commit hooks run the mandatory verification suite.
 - If you are creating a commit, do not run the mandatory verification suite manually first; commit hooks will run it.
