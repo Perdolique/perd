@@ -87,6 +87,7 @@ test.describe('Equipment image management', () => {
       await route.fulfill({
         json: {
           isAdmin: true,
+          isGuest: false,
           userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
         }
       })
@@ -133,6 +134,7 @@ test.describe('Equipment image management', () => {
       await route.fulfill({
         json: {
           isAdmin: true,
+          isGuest: false,
           userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
         }
       })
@@ -206,6 +208,7 @@ test.describe('Equipment image management', () => {
       await route.fulfill({
         json: {
           isAdmin: true,
+          isGuest: false,
           userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
         }
       })

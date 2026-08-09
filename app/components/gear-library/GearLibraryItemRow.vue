@@ -88,7 +88,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed } from 'vue'
+  import { computed, useId } from 'vue'
 
   import type {
     GearLibraryListItemView,
@@ -120,7 +120,7 @@
   const weightPropertySlug = 'weight'
   const props = defineProps<Props>()
   const emit = defineEmits<Emits>()
-  const comparisonControlId = computed(() => `compare-${props.item.id}`)
+  const comparisonControlId = useId()
 
   function handleComparisonChange(event: Event) {
     const checkbox = event.currentTarget

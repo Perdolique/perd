@@ -1,5 +1,15 @@
 <template>
   <PageContent :page-title="navigationLabels.gearLibrary">
+    <template #actions>
+      <PerdButton
+        :to="appRoutes.gearLibraryNew"
+        size="small"
+        icon="hugeicons:add-01"
+      >
+        Submit gear
+      </PerdButton>
+    </template>
+
     <div :class="$style.component">
       <p
         v-if="showPageComparisonNotice"
@@ -66,7 +76,15 @@
 
         <template #results-summary>
           <PageSummaryHeader
-            v-if="hasSuccessfulItemsRequest"
+            v-if="showInitialLoadingSurface"
+            :class="$style.resultsSummaryPlaceholder"
+            label="Results"
+            value="0 items"
+            aria-hidden="true"
+          />
+
+          <PageSummaryHeader
+            v-else-if="hasSuccessfulItemsRequest"
             label="Results"
             :value="itemsSummaryText"
           />
@@ -76,6 +94,7 @@
           <PerdButton
             v-if="showComparisonModeAction"
             ref="comparisonModeAction"
+            size="small"
             variant="secondary"
             @click="handleComparisonModeToggle"
           >
@@ -251,7 +270,7 @@
   import { useGearLibraryStore } from '~/stores/gear-library'
   import { useGearLibraryBrowsingRestoration } from '~/composables/use-gear-library-browsing-restoration'
   import { createGearLibraryAppliedFilterChips } from '~/utils/gear-library-filters'
-  import { createGearLibraryItemPath, navigationLabels } from '~/utils/navigation'
+  import { appRoutes, createGearLibraryItemPath, navigationLabels } from '~/utils/navigation'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PageSummaryHeader from '~/components/PageSummaryHeader.vue'
   import PerdButton from '~/components/PerdButton.vue'
@@ -692,6 +711,10 @@
   .results {
     display: grid;
     gap: var(--spacing-24);
+  }
+
+  .resultsSummaryPlaceholder {
+    visibility: hidden;
   }
 
   .initialState {

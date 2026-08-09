@@ -15,6 +15,7 @@
 
           <PerdButton
             ref="filterTrigger"
+            size="small"
             variant="secondary"
             aria-haspopup="dialog"
             :aria-expanded="isDialogOpen"

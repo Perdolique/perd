@@ -3,6 +3,7 @@ import { users } from '#server/database/schema'
 import { useAppSession } from '#server/utils/session'
 
 interface ReturnType {
+  isGuest: boolean;
   userId: string;
 }
 
@@ -34,6 +35,7 @@ export default defineEventHandler(async (event) : Promise<ReturnType> => {
   })
 
   return {
+    isGuest: true,
     userId: newUser.userId
   }
 })

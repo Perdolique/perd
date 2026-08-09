@@ -8,6 +8,7 @@ interface EnumOptionDefinition {
 }
 
 interface PropertyDefinition {
+  allowsNegativeValues?: boolean;
   dataType: PropertyDataType;
   enumOptions?: EnumOptionDefinition[];
   name: string;
@@ -58,6 +59,7 @@ const brandDefinitions: ReferenceSeedDefinition[] = [
 const propertyDefinitionsByCategorySlug: Record<string, PropertyDefinition[]> = {
   'sleeping-bags': [
     {
+      allowsNegativeValues: true,
       dataType: 'number',
       name: 'Temperature Rating',
       slug: 'temperature-rating',

@@ -31,6 +31,7 @@ export default defineEventHandler(async (event) => {
           )
         )
         .limit(1)
+        .for('update')
 
       if (currentOption === undefined) {
         throw createError({ status: 404 })

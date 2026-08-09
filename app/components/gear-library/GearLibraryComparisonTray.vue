@@ -2,7 +2,7 @@
   <div :class="$style.component" :style="componentStyle">
     <aside
       :class="$style.tray"
-      aria-labelledby="gear-library-comparison-heading"
+      :aria-labelledby="headingId"
       data-testid="gear-library-comparison-tray"
     >
       <div ref="surface" :class="$style.surface">
@@ -28,7 +28,7 @@
 
         <header :class="$style.header">
           <div>
-            <PerdHeading id="gear-library-comparison-heading" :level="2">
+            <PerdHeading :id="headingId" :level="2">
               Compare items
             </PerdHeading>
 
@@ -149,6 +149,7 @@
 
   const props = defineProps<Props>()
   const emit = defineEmits<Emits>()
+  const headingId = useId()
   const isItemListExpanded = ref(false)
   const pendingFocusTarget = ref<string>()
   const itemListId = useId()

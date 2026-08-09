@@ -1,6 +1,7 @@
 const appRoutes = {
   account: '/account',
   gearLibrary: '/gear-library',
+  gearLibraryNew: '/gear-library/new',
   home: '/',
   myGear: '/my-gear',
   packingLists: '/packing-lists'

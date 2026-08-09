@@ -137,6 +137,7 @@
 
       if (typeof response.userId === 'string') {
         user.value.userId = response.userId
+        user.value.isGuest = response.isGuest
         user.value.hasData = true
       }
 

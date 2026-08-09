@@ -6,6 +6,7 @@ import { oauthAccounts, users } from '#server/database/schema'
 interface OAuthUserResult {
   readonly userId: string;
   readonly isAdmin: boolean;
+  readonly isGuest: boolean;
 }
 
 async function createOAuthUser(
@@ -62,13 +63,15 @@ async function createOAuthUser(
 
         return {
           userId: foundUser.userId,
-          isAdmin: foundUser.isAdmin
+          isAdmin: foundUser.isAdmin,
+          isGuest: false
         }
       })
 
       return {
         userId: newUser.userId,
-        isAdmin: newUser.isAdmin
+        isAdmin: newUser.isAdmin,
+        isGuest: newUser.isGuest
       }
     } finally {
       await dbWebsocket.$client.end()

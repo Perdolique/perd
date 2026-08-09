@@ -17,6 +17,7 @@
       :data-value="modelValue"
       :aria-busy="pending"
       :aria-disabled="ariaDisabled"
+      :aria-required="ariaRequired"
       :aria-controls="listboxId"
       :aria-expanded="isOpen"
       :aria-activedescendant="activeOptionId"
@@ -81,13 +82,15 @@
     label: string;
     options: PerdSelectOption[];
     pending?: boolean;
+    required?: boolean;
   }
 
   const {
     disabled,
     label,
     options,
-    pending
+    pending,
+    required
   } = defineProps<Props>()
 
   const modelValue = defineModel<string>({
@@ -122,6 +125,7 @@
   const isNativelyDisabled = computed(() => disabled === true || hasEnabledOptions.value === false)
   const isControlDisabled = computed(() => isNativelyDisabled.value || pending === true)
   const ariaDisabled = computed(() => pending === true || undefined)
+  const ariaRequired = computed(() => required === true || undefined)
 
   const selectedOption = computed(() => (
     options.find((option) => option.value === modelValue.value)

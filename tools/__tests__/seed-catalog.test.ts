@@ -50,4 +50,19 @@ describe(buildCategoryPropertySeedRows, () => {
       expect(orderedProperties).toStrictEqual(expectedProperties)
     }
   })
+
+  it('should allow negative values only for the sleeping bag temperature rating', () => {
+    const categorySlugs = Object.keys(propertyDefinitionsByCategorySlug)
+    const categoryIdBySlug = new Map(categorySlugs.map((categorySlug, index) => [categorySlug, index + 1]))
+    const rows = buildCategoryPropertySeedRows(categoryIdBySlug)
+    const negativeValueRows = rows.filter((row) => row.allowsNegativeValues)
+    const sleepingBagsCategoryId = categoryIdBySlug.get('sleeping-bags')
+
+    expect(negativeValueRows).toStrictEqual([
+      expect.objectContaining({
+        categoryId: sleepingBagsCategoryId,
+        slug: 'temperature-rating'
+      })
+    ])
+  })
 })

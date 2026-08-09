@@ -16,6 +16,7 @@ import {
   validateGroupMutationBody,
   validateItemDetailParams,
   validateItemImageUploadQuery,
+  validateItemSubmissionCreateBody,
   validateEquipmentComparisonQuery,
   validateItemsListQuery,
   validatePackingListAvailableGearQuery,
@@ -1169,6 +1170,72 @@ describe('validation schemas', () => {
     expect(() => validateUserEquipmentCreateBody({
       itemId: '550e8400-e29b-41d4-a716-446655440000'
     })).toThrow(/./u)
+  })
+
+  it('should trim an item submission name and default properties to an empty array', () => {
+    const result = validateItemSubmissionCreateBody({
+      brandId: 1,
+      categoryId: 2,
+      name: '  PocketRocket Deluxe  '
+    })
+
+    expect(result).toStrictEqual({
+      brandId: 1,
+      categoryId: 2,
+      name: 'PocketRocket Deluxe',
+      properties: []
+    })
+  })
+
+  it('should accept string and boolean item submission property values', () => {
+    const result = validateItemSubmissionCreateBody({
+      brandId: 1,
+      categoryId: 2,
+      name: 'PocketRocket Deluxe',
+
+      properties: [{
+        propertyId: 3,
+        value: '83.5'
+      }, {
+        propertyId: 4,
+        value: false
+      }]
+    })
+
+    expect(result.properties).toStrictEqual([{
+      propertyId: 3,
+      value: '83.5'
+    }, {
+      propertyId: 4,
+      value: false
+    }])
+  })
+
+  it.each([
+    { brandId: 0, categoryId: 2, name: 'Item', properties: [] },
+    { brandId: 1.5, categoryId: 2, name: 'Item', properties: [] },
+    { brandId: 1, categoryId: -1, name: 'Item', properties: [] },
+    { brandId: 1, categoryId: 2, name: '   ', properties: [] },
+    {
+      brandId: 1,
+      categoryId: 2,
+      name: 'I'.repeat(limits.maxEquipmentItemNameLength + 1),
+      properties: []
+    },
+    {
+      brandId: 1,
+      categoryId: 2,
+      name: 'Item',
+      properties: [{ propertyId: 1, value: 12 }]
+    },
+    {
+      brandId: 1,
+      categoryId: 2,
+      name: 'Item',
+      properties: [{ propertyId: 1, value: 'one' }, { propertyId: 1, value: 'two' }]
+    }
+  ])('should reject invalid item submission body: %j', (body) => {
+    expect(() => validateItemSubmissionCreateBody(body)).toThrow(/./u)
   })
 
   it('should trim an equipment image upload filename', () => {

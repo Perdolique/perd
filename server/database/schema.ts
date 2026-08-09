@@ -8,9 +8,9 @@ import { limits } from '../../shared/constants'
 // ─── Auth ───────────────────────────────────────────────────────────
 
 /**
- * Registered users.
+ * Guest and registered user accounts.
  *
- * Created automatically on first OAuth login.
+ * Created automatically on Guest or OAuth login.
  */
 const users = pgTable('users', {
   id:
@@ -338,6 +338,11 @@ const categoryProperties = pgTable('category_properties', {
   dataType:
     varchar({ length: 16 })
     .notNull(),
+
+  allowsNegativeValues:
+    boolean()
+    .notNull()
+    .default(false),
 
   displayOrder:
     integer()

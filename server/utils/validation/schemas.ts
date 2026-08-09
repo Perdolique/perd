@@ -201,6 +201,49 @@ const itemDetailParamsSchema = v.object({
   id: canonicalUuidV7Schema
 })
 
+const itemSubmissionPropertyValueSchema = v.union([
+  v.boolean(),
+  v.string()
+])
+
+const itemSubmissionPropertySchema = v.object({
+  propertyId: v.pipe(
+    v.number(),
+    v.integer(),
+    v.minValue(1)
+  ),
+
+  value: itemSubmissionPropertyValueSchema
+})
+
+const itemSubmissionCreateBodySchema = v.pipe(
+  v.object({
+    brandId: v.pipe(
+      v.number(),
+      v.integer(),
+      v.minValue(1)
+    ),
+
+    categoryId: v.pipe(
+      v.number(),
+      v.integer(),
+      v.minValue(1)
+    ),
+
+    name: v.pipe(
+      trimmedNonEmptyStringSchema,
+      v.maxLength(limits.maxEquipmentItemNameLength)
+    ),
+
+    properties: v.optional(v.array(itemSubmissionPropertySchema), [])
+  }),
+  v.check((input) => {
+    const propertyIds = input.properties.map((property) => property.propertyId)
+
+    return new Set(propertyIds).size === propertyIds.length
+  }, 'properties must contain unique propertyId values')
+)
+
 const itemImageParamsSchema = v.object({
   id: canonicalUuidV7Schema,
   'image-id': canonicalUuidV7Schema
@@ -659,6 +702,10 @@ function validateItemDetailParams(params: unknown) {
   return v.parse(itemDetailParamsSchema, params)
 }
 
+function validateItemSubmissionCreateBody(body: unknown) {
+  return v.parse(itemSubmissionCreateBodySchema, body)
+}
+
 function validateItemImageParams(params: unknown) {
   return v.parse(itemImageParamsSchema, params)
 }
@@ -743,6 +790,7 @@ export {
   groupIdParamsSchema,
   groupMutationSchema,
   itemDetailParamsSchema,
+  itemSubmissionCreateBodySchema,
   itemImageOrderBodySchema,
   itemImageParamsSchema,
   itemImageUploadQuerySchema,
@@ -780,6 +828,7 @@ export {
   validateGroupIdParams,
   validateGroupMutationBody,
   validateItemDetailParams,
+  validateItemSubmissionCreateBody,
   validateItemImageOrderBody,
   validateItemImageParams,
   validateItemImageUploadQuery,
