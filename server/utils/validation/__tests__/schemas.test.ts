@@ -1283,6 +1283,51 @@ describe('validation schemas', () => {
     })).toThrow(/./u)
   })
 
+  it('should validate item submission publish and reject decisions', () => {
+    const body = {
+      brandId: 1,
+      categoryId: 2,
+      expectedUpdatedAt: '2026-08-01T12:00:00.000Z',
+      name: 'PocketRocket Deluxe',
+      properties: []
+    }
+
+    expect(validateItemSubmissionUpdateBody({
+      ...body,
+      decision: 'publish'
+    })).toStrictEqual({
+      ...body,
+      decision: 'publish'
+    })
+
+    expect(validateItemSubmissionUpdateBody({
+      ...body,
+      decision: 'reject',
+      rejectionReason: '  Duplicate catalog item  '
+    })).toStrictEqual({
+      ...body,
+      decision: 'reject',
+      rejectionReason: 'Duplicate catalog item'
+    })
+  })
+
+  it.each([
+    { decision: 'reject', rejectionReason: '' },
+    { decision: 'reject', rejectionReason: '   ' },
+    { decision: 'reject', rejectionReason: 'x'.repeat(257) },
+    { decision: 'publish', rejectionReason: 'Not allowed' },
+    { rejectionReason: 'Not allowed' }
+  ])('should reject an invalid item submission decision: %j', (decision) => {
+    expect(() => validateItemSubmissionUpdateBody({
+      brandId: 1,
+      categoryId: 2,
+      expectedUpdatedAt: '2026-08-01T12:00:00.000Z',
+      name: 'PocketRocket Deluxe',
+      properties: [],
+      ...decision
+    })).toThrow(/./u)
+  })
+
   it('should accept only canonical uuid v7 submission params', () => {
     expect(validateItemSubmissionParams({
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'

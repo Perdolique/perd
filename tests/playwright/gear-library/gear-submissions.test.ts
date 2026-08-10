@@ -385,6 +385,10 @@ test.describe('Gear submissions', () => {
     await expect(submissionStatus).toBeFocused()
     await expect(page.getByRole('button', { name: 'Submit for review' })).toHaveCount(0)
     await expect(page.locator(`a[href*="${pendingItemId}"]`)).toHaveCount(0)
+    await expect(page.getByRole('link', { name: 'View gear submissions' })).toHaveAttribute(
+      'href',
+      '/account/submissions'
+    )
     expect(getMyGearPostCount()).toBe(0)
   })
 

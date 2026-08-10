@@ -230,6 +230,9 @@ const equipmentItems = pgTable('equipment_items', {
     .notNull()
     .default('approved'),
 
+  rejectionReason:
+    varchar({ length: limits.maxEquipmentItemRejectionReasonLength }),
+
   createdBy:
     uuid()
     .references(() => users.id, {

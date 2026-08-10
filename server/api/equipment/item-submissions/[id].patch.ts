@@ -180,12 +180,34 @@ export default defineEventHandler(async (event): Promise<ItemSubmissionDetailRes
         body.properties
       )
 
+      let status: 'approved' | 'pending' | 'rejected' = 'pending'
+
+      if (body.decision === 'publish') {
+        status = 'approved'
+      } else if (body.decision === 'reject') {
+        status = 'rejected'
+      }
+
+      const rejectionReason = body.decision === 'reject'
+        ? body.rejectionReason ?? null
+        : null
+
+      let contributionAction = 'update_equipment_item_submission'
+
+      if (body.decision === 'publish') {
+        contributionAction = 'publish_item_submission'
+      } else if (body.decision === 'reject') {
+        contributionAction = 'reject_item_submission'
+      }
+
       const [updatedItem] = await transaction
         .update(equipmentItems)
         .set({
           brandId: body.brandId,
           categoryId: body.categoryId,
-          name: body.name
+          name: body.name,
+          rejectionReason,
+          status
         })
         .where(eq(equipmentItems.id, id))
         .returning({ updatedAt: equipmentItems.updatedAt })
@@ -219,7 +241,7 @@ export default defineEventHandler(async (event): Promise<ItemSubmissionDetailRes
       await transaction
         .insert(contributions)
         .values({
-          action: 'update_equipment_item_submission',
+          action: contributionAction,
 
           metadata: {
             brandId: brand.id,
@@ -228,7 +250,8 @@ export default defineEventHandler(async (event): Promise<ItemSubmissionDetailRes
             categoryName: category.name,
             name: body.name,
             propertyCount: normalizedProperties.length,
-            status: 'pending'
+            rejectionReason,
+            status
           },
 
           targetId: id,
@@ -243,6 +266,8 @@ export default defineEventHandler(async (event): Promise<ItemSubmissionDetailRes
         id,
         name: body.name,
         properties: normalizedProperties.map((property) => mapNormalizedProperty(property)),
+        rejectionReason,
+        status,
         updatedAt: updatedItem.updatedAt
       }
     })

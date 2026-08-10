@@ -12,6 +12,7 @@ const limits = {
   maxEquipmentGroupSlugLength: 128,
   maxEquipmentItemImageFilenameLength: 255,
   maxEquipmentItemNameLength: 256,
+  maxEquipmentItemRejectionReasonLength: 256,
   maxEquipmentItemsFilterCount: 20,
   maxPackingListEntryCustomNameLength: 128,
   maxPackingListNameLength: 128,

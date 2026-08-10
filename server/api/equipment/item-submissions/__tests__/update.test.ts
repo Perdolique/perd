@@ -248,7 +248,9 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
     expect(db.updateSetMock).toHaveBeenCalledWith({
       brandId: 1,
       categoryId: 2,
-      name: 'PocketRocket Deluxe'
+      name: 'PocketRocket Deluxe',
+      rejectionReason: null,
+      status: 'pending'
     })
     expectIdPredicate(db.updateWhereMock.mock.calls[0]?.[0], 'equipment_items')
     expect(db.updateReturningMock).toHaveBeenCalledWith({
@@ -278,9 +280,60 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
       { propertyId: 3, value: '83.5' },
       { propertyId: 4, value: false }
     ])
+    expect(result.rejectionReason).toBeNull()
+    expect(result.status).toBe('pending')
     expect(result.updatedAt).toStrictEqual(new Date('2026-08-01T12:31:00Z'))
     expect(db.endMock).toHaveBeenCalledTimes(1)
   })
+
+  it.each([{
+    action: 'publish_item_submission',
+    body: {
+      brandId: 1,
+      categoryId: 2,
+      decision: 'publish',
+      expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
+      name: 'PocketRocket Deluxe',
+      properties: [{ propertyId: 3, value: '83.50' }]
+    },
+    rejectionReason: null,
+    status: 'approved'
+  }, {
+    action: 'reject_item_submission',
+    body: {
+      brandId: 1,
+      categoryId: 2,
+      decision: 'reject',
+      expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
+      name: 'PocketRocket Deluxe',
+      properties: [{ propertyId: 3, value: '83.50' }],
+      rejectionReason: 'Duplicate catalog item'
+    },
+    rejectionReason: 'Duplicate catalog item',
+    status: 'rejected'
+  }] as const)(
+    'should apply one decision with one $action contribution',
+    async ({ action, body, rejectionReason, status }) => {
+      const db = createUpdateDb()
+
+      createWebSocketClientMock.mockReturnValue(db.dbWrite)
+      readValidatedBodyMock.mockResolvedValue(body)
+
+      const result = await updateHandler(createTestEvent({}))
+
+      expect(db.updateSetMock).toHaveBeenCalledWith({
+        brandId: 1,
+        categoryId: 2,
+        name: 'PocketRocket Deluxe',
+        rejectionReason,
+        status
+      })
+      expect(db.contributionValuesMock).toHaveBeenCalledTimes(1)
+      expect(db.contributionValuesMock).toHaveBeenCalledWith(expect.objectContaining({ action }))
+      expect(result.rejectionReason).toBe(rejectionReason)
+      expect(result.status).toBe(status)
+    }
+  )
 
   it('should delete all EAV values without inserting replacements when properties are empty', async () => {
     const db = createUpdateDb()

@@ -24,6 +24,10 @@
           <PerdLink :to="appRoutes.gearLibrary">
             Back to Gear library
           </PerdLink>
+
+          <PerdLink :to="appRoutes.accountSubmissions">
+            View gear submissions
+          </PerdLink>
         </div>
       </div>
 
