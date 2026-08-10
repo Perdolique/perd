@@ -244,6 +244,62 @@ const itemSubmissionCreateBodySchema = v.pipe(
   }, 'properties must contain unique propertyId values')
 )
 
+const itemSubmissionListQuerySchema = v.object({
+  limit: v.pipe(
+    v.optional(v.string(), '20'),
+    v.digits(),
+    v.toNumber(),
+    v.integer(),
+    v.minValue(1),
+    v.maxValue(100)
+  ),
+
+  page: v.pipe(
+    v.optional(v.string(), '1'),
+    v.digits(),
+    v.toNumber(),
+    v.integer(),
+    v.minValue(1)
+  )
+})
+
+const itemSubmissionParamsSchema = v.object({
+  id: canonicalUuidV7Schema
+})
+
+const itemSubmissionUpdateBodySchema = v.pipe(
+  v.object({
+    brandId: v.pipe(
+      v.number(),
+      v.integer(),
+      v.minValue(1)
+    ),
+
+    categoryId: v.pipe(
+      v.number(),
+      v.integer(),
+      v.minValue(1)
+    ),
+
+    expectedUpdatedAt: v.pipe(
+      v.string(),
+      v.isoTimestamp()
+    ),
+
+    name: v.pipe(
+      trimmedNonEmptyStringSchema,
+      v.maxLength(limits.maxEquipmentItemNameLength)
+    ),
+
+    properties: v.array(itemSubmissionPropertySchema)
+  }),
+  v.check((input) => {
+    const propertyIds = input.properties.map((property) => property.propertyId)
+
+    return new Set(propertyIds).size === propertyIds.length
+  }, 'properties must contain unique propertyId values')
+)
+
 const itemImageParamsSchema = v.object({
   id: canonicalUuidV7Schema,
   'image-id': canonicalUuidV7Schema
@@ -706,6 +762,18 @@ function validateItemSubmissionCreateBody(body: unknown) {
   return v.parse(itemSubmissionCreateBodySchema, body)
 }
 
+function validateItemSubmissionListQuery(query: unknown) {
+  return v.parse(itemSubmissionListQuerySchema, query)
+}
+
+function validateItemSubmissionParams(params: unknown) {
+  return v.parse(itemSubmissionParamsSchema, params)
+}
+
+function validateItemSubmissionUpdateBody(body: unknown) {
+  return v.parse(itemSubmissionUpdateBodySchema, body)
+}
+
 function validateItemImageParams(params: unknown) {
   return v.parse(itemImageParamsSchema, params)
 }
@@ -791,6 +859,9 @@ export {
   groupMutationSchema,
   itemDetailParamsSchema,
   itemSubmissionCreateBodySchema,
+  itemSubmissionListQuerySchema,
+  itemSubmissionParamsSchema,
+  itemSubmissionUpdateBodySchema,
   itemImageOrderBodySchema,
   itemImageParamsSchema,
   itemImageUploadQuerySchema,
@@ -829,6 +900,9 @@ export {
   validateGroupMutationBody,
   validateItemDetailParams,
   validateItemSubmissionCreateBody,
+  validateItemSubmissionListQuery,
+  validateItemSubmissionParams,
+  validateItemSubmissionUpdateBody,
   validateItemImageOrderBody,
   validateItemImageParams,
   validateItemImageUploadQuery,

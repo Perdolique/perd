@@ -1,5 +1,7 @@
 const appRoutes = {
   account: '/account',
+  admin: '/admin',
+  adminEquipmentSubmissions: '/admin/equipment/submissions',
   gearLibrary: '/gear-library',
   gearLibraryNew: '/gear-library/new',
   home: '/',
@@ -9,6 +11,7 @@ const appRoutes = {
 
 const navigationLabels = {
   account: 'Profile',
+  admin: 'Admin',
   gearLibrary: 'Gear library',
   home: 'Home',
   myGear: 'My gear',
@@ -18,6 +21,7 @@ const navigationLabels = {
 
 const navigationIcons = {
   account: 'hugeicons:user',
+  admin: 'hugeicons:settings-02',
   gearLibrary: 'hugeicons:package-search',
   home: 'hugeicons:tent',
   myGear: 'hugeicons:backpack-03',
@@ -29,6 +33,11 @@ function createGearLibraryItemPath(itemId: string) {
   return `${appRoutes.gearLibrary}/${itemId}`
 }
 
+/** Creates the admin review path for one equipment submission. */
+function createAdminEquipmentSubmissionPath(itemId: string) {
+  return `${appRoutes.adminEquipmentSubmissions}/${itemId}`
+}
+
 /** Creates the detail path for one packing list. */
 function createPackingListPath(packingListId: string) {
   return `${appRoutes.packingLists}/${packingListId}`
@@ -36,6 +45,7 @@ function createPackingListPath(packingListId: string) {
 
 export {
   appRoutes,
+  createAdminEquipmentSubmissionPath,
   createGearLibraryItemPath,
   createPackingListPath,
   navigationIcons,
