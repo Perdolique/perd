@@ -17,6 +17,9 @@ import {
   validateItemDetailParams,
   validateItemImageUploadQuery,
   validateItemSubmissionCreateBody,
+  validateItemSubmissionListQuery,
+  validateItemSubmissionParams,
+  validateItemSubmissionUpdateBody,
   validateEquipmentComparisonQuery,
   validateItemsListQuery,
   validatePackingListAvailableGearQuery,
@@ -1236,6 +1239,58 @@ describe('validation schemas', () => {
     }
   ])('should reject invalid item submission body: %j', (body) => {
     expect(() => validateItemSubmissionCreateBody(body)).toThrow(/./u)
+  })
+
+  it('should validate admin item submission pagination boundaries', () => {
+    expect(validateItemSubmissionListQuery({})).toStrictEqual({ limit: 20, page: 1 })
+    expect(validateItemSubmissionListQuery({ limit: '100', page: '2' })).toStrictEqual({
+      limit: 100,
+      page: 2
+    })
+
+    expect(() => validateItemSubmissionListQuery({ limit: '101', page: '1' })).toThrow(/./u)
+    expect(() => validateItemSubmissionListQuery({ limit: '20', page: '0' })).toThrow(/./u)
+  })
+
+  it('should require properties for full item submission replacement', () => {
+    expect(validateItemSubmissionUpdateBody({
+      brandId: 1,
+      categoryId: 2,
+      expectedUpdatedAt: '2026-08-01T12:00:00.000Z',
+      name: '  PocketRocket Deluxe  ',
+      properties: []
+    })).toStrictEqual({
+      brandId: 1,
+      categoryId: 2,
+      expectedUpdatedAt: '2026-08-01T12:00:00.000Z',
+      name: 'PocketRocket Deluxe',
+      properties: []
+    })
+
+    expect(() => validateItemSubmissionUpdateBody({
+      brandId: 1,
+      categoryId: 2,
+      expectedUpdatedAt: '2026-08-01T12:00:00.000Z',
+      name: 'PocketRocket Deluxe'
+    })).toThrow(/./u)
+
+    expect(() => validateItemSubmissionUpdateBody({
+      brandId: 1,
+      categoryId: 2,
+      expectedUpdatedAt: 'not-a-timestamp',
+      name: 'PocketRocket Deluxe',
+      properties: []
+    })).toThrow(/./u)
+  })
+
+  it('should accept only canonical uuid v7 submission params', () => {
+    expect(validateItemSubmissionParams({
+      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+    })).toStrictEqual({
+      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+    })
+
+    expect(() => validateItemSubmissionParams({ id: 'not-a-uuid' })).toThrow(/./u)
   })
 
   it('should trim an equipment image upload filename', () => {

@@ -51,11 +51,30 @@
       />
       <span>{{ navigationLabels.packingLists }}</span>
     </NuxtLink>
+
+    <NuxtLink
+      v-if="isAdmin"
+      :to="appRoutes.admin"
+      active-class="active"
+      :class="$style.navigationItem"
+    >
+      <Icon
+        :name="navigationIcons.admin"
+        :class="$style.navigationIcon"
+        aria-hidden="true"
+      />
+      <span>{{ navigationLabels.admin }}</span>
+    </NuxtLink>
   </nav>
 </template>
 
 <script lang="ts" setup>
+  import { computed } from 'vue'
+  import { useUserStore } from '#imports'
   import { appRoutes, navigationIcons, navigationLabels } from '~/utils/navigation'
+
+  const { user } = useUserStore()
+  const isAdmin = computed(() => user.value.isAdmin)
 </script>
 
 <style module>

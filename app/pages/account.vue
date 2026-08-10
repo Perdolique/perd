@@ -8,6 +8,14 @@
         @logout="handleLogout"
       />
 
+      <ActionPanel
+        v-if="isAdmin"
+        icon="hugeicons:settings-02"
+        subtitle="Review pending catalog contributions."
+        title="Admin"
+        :to="appRoutes.admin"
+      />
+
       <DangerActionCard
         title="Danger"
         action-text="Delete Account"
@@ -33,9 +41,11 @@
   import { useGearLibraryStore } from '~/stores/gear-library'
   import { usePackingListsStore } from '~/stores/packing-lists'
   import AccountProfileCard from '~/components/account/AccountProfileCard.vue'
+  import ActionPanel from '~/components/ActionPanel.vue'
   import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue'
   import DangerActionCard from '~/components/DangerActionCard.vue'
   import PageContent from '~/components/layout/PageContent.vue'
+  import { appRoutes } from '~/utils/navigation'
 
   definePageMeta({
     layout: 'page'
@@ -48,6 +58,7 @@
   const showDeleteModal = ref(false)
   const isDeleting = ref(false)
   const role = computed(() => user.value.isAdmin ? 'Admin' : 'User')
+  const isAdmin = computed(() => user.value.isAdmin)
   const userIdText = computed(() => user.value.userId ?? '')
   const userInitial = computed(() => userIdText.value.slice(0, 1).toUpperCase() || 'P')
 

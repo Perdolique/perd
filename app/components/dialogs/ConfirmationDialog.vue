@@ -1,6 +1,7 @@
 <template>
   <ModalDialog
     v-model="isOpened"
+    :class="$style.dialog"
     :aria-labelledby="headingId"
     :close-disabled="confirmLoading"
   >
@@ -92,6 +93,11 @@
 </script>
 
 <style module>
+  .dialog {
+    inline-size: min(100dvw - var(--spacing-32), 30rem);
+    max-inline-size: none;
+  }
+
   .content {
     display: grid;
     row-gap: var(--spacing-24);

@@ -140,13 +140,15 @@
   import EquipmentItemImage from '~/components/equipment/EquipmentItemImage.vue'
 
   definePageMeta({
-    layout: 'page'
+    layout: 'page',
+    middleware: 'admin'
   })
 
   const route = useRoute()
   const requestFetch = useRequestFetch()
   const fileInput = useTemplateRef('fileInput')
   const routeItemId = route.params.id
+
   const itemId = Array.isArray(routeItemId)
     ? routeItemId[0] ?? ''
     : routeItemId ?? ''
@@ -169,7 +171,6 @@
   const deletingImageId = ref<string | null>(null)
   const isReordering = ref(false)
   const isUploading = ref(false)
-
   const hasLoadError = computed(() => imagesError.value !== undefined)
   const hasMutationError = computed(() => mutationErrorMessage.value !== null)
   const isEmpty = computed(() => imagesResponse.value.length === 0)
@@ -288,6 +289,7 @@
 
     deletingImageId.value = imageId
     mutationErrorMessage.value = null
+
     const imagePath = `${imagesPath}/${imageId}` as const
 
     try {
