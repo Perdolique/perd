@@ -48,6 +48,8 @@ const listItem = {
 const detail = {
   ...listItem,
   properties: [{ propertyId: 21, value: '83.5' }],
+  rejectionReason: null,
+  status: 'pending',
   updatedAt: '2026-08-01T12:30:00.000Z'
 }
 
@@ -290,6 +292,136 @@ test.describe('Admin gear submission review', () => {
     await expect(page.getByRole('status')).toBeFocused()
     await expect(saveButton).toBeDisabled()
     await expect(page.getByText('UTC')).toBeVisible()
+  })
+
+  test('should publish the current unsaved edits and focus the terminal state', async ({
+    context,
+    page
+  }) => {
+    const patchRequests: Request[] = []
+
+    await mockReferences(context)
+    await context.route((url) => url.pathname === detailPath, async (route) => {
+      const request = route.request()
+
+      if (request.method() === 'PATCH') {
+        patchRequests.push(request)
+        await route.fulfill({
+          json: {
+            ...detail,
+            name: 'Published corrected name',
+            status: 'approved',
+            updatedAt: '2026-08-01T12:31:00.000Z'
+          }
+        })
+
+        return
+      }
+
+      await route.fulfill({ json: detail })
+    })
+    await authenticate({
+      context,
+      isAdmin: true,
+      page,
+      target: `/admin/equipment/submissions/${submissionId}`
+    })
+    await page.getByLabel('Item name').fill('Published corrected name')
+    await page.getByRole('button', { name: 'Publish', exact: true }).click()
+
+    const dialog = page.getByRole('dialog', { name: 'Publish submission' })
+
+    await dialog.getByRole('button', { name: 'Publish', exact: true }).click()
+    await expect.poll(() => patchRequests).toHaveLength(1)
+    expect(patchRequests[0]?.postDataJSON()).toStrictEqual({
+      brandId: 10,
+      categoryId: 2,
+      decision: 'publish',
+      expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
+      name: 'Published corrected name',
+      properties: [{ propertyId: 21, value: '83.5' }]
+    })
+
+    const terminalStatus = page.getByRole('status').filter({ hasText: 'Published' })
+
+    await expect(terminalStatus).toBeVisible()
+    await expect(terminalStatus).toBeFocused()
+    await expect(terminalStatus.getByRole('link', { name: 'Back to submissions' })).toBeVisible()
+    await expect(page.getByLabel('Item name')).toHaveCount(0)
+  })
+
+  test('should require and preserve a rejection reason while retrying unsaved edits', async ({
+    context,
+    page
+  }) => {
+    const patchRequests: Request[] = []
+
+    await mockReferences(context)
+    await context.route((url) => url.pathname === detailPath, async (route) => {
+      const request = route.request()
+
+      if (request.method() === 'PATCH') {
+        patchRequests.push(request)
+
+        if (patchRequests.length === 1) {
+          await route.fulfill({ json: { message: 'Raw technical detail' }, status: 500 })
+
+          return
+        }
+
+        await route.fulfill({
+          json: {
+            ...detail,
+            name: 'Rejected corrected name',
+            rejectionReason: 'Duplicate catalog item',
+            status: 'rejected',
+            updatedAt: '2026-08-01T12:31:00.000Z'
+          }
+        })
+
+        return
+      }
+
+      await route.fulfill({ json: detail })
+    })
+    await authenticate({
+      context,
+      isAdmin: true,
+      page,
+      target: `/admin/equipment/submissions/${submissionId}`
+    })
+    await page.getByLabel('Item name').fill('Rejected corrected name')
+    await page.getByRole('button', { name: 'Reject', exact: true }).click()
+
+    const dialog = page.getByRole('dialog', { name: 'Reject submission' })
+    const confirmButton = dialog.getByRole('button', { name: 'Reject', exact: true })
+
+    await expect(confirmButton).toBeDisabled()
+    await dialog.getByLabel('Reason').fill('   ')
+    await expect(confirmButton).toBeDisabled()
+    await dialog.getByLabel('Reason').fill('Duplicate catalog item')
+    await confirmButton.click()
+    await expect(dialog).not.toBeVisible()
+    await expect(page.getByText('Could not apply this decision. Your edits are still here. Try again.')).toBeVisible()
+    await expect(page.getByLabel('Item name')).toHaveValue('Rejected corrected name')
+    await page.getByRole('button', { name: 'Reject', exact: true }).click()
+    await expect(dialog.getByLabel('Reason')).toHaveValue('Duplicate catalog item')
+    await dialog.getByRole('button', { name: 'Reject', exact: true }).click()
+    await expect.poll(() => patchRequests).toHaveLength(2)
+    expect(patchRequests[1]?.postDataJSON()).toStrictEqual({
+      brandId: 10,
+      categoryId: 2,
+      decision: 'reject',
+      expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
+      name: 'Rejected corrected name',
+      properties: [{ propertyId: 21, value: '83.5' }],
+      rejectionReason: 'Duplicate catalog item'
+    })
+
+    const terminalStatus = page.getByRole('status').filter({ hasText: 'Rejected' })
+
+    await expect(terminalStatus).toBeVisible()
+    await expect(terminalStatus).toBeFocused()
   })
 
   test('should confirm a destructive category change before the initial properties load', async ({

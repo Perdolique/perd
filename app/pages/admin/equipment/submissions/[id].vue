@@ -42,7 +42,27 @@
       </PagePlaceholder>
     </div>
 
-    <div v-else-if="editorValue !== null" :class="$style.component">
+    <div
+      v-else-if="decisionStatus"
+      ref="decisionStatusElement"
+      role="status"
+      tabindex="-1"
+    >
+      <PagePlaceholder
+        :emoji="decisionStatus.emoji"
+        :title="decisionStatus.title"
+      >
+        {{ decisionStatus.message }}
+
+        <template #actions>
+          <PerdLink :to="appRoutes.adminEquipmentSubmissions">
+            Back to submissions
+          </PerdLink>
+        </template>
+      </PagePlaceholder>
+    </div>
+
+    <div v-else-if="editorValue" :class="$style.component">
       <dl :class="$style.metadata">
         <div :class="$style.metadataGroup">
           <dt :class="$style.metadataTerm">Submitted by</dt>
@@ -72,6 +92,8 @@
         :is-submitting="isSubmitting"
         mode="review"
         :mutation-message="mutationMessage"
+        @publish="publishSubmission"
+        @reject="rejectSubmission"
         @submit="saveChanges"
       />
     </div>
@@ -97,6 +119,7 @@
   const route = useRoute()
   const requestFetch = useRequestFetch()
   const conflictStatus = useTemplateRef('conflictStatus')
+  const decisionStatusElement = useTemplateRef('decisionStatusElement')
   const saveStatus = useTemplateRef('saveStatus')
   const routeId = route.params.id
   const submissionId = Array.isArray(routeId) ? routeId[0] ?? '' : routeId ?? ''
@@ -115,6 +138,28 @@
 
   const isInitialLoading = computed(() => submissionStatus.value === 'pending')
   const hasInitialError = computed(() => submissionError.value !== undefined)
+
+  const decisionStatus = computed(() => {
+    const status = submission.value?.status
+
+    if (status === 'approved') {
+      return {
+        emoji: '✅',
+        message: 'The corrected item is now visible in Gear library.',
+        title: 'Published'
+      }
+    }
+
+    if (status === 'rejected') {
+      return {
+        emoji: '🛑',
+        message: 'The author can now see the rejection reason.',
+        title: 'Rejected'
+      }
+    }
+
+    return null
+  })
 
   const editorValue = computed<EquipmentItemEditorValue | null>(() => {
     const { value } = submission
@@ -172,7 +217,11 @@
     await refreshSubmission()
   }
 
-  async function saveChanges(body: EquipmentItemEditorValue) {
+  async function mutateSubmission(
+    body: EquipmentItemEditorValue,
+    decision?: 'publish' | 'reject',
+    rejectionReason?: string
+  ) {
     const currentSubmission = submission.value
 
     if (currentSubmission === undefined) {
@@ -188,19 +237,29 @@
         body: {
           brandId: body.brandId,
           categoryId: body.categoryId,
+          decision,
           expectedUpdatedAt: new Date(currentSubmission.updatedAt).toISOString(),
           name: body.name,
-          properties: body.properties
+          properties: body.properties,
+          rejectionReason
         },
         method: 'PATCH'
       })
 
       submission.value = response
-      statusMessage.value = 'Changes saved.'
+      if (decision === undefined) {
+        statusMessage.value = 'Changes saved.'
+
+        await nextTick()
+
+        saveStatus.value?.focus()
+
+        return
+      }
 
       await nextTick()
 
-      saveStatus.value?.focus()
+      decisionStatusElement.value?.focus()
     } catch (error) {
       if (getStatusCode(error) === 409) {
         isConflict.value = true
@@ -212,10 +271,24 @@
         return
       }
 
-      mutationMessage.value = 'Could not save changes. Your edits are still here. Try again.'
+      mutationMessage.value = decision === undefined
+        ? 'Could not save changes. Your edits are still here. Try again.'
+        : 'Could not apply this decision. Your edits are still here. Try again.'
     } finally {
       isSubmitting.value = false
     }
+  }
+
+  async function saveChanges(body: EquipmentItemEditorValue) {
+    await mutateSubmission(body)
+  }
+
+  async function publishSubmission(body: EquipmentItemEditorValue) {
+    await mutateSubmission(body, 'publish')
+  }
+
+  async function rejectSubmission(body: EquipmentItemEditorValue, rejectionReason: string) {
+    await mutateSubmission(body, 'reject', rejectionReason)
   }
 </script>
 

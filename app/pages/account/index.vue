@@ -9,6 +9,13 @@
       />
 
       <ActionPanel
+        icon="hugeicons:task-daily-01"
+        subtitle="Track pending, published, and rejected catalog contributions."
+        title="Gear submissions"
+        :to="appRoutes.accountSubmissions"
+      />
+
+      <ActionPanel
         v-if="isAdmin"
         icon="hugeicons:settings-02"
         subtitle="Review pending catalog contributions."

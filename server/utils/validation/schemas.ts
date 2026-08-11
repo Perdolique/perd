@@ -291,13 +291,27 @@ const itemSubmissionUpdateBodySchema = v.pipe(
       v.maxLength(limits.maxEquipmentItemNameLength)
     ),
 
+    decision: v.optional(v.picklist(['publish', 'reject'])),
+
+    rejectionReason: v.optional(v.pipe(
+      trimmedStringSchema,
+      v.maxLength(limits.maxEquipmentItemRejectionReasonLength)
+    )),
+
     properties: v.array(itemSubmissionPropertySchema)
   }),
   v.check((input) => {
     const propertyIds = input.properties.map((property) => property.propertyId)
 
     return new Set(propertyIds).size === propertyIds.length
-  }, 'properties must contain unique propertyId values')
+  }, 'properties must contain unique propertyId values'),
+  v.check((input) => {
+    if (input.decision === 'reject') {
+      return input.rejectionReason !== undefined && input.rejectionReason !== ''
+    }
+
+    return input.rejectionReason === undefined
+  }, 'rejectionReason is required only when rejecting a submission')
 )
 
 const itemImageParamsSchema = v.object({

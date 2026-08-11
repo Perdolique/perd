@@ -21,6 +21,11 @@ const negativeValuesMigrationUrl = new URL(
   import.meta.url
 )
 const negativeValuesMigrationSql = readFileSync(negativeValuesMigrationUrl, 'utf8')
+const rejectionReasonMigrationUrl = new URL(
+  '../migrations/20260810183449_add-item-submission-rejection-reason/migration.sql',
+  import.meta.url
+)
+const rejectionReasonMigrationSql = readFileSync(rejectionReasonMigrationUrl, 'utf8')
 
 describe('database migration workflow', () => {
   it('should migrate pull request databases without resetting catalog data', () => {
@@ -109,5 +114,18 @@ describe('category property negative value migration', () => {
     expect(negativeValuesMigrationSql).not.toMatch(
       /DELETE FROM "equipment_item_images"/iu
     )
+  })
+})
+
+describe('equipment item rejection reason migration', () => {
+  it('should add a nullable bounded column without rebuilding equipment items', () => {
+    expect(rejectionReasonMigrationSql).toContain(
+      'ALTER TABLE "equipment_items" ADD COLUMN "rejectionReason" varchar(256);'
+    )
+    expect(rejectionReasonMigrationSql).not.toMatch(
+      /(?:CREATE|DROP|TRUNCATE) TABLE (?:IF (?:NOT )?EXISTS )?"equipment_items"/iu
+    )
+    expect(rejectionReasonMigrationSql).not.toMatch(/DELETE FROM "equipment_items"/iu)
+    expect(rejectionReasonMigrationSql).not.toContain('NOT NULL')
   })
 })

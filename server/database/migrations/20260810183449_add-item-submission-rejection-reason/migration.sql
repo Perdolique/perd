@@ -1,0 +1,1 @@
+ALTER TABLE "equipment_items" ADD COLUMN "rejectionReason" varchar(256);

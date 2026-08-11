@@ -130,6 +130,25 @@
         <PerdButton type="submit" :disabled="isSubmitDisabled" :loading="isSubmitting">
           {{ submitLabel }}
         </PerdButton>
+
+        <template v-if="isReviewMode">
+          <PerdButton
+            type="button"
+            :disabled="isDecisionDisabled"
+            @click="openPublishConfirmation"
+          >
+            Publish
+          </PerdButton>
+
+          <PerdButton
+            type="button"
+            variant="danger"
+            :disabled="isDecisionDisabled"
+            @click="openRejectConfirmation"
+          >
+            Reject
+          </PerdButton>
+        </template>
       </div>
     </form>
 
@@ -140,6 +159,35 @@
       @confirm="confirmCategoryChange"
     >
       Changing the category clears the entered characteristics. Continue?
+    </ConfirmationDialog>
+
+    <ConfirmationDialog
+      v-model="showPublishConfirmation"
+      header-text="Publish submission"
+      confirm-button-text="Publish"
+      :confirm-loading="isSubmitting"
+      @confirm="confirmPublish"
+    >
+      Publish the current corrected item to Gear library?
+    </ConfirmationDialog>
+
+    <ConfirmationDialog
+      v-model="showRejectConfirmation"
+      header-text="Reject submission"
+      confirm-button-text="Reject"
+      confirm-variant="danger"
+      :confirm-disabled="isRejectConfirmDisabled"
+      :confirm-loading="isSubmitting"
+      @confirm="confirmReject"
+    >
+      <TextInput
+        v-model="rejectionReason"
+        label="Reason"
+        name="rejection-reason"
+        :disabled="isSubmitting"
+        :maxlength="maxRejectionReasonLength"
+        required
+      />
     </ConfirmationDialog>
   </div>
 </template>
@@ -182,6 +230,8 @@
   }
 
   interface Emits {
+    publish: [value: EquipmentItemEditorValue];
+    reject: [value: EquipmentItemEditorValue, rejectionReason: string];
     submit: [value: EquipmentItemEditorValue];
   }
 
@@ -211,11 +261,15 @@
   const knownPropertiesTitleId = useId()
   const itemNameInput = useTemplateRef('itemNameInput')
   const maxItemNameLength = limits.maxEquipmentItemNameLength
+  const maxRejectionReasonLength = limits.maxEquipmentItemRejectionReasonLength
   const itemName = ref('')
   const selectedBrandId = ref('')
   const selectedCategorySlug = ref('')
   const pendingCategorySlug = ref('')
   const showCategoryChangeConfirmation = ref(false)
+  const showPublishConfirmation = ref(false)
+  const showRejectConfirmation = ref(false)
+  const rejectionReason = ref('')
   const propertyValues = ref<Record<number, unknown>>({})
 
   function focusNameInput() {
@@ -349,6 +403,7 @@
     : 'Could not load characteristics. You can still submit the basic item.')
 
   const hasMutationMessage = computed(() => props.mutationMessage !== undefined && props.mutationMessage !== null)
+  const isReviewMode = computed(() => props.mode === 'review')
   const submitLabel = computed(() => props.mode === 'review' ? 'Save changes' : 'Submit for review')
 
   const trimmedItemName = computed(() => itemName.value.trim())
@@ -516,6 +571,19 @@
     || (props.mode === 'review' && isDirty.value === false)
   ))
 
+  const isDecisionDisabled = computed(() => (
+    currentValue.value === null
+    || isMandatoryReferenceReady.value === false
+    || isReviewDetailUnavailable.value
+    || props.isSubmitting
+  ))
+
+  const trimmedRejectionReason = computed(() => rejectionReason.value.trim())
+
+  const isRejectConfirmDisabled = computed(() => (
+    props.isSubmitting || trimmedRejectionReason.value === ''
+  ))
+
   function clearPropertyState() {
     propertyValues.value = {}
   }
@@ -578,6 +646,42 @@
     }
 
     emit('submit', value)
+  }
+
+  function openPublishConfirmation() {
+    if (isDecisionDisabled.value) {
+      return
+    }
+
+    showPublishConfirmation.value = true
+  }
+
+  function openRejectConfirmation() {
+    if (isDecisionDisabled.value) {
+      return
+    }
+
+    showRejectConfirmation.value = true
+  }
+
+  function confirmPublish() {
+    const { value } = currentValue
+
+    if (isDecisionDisabled.value || value === null) {
+      return
+    }
+
+    emit('publish', value)
+  }
+
+  function confirmReject() {
+    const { value } = currentValue
+
+    if (isDecisionDisabled.value || isRejectConfirmDisabled.value || value === null) {
+      return
+    }
+
+    emit('reject', value, trimmedRejectionReason.value)
   }
 
   function reset(value: EquipmentItemEditorValue) {

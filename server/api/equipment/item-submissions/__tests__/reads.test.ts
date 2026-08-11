@@ -156,6 +156,8 @@ describe('admin equipment submission reads', () => {
           valueNumber: null,
           valueText: null
         }],
+        rejectionReason: null,
+        status: 'pending',
         updatedAt: new Date('2026-08-01T12:30:00Z')
       }
     })
@@ -182,6 +184,8 @@ describe('admin equipment submission reads', () => {
       { propertyId: 3, value: '83.50' },
       { propertyId: 4, value: false }
     ])
+    expect(result.rejectionReason).toBeNull()
+    expect(result.status).toBe('pending')
     expect(result.updatedAt).toStrictEqual(new Date('2026-08-01T12:30:00Z'))
   })
 

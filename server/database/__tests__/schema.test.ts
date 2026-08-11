@@ -47,6 +47,18 @@ describe('equipmentItems updatedAt', () => {
   })
 })
 
+describe('equipment item rejection reason', () => {
+  it('should keep rejection reasons nullable and bounded to the shared limit', () => {
+    const tableConfig = getTableConfig(schema.equipmentItems)
+    const rejectionReasonColumn = tableConfig.columns.find(
+      (column) => column.name === 'rejectionReason'
+    )
+
+    expect(rejectionReasonColumn?.notNull).toBe(false)
+    expect(rejectionReasonColumn?.getSQLType()).toBe('varchar(256)')
+  })
+})
+
 describe('equipment catalog research schema', () => {
   it('should require a unique display order within each category', () => {
     const tableConfig = getTableConfig(schema.categoryProperties)
