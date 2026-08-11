@@ -330,6 +330,32 @@ const itemImageUploadQuerySchema = v.object({
   )
 })
 
+const photoSubmissionHttpsUrlSchema = v.pipe(
+  trimmedNonEmptyStringSchema,
+  v.url(),
+  v.check((sourceUrl) => sourceUrl.startsWith('https://'), 'sourceUrl must use HTTPS')
+)
+
+const photoSubmissionCreateBodySchema = v.pipe(
+  v.object({
+    filename: v.pipe(
+      trimmedNonEmptyStringSchema,
+      v.maxLength(limits.maxEquipmentItemImageFilenameLength)
+    ),
+
+    rightsConfirmed: v.literal('true'),
+    sourceType: v.picklist(['own', 'manufacturer']),
+    sourceUrl: v.optional(photoSubmissionHttpsUrlSchema)
+  }),
+  v.check((input) => {
+    if (input.sourceType === 'manufacturer') {
+      return input.sourceUrl !== undefined
+    }
+
+    return input.sourceUrl === undefined
+  }, 'sourceUrl is required only for manufacturer photos')
+)
+
 const minimumEquipmentComparisonItemCount = 2
 const maximumEquipmentComparisonItemCount = 4
 
@@ -800,6 +826,10 @@ function validateItemImageUploadQuery(query: unknown) {
   return v.parse(itemImageUploadQuerySchema, query)
 }
 
+function validatePhotoSubmissionCreateBody(body: unknown) {
+  return v.parse(photoSubmissionCreateBodySchema, body)
+}
+
 function validateEquipmentComparisonQuery(query: unknown) {
   return v.parse(equipmentComparisonQuerySchema, query)
 }
@@ -879,6 +909,7 @@ export {
   itemImageOrderBodySchema,
   itemImageParamsSchema,
   itemImageUploadQuerySchema,
+  photoSubmissionCreateBodySchema,
   equipmentComparisonQuerySchema,
   itemsListQuerySchema,
   limitQuerySchema,
@@ -920,6 +951,7 @@ export {
   validateItemImageOrderBody,
   validateItemImageParams,
   validateItemImageUploadQuery,
+  validatePhotoSubmissionCreateBody,
   validateEquipmentComparisonQuery,
   validateItemsListQuery,
   validatePackingListAvailableGearQuery,

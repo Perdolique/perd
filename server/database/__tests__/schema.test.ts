@@ -148,4 +148,47 @@ describe('equipment catalog research schema', () => {
 
     expect(equipmentItemColumnNames).not.toContain('cloudflareImageId')
   })
+
+  it('should keep pending photo submissions private and linked to their source', () => {
+    const tableConfig = getTableConfig(schema.equipmentItemPhotoSubmissions)
+    const columnNames = tableConfig.columns.map((column) => column.name)
+    const cloudflareImageIdColumn = tableConfig.columns.find(
+      (column) => column.name === 'cloudflareImageId'
+    )
+    const sourceUrlColumn = tableConfig.columns.find(
+      (column) => column.name === 'sourceUrl'
+    )
+    const statusColumn = tableConfig.columns.find(
+      (column) => column.name === 'status'
+    )
+    const itemForeignKey = tableConfig.foreignKeys.find(
+      (foreignKey) => foreignKey.reference().foreignTable === schema.equipmentItems
+    )
+    const creatorForeignKey = tableConfig.foreignKeys.find(
+      (foreignKey) => foreignKey.reference().foreignTable === schema.users
+    )
+
+    expect(columnNames).toStrictEqual([
+      'id',
+      'itemId',
+      'cloudflareImageId',
+      'filename',
+      'sourceType',
+      'sourceUrl',
+      'rightsConfirmed',
+      'status',
+      'createdBy',
+      'createdAt',
+      'updatedAt'
+    ])
+    expect(tableConfig.columns[0]?.getSQLType()).toBe('uuid')
+    expect(cloudflareImageIdColumn?.isUnique).toBe(true)
+    expect(sourceUrlColumn?.notNull).toBe(false)
+    expect(statusColumn?.default).toBe('pending')
+    expect(itemForeignKey?.onDelete).toBe('restrict')
+    expect(creatorForeignKey?.onDelete).toBe('set null')
+    expect(tableConfig.checks.map((check) => check.name)).toContain(
+      schema.equipmentItemPhotoSubmissionSourceConstraintName
+    )
+  })
 })

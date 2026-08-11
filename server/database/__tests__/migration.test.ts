@@ -26,6 +26,11 @@ const rejectionReasonMigrationUrl = new URL(
   import.meta.url
 )
 const rejectionReasonMigrationSql = readFileSync(rejectionReasonMigrationUrl, 'utf8')
+const photoSubmissionsMigrationUrl = new URL(
+  '../migrations/20260811190742_lean_guardsmen/migration.sql',
+  import.meta.url
+)
+const photoSubmissionsMigrationSql = readFileSync(photoSubmissionsMigrationUrl, 'utf8')
 
 describe('database migration workflow', () => {
   it('should migrate pull request databases without resetting catalog data', () => {
@@ -127,5 +132,34 @@ describe('equipment item rejection reason migration', () => {
     )
     expect(rejectionReasonMigrationSql).not.toMatch(/DELETE FROM "equipment_items"/iu)
     expect(rejectionReasonMigrationSql).not.toContain('NOT NULL')
+  })
+})
+
+describe('equipment item photo submissions migration', () => {
+  it('should create the pending submission table with protected image ownership', () => {
+    expect(photoSubmissionsMigrationSql).toContain(
+      'CREATE TABLE "equipment_item_photo_submissions"'
+    )
+    expect(photoSubmissionsMigrationSql).toContain(
+      '"cloudflareImageId" text NOT NULL UNIQUE'
+    )
+    expect(photoSubmissionsMigrationSql).toContain(
+      '"status" varchar(16) DEFAULT \'pending\' NOT NULL'
+    )
+  })
+
+  it('should enforce source metadata and preserve item and creator rows correctly', () => {
+    expect(photoSubmissionsMigrationSql).toContain(
+      '"sourceType" = \'own\' AND "sourceUrl" IS NULL'
+    )
+    expect(photoSubmissionsMigrationSql).toContain(
+      '"sourceType" = \'manufacturer\' AND NULLIF(BTRIM("sourceUrl"), \'\') IS NOT NULL'
+    )
+    expect(photoSubmissionsMigrationSql).toMatch(
+      /FOREIGN KEY \("itemId"\).*ON DELETE RESTRICT ON UPDATE CASCADE/u
+    )
+    expect(photoSubmissionsMigrationSql).toMatch(
+      /FOREIGN KEY \("createdBy"\).*ON DELETE SET NULL ON UPDATE CASCADE/u
+    )
   })
 })
