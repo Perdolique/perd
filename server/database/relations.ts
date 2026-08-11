@@ -27,6 +27,11 @@ export const relations = defineRelations(schema, (relation) => {
       createdItems: relation.many.equipmentItems({
         from: relation.users.id,
         to: relation.equipmentItems.createdBy
+      }),
+
+      photoSubmissions: relation.many.equipmentItemPhotoSubmissions({
+        from: relation.users.id,
+        to: relation.equipmentItemPhotoSubmissions.createdBy
       })
     },
 
@@ -87,6 +92,11 @@ export const relations = defineRelations(schema, (relation) => {
       images: relation.many.equipmentItemImages({
         from: relation.equipmentItems.id,
         to: relation.equipmentItemImages.itemId
+      }),
+
+      photoSubmissions: relation.many.equipmentItemPhotoSubmissions({
+        from: relation.equipmentItems.id,
+        to: relation.equipmentItemPhotoSubmissions.itemId
       })
     },
 
@@ -178,6 +188,18 @@ export const relations = defineRelations(schema, (relation) => {
       item: relation.one.equipmentItems({
         from: relation.equipmentItemImages.itemId,
         to: relation.equipmentItems.id
+      })
+    },
+
+    equipmentItemPhotoSubmissions: {
+      item: relation.one.equipmentItems({
+        from: relation.equipmentItemPhotoSubmissions.itemId,
+        to: relation.equipmentItems.id
+      }),
+
+      creator: relation.one.users({
+        from: relation.equipmentItemPhotoSubmissions.createdBy,
+        to: relation.users.id
       })
     }
   }

@@ -2,6 +2,7 @@ import { eq, max } from 'drizzle-orm'
 import {
   createError,
   defineEventHandler,
+  getRequestWebStream,
   getValidatedQuery,
   getValidatedRouterParams,
   isError,
@@ -20,8 +21,9 @@ import { createWebSocketClientFromEvent } from '#server/utils/config'
 
 import {
   createEquipmentItemImageBody,
-  validateEquipmentItemImageRequest,
-  type EquipmentItemImageBody
+  deleteUnattachedHostedEquipmentImage,
+  uploadHostedEquipmentImage,
+  validateEquipmentItemImageRequest
 } from '#server/utils/equipment/item-images'
 
 import {
@@ -35,76 +37,12 @@ interface EquipmentItemImageResponse {
   id: string;
 }
 
-interface UploadEquipmentItemImageOptions {
-  binding: Env['IMAGES'];
-  body: EquipmentItemImageBody;
-  filename: string;
-  itemId: string;
-  userId: string;
-}
-
-async function uploadEquipmentItemImage(
-  options: UploadEquipmentItemImageOptions
-): Promise<string> {
-  const { binding, body, filename, itemId, userId } = options
-
-  try {
-    const image = await binding.hosted.upload(body.stream, {
-      creator: userId,
-      filename,
-
-      metadata: {
-        itemId
-      },
-
-      requireSignedURLs: false
-    })
-
-    return image.id
-  } catch (error) {
-    if (body.isLimitExceeded()) {
-      throw createError({
-        status: 413,
-        statusMessage: 'Image body is too large'
-      })
-    }
-
-    console.error('Failed to upload Cloudflare image', {
-      error,
-      itemId
-    })
-
-    throw createError({
-      status: 502,
-      statusMessage: 'Image upload failed'
-    })
-  } finally {
-    await body.close()
-  }
-}
-
-async function deleteUnattachedImage(
-  binding: Env['IMAGES'],
-  cloudflareImageId: string
-): Promise<void> {
-  try {
-    const imageHandle = binding.hosted.image(cloudflareImageId)
-
-    await imageHandle.delete()
-  } catch (error) {
-    console.error('Failed to delete unattached Cloudflare image', {
-      cloudflareImageId,
-      error
-    })
-  }
-}
-
 export default defineEventHandler(async (event) : Promise<EquipmentItemImageResponse> => {
   const userId = await validateAdminUser(event)
   const { id: itemId } = await getValidatedRouterParams(event, validateItemDetailParams)
   const { filename } = await getValidatedQuery(event, validateItemImageUploadQuery)
 
-  validateEquipmentItemImageRequest(event)
+  const mediaType = validateEquipmentItemImageRequest(event)
 
   const item = await event.context.dbHttp.query.equipmentItems.findFirst({
     columns: {
@@ -124,14 +62,22 @@ export default defineEventHandler(async (event) : Promise<EquipmentItemImageResp
   }
 
   const imagesBinding = getCloudflareImagesBinding(event)
-  const imageBody = await createEquipmentItemImageBody(event)
+  const imageBody = await createEquipmentItemImageBody({
+    mediaType,
+    stream: getRequestWebStream(event)
+  })
 
-  const cloudflareImageId = await uploadEquipmentItemImage({
+  const cloudflareImageId = await uploadHostedEquipmentImage({
     binding: imagesBinding,
     body: imageBody,
+    creator: userId,
     filename,
-    itemId,
-    userId
+
+    metadata: {
+      itemId
+    },
+
+    requireSignedURLs: false
   })
 
   let dbWebsocket: ReturnType<typeof createWebSocketClientFromEvent> | null = null
@@ -212,7 +158,10 @@ export default defineEventHandler(async (event) : Promise<EquipmentItemImageResp
 
     return createdImage
   } catch (error) {
-    await deleteUnattachedImage(imagesBinding, cloudflareImageId)
+    await deleteUnattachedHostedEquipmentImage({
+      binding: imagesBinding,
+      cloudflareImageId
+    })
 
     if (isError(error)) {
       throw error

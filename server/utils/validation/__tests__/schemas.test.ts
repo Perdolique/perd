@@ -16,6 +16,7 @@ import {
   validateGroupMutationBody,
   validateItemDetailParams,
   validateItemImageUploadQuery,
+  validatePhotoSubmissionCreateBody,
   validateItemSubmissionCreateBody,
   validateItemSubmissionListQuery,
   validateItemSubmissionParams,
@@ -1353,6 +1354,69 @@ describe('validation schemas', () => {
     { filename: tooLongImageFilename }
   ])('should reject invalid equipment image upload filename: %j', (query) => {
     expect(() => validateItemImageUploadQuery(query)).toThrow(/./u)
+  })
+
+  it('should accept own photo submission metadata without a source URL', () => {
+    expect(validatePhotoSubmissionCreateBody({
+      filename: '  pocketrocket.webp  ',
+      rightsConfirmed: 'true',
+      sourceType: 'own'
+    })).toStrictEqual({
+      filename: 'pocketrocket.webp',
+      rightsConfirmed: 'true',
+      sourceType: 'own'
+    })
+  })
+
+  it('should accept a manufacturer photo with a trimmed HTTPS source', () => {
+    expect(validatePhotoSubmissionCreateBody({
+      filename: 'official.png',
+      rightsConfirmed: 'true',
+      sourceType: 'manufacturer',
+      sourceUrl: '  https://www.msrgear.com/products/pocketrocket  '
+    })).toStrictEqual({
+      filename: 'official.png',
+      rightsConfirmed: 'true',
+      sourceType: 'manufacturer',
+      sourceUrl: 'https://www.msrgear.com/products/pocketrocket'
+    })
+  })
+
+  it.each([
+    {
+      filename: 'official.png',
+      rightsConfirmed: 'true',
+      sourceType: 'manufacturer'
+    },
+    {
+      filename: 'official.png',
+      rightsConfirmed: 'true',
+      sourceType: 'manufacturer',
+      sourceUrl: 'http://www.msrgear.com/products/pocketrocket'
+    },
+    {
+      filename: 'official.png',
+      rightsConfirmed: 'true',
+      sourceType: 'manufacturer',
+      sourceUrl: 'not a URL'
+    },
+    {
+      filename: 'own.png',
+      rightsConfirmed: 'true',
+      sourceType: 'own',
+      sourceUrl: 'https://example.com/own.png'
+    },
+    {
+      filename: 'own.png',
+      sourceType: 'own'
+    },
+    {
+      filename: 'own.png',
+      rightsConfirmed: 'false',
+      sourceType: 'own'
+    }
+  ])('should reject invalid photo submission metadata: %j', (query) => {
+    expect(() => validatePhotoSubmissionCreateBody(query)).toThrow(/./u)
   })
 
   it('should accept canonical uuid v7 inventory id params only', () => {

@@ -7,6 +7,7 @@ import { createDeferred } from '../fixtures/gear-library-entry-list.fixtures.ts'
 const userId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
 const publishedItemId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d2'
 const submissionsPath = '/api/user/item-submissions'
+const photoSubmissionsPath = '/api/user/photo-submissions'
 
 async function authenticate(context: BrowserContext, page: Page, target: string) {
   await context.route((url) => url.pathname === '/api/oauth/twitch', async (route) => {
@@ -63,13 +64,16 @@ test.describe('Account gear submissions', () => {
       await responseGate.promise
       await route.fulfill({ json: { items: createSubmissions() } })
     })
+    await context.route((url) => url.pathname === photoSubmissionsPath, async (route) => {
+      await route.fulfill({ json: { items: [] } })
+    })
     await authenticate(context, page, '/account')
 
-    const submissionsLink = page.getByRole('link', { name: /Gear submissions/u })
+    const submissionsLink = page.getByRole('link', { name: /My contributions/u })
 
     await expect(submissionsLink).toBeVisible()
     await submissionsLink.click()
-    await expect(page.getByText('Loading gear submissions')).toBeVisible()
+    await expect(page.getByText('Loading My contributions')).toBeVisible()
     responseGate.resolve()
 
     await expect(page).toHaveURL(/\/account\/submissions$/u)
@@ -100,14 +104,71 @@ test.describe('Account gear submissions', () => {
 
       await route.fulfill({ json: { message: 'Temporary failure' }, status: 500 })
     })
+    await context.route((url) => url.pathname === photoSubmissionsPath, async (route) => {
+      await route.fulfill({ json: { items: [] } })
+    })
     await authenticate(context, page, '/account/submissions')
-    await expect(page.getByText('Gear submissions unavailable.')).toBeVisible()
+    await expect(page.getByText('My contributions unavailable.')).toBeVisible()
     shouldSucceed = true
     await page.getByRole('button', { name: 'Retry' }).click()
-    await expect(page.getByText('No gear submissions yet.')).toBeVisible()
+    await expect(page.getByText('No contributions yet.')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Submit gear' })).toHaveAttribute(
       'href',
       '/gear-library/new'
     )
+  })
+
+  test('should keep photo loading and error states retryable independently', async ({ context, page }) => {
+    const firstPhotoResponseGate = createDeferred()
+    let photoRequestCount = 0
+    let shouldPhotoRequestSucceed = false
+
+    await context.route((url) => url.pathname === submissionsPath, async (route) => {
+      await route.fulfill({ json: { items: [] } })
+    })
+    await context.route((url) => url.pathname === photoSubmissionsPath, async (route) => {
+      photoRequestCount += 1
+
+      if (photoRequestCount === 1) {
+        await firstPhotoResponseGate.promise
+      }
+
+      if (shouldPhotoRequestSucceed === false) {
+        await route.fulfill({ status: 500, json: { message: 'Temporary photo failure' } })
+
+        return
+      }
+
+      await route.fulfill({
+        json: {
+          items: [{
+            createdAt: '2026-08-10T12:00:00.000Z',
+            filename: 'PocketRocket camp.webp',
+            id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
+            item: {
+              id: publishedItemId,
+              name: 'Published corrected stove'
+            },
+            sourceType: 'own',
+            sourceUrl: null,
+            status: 'pending',
+            updatedAt: '2026-08-10T12:00:00.000Z'
+          }]
+        }
+      })
+    })
+    await authenticate(context, page, '/account/submissions')
+    await expect(page.getByText('Loading My contributions')).toBeVisible()
+    firstPhotoResponseGate.resolve()
+    await expect(page.getByText('My contributions unavailable.')).toBeVisible()
+    const failedPhotoRequestCount = photoRequestCount
+
+    shouldPhotoRequestSucceed = true
+    await page.getByRole('button', { name: 'Retry' }).click()
+
+    await expect(page.getByRole('heading', { name: 'Photo submissions' })).toBeVisible()
+    await expect(page.getByText('PocketRocket camp.webp')).toBeVisible()
+    await expect(page.getByText('Own photo')).toBeVisible()
+    await expect.poll(() => photoRequestCount).toBeGreaterThan(failedPhotoRequestCount)
   })
 })

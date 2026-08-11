@@ -26,7 +26,7 @@
           </PerdLink>
 
           <PerdLink :to="appRoutes.accountSubmissions">
-            View gear submissions
+            View My contributions
           </PerdLink>
         </div>
       </div>
