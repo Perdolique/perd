@@ -49,7 +49,13 @@
         <div :class="$style.header">
           <div :class="$style.titleGroup">
             <PerdHeading :level="2">
-              {{ item.name }}
+              <PerdLink v-if="item.detailPath" :to="item.detailPath">
+                {{ item.name }}
+              </PerdLink>
+
+              <template v-else>
+                {{ item.name }}
+              </template>
             </PerdHeading>
 
             <p :class="$style.references">
@@ -132,7 +138,7 @@
   import PerdLink from '~/components/PerdLink.vue'
   import PerdPill, { type PerdPillTone } from '~/components/PerdPill.vue'
   import PageContent from '~/components/layout/PageContent.vue'
-  import { appRoutes } from '~/utils/navigation'
+  import { appRoutes, createGearLibraryItemPath } from '~/utils/navigation'
 
   interface SubmissionPropertyCard {
     displayValue: string;
@@ -144,6 +150,7 @@
     brandName: string;
     categoryName: string;
     createdAt: Date | string;
+    detailPath: string | null;
     hasProperties: boolean;
     id: string;
     name: string;
@@ -212,6 +219,7 @@
   }
 
   const submissionCards = computed<SubmissionCard[]>(() => submissions.value.items.map((item) => {
+    const detailPath = item.status === 'approved' ? createGearLibraryItemPath(item.id) : null
     const statusPresentation = getStatusPresentation(item.status)
     const properties = item.properties.map(formatProperty)
 
@@ -219,6 +227,7 @@
       brandName: item.brand.name,
       categoryName: item.category.name,
       createdAt: item.createdAt,
+      detailPath,
       hasProperties: properties.length > 0,
       id: item.id,
       name: item.name,

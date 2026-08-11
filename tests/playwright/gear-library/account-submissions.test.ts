@@ -5,6 +5,7 @@ import { createDeferred } from '../fixtures/gear-library-entry-list.fixtures.ts'
 /* oxlint-disable vitest/no-conditional-in-test -- Playwright route handlers branch across sequential mocked responses. */
 
 const userId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
+const publishedItemId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d2'
 const submissionsPath = '/api/user/item-submissions'
 
 async function authenticate(context: BrowserContext, page: Page, target: string) {
@@ -41,7 +42,7 @@ function createSubmissions() {
     status: 'pending'
   }, {
     ...baseItem,
-    id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d2',
+    id: publishedItemId,
     name: 'Published corrected stove',
     properties: [{ name: 'Piezo ignition', propertyId: 22, unit: null, value: false }],
     status: 'approved'
@@ -75,7 +76,12 @@ test.describe('Account gear submissions', () => {
     await expect(page.getByText('Pending', { exact: true })).toBeVisible()
     await expect(page.getByText('Published', { exact: true })).toBeVisible()
     await expect(page.getByText('Rejected', { exact: true })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Published corrected stove' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Published corrected stove' })).toHaveAttribute(
+      'href',
+      `/gear-library/${publishedItemId}`
+    )
+    await expect(page.getByRole('link', { name: 'Pending stove' })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: 'Rejected corrected stove' })).toHaveCount(0)
     await expect(page.getByText('Piezo ignition')).toBeVisible()
     await expect(page.getByText('No', { exact: true })).toBeVisible()
     await expect(page.getByText('83.5 g').first()).toBeVisible()
