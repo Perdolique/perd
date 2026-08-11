@@ -43,7 +43,7 @@
     </div>
 
     <div
-      v-else-if="decisionStatus !== null"
+      v-else-if="decisionStatus"
       ref="decisionStatusElement"
       role="status"
       tabindex="-1"
@@ -62,7 +62,7 @@
       </PagePlaceholder>
     </div>
 
-    <div v-else-if="editorValue !== null" :class="$style.component">
+    <div v-else-if="editorValue" :class="$style.component">
       <dl :class="$style.metadata">
         <div :class="$style.metadataGroup">
           <dt :class="$style.metadataTerm">Submitted by</dt>

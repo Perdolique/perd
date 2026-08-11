@@ -579,6 +579,7 @@
   ))
 
   const trimmedRejectionReason = computed(() => rejectionReason.value.trim())
+
   const isRejectConfirmDisabled = computed(() => (
     props.isSubmitting || trimmedRejectionReason.value === ''
   ))

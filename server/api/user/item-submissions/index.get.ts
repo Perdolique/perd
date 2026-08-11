@@ -96,6 +96,7 @@ export default defineEventHandler(async (event): Promise<UserItemSubmissionsResp
 
     where: {
       createdBy: userId,
+
       status: {
         in: ['approved', 'pending', 'rejected']
       }

@@ -65,6 +65,7 @@
         <dl :class="$style.metadata">
           <div :class="$style.metadataGroup">
             <dt>Submitted</dt>
+
             <dd>
               <NuxtTime
                 :datetime="item.createdAt"
@@ -77,6 +78,7 @@
 
           <div :class="$style.metadataGroup">
             <dt>Last updated</dt>
+
             <dd>
               <NuxtTime
                 :datetime="item.updatedAt"
@@ -116,10 +118,12 @@
   import { computed } from 'vue'
   import { definePageMeta, useFetch, useUserStore } from '#imports'
   import { NuxtTime } from '#components'
+
   import type {
     UserItemSubmission,
     UserItemSubmissionProperty
   } from '#server/api/user/item-submissions/index.get'
+
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PerdButton from '~/components/PerdButton.vue'
@@ -183,6 +187,7 @@
       unit,
       value: rawValue
     } = property
+
     const value = typeof rawValue === 'boolean' ? formatBoolean(rawValue) : rawValue
 
     const displayValue = unit === null ? value : `${value} ${unit}`
