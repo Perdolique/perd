@@ -81,34 +81,15 @@
 </template>
 
 <script lang="ts" setup>
-  import {
-    computed,
-    nextTick,
-    ref,
-    useTemplateRef,
-    watch
-  } from 'vue'
-
-  import {
-    definePageMeta,
-    navigateTo,
-    useAsyncData,
-    useRequestFetch,
-    useRoute
-  } from '#imports'
-
+  import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
+  import { definePageMeta, navigateTo, useAsyncData, useRequestFetch, useRoute } from '#imports'
   import type { ComparisonResponse } from '#server/api/equipment/comparisons.get'
-
-  import {
-    createGearLibraryComparisonRows,
-    validateGearLibraryComparisonQuery
-  } from '~/utils/gear-library-comparison'
-
+  import { createGearLibraryComparisonRows, validateGearLibraryComparisonQuery } from '~/utils/gear-library-comparison'
   import { appRoutes, createGearLibraryItemPath } from '~/utils/navigation'
 
   import GearLibraryComparisonTable, {
-    type GearLibraryComparisonTableItem
-  } from '~/components/gear-library/GearLibraryComparisonTable.vue'
+  type GearLibraryComparisonTableItem
+} from '~/components/gear-library/GearLibraryComparisonTable.vue'
 
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
@@ -137,6 +118,7 @@
   const comparisonValidation = computed(
     () => validateGearLibraryComparisonQuery(route.query.item)
   )
+
   const orderedItemIds = computed(() => comparisonValidation.value.ids)
 
   const comparisonRequest = await useAsyncData('gear-library-comparison', async (_nuxtApp, { signal }) => {
@@ -321,6 +303,7 @@
     itemId: string
   ): ComparisonResponse {
     const items = response.items.filter((item) => item.id !== itemId)
+
     const properties = response.properties.map((property) => {
       const values = property.values.filter((value) => value.itemId !== itemId)
 
@@ -352,6 +335,7 @@
     const remainingItemIds = orderedItemIds.value.filter(
       (selectedItemId) => selectedItemId !== itemId
     )
+
     const response = comparisonResponse.value
 
     if (response === null) {

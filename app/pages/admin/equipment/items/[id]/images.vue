@@ -236,6 +236,7 @@
 
     isUploading.value = true
     mutationErrorMessage.value = null
+
     let uploadedFileCount = 0
 
     try {

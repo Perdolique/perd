@@ -75,7 +75,17 @@
 <script lang="ts" setup>
   import { ref } from 'vue'
   import { $fetch } from 'ofetch'
-  import { definePageMeta, navigateTo, useHead, useRoute, useRuntimeConfig, useUserStore, withMinimumDelay } from '#imports'
+
+  import {
+  definePageMeta,
+  navigateTo,
+  useHead,
+  useRoute,
+  useRuntimeConfig,
+  useUserStore,
+  withMinimumDelay
+} from '#imports'
+
   import { getRedirectNavigationTarget } from '~/utils/router'
   import PerdButton from '~/components/PerdButton.vue'
 

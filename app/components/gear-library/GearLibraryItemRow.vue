@@ -89,13 +89,7 @@
 
 <script lang="ts" setup>
   import { computed, useId } from 'vue'
-
-  import type {
-    GearLibraryListItemView,
-    GearLibraryListProperty,
-    ItemDisplayProperty
-  } from '~/types/equipment'
-
+  import type { GearLibraryListItemView, GearLibraryListProperty, ItemDisplayProperty } from '~/types/equipment'
   import PerdLink from '~/components/PerdLink.vue'
   import EquipmentItemImage from '~/components/equipment/EquipmentItemImage.vue'
   import GearLibraryItemRowShell from './GearLibraryItemRowShell.vue'
@@ -130,6 +124,7 @@
     }
 
     const selected = checkbox.checked
+
     const shouldRejectSelection = selected
       && props.isComparisonSelected === false
       && props.isComparisonLimitReached

@@ -41,9 +41,9 @@
   import ShellUserCard from '~/components/layout/ShellUserCard.vue'
 
   const { user } = useUserStore()
-
   const userIdText = computed(() => user.value.userId ?? '')
   const userInitial = computed(() => userIdText.value.slice(0, 1).toUpperCase() || 'P')
+
   const userLabel = computed(() => userIdText.value === ''
     ? 'Field user'
     : `User ${userIdText.value.slice(0, 8)}`)

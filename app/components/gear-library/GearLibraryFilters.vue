@@ -92,26 +92,15 @@
 </template>
 
 <script lang="ts" setup>
-  import {
-    computed,
-    nextTick,
-    ref,
-    useId,
-    useTemplateRef,
-    watch
-  } from 'vue'
+  import { computed, nextTick, ref, useId, useTemplateRef, watch } from 'vue'
+  import type { GearLibraryEntitySummary, GearLibraryFilterProperty } from '~/types/equipment'
 
   import type {
-    GearLibraryEntitySummary,
-    GearLibraryFilterProperty
-  } from '~/types/equipment'
-
-  import type {
-    GearLibraryAppliedFilter,
-    GearLibraryAppliedFilterChip,
-    GearLibraryFilterDraft,
-    GearLibraryNumberRangeErrors
-  } from '~/utils/gear-library-filters'
+  GearLibraryAppliedFilter,
+  GearLibraryAppliedFilterChip,
+  GearLibraryFilterDraft,
+  GearLibraryNumberRangeErrors
+} from '~/utils/gear-library-filters'
 
   import ModalDialog from '~/components/dialogs/ModalDialog.vue'
   import GearLibraryFilterEditor from '~/components/gear-library/GearLibraryFilterEditor.vue'

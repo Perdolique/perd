@@ -405,7 +405,6 @@
   const hasMutationMessage = computed(() => props.mutationMessage !== undefined && props.mutationMessage !== null)
   const isReviewMode = computed(() => props.mode === 'review')
   const submitLabel = computed(() => props.mode === 'review' ? 'Save changes' : 'Submit for review')
-
   const trimmedItemName = computed(() => itemName.value.trim())
 
   const selectedBrand = computed(() => {

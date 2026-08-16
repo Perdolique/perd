@@ -4,14 +4,15 @@ allowBuilds:
   sharp: false
   workerd: false
 minimumReleaseAgeExclude:
-  - worsier-darwin-arm64@2.7.1
-  - worsier-darwin-x64@2.7.1
-  - worsier-linux-arm64-gnu@2.7.1
-  - worsier-linux-arm64-musl@2.7.1
-  - worsier-linux-x64-gnu@2.7.1
-  - worsier-linux-x64-musl@2.7.1
-  - worsier-win32-arm64-msvc@2.7.1
-  - worsier-win32-x64-msvc@2.7.1
-  - worsier@2.7.1
+  - worsier-darwin-arm64@2.8.0
+  - worsier-darwin-x64@2.8.0
+  - worsier-linux-arm64-gnu@2.8.0
+  - worsier-linux-arm64-musl@2.8.0
+  - worsier-linux-x64-gnu@2.8.0
+  - worsier-linux-x64-musl@2.8.0
+  - worsier-win32-arm64-msvc@2.8.0
+  - worsier-win32-x64-msvc@2.8.0
+  - worsier@2.8.0
+  - '@iconify-json/hugeicons@1.2.33'
 publicHoistPattern:
   - h3

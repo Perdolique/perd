@@ -32,15 +32,7 @@
 </template>
 
 <script lang="ts" setup>
-  import {
-    computed,
-    nextTick,
-    ref,
-    useId,
-    useTemplateRef,
-    watch
-  } from 'vue'
-
+  import { computed, nextTick, ref, useId, useTemplateRef, watch } from 'vue'
   import PerdButton from '~/components/PerdButton.vue'
 
   interface Props {

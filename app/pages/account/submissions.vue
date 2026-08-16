@@ -194,14 +194,8 @@
   import { computed } from 'vue'
   import { definePageMeta, useFetch, useUserStore } from '#imports'
   import { NuxtTime } from '#components'
-
-  import type {
-    UserItemSubmission,
-    UserItemSubmissionProperty
-  } from '#server/api/user/item-submissions/index.get'
-
+  import type { UserItemSubmission, UserItemSubmissionProperty } from '#server/api/user/item-submissions/index.get'
   import type { UserPhotoSubmission } from '#server/api/user/photo-submissions/index.get'
-
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PerdButton from '~/components/PerdButton.vue'
@@ -289,6 +283,7 @@
 
   const hasItemSubmissions = computed(() => itemSubmissions.value.items.length > 0)
   const hasPhotoSubmissions = computed(() => photoSubmissions.value.items.length > 0)
+
   const hasNoContributions = computed(
     () => hasItemSubmissions.value === false && hasPhotoSubmissions.value === false
   )
@@ -306,7 +301,6 @@
     } = property
 
     const value = typeof rawValue === 'boolean' ? formatBoolean(rawValue) : rawValue
-
     const displayValue = unit === null ? value : `${value} ${unit}`
 
     return {

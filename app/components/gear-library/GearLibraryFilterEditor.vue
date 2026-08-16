@@ -113,10 +113,10 @@
   import type { GearLibraryEntitySummary, GearLibraryFilterProperty } from '~/types/equipment'
 
   import {
-    normalizeGearLibraryFilterDraft,
-    type GearLibraryFilterDraft,
-    type GearLibraryNumberRangeErrors
-  } from '~/utils/gear-library-filters'
+  normalizeGearLibraryFilterDraft,
+  type GearLibraryFilterDraft,
+  type GearLibraryNumberRangeErrors
+} from '~/utils/gear-library-filters'
 
   import PerdButton from '~/components/PerdButton.vue'
   import PerdIconButton from '~/components/PerdIconButton.vue'
@@ -194,6 +194,7 @@
       }
     }
   })
+
   const filterLimitState = computed(() => {
     const filters = normalizeGearLibraryFilterDraft(draftFilters.value)
     const brandFilterCount = filters.brand.length
@@ -209,6 +210,7 @@
       isPropertyFilterLimitReached: propertyFilterCount >= maximumFilterCount
     }
   })
+
   const filterLimitMessage = computed(() => {
     const state = filterLimitState.value
 
