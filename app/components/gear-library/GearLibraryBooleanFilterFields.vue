@@ -43,7 +43,7 @@
     properties: GearLibraryFilterProperty[];
   }
 
-  const booleanOptions: { label: string; value: GearLibraryBooleanDraftValue }[] = [{
+  const booleanOptions: { label: string; value: GearLibraryBooleanDraftValue; }[] = [{
     label: 'Any',
     value: 'any'
   }, {
@@ -60,7 +60,6 @@
   const selectedValues = defineModel<Record<string, GearLibraryBooleanDraftValue>>({
     required: true
   })
-
 
   /** Reads a boolean draft value without consulting inherited dictionary properties. */
   function getSelectedValue(propertySlug: string): GearLibraryBooleanDraftValue {

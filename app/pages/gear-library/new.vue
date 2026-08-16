@@ -63,6 +63,7 @@
     name: '',
     properties: []
   }
+
   const requestFetch = useRequestFetch()
   const { user } = useUserStore()
   const confirmationStatus = useTemplateRef('confirmationStatus')

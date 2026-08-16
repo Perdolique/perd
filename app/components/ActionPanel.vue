@@ -43,7 +43,6 @@
 
   const props = defineProps<Props>()
   const slots = useSlots()
-
   const hasMediaSlot = computed(() => slots.media !== undefined)
   const showIcon = computed(() => props.icon !== undefined && props.icon !== '')
   const showMedia = computed(() => hasMediaSlot.value || showIcon.value)

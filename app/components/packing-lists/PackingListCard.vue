@@ -31,6 +31,7 @@
 
   const props = defineProps<Props>()
   const packingListPath = computed(() => createPackingListPath(props.packingList.id))
+
   const itemCountText = computed(() => {
     const itemCount = props.packingList.entryCount
 

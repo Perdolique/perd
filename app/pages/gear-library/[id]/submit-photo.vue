@@ -115,17 +115,14 @@
   import PerdButton from '~/components/PerdButton.vue'
   import PerdLink from '~/components/PerdLink.vue'
   import PageContent from '~/components/layout/PageContent.vue'
-
-  import {
-    appRoutes,
-    createGearLibraryItemPath
-  } from '~/utils/navigation'
+  import { appRoutes, createGearLibraryItemPath } from '~/utils/navigation'
 
   type PhotoSourceType = 'manufacturer' | 'own'
 
   definePageMeta({ layout: 'page' })
 
   const route = useRoute()
+
   const itemId = Array.isArray(route.params.id)
     ? route.params.id[0] ?? ''
     : route.params.id ?? ''
@@ -146,6 +143,7 @@
   const isManufacturerSource = computed(() => sourceType.value === 'manufacturer')
   const selectedFilename = computed(() => selectedFile.value?.name ?? '')
   const hasRequiredSource = computed(() => isManufacturerSource.value === false || sourceUrl.value.trim() !== '')
+
   const isSelectedFileTooLarge = computed(
     () => (selectedFile.value?.size ?? 0) > limits.maxEquipmentItemImageByteLength
   )
@@ -198,14 +196,17 @@
 
     mutationMessage.value = null
     isSubmitting.value = true
+
     const selectedPhoto = selectedFile.value
 
     try {
       const photoBytes = await selectedPhoto.arrayBuffer()
+
       const photo = new globalThis.File([photoBytes], selectedPhoto.name, {
         lastModified: selectedPhoto.lastModified,
         type: selectedPhoto.type
       })
+
       const formData = new globalThis.FormData()
 
       formData.append('photo', photo)

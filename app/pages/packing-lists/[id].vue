@@ -49,7 +49,14 @@
 <script lang="ts" setup>
   import { computed, ref, useTemplateRef } from 'vue'
   import { definePageMeta, useFetch, useRequestFetch, useRoute } from '#imports'
-  import type { PackingListDetail, PackingListEntry, PackingListEntryView, PackingListInventoryEntry } from '~/types/packing'
+
+  import type {
+  PackingListDetail,
+  PackingListEntry,
+  PackingListEntryView,
+  PackingListInventoryEntry
+} from '~/types/packing'
+
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PerdButton from '~/components/PerdButton.vue'

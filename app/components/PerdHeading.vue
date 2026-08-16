@@ -19,7 +19,6 @@
   }
 
   const { level } = defineProps<Props>()
-
   const tag = computed(() => `h${level}` as const)
 </script>
 
