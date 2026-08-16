@@ -39,14 +39,17 @@ describe('post /api/auth/create-session', () => {
     const returningMock = vi.fn(() => [{
       userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
     }])
+
     const valuesMock = vi.fn(() => {
       return { returning: returningMock }
     })
+
     const insertMock = vi.fn((table: unknown) => {
       expect(table).toBe(users)
 
       return { values: valuesMock }
     })
+
     const event = createTestEvent({ insert: insertMock })
 
     useAppSessionMock.mockResolvedValue({ update: sessionUpdateMock })

@@ -10,7 +10,6 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
   const loading = ref(false)
   const errorMessage = ref<string | null>(null)
   let activeFetchController: AbortController | null = null
-
   const hasUnavailableError = computed(() => errorMessage.value !== null && hasLoaded.value === false)
   const isEmpty = computed(() => rows.value.length === 0)
   const isInitialLoading = computed(() => loading.value && hasLoaded.value === false)

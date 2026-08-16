@@ -1,19 +1,8 @@
 import { asc, eq, inArray } from 'drizzle-orm'
-
-import {
-  categoryProperties,
-  itemPropertyValues,
-  propertyEnumOptions
-} from '#server/database/schema'
-
+import { categoryProperties, itemPropertyValues, propertyEnumOptions } from '#server/database/schema'
 import type { createHttpClient } from '#server/utils/database'
 import { getPrimaryEquipmentImageIds } from '#server/utils/equipment/primary-images'
-
-import type {
-  CatalogListBrand,
-  CatalogListCategory,
-  CatalogListItemRow
-} from '#server/utils/equipment/catalog-list'
+import type { CatalogListBrand, CatalogListCategory, CatalogListItemRow } from '#server/utils/equipment/catalog-list'
 
 import {
   getEquipmentPropertyDataType,

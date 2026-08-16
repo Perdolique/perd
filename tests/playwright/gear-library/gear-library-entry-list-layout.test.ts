@@ -1,4 +1,5 @@
 import { expect, test } from '../fixtures/global.fixtures.ts'
+
 import {
   type MutableResponseState,
   type QueryEntry,
@@ -25,7 +26,7 @@ import {
   expectPerdSelectValue,
   hasVisibleFocusOutline,
   waitForInlineEndAnchoring,
-  mockGuestLogin,
+  mockGuestLogin
 } from '../fixtures/gear-library-entry-list.fixtures.ts'
 
 test.describe('Gear library layout and accessibility', () => {
@@ -214,6 +215,7 @@ test.describe('Gear library layout and accessibility', () => {
     const itemsState: MutableResponseState = {
       response: { json: scrollableItemsResponse }
     }
+
     const tracker = await mockCatalogApi(context, { items: respondFromState(itemsState) })
 
     await openGearLibrary(page)
@@ -224,6 +226,7 @@ test.describe('Gear library layout and accessibility', () => {
     await expect(initialLink).toBeVisible()
 
     const initialRowBox = await getElementBox(initialRow)
+
     const initialViewport = await page.evaluate(() => {
       return {
         clientWidth: globalThis.document.documentElement.clientWidth,
@@ -231,6 +234,7 @@ test.describe('Gear library layout and accessibility', () => {
         scrollHeight: globalThis.document.documentElement.scrollHeight
       }
     })
+
     const itemsBeforeCategory = tracker.items.length
 
     itemsState.response = { json: refreshedSearchResponse }
@@ -244,6 +248,7 @@ test.describe('Gear library layout and accessibility', () => {
     await expect(filteredLink).toBeVisible()
 
     const filteredRowBox = await getElementBox(filteredRow)
+
     const filteredViewport = await page.evaluate(() => {
       return {
         clientWidth: globalThis.document.documentElement.clientWidth,
@@ -478,6 +483,7 @@ test.describe('Gear library layout and accessibility', () => {
     })
 
     const tracker = await mockCatalogApi(context)
+
     const routeEntries: QueryEntry[] = [
       ['direction', 'sideways'],
       ['sort', 'property:weight'],
@@ -493,6 +499,7 @@ test.describe('Gear library layout and accessibility', () => {
       ['compare', stoveItem.id],
       ['debug', '1']
     ]
+
     const route = `/gear-library${buildRouteSearch(routeEntries)}`
 
     await openGearLibrary(page, route)

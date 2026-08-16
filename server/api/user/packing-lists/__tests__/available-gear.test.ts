@@ -68,47 +68,57 @@ function createAvailableGearDb({
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
       }
     : undefined
+
   const offsetMock = vi.fn(() => rows)
+
   const limitMock = vi.fn(() => {
     return {
       offset: offsetMock
     }
   })
+
   const orderByMock = vi.fn(() => {
     return {
       limit: limitMock
     }
   })
+
   const whereMock = vi.fn((_condition: SQL | undefined) => {
     return {
       orderBy: orderByMock
     }
   })
+
   const leftJoinMock = vi.fn(() => {
     return {
       where: whereMock
     }
   })
+
   const categoryJoinMock = vi.fn(() => {
     return {
       leftJoin: leftJoinMock
     }
   })
+
   const brandJoinMock = vi.fn(() => {
     return {
       innerJoin: categoryJoinMock
     }
   })
+
   const itemJoinMock = vi.fn(() => {
     return {
       innerJoin: brandJoinMock
     }
   })
+
   const fromMock = vi.fn(() => {
     return {
       innerJoin: itemJoinMock
     }
   })
+
   const findFirstMock = vi.fn((_config: PackingListFindFirstConfig) => ownedList)
 
   return {
@@ -166,7 +176,6 @@ describe('get /api/user/packing-lists/[id]/available-gear', () => {
     const rows = createAvailableGearRows(11)
     const { dbHttp, findFirstMock, limitMock, offsetMock, orderByMock, whereMock } = createAvailableGearDb({ rows })
     const event = createTestEvent(dbHttp)
-
     const result = await listAvailableGearHandler(event)
 
     expect(result).toStrictEqual({
@@ -224,6 +233,7 @@ describe('get /api/user/packing-lists/[id]/available-gear', () => {
     const { dbHttp } = createAvailableGearDb({
       isOwned: false
     })
+
     const event = createTestEvent(dbHttp)
 
     await expect(listAvailableGearHandler(event)).rejects.toMatchObject({

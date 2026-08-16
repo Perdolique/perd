@@ -20,6 +20,8 @@
     "deploy:versions:staging": "wrangler versions upload --env=staging",
     "dev": "nuxt dev",
     "drizzle": "drizzle-kit",
+    "format": "worsier --write .",
+    "format:check": "worsier --check .",
     "lint:markdown": "markdownlint '**/*.md'",
     "lint:oxlint": "oxlint",
     "lint:oxlint:agent": "oxlint --format agent",
@@ -73,6 +75,7 @@
     "vite": "8.2.1",
     "vitest": "4.1.10",
     "vue-tsc": "3.3.9",
+    "worsier": "2.7.1",
     "wrangler": "4.120.1",
     "ws": "8.21.3"
   },

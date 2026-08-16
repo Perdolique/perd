@@ -20,6 +20,7 @@ test.describe('Dashboard page', () => {
     await page.getByRole('button', { name: 'Guest' }).click()
 
     await expect(page).toHaveURL(/\/$/u)
+
     const pageContent = page.getByTestId('page-content')
 
     await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible()

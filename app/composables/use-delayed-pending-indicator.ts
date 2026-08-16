@@ -1,11 +1,4 @@
-import {
-  readonly,
-  ref,
-  toValue,
-  watch,
-  type MaybeRefOrGetter
-} from 'vue'
-
+import { readonly, ref, toValue, watch, type MaybeRefOrGetter } from 'vue'
 import { useTimeoutFn } from '@vueuse/core'
 
 interface DelayedPendingIndicatorOptions {

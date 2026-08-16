@@ -25,13 +25,17 @@ describe(createOAuthUser, () => {
       isAdmin: false,
       userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477bb'
     }])
+
     const userValuesMock = vi.fn(() => {
       return { returning: userReturningMock }
     })
+
     const accountValuesMock = vi.fn()
+
     const insertMock = vi.fn()
       .mockReturnValueOnce({ values: userValuesMock })
       .mockReturnValueOnce({ values: accountValuesMock })
+
     const transaction = {
       insert: insertMock,
 
@@ -43,6 +47,7 @@ describe(createOAuthUser, () => {
         }
       }
     }
+
     const dbWebsocket = {
       $client: {
         end: vi.fn()

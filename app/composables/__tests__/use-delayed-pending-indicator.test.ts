@@ -15,6 +15,7 @@ describe(useDelayedPendingIndicator, () => {
   it('should stay hidden when pending ends before the delay', () => {
     const pending = ref(false)
     const scope = effectScope()
+
     const isVisible = scope.run(() => useDelayedPendingIndicator(pending, {
       delayMs: 200,
       minimumVisibleMs: 300
@@ -33,6 +34,7 @@ describe(useDelayedPendingIndicator, () => {
   it('should keep a visible indicator for its minimum lifetime', () => {
     const pending = ref(true)
     const scope = effectScope()
+
     const isVisible = scope.run(() => useDelayedPendingIndicator(pending, {
       delayMs: 200,
       minimumVisibleMs: 300
@@ -54,6 +56,7 @@ describe(useDelayedPendingIndicator, () => {
   it('should cancel a scheduled hide when pending starts again', () => {
     const pending = ref(true)
     const scope = effectScope()
+
     const isVisible = scope.run(() => useDelayedPendingIndicator(pending, {
       delayMs: 100,
       minimumVisibleMs: 300
@@ -76,6 +79,7 @@ describe(useDelayedPendingIndicator, () => {
   it('should clear its pending timers when the owning scope stops', () => {
     const pending = ref(true)
     const scope = effectScope()
+
     const isVisible = scope.run(() => useDelayedPendingIndicator(pending, {
       delayMs: 200,
       minimumVisibleMs: 300

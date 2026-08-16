@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-
 import type { ComparisonResponse } from '#server/api/equipment/comparisons.get'
 
 import {

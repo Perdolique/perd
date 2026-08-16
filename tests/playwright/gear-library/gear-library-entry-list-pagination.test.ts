@@ -1,4 +1,5 @@
 import { expect, test } from '../fixtures/global.fixtures.ts'
+
 import {
   type LoadMoreFailureState,
   buildRouteSearch,
@@ -19,7 +20,7 @@ import {
   isSecondPageItemsRequest,
   waitForNextItemsRequest,
   expectQueryValues,
-  mockGuestLogin,
+  mockGuestLogin
 } from '../fixtures/gear-library-entry-list.fixtures.ts'
 
 test.describe('Gear library Load more', () => {
@@ -29,6 +30,7 @@ test.describe('Gear library Load more', () => {
 
   test('should append one ten-item page per action without exposing browsing depth in the URL', async ({ context, page }) => {
     const secondPageGate = createDeferred()
+
     const tracker = await mockCatalogApi(context, {
       items: createGatedLoadMoreResponder('2', secondPageGate)
     })
@@ -234,7 +236,6 @@ test.describe('Gear library Load more', () => {
     await waitForNextItemsRequest(tracker, requestsBeforeLoadMore)
 
     const staleRequestFailure = page.waitForEvent('requestfailed', isSecondPageItemsRequest)
-
     const detailNavigation = page.waitForURL((url) => url.pathname === `/gear-library/${detailItem.id}`)
 
     await page.getByRole('link', { name: detailItem.name }).click()

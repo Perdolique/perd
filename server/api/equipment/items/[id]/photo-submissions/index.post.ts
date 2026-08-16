@@ -1,10 +1,5 @@
 import { createError, defineEventHandler, getValidatedRouterParams, isError, setResponseStatus } from 'h3'
-
-import {
-  contributions,
-  equipmentItemPhotoSubmissions
-} from '#server/database/schema'
-
+import { contributions, equipmentItemPhotoSubmissions } from '#server/database/schema'
 import { getCloudflareImagesBinding } from '#server/utils/cloudflare'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
 
@@ -20,11 +15,7 @@ import {
 } from '#server/utils/equipment/photo-submission-form'
 
 import { validateRegisteredUser } from '#server/utils/user'
-
-import {
-  validateItemDetailParams,
-  validatePhotoSubmissionCreateBody
-} from '#server/utils/validation/schemas'
+import { validateItemDetailParams, validatePhotoSubmissionCreateBody } from '#server/utils/validation/schemas'
 
 interface PhotoSubmissionCreateResponse {
   id: string;
@@ -82,6 +73,7 @@ export default defineEventHandler(async (event): Promise<PhotoSubmissionCreateRe
   })
 
   const imagesBinding = getCloudflareImagesBinding(event)
+
   const imageBody = await createEquipmentItemImageBody({
     declaredByteLength: photo.size,
     mediaType: photo.type,

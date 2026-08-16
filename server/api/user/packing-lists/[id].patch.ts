@@ -2,11 +2,7 @@ import { and, eq } from 'drizzle-orm'
 import { createError, defineEventHandler, getValidatedRouterParams, readValidatedBody } from 'h3'
 import { packingLists } from '#server/database/schema'
 import { validateSessionUser } from '#server/utils/session'
-
-import {
-  validatePackingListIdParams,
-  validatePackingListMutationBody
-} from '#server/utils/validation/schemas'
+import { validatePackingListIdParams, validatePackingListMutationBody } from '#server/utils/validation/schemas'
 
 interface PackingListSummary {
   createdAt: Date | string;

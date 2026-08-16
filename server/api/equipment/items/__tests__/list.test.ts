@@ -75,6 +75,7 @@ function createCategoryMetadata() {
 
 function createJoinChain(terminal: object) {
   const categoryJoinMock = vi.fn(() => terminal)
+
   const brandJoinMock = vi.fn(() => {
     return { innerJoin: categoryJoinMock }
   })
@@ -149,10 +150,9 @@ function createListDb({
   })
 
   const findImagesMock = vi.fn(() => images)
-
   const findFirstMock = vi.fn(() => categoryMetadata)
 
-  const selectMock = vi.fn((selection: Record<string, unknown> & { isInMyGear?: SQL }) => {
+  const selectMock = vi.fn((selection: Record<string, unknown> & { isInMyGear?: SQL; }) => {
     if ('total' in selection) {
       return { from: countFromMock }
     }
@@ -267,6 +267,7 @@ describe('get /api/equipment/items', () => {
       cloudflareImageId: 'catalog-primary-image',
       itemId: id
     }]
+
     const db = createListDb({ definitions, enumOptions, images, items: itemRows, total: 42, values })
     const event = createTestEvent(db.dbHttp)
 
@@ -344,9 +345,11 @@ describe('get /api/equipment/items', () => {
     const itemSelection = db.selectMock.mock.calls
       .map(([selection]) => selection)
       .find((selection) => 'isInMyGear' in selection)
+
     const countSelection = db.selectMock.mock.calls
       .map(([selection]) => selection)
       .find((selection) => 'total' in selection)
+
     const membershipSql = itemSelection?.isInMyGear
     const compiledMembership = compileSql(membershipSql)
 
@@ -393,6 +396,7 @@ describe('get /api/equipment/items', () => {
 
   it('should compile grouped search, brand, enum, numeric, and boolean predicates', async () => {
     const db = createListDb({ categoryMetadata: createCategoryMetadata() })
+
     const query = createQuery({
       booleanFilter: [{ propertySlug: 'piezo', value: true }],
       brandSlug: ['msr', 'therm-a-rest'],

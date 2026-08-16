@@ -1,15 +1,5 @@
-import type {
-  LocationQuery,
-  LocationQueryRaw,
-  LocationQueryValue,
-  LocationQueryValueRaw
-} from 'vue-router'
-
-import type {
-  GearLibraryItemsResponse,
-  GearLibraryListItem
-} from '~/types/equipment'
-
+import type { LocationQuery, LocationQueryRaw, LocationQueryValue, LocationQueryValueRaw } from 'vue-router'
+import type { GearLibraryItemsResponse, GearLibraryListItem } from '~/types/equipment'
 import { normalizeGearLibraryComparisonQuery } from '~/utils/gear-library-comparison'
 
 type GearLibrarySort = 'name' | 'brand' | `property:${string}`

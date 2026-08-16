@@ -50,6 +50,7 @@ describe('equipmentItems updatedAt', () => {
 describe('equipment item rejection reason', () => {
   it('should keep rejection reasons nullable and bounded to the shared limit', () => {
     const tableConfig = getTableConfig(schema.equipmentItems)
+
     const rejectionReasonColumn = tableConfig.columns.find(
       (column) => column.name === 'rejectionReason'
     )
@@ -63,6 +64,7 @@ describe('equipment catalog research schema', () => {
   it('should require a unique display order within each category', () => {
     const tableConfig = getTableConfig(schema.categoryProperties)
     const displayOrderColumn = tableConfig.columns.find((column) => column.name === 'displayOrder')
+
     const displayOrderConstraint = tableConfig.uniqueConstraints.find(
       (constraint) => constraint.getName() === schema.categoryPropertyDisplayOrderConstraintName
     )
@@ -76,6 +78,7 @@ describe('equipment catalog research schema', () => {
 
   it('should index each typed property value by property and item', () => {
     const tableConfig = getTableConfig(schema.itemPropertyValues)
+
     const indexes = tableConfig.indexes.map((tableIndex) => {
       return {
         columns: getIndexColumnNames(tableIndex),
@@ -107,15 +110,19 @@ describe('equipment catalog research schema', () => {
   it('should keep ordered images linked to each item', () => {
     const tableConfig = getTableConfig(schema.equipmentItemImages)
     const columnNames = tableConfig.columns.map((column) => column.name)
+
     const cloudflareImageIdColumn = tableConfig.columns.find(
       (column) => column.name === 'cloudflareImageId'
     )
+
     const displayOrderColumn = tableConfig.columns.find(
       (column) => column.name === 'displayOrder'
     )
+
     const displayOrderConstraint = tableConfig.uniqueConstraints.find(
       (constraint) => constraint.getName() === schema.equipmentItemImageDisplayOrderConstraintName
     )
+
     const [itemForeignKey] = tableConfig.foreignKeys
 
     expect(columnNames).toStrictEqual([
@@ -152,18 +159,23 @@ describe('equipment catalog research schema', () => {
   it('should keep pending photo submissions private and linked to their source', () => {
     const tableConfig = getTableConfig(schema.equipmentItemPhotoSubmissions)
     const columnNames = tableConfig.columns.map((column) => column.name)
+
     const cloudflareImageIdColumn = tableConfig.columns.find(
       (column) => column.name === 'cloudflareImageId'
     )
+
     const sourceUrlColumn = tableConfig.columns.find(
       (column) => column.name === 'sourceUrl'
     )
+
     const statusColumn = tableConfig.columns.find(
       (column) => column.name === 'status'
     )
+
     const itemForeignKey = tableConfig.foreignKeys.find(
       (foreignKey) => foreignKey.reference().foreignTable === schema.equipmentItems
     )
+
     const creatorForeignKey = tableConfig.foreignKeys.find(
       (foreignKey) => foreignKey.reference().foreignTable === schema.users
     )

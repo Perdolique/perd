@@ -1,9 +1,4 @@
-import {
-  createError,
-  getRequestHeader,
-  getRequestWebStream,
-  type H3Event
-} from 'h3'
+import { createError, getRequestHeader, getRequestWebStream, type H3Event } from 'h3'
 
 import {
   createLimitedRequestBody,

@@ -5,31 +5,42 @@ const databaseMigrationWorkflowUrl = new URL(
   '../../../.github/workflows/database-migration.yml',
   import.meta.url
 )
+
 const databaseMigrationWorkflow = readFileSync(databaseMigrationWorkflowUrl, 'utf8')
+
 const migrationUrl = new URL(
   '../migrations/20260711222621_stormy_captain_marvel/migration.sql',
   import.meta.url
 )
+
 const migrationSql = readFileSync(migrationUrl, 'utf8')
+
 const imagesMigrationUrl = new URL(
   '../migrations/20260730184011_uneven_karma/migration.sql',
   import.meta.url
 )
+
 const imagesMigrationSql = readFileSync(imagesMigrationUrl, 'utf8')
+
 const negativeValuesMigrationUrl = new URL(
   '../migrations/20260808152209_stiff_ultragirl/migration.sql',
   import.meta.url
 )
+
 const negativeValuesMigrationSql = readFileSync(negativeValuesMigrationUrl, 'utf8')
+
 const rejectionReasonMigrationUrl = new URL(
   '../migrations/20260810183449_add-item-submission-rejection-reason/migration.sql',
   import.meta.url
 )
+
 const rejectionReasonMigrationSql = readFileSync(rejectionReasonMigrationUrl, 'utf8')
+
 const photoSubmissionsMigrationUrl = new URL(
   '../migrations/20260811190742_lean_guardsmen/migration.sql',
   import.meta.url
 )
+
 const photoSubmissionsMigrationSql = readFileSync(photoSubmissionsMigrationUrl, 'utf8')
 
 describe('database migration workflow', () => {
@@ -95,6 +106,7 @@ describe('category property negative value migration', () => {
     const addColumnPosition = negativeValuesMigrationSql.indexOf(
       'ADD COLUMN "allowsNegativeValues" boolean DEFAULT false NOT NULL'
     )
+
     const temperatureUpdatePosition = negativeValuesMigrationSql.indexOf(
       'SET "allowsNegativeValues" = true'
     )

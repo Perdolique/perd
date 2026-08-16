@@ -13,12 +13,7 @@ import type {
   validatePhotoSubmissionMultipartRequest
 } from '#server/utils/equipment/photo-submission-form'
 
-import {
-  contributions,
-  equipmentItemImages,
-  equipmentItemPhotoSubmissions
-} from '#server/database/schema'
-
+import { contributions, equipmentItemImages, equipmentItemPhotoSubmissions } from '#server/database/schema'
 import createPhotoSubmissionHandler from '#server/api/equipment/items/[id]/photo-submissions/index.post'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
@@ -107,7 +102,7 @@ vi.mock(import('#server/utils/user'), () => {
   }
 })
 
-function createReadDb(item: { id: string } | null = defaultReadItem) {
+function createReadDb(item: { id: string; } | null = defaultReadItem) {
   return {
     query: {
       equipmentItems: {
@@ -117,7 +112,7 @@ function createReadDb(item: { id: string } | null = defaultReadItem) {
   }
 }
 
-function createWriteDb(options: { insertError?: Error } = {}) {
+function createWriteDb(options: { insertError?: Error; } = {}) {
   const submissionValuesMock = vi.fn(() => {
     return {
       returning: vi.fn(() => {
@@ -129,7 +124,9 @@ function createWriteDb(options: { insertError?: Error } = {}) {
       })
     }
   })
+
   const contributionValuesMock = vi.fn()
+
   const insertMock = vi.fn((table) => {
     if (table === equipmentItemPhotoSubmissions) {
       return { values: submissionValuesMock }
@@ -141,10 +138,13 @@ function createWriteDb(options: { insertError?: Error } = {}) {
 
     throw new Error('Unexpected table insert')
   })
+
   const transaction = { insert: insertMock }
+
   const transactionMock = vi.fn(async (
     executeTransaction: (value: typeof transaction) => Promise<unknown>
   ) => executeTransaction(transaction))
+
   const endMock = vi.fn()
 
   return {
@@ -187,6 +187,7 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
       mediaType: 'image/webp',
       stream: new ReadableStream<Uint8Array>()
     }
+
     const writeDb = createWriteDb()
 
     createEquipmentItemImageBodyMock.mockResolvedValue(body)
@@ -306,6 +307,7 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
   it('should delete the unattached asset and close database resources after a database failure', async () => {
     const databaseError = new Error('database unavailable')
     const writeDb = createWriteDb({ insertError: databaseError })
+
     const consoleErrorMock = vi.spyOn(console, 'error').mockImplementation(() => {
       // Expected database failure telemetry.
     })

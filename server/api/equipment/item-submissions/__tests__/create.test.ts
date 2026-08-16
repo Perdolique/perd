@@ -73,28 +73,36 @@ function createDb(options: CreateDbOptions = {}) {
       id: 4
     }]
   }
+
   const brand = 'brand' in options ? options.brand : { id: 1, name: 'MSR' }
   const category = 'category' in options ? options.category : defaultCategory
   const { contributionError } = options
   const createdItemId = options.createdItemId ?? '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
   const itemReturningMock = vi.fn(() => [{ id: createdItemId }])
+
   const itemValuesMock = vi.fn(() => {
     return { returning: itemReturningMock }
   })
+
   const propertyValuesMock = vi.fn()
+
   const contributionValuesMock = vi.fn(() => {
     if (contributionError !== undefined) {
       throw contributionError
     }
   })
+
   const insertMock = vi.fn()
   const propertyLockForMock = vi.fn(() => [])
+
   const propertyLockWhereMock = vi.fn(() => {
     return { for: propertyLockForMock }
   })
+
   const propertyLockFromMock = vi.fn(() => {
     return { where: propertyLockWhereMock }
   })
+
   const selectMock = vi.fn(() => {
     return { from: propertyLockFromMock }
   })
@@ -133,7 +141,9 @@ function createDb(options: CreateDbOptions = {}) {
   const transactionMock = vi.fn(
     async (execute: (transactionValue: typeof transaction) => Promise<unknown>) => execute(transaction)
   )
+
   const endMock = vi.fn()
+
   const dbWrite = {
     $client: {
       end: endMock
@@ -289,6 +299,7 @@ describe('post /api/equipment/item-submissions', () => {
     expect(propertyLockForMock).toHaveBeenCalledWith('key share')
 
     const propertyLockCallOrder = Math.min(...propertyLockForMock.mock.invocationCallOrder)
+
     const categoryReadCallOrder = Math.min(
       ...transaction.query.equipmentCategories.findFirst.mock.invocationCallOrder
     )

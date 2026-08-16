@@ -46,6 +46,7 @@ describe('get /api/user/item-submissions', () => {
       status: 'rejected',
       updatedAt: new Date('2026-08-02T12:00:00Z')
     }])
+
     const event = createTestEvent({
       query: {
         equipmentItems: { findMany: findManyMock }
@@ -122,6 +123,7 @@ describe('get /api/user/item-submissions', () => {
         status,
         updatedAt: new Date('2026-08-02T12:00:00Z')
       }])
+
       const event = createTestEvent({
         query: {
           equipmentItems: { findMany: findManyMock }

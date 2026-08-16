@@ -76,6 +76,7 @@ describe('database middleware', () => {
       databaseUrl: 'postgres://unused.invalid/test',
       isLocalDatabase: false
     }
+
     const databaseClient = { query: {} }
     const event = createMiddlewareEvent('/api/equipment/items')
 

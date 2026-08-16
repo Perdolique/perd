@@ -131,6 +131,7 @@ async function setOversizedPhoto(page: Page): Promise<void> {
       'oversized.webp',
       { type: 'image/webp' }
     )
+
     const files = new globalThis.DataTransfer()
 
     files.items.add(photo)
@@ -186,16 +187,19 @@ test.describe('Photo submissions', () => {
     })
 
     await manufacturerSource.check()
+
     const sourceInput = page.getByLabel('Manufacturer source')
 
     await expect(sourceInput).toBeVisible()
     await expect(sourceInput).toHaveAttribute('required', '')
     await sourceInput.fill(sourceUrl)
+
     const photoInput = page.getByLabel('Photo', { exact: true })
 
     await expect(photoInput).not.toHaveAttribute('multiple', '')
     await photoInput.setInputFiles(photoFixturePath)
     await expect(page.getByText('Selected: photo-submission.webp')).toBeVisible()
+
     const rightsCheckbox = page.getByLabel(
       'I confirm that this photo can be published in the catalog.'
     )

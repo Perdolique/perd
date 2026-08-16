@@ -1,13 +1,6 @@
 import { and, eq, inArray } from 'drizzle-orm'
 import { createError, defineEventHandler, isError, readValidatedBody, setResponseStatus } from 'h3'
-
-import {
-  categoryProperties,
-  contributions,
-  equipmentItems,
-  itemPropertyValues
-} from '#server/database/schema'
-
+import { categoryProperties, contributions, equipmentItems, itemPropertyValues } from '#server/database/schema'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
 import { normalizeItemSubmissionProperties } from '#server/utils/equipment/item-submission-properties'
 import { validateRegisteredUser } from '#server/utils/user'

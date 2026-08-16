@@ -58,7 +58,6 @@ describe(shouldSkipAuth, () => {
 
   it('should skip api document navigations', () => {
     const route = createRoute('/api/oauth/twitch')
-
     const result = shouldSkipAuth(route)
 
     expect(result).toBe(true)
@@ -66,7 +65,6 @@ describe(shouldSkipAuth, () => {
 
   it('should keep regular app routes protected', () => {
     const route = createRoute('/gear-library')
-
     const result = shouldSkipAuth(route)
 
     expect(result).toBe(false)

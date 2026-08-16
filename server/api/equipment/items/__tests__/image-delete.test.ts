@@ -110,6 +110,7 @@ function createDeleteDb({
   const itemRows = hasItem ? [{ id: itemId }] : []
   const foundImages = hasImage ? [currentImage] : []
   const selectForUpdateMock = vi.fn(() => itemRows)
+
   const selectLimitMock = vi.fn(() => {
     return { for: selectForUpdateMock }
   })
@@ -128,6 +129,7 @@ function createDeleteDb({
 
   const findManyMock = vi.fn<() => EquipmentItemImageRow[]>(() => foundImages)
   const deleteReturningMock = vi.fn(() => [{ id: currentImage.id }])
+
   const deleteWhereMock = vi.fn(() => {
     return { returning: deleteReturningMock }
   })
@@ -137,6 +139,7 @@ function createDeleteDb({
   })
 
   const updateWhereMock = vi.fn()
+
   const updateSetMock = vi.fn(() => {
     return { where: updateWhereMock }
   })
@@ -146,6 +149,7 @@ function createDeleteDb({
   })
 
   const insertContributionValuesMock = vi.fn()
+
   const insertMock = vi.fn(() => {
     return { values: insertContributionValuesMock }
   })
@@ -177,6 +181,7 @@ function createDeleteDb({
   })
 
   const endMock = vi.fn()
+
   const dbWrite: MockWriteDb = {
     $client: {
       end: endMock
@@ -359,6 +364,7 @@ describe('delete /api/equipment/items/[id]/images/[image-id]', () => {
 
     createWebSocketClientMock.mockReturnValue(dbWrite)
     deleteCloudflareImageMock.mockRejectedValue(cloudflareError)
+
     const consoleErrorMock = vi.spyOn(console, 'error').mockImplementation((message) => {
       expect(message).toBe('Failed to delete Cloudflare image')
     })

@@ -1,13 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import {
-  buildCategoryPropertySeedRows,
-  resetAndSeedCatalog
-} from '../seed-catalog'
-import {
-  categoryDefinitions,
-  propertyDefinitionsByCategorySlug,
-  sampleItems
-} from '../seed-data'
+import { buildCategoryPropertySeedRows, resetAndSeedCatalog } from '../seed-catalog'
+import { categoryDefinitions, propertyDefinitionsByCategorySlug, sampleItems } from '../seed-data'
 
 describe(resetAndSeedCatalog, () => {
   it('should seed exactly 25 uniquely named catalog items per category', () => {

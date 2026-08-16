@@ -7,8 +7,8 @@ import {
   decimalNumberPattern,
   isFiniteDecimalNumber,
   normalizeDecimalNumber
-}
- from '#shared/utils/decimal-number'
+} from '#shared/utils/decimal-number'
+
 import { sanitizeRedirectPath } from '#shared/utils/redirect'
 
 const nonEmptyStringSchema = v.pipe(
@@ -552,6 +552,7 @@ const booleanFilterQueryValueSchema = v.pipe(
 )
 
 const propertySortPrefix = 'property:'
+
 const propertyItemsListSortSchema = v.pipe(
   v.string(),
   v.startsWith(propertySortPrefix),
@@ -728,6 +729,7 @@ const itemsListQuerySchema = v.pipe(
     const hasPropertyFilters = query.numberFilter.length > 0
       || query.enumFilter.length > 0
       || query.booleanFilter.length > 0
+
     const hasPropertySort = query.sort.startsWith('property:')
     const requiresCategory = hasPropertyFilters || hasPropertySort
 

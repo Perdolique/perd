@@ -16,7 +16,6 @@ const dbWebsocket = createWebSocketClient(databaseConfig)
  * @todo Move to custom migrations
  * @see {@link https://orm.drizzle.team/docs/kit-custom-migrations}
  */
-
 await migrate(dbWebsocket, {
   migrationsFolder: drizzleConfig.out
 })

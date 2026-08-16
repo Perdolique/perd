@@ -1,5 +1,6 @@
 import { and, eq, sql } from 'drizzle-orm'
 import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody } from 'h3'
+
 import {
   brands,
   equipmentCategories,
@@ -8,13 +9,10 @@ import {
   packingLists,
   userEquipment
 } from '#server/database/schema'
+
 import { createWebSocketClientFromEvent } from '#server/utils/config'
 import { validateSessionUser } from '#server/utils/session'
-
-import {
-  validatePackingListEntryParams,
-  validatePackingListEntryUpdateBody
-} from '#server/utils/validation/schemas'
+import { validatePackingListEntryParams, validatePackingListEntryUpdateBody } from '#server/utils/validation/schemas'
 
 interface PackingListEntryInventory {
   brand: string;

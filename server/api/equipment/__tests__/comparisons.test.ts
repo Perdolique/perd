@@ -12,7 +12,6 @@ const firstItemId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
 const secondItemId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8'
 const thirdItemId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9'
 const fourthItemId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477da'
-
 const comparisonItemIds = [firstItemId, secondItemId, thirdItemId, fourthItemId]
 
 const { getValidatedQueryMock } = vi.hoisted(() => {
@@ -307,8 +306,10 @@ describe('get /api/equipment/comparisons', () => {
       selectMock,
       valuesWhereMock
     } = createComparisonDb({ definitions, enumOptions, images, items: itemRows, values })
+
     const event = createTestEvent(dbHttp)
     const result = await comparisonsHandler(event)
+
     const expectedImageIds = new Map([
       [firstItemId, 'compare-primary-image'],
       [secondItemId, null],
@@ -431,6 +432,7 @@ describe('get /api/equipment/comparisons', () => {
     const { dbHttp, selectMock } = createComparisonDb({
       items: [createItemRow(firstItemId)]
     })
+
     const event = createTestEvent(dbHttp)
 
     getValidatedQueryMock.mockResolvedValue(createQuery(itemIds))
@@ -443,9 +445,11 @@ describe('get /api/equipment/comparisons', () => {
 
   it('should return 400 before enrichment for mixed categories', async () => {
     const itemIds = [firstItemId, secondItemId]
+
     const { dbHttp, selectMock } = createComparisonDb({
       items: [createItemRow(firstItemId), createItemRow(secondItemId, 3)]
     })
+
     const event = createTestEvent(dbHttp)
 
     getValidatedQueryMock.mockResolvedValue(createQuery(itemIds))

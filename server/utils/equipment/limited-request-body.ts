@@ -1,8 +1,4 @@
-import {
-  createError,
-  getRequestHeader,
-  type H3Event
-} from 'h3'
+import { createError, getRequestHeader, type H3Event } from 'h3'
 
 interface LimitedRequestBody {
   close: () => Promise<void>;

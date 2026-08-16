@@ -567,6 +567,7 @@ describe('category property handlers', () => {
         code: '23505',
         constraint: categoryPropertyDisplayOrderConstraintName
       })
+
       const displayOrderConflict = new DrizzleQueryError('insert category property', [], postgresError)
 
       const { insertMock } = createInsertMock([{
