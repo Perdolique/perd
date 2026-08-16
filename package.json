@@ -41,10 +41,10 @@
   "dependencies": {
     "@nuxt/hints": "1.1.4",
     "@nuxt/image": "2.1.0",
-    "@pinia/nuxt": "1.0.1",
+    "@pinia/nuxt": "1.0.2",
     "delay": "7.0.0",
     "nuxt": "4.5.2",
-    "pinia": "4.0.2",
+    "pinia": "4.0.3",
     "vue": "3.5.41",
     "vue-router": "5.2.0"
   },
@@ -67,17 +67,17 @@
     "markdownlint-cli": "0.49.1",
     "oxlint": "1.78.0",
     "oxlint-tsgolint": "7.0.2001",
-    "taze": "20.0.1",
+    "taze": "21.1.0",
     "tsx": "4.23.12",
     "typescript": "6.0.3",
     "ufo": "1.6.4",
     "valibot": "1.4.2",
     "vite": "8.2.1",
     "vitest": "4.1.10",
-    "vue-tsc": "3.3.9",
+    "vue-tsc": "3.3.10",
     "worsier": "2.7.1",
-    "wrangler": "4.120.1",
+    "wrangler": "4.123.0",
     "ws": "8.21.3"
   },
-  "packageManager": "pnpm@11.21.0"
+  "packageManager": "pnpm@11.22.0"
 }
