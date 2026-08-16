@@ -4,32 +4,6 @@ allowBuilds:
   sharp: false
   workerd: false
 minimumReleaseAgeExclude:
-  - '@nuxt/icon@2.5.0'
-  - '@oxlint/binding-android-arm-eabi@1.78.0'
-  - '@oxlint/binding-android-arm64@1.78.0'
-  - '@oxlint/binding-darwin-arm64@1.78.0'
-  - '@oxlint/binding-darwin-x64@1.78.0'
-  - '@oxlint/binding-freebsd-x64@1.78.0'
-  - '@oxlint/binding-linux-arm-gnueabihf@1.78.0'
-  - '@oxlint/binding-linux-arm-musleabihf@1.78.0'
-  - '@oxlint/binding-linux-arm64-gnu@1.78.0'
-  - '@oxlint/binding-linux-arm64-musl@1.78.0'
-  - '@oxlint/binding-linux-ppc64-gnu@1.78.0'
-  - '@oxlint/binding-linux-riscv64-gnu@1.78.0'
-  - '@oxlint/binding-linux-riscv64-musl@1.78.0'
-  - '@oxlint/binding-linux-s390x-gnu@1.78.0'
-  - '@oxlint/binding-linux-x64-gnu@1.78.0'
-  - '@oxlint/binding-linux-x64-musl@1.78.0'
-  - '@oxlint/binding-openharmony-arm64@1.78.0'
-  - '@oxlint/binding-win32-arm64-msvc@1.78.0'
-  - '@oxlint/binding-win32-ia32-msvc@1.78.0'
-  - '@oxlint/binding-win32-x64-msvc@1.78.0'
-  - eslint-config-greenpie@17.6.0
-  - miniflare@5.20260804.0-alpha
-  - oxlint@1.78.0
-  - taze@20.0.1
-  - tsx@4.23.12
-  - wrangler@4.120.1
   - worsier-darwin-arm64@2.7.1
   - worsier-darwin-x64@2.7.1
   - worsier-linux-arm64-gnu@2.7.1
