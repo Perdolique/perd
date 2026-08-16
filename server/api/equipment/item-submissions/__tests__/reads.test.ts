@@ -52,9 +52,11 @@ interface DetailQueryConfig {
 function createListDb(items: unknown[], total: number) {
   const findManyMock = vi.fn(() => items)
   const countWhereMock = vi.fn((_condition: SQL | undefined) => [{ total }])
+
   const countFromMock = vi.fn(() => {
     return { where: countWhereMock }
   })
+
   const selectMock = vi.fn(() => {
     return { from: countFromMock }
   })
@@ -96,9 +98,9 @@ describe('admin equipment submission reads', () => {
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
       name: 'PocketRocket Deluxe'
     }]
+
     const { countWhereMock, dbHttp, findManyMock } = createListDb(items, 21)
     const event = createTestEvent(dbHttp)
-
     const result = await listHandler(event)
 
     expect(validateAdminUserMock).toHaveBeenCalledWith(event)
@@ -113,6 +115,7 @@ describe('admin equipment submission reads', () => {
         status: 'pending'
       }
     }))
+
     const countCondition = countWhereMock.mock.calls[0]?.[0]
 
     expectDefinedSql(countCondition)
@@ -161,6 +164,7 @@ describe('admin equipment submission reads', () => {
         updatedAt: new Date('2026-08-01T12:30:00Z')
       }
     })
+
     const event = createTestEvent({
       query: {
         equipmentItems: {
@@ -177,6 +181,7 @@ describe('admin equipment submission reads', () => {
         status: 'pending'
       }
     }))
+
     const detailQueryConfig = findFirstMock.mock.calls[0]?.[0]
 
     expect(detailQueryConfig?.columns.updatedAt).toBe(true)

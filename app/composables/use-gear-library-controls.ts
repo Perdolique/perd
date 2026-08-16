@@ -1,5 +1,6 @@
 import { computed, watch, type ComputedRef } from 'vue'
 import type { GearLibraryEntitySummary } from '~/types/equipment'
+
 import type {
   GearLibraryDirection,
   GearLibraryOrdering,
@@ -211,6 +212,7 @@ function useGearLibraryControls(options: UseGearLibraryControlsOptions) {
       }
 
       const propertySlug = sort.slice('property:'.length)
+
       const hasSupportedPropertySort = categoryDetail.properties.some((property) => (
         property.dataType === 'number' && property.slug === propertySlug
       ))

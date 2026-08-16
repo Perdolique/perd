@@ -106,7 +106,7 @@ function createUploadDb() {
   }
 }
 
-function createWriteDb(options: { insertError?: Error } = {}) {
+function createWriteDb(options: { insertError?: Error; } = {}) {
   const lockedItemFromMock = vi.fn(() => {
     return {
       where: vi.fn(() => {
@@ -120,19 +120,23 @@ function createWriteDb(options: { insertError?: Error } = {}) {
       })
     }
   })
+
   const displayOrderFromMock = vi.fn(() => {
     return {
       where: vi.fn(() => [{ displayOrder: 0 }])
     }
   })
+
   const selectMock = vi.fn()
     .mockReturnValueOnce({ from: lockedItemFromMock })
     .mockReturnValueOnce({ from: displayOrderFromMock })
+
   const newImage = {
     cloudflareImageId,
     displayOrder: 1,
     id: imageId
   }
+
   const insertImageValuesMock = vi.fn(() => {
     return {
       returning: vi.fn(() => {
@@ -144,13 +148,16 @@ function createWriteDb(options: { insertError?: Error } = {}) {
       })
     }
   })
+
   const insertMock = vi.fn()
     .mockReturnValueOnce({ values: insertImageValuesMock })
     .mockReturnValueOnce({ values: insertContributionValuesMock })
+
   const transaction = {
     insert: insertMock,
     select: selectMock
   }
+
   const transactionMock = vi.fn(async (
     executeTransaction: (value: typeof transaction) => Promise<unknown>
   ) => {
@@ -158,6 +165,7 @@ function createWriteDb(options: { insertError?: Error } = {}) {
 
     return result
   })
+
   const endMock = vi.fn()
 
   return {
@@ -179,6 +187,7 @@ describe('post /api/equipment/items/[id]/images', () => {
       mediaType: 'image/webp',
       stream: new ReadableStream<Uint8Array>()
     }
+
     const writeDb = createWriteDb()
 
     createEquipmentItemImageBodyMock.mockResolvedValue(body)
@@ -224,6 +233,7 @@ describe('post /api/equipment/items/[id]/images', () => {
   it('should delete an uploaded asset after a database failure', async () => {
     const databaseError = new Error('database unavailable')
     const writeDb = createWriteDb({ insertError: databaseError })
+
     const consoleErrorMock = vi.spyOn(console, 'error').mockImplementation(() => {
       // Expected database failure telemetry.
     })

@@ -24,7 +24,6 @@ function useGearLibraryMyGear() {
   const savingItemIds = shallowRef(new Set<string>())
   const failedItemIds = shallowRef(new Set<string>())
   const announcement = shallowRef('')
-
   const failedItemIdList = computed(() => [...failedItemIds.value])
   const savingItemIdList = computed(() => [...savingItemIds.value])
 
@@ -38,6 +37,7 @@ function useGearLibraryMyGear() {
     announcement.value = ''
 
     const nextFailedItemIds = new Set(failedItemIds.value)
+
     nextFailedItemIds.delete(itemId)
     failedItemIds.value = nextFailedItemIds
 

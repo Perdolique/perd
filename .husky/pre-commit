@@ -20,6 +20,7 @@ run_quietly() {
 	return "$status"
 }
 
+run_quietly 'Format check' vp run format:check
 run_quietly 'Markdown lint' vp run lint:markdown
 run_quietly 'Oxlint' vp run lint:oxlint:agent
 run_quietly 'Typecheck' vp run test:typecheck

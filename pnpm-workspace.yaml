@@ -30,5 +30,14 @@ minimumReleaseAgeExclude:
   - taze@20.0.1
   - tsx@4.23.12
   - wrangler@4.120.1
+  - worsier-darwin-arm64@2.7.1
+  - worsier-darwin-x64@2.7.1
+  - worsier-linux-arm64-gnu@2.7.1
+  - worsier-linux-arm64-musl@2.7.1
+  - worsier-linux-x64-gnu@2.7.1
+  - worsier-linux-x64-musl@2.7.1
+  - worsier-win32-arm64-msvc@2.7.1
+  - worsier-win32-x64-msvc@2.7.1
+  - worsier@2.7.1
 publicHoistPattern:
   - h3

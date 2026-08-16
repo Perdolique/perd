@@ -640,6 +640,7 @@ async function mockCatalogApi(context: BrowserContext, config: CatalogMockConfig
         item: createItemDetailResponse(stoveItem)
       }
     }
+
     const response = config.addMyGear === undefined
       ? fallback
       : await config.addMyGear(request)
@@ -692,6 +693,7 @@ async function mockCatalogApi(context: BrowserContext, config: CatalogMockConfig
     const fallbackCategory = requestUrl.pathname.endsWith('/sleeping-pads')
       ? sleepingPadsCategoryResponse
       : stovesCategoryResponse
+
     const fallback = { json: fallbackCategory }
     const response = await resolveMockResponse(config.categoryDetail, request, fallback)
 
@@ -834,9 +836,11 @@ async function clearGearLibraryItemsSnapshot(page: Page): Promise<void> {
     }
 
     const nuxtRoot = globalThis.document.querySelector('#__nuxt')
+
     const vueApp: unknown = nuxtRoot === null
       ? undefined
       : Reflect.get(nuxtRoot, '__vue_app__')
+
     const vueAppConfig = getRequiredProperty(vueApp, 'config')
     const globalProperties = getRequiredProperty(vueAppConfig, 'globalProperties')
     const pinia = getRequiredProperty(globalProperties, '$pinia')
@@ -1010,5 +1014,5 @@ export {
   expectPerdSelectValue,
   hasVisibleFocusOutline,
   waitForInlineEndAnchoring,
-  waitForBlockEndAnchoring,
+  waitForBlockEndAnchoring
 }

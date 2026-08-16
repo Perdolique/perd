@@ -1,4 +1,5 @@
 import { isSamePath, withBase } from 'ufo'
+
 import {
   createError,
   defineEventHandler,
@@ -8,6 +9,7 @@ import {
   type EventHandlerRequest,
   type H3Event
 } from 'h3'
+
 import { getAppSession } from '#server/utils/session'
 
 const apiBase = '/api'
@@ -25,6 +27,7 @@ function isPublicApiPath(pathname: string) {
 
     return isSamePath(apiPath, pathname)
   })
+
   const hasPublicPrefix = publicApiPathPrefixes.some((pathPrefix) => pathname.startsWith(pathPrefix))
 
   return hasExactPublicPath || hasPublicPrefix

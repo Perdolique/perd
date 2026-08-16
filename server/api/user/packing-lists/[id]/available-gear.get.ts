@@ -1,17 +1,8 @@
 import { and, asc, eq, ilike, isNull, or, sql, type SQL } from 'drizzle-orm'
 import { createError, defineEventHandler, getValidatedQuery, getValidatedRouterParams } from 'h3'
-import {
-  brands,
-  equipmentCategories,
-  equipmentItems,
-  packingListEntries,
-  userEquipment
-} from '#server/database/schema'
+import { brands, equipmentCategories, equipmentItems, packingListEntries, userEquipment } from '#server/database/schema'
 import { validateSessionUser } from '#server/utils/session'
-import {
-  validatePackingListAvailableGearQuery,
-  validatePackingListIdParams
-} from '#server/utils/validation/schemas'
+import { validatePackingListAvailableGearQuery, validatePackingListIdParams } from '#server/utils/validation/schemas'
 
 interface AvailableGearItem {
   brand: string;
@@ -56,7 +47,7 @@ export default defineEventHandler(async (event) : Promise<AvailableGearResponse>
     const escapedSearch = escapeLikePattern(search)
     const containsPattern = `%${escapedSearch}%`
     const prefixPattern = `${escapedSearch}%`
-    
+
     const searchCondition = or(
       ilike(equipmentItems.name, containsPattern),
       ilike(brands.name, containsPattern),
@@ -128,9 +119,11 @@ export default defineEventHandler(async (event) : Promise<AvailableGearResponse>
   }
 
   const hasNextPage = availableGearRows.length > pageSize
+
   const items = hasNextPage
     ? availableGearRows.slice(0, pageSize)
     : availableGearRows
+
   const nextPage = hasNextPage ? page + 1 : null
 
   return {

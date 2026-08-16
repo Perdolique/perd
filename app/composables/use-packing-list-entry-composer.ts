@@ -30,7 +30,6 @@ export function usePackingListEntryComposer(options: ComposerOptions) {
   const loadedSearch = ref<string | null>(null)
   let activeFetchController: AbortController | null = null
   let lastRequestedSearch: string | null = null
-
   const normalizedSearch = computed(() => searchQuery.value.trim())
   const hasAvailableItems = computed(() => availableGearItems.value.length > 0)
   const hasLoadError = computed(() => loadErrorMessage.value !== null)
@@ -42,13 +41,16 @@ export function usePackingListEntryComposer(options: ComposerOptions) {
   const isReadPending = computed(() => isInitialLoading.value || isLoadingMore.value)
   const isResultActionDisabled = computed(() => isMutationPending.value || isReadPending.value)
   const ariaBusy = computed(() => isReadPending.value || undefined)
+
   const showCustomAction = computed(() => hasSearchQuery.value
     && isInitialLoading.value === false
     && isCurrentSearchSettled.value)
+
   const showEmptyMessage = computed(() => isInitialLoading.value === false
     && isCurrentSearchSettled.value
     && hasLoadError.value === false
     && hasAvailableItems.value === false)
+
   const emptyMessage = computed(() => {
     if (hasSearchQuery.value) {
       return 'No available My gear matches.'
@@ -56,6 +58,7 @@ export function usePackingListEntryComposer(options: ComposerOptions) {
 
     return 'No available My gear items. Type a name to add a custom item.'
   })
+
   const customActionText = computed(() => `Add "${normalizedSearch.value}" as custom item`)
   const showLoadMore = computed(() => nextPage.value !== null && hasLoadError.value === false)
 

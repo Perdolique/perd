@@ -6,6 +6,7 @@ import { appBaseUrl } from './tests/playwright/constants.ts'
 delete env.NO_COLOR
 
 const isCI = Boolean(env.CI)
+
 const e2eWebServerCommand = isCI
   ? 'pnpm run build:e2e && pnpm run preview:e2e'
   : 'vp run build:e2e && vp run preview:e2e'

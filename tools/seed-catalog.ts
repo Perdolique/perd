@@ -23,6 +23,7 @@ import {
   referenceSeed,
   sampleItems
 } from './seed-data'
+
 import { assertSampleItemCoverage } from './seed-validation'
 
 type Database = ReturnType<typeof createWebSocketClient>

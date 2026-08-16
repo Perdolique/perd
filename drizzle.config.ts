@@ -12,6 +12,6 @@ export default defineConfig({
   out: './server/database/migrations',
 
   dbCredentials: {
-    url: databaseUrl,
+    url: databaseUrl
   }
 })

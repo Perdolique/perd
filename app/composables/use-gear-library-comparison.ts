@@ -1,21 +1,8 @@
 /* oxlint-disable max-lines -- Comparison restoration and mode state share one URL-backed lifecycle. */
-import {
-  computed,
-  onMounted,
-  ref,
-  shallowRef,
-  watch,
-  type ComputedRef
-} from 'vue'
+import { computed, onMounted, ref, shallowRef, watch, type ComputedRef } from 'vue'
 import { useTimeoutFn } from '@vueuse/core'
-
 import { useAsyncData, useRequestFetch } from '#imports'
-
-import type {
-  GearLibraryComparisonSelectionItem,
-  GearLibraryListItemView
-} from '~/types/equipment'
-
+import type { GearLibraryComparisonSelectionItem, GearLibraryListItemView } from '~/types/equipment'
 import type { GearLibraryComparisonNormalization } from '~/utils/gear-library-comparison'
 
 interface GearLibraryComparisonSummary {
@@ -178,11 +165,13 @@ function useGearLibraryComparison(options: UseGearLibraryComparisonOptions) {
     const selectedIds = options.selectedIds.value
     const missingIds = selectedIds.filter((id) => summaries.value.has(id) === false)
     const signature = selectedSignature.value
+
     const requests = missingIds.map(async (id) => {
       const summaryPromise = fetchComparisonSummary(id, signal)
 
       return summaryPromise
     })
+
     const results = await Promise.allSettled(requests)
 
     if (signal.aborted) {

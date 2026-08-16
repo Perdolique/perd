@@ -1,4 +1,4 @@
-import { defineNuxtRouteMiddleware, shouldSkipAuth, useUserStore } from '#imports';
+import { defineNuxtRouteMiddleware, shouldSkipAuth, useUserStore } from '#imports'
 
 export default defineNuxtRouteMiddleware(async (to) => {
   if (shouldSkipAuth(to)) {

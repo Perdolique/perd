@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-
 import { limits } from '#shared/constants'
 
 import {
@@ -27,14 +26,17 @@ function createImagesBinding(options: {
     requireSignedURLs: false,
     variants: []
   }
+
   const deleteImageMock = vi.fn<() => Promise<boolean>>()
   const imageInfoMock = vi.fn<Env['IMAGES']['info']>()
+
   const defaultImageInfo: ImageInfoResponse = {
     fileSize: 4,
     format: 'image/webp',
     height: 1,
     width: 1
   }
+
   const uploadImageMock = vi.fn<Env['IMAGES']['hosted']['upload']>()
 
   if (options.deleteImageError === undefined) {
@@ -61,7 +63,9 @@ function createImagesBinding(options: {
     details: vi.fn<ImageHandle['details']>().mockResolvedValue(imageMetadata),
     update: vi.fn<ImageHandle['update']>().mockResolvedValue(imageMetadata)
   }
+
   const imageMock = vi.fn<Env['IMAGES']['hosted']['image']>(() => imageHandle)
+
   const binding: Env['IMAGES'] = {
     hosted: {
       image: imageMock,
@@ -103,6 +107,7 @@ async function createMultipartEvent(formData: FormData) {
     body: formData,
     method: 'POST'
   })
+
   const body = new Uint8Array(await request.arrayBuffer())
   const event = createTestEvent({})
 
@@ -134,6 +139,7 @@ describe('equipment item image lifecycle', () => {
   it('should inspect the real format before uploading with the requested visibility', async () => {
     const { binding, imageInfoMock, uploadImageMock } = createImagesBinding()
     const closeMock = vi.fn<() => Promise<void>>().mockResolvedValue()
+
     const body = createImageBody({
       close: closeMock,
       stream: new ReadableStream({
@@ -176,6 +182,7 @@ describe('equipment item image lifecycle', () => {
     vi.spyOn(bodyStream, 'tee').mockReturnValue([infoStream, uploadStream])
 
     const body = createImageBody({ stream: bodyStream })
+
     const { binding, uploadImageMock } = createImagesBinding({
       imageInfo: {
         fileSize: 4,
@@ -201,6 +208,7 @@ describe('equipment item image lifecycle', () => {
 
   it('should map invalid image bytes to 415 without uploading', async () => {
     const invalidImageError = Object.assign(new Error('not an image'), { code: 9412 })
+
     const { binding, uploadImageMock } = createImagesBinding({
       imageInfoError: invalidImageError
     })
@@ -220,9 +228,11 @@ describe('equipment item image lifecycle', () => {
 
   it('should map other Images binding inspection failures to a safe 502', async () => {
     const inspectionError = new Error('binding unavailable')
+
     const consoleErrorMock = vi.spyOn(console, 'error').mockImplementation(() => {
       // Expected binding failure telemetry.
     })
+
     const { binding } = createImagesBinding({
       imageInfoError: inspectionError
     })
@@ -246,9 +256,11 @@ describe('equipment item image lifecycle', () => {
 
   it('should map hosted upload failures to a safe 502 and close the body', async () => {
     const uploadError = new Error('hosted upload unavailable')
+
     const consoleErrorMock = vi.spyOn(console, 'error').mockImplementation(() => {
       // Expected binding failure telemetry.
     })
+
     const closeMock = vi.fn<() => Promise<void>>().mockResolvedValue()
     const { binding } = createImagesBinding({ uploadImageError: uploadError })
 
@@ -304,9 +316,11 @@ describe('equipment item image lifecycle', () => {
 
   it('should preserve the original error when unattached asset deletion fails', async () => {
     const deletionError = new Error('delete unavailable')
+
     const consoleErrorMock = vi.spyOn(console, 'error').mockImplementation(() => {
       // Expected cleanup failure telemetry.
     })
+
     const { binding } = createImagesBinding({
       deleteImageError: deletionError
     })

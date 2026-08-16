@@ -1,5 +1,4 @@
 import type { BrowserContext, Page, Request } from '@playwright/test'
-
 import type { ComparisonResponse } from '../../../server/api/equipment/comparisons.get'
 import { expect } from './global.fixtures.ts'
 
@@ -125,6 +124,7 @@ function createComparisonResponse(itemIds: readonly string[]): ComparisonRespons
   }
 
   const itemIdSet = new Set(itemIds)
+
   const properties = comparisonResponse.properties.map((property) => {
     const values = property.values.filter((value) => itemIdSet.has(value.itemId))
 
@@ -184,12 +184,14 @@ async function mockComparisonApi(
 
   await context.route((url) => url.pathname === '/api/equipment/comparisons', async (route) => {
     const request = route.request()
+
     tracker.comparisons.push(request)
 
     const requestUrl = new globalThis.URL(request.url())
     const itemIds = requestUrl.searchParams.getAll('itemId')
     const defaultResponse = createComparisonResponse(itemIds)
     const response = getMockResponse(options.comparison, request, defaultResponse)
+
     await fulfillMockResponse(route, response)
   })
 

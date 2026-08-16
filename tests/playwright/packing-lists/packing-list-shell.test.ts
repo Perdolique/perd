@@ -279,6 +279,7 @@ async function fulfillAvailableGearRoute(route: Route, requestUrl: URL, state: P
   const search = requestUrl.searchParams.get('search') ?? ''
   const responseKey = createAvailableGearKey(search, page)
   const configuredResponses = state.availableGearResponses.get(responseKey) ?? []
+
   const response = configuredResponses.length > 1
     ? configuredResponses.shift()
     : configuredResponses[0]
@@ -528,6 +529,7 @@ test.describe('Packing list shell', () => {
   test('should refresh the open item composer after removing an inventory item', async ({ context, page }) => {
     const state = createPackingListRouteState([createPackingListSummary('Weekend trail')])
     const availablePocketRocket = createAvailableGearItem(pocketRocketInventoryId, 'PocketRocket Deluxe')
+
     const existingEntry: PackingListInventoryEntry = {
       createdAt: '2026-04-03T09:02:00.000Z',
       customName: null,
@@ -544,6 +546,7 @@ test.describe('Packing list shell', () => {
       source: 'inventory',
       updatedAt: '2026-04-03T09:02:00.000Z'
     }
+
     const firstPageKey = createAvailableGearKey('', 1)
 
     state.detail = createPackingListDetail('Weekend trail', [existingEntry])
@@ -675,6 +678,7 @@ test.describe('Packing list shell', () => {
   test('should debounce search and add the query as a custom item', async ({ context, page }) => {
     const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
     const customName = 'Emergency blanket'
+
     const emptyPage = {
       items: [],
       nextPage: null

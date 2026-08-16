@@ -1,5 +1,6 @@
 import type { Locator, Request } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
+
 import {
   buildRouteSearch,
   createDeferred,
@@ -65,7 +66,7 @@ async function expectTraySpaceReserved(tray: Locator) {
 }
 
 function createSleepingPadsItemsResponder(waitFor: Promise<void>) {
-  return (request: { url: InstanceType<typeof globalThis.URL> }) => {
+  return (request: { url: InstanceType<typeof globalThis.URL>; }) => {
     if (request.url.searchParams.get('categorySlug') === 'sleeping-pads') {
       return {
         json: {
@@ -96,7 +97,6 @@ test.describe('Gear library comparison selection', () => {
     await openGearLibrary(page, '/gear-library?category=stoves')
 
     const [firstItem, secondItem, thirdItem, fourthItem, fifthItem] = scrollableItemsResponse.items
-
     const initialHistoryLength = await page.evaluate(() => globalThis.history.length)
     const selectedItems = [firstItem, secondItem, thirdItem, fourthItem]
 
@@ -131,6 +131,7 @@ test.describe('Gear library comparison selection', () => {
     }).click()
 
     const remainingItems = selectedItems.slice(1)
+
     const remainingSearch = buildRouteSearch([
       ['category', 'stoves'],
       ...remainingItems.map((item) => ['compare', item.id] as const)
@@ -250,6 +251,7 @@ test.describe('Gear library comparison selection', () => {
     await expect(hideItemsButton).toHaveAttribute('aria-expanded', 'true')
 
     await page.getByRole('checkbox', { name: `Select ${secondItem.name}` }).check()
+
     const twoItemSearch = buildRouteSearch([
       ['category', 'stoves'],
       ['compare', firstItem.id],
@@ -262,6 +264,7 @@ test.describe('Gear library comparison selection', () => {
     const firstRemoveButton = tray.getByRole('button', {
       name: `Remove ${firstItem.name} from comparison`
     })
+
     const secondRemoveButton = tray.getByRole('button', {
       name: `Remove ${secondItem.name} from comparison`
     })
@@ -337,6 +340,7 @@ test.describe('Gear library comparison selection', () => {
     await openGearLibrary(page, '/gear-library?category=stoves')
 
     const [firstItem] = scrollableItemsResponse.items
+
     await expect(
       page.getByTestId('gear-library-results-body').getByRole('listitem')
     ).toHaveCount(scrollableItemsResponse.items.length)
@@ -419,6 +423,7 @@ test.describe('Gear library comparison selection', () => {
       await tray.getByRole('button', { name: `Remove ${item.name} from comparison` }).click()
 
       const remainingItems = selectedItems.slice(itemIndex + 1)
+
       const remainingSearch = buildRouteSearch([
         ['category', 'stoves'],
         ...remainingItems.map((remainingItem) => ['compare', remainingItem.id] as const)
@@ -530,6 +535,7 @@ test.describe('Gear library comparison selection', () => {
     })
 
     const unavailableItemId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477ee'
+
     const rawSearch = buildRouteSearch([
       ['category', 'stoves'],
       ['compare', unavailableItemId],

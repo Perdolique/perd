@@ -1,25 +1,9 @@
 import { eq, sql } from 'drizzle-orm'
-import {
-  createError,
-  defineEventHandler,
-  getValidatedRouterParams,
-  isError,
-  readValidatedBody
-} from 'h3'
-
-import {
-  contributions,
-  equipmentItemImages,
-  equipmentItems
-} from '#server/database/schema'
-
+import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody } from 'h3'
+import { contributions, equipmentItemImages, equipmentItems } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
-
-import {
-  validateItemDetailParams,
-  validateItemImageOrderBody
-} from '#server/utils/validation/schemas'
+import { validateItemDetailParams, validateItemImageOrderBody } from '#server/utils/validation/schemas'
 
 interface EquipmentItemImageOrderResponse {
   imageIds: string[];
@@ -98,6 +82,7 @@ export default defineEventHandler(async (event) : Promise<EquipmentItemImageOrde
         const displayOrderCases = imageIds.map(
           (imageId, displayOrder) => sql`when ${equipmentItemImages.id} = ${imageId} then ${displayOrder}`
         )
+
         const caseSeparator = sql.raw(' ')
         const joinedDisplayOrderCases = sql.join(displayOrderCases, caseSeparator)
         const displayOrder = sql<number>`cast(case ${joinedDisplayOrderCases} end as integer)`

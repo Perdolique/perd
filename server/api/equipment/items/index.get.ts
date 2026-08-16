@@ -1,12 +1,6 @@
 import { and, count, eq, sql } from 'drizzle-orm'
 import { defineEventHandler, getValidatedQuery } from 'h3'
-
-import {
-  brands,
-  equipmentCategories,
-  equipmentItems,
-  userEquipment
-} from '#server/database/schema'
+import { brands, equipmentCategories, equipmentItems, userEquipment } from '#server/database/schema'
 
 import {
   buildCatalogListSql,
@@ -14,11 +8,7 @@ import {
   type CatalogListItemRow
 } from '#server/utils/equipment/catalog-list'
 
-import {
-  enrichCatalogItemRows,
-  type CatalogListItem
-} from '#server/utils/equipment/catalog-list-enrichment'
-
+import { enrichCatalogItemRows, type CatalogListItem } from '#server/utils/equipment/catalog-list-enrichment'
 import { validateSessionUser } from '#server/utils/session'
 import { validateItemsListQuery } from '#server/utils/validation/schemas'
 
@@ -59,6 +49,7 @@ export default defineEventHandler(async (event) : Promise<ReturnData> => {
       slug: equipmentCategories.slug
     }
   }
+
   const baseItemsQuery = dbHttp
     .select(selection)
     .from(equipmentItems)

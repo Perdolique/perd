@@ -1,4 +1,5 @@
 import { eq, max } from 'drizzle-orm'
+
 import {
   createError,
   defineEventHandler,
@@ -9,12 +10,7 @@ import {
   setResponseStatus
 } from 'h3'
 
-import {
-  contributions,
-  equipmentItemImages,
-  equipmentItems
-} from '#server/database/schema'
-
+import { contributions, equipmentItemImages, equipmentItems } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
 import { getCloudflareImagesBinding } from '#server/utils/cloudflare'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
@@ -26,10 +22,7 @@ import {
   validateEquipmentItemImageRequest
 } from '#server/utils/equipment/item-images'
 
-import {
-  validateItemDetailParams,
-  validateItemImageUploadQuery
-} from '#server/utils/validation/schemas'
+import { validateItemDetailParams, validateItemImageUploadQuery } from '#server/utils/validation/schemas'
 
 interface EquipmentItemImageResponse {
   cloudflareImageId: string;
@@ -41,7 +34,6 @@ export default defineEventHandler(async (event) : Promise<EquipmentItemImageResp
   const userId = await validateAdminUser(event)
   const { id: itemId } = await getValidatedRouterParams(event, validateItemDetailParams)
   const { filename } = await getValidatedQuery(event, validateItemImageUploadQuery)
-
   const mediaType = validateEquipmentItemImageRequest(event)
 
   const item = await event.context.dbHttp.query.equipmentItems.findFirst({
@@ -62,6 +54,7 @@ export default defineEventHandler(async (event) : Promise<EquipmentItemImageResp
   }
 
   const imagesBinding = getCloudflareImagesBinding(event)
+
   const imageBody = await createEquipmentItemImageBody({
     mediaType,
     stream: getRequestWebStream(event)

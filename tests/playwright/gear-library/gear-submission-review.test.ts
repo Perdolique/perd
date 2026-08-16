@@ -1,17 +1,14 @@
 import type { BrowserContext, Page, Request, Route } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
-import {
-  createDeferred,
-  selectPerdOption
-} from '../fixtures/gear-library-entry-list.fixtures.ts'
+import { createDeferred, selectPerdOption } from '../fixtures/gear-library-entry-list.fixtures.ts'
 
 /* oxlint-disable vitest/no-conditional-in-test -- Playwright route handlers branch on mocked request paths and methods. */
-
 const adminId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
 const submissionId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477ee'
 const secondSubmissionId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477ef'
 const submissionsPath = '/api/equipment/item-submissions'
 const detailPath = `${submissionsPath}/${submissionId}`
+
 const guardedAdminTargets = [
   '/admin',
   '/admin/equipment/submissions',
@@ -20,23 +17,27 @@ const guardedAdminTargets = [
 ]
 
 const brands = [{ id: 10, name: 'MSR', slug: 'msr' }]
+
 const categories = [{ id: 2, name: 'Stoves', slug: 'stoves' }, {
   id: 1,
   name: 'Sleeping Pads',
   slug: 'sleeping-pads'
 }]
+
 const stovesCategory = {
   id: 2,
   name: 'Stoves',
   slug: 'stoves',
   properties: [{ dataType: 'number', id: 21, name: 'Weight', slug: 'weight', unit: 'g' }]
 }
+
 const sleepingPadsCategory = {
   id: 1,
   name: 'Sleeping Pads',
   slug: 'sleeping-pads',
   properties: [{ dataType: 'number', id: 11, name: 'R-value', slug: 'r-value', unit: null }]
 }
+
 const listItem = {
   author: { id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477ab', name: 'Ada' },
   brand: { id: 10, name: 'MSR' },
@@ -45,6 +46,7 @@ const listItem = {
   id: submissionId,
   name: 'PocketRocket Deluxe'
 }
+
 const detail = {
   ...listItem,
   properties: [{ propertyId: 21, value: '83.5' }],
@@ -127,6 +129,7 @@ test.describe('Admin gear submission review', () => {
     await expect(page.getByRole('navigation', { name: 'Workspace navigation' }).getByText('Admin')).toBeVisible()
 
     await page.setViewportSize({ height: 800, width: 390 })
+
     const dock = page.getByTestId('shell-dock')
 
     await expect(dock).toBeVisible()
@@ -142,6 +145,7 @@ test.describe('Admin gear submission review', () => {
 
       page.on('request', (request) => {
         const { pathname } = new globalThis.URL(request.url())
+
         const isAdminDataRequest = pathname.startsWith(submissionsPath)
           || pathname.startsWith('/api/equipment/items/')
 
@@ -165,6 +169,7 @@ test.describe('Admin gear submission review', () => {
     await context.route((url) => url.pathname === submissionsPath, async (route) => {
       const requestUrl = new globalThis.URL(route.request().url())
       const pageNumber = requestUrl.searchParams.get('page')
+
       const secondItem = {
         ...listItem,
         author: null,
@@ -190,6 +195,7 @@ test.describe('Admin gear submission review', () => {
     await expect(page.getByRole('link', { name: /PocketRocket Deluxe/u })).toBeVisible()
     await page.getByRole('button', { name: 'Load more' }).click()
     await expect(page.getByRole('link', { name: /Deleted user item/u })).toContainText('Deleted account')
+
     const paginationStatus = page.getByText('All pending submissions are loaded.', { exact: true })
 
     await expect(paginationStatus).toHaveAttribute('role', 'status')
@@ -228,6 +234,7 @@ test.describe('Admin gear submission review', () => {
       target: '/admin/equipment/submissions'
     })
     await expect(page.getByText('Gear submissions unavailable.')).toBeVisible()
+
     const requestCountBeforeRetry = requestCount
 
     allowSuccess = true
@@ -470,6 +477,7 @@ test.describe('Admin gear submission review', () => {
     const staleRequestFailure = page.waitForEvent('requestfailed', isStovesCategoryDetailRequest)
 
     await selectPerdOption(getSelect(page, 'Category'), 'sleeping-pads')
+
     const dialog = page.getByRole('dialog', { name: 'Change category' })
 
     await expect(dialog).toBeVisible()
@@ -561,6 +569,7 @@ test.describe('Admin gear submission review', () => {
 
     await test.step('focus the terminal conflict after a stale save', async () => {
       await page.getByRole('button', { name: 'Save changes' }).click()
+
       const conflict = page.getByRole('alert').filter({
         hasText: 'This submission changed while you were reviewing it.'
       })

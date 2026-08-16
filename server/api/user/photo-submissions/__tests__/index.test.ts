@@ -45,6 +45,7 @@ describe('get /api/user/photo-submissions', () => {
       status: 'pending',
       updatedAt: new Date('2026-08-09T12:00:00Z')
     }])
+
     const event = createTestEvent({
       query: {
         equipmentItemPhotoSubmissions: { findMany: findManyMock }

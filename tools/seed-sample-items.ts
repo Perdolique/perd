@@ -1,7 +1,4 @@
-import {
-  generatedSampleItems,
-  type SampleItemDefinition
-} from './seed-generated-sample-items'
+import { generatedSampleItems, type SampleItemDefinition } from './seed-generated-sample-items'
 
 const curatedSampleItems: SampleItemDefinition[] = [
   {

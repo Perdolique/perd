@@ -1,4 +1,4 @@
-import { defineNuxtRouteMiddleware, navigateTo, shouldSkipAuth, useUserStore } from '#imports';
+import { defineNuxtRouteMiddleware, navigateTo, shouldSkipAuth, useUserStore } from '#imports'
 import { getRedirectNavigationTarget } from '~/utils/router'
 
 export default defineNuxtRouteMiddleware(async (to) => {

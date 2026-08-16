@@ -1,9 +1,4 @@
-import {
-  createError,
-  getRequestHeader,
-  type H3Event
-} from 'h3'
-
+import { createError, getRequestHeader, type H3Event } from 'h3'
 import { limits } from '#shared/constants'
 
 import {
@@ -200,6 +195,7 @@ async function uploadHostedEquipmentImage(
     metadata,
     requireSignedURLs
   } = options
+
   const [infoStream, uploadStream] = body.stream.tee()
 
   try {

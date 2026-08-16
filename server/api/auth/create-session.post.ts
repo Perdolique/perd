@@ -11,7 +11,6 @@ export default defineEventHandler(async (event) : Promise<ReturnType> => {
   const { dbHttp } = event.context
 
   // TODO (#101): check if user is already logged in
-
   const [newUser] = await dbHttp
     .insert(users)
     .values({})

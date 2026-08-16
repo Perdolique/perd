@@ -1,7 +1,23 @@
 // oxlint-disable max-lines
 // oxlint-disable import/no-relative-parent-imports
 import { sql } from 'drizzle-orm'
-import { boolean, check, index, integer, jsonb, numeric, pgTable, serial, text, timestamp, unique, uuid, varchar } from 'drizzle-orm/pg-core'
+
+import {
+  boolean,
+  check,
+  index,
+  integer,
+  jsonb,
+  numeric,
+  pgTable,
+  serial,
+  text,
+  timestamp,
+  unique,
+  uuid,
+  varchar
+} from 'drizzle-orm/pg-core'
+
 // FIXME: drizzle-kit can't handle #shared/constants, so we have to import it with a relative path
 import { limits } from '../../shared/constants'
 

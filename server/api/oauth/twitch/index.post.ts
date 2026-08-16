@@ -13,7 +13,6 @@ interface TwitchOAuthResponse {
 
 export default defineEventHandler(async (event): Promise<TwitchOAuthResponse> => {
   const twitchConfig = getRuntimeTwitchConfig(event)
-
   const { code } = await readValidatedBody(event, validateTwitchOAuthBody)
   const token = await getTwitchOAuthToken(event, code, twitchConfig)
   const { id: twitchAccountId } = await getTwitchUserInfo(token, twitchConfig.clientId)

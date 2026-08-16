@@ -1,13 +1,4 @@
-import {
-  computed,
-  onScopeDispose,
-  ref,
-  shallowRef,
-  watch,
-  type ComputedRef,
-  type Ref
-} from 'vue'
-
+import { computed, onScopeDispose, ref, shallowRef, watch, type ComputedRef, type Ref } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import { useAsyncData, useRequestFetch } from '#imports'
 import type { GearLibraryItemsResponse } from '~/types/equipment'
@@ -20,14 +11,8 @@ import {
   type GearLibraryItemsApiQuery
 } from '~/utils/gear-library'
 
-import {
-  gearLibraryItemsAsyncDataKey,
-  useGearLibraryStore
-} from '~/stores/gear-library'
-
-import {
-  useGearLibraryPageLoader
-} from '~/composables/use-gear-library-page-loader'
+import { gearLibraryItemsAsyncDataKey, useGearLibraryStore } from '~/stores/gear-library'
+import { useGearLibraryPageLoader } from '~/composables/use-gear-library-page-loader'
 
 interface UseGearLibraryItemsDataOptions {
   hasSavedBrowsingState: boolean;
@@ -109,6 +94,7 @@ function useGearLibraryItemsData(options: UseGearLibraryItemsDataOptions) {
       total: firstPage.total
     }
   })
+
   const currentLoadedPageCount = computed(() => loadedPages.value.length)
   const totalPages = computed(() => getGearLibraryTotalPages(lastSuccessfulItemsResponse.value))
 

@@ -1,26 +1,7 @@
-import {
-  and,
-  asc,
-  desc,
-  eq,
-  gte,
-  ilike,
-  lte,
-  or,
-  sql,
-  type SQL
-} from 'drizzle-orm'
-
+import { and, asc, desc, eq, gte, ilike, lte, or, sql, type SQL } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 import { createError } from 'h3'
-
-import {
-  brands,
-  equipmentCategories,
-  equipmentItems,
-  itemPropertyValues
-} from '#server/database/schema'
-
+import { brands, equipmentCategories, equipmentItems, itemPropertyValues } from '#server/database/schema'
 import type { createHttpClient } from '#server/utils/database'
 
 import type {
