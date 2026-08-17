@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-24.04
     environment: ${{ github.event_name == 'pull_request' && 'staging' || 'production' }}
     steps:
-      - uses: Perdolique/automations/.github/actions/setup-pnpm@v2
+      - uses: Perdolique/automations/.github/actions/setup-pnpm@v3
         with:
           install-dependencies: true
       - name: Run database migration
