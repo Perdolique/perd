@@ -90,6 +90,7 @@ function useGearLibraryBrowsingRestoration() {
       || isBrowsingStateReady?.value !== true
     ) {
       hasHandledInitialScroll = true
+
       return
     }
 

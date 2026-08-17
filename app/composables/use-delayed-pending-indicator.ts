@@ -46,6 +46,7 @@ function useDelayedPendingIndicator(
       }
 
       showTimeout.start()
+
       return
     }
 
@@ -60,6 +61,7 @@ function useDelayedPendingIndicator(
 
     if (remainingDuration === 0) {
       hideIndicator()
+
       return
     }
 

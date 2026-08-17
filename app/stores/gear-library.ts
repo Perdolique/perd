@@ -54,6 +54,7 @@ const useGearLibraryStore = defineStore('gear-library', () => {
 
     if (existingIndex === -1) {
       categoryDetails.value.push(categoryDetail)
+
       return
     }
 

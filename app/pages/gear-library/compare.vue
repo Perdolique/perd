@@ -88,8 +88,8 @@
   import { appRoutes, createGearLibraryItemPath } from '~/utils/navigation'
 
   import GearLibraryComparisonTable, {
-  type GearLibraryComparisonTableItem
-} from '~/components/gear-library/GearLibraryComparisonTable.vue'
+    type GearLibraryComparisonTableItem
+  } from '~/components/gear-library/GearLibraryComparisonTable.vue'
 
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'

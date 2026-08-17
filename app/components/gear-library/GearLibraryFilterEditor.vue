@@ -113,10 +113,10 @@
   import type { GearLibraryEntitySummary, GearLibraryFilterProperty } from '~/types/equipment'
 
   import {
-  normalizeGearLibraryFilterDraft,
-  type GearLibraryFilterDraft,
-  type GearLibraryNumberRangeErrors
-} from '~/utils/gear-library-filters'
+    normalizeGearLibraryFilterDraft,
+    type GearLibraryFilterDraft,
+    type GearLibraryNumberRangeErrors
+  } from '~/utils/gear-library-filters'
 
   import PerdButton from '~/components/PerdButton.vue'
   import PerdIconButton from '~/components/PerdIconButton.vue'

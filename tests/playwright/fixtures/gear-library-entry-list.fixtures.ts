@@ -628,6 +628,7 @@ async function mockCatalogApi(context: BrowserContext, config: CatalogMockConfig
 
     if (request.method() !== 'POST') {
       await route.abort()
+
       return
     }
 
