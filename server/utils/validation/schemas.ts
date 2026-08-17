@@ -7,8 +7,8 @@ import {
   decimalNumberPattern,
   isFiniteDecimalNumber,
   normalizeDecimalNumber
-}
- from '#shared/utils/decimal-number'
+} from '#shared/utils/decimal-number'
+
 import { sanitizeRedirectPath } from '#shared/utils/redirect'
 
 const nonEmptyStringSchema = v.pipe(
@@ -330,6 +330,32 @@ const itemImageUploadQuerySchema = v.object({
   )
 })
 
+const photoSubmissionHttpsUrlSchema = v.pipe(
+  trimmedNonEmptyStringSchema,
+  v.url(),
+  v.check((sourceUrl) => sourceUrl.startsWith('https://'), 'sourceUrl must use HTTPS')
+)
+
+const photoSubmissionCreateBodySchema = v.pipe(
+  v.object({
+    filename: v.pipe(
+      trimmedNonEmptyStringSchema,
+      v.maxLength(limits.maxEquipmentItemImageFilenameLength)
+    ),
+
+    rightsConfirmed: v.literal('true'),
+    sourceType: v.picklist(['own', 'manufacturer']),
+    sourceUrl: v.optional(photoSubmissionHttpsUrlSchema)
+  }),
+  v.check((input) => {
+    if (input.sourceType === 'manufacturer') {
+      return input.sourceUrl !== undefined
+    }
+
+    return input.sourceUrl === undefined
+  }, 'sourceUrl is required only for manufacturer photos')
+)
+
 const minimumEquipmentComparisonItemCount = 2
 const maximumEquipmentComparisonItemCount = 4
 
@@ -526,6 +552,7 @@ const booleanFilterQueryValueSchema = v.pipe(
 )
 
 const propertySortPrefix = 'property:'
+
 const propertyItemsListSortSchema = v.pipe(
   v.string(),
   v.startsWith(propertySortPrefix),
@@ -702,6 +729,7 @@ const itemsListQuerySchema = v.pipe(
     const hasPropertyFilters = query.numberFilter.length > 0
       || query.enumFilter.length > 0
       || query.booleanFilter.length > 0
+
     const hasPropertySort = query.sort.startsWith('property:')
     const requiresCategory = hasPropertyFilters || hasPropertySort
 
@@ -800,6 +828,10 @@ function validateItemImageUploadQuery(query: unknown) {
   return v.parse(itemImageUploadQuerySchema, query)
 }
 
+function validatePhotoSubmissionCreateBody(body: unknown) {
+  return v.parse(photoSubmissionCreateBodySchema, body)
+}
+
 function validateEquipmentComparisonQuery(query: unknown) {
   return v.parse(equipmentComparisonQuerySchema, query)
 }
@@ -879,6 +911,7 @@ export {
   itemImageOrderBodySchema,
   itemImageParamsSchema,
   itemImageUploadQuerySchema,
+  photoSubmissionCreateBodySchema,
   equipmentComparisonQuerySchema,
   itemsListQuerySchema,
   limitQuerySchema,
@@ -920,6 +953,7 @@ export {
   validateItemImageOrderBody,
   validateItemImageParams,
   validateItemImageUploadQuery,
+  validatePhotoSubmissionCreateBody,
   validateEquipmentComparisonQuery,
   validateItemsListQuery,
   validatePackingListAvailableGearQuery,

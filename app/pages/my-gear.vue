@@ -61,9 +61,11 @@
 
   const removeErrorMessage = ref<string | null>(null)
   const removingMyGearId = ref<string | null>(null)
+
   const myGearDateFormatter = new Intl.DateTimeFormat('en', {
     dateStyle: 'medium'
   })
+
   const requestFetch = useRequestFetch()
   const gearLibraryStore = useGearLibraryStore()
 
@@ -79,6 +81,7 @@
   const hasError = computed(() => myGearError.value !== undefined)
   const isInitialLoading = computed(() => myGearStatus.value === 'pending')
   const isEmpty = computed(() => myGearResponse.value.length === 0)
+
   const myGearSummaryText = computed(() => {
     const itemCount = myGearResponse.value.length
 

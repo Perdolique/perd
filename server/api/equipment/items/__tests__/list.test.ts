@@ -75,6 +75,7 @@ function createCategoryMetadata() {
 
 function createJoinChain(terminal: object) {
   const categoryJoinMock = vi.fn(() => terminal)
+
   const brandJoinMock = vi.fn(() => {
     return { innerJoin: categoryJoinMock }
   })
@@ -119,7 +120,11 @@ function createListDb({
     return { where: itemsWhereMock }
   })
 
-  const itemsFromMock = createJoinChain({ leftJoin: itemsLeftJoinMock, where: itemsWhereMock })
+  const itemsFromMock = createJoinChain({
+    leftJoin: itemsLeftJoinMock,
+    where: itemsWhereMock
+  })
+
   const countWhereMock = vi.fn((_condition: SQL | undefined) => [{ total }])
   const countFromMock = createJoinChain({ where: countWhereMock })
   const definitionsOrderByMock = vi.fn((..._conditions: SQL[]) => definitions)
@@ -149,10 +154,9 @@ function createListDb({
   })
 
   const findImagesMock = vi.fn(() => images)
-
   const findFirstMock = vi.fn(() => categoryMetadata)
 
-  const selectMock = vi.fn((selection: Record<string, unknown> & { isInMyGear?: SQL }) => {
+  const selectMock = vi.fn((selection: Record<string, unknown> & { isInMyGear?: SQL; }) => {
     if ('total' in selection) {
       return { from: countFromMock }
     }
@@ -234,43 +238,133 @@ describe('get /api/equipment/items', () => {
       id,
       isInMyGear: true,
       name: 'PocketRocket Deluxe',
-      brand: { name: 'MSR', slug: 'msr' },
-      category: { name: 'Stoves', slug: 'stoves' }
+
+      brand: {
+        name: 'MSR',
+        slug: 'msr'
+      },
+
+      category: {
+        name: 'Stoves',
+        slug: 'stoves'
+      }
     }, {
       categoryId: 3,
       id: secondId,
       isInMyGear: false,
       name: 'Solo Pot',
-      brand: { name: 'Solo', slug: 'solo' },
-      category: { name: 'Cookware', slug: 'cookware' }
+
+      brand: {
+        name: 'Solo',
+        slug: 'solo'
+      },
+
+      category: {
+        name: 'Cookware',
+        slug: 'cookware'
+      }
     }]
 
     const definitions = [
-      { categoryId: 2, dataType: 'number', displayOrder: 0, id: 10, name: 'Weight', slug: 'weight', unit: 'g' },
-      { categoryId: 2, dataType: 'boolean', displayOrder: 1, id: 12, name: 'Piezo', slug: 'piezo', unit: null },
-      { categoryId: 2, dataType: 'enum', displayOrder: 2, id: 11, name: 'Fuel', slug: 'fuel', unit: null },
-      { categoryId: 2, dataType: 'text', displayOrder: 3, id: 13, name: 'Notes', slug: 'notes', unit: null },
-      { categoryId: 3, dataType: 'number', displayOrder: 0, id: 20, name: 'Volume', slug: 'volume', unit: 'ml' }
+      {
+        categoryId: 2,
+        dataType: 'number',
+        displayOrder: 0,
+        id: 10,
+        name: 'Weight',
+        slug: 'weight',
+        unit: 'g'
+      },
+      {
+        categoryId: 2,
+        dataType: 'boolean',
+        displayOrder: 1,
+        id: 12,
+        name: 'Piezo',
+        slug: 'piezo',
+        unit: null
+      },
+      {
+        categoryId: 2,
+        dataType: 'enum',
+        displayOrder: 2,
+        id: 11,
+        name: 'Fuel',
+        slug: 'fuel',
+        unit: null
+      },
+      {
+        categoryId: 2,
+        dataType: 'text',
+        displayOrder: 3,
+        id: 13,
+        name: 'Notes',
+        slug: 'notes',
+        unit: null
+      },
+      {
+        categoryId: 3,
+        dataType: 'number',
+        displayOrder: 0,
+        id: 20,
+        name: 'Volume',
+        slug: 'volume',
+        unit: 'ml'
+      }
     ]
 
     const enumOptions = [
-      { name: 'Liquid fuel', propertyId: 11, slug: 'liquid-fuel' }
+      {
+        name: 'Liquid fuel',
+        propertyId: 11,
+        slug: 'liquid-fuel'
+      }
     ]
 
     const values = [
-      { itemId: id, propertyId: 10, valueBoolean: null, valueNumber: '83', valueText: null },
-      { itemId: id, propertyId: 12, valueBoolean: true, valueNumber: null, valueText: null },
-      { itemId: id, propertyId: 11, valueBoolean: null, valueNumber: null, valueText: 'liquid-fuel' }
+      {
+        itemId: id,
+        propertyId: 10,
+        valueBoolean: null,
+        valueNumber: '83',
+        valueText: null
+      },
+      {
+        itemId: id,
+        propertyId: 12,
+        valueBoolean: true,
+        valueNumber: null,
+        valueText: null
+      },
+      {
+        itemId: id,
+        propertyId: 11,
+        valueBoolean: null,
+        valueNumber: null,
+        valueText: 'liquid-fuel'
+      }
     ]
 
     const images = [{
       cloudflareImageId: 'catalog-primary-image',
       itemId: id
     }]
-    const db = createListDb({ definitions, enumOptions, images, items: itemRows, total: 42, values })
+
+    const db = createListDb({
+      definitions,
+      enumOptions,
+      images,
+      items: itemRows,
+      total: 42,
+      values
+    })
+
     const event = createTestEvent(db.dbHttp)
 
-    getValidatedQueryMock.mockResolvedValue(createQuery({ limit: 10, page: 2 }))
+    getValidatedQueryMock.mockResolvedValue(createQuery({
+      limit: 10,
+      page: 2
+    }))
 
     const result = await listItemsHandler(event)
 
@@ -280,12 +374,32 @@ describe('get /api/equipment/items', () => {
         id,
         isInMyGear: true,
         name: 'PocketRocket Deluxe',
-        brand: { name: 'MSR', slug: 'msr' },
-        category: { name: 'Stoves', slug: 'stoves' },
+
+        brand: {
+          name: 'MSR',
+          slug: 'msr'
+        },
+
+        category: {
+          name: 'Stoves',
+          slug: 'stoves'
+        },
 
         properties: [
-          { dataType: 'number', name: 'Weight', slug: 'weight', unit: 'g', value: 83 },
-          { dataType: 'boolean', name: 'Piezo', slug: 'piezo', unit: null, value: true },
+          {
+          dataType: 'number',
+          name: 'Weight',
+          slug: 'weight',
+          unit: 'g',
+          value: 83
+        },
+          {
+          dataType: 'boolean',
+          name: 'Piezo',
+          slug: 'piezo',
+          unit: null,
+          value: true
+        },
           {
             dataType: 'enum',
             enumOptionName: 'Liquid fuel',
@@ -300,13 +414,28 @@ describe('get /api/equipment/items', () => {
         id: secondId,
         isInMyGear: false,
         name: 'Solo Pot',
-        brand: { name: 'Solo', slug: 'solo' },
-        category: { name: 'Cookware', slug: 'cookware' },
+
+        brand: {
+          name: 'Solo',
+          slug: 'solo'
+        },
+
+        category: {
+          name: 'Cookware',
+          slug: 'cookware'
+        },
 
         properties: [
-          { dataType: 'number', name: 'Volume', slug: 'volume', unit: 'ml', value: null }
+          {
+          dataType: 'number',
+          name: 'Volume',
+          slug: 'volume',
+          unit: 'ml',
+          value: null
+        }
         ]
       }],
+
       limit: 10,
       page: 2,
       total: 42
@@ -344,9 +473,11 @@ describe('get /api/equipment/items', () => {
     const itemSelection = db.selectMock.mock.calls
       .map(([selection]) => selection)
       .find((selection) => 'isInMyGear' in selection)
+
     const countSelection = db.selectMock.mock.calls
       .map(([selection]) => selection)
       .find((selection) => 'total' in selection)
+
     const membershipSql = itemSelection?.isInMyGear
     const compiledMembership = compileSql(membershipSql)
 
@@ -366,19 +497,46 @@ describe('get /api/equipment/items', () => {
       id,
       isInMyGear: false,
       name: 'PocketRocket Deluxe',
-      brand: { name: 'MSR', slug: 'msr' },
-      category: { name: 'Stoves', slug: 'stoves' }
+
+      brand: {
+        name: 'MSR',
+        slug: 'msr'
+      },
+
+      category: {
+        name: 'Stoves',
+        slug: 'stoves'
+      }
     }]
 
     const definitions = [
-      { categoryId: 2, dataType: 'enum', displayOrder: 0, id: 11, name: 'Fuel', slug: 'fuel', unit: null }
+      {
+        categoryId: 2,
+        dataType: 'enum',
+        displayOrder: 0,
+        id: 11,
+        name: 'Fuel',
+        slug: 'fuel',
+        unit: null
+      }
     ]
 
     const values = [
-      { itemId: id, propertyId: 11, valueBoolean: null, valueNumber: null, valueText: 'legacy-fuel' }
+      {
+        itemId: id,
+        propertyId: 11,
+        valueBoolean: null,
+        valueNumber: null,
+        valueText: 'legacy-fuel'
+      }
     ]
 
-    const db = createListDb({ definitions, items: itemRows, values })
+    const db = createListDb({
+      definitions,
+      items: itemRows,
+      values
+    })
+
     const event = createTestEvent(db.dbHttp)
     const result = await listItemsHandler(event)
 
@@ -393,14 +551,25 @@ describe('get /api/equipment/items', () => {
 
   it('should compile grouped search, brand, enum, numeric, and boolean predicates', async () => {
     const db = createListDb({ categoryMetadata: createCategoryMetadata() })
+
     const query = createQuery({
-      booleanFilter: [{ propertySlug: 'piezo', value: true }],
+      booleanFilter: [{
+        propertySlug: 'piezo',
+        value: true
+      }],
+
       brandSlug: ['msr', 'therm-a-rest'],
       categorySlug: 'stoves',
 
       enumFilter: [
-        { optionSlug: 'canister', propertySlug: 'fuel' },
-        { optionSlug: 'alcohol', propertySlug: 'fuel' }
+        {
+        optionSlug: 'canister',
+        propertySlug: 'fuel'
+      },
+        {
+        optionSlug: 'alcohol',
+        propertySlug: 'fuel'
+      }
       ],
 
       numberFilter: [{
@@ -498,7 +667,10 @@ describe('get /api/equipment/items', () => {
     const db = createListDb()
     const event = createTestEvent(db.dbHttp)
 
-    getValidatedQueryMock.mockResolvedValue(createQuery({ direction, sort }))
+    getValidatedQueryMock.mockResolvedValue(createQuery({
+      direction,
+      sort
+    }))
 
     await listItemsHandler(event)
 
@@ -508,11 +680,45 @@ describe('get /api/equipment/items', () => {
   })
 
   it.each([
-    ['unknown category', undefined, createQuery({ categorySlug: 'unknown', numberFilter: [{ min: '1', max: null, propertySlug: 'weight' }] })],
-    ['wrong data type', createCategoryMetadata(), createQuery({ categorySlug: 'stoves', numberFilter: [{ min: '1', max: null, propertySlug: 'fuel' }] })],
-    ['unknown property', createCategoryMetadata(), createQuery({ categorySlug: 'stoves', numberFilter: [{ min: '1', max: null, propertySlug: 'capacity' }] })],
-    ['unknown enum option', createCategoryMetadata(), createQuery({ categorySlug: 'stoves', enumFilter: [{ optionSlug: 'gasoline', propertySlug: 'fuel' }] })],
-    ['non-numeric property sort', createCategoryMetadata(), createQuery({ categorySlug: 'stoves', sort: 'property:fuel' })]
+    ['unknown category', undefined, createQuery({
+      categorySlug: 'unknown',
+
+      numberFilter: [{
+        min: '1',
+        max: null,
+        propertySlug: 'weight'
+      }]
+    })],
+    ['wrong data type', createCategoryMetadata(), createQuery({
+      categorySlug: 'stoves',
+
+      numberFilter: [{
+        min: '1',
+        max: null,
+        propertySlug: 'fuel'
+      }]
+    })],
+    ['unknown property', createCategoryMetadata(), createQuery({
+      categorySlug: 'stoves',
+
+      numberFilter: [{
+        min: '1',
+        max: null,
+        propertySlug: 'capacity'
+      }]
+    })],
+    ['unknown enum option', createCategoryMetadata(), createQuery({
+      categorySlug: 'stoves',
+
+      enumFilter: [{
+        optionSlug: 'gasoline',
+        propertySlug: 'fuel'
+      }]
+    })],
+    ['non-numeric property sort', createCategoryMetadata(), createQuery({
+      categorySlug: 'stoves',
+      sort: 'property:fuel'
+    })]
   ])('should reject %s metadata', async (_name, categoryMetadata, query) => {
     const db = createListDb({ categoryMetadata })
     const event = createTestEvent(db.dbHttp)
@@ -526,7 +732,12 @@ describe('get /api/equipment/items', () => {
 
   it('should keep unknown brand and category slugs as zero-match SQL filters', async () => {
     const db = createListDb()
-    const query = createQuery({ brandSlug: ['unknown-brand'], categorySlug: 'unknown-category' })
+
+    const query = createQuery({
+      brandSlug: ['unknown-brand'],
+      categorySlug: 'unknown-category'
+    })
+
     const event = createTestEvent(db.dbHttp)
 
     getValidatedQueryMock.mockResolvedValue(query)

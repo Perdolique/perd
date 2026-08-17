@@ -1,4 +1,5 @@
 import { expect, test } from '../fixtures/global.fixtures.ts'
+
 import {
   type MutableResponseState,
   firstPageResponse,
@@ -22,7 +23,7 @@ import {
   getPerdSelectOption,
   selectPerdOption,
   expectPerdSelectValue,
-  mockGuestLogin,
+  mockGuestLogin
 } from '../fixtures/gear-library-entry-list.fixtures.ts'
 
 test.describe('Gear library states', () => {
@@ -144,7 +145,6 @@ test.describe('Gear library states', () => {
     await page.goto(`/login?redirectTo=${redirectTo}`)
 
     const loginClickPromise = page.getByRole('button', { name: 'Guest' }).click()
-
     const initialProgress = page.getByTestId('gear-library-initial-progress')
     const resultsSkeleton = page.getByTestId('gear-library-results-skeleton')
     const resultsSkeletonRow = page.getByTestId('gear-library-results-skeleton-row')
@@ -203,7 +203,6 @@ test.describe('Gear library states', () => {
 
     const list = page.getByRole('list')
     const listBoxBefore = await getElementBox(list)
-
     const itemsBeforeSearch = tracker.items.length
 
     itemsState.response = {

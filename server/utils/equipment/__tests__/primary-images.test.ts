@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from 'vitest'
-
 import { getPrimaryEquipmentImageIds } from '#server/utils/equipment/primary-images'
 
 type PrimaryImageOptions = Parameters<typeof getPrimaryEquipmentImageIds>[0]
@@ -13,7 +12,9 @@ describe(getPrimaryEquipmentImageIds, () => {
       cloudflareImageId: 'cloudflare-image-2',
       itemId: 'item-2'
     }]
+
     const findManyMock = vi.fn(() => rows)
+
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Drizzle's fluent client type is impractical to construct in a focused unit test.
     const dbHttp = {
       query: {
@@ -50,6 +51,7 @@ describe(getPrimaryEquipmentImageIds, () => {
 
   it('should return an empty map without querying for an empty item list', async () => {
     const findManyMock = vi.fn()
+
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Drizzle's fluent client type is impractical to construct in a focused unit test.
     const dbHttp = {
       query: {

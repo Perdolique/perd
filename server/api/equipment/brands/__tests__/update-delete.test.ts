@@ -212,6 +212,7 @@ function createDeleteDb({
     $client: {
       end: endMock
     },
+
     transaction: transactionMock
   }
 
@@ -312,6 +313,7 @@ describe('patch /api/equipment/brands/[id]', () => {
       message: routeId,
       status: 400
     })
+
     const event = createTestEvent({})
 
     getValidatedRouterParamsMock.mockRejectedValue(routeError)
@@ -477,6 +479,7 @@ describe('delete /api/equipment/brands/[id]', () => {
       message: routeId,
       status: 400
     })
+
     const event = createTestEvent({})
 
     getValidatedRouterParamsMock.mockRejectedValue(routeError)

@@ -1,9 +1,6 @@
 import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
 import { validateCategoryDetailParams } from '#server/utils/validation/schemas'
-import {
-  getEquipmentPropertyDataType,
-  type EquipmentPropertyDataType
-} from '#server/utils/equipment/property-values'
+import { getEquipmentPropertyDataType, type EquipmentPropertyDataType } from '#server/utils/equipment/property-values'
 
 interface CategoryDetailEnumOption {
   id: number;

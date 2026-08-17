@@ -1,5 +1,6 @@
 import type { Request } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
+
 import {
   createDeferred,
   firstPageResponse,
@@ -18,6 +19,7 @@ function createMyGearRow(item = stoveItem) {
   return {
     createdAt: '2026-07-23T00:00:00.000Z',
     id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477ab',
+
     item: {
       brand: item.brand,
       category: item.category,
@@ -72,10 +74,12 @@ function createRetryingMyGearResponder() {
 function createIndependentMyGearResponder(firstAdditionGate: Promise<void>) {
   return (request: Request) => {
     const requestBody: unknown = request.postDataJSON()
+
     const isFirstItem = typeof requestBody === 'object'
       && requestBody !== null
       && 'itemId' in requestBody
       && requestBody.itemId === stoveItem.id
+
     const responseItem = isFirstItem ? stoveItem : sleepingPadItem
     const waitFor = isFirstItem ? firstAdditionGate : undefined
 
@@ -103,9 +107,11 @@ test.describe('Gear library item actions', () => {
 
     const addButtonName = `Add to My gear ${stoveItem.name}`
     const addButton = page.getByRole('button', { name: addButtonName })
+
     const stoveRow = page.getByRole('listitem').filter({
       has: page.getByRole('link', { name: stoveItem.name })
     })
+
     const weightLabel = stoveRow.getByText('Weight', { exact: true })
     const actionRailBefore = addButton.locator('..')
     const actionRailBoxBefore = await getElementBox(actionRailBefore)
@@ -130,6 +136,7 @@ test.describe('Gear library item actions', () => {
     const savedFocusShadow = await savedStatus.evaluate(
       (element) => globalThis.getComputedStyle(element).boxShadow
     )
+
     const actionRailBoxAfter = await getElementBox(savedStatus.locator('..'))
     const weightBoxAfter = await getElementBox(weightLabel)
 
@@ -164,6 +171,7 @@ test.describe('Gear library item actions', () => {
     const unselectedBackground = await firstSelectionControl.evaluate(
       (element) => globalThis.getComputedStyle(element).backgroundColor
     )
+
     const firstSelectionCheckbox = firstSelectionControl.getByRole('checkbox')
 
     await firstSelectionCheckbox.check()
@@ -185,6 +193,7 @@ test.describe('Gear library item actions', () => {
     const cardBottomLeftRadius = await stoveRow.evaluate(
       (element) => globalThis.getComputedStyle(element).borderBottomLeftRadius
     )
+
     const cardBottomRightRadius = await stoveRow.evaluate(
       (element) => globalThis.getComputedStyle(element).borderBottomRightRadius
     )
@@ -218,6 +227,7 @@ test.describe('Gear library item actions', () => {
         }
       }
     })
+
     await openGearLibrary(page)
 
     await expect(page.getByText('In My gear', { exact: true })).toBeVisible()
@@ -271,6 +281,7 @@ test.describe('Gear library item actions', () => {
     const firstAddButton = page.getByRole('button', {
       name: `Add to My gear ${stoveItem.name}`
     })
+
     const secondAddButton = page.getByRole('button', {
       name: `Add to My gear ${sleepingPadItem.name}`
     })
@@ -295,6 +306,7 @@ test.describe('Gear library item actions', () => {
     page
   }) => {
     const myGearRow = createMyGearRow()
+
     const savedStoveItem = {
       ...stoveItem,
       isInMyGear: true
@@ -347,6 +359,7 @@ test.describe('Gear library item actions', () => {
               ...stoveItem,
               isInMyGear
             }],
+
             limit: 10,
             page: 1,
             total: 1

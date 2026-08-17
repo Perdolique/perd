@@ -2,11 +2,7 @@ import * as h3 from 'h3'
 import type { SQL } from 'drizzle-orm'
 import { PgDialect } from 'drizzle-orm/pg-core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import {
-  contributions,
-  equipmentItems,
-  itemPropertyValues
-} from '#server/database/schema'
+import { contributions, equipmentItems, itemPropertyValues } from '#server/database/schema'
 import updateHandler from '#server/api/equipment/item-submissions/[id].patch'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
@@ -78,18 +74,24 @@ function createUpdateDb(options: UpdateDbOptions = {}) {
     status: 'pending',
     updatedAt: new Date('2026-08-01T12:30:00Z')
   }
+
   const item = 'item' in options ? options.item : defaultItem
   const itemLockForMock = vi.fn(() => item === undefined ? [] : [item])
+
   const itemLockLimitMock = vi.fn(() => {
     return { for: itemLockForMock }
   })
+
   const itemLockWhereMock = vi.fn(() => {
     return { limit: itemLockLimitMock }
   })
+
   const propertyLockForMock = vi.fn(() => [{ id: 3 }, { id: 4 }])
+
   const propertyLockWhereMock = vi.fn(() => {
     return { for: propertyLockForMock }
   })
+
   const selectMock = vi.fn((selection: Record<string, unknown>) => {
     if ('status' in selection) {
       return {
@@ -105,31 +107,40 @@ function createUpdateDb(options: UpdateDbOptions = {}) {
       })
     }
   })
+
   const updatedAt = new Date('2026-08-01T12:31:00Z')
   const updateReturningMock = vi.fn(() => [{ updatedAt }])
+
   const updateWhereMock = vi.fn((_condition: SQL | undefined) => {
     return { returning: updateReturningMock }
   })
+
   const updateSetMock = vi.fn(() => {
     return { where: updateWhereMock }
   })
+
   const updateMock = vi.fn((table: unknown) => {
     expect(table).toBe(equipmentItems)
 
     return { set: updateSetMock }
   })
+
   const deleteWhereMock = vi.fn((_condition: SQL | undefined) => [])
+
   const deleteMock = vi.fn((table: unknown) => {
     expect(table).toBe(itemPropertyValues)
 
     return { where: deleteWhereMock }
   })
+
   const propertyValuesMock = vi.fn()
+
   const contributionValuesMock = vi.fn(() => {
     if (options.contributionError !== undefined) {
       throw options.contributionError
     }
   })
+
   const insertMock = vi.fn((table: unknown) => {
     if (table === itemPropertyValues) {
       return { values: propertyValuesMock }
@@ -141,6 +152,7 @@ function createUpdateDb(options: UpdateDbOptions = {}) {
 
     throw new Error('Unexpected insert table')
   })
+
   const transaction = {
     delete: deleteMock,
     insert: insertMock,
@@ -150,14 +162,19 @@ function createUpdateDb(options: UpdateDbOptions = {}) {
     query: {
       brands: {
         findFirst: vi.fn(() => {
-          return { id: 1, name: 'MSR' }
+          return {
+            id: 1,
+            name: 'MSR'
+          }
         })
       },
+
       equipmentCategories: {
         findFirst: vi.fn(() => {
           return {
             id: 2,
             name: 'Stoves',
+
             properties: [{
               allowsNegativeValues: false,
               categoryId: 2,
@@ -174,19 +191,26 @@ function createUpdateDb(options: UpdateDbOptions = {}) {
           }
         })
       },
+
       users: {
         findFirst: vi.fn(() => {
-          return { id: 'author-1', name: null }
+          return {
+            id: 'author-1',
+            name: null
+          }
         })
       }
     }
   }
+
   /* oxlint-disable promise/prefer-await-to-callbacks -- The mock executes Drizzle's transaction callback. */
   const transactionMock = vi.fn(
     async (callback: (value: typeof transaction) => Promise<unknown>) => callback(transaction)
   )
+
   /* oxlint-enable promise/prefer-await-to-callbacks */
   const endMock = vi.fn()
+
   const dbWrite = {
     $client: { end: endMock },
     transaction: transactionMock
@@ -220,7 +244,14 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
       categoryId: 2,
       expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
       name: 'PocketRocket Deluxe',
-      properties: [{ propertyId: 3, value: '83.50' }, { propertyId: 4, value: false }]
+
+      properties: [{
+        propertyId: 3,
+        value: '83.50'
+      }, {
+        propertyId: 4,
+        value: false
+      }]
     })
   })
 
@@ -241,6 +272,7 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
     }))
     expect(db.itemLockForMock).toHaveBeenCalledWith('update')
     expect(db.propertyLockForMock).toHaveBeenCalledWith('key share')
+
     const itemLockOrder = Math.max(...db.itemLockForMock.mock.invocationCallOrder)
     const propertyLockOrder = Math.min(...db.propertyLockForMock.mock.invocationCallOrder)
 
@@ -277,8 +309,14 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
       userId: 'admin-1'
     }))
     expect(result.properties).toStrictEqual([
-      { propertyId: 3, value: '83.5' },
-      { propertyId: 4, value: false }
+      {
+        propertyId: 3,
+        value: '83.5'
+      },
+      {
+        propertyId: 4,
+        value: false
+      }
     ])
     expect(result.rejectionReason).toBeNull()
     expect(result.status).toBe('pending')
@@ -288,27 +326,40 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
 
   it.each([{
     action: 'publish_item_submission',
+
     body: {
       brandId: 1,
       categoryId: 2,
       decision: 'publish',
       expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
       name: 'PocketRocket Deluxe',
-      properties: [{ propertyId: 3, value: '83.50' }]
+
+      properties: [{
+        propertyId: 3,
+        value: '83.50'
+      }]
     },
+
     rejectionReason: null,
     status: 'approved'
   }, {
     action: 'reject_item_submission',
+
     body: {
       brandId: 1,
       categoryId: 2,
       decision: 'reject',
       expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
       name: 'PocketRocket Deluxe',
-      properties: [{ propertyId: 3, value: '83.50' }],
+
+      properties: [{
+        propertyId: 3,
+        value: '83.50'
+      }],
+
       rejectionReason: 'Duplicate catalog item'
     },
+
     rejectionReason: 'Duplicate catalog item',
     status: 'rejected'
   }] as const)(
@@ -366,7 +417,10 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
   })
 
   it('should return 409 for a non-pending submission before replacement', async () => {
-    const db = createUpdateDb({ item: { id: 'item-1', status: 'approved' } })
+    const db = createUpdateDb({ item: {
+      id: 'item-1',
+      status: 'approved'
+    } })
 
     createWebSocketClientMock.mockReturnValue(db.dbWrite)
 
@@ -397,6 +451,7 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
   it('should return a safe 500 and close the client when the transaction rolls back', async () => {
     const technicalError = new Error('database credentials and raw failure')
     const db = createUpdateDb({ contributionError: technicalError })
+
     const consoleErrorMock = vi.spyOn(console, 'error').mockImplementation((...messages) => {
       void messages
     })

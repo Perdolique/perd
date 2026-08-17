@@ -1,33 +1,11 @@
 import { and, eq, inArray } from 'drizzle-orm'
-
-import {
-  createError,
-  defineEventHandler,
-  getValidatedRouterParams,
-  isError,
-  readValidatedBody
-} from 'h3'
-
-import {
-  categoryProperties,
-  contributions,
-  equipmentItems,
-  itemPropertyValues
-} from '#server/database/schema'
-
+import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody } from 'h3'
+import { categoryProperties, contributions, equipmentItems, itemPropertyValues } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
 import { normalizeItemSubmissionProperties } from '#server/utils/equipment/item-submission-properties'
-
-import {
-  validateItemSubmissionParams,
-  validateItemSubmissionUpdateBody
-} from '#server/utils/validation/schemas'
-
-import type {
-  ItemSubmissionDetailResponse,
-  ItemSubmissionPropertyValue
-} from './[id].get'
+import { validateItemSubmissionParams, validateItemSubmissionUpdateBody } from '#server/utils/validation/schemas'
+import type { ItemSubmissionDetailResponse, ItemSubmissionPropertyValue } from './[id].get'
 
 function mapNormalizedProperty(value: {
   propertyId: number;

@@ -18,8 +18,15 @@ test.describe('Login page', () => {
     await expect(page.getByRole('button', { name: 'Guest' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Twitch' })).toBeVisible()
 
-    const githubLink = page.getByRole('link', { name: 'GitHub', exact: true })
-    const commitLink = page.getByRole('link', { name: `#${buildCommitShortSha}`, exact: true })
+    const githubLink = page.getByRole('link', {
+      name: 'GitHub',
+      exact: true
+    })
+
+    const commitLink = page.getByRole('link', {
+      name: `#${buildCommitShortSha}`,
+      exact: true
+    })
 
     await expect(githubLink).toBeVisible()
     await expect(githubLink).toHaveAttribute('href', repositoryUrl)

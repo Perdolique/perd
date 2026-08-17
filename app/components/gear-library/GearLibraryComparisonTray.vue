@@ -119,16 +119,7 @@
 </template>
 
 <script lang="ts" setup>
-  import {
-    computed,
-    nextTick,
-    ref,
-    useId,
-    useTemplateRef,
-    watch,
-    type CSSProperties
-  } from 'vue'
-
+  import { computed, nextTick, ref, useId, useTemplateRef, watch, type CSSProperties } from 'vue'
   import { useElementSize } from '@vueuse/core'
   import type { GearLibraryComparisonSelectionItem } from '~/types/equipment'
   import PerdButton from '~/components/PerdButton.vue'

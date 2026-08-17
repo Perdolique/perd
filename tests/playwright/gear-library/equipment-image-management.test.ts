@@ -25,9 +25,11 @@ async function navigateWithinApp(page: Page, path: string) {
     }
 
     const nuxtRoot = globalThis.document.querySelector('#__nuxt')
+
     const vueApp: unknown = nuxtRoot === null
       ? undefined
       : Reflect.get(nuxtRoot, '__vue_app__')
+
     const config = getRequiredProperty(vueApp, 'config')
     const globalProperties = getRequiredProperty(config, 'globalProperties')
     const router = getRequiredProperty(globalProperties, '$router')
@@ -94,7 +96,6 @@ test.describe('Equipment image management', () => {
     })
 
     const uploadRequests = await mockImageUploadApi(context)
-
     const pagePath = `/admin/equipment/items/${itemId}/images`
     const authPath = `/auth/twitch?code=oauth-code&state=${encodeURIComponent(pagePath)}`
 
@@ -225,8 +226,14 @@ test.describe('Equipment image management', () => {
       })
 
       images = [
-        { ...secondImage, displayOrder: 0 },
-        { ...firstImage, displayOrder: 1 }
+        {
+          ...secondImage,
+          displayOrder: 0
+        },
+        {
+          ...firstImage,
+          displayOrder: 1
+        }
       ]
       primaryCloudflareImageId = secondImage.cloudflareImageId
 
@@ -236,8 +243,18 @@ test.describe('Equipment image management', () => {
     await context.route(`/api/equipment/items/${itemId}`, async (route) => {
       await route.fulfill({
         json: {
-          brand: { id: 1, name: 'MSR', slug: 'msr' },
-          category: { id: 2, name: 'Stoves', slug: 'stoves' },
+          brand: {
+            id: 1,
+            name: 'MSR',
+            slug: 'msr'
+          },
+
+          category: {
+            id: 2,
+            name: 'Stoves',
+            slug: 'stoves'
+          },
+
           cloudflareImageId: primaryCloudflareImageId,
           createdAt: '2088-04-20T12:00:00.000Z',
           id: itemId,

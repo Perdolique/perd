@@ -194,6 +194,7 @@
       }
     }
   })
+
   const filterLimitState = computed(() => {
     const filters = normalizeGearLibraryFilterDraft(draftFilters.value)
     const brandFilterCount = filters.brand.length
@@ -209,6 +210,7 @@
       isPropertyFilterLimitReached: propertyFilterCount >= maximumFilterCount
     }
   })
+
   const filterLimitMessage = computed(() => {
     const state = filterLimitState.value
 

@@ -1,4 +1,5 @@
 import { expect, test } from '../fixtures/global.fixtures.ts'
+
 import {
   type QueryEntry,
   categoriesResponse,
@@ -24,7 +25,7 @@ import {
   selectPerdOption,
   expectPerdSelectValue,
   waitForBlockEndAnchoring,
-  mockGuestLogin,
+  mockGuestLogin
 } from '../fixtures/gear-library-entry-list.fixtures.ts'
 
 test.describe('Gear library filters', () => {
@@ -59,7 +60,6 @@ test.describe('Gear library filters', () => {
     const searchInput = searchRegion.getByLabel('Search gear')
     const categorySelect = getGearLibrarySelect(searchRegion, 'Category')
     const sortSelect = getGearLibrarySelect(searchRegion, 'Sort by')
-
     const itemsBeforeCategory = tracker.items.length
 
     await selectPerdOption(categorySelect, 'stoves')
@@ -281,6 +281,7 @@ test.describe('Gear library filters', () => {
     const brandGroup = filterDialog.getByRole('group', { name: /^Brands/u })
     const brandCheckboxes = brandGroup.getByRole('checkbox')
     const brandLabels = brandGroup.locator('label:has(input[type="checkbox"])')
+
     const initialBrandNames = [
       'Alpkit',
       'Big Agnes',
@@ -949,6 +950,7 @@ test.describe('Gear library filters', () => {
       const hasItemsRequest = tracker.items.some((request) => (
         request.searchParams.get('categorySlug') === 'stoves'
       ))
+
       const hasCategoryDetailRequest = tracker.categoryDetails.some((request) => (
         request.pathname.endsWith('/stoves')
       ))

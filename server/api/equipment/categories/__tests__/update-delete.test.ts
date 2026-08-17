@@ -313,6 +313,7 @@ describe('patch /api/equipment/categories/[id]', () => {
       message: routeId,
       status: 400
     })
+
     const event = createTestEvent({})
 
     getValidatedRouterParamsMock.mockRejectedValue(routeError)
@@ -478,6 +479,7 @@ describe('delete /api/equipment/categories/[id]', () => {
       message: routeId,
       status: 400
     })
+
     const event = createTestEvent({})
 
     getValidatedRouterParamsMock.mockRejectedValue(routeError)

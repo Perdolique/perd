@@ -55,6 +55,7 @@
     name,
     placeholder
   } = defineProps<Props>()
+
   const emit = defineEmits<Emits>()
 
   const value = defineModel<string>({

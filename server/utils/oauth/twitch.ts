@@ -71,7 +71,7 @@ async function getTwitchOAuthToken(event: H3Event, code: string, config: TwitchO
 
     throw createError({
       status: 400,
-      message: 'Failed to obtain OAuth token',
+      message: 'Failed to obtain OAuth token'
     })
   }
 }
@@ -95,7 +95,7 @@ async function getTwitchUserInfo(accessToken: string, clientId: string): Promise
 
     throw createError({
       status: 400,
-      message: 'Failed to get user info',
+      message: 'Failed to get user info'
     })
   }
 }

@@ -92,19 +92,8 @@
 </template>
 
 <script lang="ts" setup>
-  import {
-    computed,
-    nextTick,
-    ref,
-    useId,
-    useTemplateRef,
-    watch
-  } from 'vue'
-
-  import type {
-    GearLibraryEntitySummary,
-    GearLibraryFilterProperty
-  } from '~/types/equipment'
+  import { computed, nextTick, ref, useId, useTemplateRef, watch } from 'vue'
+  import type { GearLibraryEntitySummary, GearLibraryFilterProperty } from '~/types/equipment'
 
   import type {
     GearLibraryAppliedFilter,

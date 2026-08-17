@@ -143,6 +143,7 @@ describe(normalizeGearLibraryComparisonQuery, () => {
         thirdComparisonId,
         fourthComparisonId
       ],
+
       hasDuplicateIds: true,
       hasInvalidIds: false,
       hasOverLimitIds: true,
@@ -269,10 +270,17 @@ describe(getRestorableGearLibraryPages, () => {
   })
 
   it.each([
-    { loadedPageCount: 100, pages: cachedPages },
-    { loadedPageCount: 3, pages: cachedPages.slice(0, 2) },
+    {
+      loadedPageCount: 100,
+      pages: cachedPages
+    },
+    {
+      loadedPageCount: 3,
+      pages: cachedPages.slice(0, 2)
+    },
     {
       loadedPageCount: 2,
+
       pages: [
         createItemsResponse(1, ['first'], 30),
         createItemsResponse(3, ['third'], 30)
@@ -386,7 +394,10 @@ describe(isGearLibraryRouteQueryCanonical, () => {
       compare: firstComparisonId,
       category: 'stoves'
     }, 'comparison before its category'],
-    [{ brand: 'msr', q: 'pad' }, 'supported keys in the wrong order'],
+    [{
+      brand: 'msr',
+      q: 'pad'
+    }, 'supported keys in the wrong order'],
     [{ sort: 'property:' }, 'a property sort without a property'],
     [{ sort: 'recent' }, 'an invalid sort']
   ]

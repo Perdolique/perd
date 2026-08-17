@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-
 import type { ComparisonResponse } from '#server/api/equipment/comparisons.get'
 
 import {
@@ -22,10 +21,20 @@ const comparisonProperties: ComparisonResponse['properties'] = [
     name: 'Weight',
     slug: 'weight',
     unit: 'g',
+
     values: [
-      { itemId: firstItemId, value: 500 },
-      { itemId: secondItemId, value: 500 },
-      { itemId: thirdItemId, value: null }
+      {
+      itemId: firstItemId,
+      value: 500
+    },
+      {
+      itemId: secondItemId,
+      value: 500
+    },
+      {
+      itemId: thirdItemId,
+      value: null
+    }
     ]
   },
   {
@@ -34,10 +43,23 @@ const comparisonProperties: ComparisonResponse['properties'] = [
     name: 'Season',
     slug: 'season',
     unit: null,
+
     values: [
-      { enumOptionName: 'Three season', itemId: firstItemId, value: 'three-season' },
-      { enumOptionName: 'Three season', itemId: secondItemId, value: 'three-season' },
-      { enumOptionName: 'Four season', itemId: thirdItemId, value: 'four-season' }
+      {
+      enumOptionName: 'Three season',
+      itemId: firstItemId,
+      value: 'three-season'
+    },
+      {
+      enumOptionName: 'Three season',
+      itemId: secondItemId,
+      value: 'three-season'
+    },
+      {
+      enumOptionName: 'Four season',
+      itemId: thirdItemId,
+      value: 'four-season'
+    }
     ]
   }
 ]
@@ -96,33 +118,70 @@ describe('comparison values', () => {
 
   it('formats null, booleans, numbers, enums, and text', () => {
     expect(formatGearLibraryComparisonValue(
-      { dataType: 'text', unit: null },
-      { itemId: firstItemId, value: null }
+      {
+        dataType: 'text',
+        unit: null
+      },
+      {
+        itemId: firstItemId,
+        value: null
+      }
     )).toBe('—')
 
     expect(formatGearLibraryComparisonValue(
-      { dataType: 'boolean', unit: null },
-      { itemId: firstItemId, value: true }
+      {
+        dataType: 'boolean',
+        unit: null
+      },
+      {
+        itemId: firstItemId,
+        value: true
+      }
     )).toBe('Yes')
 
     expect(formatGearLibraryComparisonValue(
-      { dataType: 'number', unit: 'g' },
-      { itemId: firstItemId, value: 500 }
+      {
+        dataType: 'number',
+        unit: 'g'
+      },
+      {
+        itemId: firstItemId,
+        value: 500
+      }
     )).toBe('500 g')
 
     expect(formatGearLibraryComparisonValue(
-      { dataType: 'enum', unit: null },
-      { enumOptionName: 'Three season', itemId: firstItemId, value: 'three-season' }
+      {
+        dataType: 'enum',
+        unit: null
+      },
+      {
+        enumOptionName: 'Three season',
+        itemId: firstItemId,
+        value: 'three-season'
+      }
     )).toBe('Three season')
 
     expect(formatGearLibraryComparisonValue(
-      { dataType: 'enum', unit: null },
-      { itemId: firstItemId, value: 'three-season' }
+      {
+        dataType: 'enum',
+        unit: null
+      },
+      {
+        itemId: firstItemId,
+        value: 'three-season'
+      }
     )).toBe('three-season')
 
     expect(formatGearLibraryComparisonValue(
-      { dataType: 'text', unit: null },
-      { itemId: firstItemId, value: 'Dyneema' }
+      {
+        dataType: 'text',
+        unit: null
+      },
+      {
+        itemId: firstItemId,
+        value: 'Dyneema'
+      }
     )).toBe('Dyneema')
   })
 })
@@ -137,8 +196,16 @@ describe(createGearLibraryComparisonRows, () => {
 
     expect(rows.map((row) => row.slug)).toStrictEqual(['weight', 'season'])
     expect(rows[0]?.values).toStrictEqual([
-      { displayValue: '—', itemId: thirdItemId, rawValue: null },
-      { displayValue: '500 g', itemId: firstItemId, rawValue: 500 }
+      {
+        displayValue: '—',
+        itemId: thirdItemId,
+        rawValue: null
+      },
+      {
+        displayValue: '500 g',
+        itemId: firstItemId,
+        rawValue: 500
+      }
     ])
   })
 

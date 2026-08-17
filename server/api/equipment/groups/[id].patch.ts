@@ -4,11 +4,7 @@ import { contributions, equipmentGroups } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
 import { groupBaseSelection } from '#server/utils/equipment/base-records'
-
-import {
-  validateGroupIdParams,
-  validateGroupMutationBody
-} from '#server/utils/validation/schemas'
+import { validateGroupIdParams, validateGroupMutationBody } from '#server/utils/validation/schemas'
 
 export default defineEventHandler(async (event) => {
   const userId = await validateAdminUser(event)

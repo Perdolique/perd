@@ -1,7 +1,4 @@
-import {
-  propertyDefinitionsByCategorySlug,
-  sampleItems
-} from './seed-data'
+import { propertyDefinitionsByCategorySlug, sampleItems } from './seed-data'
 
 function getRequiredMapValue<ValueType>(
   lookup: Map<string, ValueType>,
@@ -29,6 +26,7 @@ function assertSampleItemCoverage() {
   for (const item of sampleItems) {
     for (const property of item.properties) {
       const propertyKey = `${item.categorySlug}:${property.propertySlug}`
+
       const dataType = getRequiredMapValue(
         propertyDataTypeByKey,
         propertyKey,

@@ -1,5 +1,6 @@
 import type { BrowserContext, Page, Request, Route } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
+
 import {
   createDeferred,
   mockCatalogApi,
@@ -125,7 +126,11 @@ async function mockSubmissionApi(
 
     await route.fulfill({
       status: 201,
-      json: { id: pendingItemId, status: 'pending' }
+
+      json: {
+        id: pendingItemId,
+        status: 'pending'
+      }
     })
   })
 }
@@ -173,6 +178,7 @@ function trackSubmissionPageRequests(page: Page) {
     '/api/equipment/categories',
     '/api/equipment/item-submissions'
   ])
+
   let requestCount = 0
 
   page.on('request', (request) => {
@@ -209,14 +215,21 @@ function createRetryingSubmitResponder() {
       requestCount += 1
 
       if (requestCount === 1) {
-        await route.fulfill({ status: 500, json: { statusCode: 500 } })
+        await route.fulfill({
+          status: 500,
+          json: { statusCode: 500 }
+        })
 
         return
       }
 
       await route.fulfill({
         status: 201,
-        json: { id: pendingItemId, status: 'pending' }
+
+        json: {
+          id: pendingItemId,
+          status: 'pending'
+        }
       })
     }
   }
@@ -242,7 +255,10 @@ function createRecoveringBrandsResponder() {
         return
       }
 
-      await route.fulfill({ status: 500, json: { statusCode: 500 } })
+      await route.fulfill({
+        status: 500,
+        json: { statusCode: 500 }
+      })
     }
   }
 }
@@ -276,6 +292,7 @@ test.describe('Gear submissions', () => {
     await mockGuestLogin(context)
     await mockCatalogApi(context)
     await openGearLibrary(page)
+
     const submitGearLink = page.getByRole('link', { name: 'Submit gear' })
 
     await expect(submitGearLink).toBeVisible()
@@ -313,12 +330,14 @@ test.describe('Gear submissions', () => {
       brandsResponder.respond
     )
     await openRegisteredSubmissionPage(context, page)
+
     const brandSelect = getSelect(page, 'Brand')
     const categorySelect = getSelect(page, 'Category')
 
     await expect(page.getByText('Could not load brands and categories.')).toBeVisible()
     await expect(brandSelect).toBeDisabled()
     await expect(categorySelect).toBeDisabled()
+
     const requestCountBeforeRetry = brandsResponder.getRequestCount()
     const brandRetryRequestPromise = page.waitForRequest(isBrandsRequest)
 
@@ -338,6 +357,7 @@ test.describe('Gear submissions', () => {
     page
   }) => {
     const getMyGearPostCount = trackMyGearPosts(page)
+
     await mockSubmissionApi(context)
     await openRegisteredSubmissionPage(context, page)
     await expect(page.getByLabel('Item name')).toHaveAttribute('required', '')
@@ -347,6 +367,7 @@ test.describe('Gear submissions', () => {
     await page.getByLabel('Weight').fill('83.5')
     await page.getByLabel('Notes').fill('  Three season  ')
     await selectPerdOption(getSelect(page, 'Fuel type'), 'canister')
+
     const booleanSelect = getSelect(page, 'Piezo ignition')
 
     await expect(booleanSelect).toHaveAttribute('data-value', '')
@@ -385,7 +406,7 @@ test.describe('Gear submissions', () => {
     await expect(submissionStatus).toBeFocused()
     await expect(page.getByRole('button', { name: 'Submit for review' })).toHaveCount(0)
     await expect(page.locator(`a[href*="${pendingItemId}"]`)).toHaveCount(0)
-    await expect(page.getByRole('link', { name: 'View gear submissions' })).toHaveAttribute(
+    await expect(page.getByRole('link', { name: 'View My contributions' })).toHaveAttribute(
       'href',
       '/account/submissions'
     )
@@ -462,13 +483,17 @@ test.describe('Gear submissions', () => {
     await mockSubmissionApi(context, {
       categoryDetail: async (route) => {
         categoryRequestCount += 1
-        await route.fulfill({ status: 500, json: { statusCode: 500 } })
+        await route.fulfill({
+          status: 500,
+          json: { statusCode: 500 }
+        })
       }
     })
     await openRegisteredSubmissionPage(context, page)
     await fillBaseFields(page)
 
     await expect(page.getByText(/Could not load characteristics/u)).toBeVisible()
+
     const categoryRequestCountBeforeRetry = categoryRequestCount
 
     await page.getByRole('button', { name: 'Retry' }).click()

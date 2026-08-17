@@ -1,13 +1,11 @@
-import {
-  generatedSampleItems,
-  type SampleItemDefinition
-} from './seed-generated-sample-items'
+import { generatedSampleItems, type SampleItemDefinition } from './seed-generated-sample-items'
 
 const curatedSampleItems: SampleItemDefinition[] = [
   {
     brandSlug: 'therm-a-rest',
     categorySlug: 'sleeping-pads',
     name: 'Therm-a-Rest NeoAir XLite NXT Regular',
+
     properties: [
       {
         propertySlug: 'r-value',
@@ -39,6 +37,7 @@ const curatedSampleItems: SampleItemDefinition[] = [
     brandSlug: 'nemo',
     categorySlug: 'sleeping-pads',
     name: 'Nemo Tensor Insulated Regular',
+
     properties: [
       {
         propertySlug: 'r-value',
@@ -70,6 +69,7 @@ const curatedSampleItems: SampleItemDefinition[] = [
     brandSlug: 'enlightened-equipment',
     categorySlug: 'sleeping-bags',
     name: 'Enlightened Equipment Enigma 20F Regular',
+
     properties: [
       {
         propertySlug: 'temperature-rating',
@@ -101,6 +101,7 @@ const curatedSampleItems: SampleItemDefinition[] = [
     brandSlug: 'big-agnes',
     categorySlug: 'tents',
     name: 'Big Agnes Copper Spur HV UL2',
+
     properties: [
       {
         propertySlug: 'weight',
@@ -126,6 +127,7 @@ const curatedSampleItems: SampleItemDefinition[] = [
     brandSlug: 'msr',
     categorySlug: 'stoves',
     name: 'MSR PocketRocket Deluxe',
+
     properties: [
       {
         propertySlug: 'weight',
@@ -151,6 +153,7 @@ const curatedSampleItems: SampleItemDefinition[] = [
     brandSlug: 'msr',
     categorySlug: 'water-filters',
     name: 'MSR Guardian Purifier',
+
     properties: [
       {
         propertySlug: 'weight',

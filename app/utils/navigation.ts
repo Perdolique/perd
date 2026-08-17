@@ -34,6 +34,11 @@ function createGearLibraryItemPath(itemId: string) {
   return `${appRoutes.gearLibrary}/${itemId}`
 }
 
+/** Creates the photo-submission path for one published gear-library item. */
+function createGearLibraryPhotoSubmissionPath(itemId: string) {
+  return `${createGearLibraryItemPath(itemId)}/submit-photo`
+}
+
 /** Creates the admin review path for one equipment submission. */
 function createAdminEquipmentSubmissionPath(itemId: string) {
   return `${appRoutes.adminEquipmentSubmissions}/${itemId}`
@@ -48,6 +53,7 @@ export {
   appRoutes,
   createAdminEquipmentSubmissionPath,
   createGearLibraryItemPath,
+  createGearLibraryPhotoSubmissionPath,
   createPackingListPath,
   navigationIcons,
   navigationLabels

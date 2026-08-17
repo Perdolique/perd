@@ -3,6 +3,7 @@ import { delay, withMinimumDelay } from '../async'
 
 async function slowTask() {
   await delay(500)
+
   return 'slow'
 }
 

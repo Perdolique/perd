@@ -55,6 +55,7 @@ export default defineEventHandler(async (event): Promise<ItemSubmissionListRespo
 
     limit,
     offset,
+
     orderBy: {
       createdAt: 'asc',
       id: 'asc'

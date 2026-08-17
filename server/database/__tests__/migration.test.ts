@@ -5,27 +5,43 @@ const databaseMigrationWorkflowUrl = new URL(
   '../../../.github/workflows/database-migration.yml',
   import.meta.url
 )
+
 const databaseMigrationWorkflow = readFileSync(databaseMigrationWorkflowUrl, 'utf8')
+
 const migrationUrl = new URL(
   '../migrations/20260711222621_stormy_captain_marvel/migration.sql',
   import.meta.url
 )
+
 const migrationSql = readFileSync(migrationUrl, 'utf8')
+
 const imagesMigrationUrl = new URL(
   '../migrations/20260730184011_uneven_karma/migration.sql',
   import.meta.url
 )
+
 const imagesMigrationSql = readFileSync(imagesMigrationUrl, 'utf8')
+
 const negativeValuesMigrationUrl = new URL(
   '../migrations/20260808152209_stiff_ultragirl/migration.sql',
   import.meta.url
 )
+
 const negativeValuesMigrationSql = readFileSync(negativeValuesMigrationUrl, 'utf8')
+
 const rejectionReasonMigrationUrl = new URL(
   '../migrations/20260810183449_add-item-submission-rejection-reason/migration.sql',
   import.meta.url
 )
+
 const rejectionReasonMigrationSql = readFileSync(rejectionReasonMigrationUrl, 'utf8')
+
+const photoSubmissionsMigrationUrl = new URL(
+  '../migrations/20260811190742_lean_guardsmen/migration.sql',
+  import.meta.url
+)
+
+const photoSubmissionsMigrationSql = readFileSync(photoSubmissionsMigrationUrl, 'utf8')
 
 describe('database migration workflow', () => {
   it('should migrate pull request databases without resetting catalog data', () => {
@@ -90,6 +106,7 @@ describe('category property negative value migration', () => {
     const addColumnPosition = negativeValuesMigrationSql.indexOf(
       'ADD COLUMN "allowsNegativeValues" boolean DEFAULT false NOT NULL'
     )
+
     const temperatureUpdatePosition = negativeValuesMigrationSql.indexOf(
       'SET "allowsNegativeValues" = true'
     )
@@ -127,5 +144,34 @@ describe('equipment item rejection reason migration', () => {
     )
     expect(rejectionReasonMigrationSql).not.toMatch(/DELETE FROM "equipment_items"/iu)
     expect(rejectionReasonMigrationSql).not.toContain('NOT NULL')
+  })
+})
+
+describe('equipment item photo submissions migration', () => {
+  it('should create the pending submission table with protected image ownership', () => {
+    expect(photoSubmissionsMigrationSql).toContain(
+      'CREATE TABLE "equipment_item_photo_submissions"'
+    )
+    expect(photoSubmissionsMigrationSql).toContain(
+      '"cloudflareImageId" text NOT NULL UNIQUE'
+    )
+    expect(photoSubmissionsMigrationSql).toContain(
+      '"status" varchar(16) DEFAULT \'pending\' NOT NULL'
+    )
+  })
+
+  it('should enforce source metadata and preserve item and creator rows correctly', () => {
+    expect(photoSubmissionsMigrationSql).toContain(
+      '"sourceType" = \'own\' AND "sourceUrl" IS NULL'
+    )
+    expect(photoSubmissionsMigrationSql).toContain(
+      '"sourceType" = \'manufacturer\' AND NULLIF(BTRIM("sourceUrl"), \'\') IS NOT NULL'
+    )
+    expect(photoSubmissionsMigrationSql).toMatch(
+      /FOREIGN KEY \("itemId"\).*ON DELETE RESTRICT ON UPDATE CASCADE/u
+    )
+    expect(photoSubmissionsMigrationSql).toMatch(
+      /FOREIGN KEY \("createdBy"\).*ON DELETE SET NULL ON UPDATE CASCADE/u
+    )
   })
 })

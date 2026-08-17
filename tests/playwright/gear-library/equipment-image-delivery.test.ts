@@ -1,11 +1,13 @@
 import type { Request } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
+
 import {
   comparisonItemIds,
   createComparisonResponse,
   mockComparisonApi,
   openComparisonPage
 } from '../fixtures/gear-library-comparison.fixtures.ts'
+
 import {
   mockCatalogApi,
   mockGuestLogin,
@@ -21,11 +23,15 @@ const compareImageId = 'compare-image'
 const failedImageId = 'failed-image'
 const placeholderPath = '/equipment-item-placeholder.webp'
 const imageBody = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"/>'
+
 const twoItemComparisonSizes = '(max-width: 599px) 176px, (max-width: 899px) 33vw, '
   + '(max-width: 1279px) 25vw, 288px'
+
 const threeItemComparisonSizes = '(max-width: 799px) 176px, (max-width: 899px) 23vw, '
   + '(max-width: 1049px) 176px, (max-width: 1439px) 20vw, 288px'
+
 const fourItemComparisonSizes = '(max-width: 1249px) 176px, (max-width: 1535px) 15vw, 220px'
+
 const comparisonImageLayoutCases = [{
   expectedImageWidth: 288,
   expectedMaximumRenderedWidth: 270,
@@ -94,6 +100,7 @@ test.describe('Direct equipment image delivery', () => {
   }) => {
     const imageRequests: string[] = []
     const pageRequests: Request[] = []
+
     const catalogItem = {
       ...stoveItem,
       cloudflareImageId: catalogImageId
@@ -122,8 +129,16 @@ test.describe('Direct equipment image delivery', () => {
       itemDetails: () => {
         return {
           json: {
-            brand: { id: 1, ...catalogItem.brand },
-            category: { id: 2, ...catalogItem.category },
+            brand: {
+              id: 1,
+              ...catalogItem.brand
+            },
+
+            category: {
+              id: 2,
+              ...catalogItem.category
+            },
+
             cloudflareImageId: detailImageId,
             createdAt: '2088-04-20T12:00:00.000Z',
             id: catalogItem.id,
@@ -160,6 +175,7 @@ test.describe('Direct equipment image delivery', () => {
     const catalogRow = page.getByRole('listitem').filter({
       has: page.getByRole('link', { name: catalogItem.name })
     })
+
     const catalogImage = catalogRow.locator('img')
 
     await expect(catalogImage).toHaveAttribute('src', catalogUrl)
@@ -228,6 +244,7 @@ test.describe('Direct equipment image delivery', () => {
       ...stoveItem,
       cloudflareImageId: failedImageId
     }
+
     const failedUrl = createFlexibleImageUrl(failedImageId, 'w=48,h=48,fit=cover')
     const failedRetinaUrl = createFlexibleImageUrl(failedImageId, 'w=96,h=96,fit=cover')
 
@@ -256,6 +273,7 @@ test.describe('Direct equipment image delivery', () => {
     const failedRow = page.getByRole('listitem').filter({
       has: page.getByRole('link', { name: failedItem.name })
     })
+
     const missingRow = page.getByRole('listitem').filter({
       has: page.getByRole('link', { name: sleepingPadItem.name })
     })
@@ -273,7 +291,11 @@ test.describe('Direct equipment image delivery', () => {
       const imageHeight = comparisonCase.expectedImageWidth * 0.75
       const operations = `w=${comparisonCase.expectedImageWidth},h=${imageHeight},fit=contain`
       const comparisonUrl = createFlexibleImageUrl(compareImageId, operations)
-      const viewport = { width: comparisonCase.viewportWidth, height: 720 }
+
+      const viewport = {
+        width: comparisonCase.viewportWidth,
+        height: 720
+      }
 
       await page.setViewportSize(viewport)
       await context.route('https://imagedelivery.net/**', async (route) => {

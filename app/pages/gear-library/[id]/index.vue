@@ -1,7 +1,11 @@
 <template>
   <PageContent :page-title="pageTitle">
-    <template v-if="showImageManagementAction" #actions>
-      <PerdLink :to="imagesManagementPath">
+    <template #actions>
+      <PerdLink :to="photoSubmissionPath">
+        Submit photo
+      </PerdLink>
+
+      <PerdLink v-if="showImageManagementAction" :to="imagesManagementPath">
         Manage images
       </PerdLink>
     </template>
@@ -27,6 +31,7 @@
   import PageContent from '~/components/layout/PageContent.vue'
   import PerdLink from '~/components/PerdLink.vue'
   import EquipmentItemImage from '~/components/equipment/EquipmentItemImage.vue'
+  import { createGearLibraryPhotoSubmissionPath } from '~/utils/navigation'
 
   definePageMeta({
     layout: 'page'
@@ -36,12 +41,13 @@
 
   const itemId = Array.isArray(route.params.id)
     ? route.params.id[0] ?? ''
-    : route.params.id
+    : route.params.id ?? ''
 
   const { user } = useUserStore()
   const { data: itemResponse } = await useFetch(`/api/equipment/items/${itemId}`)
   const pageTitle = computed(() => itemResponse.value?.name ?? 'Gear item')
   const imagesManagementPath = `/admin/equipment/items/${itemId}/images`
+  const photoSubmissionPath = createGearLibraryPhotoSubmissionPath(itemId)
   const showImageManagementAction = computed(() => user.value.isAdmin)
 </script>
 
