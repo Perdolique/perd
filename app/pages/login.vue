@@ -77,14 +77,14 @@
   import { $fetch } from 'ofetch'
 
   import {
-  definePageMeta,
-  navigateTo,
-  useHead,
-  useRoute,
-  useRuntimeConfig,
-  useUserStore,
-  withMinimumDelay
-} from '#imports'
+    definePageMeta,
+    navigateTo,
+    useHead,
+    useRoute,
+    useRuntimeConfig,
+    useUserStore,
+    withMinimumDelay
+  } from '#imports'
 
   import { getRedirectNavigationTarget } from '~/utils/router'
   import PerdButton from '~/components/PerdButton.vue'

@@ -51,11 +51,11 @@
   import { definePageMeta, useFetch, useRequestFetch, useRoute } from '#imports'
 
   import type {
-  PackingListDetail,
-  PackingListEntry,
-  PackingListEntryView,
-  PackingListInventoryEntry
-} from '~/types/packing'
+    PackingListDetail,
+    PackingListEntry,
+    PackingListEntryView,
+    PackingListInventoryEntry
+  } from '~/types/packing'
 
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
