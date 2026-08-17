@@ -162,14 +162,19 @@ function createUpdateDb(options: UpdateDbOptions = {}) {
     query: {
       brands: {
         findFirst: vi.fn(() => {
-          return { id: 1, name: 'MSR' }
+          return {
+            id: 1,
+            name: 'MSR'
+          }
         })
       },
+
       equipmentCategories: {
         findFirst: vi.fn(() => {
           return {
             id: 2,
             name: 'Stoves',
+
             properties: [{
               allowsNegativeValues: false,
               categoryId: 2,
@@ -186,9 +191,13 @@ function createUpdateDb(options: UpdateDbOptions = {}) {
           }
         })
       },
+
       users: {
         findFirst: vi.fn(() => {
-          return { id: 'author-1', name: null }
+          return {
+            id: 'author-1',
+            name: null
+          }
         })
       }
     }
@@ -235,7 +244,14 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
       categoryId: 2,
       expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
       name: 'PocketRocket Deluxe',
-      properties: [{ propertyId: 3, value: '83.50' }, { propertyId: 4, value: false }]
+
+      properties: [{
+        propertyId: 3,
+        value: '83.50'
+      }, {
+        propertyId: 4,
+        value: false
+      }]
     })
   })
 
@@ -293,8 +309,14 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
       userId: 'admin-1'
     }))
     expect(result.properties).toStrictEqual([
-      { propertyId: 3, value: '83.5' },
-      { propertyId: 4, value: false }
+      {
+        propertyId: 3,
+        value: '83.5'
+      },
+      {
+        propertyId: 4,
+        value: false
+      }
     ])
     expect(result.rejectionReason).toBeNull()
     expect(result.status).toBe('pending')
@@ -304,27 +326,40 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
 
   it.each([{
     action: 'publish_item_submission',
+
     body: {
       brandId: 1,
       categoryId: 2,
       decision: 'publish',
       expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
       name: 'PocketRocket Deluxe',
-      properties: [{ propertyId: 3, value: '83.50' }]
+
+      properties: [{
+        propertyId: 3,
+        value: '83.50'
+      }]
     },
+
     rejectionReason: null,
     status: 'approved'
   }, {
     action: 'reject_item_submission',
+
     body: {
       brandId: 1,
       categoryId: 2,
       decision: 'reject',
       expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
       name: 'PocketRocket Deluxe',
-      properties: [{ propertyId: 3, value: '83.50' }],
+
+      properties: [{
+        propertyId: 3,
+        value: '83.50'
+      }],
+
       rejectionReason: 'Duplicate catalog item'
     },
+
     rejectionReason: 'Duplicate catalog item',
     status: 'rejected'
   }] as const)(
@@ -382,7 +417,10 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
   })
 
   it('should return 409 for a non-pending submission before replacement', async () => {
-    const db = createUpdateDb({ item: { id: 'item-1', status: 'approved' } })
+    const db = createUpdateDb({ item: {
+      id: 'item-1',
+      status: 'approved'
+    } })
 
     createWebSocketClientMock.mockReturnValue(db.dbWrite)
 

@@ -90,11 +90,13 @@ function createComparisonCatalogItemDetail(itemId?: string) {
         name: item.brand.name,
         slug: item.brand.slug
       },
+
       category: {
         id: comparisonResponse.category.id,
         name: comparisonResponse.category.name,
         slug: comparisonResponse.category.slug
       },
+
       cloudflareImageId: null,
       createdAt: '2088-04-20T12:00:00.000Z',
       id: item.id,
@@ -218,6 +220,7 @@ test.describe('Gear library comparison page', () => {
 
     const selectedResponse = {
       ...comparisonResponse,
+
       items: selectedItems.map((item) => {
         return {
           brand: item.brand,
@@ -226,9 +229,11 @@ test.describe('Gear library comparison page', () => {
           name: item.name
         }
       }),
+
       properties: comparisonResponse.properties.map((property) => {
         return {
           ...property,
+
           values: selectedIds.map((itemId, index) => {
             return {
               itemId,
@@ -253,7 +258,10 @@ test.describe('Gear library comparison page', () => {
     await openGearLibrary(page, `/gear-library${catalogSearch}`)
     await page.getByRole('button', { name: 'Compare items' }).click()
 
-    const compareButton = page.getByRole('button', { name: 'Compare', exact: true })
+    const compareButton = page.getByRole('button', {
+      name: 'Compare',
+      exact: true
+    })
 
     await page.getByRole('checkbox', { name: `Select ${selectedItems[0]?.name}` }).check()
     await expect(compareButton).toBeDisabled()
@@ -475,7 +483,10 @@ test.describe('Gear library comparison page', () => {
     context,
     page
   }) => {
-    await page.setViewportSize({ width: 390, height: 844 })
+    await page.setViewportSize({
+      width: 390,
+      height: 844
+    })
 
     const pageRequests: Request[] = []
 
@@ -544,7 +555,10 @@ test.describe('Gear library comparison page', () => {
     context,
     page
   }) => {
-    await page.setViewportSize({ width: 390, height: 500 })
+    await page.setViewportSize({
+      width: 390,
+      height: 500
+    })
 
     const longItemName = 'Enlightened Equipment Enigma 20F Regular'
     const shortItemName = 'Seed Sleeping Bag 03'
@@ -658,7 +672,10 @@ test.describe('Gear library comparison page', () => {
     context,
     page
   }) => {
-    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.setViewportSize({
+      width: 1440,
+      height: 900
+    })
     await page.emulateMedia({ reducedMotion: 'reduce' })
 
     const tracker = await mockComparisonApi(context)

@@ -98,7 +98,10 @@
     refresh: refreshInitial,
     status: initialStatus
   } = await useFetch('/api/equipment/item-submissions', {
-    query: { limit: pageSize, page: 1 }
+    query: {
+      limit: pageSize,
+      page: 1
+    }
   })
 
   const allItems = computed(() => [
@@ -157,7 +160,10 @@
 
     try {
       const response = await requestFetch('/api/equipment/item-submissions', {
-        query: { limit: pageSize, page: nextPage }
+        query: {
+          limit: pageSize,
+          page: nextPage
+        }
       })
 
       appendedItems.value.push(...response.items)

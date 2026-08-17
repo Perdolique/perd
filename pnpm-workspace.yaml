@@ -4,14 +4,14 @@ allowBuilds:
   sharp: false
   workerd: false
 minimumReleaseAgeExclude:
-  - worsier-darwin-arm64@2.10.0
-  - worsier-darwin-x64@2.10.0
-  - worsier-linux-arm64-gnu@2.10.0
-  - worsier-linux-arm64-musl@2.10.0
-  - worsier-linux-x64-gnu@2.10.0
-  - worsier-linux-x64-musl@2.10.0
-  - worsier-win32-arm64-msvc@2.10.0
-  - worsier-win32-x64-msvc@2.10.0
-  - worsier@2.10.0
+  - worsier-darwin-arm64@2.10.0 || 2.11.0
+  - worsier-darwin-x64@2.10.0 || 2.11.0
+  - worsier-linux-arm64-gnu@2.10.0 || 2.11.0
+  - worsier-linux-arm64-musl@2.10.0 || 2.11.0
+  - worsier-linux-x64-gnu@2.10.0 || 2.11.0
+  - worsier-linux-x64-musl@2.10.0 || 2.11.0
+  - worsier-win32-arm64-msvc@2.10.0 || 2.11.0
+  - worsier-win32-x64-msvc@2.10.0 || 2.11.0
+  - worsier@2.10.0 || 2.11.0
 publicHoistPattern:
   - h3

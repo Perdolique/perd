@@ -149,6 +149,7 @@ function useGearLibraryItemsData(options: UseGearLibraryItemsDataOptions) {
     retryLoadMore
   } = useGearLibraryPageLoader({
     fetchPage: fetchAdditionalPage,
+
     getActiveRequest: () => {
       return {
         generation: activeItemsGeneration,

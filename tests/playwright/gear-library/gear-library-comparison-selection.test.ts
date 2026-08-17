@@ -75,6 +75,7 @@ function createSleepingPadsItemsResponder(waitFor: Promise<void>) {
           page: 1,
           total: 1
         },
+
         waitFor
       }
     }
@@ -214,7 +215,10 @@ test.describe('Gear library comparison selection', () => {
   })
 
   test('should keep the mobile tray collapsed and remember its disclosure state', async ({ context, page }) => {
-    await page.setViewportSize({ width: 390, height: 844 })
+    await page.setViewportSize({
+      width: 390,
+      height: 844
+    })
     await mockCatalogApi(context, {
       items: () => {
         return { json: scrollableItemsResponse }
@@ -283,7 +287,10 @@ test.describe('Gear library comparison selection', () => {
   })
 
   test('should keep Load more above the expanded mobile and desktop tray', async ({ context, page }) => {
-    await page.setViewportSize({ width: 390, height: 844 })
+    await page.setViewportSize({
+      width: 390,
+      height: 844
+    })
     await mockCatalogApi(context, {
       items: respondWithLoadMore
     })
@@ -316,7 +323,10 @@ test.describe('Gear library comparison selection', () => {
     await loadMoreButton.click()
     await expect(page.getByTestId('gear-library-results-body').getByRole('listitem')).toHaveCount(20)
 
-    await page.setViewportSize({ width: 1280, height: 800 })
+    await page.setViewportSize({
+      width: 1280,
+      height: 800
+    })
     await expectTraySpaceReserved(tray)
     await page.evaluate(() => {
       globalThis.scrollTo({ top: globalThis.document.documentElement.scrollHeight })
@@ -355,7 +365,10 @@ test.describe('Gear library comparison selection', () => {
       () => globalThis.document.documentElement.scrollHeight
     )).toBe(documentHeightBeforeMode)
 
-    await page.getByRole('link', { name: firstItem.name, exact: true }).click()
+    await page.getByRole('link', {
+      name: firstItem.name,
+      exact: true
+    }).click()
     await expect(page).toHaveURL(new RegExp(`/gear-library/${firstItem.id}$`, 'u'))
 
     await page.goBack()
@@ -506,6 +519,7 @@ test.describe('Gear library comparison selection', () => {
       items: () => {
         return { json: firstPageResponse }
       },
+
       itemDetails: (request) => activeItemDetailResponder(request)
     })
 
@@ -559,6 +573,7 @@ test.describe('Gear library comparison selection', () => {
       items: () => {
         return { json: firstPageResponse }
       },
+
       itemDetails: (request) => {
         const response = respondWithItemDetail(request)
 

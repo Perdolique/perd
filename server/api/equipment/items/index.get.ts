@@ -87,5 +87,10 @@ export default defineEventHandler(async (event) : Promise<ReturnData> => {
   const items = await enrichCatalogItemRows(dbHttp, itemRows)
   const total = countRows[0]?.total ?? 0
 
-  return { items, limit, page, total }
+  return {
+    items,
+    limit,
+    page,
+    total
+  }
 })

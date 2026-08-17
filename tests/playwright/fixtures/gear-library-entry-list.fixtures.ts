@@ -154,6 +154,7 @@ const scrollableItemsResponse: GearLibraryItemsResponse = {
       name: `PocketRocket Deluxe ${index + 1}`
     }
   }),
+
   limit: 10,
   page: 1,
   total: 8
@@ -473,7 +474,10 @@ function createGatedLoadMoreResponder(gatedPage: string, gate: Deferred): Catalo
     const shouldWait = requestedPage === gatedPage
 
     if (shouldWait) {
-      return { ...response, waitFor: gate.promise }
+      return {
+        ...response,
+        waitFor: gate.promise
+      }
     }
 
     return response
@@ -504,7 +508,10 @@ function createStaleLoadMoreResponder(secondPageGate: Deferred): CatalogResponde
     const isSecondPage = requestedPage === '2'
 
     if (isSecondPage) {
-      return { ...response, waitFor: secondPageGate.promise }
+      return {
+        ...response,
+        waitFor: secondPageGate.promise
+      }
     }
 
     const isRefreshedSearch = search === 'whisper'

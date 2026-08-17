@@ -253,6 +253,7 @@ export default defineEventHandler(async (event) : Promise<ComparisonResponse> =>
         name: itemRow.brand.name,
         slug: itemRow.brand.slug
       },
+
       cloudflareImageId,
       id: itemRow.id,
       name: itemRow.name
@@ -311,6 +312,7 @@ export default defineEventHandler(async (event) : Promise<ComparisonResponse> =>
       name: firstItem.category.name,
       slug: firstItem.category.slug
     },
+
     items,
     properties
   }

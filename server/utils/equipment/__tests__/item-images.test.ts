@@ -69,12 +69,15 @@ function createImagesBinding(options: {
   const binding: Env['IMAGES'] = {
     hosted: {
       image: imageMock,
+
       list: vi.fn<Env['IMAGES']['hosted']['list']>().mockResolvedValue({
         images: [],
         listComplete: true
       }),
+
       upload: uploadImageMock
     },
+
     info: imageInfoMock,
     input: vi.fn<Env['IMAGES']['input']>()
   }
@@ -142,6 +145,7 @@ describe('equipment item image lifecycle', () => {
 
     const body = createImageBody({
       close: closeMock,
+
       stream: new ReadableStream({
         start(controller) {
           controller.enqueue(new Uint8Array([1, 2, 3, 4]))

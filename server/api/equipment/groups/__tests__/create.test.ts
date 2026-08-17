@@ -27,6 +27,7 @@ const {
     createWebSocketClientMock: vi.fn<(config: unknown) => MockWriteDb>(() => {
       throw new Error('createWebSocketClient mock is not configured')
     }),
+
     readValidatedBodyMock: vi.fn<typeof h3.readValidatedBody>(),
     setResponseStatusMock: vi.fn<typeof h3.setResponseStatus>(),
     validateAdminUserMock: vi.fn()

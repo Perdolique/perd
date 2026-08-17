@@ -6,14 +6,17 @@ const itemSummary = {
   id: itemId,
   isInMyGear: false,
   name: 'PocketRocket Deluxe',
+
   brand: {
     name: 'MSR',
     slug: 'msr'
   },
+
   category: {
     name: 'Stoves',
     slug: 'stoves'
   },
+
   properties: [{
     dataType: 'number',
     name: 'Weight',
@@ -33,6 +36,7 @@ test.describe('Gear library item detail', () => {
     await context.route('**/api/auth/create-session**', async (route) => {
       await route.fulfill({
         status: 201,
+
         json: {
           isGuest: true,
           userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
@@ -57,8 +61,17 @@ test.describe('Gear library item detail', () => {
         await route.fulfill({
           json: {
             ...itemSummary,
-            brand: { id: 1, ...itemSummary.brand },
-            category: { id: 2, ...itemSummary.category },
+
+            brand: {
+              id: 1,
+              ...itemSummary.brand
+            },
+
+            category: {
+              id: 2,
+              ...itemSummary.category
+            },
+
             createdAt: '2026-04-01T09:00:00.000Z'
           }
         })
@@ -87,7 +100,10 @@ test.describe('Gear library item detail', () => {
     await page.getByRole('link', { name: itemSummary.name }).click()
 
     await expect(page).toHaveURL(new RegExp(`/gear-library/${itemId}`, 'u'))
-    await expect(page.getByRole('heading', { level: 1, name: itemSummary.name })).toBeVisible()
+    await expect(page.getByRole('heading', {
+      level: 1,
+      name: itemSummary.name
+    })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Manage images' })).toHaveCount(0)
     await expect(page.getByRole('link', { name: 'Back to gear library' })).toHaveCount(0)
     await expect(page.getByText('83 g')).toHaveCount(0)
@@ -113,8 +129,17 @@ test.describe('Gear library item detail', () => {
         await route.fulfill({
           json: {
             ...itemSummary,
-            brand: { id: 1, ...itemSummary.brand },
-            category: { id: 2, ...itemSummary.category },
+
+            brand: {
+              id: 1,
+              ...itemSummary.brand
+            },
+
+            category: {
+              id: 2,
+              ...itemSummary.category
+            },
+
             createdAt: '2026-04-01T09:00:00.000Z'
           }
         })

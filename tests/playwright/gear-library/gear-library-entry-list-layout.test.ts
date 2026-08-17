@@ -48,7 +48,10 @@ test.describe('Gear library layout and accessibility', () => {
     const categorySelect = getGearLibrarySelect(searchRegion, 'Category')
     const sortSelect = getGearLibrarySelect(searchRegion, 'Sort by')
 
-    await expect(page.getByRole('heading', { name: 'Gear library', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', {
+      name: 'Gear library',
+      exact: true
+    })).toBeVisible()
     await expect(searchRegion.getByLabel('Search gear')).toHaveAttribute('type', 'search')
     await expectPerdSelectValue(categorySelect, '')
     await expectPerdSelectValue(sortSelect, 'name:asc')
@@ -320,7 +323,10 @@ test.describe('Gear library layout and accessibility', () => {
     await selectPerdOption(categorySelect, 'stoves')
     await waitForNextItemsRequest(tracker, itemsBeforeCategory)
 
-    const filtersButton = page.getByRole('button', { name: 'Filters', exact: true })
+    const filtersButton = page.getByRole('button', {
+      name: 'Filters',
+      exact: true
+    })
 
     await expect(page.getByRole('complementary', { name: 'Catalog filters' })).toHaveCount(0)
 

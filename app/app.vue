@@ -12,6 +12,7 @@
       name: 'color-scheme',
       content: 'light dark'
     }],
+
     link: [{
       rel: 'icon',
       type: 'image/png',

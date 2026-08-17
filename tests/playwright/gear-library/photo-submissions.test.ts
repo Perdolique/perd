@@ -24,11 +24,13 @@ const item = {
     name: 'MSR',
     slug: 'msr'
   },
+
   category: {
     id: 2,
     name: 'Stoves',
     slug: 'stoves'
   },
+
   cloudflareImageId: null,
   createdAt: '2026-04-01T09:00:00.000Z',
   id: itemId,
@@ -145,6 +147,7 @@ test.describe('Photo submissions', () => {
     await context.route((url) => url.pathname === '/api/auth/create-session', async (route) => {
       await route.fulfill({
         status: 201,
+
         json: {
           isGuest: true,
           userId
@@ -159,7 +162,10 @@ test.describe('Photo submissions', () => {
     await page.getByRole('link', { name: 'Submit photo' }).click()
 
     await expect(page).toHaveURL(new RegExp(`${submissionPath}$`, 'u'))
-    await expect(page.getByRole('heading', { level: 1, name: 'Submit a photo' })).toBeVisible()
+    await expect(page.getByRole('heading', {
+      level: 1,
+      name: 'Submit a photo'
+    })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Account required.' })).toBeVisible()
     await expect(page.locator('form')).toHaveCount(0)
   })
@@ -176,7 +182,11 @@ test.describe('Photo submissions', () => {
 
       await route.fulfill({
         status: 201,
-        json: { id: submissionId, status: 'pending' }
+
+        json: {
+          id: submissionId,
+          status: 'pending'
+        }
       })
     })
     await authenticateRegisteredUser(context, page, itemPath)
@@ -255,7 +265,14 @@ test.describe('Photo submissions', () => {
     await mockItem(context)
     await context.route((url) => url.pathname === photoApiPath, async (route) => {
       requestCount += 1
-      await route.fulfill({ status: 201, json: { id: submissionId, status: 'pending' } })
+      await route.fulfill({
+        status: 201,
+
+        json: {
+          id: submissionId,
+          status: 'pending'
+        }
+      })
     })
     await authenticateRegisteredUser(context, page, submissionPath)
     await page.getByRole('radio', { name: 'Official manufacturer photo' }).check()
@@ -285,7 +302,10 @@ test.describe('Photo submissions', () => {
     test(`should show the safe ${status} upload error`, async ({ context, page }) => {
       await mockItem(context)
       await context.route((url) => url.pathname === photoApiPath, async (route) => {
-        await route.fulfill({ status, json: { statusMessage: 'Internal upload detail' } })
+        await route.fulfill({
+          status,
+          json: { statusMessage: 'Internal upload detail' }
+        })
       })
       await authenticateRegisteredUser(context, page, submissionPath)
       await page.getByLabel('Photo', { exact: true }).setInputFiles(photoFixturePath)
@@ -311,10 +331,12 @@ test.describe('Photo submissions', () => {
             createdAt: '2026-08-10T12:00:00.000Z',
             filename: 'PocketRocket official.webp',
             id: submissionId,
+
             item: {
               id: itemId,
               name: item.name
             },
+
             sourceType: 'manufacturer',
             sourceUrl,
             status: 'pending',

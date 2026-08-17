@@ -21,6 +21,7 @@ const {
     createWebSocketClientMock: vi.fn<(event: unknown) => MockWriteDb>(() => {
       throw new Error('createWebSocketClient mock is not configured')
     }),
+
     getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
     readValidatedBodyMock: vi.fn<typeof h3.readValidatedBody>(),
     setResponseStatusMock: vi.fn<typeof h3.setResponseStatus>(),
@@ -192,6 +193,7 @@ function createCreateDb(createdRow?: unknown) {
         }
       })
     },
+
     insertValuesMock
   }
 }
@@ -387,6 +389,7 @@ function createUpdateDb(updatedRow?: unknown) {
         }
       })
     },
+
     updateSetMock,
     updateWhereMock
   }
@@ -409,6 +412,7 @@ function createDeleteDb(deletedRow?: unknown) {
         }
       })
     },
+
     deleteWhereMock
   }
 }
@@ -440,11 +444,13 @@ describe('user packing list handlers', () => {
     it('should return packing lists scoped to the current user', async () => {
       const rows = [{
         createdAt: '2026-04-03T09:00:00.000Z',
+
         entries: [{
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1'
         }, {
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e2'
         }],
+
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
         name: 'Alpine weekend',
         updatedAt: '2026-04-03T09:00:00.000Z'
@@ -510,6 +516,7 @@ describe('user packing list handlers', () => {
     it('should return an owned packing list', async () => {
       const row = {
         createdAt: '2026-04-03T09:00:00.000Z',
+
         entries: [{
           createdAt: '2026-04-03T09:01:00.000Z',
           customName: 'Rain jacket',
@@ -540,6 +547,7 @@ describe('user packing list handlers', () => {
             }
           }
         }],
+
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
         name: 'Alpine weekend',
         updatedAt: '2026-04-03T09:00:00.000Z'
@@ -547,6 +555,7 @@ describe('user packing list handlers', () => {
 
       const expectedRow = {
         createdAt: '2026-04-03T09:00:00.000Z',
+
         entries: [{
           createdAt: '2026-04-03T09:01:00.000Z',
           customName: 'Rain jacket',
@@ -570,6 +579,7 @@ describe('user packing list handlers', () => {
           source: 'inventory',
           updatedAt: '2026-04-03T09:02:00.000Z'
         }],
+
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
         name: 'Alpine weekend',
         updatedAt: '2026-04-03T09:00:00.000Z'
@@ -853,6 +863,7 @@ describe('user packing list handlers', () => {
           ...createdEntry,
           source: 'custom'
         },
+
         packingListUpdatedAt: '2026-04-03T09:02:00.000Z'
       })
       expect(setResponseStatusMock).toHaveBeenCalledWith(event, 201)
@@ -926,6 +937,7 @@ describe('user packing list handlers', () => {
 
           source: 'inventory'
         },
+
         packingListUpdatedAt: '2026-04-03T09:02:00.000Z'
       })
       expect(valuesMock).toHaveBeenCalledWith({
@@ -996,6 +1008,7 @@ describe('user packing list handlers', () => {
         error: Object.assign(new Error('duplicate key value violates unique constraint'), {
           code: '23505'
         }),
+
         rows: []
       })
 
@@ -1115,6 +1128,7 @@ describe('user packing list handlers', () => {
           source: 'custom',
           updatedAt: '2026-04-03T09:03:00.000Z'
         },
+
         packingListUpdatedAt: '2026-04-03T09:04:00.000Z'
       })
       expect(setMocks[0]).toHaveBeenCalledWith({
@@ -1190,6 +1204,7 @@ describe('user packing list handlers', () => {
           source: 'inventory',
           updatedAt: '2026-04-03T09:03:00.000Z'
         },
+
         packingListUpdatedAt: '2026-04-03T09:04:00.000Z'
       })
       expect(setMocks[0]).toHaveBeenCalledWith({

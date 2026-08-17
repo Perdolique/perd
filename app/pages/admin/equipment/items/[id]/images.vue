@@ -244,9 +244,11 @@
         // oxlint-disable-next-line no-await-in-loop -- Each response determines the next dense displayOrder.
         await requestFetch(imagesPath, {
           body: file,
+
           headers: {
             'content-type': file.type
           },
+
           method: 'POST',
 
           query: {
@@ -341,6 +343,7 @@
         body: {
           imageIds
         },
+
         method: 'PATCH'
       })
     } catch {
