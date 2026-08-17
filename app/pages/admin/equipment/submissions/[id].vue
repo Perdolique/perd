@@ -247,6 +247,7 @@
       })
 
       submission.value = response
+
       if (decision === undefined) {
         statusMessage.value = 'Changes saved.'
 
