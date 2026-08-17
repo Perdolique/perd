@@ -45,7 +45,6 @@ export default defineEventHandler(async (event): Promise<TwitchOAuthResponse> =>
   }
 
   // TODO (#104): Link the Twitch account to the current user
-
   throw createError({
     message: 'Not implemented',
     status: 501

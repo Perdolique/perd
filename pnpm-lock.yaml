@@ -112,8 +112,8 @@ importers:
         specifier: 3.3.10
         version: 3.3.10(typescript@6.0.3)
       worsier:
-        specifier: 2.9.0
-        version: 2.9.0
+        specifier: 2.10.0
+        version: 2.10.0
       wrangler:
         specifier: 4.123.0
         version: 4.123.0
@@ -5501,52 +5501,52 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
-  worsier-darwin-arm64@2.9.0:
-    resolution: {integrity: sha512-NY7jG2PSONgNYqtHsm3P85PHv7UrEnlkqs7UZhB7wW319Lrkhx9dY2JfUuzN+F0aJmw/V6VQY2bkLCgYMH7lYg==}
+  worsier-darwin-arm64@2.10.0:
+    resolution: {integrity: sha512-nbeq0tIUZB/VJvTd3qb6XWRhua0nxIN0Mg+PDKLer+ruO56vMX/oe9bAhd1u95naUdvEQ2WmCNbBAn75lpLYhg==}
     cpu: [arm64]
     os: [darwin]
 
-  worsier-darwin-x64@2.9.0:
-    resolution: {integrity: sha512-Rd3k/gddKSlJENiSBe9rP677dfR0iTPAiytuixEQIIidjcovmY6zhCz5OHKlLdf/bPiacLDiFUsSEWaKP6PgZg==}
+  worsier-darwin-x64@2.10.0:
+    resolution: {integrity: sha512-bn29cgIHkfLZizxi8eOFPmzpHu97ZC0RkiI68/i3iVVKdnT8AzMpyvoGjHHBLTBRd+2+Zdjy9pSltMrPpiKDEw==}
     cpu: [x64]
     os: [darwin]
 
-  worsier-linux-arm64-gnu@2.9.0:
-    resolution: {integrity: sha512-xGr4C/5jLR+okP6fS4Sgtf7FEYOLHQR4G8eIEDIiK/fOx7H5johf0VLwK2cTkLNbdWlnh4rR+tLX7Ng4TPzN+A==}
+  worsier-linux-arm64-gnu@2.10.0:
+    resolution: {integrity: sha512-0thEZww57ZSyTjMvoJ2uzbY/kMt5A0l/V3iKL9E2w9ajw3sd7mne0uBp+gSZvZ/iyhK/b3FHiyiYk+RUFMMRbw==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  worsier-linux-arm64-musl@2.9.0:
-    resolution: {integrity: sha512-UcdOQ/Yfg4Wf9iNx/8zcvhITzzAdiqejJMT3jyAbKb0D4l84J55Qja2wnfWu79nSTVqfr/zm8WPHrS2K7MWIaw==}
+  worsier-linux-arm64-musl@2.10.0:
+    resolution: {integrity: sha512-aeD0CbWodKK/Hr0k0t8IKZ6Oy1F3i9mu3fr+xj0bfdOUPWIhZinjnghoZ5fOJ66/OvEZ53pFAUcsxJbF2U9PLA==}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  worsier-linux-x64-gnu@2.9.0:
-    resolution: {integrity: sha512-7xgXfHffXpFF778u8XspBMukWeJug6BEzsPwTv/zcys+Rx17gx01x0mA3medp2Jidzar9y5IBHoCl1Bv5N/aug==}
+  worsier-linux-x64-gnu@2.10.0:
+    resolution: {integrity: sha512-nQvAzFpWG1EBoDR4CP/0xdYiPtosNFkP2WPV0AI0P1y99yNh460Se4vQcE8LGIigrl1IiOntki8u6vIK8L/E4w==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  worsier-linux-x64-musl@2.9.0:
-    resolution: {integrity: sha512-HsE0vTvZhf022EEawzrKPi0SIMmg+QCvpPh60vHKbYIzoEBMN3edh+Gy9ghU5Rf6wDxoI/oR9hyWpk9lxQDlCg==}
+  worsier-linux-x64-musl@2.10.0:
+    resolution: {integrity: sha512-9e+3YjgzZ7WqYASBQnG06mUtWBjdFCpTXP6wxYV8RJiZDERO4c/MQ0e6cfUYkuULWP3zG5Fxtk841gNv5Gd9HQ==}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  worsier-win32-arm64-msvc@2.9.0:
-    resolution: {integrity: sha512-C+3n5sh4ODhWR/8ArhQRXmP2AD/H77rt/U6x69xa/KIxyicirdtfY7MSBRAMG97KWoN4oV2n/ICjUOkWo/rF9w==}
+  worsier-win32-arm64-msvc@2.10.0:
+    resolution: {integrity: sha512-Y7+rZ/LIMn8I60NRUHbP1Wc6aQUAtY0CUskBoip6lWZ9sbOIceHAW0DraHMGIjVhoSKvYmXf6XTAWUmOhAsXdw==}
     cpu: [arm64]
     os: [win32]
 
-  worsier-win32-x64-msvc@2.9.0:
-    resolution: {integrity: sha512-71GyveteoDE/jRZd9DW9UnQdQWVBZIR1ztC/K4A8Qaj4YR0WRDwxcdCt1HSBZq6XyPvvZw490VwTwav3jYpHgQ==}
+  worsier-win32-x64-msvc@2.10.0:
+    resolution: {integrity: sha512-Q+TpIwZgRURBgRrgpmbpZtOKG+R/P+LnhF+sS2U94pXGaHGebDz1GqXoiXA9uvLDagwNxHspVby45hrlXtPavw==}
     cpu: [x64]
     os: [win32]
 
-  worsier@2.9.0:
-    resolution: {integrity: sha512-2h6U07YQPGmnY5EgaxNliCp0dNxfYYIXrsrNp6d0tytAzeAmHmpnzOmx3TTEInZEzw9rtHRM5QPN7OAmD5xqQQ==}
+  worsier@2.10.0:
+    resolution: {integrity: sha512-XIiIC+KXa7TUDHle+5YKbynrF7ABY3pj0g4/m9e8u8oH3YwmzdxTabK2GCD6I6LDSPH43KEnNMwO01ryZt3Pqw==}
     engines: {node: '>=24.0.0'}
     hasBin: true
 
@@ -11235,40 +11235,40 @@ snapshots:
       '@cloudflare/workerd-linux-arm64': 1.20260811.1
       '@cloudflare/workerd-windows-64': 1.20260811.1
 
-  worsier-darwin-arm64@2.9.0:
+  worsier-darwin-arm64@2.10.0:
     optional: true
 
-  worsier-darwin-x64@2.9.0:
+  worsier-darwin-x64@2.10.0:
     optional: true
 
-  worsier-linux-arm64-gnu@2.9.0:
+  worsier-linux-arm64-gnu@2.10.0:
     optional: true
 
-  worsier-linux-arm64-musl@2.9.0:
+  worsier-linux-arm64-musl@2.10.0:
     optional: true
 
-  worsier-linux-x64-gnu@2.9.0:
+  worsier-linux-x64-gnu@2.10.0:
     optional: true
 
-  worsier-linux-x64-musl@2.9.0:
+  worsier-linux-x64-musl@2.10.0:
     optional: true
 
-  worsier-win32-arm64-msvc@2.9.0:
+  worsier-win32-arm64-msvc@2.10.0:
     optional: true
 
-  worsier-win32-x64-msvc@2.9.0:
+  worsier-win32-x64-msvc@2.10.0:
     optional: true
 
-  worsier@2.9.0:
+  worsier@2.10.0:
     optionalDependencies:
-      worsier-darwin-arm64: 2.9.0
-      worsier-darwin-x64: 2.9.0
-      worsier-linux-arm64-gnu: 2.9.0
-      worsier-linux-arm64-musl: 2.9.0
-      worsier-linux-x64-gnu: 2.9.0
-      worsier-linux-x64-musl: 2.9.0
-      worsier-win32-arm64-msvc: 2.9.0
-      worsier-win32-x64-msvc: 2.9.0
+      worsier-darwin-arm64: 2.10.0
+      worsier-darwin-x64: 2.10.0
+      worsier-linux-arm64-gnu: 2.10.0
+      worsier-linux-arm64-musl: 2.10.0
+      worsier-linux-x64-gnu: 2.10.0
+      worsier-linux-x64-musl: 2.10.0
+      worsier-win32-arm64-msvc: 2.10.0
+      worsier-win32-x64-msvc: 2.10.0
 
   wrangler@4.123.0:
     dependencies:
