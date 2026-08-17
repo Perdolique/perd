@@ -254,6 +254,7 @@
     default: () => {
       return { items: [] }
     },
+
     immediate: isGuest.value === false,
     lazy: true
   })
@@ -267,6 +268,7 @@
     default: () => {
       return { items: [] }
     },
+
     immediate: isGuest.value === false,
     lazy: true
   })
@@ -312,14 +314,23 @@
 
   function getStatusPresentation(statusValue: UserItemSubmission['status']) {
     if (statusValue === 'approved') {
-      return { label: 'Published', tone: 'success' as const }
+      return {
+        label: 'Published',
+        tone: 'success' as const
+      }
     }
 
     if (statusValue === 'rejected') {
-      return { label: 'Rejected', tone: 'danger' as const }
+      return {
+        label: 'Rejected',
+        tone: 'danger' as const
+      }
     }
 
-    return { label: 'Pending', tone: 'warning' as const }
+    return {
+      label: 'Pending',
+      tone: 'warning' as const
+    }
   }
 
   const itemSubmissionCards = computed<SubmissionCard[]>(() => itemSubmissions.value.items.map((item) => {

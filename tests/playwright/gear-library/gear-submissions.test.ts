@@ -126,7 +126,11 @@ async function mockSubmissionApi(
 
     await route.fulfill({
       status: 201,
-      json: { id: pendingItemId, status: 'pending' }
+
+      json: {
+        id: pendingItemId,
+        status: 'pending'
+      }
     })
   })
 }
@@ -211,14 +215,21 @@ function createRetryingSubmitResponder() {
       requestCount += 1
 
       if (requestCount === 1) {
-        await route.fulfill({ status: 500, json: { statusCode: 500 } })
+        await route.fulfill({
+          status: 500,
+          json: { statusCode: 500 }
+        })
 
         return
       }
 
       await route.fulfill({
         status: 201,
-        json: { id: pendingItemId, status: 'pending' }
+
+        json: {
+          id: pendingItemId,
+          status: 'pending'
+        }
       })
     }
   }
@@ -244,7 +255,10 @@ function createRecoveringBrandsResponder() {
         return
       }
 
-      await route.fulfill({ status: 500, json: { statusCode: 500 } })
+      await route.fulfill({
+        status: 500,
+        json: { statusCode: 500 }
+      })
     }
   }
 }
@@ -469,7 +483,10 @@ test.describe('Gear submissions', () => {
     await mockSubmissionApi(context, {
       categoryDetail: async (route) => {
         categoryRequestCount += 1
-        await route.fulfill({ status: 500, json: { statusCode: 500 } })
+        await route.fulfill({
+          status: 500,
+          json: { statusCode: 500 }
+        })
       }
     })
     await openRegisteredSubmissionPage(context, page)

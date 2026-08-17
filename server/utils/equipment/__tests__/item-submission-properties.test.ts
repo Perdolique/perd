@@ -69,42 +69,88 @@ describe('item submission properties', () => {
   it.each([
     {
       definitions,
-      inputs: [{ propertyId: 99, value: 'unknown' }],
+
+      inputs: [{
+        propertyId: 99,
+        value: 'unknown'
+      }],
+
       name: 'unknown property'
     },
     {
-      definitions: [{ allowsNegativeValues: false, categoryId: 3, dataType: 'text', enumOptions: [], id: 1 }],
-      inputs: [{ propertyId: 1, value: 'wrong category' }],
+      definitions: [{
+        allowsNegativeValues: false,
+        categoryId: 3,
+        dataType: 'text',
+        enumOptions: [],
+        id: 1
+      }],
+
+      inputs: [{
+        propertyId: 1,
+        value: 'wrong category'
+      }],
+
       name: 'property from another category'
     },
     {
       definitions,
-      inputs: [{ propertyId: 1, value: '   ' }],
+
+      inputs: [{
+        propertyId: 1,
+        value: '   '
+      }],
+
       name: 'empty text'
     },
     {
       definitions,
-      inputs: [{ propertyId: 2, value: 'Infinity' }],
+
+      inputs: [{
+        propertyId: 2,
+        value: 'Infinity'
+      }],
+
       name: 'invalid number'
     },
     {
       definitions,
-      inputs: [{ propertyId: 2, value: '-0.1' }],
+
+      inputs: [{
+        propertyId: 2,
+        value: '-0.1'
+      }],
+
       name: 'negative number without permission'
     },
     {
       definitions,
-      inputs: [{ propertyId: 2, value: true }],
+
+      inputs: [{
+        propertyId: 2,
+        value: true
+      }],
+
       name: 'wrong number type'
     },
     {
       definitions,
-      inputs: [{ propertyId: 3, value: 'false' }],
+
+      inputs: [{
+        propertyId: 3,
+        value: 'false'
+      }],
+
       name: 'wrong boolean type'
     },
     {
       definitions,
-      inputs: [{ propertyId: 4, value: 'liquid' }],
+
+      inputs: [{
+        propertyId: 4,
+        value: 'liquid'
+      }],
+
       name: 'unknown enum option'
     }
   ])('should reject $name', ({ definitions: propertyDefinitions, inputs }) => {

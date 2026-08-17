@@ -160,6 +160,7 @@ function createInventoryEntryMutation(
       source: 'inventory',
       updatedAt: '2026-04-03T09:03:00.000Z'
     },
+
     packingListUpdatedAt: '2026-04-03T09:03:00.000Z'
   }
 }
@@ -174,6 +175,7 @@ function createCustomEntryMutation(customName: string): PackingListEntryMutation
       source: 'custom',
       updatedAt: '2026-04-03T09:04:00.000Z'
     },
+
     packingListUpdatedAt: '2026-04-03T09:04:00.000Z'
   }
 }
@@ -331,6 +333,7 @@ async function fulfillEntryDeleteRoute(route: Route, state: PackingListRouteStat
   if (entryExists === false) {
     await route.fulfill({
       status: 404,
+
       json: {
         statusCode: 404
       }
@@ -349,6 +352,7 @@ async function fulfillEntryDeleteRoute(route: Route, state: PackingListRouteStat
 
   await route.fulfill({
     status: 200,
+
     json: {
       deletedEntryId: entryId,
       packingListUpdatedAt: state.detail.updatedAt
@@ -440,7 +444,11 @@ test.describe('Packing list shell', () => {
     await openPackingLists(page)
 
     await expect(page).toHaveURL(/\/packing-lists$/u)
-    await expect(page.getByRole('heading', { level: 1, name: 'Packing lists', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', {
+      level: 1,
+      name: 'Packing lists',
+      exact: true
+    })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'No packing lists yet.' })).toBeVisible()
 
     await page.getByRole('button', { name: 'New list' }).first().click()
@@ -515,7 +523,10 @@ test.describe('Packing list shell', () => {
     await page.getByRole('link', { name: /Alpine weekend/iu }).click()
 
     await expect(page).toHaveURL(new RegExp(`/packing-lists/${packingListId}$`, 'u'))
-    await expect(page.getByRole('heading', { level: 1, name: 'Alpine weekend' })).toBeVisible()
+    await expect(page.getByRole('heading', {
+      level: 1,
+      name: 'Alpine weekend'
+    })).toBeVisible()
     await expect(page.getByText('Rain jacket')).toBeVisible()
     await expect(page.getByText('PocketRocket Deluxe')).toBeVisible()
     await expect(page.getByText('MSR / Stoves')).toBeVisible()
@@ -731,7 +742,10 @@ test.describe('Packing list shell', () => {
     await page.getByRole('link', { name: /Empty trail/iu }).click()
 
     await expect(page).toHaveURL(new RegExp(`/packing-lists/${packingListId}$`, 'u'))
-    await expect(page.getByRole('heading', { level: 1, name: 'Empty trail' })).toBeVisible()
+    await expect(page.getByRole('heading', {
+      level: 1,
+      name: 'Empty trail'
+    })).toBeVisible()
     await expect(page.getByText('Add another item', { exact: true })).toBeVisible()
     await expect(page.getByLabel('Find an item')).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Planning' })).toHaveCount(0)

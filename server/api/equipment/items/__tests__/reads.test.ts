@@ -69,6 +69,7 @@ function createDetailDb(item?: unknown, images: unknown[] = []) {
         }
       }
     },
+
     findFirstMock
   }
 }

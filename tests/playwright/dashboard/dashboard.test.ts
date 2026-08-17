@@ -26,8 +26,16 @@ test.describe('Dashboard page', () => {
     await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible()
 
     const packingListsLink = pageContent.getByRole('link', { name: 'Packing lists Plan and check off gear' })
-    const gearLibraryLink = pageContent.getByRole('link', { name: 'Gear library', exact: true })
-    const myGearLink = pageContent.getByRole('link', { name: 'My gear', exact: true })
+
+    const gearLibraryLink = pageContent.getByRole('link', {
+      name: 'Gear library',
+      exact: true
+    })
+
+    const myGearLink = pageContent.getByRole('link', {
+      name: 'My gear',
+      exact: true
+    })
 
     await expect(packingListsLink).toBeVisible()
     await expect(packingListsLink).toHaveAttribute('href', '/packing-lists')

@@ -120,7 +120,10 @@ function createWriteDb(options: { insertError?: Error; } = {}) {
           throw options.insertError
         }
 
-        return [{ id: submissionId, status: 'pending' }]
+        return [{
+          id: submissionId,
+          status: 'pending'
+        }]
       })
     }
   })
@@ -155,6 +158,7 @@ function createWriteDb(options: { insertError?: Error; } = {}) {
 
       transaction: transactionMock
     },
+
     contributionValuesMock,
     endMock,
     insertMock,
@@ -277,7 +281,10 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
     })
     expect(writeDb.insertMock).not.toHaveBeenCalledWith(equipmentItemImages)
     expect(writeDb.db.transaction).toHaveBeenCalledTimes(1)
-    expect(result).toStrictEqual({ id: submissionId, status: 'pending' })
+    expect(result).toStrictEqual({
+      id: submissionId,
+      status: 'pending'
+    })
     expect(setResponseStatusMock).toHaveBeenCalledWith(event, 201)
     expect(writeDb.endMock).toHaveBeenCalledTimes(1)
   })

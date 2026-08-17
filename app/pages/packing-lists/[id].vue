@@ -144,10 +144,12 @@
   function handleEntryCreated(entry: PackingListEntry, packingListUpdatedAt: string) {
     packingListResponse.value = {
       createdAt: packingListResponse.value.createdAt,
+
       entries: [
         ...packingListResponse.value.entries,
         entry
       ],
+
       id: packingListResponse.value.id,
       name: packingListResponse.value.name,
       updatedAt: packingListUpdatedAt

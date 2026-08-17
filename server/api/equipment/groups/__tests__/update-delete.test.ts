@@ -31,6 +31,7 @@ const {
     createWebSocketClientMock: vi.fn<(config: unknown) => MockWriteDb>(() => {
       throw new Error('createWebSocketClient mock is not configured')
     }),
+
     getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
     readValidatedBodyMock: vi.fn<typeof h3.readValidatedBody>(),
     setResponseStatusMock: vi.fn<typeof h3.setResponseStatus>(),
@@ -139,6 +140,7 @@ function createPatchDb({
     $client: {
       end: endMock
     },
+
     transaction: transactionMock
   }
 
@@ -210,6 +212,7 @@ function createDeleteDb({
     $client: {
       end: endMock
     },
+
     transaction: transactionMock
   }
 
@@ -355,6 +358,7 @@ describe('patch /api/equipment/groups/[id]', () => {
   it('should return 500 when contribution logging fails after group update', async () => {
     const { dbWrite } = createPatchDb({
       contributionError: new Error('contribution failed'),
+
       updatedGroup: {
         id: 7,
         name: 'Sleep',

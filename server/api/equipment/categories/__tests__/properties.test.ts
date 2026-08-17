@@ -45,6 +45,7 @@ const {
     createWebSocketClientMock: vi.fn<(config: unknown) => MockWriteDb>(() => {
       throw new Error('createWebSocketClient mock is not configured')
     }),
+
     getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
     readValidatedBodyMock: vi.fn<typeof h3.readValidatedBody>(),
     setResponseStatusMock: vi.fn<typeof h3.setResponseStatus>(),
@@ -295,6 +296,7 @@ describe('category property handlers', () => {
         rows: [{
           id: 5
         }],
+
         terminal: 'for'
       }, {
         rows: []
@@ -302,6 +304,7 @@ describe('category property handlers', () => {
         rows: [{
           displayOrder: 3
         }],
+
         terminal: 'where'
       }])
 
@@ -388,6 +391,7 @@ describe('category property handlers', () => {
         rows: [{
           id: 5
         }],
+
         terminal: 'for'
       }, {
         rows: []
@@ -395,6 +399,7 @@ describe('category property handlers', () => {
         rows: [{
           displayOrder: null
         }],
+
         terminal: 'where'
       }])
 
@@ -472,6 +477,7 @@ describe('category property handlers', () => {
         rows: [{
           id: 5
         }],
+
         terminal: 'for'
       }, {
         rows: [{
@@ -527,6 +533,7 @@ describe('category property handlers', () => {
         rows: [{
           id: 5
         }],
+
         terminal: 'for'
       }, {
         rows: []
@@ -534,6 +541,7 @@ describe('category property handlers', () => {
         rows: [{
           displayOrder: 0
         }],
+
         terminal: 'where'
       }])
 
@@ -579,6 +587,7 @@ describe('category property handlers', () => {
         rows: [{
           id: 5
         }],
+
         terminal: 'for'
       }, {
         rows: []
@@ -586,6 +595,7 @@ describe('category property handlers', () => {
         rows: [{
           displayOrder: 0
         }],
+
         terminal: 'where'
       }])
 

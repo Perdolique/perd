@@ -235,6 +235,7 @@
       brand: {
         name: item.brand.name
       },
+
       cloudflareImageId: item.cloudflareImageId,
       detailPath: createGearLibraryItemPath(itemId),
       id: itemId,
@@ -287,6 +288,7 @@
 
     return {
       path: appRoutes.gearLibrary,
+
       query: {
         category: response.category.slug,
         compare: orderedItemIds.value
@@ -323,6 +325,7 @@
         name: response.category.name,
         slug: response.category.slug
       },
+
       items,
       properties
     }
@@ -345,6 +348,7 @@
     if (remainingItemIds.length < 2) {
       const catalogLocation = {
         path: appRoutes.gearLibrary,
+
         query: {
           category: response.category.slug,
           compare: remainingItemIds
@@ -365,6 +369,7 @@
 
     const comparisonLocation = {
       path: route.path,
+
       query: {
         item: remainingItemIds
       }

@@ -226,8 +226,14 @@ test.describe('Equipment image management', () => {
       })
 
       images = [
-        { ...secondImage, displayOrder: 0 },
-        { ...firstImage, displayOrder: 1 }
+        {
+          ...secondImage,
+          displayOrder: 0
+        },
+        {
+          ...firstImage,
+          displayOrder: 1
+        }
       ]
       primaryCloudflareImageId = secondImage.cloudflareImageId
 
@@ -237,8 +243,18 @@ test.describe('Equipment image management', () => {
     await context.route(`/api/equipment/items/${itemId}`, async (route) => {
       await route.fulfill({
         json: {
-          brand: { id: 1, name: 'MSR', slug: 'msr' },
-          category: { id: 2, name: 'Stoves', slug: 'stoves' },
+          brand: {
+            id: 1,
+            name: 'MSR',
+            slug: 'msr'
+          },
+
+          category: {
+            id: 2,
+            name: 'Stoves',
+            slug: 'stoves'
+          },
+
           cloudflareImageId: primaryCloudflareImageId,
           createdAt: '2088-04-20T12:00:00.000Z',
           id: itemId,

@@ -247,7 +247,10 @@ test.describe('Gear library Load more', () => {
     secondPageGate.resolve()
 
     await detailNavigation
-    await expect(page.getByRole('heading', { level: 1, name: detailItem.name })).toBeVisible()
+    await expect(page.getByRole('heading', {
+      level: 1,
+      name: detailItem.name
+    })).toBeVisible()
 
     const detailUrl = new globalThis.URL(page.url())
 
@@ -290,7 +293,10 @@ test.describe('Gear library Load more', () => {
     await expect(detailLink).toHaveAttribute('href', `/gear-library/${detailItem.id}`)
 
     await detailLink.click()
-    await expect(page.getByRole('heading', { level: 1, name: detailItem.name })).toBeVisible()
+    await expect(page.getByRole('heading', {
+      level: 1,
+      name: detailItem.name
+    })).toBeVisible()
 
     await page.goBack()
     await expectRouteSearch(page, '?q=catalog')
@@ -357,7 +363,10 @@ test.describe('Gear library Load more', () => {
     expect(savedScrollTop).toBeGreaterThan(0)
 
     await detailLink.click()
-    await expect(page.getByRole('heading', { level: 1, name: detailItem.name })).toBeVisible()
+    await expect(page.getByRole('heading', {
+      level: 1,
+      name: detailItem.name
+    })).toBeVisible()
 
     await page.goBack()
     await expectRouteSearch(page, selectedSearch)
@@ -399,7 +408,10 @@ test.describe('Gear library Load more', () => {
     expect(savedScrollTop).toBeGreaterThan(0)
 
     await detailLink.click()
-    await expect(page.getByRole('heading', { level: 1, name: detailItem.name })).toBeVisible()
+    await expect(page.getByRole('heading', {
+      level: 1,
+      name: detailItem.name
+    })).toBeVisible()
     await clearGearLibraryItemsSnapshot(page)
 
     const requestsBeforeBack = tracker.items.length

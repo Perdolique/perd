@@ -23,7 +23,10 @@ function getEnvDatabaseConfig(): DatabaseConfig {
   const databaseUrl = v.parse(nonEmptyStringSchema, process.env.NUXT_DATABASE_URL)
   const isLocalDatabase = v.parse(optionalBooleanSchema, process.env.NUXT_LOCAL_DATABASE)
 
-  return { databaseUrl, isLocalDatabase }
+  return {
+    databaseUrl,
+    isLocalDatabase
+  }
 }
 
 export type { DatabaseConfig }

@@ -24,10 +24,12 @@ describe('get /api/user/photo-submissions', () => {
       createdAt: new Date('2026-08-10T12:00:00Z'),
       filename: 'PocketRocket official.webp',
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
+
       item: {
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
         name: 'PocketRocket Deluxe'
       },
+
       sourceType: 'manufacturer',
       sourceUrl: 'https://www.msrgear.com/products/pocketrocket',
       status: 'pending',
@@ -36,10 +38,12 @@ describe('get /api/user/photo-submissions', () => {
       createdAt: new Date('2026-08-09T12:00:00Z'),
       filename: 'PocketRocket camp.webp',
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
+
       item: {
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
         name: 'PocketRocket Deluxe'
       },
+
       sourceType: 'own',
       sourceUrl: null,
       status: 'pending',
@@ -93,10 +97,12 @@ describe('get /api/user/photo-submissions', () => {
         createdAt: new Date('2026-08-10T12:00:00Z'),
         filename: 'PocketRocket official.webp',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
+
         item: {
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
           name: 'PocketRocket Deluxe'
         },
+
         sourceType: 'manufacturer',
         sourceUrl: 'https://www.msrgear.com/products/pocketrocket',
         status: 'pending',
@@ -105,10 +111,12 @@ describe('get /api/user/photo-submissions', () => {
         createdAt: new Date('2026-08-09T12:00:00Z'),
         filename: 'PocketRocket camp.webp',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
+
         item: {
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
           name: 'PocketRocket Deluxe'
         },
+
         sourceType: 'own',
         sourceUrl: null,
         status: 'pending',

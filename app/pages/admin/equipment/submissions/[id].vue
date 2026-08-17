@@ -243,6 +243,7 @@
           properties: body.properties,
           rejectionReason
         },
+
         method: 'PATCH'
       })
 

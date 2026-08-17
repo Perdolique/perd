@@ -16,9 +16,17 @@ const guardedAdminTargets = [
   `/admin/equipment/items/${submissionId}/images`
 ]
 
-const brands = [{ id: 10, name: 'MSR', slug: 'msr' }]
+const brands = [{
+  id: 10,
+  name: 'MSR',
+  slug: 'msr'
+}]
 
-const categories = [{ id: 2, name: 'Stoves', slug: 'stoves' }, {
+const categories = [{
+  id: 2,
+  name: 'Stoves',
+  slug: 'stoves'
+}, {
   id: 1,
   name: 'Sleeping Pads',
   slug: 'sleeping-pads'
@@ -28,20 +36,46 @@ const stovesCategory = {
   id: 2,
   name: 'Stoves',
   slug: 'stoves',
-  properties: [{ dataType: 'number', id: 21, name: 'Weight', slug: 'weight', unit: 'g' }]
+
+  properties: [{
+    dataType: 'number',
+    id: 21,
+    name: 'Weight',
+    slug: 'weight',
+    unit: 'g'
+  }]
 }
 
 const sleepingPadsCategory = {
   id: 1,
   name: 'Sleeping Pads',
   slug: 'sleeping-pads',
-  properties: [{ dataType: 'number', id: 11, name: 'R-value', slug: 'r-value', unit: null }]
+
+  properties: [{
+    dataType: 'number',
+    id: 11,
+    name: 'R-value',
+    slug: 'r-value',
+    unit: null
+  }]
 }
 
 const listItem = {
-  author: { id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477ab', name: 'Ada' },
-  brand: { id: 10, name: 'MSR' },
-  category: { id: 2, name: 'Stoves' },
+  author: {
+    id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477ab',
+    name: 'Ada'
+  },
+
+  brand: {
+    id: 10,
+    name: 'MSR'
+  },
+
+  category: {
+    id: 2,
+    name: 'Stoves'
+  },
+
   createdAt: '2026-08-01T12:00:00.000Z',
   id: submissionId,
   name: 'PocketRocket Deluxe'
@@ -49,7 +83,12 @@ const listItem = {
 
 const detail = {
   ...listItem,
-  properties: [{ propertyId: 21, value: '83.5' }],
+
+  properties: [{
+    propertyId: 21,
+    value: '83.5'
+  }],
+
   rejectionReason: null,
   status: 'pending',
   updatedAt: '2026-08-01T12:30:00.000Z'
@@ -124,11 +163,19 @@ test.describe('Admin gear submission review', () => {
     context,
     page
   }) => {
-    await authenticate({ context, isAdmin: true, page, target: '/' })
+    await authenticate({
+      context,
+      isAdmin: true,
+      page,
+      target: '/'
+    })
 
     await expect(page.getByRole('navigation', { name: 'Workspace navigation' }).getByText('Admin')).toBeVisible()
 
-    await page.setViewportSize({ height: 800, width: 390 })
+    await page.setViewportSize({
+      height: 800,
+      width: 390
+    })
 
     const dock = page.getByTestId('shell-dock')
 
@@ -154,7 +201,12 @@ test.describe('Admin gear submission review', () => {
         }
       })
 
-      await authenticate({ context, isAdmin: false, page, target })
+      await authenticate({
+        context,
+        isAdmin: false,
+        page,
+        target
+      })
 
       await expect(page).toHaveURL(/\/$/u)
       expect(adminRequestCount).toBe(0)
@@ -188,7 +240,12 @@ test.describe('Admin gear submission review', () => {
       })
     })
 
-    await authenticate({ context, isAdmin: true, page, target: '/admin' })
+    await authenticate({
+      context,
+      isAdmin: true,
+      page,
+      target: '/admin'
+    })
     await page.getByRole('link', { name: /Review gear submissions/u }).click()
 
     await expect(page).toHaveURL(/\/admin\/equipment\/submissions$/u)
@@ -212,7 +269,10 @@ test.describe('Admin gear submission review', () => {
       requestCount += 1
 
       if (allowSuccess === false) {
-        await route.fulfill({ json: { message: 'Temporary failure' }, status: 500 })
+        await route.fulfill({
+          json: { message: 'Temporary failure' },
+          status: 500
+        })
 
         return
       }
@@ -293,7 +353,11 @@ test.describe('Admin gear submission review', () => {
       categoryId: 2,
       expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
       name: 'PocketRocket Deluxe 2',
-      properties: [{ propertyId: 21, value: '83.5' }]
+
+      properties: [{
+        propertyId: 21,
+        value: '83.5'
+      }]
     })
     await expect(page.getByRole('status')).toHaveText('Changes saved.')
     await expect(page.getByRole('status')).toBeFocused()
@@ -334,11 +398,17 @@ test.describe('Admin gear submission review', () => {
       target: `/admin/equipment/submissions/${submissionId}`
     })
     await page.getByLabel('Item name').fill('Published corrected name')
-    await page.getByRole('button', { name: 'Publish', exact: true }).click()
+    await page.getByRole('button', {
+      name: 'Publish',
+      exact: true
+    }).click()
 
     const dialog = page.getByRole('dialog', { name: 'Publish submission' })
 
-    await dialog.getByRole('button', { name: 'Publish', exact: true }).click()
+    await dialog.getByRole('button', {
+      name: 'Publish',
+      exact: true
+    }).click()
     await expect.poll(() => patchRequests).toHaveLength(1)
     expect(patchRequests[0]?.postDataJSON()).toStrictEqual({
       brandId: 10,
@@ -346,7 +416,11 @@ test.describe('Admin gear submission review', () => {
       decision: 'publish',
       expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
       name: 'Published corrected name',
-      properties: [{ propertyId: 21, value: '83.5' }]
+
+      properties: [{
+        propertyId: 21,
+        value: '83.5'
+      }]
     })
 
     const terminalStatus = page.getByRole('status').filter({ hasText: 'Published' })
@@ -371,7 +445,10 @@ test.describe('Admin gear submission review', () => {
         patchRequests.push(request)
 
         if (patchRequests.length === 1) {
-          await route.fulfill({ json: { message: 'Raw technical detail' }, status: 500 })
+          await route.fulfill({
+            json: { message: 'Raw technical detail' },
+            status: 500
+          })
 
           return
         }
@@ -398,10 +475,17 @@ test.describe('Admin gear submission review', () => {
       target: `/admin/equipment/submissions/${submissionId}`
     })
     await page.getByLabel('Item name').fill('Rejected corrected name')
-    await page.getByRole('button', { name: 'Reject', exact: true }).click()
+    await page.getByRole('button', {
+      name: 'Reject',
+      exact: true
+    }).click()
 
     const dialog = page.getByRole('dialog', { name: 'Reject submission' })
-    const confirmButton = dialog.getByRole('button', { name: 'Reject', exact: true })
+
+    const confirmButton = dialog.getByRole('button', {
+      name: 'Reject',
+      exact: true
+    })
 
     await expect(confirmButton).toBeDisabled()
     await dialog.getByLabel('Reason').fill('   ')
@@ -411,9 +495,15 @@ test.describe('Admin gear submission review', () => {
     await expect(dialog).not.toBeVisible()
     await expect(page.getByText('Could not apply this decision. Your edits are still here. Try again.')).toBeVisible()
     await expect(page.getByLabel('Item name')).toHaveValue('Rejected corrected name')
-    await page.getByRole('button', { name: 'Reject', exact: true }).click()
+    await page.getByRole('button', {
+      name: 'Reject',
+      exact: true
+    }).click()
     await expect(dialog.getByLabel('Reason')).toHaveValue('Duplicate catalog item')
-    await dialog.getByRole('button', { name: 'Reject', exact: true }).click()
+    await dialog.getByRole('button', {
+      name: 'Reject',
+      exact: true
+    }).click()
     await expect.poll(() => patchRequests).toHaveLength(2)
     expect(patchRequests[1]?.postDataJSON()).toStrictEqual({
       brandId: 10,
@@ -421,7 +511,12 @@ test.describe('Admin gear submission review', () => {
       decision: 'reject',
       expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
       name: 'Rejected corrected name',
-      properties: [{ propertyId: 21, value: '83.5' }],
+
+      properties: [{
+        propertyId: 21,
+        value: '83.5'
+      }],
+
       rejectionReason: 'Duplicate catalog item'
     })
 
@@ -454,7 +549,12 @@ test.describe('Admin gear submission review', () => {
         await route.fulfill({
           json: {
             ...detail,
-            category: { id: 1, name: 'Sleeping Pads' },
+
+            category: {
+              id: 1,
+              name: 'Sleeping Pads'
+            },
+
             properties: [],
             updatedAt: '2026-08-01T12:31:00.000Z'
           }
@@ -507,19 +607,28 @@ test.describe('Admin gear submission review', () => {
     let patchCount = 0
 
     await test.step('prepare the review page and mutation responses', async () => {
-      await page.setViewportSize({ height: 800, width: 415 })
+      await page.setViewportSize({
+        height: 800,
+        width: 415
+      })
       await mockReferences(context)
       await context.route((url) => url.pathname === detailPath, async (route) => {
         if (route.request().method() === 'PATCH') {
           patchCount += 1
 
           if (patchCount === 1) {
-            await route.fulfill({ json: { message: 'Temporary failure' }, status: 500 })
+            await route.fulfill({
+              json: { message: 'Temporary failure' },
+              status: 500
+            })
 
             return
           }
 
-          await route.fulfill({ json: { message: 'No longer pending' }, status: 409 })
+          await route.fulfill({
+            json: { message: 'No longer pending' },
+            status: 409
+          })
 
           return
         }

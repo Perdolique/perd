@@ -87,7 +87,10 @@
     isSubmitting.value = true
 
     try {
-      await requestFetch('/api/equipment/item-submissions', { body, method: 'POST' })
+      await requestFetch('/api/equipment/item-submissions', {
+        body,
+        method: 'POST'
+      })
       isSubmitted.value = true
 
       await nextTick()

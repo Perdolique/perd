@@ -43,6 +43,7 @@ const {
     createWebSocketClientMock: vi.fn<(config: unknown) => MockWriteDb>(() => {
       throw new Error('createWebSocketClient mock is not configured')
     }),
+
     getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
     readValidatedBodyMock: vi.fn<typeof h3.readValidatedBody>(),
     setResponseStatusMock: vi.fn<typeof h3.setResponseStatus>(),
@@ -222,6 +223,7 @@ function createDb(transaction: MockEnumOptionTransaction) {
     $client: {
       end: endMock
     },
+
     transaction: transactionMock
   }
 

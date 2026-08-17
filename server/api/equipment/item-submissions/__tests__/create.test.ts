@@ -74,7 +74,11 @@ function createDb(options: CreateDbOptions = {}) {
     }]
   }
 
-  const brand = 'brand' in options ? options.brand : { id: 1, name: 'MSR' }
+  const brand = 'brand' in options ? options.brand : {
+    id: 1,
+    name: 'MSR'
+  }
+
   const category = 'category' in options ? options.category : defaultCategory
   const { contributionError } = options
   const createdItemId = options.createdItemId ?? '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
@@ -381,8 +385,23 @@ describe('post /api/equipment/item-submissions', () => {
   })
 
   it.each([
-    { brand: undefined, category: { id: 2, name: 'Stoves', properties: [] } },
-    { brand: { id: 1, name: 'MSR' }, category: undefined }
+    {
+      brand: undefined,
+
+      category: {
+        id: 2,
+        name: 'Stoves',
+        properties: []
+      }
+    },
+    {
+      brand: {
+        id: 1,
+        name: 'MSR'
+      },
+
+      category: undefined
+    }
   ])('should return 404 when a selected reference disappears', async (options) => {
     const { dbWrite } = createDb(options)
 

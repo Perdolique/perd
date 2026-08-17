@@ -16,7 +16,10 @@ function getRuntimeDatabaseConfig(event: H3Event): DatabaseConfig {
   const localFlag = v.parse(optionalBooleanSchema, config.localDatabase)
   const isLocalDatabase = import.meta.dev === true || localFlag
 
-  return { databaseUrl, isLocalDatabase }
+  return {
+    databaseUrl,
+    isLocalDatabase
+  }
 }
 
 function getRuntimeSessionSecret(event: H3Event): string {

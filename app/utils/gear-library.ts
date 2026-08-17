@@ -265,7 +265,10 @@ function getSupportedQueryEntries(query: LocationQuery | LocationQueryRaw): Supp
       const value = query[key]
       const values = Array.isArray(value) ? value : [value]
 
-      entries.push({ key, values })
+      entries.push({
+        key,
+        values
+      })
     }
   }
 

@@ -98,7 +98,6 @@ describe('get /api/equipment/categories/by-slug/[slug]', () => {
         name: 'Weight',
         slug: 'weight',
         unit: 'g',
-
         enumOptions: []
       }, {
         dataType: 'enum',

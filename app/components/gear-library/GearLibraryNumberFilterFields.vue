@@ -133,6 +133,7 @@
 
     ranges.value = {
       ...ranges.value,
+
       [propertySlug]: {
         max: boundary === 'max' ? input.value : currentRange.max,
         min: boundary === 'min' ? input.value : currentRange.min

@@ -129,8 +129,16 @@ test.describe('Direct equipment image delivery', () => {
       itemDetails: () => {
         return {
           json: {
-            brand: { id: 1, ...catalogItem.brand },
-            category: { id: 2, ...catalogItem.category },
+            brand: {
+              id: 1,
+              ...catalogItem.brand
+            },
+
+            category: {
+              id: 2,
+              ...catalogItem.category
+            },
+
             cloudflareImageId: detailImageId,
             createdAt: '2088-04-20T12:00:00.000Z',
             id: catalogItem.id,
@@ -283,7 +291,11 @@ test.describe('Direct equipment image delivery', () => {
       const imageHeight = comparisonCase.expectedImageWidth * 0.75
       const operations = `w=${comparisonCase.expectedImageWidth},h=${imageHeight},fit=contain`
       const comparisonUrl = createFlexibleImageUrl(compareImageId, operations)
-      const viewport = { width: comparisonCase.viewportWidth, height: 720 }
+
+      const viewport = {
+        width: comparisonCase.viewportWidth,
+        height: 720
+      }
 
       await page.setViewportSize(viewport)
       await context.route('https://imagedelivery.net/**', async (route) => {

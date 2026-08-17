@@ -19,6 +19,7 @@ function createMyGearRow(item = stoveItem) {
   return {
     createdAt: '2026-07-23T00:00:00.000Z',
     id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477ab',
+
     item: {
       brand: item.brand,
       category: item.category,
@@ -358,6 +359,7 @@ test.describe('Gear library item actions', () => {
               ...stoveItem,
               isInMyGear
             }],
+
             limit: 10,
             page: 1,
             total: 1

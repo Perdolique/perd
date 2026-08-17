@@ -27,10 +27,25 @@ async function authenticate(context: BrowserContext, page: Page, target: string)
 
 function createSubmissions() {
   const baseItem = {
-    brand: { id: 10, name: 'MSR' },
-    category: { id: 2, name: 'Stoves' },
+    brand: {
+      id: 10,
+      name: 'MSR'
+    },
+
+    category: {
+      id: 2,
+      name: 'Stoves'
+    },
+
     createdAt: '2026-08-01T12:00:00.000Z',
-    properties: [{ name: 'Weight', propertyId: 21, unit: 'g', value: '83.5' }],
+
+    properties: [{
+      name: 'Weight',
+      propertyId: 21,
+      unit: 'g',
+      value: '83.5'
+    }],
+
     rejectionReason: null,
     updatedAt: '2026-08-02T12:00:00.000Z'
   }
@@ -44,7 +59,14 @@ function createSubmissions() {
     ...baseItem,
     id: publishedItemId,
     name: 'Published corrected stove',
-    properties: [{ name: 'Piezo ignition', propertyId: 22, unit: null, value: false }],
+
+    properties: [{
+      name: 'Piezo ignition',
+      propertyId: 22,
+      unit: null,
+      value: false
+    }],
+
     status: 'approved'
   }, {
     ...baseItem,
@@ -101,7 +123,10 @@ test.describe('Account gear submissions', () => {
         return
       }
 
-      await route.fulfill({ json: { message: 'Temporary failure' }, status: 500 })
+      await route.fulfill({
+        json: { message: 'Temporary failure' },
+        status: 500
+      })
     })
     await context.route((url) => url.pathname === photoSubmissionsPath, async (route) => {
       await route.fulfill({ json: { items: [] } })
@@ -133,7 +158,10 @@ test.describe('Account gear submissions', () => {
       }
 
       if (shouldPhotoRequestSucceed === false) {
-        await route.fulfill({ status: 500, json: { message: 'Temporary photo failure' } })
+        await route.fulfill({
+          status: 500,
+          json: { message: 'Temporary photo failure' }
+        })
 
         return
       }
@@ -144,10 +172,12 @@ test.describe('Account gear submissions', () => {
             createdAt: '2026-08-10T12:00:00.000Z',
             filename: 'PocketRocket camp.webp',
             id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
+
             item: {
               id: publishedItemId,
               name: 'Published corrected stove'
             },
+
             sourceType: 'own',
             sourceUrl: null,
             status: 'pending',

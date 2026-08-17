@@ -68,8 +68,10 @@ function createListDb(items: unknown[], total: number) {
           findMany: findManyMock
         }
       },
+
       select: selectMock
     },
+
     countWhereMock,
     findManyMock
   }
@@ -79,7 +81,10 @@ describe('admin equipment submission reads', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     validateAdminUserMock.mockResolvedValue('admin-1')
-    getValidatedQueryMock.mockResolvedValue({ limit: 20, page: 2 })
+    getValidatedQueryMock.mockResolvedValue({
+      limit: 20,
+      page: 2
+    })
     getValidatedRouterParamsMock.mockResolvedValue({
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
     })
@@ -91,8 +96,16 @@ describe('admin equipment submission reads', () => {
 
   it('should list only pending submissions in stable oldest-first pages with nullable authors', async () => {
     const items = [{
-      brand: { id: 1, name: 'MSR' },
-      category: { id: 2, name: 'Stoves' },
+      brand: {
+        id: 1,
+        name: 'MSR'
+      },
+
+      category: {
+        id: 2,
+        name: 'Stoves'
+      },
+
       createdAt: new Date('2026-08-01T12:00:00Z'),
       creator: null,
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
@@ -107,10 +120,12 @@ describe('admin equipment submission reads', () => {
     expect(findManyMock).toHaveBeenCalledWith(expect.objectContaining({
       limit: 20,
       offset: 20,
+
       orderBy: {
         createdAt: 'asc',
         id: 'asc'
       },
+
       where: {
         status: 'pending'
       }
@@ -127,12 +142,22 @@ describe('admin equipment submission reads', () => {
     expect(result).toStrictEqual({
       items: [{
         author: null,
-        brand: { id: 1, name: 'MSR' },
-        category: { id: 2, name: 'Stoves' },
+
+        brand: {
+          id: 1,
+          name: 'MSR'
+        },
+
+        category: {
+          id: 2,
+          name: 'Stoves'
+        },
+
         createdAt: new Date('2026-08-01T12:00:00Z'),
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
         name: 'PocketRocket Deluxe'
       }],
+
       limit: 20,
       page: 2,
       total: 21
@@ -142,12 +167,26 @@ describe('admin equipment submission reads', () => {
   it('should preserve decimal strings and boolean false in pending detail', async () => {
     const findFirstMock = vi.fn((_config: DetailQueryConfig) => {
       return {
-        brand: { id: 1, name: 'MSR' },
-        category: { id: 2, name: 'Stoves' },
+        brand: {
+          id: 1,
+          name: 'MSR'
+        },
+
+        category: {
+          id: 2,
+          name: 'Stoves'
+        },
+
         createdAt: new Date('2026-08-01T12:00:00Z'),
-        creator: { id: 'author-1', name: 'Ada' },
+
+        creator: {
+          id: 'author-1',
+          name: 'Ada'
+        },
+
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
         name: 'PocketRocket Deluxe',
+
         propertyValues: [{
           propertyId: 3,
           valueBoolean: null,
@@ -159,6 +198,7 @@ describe('admin equipment submission reads', () => {
           valueNumber: null,
           valueText: null
         }],
+
         rejectionReason: null,
         status: 'pending',
         updatedAt: new Date('2026-08-01T12:30:00Z')
@@ -186,8 +226,14 @@ describe('admin equipment submission reads', () => {
 
     expect(detailQueryConfig?.columns.updatedAt).toBe(true)
     expect(result.properties).toStrictEqual([
-      { propertyId: 3, value: '83.50' },
-      { propertyId: 4, value: false }
+      {
+        propertyId: 3,
+        value: '83.50'
+      },
+      {
+        propertyId: 4,
+        value: false
+      }
     ])
     expect(result.rejectionReason).toBeNull()
     expect(result.status).toBe('pending')

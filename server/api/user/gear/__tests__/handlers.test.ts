@@ -173,6 +173,7 @@ function createDeleteDb({
     dbHttp: {
       delete: deleteMock
     },
+
     deleteWhereMock
   }
 }

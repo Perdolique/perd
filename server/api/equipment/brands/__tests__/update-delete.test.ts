@@ -212,6 +212,7 @@ function createDeleteDb({
     $client: {
       end: endMock
     },
+
     transaction: transactionMock
   }
 
