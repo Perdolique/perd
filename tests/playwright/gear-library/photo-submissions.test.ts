@@ -1,4 +1,4 @@
-import type { BrowserContext, Page, Request } from '@playwright/test'
+import type { BrowserContext, Locator, Page, Request } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
 import { createDeferred } from '../fixtures/gear-library-entry-list.fixtures.ts'
 
@@ -142,6 +142,41 @@ async function setOversizedPhoto(page: Page): Promise<void> {
   })
 }
 
+async function dropReplacementPhoto(page: Page): Promise<void> {
+  const photoInput = page.getByLabel('Photo', { exact: true })
+
+  await photoInput.locator('..').evaluate(async (dropZone) => {
+    const response = await globalThis.fetch('/equipment-item-placeholder.webp')
+    const photoBytes = await response.arrayBuffer()
+
+    const photo = new globalThis.File([photoBytes], 'replacement.webp', {
+      type: 'image/webp'
+    })
+
+    const dataTransfer = new globalThis.DataTransfer()
+
+    dataTransfer.items.add(photo)
+    dropZone.dispatchEvent(new globalThis.DragEvent('dragenter', {
+      bubbles: true,
+      dataTransfer
+    }))
+    dropZone.dispatchEvent(new globalThis.DragEvent('drop', {
+      bubbles: true,
+      dataTransfer
+    }))
+  })
+}
+
+async function getRequiredBoundingBox(locator: Locator) {
+  const box = await locator.boundingBox()
+
+  if (box === null) {
+    throw new Error('Expected the element to have a bounding box')
+  }
+
+  return box
+}
+
 test.describe('Photo submissions', () => {
   test('should open the dedicated form from an item and deny a Guest', async ({ context, page }) => {
     await context.route((url) => url.pathname === '/api/auth/create-session', async (route) => {
@@ -170,6 +205,63 @@ test.describe('Photo submissions', () => {
     await expect(page.locator('form')).toHaveCount(0)
   })
 
+  test('should preview, replace, and remove a selected WebP photo', async ({
+    context,
+    page
+  }) => {
+    await mockItem(context)
+    await authenticateRegisteredUser(context, page, submissionPath)
+
+    const photoInput = page.getByLabel('Photo', { exact: true })
+    const ownSource = page.getByRole('radio', { name: 'My own photo' })
+
+    const manufacturerSource = page.getByRole('radio', {
+      name: 'Official manufacturer photo'
+    })
+
+    await expect(photoInput).toHaveAttribute('accept', 'image/jpeg,image/png,image/webp')
+    await expect(photoInput).not.toHaveAttribute('multiple', '')
+    await expect(ownSource).toBeChecked()
+    await expect(page.getByLabel('Manufacturer source')).toHaveCount(0)
+
+    await photoInput.setInputFiles(photoFixturePath)
+
+    await expect(page.getByRole('img', {
+      name: 'Preview of photo-submission.webp'
+    })).toBeVisible()
+    await expect(page.getByText('photo-submission.webp', { exact: true })).toBeVisible()
+    await expect(page.getByText('38 B', { exact: true })).toBeVisible()
+
+    const rightsCheckbox = page.getByLabel(
+      'I confirm that this photo can be published in the catalog.'
+    )
+
+    await rightsCheckbox.check()
+    await expect(page.getByRole('button', { name: 'Submit photo' })).toBeEnabled()
+
+    await dropReplacementPhoto(page)
+
+    await expect(page.getByRole('img', {
+      name: 'Preview of replacement.webp'
+    })).toBeVisible()
+    await expect(page.getByRole('img', {
+      name: 'Preview of photo-submission.webp'
+    })).toHaveCount(0)
+    await expect(page.getByText('replacement.webp', { exact: true })).toBeVisible()
+    await expect(page.getByText('26.2 KB', { exact: true })).toBeVisible()
+
+    await page.getByRole('button', { name: 'Remove photo' }).click()
+
+    await expect(page.getByRole('img', { name: 'Preview of replacement.webp' })).toHaveCount(0)
+    await expect(page.getByText('Click to choose or drag and drop')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Submit photo' })).toBeDisabled()
+    await expect(photoInput).toBeFocused()
+    await expect(photoInput).toHaveValue('')
+
+    await manufacturerSource.check()
+    await expect(page.getByLabel('Manufacturer source')).toBeVisible()
+  })
+
   test('should upload one manufacturer photo with exact private submission metadata', async ({
     context,
     page
@@ -196,19 +288,23 @@ test.describe('Photo submissions', () => {
       name: 'Official manufacturer photo'
     })
 
+    await expect(page.getByRole('radio', { name: 'My own photo' })).toBeChecked()
+
     await manufacturerSource.check()
 
     const sourceInput = page.getByLabel('Manufacturer source')
 
     await expect(sourceInput).toBeVisible()
     await expect(sourceInput).toHaveAttribute('required', '')
+    await expect(sourceInput).toHaveAttribute('type', 'url')
+    await expect(sourceInput).toHaveAttribute('autocomplete', 'url')
     await sourceInput.fill(sourceUrl)
 
     const photoInput = page.getByLabel('Photo', { exact: true })
 
     await expect(photoInput).not.toHaveAttribute('multiple', '')
     await photoInput.setInputFiles(photoFixturePath)
-    await expect(page.getByText('Selected: photo-submission.webp')).toBeVisible()
+    await expect(page.getByText('photo-submission.webp', { exact: true })).toBeVisible()
 
     const rightsCheckbox = page.getByLabel(
       'I confirm that this photo can be published in the catalog.'
@@ -242,6 +338,7 @@ test.describe('Photo submissions', () => {
     await expect(manufacturerSource).toBeDisabled()
     await expect(sourceInput).toBeDisabled()
     await expect(rightsCheckbox).toBeDisabled()
+    await expect(page.getByRole('button', { name: 'Remove photo' })).toBeDisabled()
     responseGate.resolve()
 
     const status = page.getByRole('status')
@@ -280,13 +377,72 @@ test.describe('Photo submissions', () => {
     await setOversizedPhoto(page)
     await page.getByLabel('I confirm that this photo can be published in the catalog.').check()
 
-    await expect(page.getByText('Choose a photo that is 5 MB or smaller.')).toBeVisible()
+    const photoInput = page.getByLabel('Photo', { exact: true })
+    const oversizedError = page.getByText('Choose a photo that is 5 MB or smaller.')
+
+    await expect(oversizedError).toBeVisible()
     await expect(page.getByText('Use an HTTPS manufacturer URL.')).toBeVisible()
+    await expect(photoInput).toHaveAttribute('aria-invalid', 'true')
+
+    const oversizedErrorId = await oversizedError.getAttribute('id')
+    const photoDescriptionIds = await photoInput.getAttribute('aria-describedby')
+
+    expect(oversizedErrorId).not.toBeNull()
+    expect(photoDescriptionIds).toContain(oversizedErrorId)
     await expect(page.getByRole('button', { name: 'Submit photo' })).toBeDisabled()
     await page.locator('form').evaluate((form: HTMLFormElement) => {
       form.requestSubmit()
     })
     expect(requestCount).toBe(0)
+  })
+
+  test('should place sections side by side on desktop and stack them without overflow on mobile', async ({
+    context,
+    page
+  }) => {
+    await page.setViewportSize({
+      height: 900,
+      width: 1280
+    })
+    await mockItem(context)
+    await authenticateRegisteredUser(context, page, submissionPath)
+
+    const photoSection = page.locator('section').filter({
+      has: page.getByRole('heading', {
+        name: 'Photo',
+        exact: true
+      })
+    })
+
+    const detailsSection = page.locator('section').filter({
+      has: page.getByRole('heading', {
+        name: 'Photo details',
+        exact: true
+      })
+    })
+
+    const desktopPhotoBox = await getRequiredBoundingBox(photoSection)
+    const desktopDetailsBox = await getRequiredBoundingBox(detailsSection)
+
+    expect(Math.abs(desktopPhotoBox.y - desktopDetailsBox.y)).toBeLessThan(2)
+    expect(desktopDetailsBox.x).toBeGreaterThan(desktopPhotoBox.x)
+
+    await page.setViewportSize({
+      height: 844,
+      width: 390
+    })
+
+    const mobilePhotoBox = await getRequiredBoundingBox(photoSection)
+    const mobileDetailsBox = await getRequiredBoundingBox(detailsSection)
+
+    expect(mobileDetailsBox.y).toBeGreaterThan(mobilePhotoBox.y + mobilePhotoBox.height)
+
+    const hasHorizontalOverflow = await page.evaluate(
+      () => globalThis.document.documentElement.scrollWidth
+        > globalThis.document.documentElement.clientWidth
+    )
+
+    expect(hasHorizontalOverflow).toBe(false)
   })
 
   for (const { message, status } of [

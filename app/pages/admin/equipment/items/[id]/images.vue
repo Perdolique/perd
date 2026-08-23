@@ -14,23 +14,14 @@
 
     <div :class="$style.component">
       <PerdCard padding="large">
-        <label :class="$style.filePicker">
-          <span :class="$style.filePickerLabel">Choose images</span>
-          <span :class="$style.filePickerValue">{{ selectedFilesText }}</span>
-
-          <input
-            ref="fileInput"
-            :class="$style.fileInput"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            multiple
-            @change="handleFileSelection"
-          >
-        </label>
-
-        <p :class="$style.helpText">
-          Select one or more JPEG, PNG, or WebP images. They are added in selection order.
-        </p>
+        <EquipmentImageFilePicker
+          v-model="selectedFiles"
+          :disabled="isUploading"
+          label="Choose images"
+          multiple
+          name="images"
+          @update:model-value="handleFileSelection"
+        />
       </PerdCard>
 
       <p
@@ -130,14 +121,15 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, ref, useTemplateRef } from 'vue'
+  import { computed, ref } from 'vue'
   import { definePageMeta, useFetch, useRequestFetch, useRoute } from '#imports'
+  import EquipmentImageFilePicker from '~/components/equipment/EquipmentImageFilePicker.vue'
+  import EquipmentItemImage from '~/components/equipment/EquipmentItemImage.vue'
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PerdButton from '~/components/PerdButton.vue'
   import PerdCard from '~/components/PerdCard.vue'
   import PageContent from '~/components/layout/PageContent.vue'
-  import EquipmentItemImage from '~/components/equipment/EquipmentItemImage.vue'
 
   definePageMeta({
     layout: 'page',
@@ -146,7 +138,6 @@
 
   const route = useRoute()
   const requestFetch = useRequestFetch()
-  const fileInput = useTemplateRef('fileInput')
   const routeItemId = route.params.id
 
   const itemId = Array.isArray(routeItemId)
@@ -188,18 +179,6 @@
     () => selectedFiles.value.length === 0 || isUploading.value
   )
 
-  const selectedFilesText = computed(() => {
-    const fileCount = selectedFiles.value.length
-
-    if (fileCount === 0) {
-      return 'No files selected'
-    }
-
-    const fileLabel = fileCount === 1 ? 'file' : 'files'
-
-    return `${fileCount} ${fileLabel} selected`
-  })
-
   const imageViews = computed(() => imagesResponse.value.map((image, index) => {
     const position = index + 1
 
@@ -214,12 +193,6 @@
   }))
 
   function handleFileSelection() {
-    const files = fileInput.value?.files
-
-    selectedFiles.value = files === null || files === undefined
-      ? []
-      : [...files]
-
     mutationErrorMessage.value = null
   }
 
@@ -263,10 +236,6 @@
     } finally {
       selectedFiles.value = selectedFiles.value.slice(uploadedFileCount)
       isUploading.value = false
-
-      if (selectedFiles.value.length === 0 && fileInput.value !== null) {
-        fileInput.value.value = ''
-      }
     }
 
     await refreshImages()
@@ -362,40 +331,6 @@
     display: grid;
     gap: var(--spacing-24);
     container-type: inline-size;
-  }
-
-  .filePicker {
-    display: grid;
-    gap: var(--spacing-8);
-    padding: var(--spacing-16);
-    border: 1px dashed var(--color-border-strong);
-    border-radius: var(--border-radius-12);
-    background: var(--color-surface-secondary);
-    cursor: pointer;
-
-    &:focus-within {
-      border-color: var(--color-accent-primary);
-      box-shadow: var(--shadow-focus);
-    }
-  }
-
-  .filePickerLabel {
-    color: var(--color-text-primary);
-    font-weight: var(--font-weight-semibold);
-  }
-
-  .filePickerValue,
-  .helpText {
-    color: var(--color-text-tertiary);
-    font-size: var(--font-size-14);
-  }
-
-  .fileInput {
-    inline-size: 100%;
-  }
-
-  .helpText {
-    margin-block-start: var(--spacing-12);
   }
 
   .errorMessage {

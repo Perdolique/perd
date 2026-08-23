@@ -9,44 +9,87 @@
       ref="input"
       v-model="value"
       :class="$style.input"
+      :aria-describedby="describedBy"
+      :aria-invalid="ariaInvalid"
+      :autocomplete="autocomplete"
       :disabled="disabled"
       :maxlength="maxlength"
       :name="name"
       :placeholder="placeholder"
       :required="required"
-      type="text"
-      autocomplete="off"
+      :type="type"
     >
+
+    <span v-if="hasHint" :id="hintId" :class="$style.hint">
+      {{ hint }}
+    </span>
+
+    <span
+      v-if="hasError"
+      :id="errorId"
+      :class="$style.error"
+      role="alert"
+    >
+      {{ error }}
+    </span>
   </div>
 </template>
 
 <script lang="ts" setup>
-  import { useId, useTemplateRef } from 'vue'
+  import { computed, useId, useTemplateRef } from 'vue'
 
   interface Props {
+    autocomplete?: string;
     disabled?: boolean;
+    error?: string;
+    hint?: string;
     label: string;
     maxlength?: number;
     name: string;
     placeholder?: string;
     required?: boolean;
+    type?: 'text' | 'url';
   }
 
   const {
+    autocomplete = 'off',
     disabled,
+    error,
+    hint,
     label,
     maxlength,
     name,
     placeholder,
-    required
+    required,
+    type = 'text'
   } = defineProps<Props>()
 
   const value = defineModel<string>({
     required: true
   })
 
-  const inputId = useId()
+  const componentId = useId()
+  const inputId = `${componentId}-input`
+  const hintId = `${componentId}-hint`
+  const errorId = `${componentId}-error`
   const input = useTemplateRef('input')
+  const hasHint = computed(() => hint !== undefined)
+  const hasError = computed(() => error !== undefined)
+  const ariaInvalid = computed(() => hasError.value || undefined)
+
+  const describedBy = computed(() => {
+    const ids = []
+
+    if (hasHint.value) {
+      ids.push(hintId)
+    }
+
+    if (hasError.value) {
+      ids.push(errorId)
+    }
+
+    return ids.length === 0 ? undefined : ids.join(' ')
+  })
 
   function focus() {
     input.value?.focus()
@@ -88,5 +131,18 @@
       outline-offset: 2px;
       box-shadow: var(--shadow-focus);
     }
+
+    &[aria-invalid='true'] {
+      border-color: var(--color-danger-primary);
+    }
+  }
+
+  .hint {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-14);
+  }
+
+  .error {
+    color: var(--color-danger-primary);
   }
 </style>
