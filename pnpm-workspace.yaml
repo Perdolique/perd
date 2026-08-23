@@ -4,14 +4,22 @@ allowBuilds:
   sharp: false
   workerd: false
 minimumReleaseAgeExclude:
-  - worsier-darwin-arm64@2.10.0 || 2.11.0
-  - worsier-darwin-x64@2.10.0 || 2.11.0
-  - worsier-linux-arm64-gnu@2.10.0 || 2.11.0
-  - worsier-linux-arm64-musl@2.10.0 || 2.11.0
-  - worsier-linux-x64-gnu@2.10.0 || 2.11.0
-  - worsier-linux-x64-musl@2.10.0 || 2.11.0
-  - worsier-win32-arm64-msvc@2.10.0 || 2.11.0
-  - worsier-win32-x64-msvc@2.10.0 || 2.11.0
-  - worsier@2.10.0 || 2.11.0
+  - '@nuxt/devtools@3.4.2'
+  - eslint-config-greenpie@17.7.0
+  - oxlint@1.79.0
+  - vite@8.2.2
+  - vitest@4.1.11
+  - vue-tsc@3.3.11
+  - worsier-darwin-arm64@3.0.1
+  - worsier-darwin-x64@3.0.1
+  - worsier-linux-arm64-gnu@3.0.1
+  - worsier-linux-arm64-musl@3.0.1
+  - worsier-linux-x64-gnu@3.0.1
+  - worsier-linux-x64-musl@3.0.1
+  - worsier-win32-arm64-msvc@3.0.1
+  - worsier-win32-x64-msvc@3.0.1
+  - worsier@3.0.1
+  - '@nuxt/devtools-kit@3.4.2'
+  - '@nuxt/devtools-wizard@3.4.2'
 publicHoistPattern:
   - h3
