@@ -121,6 +121,7 @@
             </div>
           </PerdCard>
         </div>
+
       </section>
 
       <section v-if="hasPhotoSubmissions" :class="$style.section">
@@ -185,14 +186,37 @@
             </dl>
           </PerdCard>
         </div>
+
+        <p v-if="hasPhotoLoadMoreError" :class="$style.errorMessage" role="alert">
+          Could not load more photo submissions. Try again.
+        </p>
+
+        <PerdButton
+          v-if="hasMorePhotoSubmissions"
+          variant="secondary"
+          :loading="isLoadingMorePhotos"
+          @click="loadMorePhotoSubmissions"
+        >
+          Load more photo submissions
+        </PerdButton>
+
+        <p
+          v-if="isPhotoPaginationComplete"
+          ref="photoPaginationStatus"
+          :class="$style.paginationStatus"
+          role="status"
+          tabindex="-1"
+        >
+          All photo submissions are loaded.
+        </p>
       </section>
     </div>
   </PageContent>
 </template>
 
 <script lang="ts" setup>
-  import { computed } from 'vue'
-  import { definePageMeta, useFetch, useUserStore } from '#imports'
+  import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
+  import { definePageMeta, useFetch, useRequestFetch, useUserStore } from '#imports'
   import { NuxtTime } from '#components'
   import type { UserItemSubmission, UserItemSubmissionProperty } from '#server/api/user/item-submissions/index.get'
   import type { UserPhotoSubmission } from '#server/api/user/photo-submissions/index.get'
@@ -244,6 +268,13 @@
 
   const { user } = useUserStore()
   const isGuest = computed(() => user.value.isGuest)
+  const requestFetch = useRequestFetch()
+  const photoPaginationStatus = useTemplateRef('photoPaginationStatus')
+  const appendedPhotoSubmissions = ref<UserPhotoSubmission[]>([])
+  const nextPhotoPage = ref<number | null>(null)
+  const isLoadingMorePhotos = ref(false)
+  const hasPhotoLoadMoreError = ref(false)
+  const isPhotoPaginationComplete = ref(false)
 
   const {
     data: itemSubmissions,
@@ -266,12 +297,30 @@
     status: photoSubmissionsStatus
   } = useFetch('/api/user/photo-submissions', {
     default: () => {
-      return { items: [] }
+      return {
+        items: [],
+        nextPage: null
+      }
     },
 
     immediate: isGuest.value === false,
-    lazy: true
+    lazy: true,
+
+    query: {
+      page: 1
+    }
   })
+
+  watch(
+    () => photoSubmissions.value,
+    (response) => {
+      appendedPhotoSubmissions.value = []
+      nextPhotoPage.value = response.nextPage
+      hasPhotoLoadMoreError.value = false
+      isPhotoPaginationComplete.value = false
+    },
+    { immediate: true }
+  )
 
   const isLoading = computed(
     () => itemSubmissionsStatus.value === 'pending'
@@ -284,7 +333,22 @@
   )
 
   const hasItemSubmissions = computed(() => itemSubmissions.value.items.length > 0)
-  const hasPhotoSubmissions = computed(() => photoSubmissions.value.items.length > 0)
+
+  const allPhotoSubmissions = computed(() => {
+    const submissionsById = new Map<string, UserPhotoSubmission>()
+
+    for (const submission of [
+      ...photoSubmissions.value.items,
+      ...appendedPhotoSubmissions.value
+    ]) {
+      submissionsById.set(submission.id, submission)
+    }
+
+    return [...submissionsById.values()]
+  })
+
+  const hasPhotoSubmissions = computed(() => allPhotoSubmissions.value.length > 0)
+  const hasMorePhotoSubmissions = computed(() => nextPhotoPage.value !== null)
 
   const hasNoContributions = computed(
     () => hasItemSubmissions.value === false && hasPhotoSubmissions.value === false
@@ -360,7 +424,7 @@
   }
 
   const photoSubmissionCards = computed<PhotoSubmissionCard[]>(
-    () => photoSubmissions.value.items.map((photo) => {
+    () => allPhotoSubmissions.value.map((photo) => {
       return {
         createdAt: photo.createdAt,
         filename: photo.filename,
@@ -374,6 +438,39 @@
       }
     })
   )
+
+  async function loadMorePhotoSubmissions() {
+    if (isLoadingMorePhotos.value || nextPhotoPage.value === null) {
+      return
+    }
+
+    const page = nextPhotoPage.value
+
+    isLoadingMorePhotos.value = true
+    hasPhotoLoadMoreError.value = false
+
+    try {
+      const response = await requestFetch('/api/user/photo-submissions', {
+        query: { page },
+        retry: 0
+      })
+
+      appendedPhotoSubmissions.value.push(...response.items)
+      nextPhotoPage.value = response.nextPage
+
+      if (response.nextPage === null) {
+        isPhotoPaginationComplete.value = true
+
+        await nextTick()
+
+        photoPaginationStatus.value?.focus()
+      }
+    } catch {
+      hasPhotoLoadMoreError.value = true
+    } finally {
+      isLoadingMorePhotos.value = false
+    }
+  }
 
   async function retry() {
     await Promise.all([
@@ -392,6 +489,14 @@
   .rejection {
     display: grid;
     gap: var(--spacing-16);
+  }
+
+  .errorMessage {
+    color: var(--color-danger-primary);
+  }
+
+  .paginationStatus {
+    color: var(--color-text-tertiary);
   }
 
   .header {

@@ -56,14 +56,14 @@
       :class="$style.error"
       role="alert"
     >
-      {{ error }}
+      {{ displayedError }}
     </p>
   </div>
 </template>
 
 <script lang="ts" setup>
   import { useDropZone } from '@vueuse/core'
-  import { computed, useId, useTemplateRef, watch } from 'vue'
+  import { computed, ref, useId, useTemplateRef, watch } from 'vue'
 
   interface Props {
     disabled?: boolean;
@@ -83,6 +83,10 @@
     required
   } = defineProps<Props>()
 
+  const emit = defineEmits<{
+    'selection-change': [];
+  }>()
+
   const files = defineModel<File[]>({ required: true })
   const componentId = useId()
   const inputId = `${componentId}-input`
@@ -91,9 +95,12 @@
   const input = useTemplateRef('input')
   const dropZone = useTemplateRef('dropZone')
   const acceptedImageTypes = ['image/jpeg', 'image/png', 'image/webp'] as const
+  const acceptedImageTypeSet = new Set<string>(acceptedImageTypes)
   const acceptedImageTypesAttribute = acceptedImageTypes.join(',')
+  const validationError = ref<string | null>(null)
   const hasSelection = computed(() => files.value.length > 0)
-  const hasError = computed(() => error !== undefined)
+  const displayedError = computed(() => validationError.value ?? error)
+  const hasError = computed(() => displayedError.value !== undefined)
   const ariaInvalid = computed(() => hasError.value || undefined)
 
   const describedBy = computed(
@@ -110,20 +117,64 @@
     return `${fileCount} files selected`
   })
 
-  function setSelectedFiles(selectedFiles: File[] | null) {
+  function synchronizeInputFiles(selectedFiles: File[]) {
+    if (input.value === null) {
+      return
+    }
+
+    const dataTransfer = new globalThis.DataTransfer()
+
+    for (const file of selectedFiles) {
+      dataTransfer.items.add(file)
+    }
+
+    input.value.files = dataTransfer.files
+  }
+
+  function getSelectionError(selectedFiles: File[]): string | null {
+    if (multiple !== true && selectedFiles.length > 1) {
+      return 'Choose one image at a time.'
+    }
+
+    const hasUnsupportedImage = selectedFiles.some(
+      (file) => acceptedImageTypeSet.has(file.type) === false
+    )
+
+    return hasUnsupportedImage
+      ? 'Choose JPEG, PNG, or WebP images.'
+      : null
+  }
+
+  function setSelectedFiles(selectedFiles: File[] | null, synchronizeInput = true) {
     if (disabled) {
       return
     }
 
     const nextFiles = selectedFiles ?? []
+    const nextError = getSelectionError(nextFiles)
 
-    files.value = multiple ? nextFiles : nextFiles.slice(0, 1)
+    if (nextError !== null) {
+      validationError.value = nextError
+      synchronizeInputFiles(files.value)
+
+      return
+    }
+
+    validationError.value = null
+
+    const acceptedFiles = multiple ? nextFiles : nextFiles.slice(0, 1)
+
+    files.value = acceptedFiles
+
+    if (synchronizeInput) {
+      synchronizeInputFiles(acceptedFiles)
+    }
+
+    emit('selection-change')
   }
 
   const { isOverDropZone } = useDropZone(dropZone, {
-    dataTypes: acceptedImageTypes,
-    multiple: multiple === true,
-    onDrop: setSelectedFiles,
+    onDrop: (selectedFiles) => setSelectedFiles(selectedFiles),
     preventDefaultForUnhandled: true
   })
 
@@ -132,10 +183,11 @@
   )
 
   watch(
-    () => files.value.length,
-    (fileCount) => {
-      if (fileCount === 0 && input.value !== null) {
-        input.value.value = ''
+    () => files.value,
+    (nextFiles) => {
+      if (nextFiles.length === 0) {
+        validationError.value = null
+        synchronizeInputFiles(nextFiles)
       }
     }
   )
@@ -144,7 +196,7 @@
     const target = event.currentTarget
 
     if (target instanceof globalThis.HTMLInputElement) {
-      setSelectedFiles(target.files === null ? [] : [...target.files])
+      setSelectedFiles(target.files === null ? [] : [...target.files], false)
     }
   }
 

@@ -1,3 +1,4 @@
+/* oxlint-disable vitest/no-conditional-in-test -- Browser callbacks validate DOM types and mocked routes branch across stateful responses. */
 import type { BrowserContext, Locator, Page, Request } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
 import { createDeferred } from '../fixtures/gear-library-entry-list.fixtures.ts'
@@ -10,13 +11,6 @@ const submissionPath = `${itemPath}/submit-photo`
 const photoApiPath = `/api/equipment/items/${itemId}/photo-submissions`
 const sourceUrl = 'https://www.msrgear.com/products/pocketrocket'
 const photoFixturePath = 'tests/playwright/fixtures/photo-submission.webp'
-
-interface MultipartPart {
-  data: string;
-  filename?: string;
-  name: string;
-  type?: string;
-}
 
 const item = {
   brand: {
@@ -66,60 +60,31 @@ async function authenticateRegisteredUser(
   await expect.poll(() => new globalThis.URL(page.url()).pathname).toBe(target)
 }
 
-function isPhotoSubmissionRequest(request: Request) {
-  const requestUrl = new globalThis.URL(request.url())
-
-  return requestUrl.pathname === photoApiPath && request.method() === 'POST'
-}
-
-function parseMultipartRequest(request: Request): MultipartPart[] {
+async function parseMultipartRequest(request: Request): Promise<FormData> {
   const contentType = request.headers()['content-type']
-  const body = request.postData()
+  const body = request.postDataBuffer()
 
   if (body === null) {
     throw new Error('Expected a multipart request body')
   }
 
-  const boundaryMatch = /boundary=(?<boundary>[^;]+)/u.exec(contentType)
-  const boundary = boundaryMatch?.groups?.boundary
-
-  if (boundary === undefined) {
-    throw new Error('Expected a multipart boundary')
-  }
-
-  const parts: MultipartPart[] = []
-
-  for (const rawPart of body.split(`--${boundary}`)) {
-    const normalizedPart = rawPart.replaceAll(/^\r\n|\r\n$/gu, '')
-
-    if (normalizedPart !== '' && normalizedPart !== '--') {
-      const [headers = '', ...dataParts] = normalizedPart.split('\r\n\r\n')
-      const name = /name="(?<name>[^"]+)"/u.exec(headers)?.groups?.name
-
-      if (name === undefined) {
-        throw new Error('Expected a multipart field name')
-      }
-
-      parts.push({
-        data: dataParts.join('\r\n\r\n'),
-        filename: /filename="(?<filename>[^"]+)"/u.exec(headers)?.groups?.filename,
-        name,
-        type: /Content-Type:\s*(?<type>[^\r\n]+)/iu.exec(headers)?.groups?.type
-      })
+  const response = new globalThis.Response(new Uint8Array(body), {
+    headers: {
+      'content-type': contentType
     }
-  }
+  })
 
-  return parts
+  return response.formData()
 }
 
-function getMultipartPart(parts: MultipartPart[], name: string): MultipartPart {
-  const part = parts.find((candidate) => candidate.name === name)
+function getMultipartFile(formData: FormData, name: string): File {
+  const value = formData.get(name)
 
-  if (part === undefined) {
-    throw new Error(`Expected multipart field ${name}`)
+  if ((value instanceof globalThis.File) === false) {
+    throw new TypeError(`Expected multipart file ${name}`)
   }
 
-  return part
+  return value
 }
 
 async function setOversizedPhoto(page: Page): Promise<void> {
@@ -165,6 +130,35 @@ async function dropReplacementPhoto(page: Page): Promise<void> {
       dataTransfer
     }))
   })
+}
+
+async function dropTestFiles(
+  page: Page,
+  files: { name: string; type: string; }[]
+): Promise<void> {
+  const photoInput = page.getByLabel('Photo', { exact: true })
+
+  await photoInput.locator('..').evaluate((dropZone, fileOptions) => {
+    const dataTransfer = new globalThis.DataTransfer()
+
+    for (const fileOption of fileOptions) {
+      const file = new globalThis.File(['test-file'], fileOption.name, {
+        type: fileOption.type
+      })
+
+      dataTransfer.items.add(file)
+    }
+
+    dropZone.dispatchEvent(new globalThis.DragEvent('dragenter', {
+      bubbles: true,
+      dataTransfer
+    }))
+
+    dropZone.dispatchEvent(new globalThis.DragEvent('drop', {
+      bubbles: true,
+      dataTransfer
+    }))
+  }, files)
 }
 
 async function getRequiredBoundingBox(locator: Locator) {
@@ -248,7 +242,25 @@ test.describe('Photo submissions', () => {
       name: 'Preview of photo-submission.webp'
     })).toHaveCount(0)
     await expect(page.getByText('replacement.webp', { exact: true })).toBeVisible()
-    await expect(page.getByText('26.2 KB', { exact: true })).toBeVisible()
+    await expect(page.getByText('26.8 KB', { exact: true })).toBeVisible()
+    await expect(rightsCheckbox).not.toBeChecked()
+    await expect(page.getByRole('button', { name: 'Submit photo' })).toBeDisabled()
+
+    const nativeDropState = await photoInput.evaluate((element) => {
+      if ((element instanceof globalThis.HTMLInputElement) === false) {
+        throw new TypeError('Expected a photo input')
+      }
+
+      return {
+        filename: element.files?.[0]?.name,
+        isValid: element.checkValidity()
+      }
+    })
+
+    expect(nativeDropState).toStrictEqual({
+      filename: 'replacement.webp',
+      isValid: true
+    })
 
     await page.getByRole('button', { name: 'Remove photo' }).click()
 
@@ -262,14 +274,65 @@ test.describe('Photo submissions', () => {
     await expect(page.getByLabel('Manufacturer source')).toBeVisible()
   })
 
+  test('should explain invalid drops and preserve the previous native selection', async ({
+    context,
+    page
+  }) => {
+    await mockItem(context)
+    await authenticateRegisteredUser(context, page, submissionPath)
+
+    const photoInput = page.getByLabel('Photo', { exact: true })
+
+    await photoInput.setInputFiles(photoFixturePath)
+    await dropTestFiles(page, [{
+      name: 'notes.txt',
+      type: 'text/plain'
+    }])
+
+    await expect(page.getByRole('alert')).toHaveText('Choose JPEG, PNG, or WebP images.')
+    await expect(page.getByText('photo-submission.webp', { exact: true })).toBeVisible()
+
+    await dropTestFiles(page, [{
+      name: 'first.webp',
+      type: 'image/webp'
+    }, {
+      name: 'second.webp',
+      type: 'image/webp'
+    }])
+
+    await expect(page.getByRole('alert')).toHaveText('Choose one image at a time.')
+
+    const preservedFilename = await photoInput.evaluate((element) => {
+      if ((element instanceof globalThis.HTMLInputElement) === false) {
+        throw new TypeError('Expected a photo input')
+      }
+
+      return element.files?.[0]?.name
+    })
+
+    expect(preservedFilename).toBe('photo-submission.webp')
+  })
+
   test('should upload one manufacturer photo with exact private submission metadata', async ({
     context,
     page
   }) => {
     const responseGate = createDeferred()
 
+    const submissionRequestGate = createDeferred<{
+      formData: FormData;
+      request: Request;
+    }>()
+
     await mockItem(context)
     await context.route((url) => url.pathname === photoApiPath, async (route) => {
+      const request = route.request()
+
+      submissionRequestGate.resolve({
+        formData: await parseMultipartRequest(request),
+        request
+      })
+
       await responseGate.promise
 
       await route.fulfill({
@@ -298,6 +361,7 @@ test.describe('Photo submissions', () => {
     await expect(sourceInput).toHaveAttribute('required', '')
     await expect(sourceInput).toHaveAttribute('type', 'url')
     await expect(sourceInput).toHaveAttribute('autocomplete', 'url')
+    await expect(sourceInput).toHaveAttribute('maxlength', '2048')
     await sourceInput.fill(sourceUrl)
 
     const photoInput = page.getByLabel('Photo', { exact: true })
@@ -312,23 +376,44 @@ test.describe('Photo submissions', () => {
 
     await rightsCheckbox.check()
 
-    const submissionRequestPromise = page.waitForRequest(isPhotoSubmissionRequest)
+    const selectedPhotoSignature = await photoInput.evaluate(async (element) => {
+      if ((element instanceof globalThis.HTMLInputElement) === false) {
+        throw new TypeError('Expected a photo input')
+      }
+
+      const selectedPhoto = element.files?.[0]
+
+      if (selectedPhoto === undefined) {
+        throw new TypeError('Expected a selected photo')
+      }
+
+      const selectedPhotoBytes = new globalThis.Uint8Array(await selectedPhoto.arrayBuffer())
+
+      return new globalThis.TextDecoder().decode(selectedPhotoBytes.slice(0, 4))
+    })
+
+    expect(selectedPhotoSignature).toBe('RIFF')
 
     await page.getByRole('button', { name: 'Submit photo' }).click()
 
-    const submissionRequest = await submissionRequestPromise
+    const {
+      formData: submissionFormData,
+      request: submissionRequest
+    } = await submissionRequestGate.promise
+
     const requestUrl = new globalThis.URL(submissionRequest.url())
-    const submissionParts = parseMultipartRequest(submissionRequest)
-    const submittedPhoto = getMultipartPart(submissionParts, 'photo')
+    const submittedPhoto = getMultipartFile(submissionFormData, 'photo')
 
     expect(Object.fromEntries(requestUrl.searchParams)).toStrictEqual({})
     expect(submissionRequest.headers()['content-type']).toMatch(/^multipart\/form-data; boundary=/u)
-    expect(getMultipartPart(submissionParts, 'rightsConfirmed').data).toBe('true')
-    expect(getMultipartPart(submissionParts, 'sourceType').data).toBe('manufacturer')
-    expect(getMultipartPart(submissionParts, 'sourceUrl').data).toBe(sourceUrl)
-    expect(submittedPhoto.filename).toBe('photo-submission.webp')
+    expect(submissionRequest.headers()['idempotency-key']).toMatch(
+      /^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/u
+    )
+    expect(submissionFormData.get('rightsConfirmed')).toBe('true')
+    expect(submissionFormData.get('sourceType')).toBe('manufacturer')
+    expect(submissionFormData.get('sourceUrl')).toBe(sourceUrl)
+    expect(submittedPhoto.name).toBe('photo-submission.webp')
     expect(submittedPhoto.type).toBe('image/webp')
-    expect(submittedPhoto.data).toMatch(/^RIFF/u)
 
     const submitButton = page.getByRole('button', { name: 'Submit photo' })
 
@@ -350,6 +435,95 @@ test.describe('Photo submissions', () => {
     await expect(page.getByRole('link', { name: 'View My contributions' })).toHaveAttribute(
       'href',
       '/account/submissions'
+    )
+  })
+
+  test('should reuse one idempotency key for unchanged retries and replace it after a form change', async ({
+    context,
+    page
+  }) => {
+    const idempotencyKeys: string[] = []
+
+    await mockItem(context)
+    await context.route((url) => url.pathname === photoApiPath, async (route) => {
+      idempotencyKeys.push(route.request().headers()['idempotency-key'] ?? '')
+
+      await route.fulfill({
+        status: 500,
+        json: { statusMessage: 'Temporary failure' }
+      })
+    })
+    await authenticateRegisteredUser(context, page, submissionPath)
+
+    const photoInput = page.getByLabel('Photo', { exact: true })
+
+    const rightsCheckbox = page.getByLabel(
+      'I confirm that this photo can be published in the catalog.'
+    )
+
+    const submitButton = page.getByRole('button', { name: 'Submit photo' })
+
+    await photoInput.setInputFiles(photoFixturePath)
+    await rightsCheckbox.check()
+    await submitButton.click()
+    await expect(page.getByRole('alert')).toHaveText('Could not submit photo. Try again.')
+    await expect(submitButton).toBeEnabled()
+    await submitButton.click()
+    await expect.poll(() => idempotencyKeys).toHaveLength(2)
+    await page.getByRole('radio', { name: 'Official manufacturer photo' }).check()
+    await page.getByLabel('Manufacturer source').fill(sourceUrl)
+    await submitButton.click()
+    await expect.poll(() => idempotencyKeys).toHaveLength(3)
+
+    expect(idempotencyKeys[0]).toMatch(
+      /^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/u
+    )
+    expect(idempotencyKeys[1]).toBe(idempotencyKeys[0])
+    expect(idempotencyKeys[2]).not.toBe(idempotencyKeys[0])
+  })
+
+  test('should keep item load failures out of the form and allow a retry', async ({
+    context,
+    page
+  }) => {
+    let shouldSucceed = false
+
+    await context.route((url) => url.pathname === `/api/equipment/items/${itemId}`, async (route) => {
+      if (shouldSucceed) {
+        await route.fulfill({ json: item })
+
+        return
+      }
+
+      await route.fulfill({
+        status: 500,
+        json: { statusMessage: 'Temporary item failure' }
+      })
+    })
+    await authenticateRegisteredUser(context, page, submissionPath)
+    await expect(page.getByRole('heading', { name: 'Could not load item.' })).toBeVisible()
+    await expect(page.locator('form')).toHaveCount(0)
+    shouldSucceed = true
+    await page.getByRole('button', { name: 'Retry' }).click()
+    await expect(page.getByRole('heading', { name: `Photo for ${item.name}` })).toBeVisible()
+    await expect(page.locator('form')).toHaveCount(1)
+  })
+
+  test('should show an unavailable item without offering a retry', async ({ context, page }) => {
+    await context.route((url) => url.pathname === `/api/equipment/items/${itemId}`, async (route) => {
+      await route.fulfill({
+        status: 404,
+        json: { statusMessage: 'Equipment item not found' }
+      })
+    })
+    await authenticateRegisteredUser(context, page, submissionPath)
+
+    await expect(page.getByRole('heading', { name: 'Item unavailable.' })).toBeVisible()
+    await expect(page.locator('form')).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Retry' })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: 'Back to gear library' }).first()).toHaveAttribute(
+      'href',
+      '/gear-library'
     )
   })
 
@@ -453,6 +627,18 @@ test.describe('Photo submissions', () => {
     {
       message: 'Choose a valid JPEG, PNG, or WebP image.',
       status: 415
+    },
+    {
+      message: 'Three photos are already awaiting review for this item.',
+      status: 409
+    },
+    {
+      message: 'Too many photo submission attempts. Try again in a minute.',
+      status: 429
+    },
+    {
+      message: 'Photo submission is temporarily unavailable. Try again.',
+      status: 503
     }
   ] as const) {
     test(`should show the safe ${status} upload error`, async ({ context, page }) => {
@@ -483,6 +669,8 @@ test.describe('Photo submissions', () => {
     await context.route((url) => url.pathname === '/api/user/photo-submissions', async (route) => {
       await route.fulfill({
         json: {
+          nextPage: null,
+
           items: [{
             createdAt: '2026-08-10T12:00:00.000Z',
             filename: 'PocketRocket official.webp',

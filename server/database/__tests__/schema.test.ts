@@ -168,6 +168,20 @@ describe('equipment catalog research schema', () => {
       (column) => column.name === 'sourceUrl'
     )
 
+    const idempotencyKeyColumn = tableConfig.columns.find(
+      (column) => column.name === 'idempotencyKey'
+    )
+
+    const idempotencyConstraint = tableConfig.uniqueConstraints.find(
+      (constraint) => constraint.getName()
+        === 'equipment_item_photo_submissions_createdBy_idempotencyKey_unique'
+    )
+
+    const historyIndex = getRequiredIndex(
+      tableConfig,
+      'equipment_item_photo_submissions_creator_history_index'
+    )
+
     const statusColumn = tableConfig.columns.find(
       (column) => column.name === 'status'
     )
@@ -183,6 +197,7 @@ describe('equipment catalog research schema', () => {
     expect(columnNames).toStrictEqual([
       'id',
       'itemId',
+      'idempotencyKey',
       'cloudflareImageId',
       'filename',
       'sourceType',
@@ -194,8 +209,20 @@ describe('equipment catalog research schema', () => {
       'updatedAt'
     ])
     expect(tableConfig.columns[0]?.getSQLType()).toBe('uuid')
+    expect(idempotencyKeyColumn?.notNull).toBe(true)
+    expect(idempotencyKeyColumn?.getSQLType()).toBe('uuid')
+    expect(idempotencyConstraint?.columns.map((column) => column.name)).toStrictEqual([
+      'createdBy',
+      'idempotencyKey'
+    ])
+    expect(getIndexColumnNames(historyIndex)).toStrictEqual([
+      'createdBy',
+      'createdAt',
+      'id'
+    ])
     expect(cloudflareImageIdColumn?.isUnique).toBe(true)
     expect(sourceUrlColumn?.notNull).toBe(false)
+    expect(sourceUrlColumn?.getSQLType()).toBe('varchar(2048)')
     expect(statusColumn?.default).toBe('pending')
     expect(itemForeignKey?.onDelete).toBe('restrict')
     expect(creatorForeignKey?.onDelete).toBe('set null')

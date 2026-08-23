@@ -1,10 +1,28 @@
+import type * as h3 from 'h3'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import listUserPhotoSubmissionsHandler from '#server/api/user/photo-submissions/index.get'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
-const { validateRegisteredUserMock } = vi.hoisted(() => {
+const {
+  getValidatedQueryMock,
+  validateRegisteredUserMock
+} = vi.hoisted(() => {
   return {
+    getValidatedQueryMock: vi.fn<typeof h3.getValidatedQuery>(),
     validateRegisteredUserMock: vi.fn<(event: unknown) => Promise<string>>()
+  }
+})
+
+// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial h3 mock.
+vi.mock(import('h3'), async () => {
+  const actual = await vi.importActual<typeof h3>('h3')
+
+  return {
+    ...actual,
+
+    async getValidatedQuery(...args: Parameters<typeof h3.getValidatedQuery>) {
+      return getValidatedQueryMock(...args)
+    }
   }
 })
 
@@ -12,43 +30,37 @@ vi.mock(import('#server/utils/user'), () => {
   return { validateRegisteredUser: validateRegisteredUserMock }
 })
 
+function createPhotoSubmission(index: number) {
+  return {
+    cloudflareImageId: `must-not-leak-${index}`,
+    createdAt: new Date(`2026-08-${String(index + 1).padStart(2, '0')}T12:00:00Z`),
+    filename: `Photo ${index}.webp`,
+    id: `submission-${index}`,
+
+    item: {
+      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
+      name: 'PocketRocket Deluxe'
+    },
+
+    sourceType: index % 2 === 0 ? 'manufacturer' : 'own',
+    sourceUrl: index % 2 === 0 ? 'https://www.msrgear.com/products/pocketrocket' : null,
+    status: 'pending',
+    updatedAt: new Date(`2026-08-${String(index + 1).padStart(2, '0')}T12:00:00Z`)
+  }
+}
+
 describe('get /api/user/photo-submissions', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    getValidatedQueryMock.mockResolvedValue({ page: 2 })
     validateRegisteredUserMock.mockResolvedValue('user-1')
   })
 
-  it('should list only the owner submissions newest first without exposing the image ID', async () => {
-    const findManyMock = vi.fn(() => [{
-      cloudflareImageId: 'must-not-leak',
-      createdAt: new Date('2026-08-10T12:00:00Z'),
-      filename: 'PocketRocket official.webp',
-      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
-
-      item: {
-        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
-        name: 'PocketRocket Deluxe'
-      },
-
-      sourceType: 'manufacturer',
-      sourceUrl: 'https://www.msrgear.com/products/pocketrocket',
-      status: 'pending',
-      updatedAt: new Date('2026-08-10T12:00:00Z')
-    }, {
-      createdAt: new Date('2026-08-09T12:00:00Z'),
-      filename: 'PocketRocket camp.webp',
-      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
-
-      item: {
-        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
-        name: 'PocketRocket Deluxe'
-      },
-
-      sourceType: 'own',
-      sourceUrl: null,
-      status: 'pending',
-      updatedAt: new Date('2026-08-09T12:00:00Z')
-    }])
+  it('should return one private owner page and signal the next page', async () => {
+    const findManyMock = vi.fn(() => Array.from(
+      { length: 21 },
+      (_value, index) => createPhotoSubmission(index)
+    ))
 
     const event = createTestEvent({
       query: {
@@ -59,6 +71,7 @@ describe('get /api/user/photo-submissions', () => {
     const result = await listUserPhotoSubmissionsHandler(event)
 
     expect(validateRegisteredUserMock).toHaveBeenCalledWith(event)
+    expect(getValidatedQueryMock).toHaveBeenCalledWith(event, expect.any(Function))
     expect(findManyMock).toHaveBeenCalledWith({
       columns: {
         createdAt: true,
@@ -83,6 +96,9 @@ describe('get /api/user/photo-submissions', () => {
         id: 'desc'
       },
 
+      limit: 21,
+      offset: 20,
+
       with: {
         item: {
           columns: {
@@ -92,41 +108,27 @@ describe('get /api/user/photo-submissions', () => {
         }
       }
     })
-    expect(result).toStrictEqual({
-      items: [{
-        createdAt: new Date('2026-08-10T12:00:00Z'),
-        filename: 'PocketRocket official.webp',
-        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
-
-        item: {
-          id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
-          name: 'PocketRocket Deluxe'
-        },
-
-        sourceType: 'manufacturer',
-        sourceUrl: 'https://www.msrgear.com/products/pocketrocket',
-        status: 'pending',
-        updatedAt: new Date('2026-08-10T12:00:00Z')
-      }, {
-        createdAt: new Date('2026-08-09T12:00:00Z'),
-        filename: 'PocketRocket camp.webp',
-        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
-
-        item: {
-          id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
-          name: 'PocketRocket Deluxe'
-        },
-
-        sourceType: 'own',
-        sourceUrl: null,
-        status: 'pending',
-        updatedAt: new Date('2026-08-09T12:00:00Z')
-      }]
-    })
+    expect(result.items).toHaveLength(20)
+    expect(result.nextPage).toBe(3)
     expect(JSON.stringify(result)).not.toContain('cloudflareImageId')
   })
 
-  it('should stop before querying when registered user validation fails', async () => {
+  it('should return a null next page for the final page', async () => {
+    const event = createTestEvent({
+      query: {
+        equipmentItemPhotoSubmissions: {
+          findMany: vi.fn(() => [createPhotoSubmission(0)])
+        }
+      }
+    })
+
+    const result = await listUserPhotoSubmissionsHandler(event)
+
+    expect(result.items).toHaveLength(1)
+    expect(result.nextPage).toBeNull()
+  })
+
+  it('should stop before query validation and database access when auth fails', async () => {
     const authError = new Error('registered account required')
     const findManyMock = vi.fn()
 
@@ -139,6 +141,7 @@ describe('get /api/user/photo-submissions', () => {
     })
 
     await expect(listUserPhotoSubmissionsHandler(event)).rejects.toBe(authError)
+    expect(getValidatedQueryMock).not.toHaveBeenCalled()
     expect(findManyMock).not.toHaveBeenCalled()
   })
 })

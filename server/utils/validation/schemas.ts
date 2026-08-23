@@ -37,6 +37,11 @@ const canonicalUuidV7Schema = v.pipe(
   v.regex(/^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/u)
 )
 
+const idempotencyKeySchema = v.pipe(
+  v.string(),
+  v.uuid()
+)
+
 const referenceDataSlugSchema = v.pipe(
   trimmedNonEmptyStringSchema,
   v.regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/u)
@@ -332,8 +337,12 @@ const itemImageUploadQuerySchema = v.object({
 
 const photoSubmissionHttpsUrlSchema = v.pipe(
   trimmedNonEmptyStringSchema,
+  v.maxLength(limits.maxEquipmentItemPhotoSubmissionSourceUrlLength),
   v.url(),
-  v.check((sourceUrl) => sourceUrl.startsWith('https://'), 'sourceUrl must use HTTPS')
+  v.check(
+    (sourceUrl) => new globalThis.URL(sourceUrl).protocol === 'https:',
+    'sourceUrl must use HTTPS'
+  )
 )
 
 const photoSubmissionCreateBodySchema = v.pipe(
@@ -355,6 +364,10 @@ const photoSubmissionCreateBodySchema = v.pipe(
     return input.sourceUrl === undefined
   }, 'sourceUrl is required only for manufacturer photos')
 )
+
+const photoSubmissionListQuerySchema = v.object({
+  page: pageQuerySchema
+})
 
 const minimumEquipmentComparisonItemCount = 2
 const maximumEquipmentComparisonItemCount = 4
@@ -832,6 +845,14 @@ function validatePhotoSubmissionCreateBody(body: unknown) {
   return v.parse(photoSubmissionCreateBodySchema, body)
 }
 
+function validatePhotoSubmissionIdempotencyKey(value: unknown) {
+  return v.parse(idempotencyKeySchema, value)
+}
+
+function validatePhotoSubmissionListQuery(query: unknown) {
+  return v.parse(photoSubmissionListQuerySchema, query)
+}
+
 function validateEquipmentComparisonQuery(query: unknown) {
   return v.parse(equipmentComparisonQuerySchema, query)
 }
@@ -912,6 +933,7 @@ export {
   itemImageParamsSchema,
   itemImageUploadQuerySchema,
   photoSubmissionCreateBodySchema,
+  photoSubmissionListQuerySchema,
   equipmentComparisonQuerySchema,
   itemsListQuerySchema,
   limitQuerySchema,
@@ -954,6 +976,8 @@ export {
   validateItemImageParams,
   validateItemImageUploadQuery,
   validatePhotoSubmissionCreateBody,
+  validatePhotoSubmissionIdempotencyKey,
+  validatePhotoSubmissionListQuery,
   validateEquipmentComparisonQuery,
   validateItemsListQuery,
   validatePackingListAvailableGearQuery,

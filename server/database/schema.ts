@@ -348,6 +348,10 @@ const equipmentItemPhotoSubmissions = pgTable('equipment_item_photo_submissions'
       onUpdate: 'cascade'
     }),
 
+  idempotencyKey:
+    uuid()
+    .notNull(),
+
   cloudflareImageId:
     text()
     .notNull()
@@ -362,7 +366,7 @@ const equipmentItemPhotoSubmissions = pgTable('equipment_item_photo_submissions'
     .notNull(),
 
   sourceUrl:
-    text(),
+    varchar({ length: limits.maxEquipmentItemPhotoSubmissionSourceUrlLength }),
 
   rightsConfirmed:
     boolean()
@@ -395,6 +399,10 @@ const equipmentItemPhotoSubmissions = pgTable('equipment_item_photo_submissions'
     .defaultNow()
     .$onUpdate(() => sql`now()`)
 }, (table) => [
+  unique('equipment_item_photo_submissions_createdBy_idempotencyKey_unique')
+    .on(table.createdBy, table.idempotencyKey),
+  index('equipment_item_photo_submissions_creator_history_index')
+    .on(table.createdBy, table.createdAt.desc(), table.id.desc()),
   check(
     equipmentItemPhotoSubmissionSourceConstraintName,
     sql`(${table.sourceType} = 'own' AND ${table.sourceUrl} IS NULL) OR (${table.sourceType} = 'manufacturer' AND NULLIF(BTRIM(${table.sourceUrl}), '') IS NOT NULL)`

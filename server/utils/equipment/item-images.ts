@@ -42,14 +42,6 @@ interface DeleteUnattachedHostedEquipmentImageOptions {
   cloudflareImageId: string;
 }
 
-interface InspectHostedEquipmentImageOptions {
-  binding: Env['IMAGES'];
-  body: EquipmentItemImageBody;
-  infoStream: ReadableStream<Uint8Array>;
-  metadata: Record<string, unknown>;
-  uploadStream: ReadableStream<Uint8Array>;
-}
-
 function validateImageMediaType(mediaType: string): string {
   const normalizedMediaType = mediaType.trim().toLowerCase()
 
@@ -133,53 +125,23 @@ function isInvalidImageError(error: unknown): boolean {
   return Reflect.get(error, 'code') === invalidImageErrorCode
 }
 
-async function cancelUnusedStream(stream: ReadableStream<Uint8Array>): Promise<void> {
-  try {
-    await stream.cancel()
-  } catch {
-    // A binding may already have consumed or locked this branch.
-  }
+function getPromiseRejectionReason(result: PromiseSettledResult<unknown>): unknown {
+  return result.status === 'rejected' ? result.reason as unknown : undefined
 }
 
-async function inspectHostedEquipmentImage(
-  options: InspectHostedEquipmentImageOptions
-): Promise<ImageInfoResponse> {
-  const {
-    binding,
-    body,
-    infoStream,
-    metadata,
-    uploadStream
-  } = options
+async function deleteUnattachedHostedEquipmentImage(
+  options: DeleteUnattachedHostedEquipmentImageOptions
+): Promise<void> {
+  const { binding, cloudflareImageId } = options
 
   try {
-    return await binding.info(infoStream)
+    const imageHandle = binding.hosted.image(cloudflareImageId)
+
+    await imageHandle.delete()
   } catch (error) {
-    void cancelUnusedStream(infoStream)
-    void cancelUnusedStream(uploadStream)
-
-    if (body.isLimitExceeded()) {
-      throw createError({
-        status: 413,
-        statusMessage: 'Image body is too large'
-      })
-    }
-
-    if (isInvalidImageError(error)) {
-      throw createError({
-        status: 415,
-        statusMessage: 'Unsupported image format'
-      })
-    }
-
-    console.error('Failed to inspect Cloudflare image', {
-      error,
-      metadata
-    })
-
-    throw createError({
-      status: 502,
-      statusMessage: 'Image inspection failed'
+    console.error('Failed to delete unattached Cloudflare image', {
+      cloudflareImageId,
+      error
     })
   }
 }
@@ -199,19 +161,79 @@ async function uploadHostedEquipmentImage(
   const [infoStream, uploadStream] = body.stream.tee()
 
   try {
-    const imageInfo = await inspectHostedEquipmentImage({
-      binding,
-      body,
-      infoStream,
+    const imageInfoPromise = binding.info(infoStream)
+
+    const imageUploadPromise = binding.hosted.upload(uploadStream, {
+      creator,
+      filename,
       metadata,
-      uploadStream
+      requireSignedURLs
     })
 
+    const [imageInfoResult, imageUploadResult] = await Promise.allSettled([
+      imageInfoPromise,
+      imageUploadPromise
+    ])
+
+    const uploadedImageId = imageUploadResult.status === 'fulfilled'
+      ? imageUploadResult.value.id
+      : null
+
+    const imageInfoError = getPromiseRejectionReason(imageInfoResult)
+    const imageUploadError = getPromiseRejectionReason(imageUploadResult)
+
+    if (body.isLimitExceeded()) {
+      if (uploadedImageId !== null) {
+        await deleteUnattachedHostedEquipmentImage({
+          binding,
+          cloudflareImageId: uploadedImageId
+        })
+      }
+
+      throw createError({
+        status: 413,
+        statusMessage: 'Image body is too large'
+      })
+    }
+
+    if (imageInfoResult.status === 'rejected') {
+      if (uploadedImageId !== null) {
+        await deleteUnattachedHostedEquipmentImage({
+          binding,
+          cloudflareImageId: uploadedImageId
+        })
+      }
+
+      if (isInvalidImageError(imageInfoError)) {
+        throw createError({
+          status: 415,
+          statusMessage: 'Unsupported image format'
+        })
+      }
+
+      console.error('Failed to inspect Cloudflare image', {
+        error: imageInfoError,
+        metadata,
+        uploadError: imageUploadError
+      })
+
+      throw createError({
+        status: 502,
+        statusMessage: 'Image inspection failed'
+      })
+    }
+
+    const imageInfo = imageInfoResult.value
     const isSupportedFormat = supportedImageMediaTypes.has(imageInfo.format)
     const doesMediaTypeMatch = imageInfo.format === body.mediaType
 
     if (isSupportedFormat === false || doesMediaTypeMatch === false) {
-      void cancelUnusedStream(uploadStream)
+      if (uploadedImageId !== null) {
+        await deleteUnattachedHostedEquipmentImage({
+          binding,
+          cloudflareImageId: uploadedImageId
+        })
+      }
 
       throw createError({
         status: 415,
@@ -219,25 +241,9 @@ async function uploadHostedEquipmentImage(
       })
     }
 
-    try {
-      const image = await binding.hosted.upload(uploadStream, {
-        creator,
-        filename,
-        metadata,
-        requireSignedURLs
-      })
-
-      return image.id
-    } catch (error) {
-      if (body.isLimitExceeded()) {
-        throw createError({
-          status: 413,
-          statusMessage: 'Image body is too large'
-        })
-      }
-
+    if (imageUploadResult.status === 'rejected') {
       console.error('Failed to upload Cloudflare image', {
-        error,
+        error: imageUploadError,
         metadata
       })
 
@@ -246,25 +252,10 @@ async function uploadHostedEquipmentImage(
         statusMessage: 'Image upload failed'
       })
     }
+
+    return imageUploadResult.value.id
   } finally {
     await body.close()
-  }
-}
-
-async function deleteUnattachedHostedEquipmentImage(
-  options: DeleteUnattachedHostedEquipmentImageOptions
-): Promise<void> {
-  const { binding, cloudflareImageId } = options
-
-  try {
-    const imageHandle = binding.hosted.image(cloudflareImageId)
-
-    await imageHandle.delete()
-  } catch (error) {
-    console.error('Failed to delete unattached Cloudflare image', {
-      cloudflareImageId,
-      error
-    })
   }
 }
 

@@ -43,9 +43,9 @@ interface CatalogRequestTracker {
   myGear: Request[];
 }
 
-interface Deferred {
-  promise: Promise<void>;
-  resolve: () => void;
+interface Deferred<TValue = void> {
+  promise: Promise<TValue>;
+  resolve: (value: TValue) => void;
 }
 
 interface MutableResponseState {
@@ -532,11 +532,11 @@ function throwUnresolvedDeferred(): never {
   throw new Error('Deferred resolver was not initialized')
 }
 
-function createDeferred(): Deferred {
-  let resolveDeferred: () => void = throwUnresolvedDeferred
+function createDeferred<TValue = void>(): Deferred<TValue> {
+  let resolveDeferred: (value: TValue) => void = throwUnresolvedDeferred
 
   // oxlint-disable-next-line promise/avoid-new -- The test needs a manually released network response.
-  const promise = new Promise<void>((resolve) => {
+  const promise = new Promise<TValue>((resolve) => {
     resolveDeferred = resolve
   })
 

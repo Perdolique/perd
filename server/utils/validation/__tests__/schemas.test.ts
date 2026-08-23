@@ -16,7 +16,6 @@ import {
   validateGroupMutationBody,
   validateItemDetailParams,
   validateItemImageUploadQuery,
-  validatePhotoSubmissionCreateBody,
   validateItemSubmissionCreateBody,
   validateItemSubmissionListQuery,
   validateItemSubmissionParams,
@@ -29,6 +28,9 @@ import {
   validatePackingListEntryUpdateBody,
   validatePackingListIdParams,
   validatePackingListMutationBody,
+  validatePhotoSubmissionCreateBody,
+  validatePhotoSubmissionIdempotencyKey,
+  validatePhotoSubmissionListQuery,
   validatePropertyEnumOptionMutationBody,
   validatePropertyEnumOptionParams,
   validateRedirectTargetQuery,
@@ -57,6 +59,12 @@ describe('validation schemas', () => {
   const tooLongGroupName = 'G'.repeat(limits.maxEquipmentGroupNameLength + 1)
   const tooLongGroupSlug = 'g'.repeat(limits.maxEquipmentGroupSlugLength + 1)
   const tooLongImageFilename = 'i'.repeat(limits.maxEquipmentItemImageFilenameLength + 1)
+  const manufacturerUrlPrefix = 'https://example.com/'
+
+  const maxManufacturerUrl = manufacturerUrlPrefix + 'a'.repeat(
+    limits.maxEquipmentItemPhotoSubmissionSourceUrlLength - manufacturerUrlPrefix.length
+  )
+
   const maxPackingListName = 'P'.repeat(limits.maxPackingListNameLength)
   const tooLongPackingListName = 'P'.repeat(limits.maxPackingListNameLength + 1)
   const maxPackingListEntryCustomName = 'E'.repeat(limits.maxPackingListEntryCustomNameLength)
@@ -1471,6 +1479,40 @@ describe('validation schemas', () => {
       sourceType: 'manufacturer',
       sourceUrl: 'https://www.msrgear.com/products/pocketrocket'
     })
+  })
+
+  it('should accept uppercase HTTPS and enforce the manufacturer URL boundary', () => {
+    expect(validatePhotoSubmissionCreateBody({
+      filename: 'official.png',
+      rightsConfirmed: 'true',
+      sourceType: 'manufacturer',
+      sourceUrl: 'HTTPS://www.msrgear.com/products/pocketrocket'
+    }).sourceUrl).toBe('HTTPS://www.msrgear.com/products/pocketrocket')
+
+    expect(validatePhotoSubmissionCreateBody({
+      filename: 'official.png',
+      rightsConfirmed: 'true',
+      sourceType: 'manufacturer',
+      sourceUrl: maxManufacturerUrl
+    }).sourceUrl).toHaveLength(limits.maxEquipmentItemPhotoSubmissionSourceUrlLength)
+
+    expect(() => validatePhotoSubmissionCreateBody({
+      filename: 'official.png',
+      rightsConfirmed: 'true',
+      sourceType: 'manufacturer',
+      sourceUrl: `${maxManufacturerUrl}a`
+    })).toThrow(/./u)
+  })
+
+  it('should validate photo submission idempotency keys and list pages', () => {
+    const idempotencyKey = '550e8400-e29b-41d4-a716-446655440000'
+
+    expect(validatePhotoSubmissionIdempotencyKey(idempotencyKey)).toBe(idempotencyKey)
+    expect(() => validatePhotoSubmissionIdempotencyKey(null)).toThrow(/./u)
+    expect(() => validatePhotoSubmissionIdempotencyKey('not-a-uuid')).toThrow(/./u)
+    expect(validatePhotoSubmissionListQuery({})).toStrictEqual({ page: 1 })
+    expect(validatePhotoSubmissionListQuery({ page: '2' })).toStrictEqual({ page: 2 })
+    expect(() => validatePhotoSubmissionListQuery({ page: '0' })).toThrow(/./u)
   })
 
   it.each([

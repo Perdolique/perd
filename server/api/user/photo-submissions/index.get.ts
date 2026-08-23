@@ -1,5 +1,8 @@
-import { defineEventHandler } from 'h3'
+import { defineEventHandler, getValidatedQuery } from 'h3'
 import { validateRegisteredUser } from '#server/utils/user'
+import { validatePhotoSubmissionListQuery } from '#server/utils/validation/schemas'
+
+const photoSubmissionPageSize = 20
 
 interface UserPhotoSubmissionItem {
   id: string;
@@ -19,6 +22,7 @@ interface UserPhotoSubmission {
 
 interface UserPhotoSubmissionsResponse {
   items: UserPhotoSubmission[];
+  nextPage: number | null;
 }
 
 interface UserPhotoSubmissionQueryRow {
@@ -50,6 +54,8 @@ function mapStatus(status: string): UserPhotoSubmission['status'] {
 
 export default defineEventHandler(async (event): Promise<UserPhotoSubmissionsResponse> => {
   const userId = await validateRegisteredUser(event)
+  const { page } = await getValidatedQuery(event, validatePhotoSubmissionListQuery)
+  const offset = (page - 1) * photoSubmissionPageSize
 
   const submissions = await event.context.dbHttp.query.equipmentItemPhotoSubmissions.findMany({
     columns: {
@@ -75,6 +81,9 @@ export default defineEventHandler(async (event): Promise<UserPhotoSubmissionsRes
       id: 'desc'
     },
 
+    limit: photoSubmissionPageSize + 1,
+    offset,
+
     with: {
       item: {
         columns: {
@@ -85,7 +94,10 @@ export default defineEventHandler(async (event): Promise<UserPhotoSubmissionsRes
     }
   })
 
-  const items = submissions.map((submission: UserPhotoSubmissionQueryRow) => {
+  const hasNextPage = submissions.length > photoSubmissionPageSize
+  const pageSubmissions = submissions.slice(0, photoSubmissionPageSize)
+
+  const items = pageSubmissions.map((submission: UserPhotoSubmissionQueryRow) => {
     if (submission.item === null) {
       throw new Error(`Photo submission ${submission.id} has missing equipment item`)
     }
@@ -102,7 +114,10 @@ export default defineEventHandler(async (event): Promise<UserPhotoSubmissionsRes
     }
   })
 
-  return { items }
+  return {
+    items,
+    nextPage: hasNextPage ? page + 1 : null
+  }
 })
 
 export type {

@@ -1,13 +1,37 @@
 <template>
   <PageContent page-title="Submit a photo">
     <template #actions>
-      <PerdLink :to="itemPath">
+      <PerdLink :to="backLinkPath">
         {{ backLinkLabel }}
       </PerdLink>
     </template>
 
     <PagePlaceholder v-if="isGuest" emoji="🔐" title="Account required.">
       Guest accounts cannot submit photos for review. Account upgrade options will be available later.
+    </PagePlaceholder>
+
+    <PageLoadingState v-else-if="isItemLoading" title="Loading equipment item" />
+
+    <PagePlaceholder
+      v-else-if="hasItemLoadError"
+      emoji="🧰"
+      :title="itemLoadErrorTitle"
+    >
+      {{ itemLoadErrorMessage }}
+
+      <template #actions>
+        <PerdButton
+          v-if="canRetryItemLoad"
+          variant="secondary"
+          @click="retryItemLoad"
+        >
+          Retry
+        </PerdButton>
+
+        <PerdLink :to="appRoutes.gearLibrary">
+          Back to gear library
+        </PerdLink>
+      </template>
     </PagePlaceholder>
 
     <PagePlaceholder
@@ -41,7 +65,7 @@
         </p>
       </div>
 
-      <form :class="$style.form" @submit.prevent="handleSubmit">
+      <form ref="submissionForm" :class="$style.form" @submit.prevent="handleSubmit">
         <div :class="$style.formGrid">
           <section :class="$style.uploadSection">
             <h3 :class="$style.sectionTitle">
@@ -56,7 +80,7 @@
               label="Photo"
               name="photo"
               required
-              @update:model-value="handlePhotoSelection"
+              @selection-change="handlePhotoSelection"
             >
               <template #selection>
                 <div :class="$style.preview">
@@ -104,6 +128,7 @@
                     name="sourceType"
                     type="radio"
                     value="own"
+                    @change="resetSubmissionAttempt"
                   >
 
                   <span :class="$style.optionBody">
@@ -119,6 +144,7 @@
                     name="sourceType"
                     type="radio"
                     value="manufacturer"
+                    @change="resetSubmissionAttempt"
                   >
 
                   <span :class="$style.optionBody">
@@ -137,10 +163,12 @@
               :error="manufacturerUrlError"
               hint="Link to the original image or product page."
               label="Manufacturer source"
+              :maxlength="limits.maxEquipmentItemPhotoSubmissionSourceUrlLength"
               name="sourceUrl"
               placeholder="https://manufacturer.example/product"
               required
               type="url"
+              @update:model-value="resetSubmissionAttempt"
             />
 
             <label :class="$style.rightsOption">
@@ -151,6 +179,7 @@
                 name="rightsConfirmed"
                 required
                 type="checkbox"
+                @change="resetSubmissionAttempt"
               >
 
               <span :class="$style.optionBody">
@@ -188,6 +217,7 @@
   import { definePageMeta, useFetch, useRequestFetch, useRoute, useUserStore } from '#imports'
   import { limits } from '#shared/constants'
   import EquipmentImageFilePicker from '~/components/equipment/EquipmentImageFilePicker.vue'
+  import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PerdButton from '~/components/PerdButton.vue'
   import PerdCard from '~/components/PerdCard.vue'
@@ -209,8 +239,16 @@
   const itemPath = createGearLibraryItemPath(itemId)
   const requestFetch = useRequestFetch()
   const { user } = useUserStore()
-  const { data: itemResponse } = await useFetch(`/api/equipment/items/${itemId}`)
+
+  const {
+    data: itemResponse,
+    error: itemError,
+    refresh: refreshItem,
+    status: itemStatus
+  } = await useFetch(`/api/equipment/items/${itemId}`)
+
   const photoPicker = useTemplateRef('photoPicker')
+  const submissionForm = useTemplateRef('submissionForm')
   const confirmationStatus = useTemplateRef('confirmationStatus')
   const selectedFiles = shallowRef<File[]>([])
   const sourceType = ref<PhotoSourceType>('own')
@@ -219,8 +257,45 @@
   const isSubmitting = ref(false)
   const isSubmitted = ref(false)
   const mutationMessage = ref<string | null>(null)
+  const idempotencyKey = ref<string | null>(null)
+
+  function getErrorStatus(error: unknown): number | undefined {
+    if (typeof error !== 'object' || error === null) {
+      return undefined
+    }
+
+    const statusCode = Reflect.get(error, 'statusCode')
+
+    return typeof statusCode === 'number' ? statusCode : undefined
+  }
+
   const isGuest = computed(() => user.value.isGuest)
-  const itemName = computed(() => itemResponse.value?.name ?? 'this item')
+  const itemName = computed(() => itemResponse.value?.name ?? '')
+  const isItemLoading = computed(() => itemStatus.value === 'pending')
+
+  const hasLoadedItem = computed(
+    () => itemResponse.value !== undefined && itemResponse.value !== null
+  )
+
+  const hasItemLoadError = computed(
+    () => (itemError.value !== undefined && itemError.value !== null)
+      || (isItemLoading.value === false && hasLoadedItem.value === false)
+  )
+
+  const itemErrorStatus = computed(() => getErrorStatus(itemError.value))
+  const isItemNotFound = computed(() => itemErrorStatus.value === 404)
+  const canRetryItemLoad = computed(() => isItemNotFound.value === false)
+
+  const itemLoadErrorTitle = computed(
+    () => isItemNotFound.value ? 'Item unavailable.' : 'Could not load item.'
+  )
+
+  const itemLoadErrorMessage = computed(
+    () => isItemNotFound.value
+      ? 'This item cannot accept photo submissions.'
+      : 'The equipment item could not be loaded. Try again.'
+  )
+
   const isManufacturerSource = computed(() => sourceType.value === 'manufacturer')
   const selectedFile = computed(() => selectedFiles.value[0] ?? null)
   const previewUrl = useObjectUrl(selectedFile)
@@ -230,8 +305,8 @@
 
   const selectedFileSize = computed(() => {
     const size = selectedFile.value?.size ?? 0
-    const bytesPerKilobyte = 1024
-    const bytesPerMegabyte = bytesPerKilobyte * bytesPerKilobyte
+    const bytesPerKilobyte = 1000
+    const bytesPerMegabyte = 1_000_000
 
     if (size < bytesPerKilobyte) {
       return `${size} B`
@@ -271,12 +346,27 @@
   })
 
   const manufacturerUrlError = computed(
-    () => isManufacturerUrlInvalid.value
-      ? 'Use an HTTPS manufacturer URL.'
-      : undefined
+    () => {
+      if (
+        isManufacturerSource.value
+        && sourceUrl.value.trim().length > limits.maxEquipmentItemPhotoSubmissionSourceUrlLength
+      ) {
+        return 'Use a manufacturer URL with 2,048 characters or fewer.'
+      }
+
+      return isManufacturerUrlInvalid.value
+        ? 'Use an HTTPS manufacturer URL.'
+        : undefined
+    }
   )
 
-  const backLinkLabel = computed(() => `Back to ${itemName.value}`)
+  const backLinkPath = computed(
+    () => hasLoadedItem.value ? itemPath : appRoutes.gearLibrary
+  )
+
+  const backLinkLabel = computed(
+    () => hasLoadedItem.value ? `Back to ${itemName.value}` : 'Back to gear library'
+  )
 
   const isSubmitDisabled = computed(
     () => isSubmitting.value
@@ -284,10 +374,17 @@
       || rightsConfirmed.value === false
       || hasRequiredSource.value === false
       || isSelectedFileTooLarge.value
-      || isManufacturerUrlInvalid.value
+      || manufacturerUrlError.value !== undefined
   )
 
   function handlePhotoSelection() {
+    rightsConfirmed.value = false
+    idempotencyKey.value = null
+    mutationMessage.value = null
+  }
+
+  function resetSubmissionAttempt() {
+    idempotencyKey.value = null
     mutationMessage.value = null
   }
 
@@ -297,6 +394,8 @@
     }
 
     selectedFiles.value = []
+    rightsConfirmed.value = false
+    idempotencyKey.value = null
     mutationMessage.value = null
 
     await nextTick()
@@ -304,14 +403,8 @@
     photoPicker.value?.focus()
   }
 
-  function getErrorStatus(error: unknown) {
-    if (typeof error !== 'object' || error === null) {
-      return null
-    }
-
-    const statusCode = Reflect.get(error, 'statusCode')
-
-    return typeof statusCode === 'number' ? statusCode : null
+  async function retryItemLoad() {
+    await refreshItem()
   }
 
   async function handleSubmit() {
@@ -322,28 +415,30 @@
     mutationMessage.value = null
     isSubmitting.value = true
 
-    const selectedPhoto = selectedFile.value
+    const submissionIdempotencyKey = idempotencyKey.value ?? globalThis.crypto.randomUUID()
+
+    idempotencyKey.value = submissionIdempotencyKey
 
     try {
-      const photoBytes = await selectedPhoto.arrayBuffer()
+      if (submissionForm.value === null) {
+        throw new Error('Photo submission form is unavailable')
+      }
 
-      const photo = new globalThis.File([photoBytes], selectedPhoto.name, {
-        lastModified: selectedPhoto.lastModified,
-        type: selectedPhoto.type
-      })
+      const formData = new globalThis.FormData(submissionForm.value)
 
-      const formData = new globalThis.FormData()
-
-      formData.append('photo', photo)
-      formData.append('rightsConfirmed', 'true')
-      formData.append('sourceType', sourceType.value)
+      formData.set('rightsConfirmed', 'true')
 
       if (isManufacturerSource.value) {
-        formData.append('sourceUrl', sourceUrl.value.trim())
+        formData.set('sourceUrl', sourceUrl.value.trim())
       }
 
       await requestFetch(`/api/equipment/items/${itemId}/photo-submissions`, {
         body: formData,
+
+        headers: {
+          'Idempotency-Key': submissionIdempotencyKey
+        },
+
         method: 'POST'
       })
       isSubmitted.value = true
@@ -358,6 +453,12 @@
         mutationMessage.value = 'Choose a photo that is 5 MB or smaller.'
       } else if (statusCode === 415) {
         mutationMessage.value = 'Choose a valid JPEG, PNG, or WebP image.'
+      } else if (statusCode === 409) {
+        mutationMessage.value = 'Three photos are already awaiting review for this item.'
+      } else if (statusCode === 429) {
+        mutationMessage.value = 'Too many photo submission attempts. Try again in a minute.'
+      } else if (statusCode === 503) {
+        mutationMessage.value = 'Photo submission is temporarily unavailable. Try again.'
       } else {
         mutationMessage.value = 'Could not submit photo. Try again.'
       }

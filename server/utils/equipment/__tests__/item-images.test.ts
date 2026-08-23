@@ -124,6 +124,52 @@ async function createMultipartEvent(formData: FormData) {
   return event
 }
 
+function createRawMultipartEvent(
+  bodyByteLength: number,
+  declaredByteLength?: number
+) {
+  const boundary = 'test-boundary'
+  const encoder = new TextEncoder()
+
+  const prefix = encoder.encode(
+    `--${boundary}\r\nContent-Disposition: form-data; name="photo"; filename="photo.webp"\r\nContent-Type: image/webp\r\n\r\n`
+  )
+
+  const suffix = encoder.encode(`\r\n--${boundary}--\r\n`)
+  const payloadByteLength = bodyByteLength - prefix.byteLength - suffix.byteLength
+
+  if (payloadByteLength < 0) {
+    throw new RangeError('Multipart body length is too small')
+  }
+
+  const body = new Uint8Array(bodyByteLength)
+
+  body.set(prefix)
+  body.fill(97, prefix.byteLength, prefix.byteLength + payloadByteLength)
+  body.set(suffix, prefix.byteLength + payloadByteLength)
+
+  const event = createTestEvent({})
+  const chunkByteLength = 64 * 1024
+
+  event.node.req.method = 'POST'
+  event.node.req.headers['content-type'] = `multipart/form-data; boundary=${boundary}`
+
+  if (declaredByteLength !== undefined) {
+    event.node.req.headers['content-length'] = String(declaredByteLength)
+  }
+
+  for (let offset = 0; offset < body.byteLength; offset += chunkByteLength) {
+    event.node.req.push(body.subarray(offset, offset + chunkByteLength))
+  }
+
+  event.node.req.push(null)
+
+  return {
+    event,
+    payloadByteLength
+  }
+}
+
 function getFormDataFile(formData: FormData, name: string): File {
   const value = formData.get(name)
 
@@ -134,6 +180,10 @@ function getFormDataFile(formData: FormData, name: string): File {
   return value
 }
 
+function createDeferred<TValue>() {
+  return Promise.withResolvers<TValue>()
+}
+
 describe('equipment item image lifecycle', () => {
   afterEach(() => {
     vi.restoreAllMocks()
@@ -142,6 +192,10 @@ describe('equipment item image lifecycle', () => {
   it('should inspect the real format before uploading with the requested visibility', async () => {
     const { binding, imageInfoMock, uploadImageMock } = createImagesBinding()
     const closeMock = vi.fn<() => Promise<void>>().mockResolvedValue()
+    const imageInfoGate = createDeferred<ImageInfoResponse>()
+
+    imageInfoMock.mockReset()
+    imageInfoMock.mockReturnValue(imageInfoGate.promise)
 
     const body = createImageBody({
       close: closeMock,
@@ -154,7 +208,7 @@ describe('equipment item image lifecycle', () => {
       })
     })
 
-    const result = await uploadHostedEquipmentImage({
+    const uploadPromise = uploadHostedEquipmentImage({
       binding,
       body,
       creator: 'user-1',
@@ -162,6 +216,19 @@ describe('equipment item image lifecycle', () => {
       metadata: { itemId: 'item-1' },
       requireSignedURLs: true
     })
+
+    await Promise.resolve()
+
+    expect(uploadImageMock).toHaveBeenCalledTimes(1)
+
+    imageInfoGate.resolve({
+      fileSize: 4,
+      format: 'image/webp',
+      height: 1,
+      width: 1
+    })
+
+    const result = await uploadPromise
 
     expect(imageInfoMock).toHaveBeenCalledWith(expect.any(ReadableStream))
     expect(uploadImageMock).toHaveBeenCalledWith(expect.any(ReadableStream), {
@@ -172,22 +239,14 @@ describe('equipment item image lifecycle', () => {
     })
     expect(result).toBe('cloudflare-image-1')
     expect(closeMock).toHaveBeenCalledTimes(1)
-    expect(Math.max(...imageInfoMock.mock.invocationCallOrder)).toBeLessThan(
-      Math.min(...uploadImageMock.mock.invocationCallOrder)
-    )
   })
 
-  it('should reject a declared and detected MIME mismatch and cancel the upload branch', async () => {
-    const infoStream = new ReadableStream<Uint8Array>()
-    const uploadStream = new ReadableStream<Uint8Array>()
-    const uploadBranchCancelMock = vi.spyOn(uploadStream, 'cancel').mockResolvedValue()
-    const bodyStream = new ReadableStream<Uint8Array>()
-
-    vi.spyOn(bodyStream, 'tee').mockReturnValue([infoStream, uploadStream])
-
-    const body = createImageBody({ stream: bodyStream })
-
-    const { binding, uploadImageMock } = createImagesBinding({
+  it('should reject a declared and detected MIME mismatch and delete the uploaded asset', async () => {
+    const {
+      binding,
+      deleteImageMock,
+      uploadImageMock
+    } = createImagesBinding({
       imageInfo: {
         fileSize: 4,
         format: 'image/png',
@@ -198,7 +257,7 @@ describe('equipment item image lifecycle', () => {
 
     await expect(uploadHostedEquipmentImage({
       binding,
-      body,
+      body: createImageBody(),
       creator: 'user-1',
       filename: 'photo.webp',
       metadata: { itemId: 'item-1' },
@@ -206,14 +265,18 @@ describe('equipment item image lifecycle', () => {
     })).rejects.toMatchObject({
       statusCode: 415
     })
-    expect(uploadBranchCancelMock).toHaveBeenCalledTimes(1)
-    expect(uploadImageMock).not.toHaveBeenCalled()
+    expect(uploadImageMock).toHaveBeenCalledTimes(1)
+    expect(deleteImageMock).toHaveBeenCalledTimes(1)
   })
 
-  it('should map invalid image bytes to 415 without uploading', async () => {
+  it('should map invalid image bytes to 415 and delete a concurrent upload', async () => {
     const invalidImageError = Object.assign(new Error('not an image'), { code: 9412 })
 
-    const { binding, uploadImageMock } = createImagesBinding({
+    const {
+      binding,
+      deleteImageMock,
+      uploadImageMock
+    } = createImagesBinding({
       imageInfoError: invalidImageError
     })
 
@@ -227,7 +290,8 @@ describe('equipment item image lifecycle', () => {
     })).rejects.toMatchObject({
       statusCode: 415
     })
-    expect(uploadImageMock).not.toHaveBeenCalled()
+    expect(uploadImageMock).toHaveBeenCalledTimes(1)
+    expect(deleteImageMock).toHaveBeenCalledTimes(1)
   })
 
   it('should map other Images binding inspection failures to a safe 502', async () => {
@@ -237,7 +301,7 @@ describe('equipment item image lifecycle', () => {
       // Expected binding failure telemetry.
     })
 
-    const { binding } = createImagesBinding({
+    const { binding, deleteImageMock } = createImagesBinding({
       imageInfoError: inspectionError
     })
 
@@ -254,8 +318,12 @@ describe('equipment item image lifecycle', () => {
     })
     expect(consoleErrorMock).toHaveBeenCalledWith(
       'Failed to inspect Cloudflare image',
-      expect.objectContaining({ error: inspectionError })
+      expect.objectContaining({
+        error: inspectionError,
+        uploadError: undefined
+      })
     )
+    expect(deleteImageMock).toHaveBeenCalledTimes(1)
   })
 
   it('should map hosted upload failures to a safe 502 and close the body', async () => {
@@ -284,6 +352,60 @@ describe('equipment item image lifecycle', () => {
       expect.objectContaining({ error: uploadError })
     )
     expect(closeMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('should prioritize the streamed byte limit and delete an uploaded asset', async () => {
+    const { binding, deleteImageMock } = createImagesBinding()
+
+    await expect(uploadHostedEquipmentImage({
+      binding,
+
+      body: createImageBody({
+        isLimitExceeded: () => true
+      }),
+
+      creator: 'user-1',
+      filename: 'photo.webp',
+      metadata: { itemId: 'item-1' },
+      requireSignedURLs: false
+    })).rejects.toMatchObject({
+      statusCode: 413
+    })
+    expect(deleteImageMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('should preserve an invalid-format error when uploaded asset deletion fails', async () => {
+    const deletionError = new Error('delete unavailable')
+
+    const consoleErrorMock = vi.spyOn(console, 'error').mockImplementation(() => {
+      // Expected cleanup failure telemetry.
+    })
+
+    const { binding } = createImagesBinding({
+      deleteImageError: deletionError,
+
+      imageInfo: {
+        fileSize: 4,
+        format: 'image/png',
+        height: 1,
+        width: 1
+      }
+    })
+
+    await expect(uploadHostedEquipmentImage({
+      binding,
+      body: createImageBody(),
+      creator: 'user-1',
+      filename: 'photo.webp',
+      metadata: { itemId: 'item-1' },
+      requireSignedURLs: false
+    })).rejects.toMatchObject({
+      statusCode: 415
+    })
+    expect(consoleErrorMock).toHaveBeenCalledWith(
+      'Failed to delete unattached Cloudflare image',
+      expect.objectContaining({ error: deletionError })
+    )
   })
 
   it.each([
@@ -344,6 +466,8 @@ describe('equipment item image lifecycle', () => {
 })
 
 describe('photo submission multipart parsing', () => {
+  const maximumPhotoSubmissionBodyByteLength = 5_500_000
+
   afterEach(() => {
     vi.restoreAllMocks()
   })
@@ -377,5 +501,43 @@ describe('photo submission multipart parsing', () => {
     expect(() => validatePhotoSubmissionMultipartRequest(event)).toThrow(
       expect.objectContaining({ statusCode: 413 })
     )
+  })
+
+  it('should accept a multi-chunk multipart body exactly at the streamed limit', async () => {
+    const { event, payloadByteLength } = createRawMultipartEvent(
+      maximumPhotoSubmissionBodyByteLength
+    )
+
+    const contentType = validatePhotoSubmissionMultipartRequest(event)
+    const formData = await readLimitedMultipartFormData(event, contentType)
+    const photo = getFormDataFile(formData, 'photo')
+
+    expect(photo.size).toBe(payloadByteLength)
+  })
+
+  it.each([
+    {
+      declaredByteLength: undefined,
+      label: 'without Content-Length'
+    },
+    {
+      declaredByteLength: 100,
+      label: 'with an understated Content-Length'
+    }
+  ])('should reject and cancel a streamed body over the limit $label', async ({
+    declaredByteLength
+  }) => {
+    const { event } = createRawMultipartEvent(
+      maximumPhotoSubmissionBodyByteLength + 1,
+      declaredByteLength
+    )
+
+    const destroyMock = vi.spyOn(event.node.req, 'destroy')
+    const contentType = validatePhotoSubmissionMultipartRequest(event)
+
+    await expect(readLimitedMultipartFormData(event, contentType)).rejects.toMatchObject({
+      statusCode: 413
+    })
+    expect(destroyMock.mock.calls.length).toBeGreaterThan(0)
   })
 })
