@@ -47,6 +47,17 @@ select {
   font: inherit;
 }
 
+/* Remove default fieldset styles */
+fieldset {
+  min-inline-size: 0;
+  padding: 0;
+  border: 0;
+}
+
+legend {
+  padding: 0;
+}
+
 /* Avoid text overflows */
 p,
 h1,

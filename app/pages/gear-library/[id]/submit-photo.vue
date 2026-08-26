@@ -551,12 +551,9 @@
   .sourceFieldset {
     display: grid;
     gap: var(--spacing-12);
-    padding: 0;
-    border: 0;
   }
 
   .legend {
-    padding: 0;
     color: var(--color-text-secondary);
     font-size: var(--font-size-14);
     font-weight: var(--font-weight-semibold);
