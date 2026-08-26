@@ -4,9 +4,11 @@ allowBuilds:
   sharp: false
   workerd: false
 minimumReleaseAgeExclude:
+  - '@nuxt/icon@2.5.1'
   - '@nuxt/devtools@3.4.2'
-  - eslint-config-greenpie@17.7.0
-  - oxlint@1.79.0
+  - '@types/node@26.3.0'
+  - eslint-config-greenpie@17.8.0
+  - oxlint@1.80.0
   - vite@8.2.2
   - vitest@4.1.11
   - vue-tsc@3.3.11
