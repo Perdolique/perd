@@ -118,7 +118,6 @@
 
 <script lang="ts" setup>
   import { computed, type CSSProperties, useTemplateRef } from 'vue'
-
   import PerdLink from '~/components/PerdLink.vue'
   import EquipmentItemImage from '~/components/equipment/EquipmentItemImage.vue'
 

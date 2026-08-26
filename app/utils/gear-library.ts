@@ -1,15 +1,5 @@
-import type {
-  LocationQuery,
-  LocationQueryRaw,
-  LocationQueryValue,
-  LocationQueryValueRaw
-} from 'vue-router'
-
-import type {
-  GearLibraryItemsResponse,
-  GearLibraryListItem
-} from '~/types/equipment'
-
+import type { LocationQuery, LocationQueryRaw, LocationQueryValue, LocationQueryValueRaw } from 'vue-router'
+import type { GearLibraryItemsResponse, GearLibraryListItem } from '~/types/equipment'
 import { normalizeGearLibraryComparisonQuery } from '~/utils/gear-library-comparison'
 
 type GearLibrarySort = 'name' | 'brand' | `property:${string}`
@@ -275,7 +265,10 @@ function getSupportedQueryEntries(query: LocationQuery | LocationQueryRaw): Supp
       const value = query[key]
       const values = Array.isArray(value) ? value : [value]
 
-      entries.push({ key, values })
+      entries.push({
+        key,
+        values
+      })
     }
   }
 

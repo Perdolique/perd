@@ -7,8 +7,8 @@ import {
   decimalNumberPattern,
   isFiniteDecimalNumber,
   normalizeDecimalNumber
-}
- from '#shared/utils/decimal-number'
+} from '#shared/utils/decimal-number'
+
 import { sanitizeRedirectPath } from '#shared/utils/redirect'
 
 const nonEmptyStringSchema = v.pipe(
@@ -35,6 +35,11 @@ const positiveIntegerIdParamSchema = v.pipe(
 const canonicalUuidV7Schema = v.pipe(
   v.string(),
   v.regex(/^[\da-f]{8}-[\da-f]{4}-7[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/u)
+)
+
+const idempotencyKeySchema = v.pipe(
+  v.string(),
+  v.uuid()
 )
 
 const referenceDataSlugSchema = v.pipe(
@@ -330,6 +335,40 @@ const itemImageUploadQuerySchema = v.object({
   )
 })
 
+const photoSubmissionHttpsUrlSchema = v.pipe(
+  trimmedNonEmptyStringSchema,
+  v.maxLength(limits.maxEquipmentItemPhotoSubmissionSourceUrlLength),
+  v.url(),
+  v.check(
+    (sourceUrl) => new globalThis.URL(sourceUrl).protocol === 'https:',
+    'sourceUrl must use HTTPS'
+  )
+)
+
+const photoSubmissionCreateBodySchema = v.pipe(
+  v.object({
+    filename: v.pipe(
+      trimmedNonEmptyStringSchema,
+      v.maxLength(limits.maxEquipmentItemImageFilenameLength)
+    ),
+
+    rightsConfirmed: v.literal('true'),
+    sourceType: v.picklist(['own', 'manufacturer']),
+    sourceUrl: v.optional(photoSubmissionHttpsUrlSchema)
+  }),
+  v.check((input) => {
+    if (input.sourceType === 'manufacturer') {
+      return input.sourceUrl !== undefined
+    }
+
+    return input.sourceUrl === undefined
+  }, 'sourceUrl is required only for manufacturer photos')
+)
+
+const photoSubmissionListQuerySchema = v.object({
+  page: pageQuerySchema
+})
+
 const minimumEquipmentComparisonItemCount = 2
 const maximumEquipmentComparisonItemCount = 4
 
@@ -526,6 +565,7 @@ const booleanFilterQueryValueSchema = v.pipe(
 )
 
 const propertySortPrefix = 'property:'
+
 const propertyItemsListSortSchema = v.pipe(
   v.string(),
   v.startsWith(propertySortPrefix),
@@ -702,6 +742,7 @@ const itemsListQuerySchema = v.pipe(
     const hasPropertyFilters = query.numberFilter.length > 0
       || query.enumFilter.length > 0
       || query.booleanFilter.length > 0
+
     const hasPropertySort = query.sort.startsWith('property:')
     const requiresCategory = hasPropertyFilters || hasPropertySort
 
@@ -800,6 +841,18 @@ function validateItemImageUploadQuery(query: unknown) {
   return v.parse(itemImageUploadQuerySchema, query)
 }
 
+function validatePhotoSubmissionCreateBody(body: unknown) {
+  return v.parse(photoSubmissionCreateBodySchema, body)
+}
+
+function validatePhotoSubmissionIdempotencyKey(value: unknown) {
+  return v.parse(idempotencyKeySchema, value)
+}
+
+function validatePhotoSubmissionListQuery(query: unknown) {
+  return v.parse(photoSubmissionListQuerySchema, query)
+}
+
 function validateEquipmentComparisonQuery(query: unknown) {
   return v.parse(equipmentComparisonQuerySchema, query)
 }
@@ -879,6 +932,8 @@ export {
   itemImageOrderBodySchema,
   itemImageParamsSchema,
   itemImageUploadQuerySchema,
+  photoSubmissionCreateBodySchema,
+  photoSubmissionListQuerySchema,
   equipmentComparisonQuerySchema,
   itemsListQuerySchema,
   limitQuerySchema,
@@ -920,6 +975,9 @@ export {
   validateItemImageOrderBody,
   validateItemImageParams,
   validateItemImageUploadQuery,
+  validatePhotoSubmissionCreateBody,
+  validatePhotoSubmissionIdempotencyKey,
+  validatePhotoSubmissionListQuery,
   validateEquipmentComparisonQuery,
   validateItemsListQuery,
   validatePackingListAvailableGearQuery,

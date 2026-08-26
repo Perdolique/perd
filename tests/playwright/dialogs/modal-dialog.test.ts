@@ -379,6 +379,7 @@ test.describe('Modal dialog', () => {
 
     const sideSheetMotionStyles = await sideSheet.evaluate((element) => {
       const computedStyle = globalThis.getComputedStyle(element)
+
       const transitionDurations = computedStyle.transitionDuration
         .split(',')
         .map((duration) => duration.trim())

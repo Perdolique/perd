@@ -1,6 +1,5 @@
 import type * as h3 from 'h3'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-
 import imageListHandler from '#server/api/equipment/items/[id]/images/index.get'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
@@ -49,6 +48,7 @@ describe('get /api/equipment/items/[id]/images', () => {
       displayOrder: 0,
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1'
     }])
+
     const dbHttp = {
       query: {
         equipmentItemImages: {
@@ -56,8 +56,8 @@ describe('get /api/equipment/items/[id]/images', () => {
         }
       }
     }
-    const event = createTestEvent(dbHttp)
 
+    const event = createTestEvent(dbHttp)
     const result = await imageListHandler(event)
 
     expect(result).toStrictEqual([{

@@ -90,6 +90,7 @@ function useGearLibraryBrowsingRestoration() {
       || isBrowsingStateReady?.value !== true
     ) {
       hasHandledInitialScroll = true
+
       return
     }
 
@@ -97,7 +98,10 @@ function useGearLibraryBrowsingRestoration() {
     const left = shouldRestoreSavedScroll ? savedBrowsingState.left : 0
     const top = shouldRestoreSavedScroll ? savedBrowsingState.top : 0
 
-    globalThis.scrollTo({ left, top })
+    globalThis.scrollTo({
+      left,
+      top
+    })
     hasHandledInitialScroll = true
   }
 

@@ -4,12 +4,13 @@ import { env } from 'node:process'
 import { fileURLToPath } from 'node:url'
 import type { NuxtOptions } from 'nuxt/schema'
 
-type ComponentType = 'page' | 'layout' | 'component';
+type ComponentType = 'page' | 'layout' | 'component'
+
 type TypeScriptCompilerOptions = NonNullable<
   NuxtOptions['typescript']['tsConfig']['compilerOptions']
->;
+>
 
-const customElements = new Set(['search']);
+const customElements = new Set(['search'])
 
 const projectTypeScriptCompilerOptions = {
   noFallthroughCasesInSwitch: true,
@@ -24,20 +25,20 @@ const modalDialogFixturePath = fileURLToPath(
 
 function getComponentType(filePath: string) : ComponentType {
   if (filePath.includes('/app/pages/')) {
-    return 'page';
+    return 'page'
   } else if (filePath.includes('/app/layouts/')) {
-    return 'layout';
+    return 'layout'
   }
 
-  return 'component';
+  return 'component'
 }
 
 function getComponentName(componentName: string, componentType: ComponentType) : string {
   if (componentType === 'component') {
-    return componentName;
+    return componentName
   }
 
-  return `${componentType}-${componentName}`;
+  return `${componentType}-${componentName}`
 }
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
@@ -56,7 +57,7 @@ export default defineNuxtConfig({
     oauth: {
       twitch: {
         clientId: '',
-        clientSecret: '',
+        clientSecret: ''
       }
     }
   },
@@ -81,7 +82,6 @@ export default defineNuxtConfig({
 
   experimental: {
     viewTransition: true,
-
     /**
      * FIXME: Disable once @nuxt/icon and other modules
      * stop relying on Nitro auto-imports
@@ -185,19 +185,19 @@ export default defineNuxtConfig({
           const hash = createHash('sha256')
             .update(css)
             .digest('hex')
-            .slice(0, 6);
+            .slice(0, 6)
 
           const filePath = filename
             .replace(/\.vue(?:\?.+?)?$/u, '')
-            .replaceAll(/\[|\]/gu, '');
+            .replaceAll(/\[|\]/gu, '')
 
-          const baseName = basename(filePath);
-          const componentType = getComponentType(filePath);
-          const componentName = getComponentName(baseName, componentType);
+          const baseName = basename(filePath)
+          const componentType = getComponentType(filePath)
+          const componentName = getComponentName(baseName, componentType)
 
-          return `${componentName}_${className}_${hash}`;
+          return `${componentName}_${className}_${hash}`
         }
-      },
+      }
 
     }
   }

@@ -1,4 +1,10 @@
-import { brands, categoryProperties, equipmentCategories, equipmentGroups, propertyEnumOptions } from '#server/database/schema'
+import {
+  brands,
+  categoryProperties,
+  equipmentCategories,
+  equipmentGroups,
+  propertyEnumOptions
+} from '#server/database/schema'
 
 const groupBaseSelection = {
   id: equipmentGroups.id,

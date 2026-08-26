@@ -21,6 +21,7 @@ const {
     createWebSocketClientMock: vi.fn<(event: unknown) => MockWriteDb>(() => {
       throw new Error('createWebSocketClient mock is not configured')
     }),
+
     getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
     readValidatedBodyMock: vi.fn<typeof h3.readValidatedBody>(),
     setResponseStatusMock: vi.fn<typeof h3.setResponseStatus>(),
@@ -126,6 +127,7 @@ interface DeleteOperation {
 
 function createListDb(rows: unknown[]) {
   let lastFindManyConfig: PackingListFindManyConfig | null = null
+
   const findManyMock = vi.fn((config: PackingListFindManyConfig) => {
     lastFindManyConfig = config
 
@@ -176,6 +178,7 @@ function createDetailDb(row?: unknown) {
 
 function createCreateDb(createdRow?: unknown) {
   const insertReturningMock = vi.fn(() => createdRow === undefined ? [] : [createdRow])
+
   const insertValuesMock = vi.fn(() => {
     return {
       returning: insertReturningMock
@@ -190,12 +193,14 @@ function createCreateDb(createdRow?: unknown) {
         }
       })
     },
+
     insertValuesMock
   }
 }
 
 function createSelectMock(operations: SelectOperation[]) {
   const limitMocks: ReturnType<typeof vi.fn>[] = []
+
   const whereMock = vi.fn(() => {
     const operation = operations.shift()
 
@@ -363,6 +368,7 @@ function createEntryMutationDb(transaction: {
 
 function createUpdateDb(updatedRow?: unknown) {
   const updateReturningMock = vi.fn(() => updatedRow === undefined ? [] : [updatedRow])
+
   const updateWhereMock = vi.fn(() => {
     return {
       returning: updateReturningMock
@@ -383,6 +389,7 @@ function createUpdateDb(updatedRow?: unknown) {
         }
       })
     },
+
     updateSetMock,
     updateWhereMock
   }
@@ -390,6 +397,7 @@ function createUpdateDb(updatedRow?: unknown) {
 
 function createDeleteDb(deletedRow?: unknown) {
   const deleteReturningMock = vi.fn(() => deletedRow === undefined ? [] : [deletedRow])
+
   const deleteWhereMock = vi.fn(() => {
     return {
       returning: deleteReturningMock
@@ -404,6 +412,7 @@ function createDeleteDb(deletedRow?: unknown) {
         }
       })
     },
+
     deleteWhereMock
   }
 }
@@ -435,11 +444,13 @@ describe('user packing list handlers', () => {
     it('should return packing lists scoped to the current user', async () => {
       const rows = [{
         createdAt: '2026-04-03T09:00:00.000Z',
+
         entries: [{
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1'
         }, {
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e2'
         }],
+
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
         name: 'Alpine weekend',
         updatedAt: '2026-04-03T09:00:00.000Z'
@@ -505,6 +516,7 @@ describe('user packing list handlers', () => {
     it('should return an owned packing list', async () => {
       const row = {
         createdAt: '2026-04-03T09:00:00.000Z',
+
         entries: [{
           createdAt: '2026-04-03T09:01:00.000Z',
           customName: 'Rain jacket',
@@ -535,6 +547,7 @@ describe('user packing list handlers', () => {
             }
           }
         }],
+
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
         name: 'Alpine weekend',
         updatedAt: '2026-04-03T09:00:00.000Z'
@@ -542,6 +555,7 @@ describe('user packing list handlers', () => {
 
       const expectedRow = {
         createdAt: '2026-04-03T09:00:00.000Z',
+
         entries: [{
           createdAt: '2026-04-03T09:01:00.000Z',
           customName: 'Rain jacket',
@@ -565,6 +579,7 @@ describe('user packing list handlers', () => {
           source: 'inventory',
           updatedAt: '2026-04-03T09:02:00.000Z'
         }],
+
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
         name: 'Alpine weekend',
         updatedAt: '2026-04-03T09:00:00.000Z'
@@ -575,6 +590,7 @@ describe('user packing list handlers', () => {
       const result = await getPackingListHandler(event)
 
       expect(result).toStrictEqual(expectedRow)
+
       const findFirstConfig = dbHttp.getLastFindFirstConfig()
 
       expect(findFirstConfig).toMatchObject({
@@ -820,14 +836,17 @@ describe('user packing list handlers', () => {
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
         }]
       }])
+
       const { insertMock, valuesMock } = createInsertMock({
         rows: [createdEntry]
       })
+
       const { setMocks, updateMock } = createUpdateMock([{
         rows: [{
           updatedAt: '2026-04-03T09:02:00.000Z'
         }]
       }])
+
       const dbWrite = createEntryMutationDb({
         insert: insertMock,
         select: selectMock,
@@ -844,6 +863,7 @@ describe('user packing list handlers', () => {
           ...createdEntry,
           source: 'custom'
         },
+
         packingListUpdatedAt: '2026-04-03T09:02:00.000Z'
       })
       expect(setResponseStatusMock).toHaveBeenCalledWith(event, 201)
@@ -882,14 +902,17 @@ describe('user packing list handlers', () => {
           itemName: 'PocketRocket Deluxe'
         }]
       }])
+
       const { insertMock, valuesMock } = createInsertMock({
         rows: [createdEntry]
       })
+
       const { setMocks, updateMock } = createUpdateMock([{
         rows: [{
           updatedAt: '2026-04-03T09:02:00.000Z'
         }]
       }])
+
       const dbWrite = createEntryMutationDb({
         insert: insertMock,
         select: selectMock,
@@ -914,6 +937,7 @@ describe('user packing list handlers', () => {
 
           source: 'inventory'
         },
+
         packingListUpdatedAt: '2026-04-03T09:02:00.000Z'
       })
       expect(valuesMock).toHaveBeenCalledWith({
@@ -938,10 +962,13 @@ describe('user packing list handlers', () => {
       }, {
         rows: []
       }])
+
       const { insertMock } = createInsertMock({
         rows: []
       })
+
       const { updateMock } = createUpdateMock([])
+
       const dbWrite = createEntryMutationDb({
         insert: insertMock,
         select: selectMock,
@@ -976,13 +1003,17 @@ describe('user packing list handlers', () => {
           itemName: 'PocketRocket Deluxe'
         }]
       }])
+
       const { insertMock } = createInsertMock({
         error: Object.assign(new Error('duplicate key value violates unique constraint'), {
           code: '23505'
         }),
+
         rows: []
       })
+
       const { updateMock } = createUpdateMock([])
+
       const dbWrite = createEntryMutationDb({
         insert: insertMock,
         select: selectMock,
@@ -1008,10 +1039,13 @@ describe('user packing list handlers', () => {
       const { selectMock } = createSelectMock([{
         rows: []
       }])
+
       const { insertMock } = createInsertMock({
         rows: []
       })
+
       const { updateMock } = createUpdateMock([])
+
       const dbWrite = createEntryMutationDb({
         insert: insertMock,
         select: selectMock,
@@ -1066,6 +1100,7 @@ describe('user packing list handlers', () => {
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
         }]
       }])
+
       const { setMocks, updateMock } = createUpdateMock([{
         rows: [updatedEntry]
       }, {
@@ -1073,6 +1108,7 @@ describe('user packing list handlers', () => {
           updatedAt: '2026-04-03T09:04:00.000Z'
         }]
       }])
+
       const dbWrite = createEntryMutationDb({
         select: selectMock,
         update: updateMock
@@ -1092,6 +1128,7 @@ describe('user packing list handlers', () => {
           source: 'custom',
           updatedAt: '2026-04-03T09:03:00.000Z'
         },
+
         packingListUpdatedAt: '2026-04-03T09:04:00.000Z'
       })
       expect(setMocks[0]).toHaveBeenCalledWith({
@@ -1131,6 +1168,7 @@ describe('user packing list handlers', () => {
           itemName: 'PocketRocket Deluxe'
         }]
       }])
+
       const { setMocks, updateMock } = createUpdateMock([{
         rows: [updatedEntry]
       }, {
@@ -1138,6 +1176,7 @@ describe('user packing list handlers', () => {
           updatedAt: '2026-04-03T09:04:00.000Z'
         }]
       }])
+
       const dbWrite = createEntryMutationDb({
         select: selectMock,
         update: updateMock
@@ -1165,6 +1204,7 @@ describe('user packing list handlers', () => {
           source: 'inventory',
           updatedAt: '2026-04-03T09:03:00.000Z'
         },
+
         packingListUpdatedAt: '2026-04-03T09:04:00.000Z'
       })
       expect(setMocks[0]).toHaveBeenCalledWith({
@@ -1187,9 +1227,11 @@ describe('user packing list handlers', () => {
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
         }]
       }])
+
       const { updateMock } = createUpdateMock([{
         rows: []
       }])
+
       const dbWrite = createEntryMutationDb({
         select: selectMock,
         update: updateMock
@@ -1218,16 +1260,19 @@ describe('user packing list handlers', () => {
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
         }]
       }])
+
       const { deleteMock, whereMock } = createDeleteEntryMock({
         rows: [{
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1'
         }]
       })
+
       const { updateMock } = createUpdateMock([{
         rows: [{
           updatedAt: '2026-04-03T09:05:00.000Z'
         }]
       }])
+
       const dbWrite = createEntryMutationDb({
         delete: deleteMock,
         select: selectMock,
@@ -1256,10 +1301,13 @@ describe('user packing list handlers', () => {
       const { selectMock } = createSelectMock([{
         rows: []
       }])
+
       const { deleteMock } = createDeleteEntryMock({
         rows: []
       })
+
       const { updateMock } = createUpdateMock([])
+
       const dbWrite = createEntryMutationDb({
         delete: deleteMock,
         select: selectMock,

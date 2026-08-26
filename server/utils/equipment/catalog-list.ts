@@ -1,26 +1,7 @@
-import {
-  and,
-  asc,
-  desc,
-  eq,
-  gte,
-  ilike,
-  lte,
-  or,
-  sql,
-  type SQL
-} from 'drizzle-orm'
-
+import { and, asc, desc, eq, gte, ilike, lte, or, sql, type SQL } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 import { createError } from 'h3'
-
-import {
-  brands,
-  equipmentCategories,
-  equipmentItems,
-  itemPropertyValues
-} from '#server/database/schema'
-
+import { brands, equipmentCategories, equipmentItems, itemPropertyValues } from '#server/database/schema'
 import type { createHttpClient } from '#server/utils/database'
 
 import type {
@@ -152,7 +133,10 @@ async function loadCategoryMetadata(dbHttp: DbHttp, query: ItemsListQuery) : Pro
   }
 
   if (query.categorySlug === undefined) {
-    throw createError({ status: 400, message: 'categorySlug is required for property filters and sorting' })
+    throw createError({
+      status: 400,
+      message: 'categorySlug is required for property filters and sorting'
+    })
   }
 
   const metadata = await dbHttp.query.equipmentCategories.findFirst({
@@ -184,7 +168,10 @@ async function loadCategoryMetadata(dbHttp: DbHttp, query: ItemsListQuery) : Pro
   })
 
   if (metadata === undefined) {
-    throw createError({ status: 400, message: `Unknown equipment category: ${query.categorySlug}` })
+    throw createError({
+      status: 400,
+      message: `Unknown equipment category: ${query.categorySlug}`
+    })
   }
 
   return metadata
@@ -200,7 +187,10 @@ function addNumberConditions(
     const property = propertiesBySlug.get(filter.propertySlug)
 
     if (property?.dataType !== 'number') {
-      throw createError({ status: 400, message: `Unknown numeric property: ${filter.propertySlug}` })
+      throw createError({
+        status: 400,
+        message: `Unknown numeric property: ${filter.propertySlug}`
+      })
     }
 
     const valueConditions: SQL[] = []
@@ -228,7 +218,10 @@ function groupEnumFilters(
     const property = propertiesBySlug.get(filter.propertySlug)
 
     if (property?.dataType !== 'enum') {
-      throw createError({ status: 400, message: `Unknown enum property: ${filter.propertySlug}` })
+      throw createError({
+        status: 400,
+        message: `Unknown enum property: ${filter.propertySlug}`
+      })
     }
 
     const optionExists = property.enumOptions.some((option) => option.slug === filter.optionSlug)
@@ -243,7 +236,10 @@ function groupEnumFilters(
     const group = groups.get(property.id)
 
     if (group === undefined) {
-      groups.set(property.id, { optionSlugs: [filter.optionSlug], propertyId: property.id })
+      groups.set(property.id, {
+        optionSlugs: [filter.optionSlug],
+        propertyId: property.id
+      })
     } else {
       group.optionSlugs.push(filter.optionSlug)
     }
@@ -275,7 +271,10 @@ function addBooleanConditions(
     const property = propertiesBySlug.get(filter.propertySlug)
 
     if (property?.dataType !== 'boolean') {
-      throw createError({ status: 400, message: `Unknown boolean property: ${filter.propertySlug}` })
+      throw createError({
+        status: 400,
+        message: `Unknown boolean property: ${filter.propertySlug}`
+      })
     }
 
     const valueCondition = eq(filterValues.valueBoolean, filter.value)
@@ -297,7 +296,10 @@ function resolveSortPropertyId(
   const property = propertiesBySlug.get(propertySlug)
 
   if (property?.dataType !== 'number') {
-    throw createError({ status: 400, message: `Unknown numeric sort property: ${propertySlug}` })
+    throw createError({
+      status: 400,
+      message: `Unknown numeric sort property: ${propertySlug}`
+    })
   }
 
   return property.id

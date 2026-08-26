@@ -203,6 +203,7 @@
 
   const summaryTitle = computed(() => isOpen.value ? 'Add another item' : 'Add item')
   const summaryChevron = computed(() => isOpen.value ? 'hugeicons:arrow-up-01' : 'hugeicons:arrow-down-01')
+
   const availableGearItemViews = computed<AvailableGearItemView[]>(() => availableGearItems.value.map((item) => {
     return {
       brand: item.brand,

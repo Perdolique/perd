@@ -72,6 +72,7 @@ function createListDb({
     dbHttp: {
       select: selectMock
     },
+
     whereMock
   }
 }

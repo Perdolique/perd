@@ -1,5 +1,4 @@
 import type { BrowserContext, Page, Request } from '@playwright/test'
-
 import type { ComparisonResponse } from '../../../server/api/equipment/comparisons.get'
 import { expect } from './global.fixtures.ts'
 
@@ -27,6 +26,7 @@ const comparisonItems: ComparisonResponse['items'] = [
     cloudflareImageId: null,
     id: comparisonItemIds[0],
     name: 'PocketRocket Deluxe',
+
     brand: {
       name: 'MSR',
       slug: 'msr'
@@ -36,6 +36,7 @@ const comparisonItems: ComparisonResponse['items'] = [
     cloudflareImageId: null,
     id: comparisonItemIds[1],
     name: 'WindBurner',
+
     brand: {
       name: 'MSR',
       slug: 'msr'
@@ -45,6 +46,7 @@ const comparisonItems: ComparisonResponse['items'] = [
     cloudflareImageId: null,
     id: comparisonItemIds[2],
     name: 'Lite Plus',
+
     brand: {
       name: 'Primus',
       slug: 'primus'
@@ -54,6 +56,7 @@ const comparisonItems: ComparisonResponse['items'] = [
     cloudflareImageId: null,
     id: comparisonItemIds[3],
     name: 'Flash',
+
     brand: {
       name: 'Jetboil',
       slug: 'jetboil'
@@ -67,7 +70,9 @@ const comparisonResponse: ComparisonResponse = {
     name: 'Stoves',
     slug: 'stoves'
   },
+
   items: comparisonItems,
+
   properties: [
     {
       dataType: 'number',
@@ -75,11 +80,24 @@ const comparisonResponse: ComparisonResponse = {
       name: 'Weight',
       slug: 'weight',
       unit: 'g',
+
       values: [
-        { itemId: comparisonItemIds[0], value: 83 },
-        { itemId: comparisonItemIds[1], value: 83 },
-        { itemId: comparisonItemIds[2], value: null },
-        { itemId: comparisonItemIds[3], value: 371 }
+        {
+        itemId: comparisonItemIds[0],
+        value: 83
+      },
+        {
+        itemId: comparisonItemIds[1],
+        value: 83
+      },
+        {
+        itemId: comparisonItemIds[2],
+        value: null
+      },
+        {
+        itemId: comparisonItemIds[3],
+        value: 371
+      }
       ]
     },
     {
@@ -88,6 +106,7 @@ const comparisonResponse: ComparisonResponse = {
       name: 'Fuel type',
       slug: 'fuel-type',
       unit: null,
+
       values: comparisonItemIds.map((itemId) => {
         return {
           enumOptionName: 'Gas canister',
@@ -102,11 +121,24 @@ const comparisonResponse: ComparisonResponse = {
       name: 'Piezo ignition',
       slug: 'piezo-ignition',
       unit: null,
+
       values: [
-        { itemId: comparisonItemIds[0], value: true },
-        { itemId: comparisonItemIds[1], value: false },
-        { itemId: comparisonItemIds[2], value: true },
-        { itemId: comparisonItemIds[3], value: true }
+        {
+        itemId: comparisonItemIds[0],
+        value: true
+      },
+        {
+        itemId: comparisonItemIds[1],
+        value: false
+      },
+        {
+        itemId: comparisonItemIds[2],
+        value: true
+      },
+        {
+        itemId: comparisonItemIds[3],
+        value: true
+      }
       ]
     }
   ]
@@ -125,6 +157,7 @@ function createComparisonResponse(itemIds: readonly string[]): ComparisonRespons
   }
 
   const itemIdSet = new Set(itemIds)
+
   const properties = comparisonResponse.properties.map((property) => {
     const values = property.values.filter((value) => itemIdSet.has(value.itemId))
 
@@ -184,12 +217,14 @@ async function mockComparisonApi(
 
   await context.route((url) => url.pathname === '/api/equipment/comparisons', async (route) => {
     const request = route.request()
+
     tracker.comparisons.push(request)
 
     const requestUrl = new globalThis.URL(request.url())
     const itemIds = requestUrl.searchParams.getAll('itemId')
     const defaultResponse = createComparisonResponse(itemIds)
     const response = getMockResponse(options.comparison, request, defaultResponse)
+
     await fulfillMockResponse(route, response)
   })
 

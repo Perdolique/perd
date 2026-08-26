@@ -31,6 +31,7 @@
 
 ### TypeScript or Vue file changes
 
+- Run `vp run format` and wait for it to finish before starting the remaining checks.
 - `vp run test:typecheck`
 - `vp run test:unit:agent`
 - `vp run lint:oxlint:agent`

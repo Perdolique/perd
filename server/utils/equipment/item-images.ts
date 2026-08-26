@@ -1,11 +1,13 @@
-import {
-  createError,
-  getRequestHeader,
-  getRequestWebStream,
-  type H3Event
-} from 'h3'
+import { createError, getRequestHeader, type H3Event } from 'h3'
+import { limits } from '#shared/constants'
 
-const maximumImageByteLength = 5_000_000
+import {
+  createLimitedRequestBody,
+  getContentLength,
+  validateDeclaredByteLength
+} from '#server/utils/equipment/limited-request-body'
+
+const invalidImageErrorCode = 9412
 
 const supportedImageMediaTypes = new Set([
   'image/jpeg',
@@ -16,203 +18,251 @@ const supportedImageMediaTypes = new Set([
 interface EquipmentItemImageBody {
   close: () => Promise<void>;
   isLimitExceeded: () => boolean;
+  mediaType: string;
   stream: ReadableStream<Uint8Array>;
 }
 
-function getImageChunk(value: unknown): Uint8Array {
-  if (value instanceof Uint8Array) {
-    return value
-  }
-
-  throw createError({
-    status: 400,
-    statusMessage: 'Image body must be binary'
-  })
+interface CreateEquipmentItemImageBodyOptions {
+  declaredByteLength?: number;
+  mediaType: string;
+  stream: ReadableStream<unknown> | undefined;
 }
 
-function validateImageContentType(event: H3Event): void {
-  const contentType = getRequestHeader(event, 'content-type')
-  const mediaType = contentType?.split(';', 1)[0]?.trim().toLowerCase()
+interface UploadHostedEquipmentImageOptions {
+  binding: Env['IMAGES'];
+  body: EquipmentItemImageBody;
+  creator: string;
+  filename: string;
+  metadata: Record<string, unknown>;
+  requireSignedURLs: boolean;
+}
 
-  if (mediaType === undefined || supportedImageMediaTypes.has(mediaType) === false) {
+interface DeleteUnattachedHostedEquipmentImageOptions {
+  binding: Env['IMAGES'];
+  cloudflareImageId: string;
+}
+
+function validateImageMediaType(mediaType: string): string {
+  const normalizedMediaType = mediaType.trim().toLowerCase()
+
+  if (supportedImageMediaTypes.has(normalizedMediaType) === false) {
     throw createError({
       status: 415,
       statusMessage: 'Unsupported image content type'
     })
   }
+
+  return normalizedMediaType
 }
 
-function validateImageContentLength(event: H3Event): void {
-  const contentLengthHeader = getRequestHeader(event, 'content-length')
+function validateEquipmentItemImageRequest(event: H3Event): string {
+  const contentType = getRequestHeader(event, 'content-type')
+  const mediaType = contentType?.split(';', 1)[0] ?? ''
+  const normalizedMediaType = validateImageMediaType(mediaType)
 
-  if (contentLengthHeader === undefined) {
+  validateDeclaredByteLength(
+    getContentLength(event),
+    limits.maxEquipmentItemImageByteLength
+  )
+
+  return normalizedMediaType
+}
+
+async function cancelSourceStream(stream: ReadableStream<unknown> | undefined): Promise<void> {
+  if (stream === undefined) {
     return
   }
 
-  const hasValidContentLength = /^\d+$/u.test(contentLengthHeader)
-
-  if (hasValidContentLength === false) {
-    throw createError({
-      status: 400,
-      statusMessage: 'Invalid Content-Length'
-    })
-  }
-
-  const contentLength = Number(contentLengthHeader)
-
-  if (contentLength === 0) {
-    throw createError({
-      status: 400,
-      statusMessage: 'Image body is required'
-    })
-  }
-
-  if (contentLength > maximumImageByteLength) {
-    throw createError({
-      status: 413,
-      statusMessage: 'Image body is too large'
-    })
-  }
-}
-
-function validateEquipmentItemImageRequest(event: H3Event): void {
-  validateImageContentType(event)
-  validateImageContentLength(event)
-}
-
-async function createEquipmentItemImageBody(event: H3Event): Promise<EquipmentItemImageBody> {
-  const sourceStream: ReadableStream<unknown> | undefined = getRequestWebStream(event)
-
-  if (sourceStream === undefined) {
-    throw createError({
-      status: 400,
-      statusMessage: 'Image body is required'
-    })
-  }
-
-  const reader = sourceStream.getReader()
-  let isReaderReleased = false
-
-  function releaseReader(): void {
-    if (isReaderReleased) {
-      return
-    }
-
-    isReaderReleased = true
-    reader.releaseLock()
-  }
-
-  async function closeReader(): Promise<void> {
-    if (isReaderReleased) {
-      return
-    }
-
-    try {
-      await reader.cancel().catch(() => null)
-    } finally {
-      releaseReader()
-    }
-  }
-
-  let firstResult = await reader.read().catch(async (error: unknown) => {
-    await closeReader()
-
-    throw error
-  })
-  let initialChunk: Uint8Array | null = null
-
   try {
-    while (firstResult.done === false) {
-      const chunk = getImageChunk(firstResult.value)
+    await stream.cancel()
+  } catch {
+    // Rejecting an invalid source still closes every stream that can be cancelled.
+  }
+}
 
-      if (chunk.byteLength > 0) {
-        initialChunk = chunk
+async function validateImageBodyOptions(
+  options: CreateEquipmentItemImageBodyOptions
+): Promise<string> {
+  try {
+    const mediaType = validateImageMediaType(options.mediaType)
 
-        break
-      }
+    validateDeclaredByteLength(
+      options.declaredByteLength,
+      limits.maxEquipmentItemImageByteLength
+    )
 
-      // oxlint-disable-next-line no-await-in-loop -- Empty chunks do not make the request body non-empty.
-      firstResult = await reader.read()
-    }
+    return mediaType
   } catch (error) {
-    await closeReader()
+    await cancelSourceStream(options.stream)
 
     throw error
   }
+}
 
-  if (initialChunk === null) {
-    releaseReader()
+async function createEquipmentItemImageBody(
+  options: CreateEquipmentItemImageBodyOptions
+): Promise<EquipmentItemImageBody> {
+  const mediaType = await validateImageBodyOptions(options)
 
-    throw createError({
-      status: 400,
-      statusMessage: 'Image body is required'
-    })
-  }
-
-  let { byteLength } = initialChunk
-
-  if (byteLength > maximumImageByteLength) {
-    await closeReader()
-
-    throw createError({
-      status: 413,
-      statusMessage: 'Image body is too large'
-    })
-  }
-
-  let firstChunk: Uint8Array | undefined = initialChunk
-  let isLimitExceeded = false
-
-  const stream = new ReadableStream<Uint8Array>({
-    cancel: closeReader,
-
-    async pull(controller) {
-      try {
-        if (firstChunk !== undefined) {
-          controller.enqueue(firstChunk)
-          firstChunk = undefined
-
-          return
-        }
-
-        const result = await reader.read()
-
-        if (result.done) {
-          releaseReader()
-          controller.close()
-
-          return
-        }
-
-        const chunk = getImageChunk(result.value)
-
-        byteLength += chunk.byteLength
-
-        if (byteLength > maximumImageByteLength) {
-          isLimitExceeded = true
-          await closeReader()
-          controller.error(new Error('Image body is too large'))
-
-          return
-        }
-
-        controller.enqueue(chunk)
-      } catch (error) {
-        await closeReader()
-        controller.error(error)
-      }
-    }
-  })
+  const body = await createLimitedRequestBody(
+    options.stream,
+    limits.maxEquipmentItemImageByteLength
+  )
 
   return {
-    close: closeReader,
-    isLimitExceeded: () => isLimitExceeded,
-    stream
+    close: body.close,
+    isLimitExceeded: body.isLimitExceeded,
+    mediaType,
+    stream: body.stream
+  }
+}
+
+function isInvalidImageError(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) {
+    return false
+  }
+
+  return Reflect.get(error, 'code') === invalidImageErrorCode
+}
+
+function getPromiseRejectionReason(result: PromiseSettledResult<unknown>): unknown {
+  return result.status === 'rejected' ? result.reason as unknown : undefined
+}
+
+async function deleteUnattachedHostedEquipmentImage(
+  options: DeleteUnattachedHostedEquipmentImageOptions
+): Promise<void> {
+  const { binding, cloudflareImageId } = options
+
+  try {
+    const imageHandle = binding.hosted.image(cloudflareImageId)
+
+    await imageHandle.delete()
+  } catch (error) {
+    console.error('Failed to delete unattached Cloudflare image', {
+      cloudflareImageId,
+      error
+    })
+  }
+}
+
+async function uploadHostedEquipmentImage(
+  options: UploadHostedEquipmentImageOptions
+): Promise<string> {
+  const {
+    binding,
+    body,
+    creator,
+    filename,
+    metadata,
+    requireSignedURLs
+  } = options
+
+  const [infoStream, uploadStream] = body.stream.tee()
+
+  try {
+    const imageInfoPromise = binding.info(infoStream)
+
+    const imageUploadPromise = binding.hosted.upload(uploadStream, {
+      creator,
+      filename,
+      metadata,
+      requireSignedURLs
+    })
+
+    const [imageInfoResult, imageUploadResult] = await Promise.allSettled([
+      imageInfoPromise,
+      imageUploadPromise
+    ])
+
+    const uploadedImageId = imageUploadResult.status === 'fulfilled'
+      ? imageUploadResult.value.id
+      : null
+
+    const imageInfoError = getPromiseRejectionReason(imageInfoResult)
+    const imageUploadError = getPromiseRejectionReason(imageUploadResult)
+
+    if (body.isLimitExceeded()) {
+      if (uploadedImageId !== null) {
+        await deleteUnattachedHostedEquipmentImage({
+          binding,
+          cloudflareImageId: uploadedImageId
+        })
+      }
+
+      throw createError({
+        status: 413,
+        statusMessage: 'Image body is too large'
+      })
+    }
+
+    if (imageInfoResult.status === 'rejected') {
+      if (uploadedImageId !== null) {
+        await deleteUnattachedHostedEquipmentImage({
+          binding,
+          cloudflareImageId: uploadedImageId
+        })
+      }
+
+      if (isInvalidImageError(imageInfoError)) {
+        throw createError({
+          status: 415,
+          statusMessage: 'Unsupported image format'
+        })
+      }
+
+      console.error('Failed to inspect Cloudflare image', {
+        error: imageInfoError,
+        metadata,
+        uploadError: imageUploadError
+      })
+
+      throw createError({
+        status: 502,
+        statusMessage: 'Image inspection failed'
+      })
+    }
+
+    const imageInfo = imageInfoResult.value
+    const isSupportedFormat = supportedImageMediaTypes.has(imageInfo.format)
+    const doesMediaTypeMatch = imageInfo.format === body.mediaType
+
+    if (isSupportedFormat === false || doesMediaTypeMatch === false) {
+      if (uploadedImageId !== null) {
+        await deleteUnattachedHostedEquipmentImage({
+          binding,
+          cloudflareImageId: uploadedImageId
+        })
+      }
+
+      throw createError({
+        status: 415,
+        statusMessage: 'Unsupported image format'
+      })
+    }
+
+    if (imageUploadResult.status === 'rejected') {
+      console.error('Failed to upload Cloudflare image', {
+        error: imageUploadError,
+        metadata
+      })
+
+      throw createError({
+        status: 502,
+        statusMessage: 'Image upload failed'
+      })
+    }
+
+    return imageUploadResult.value.id
+  } finally {
+    await body.close()
   }
 }
 
 export {
   createEquipmentItemImageBody,
+  deleteUnattachedHostedEquipmentImage,
+  uploadHostedEquipmentImage,
   validateEquipmentItemImageRequest
 }
 

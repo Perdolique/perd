@@ -34,7 +34,6 @@
 
   const props = defineProps<Props>()
   const emit = defineEmits<Emits>()
-
   const hasSubtitle = computed(() => props.entry.subtitle !== '')
   const removeLabel = computed(() => `Remove ${props.entry.title}`)
 

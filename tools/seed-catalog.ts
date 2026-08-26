@@ -23,6 +23,7 @@ import {
   referenceSeed,
   sampleItems
 } from './seed-data'
+
 import { assertSampleItemCoverage } from './seed-validation'
 
 type Database = ReturnType<typeof createWebSocketClient>
@@ -111,11 +112,13 @@ async function resetAndSeedCatalog(db: Database) {
             isUnique: true,
             values: brandDefinitions.map((brand) => brand.name)
           }),
+
           slug: funcs.valuesFromArray({
             isUnique: true,
             values: brandDefinitions.map((brand) => brand.seedSlug)
           })
         },
+
         count: brandDefinitions.length
       },
 
@@ -125,11 +128,13 @@ async function resetAndSeedCatalog(db: Database) {
             isUnique: true,
             values: categoryDefinitions.map((category) => category.name)
           }),
+
           slug: funcs.valuesFromArray({
             isUnique: true,
             values: categoryDefinitions.map((category) => category.seedSlug)
           })
         },
+
         count: categoryDefinitions.length
       },
 
@@ -139,11 +144,13 @@ async function resetAndSeedCatalog(db: Database) {
             isUnique: true,
             values: groupDefinitions.map((group) => group.name)
           }),
+
           slug: funcs.valuesFromArray({
             isUnique: true,
             values: groupDefinitions.map((group) => group.seedSlug)
           })
         },
+
         count: groupDefinitions.length
       }
     }
@@ -275,11 +282,13 @@ async function resetAndSeedCatalog(db: Database) {
           item.brandSlug,
           `Missing brand ${item.brandSlug}`
         ),
+
         categoryId: getRequiredMapValue(
           categoryIdBySlug,
           item.categorySlug,
           `Missing category ${item.categorySlug}`
         ),
+
         createdBy: null,
         name: item.name,
         status: 'approved'

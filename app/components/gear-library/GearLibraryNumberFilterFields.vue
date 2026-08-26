@@ -47,11 +47,7 @@
 <script lang="ts" setup>
   import { computed, useId } from 'vue'
   import type { GearLibraryFilterProperty } from '~/types/equipment'
-
-  import type {
-    GearLibraryNumberRangeDraft,
-    GearLibraryNumberRangeErrors
-  } from '~/utils/gear-library-filters'
+  import type { GearLibraryNumberRangeDraft, GearLibraryNumberRangeErrors } from '~/utils/gear-library-filters'
 
   interface Props {
     errors: GearLibraryNumberRangeErrors;
@@ -137,6 +133,7 @@
 
     ranges.value = {
       ...ranges.value,
+
       [propertySlug]: {
         max: boundary === 'max' ? input.value : currentRange.max,
         min: boundary === 'min' ? input.value : currentRange.min
@@ -147,14 +144,11 @@
 
 <style module>
   .component {
-    min-inline-size: 0;
-    padding: 0 0 var(--spacing-20);
-    border: 0;
+    padding-block-end: var(--spacing-20);
     border-block-end: 1px solid var(--color-border-subtle);
   }
 
   .legend {
-    padding: 0;
     margin-block-end: var(--spacing-12);
     color: var(--color-text-primary);
     font-size: var(--font-size-16);

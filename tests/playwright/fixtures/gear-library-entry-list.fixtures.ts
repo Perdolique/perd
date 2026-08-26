@@ -43,9 +43,9 @@ interface CatalogRequestTracker {
   myGear: Request[];
 }
 
-interface Deferred {
-  promise: Promise<void>;
-  resolve: () => void;
+interface Deferred<TValue = void> {
+  promise: Promise<TValue>;
+  resolve: (value: TValue) => void;
 }
 
 interface MutableResponseState {
@@ -154,6 +154,7 @@ const scrollableItemsResponse: GearLibraryItemsResponse = {
       name: `PocketRocket Deluxe ${index + 1}`
     }
   }),
+
   limit: 10,
   page: 1,
   total: 8
@@ -473,7 +474,10 @@ function createGatedLoadMoreResponder(gatedPage: string, gate: Deferred): Catalo
     const shouldWait = requestedPage === gatedPage
 
     if (shouldWait) {
-      return { ...response, waitFor: gate.promise }
+      return {
+        ...response,
+        waitFor: gate.promise
+      }
     }
 
     return response
@@ -504,7 +508,10 @@ function createStaleLoadMoreResponder(secondPageGate: Deferred): CatalogResponde
     const isSecondPage = requestedPage === '2'
 
     if (isSecondPage) {
-      return { ...response, waitFor: secondPageGate.promise }
+      return {
+        ...response,
+        waitFor: secondPageGate.promise
+      }
     }
 
     const isRefreshedSearch = search === 'whisper'
@@ -525,11 +532,11 @@ function throwUnresolvedDeferred(): never {
   throw new Error('Deferred resolver was not initialized')
 }
 
-function createDeferred(): Deferred {
-  let resolveDeferred: () => void = throwUnresolvedDeferred
+function createDeferred<TValue = void>(): Deferred<TValue> {
+  let resolveDeferred: (value: TValue) => void = throwUnresolvedDeferred
 
   // oxlint-disable-next-line promise/avoid-new -- The test needs a manually released network response.
-  const promise = new Promise<void>((resolve) => {
+  const promise = new Promise<TValue>((resolve) => {
     resolveDeferred = resolve
   })
 
@@ -628,6 +635,7 @@ async function mockCatalogApi(context: BrowserContext, config: CatalogMockConfig
 
     if (request.method() !== 'POST') {
       await route.abort()
+
       return
     }
 
@@ -640,6 +648,7 @@ async function mockCatalogApi(context: BrowserContext, config: CatalogMockConfig
         item: createItemDetailResponse(stoveItem)
       }
     }
+
     const response = config.addMyGear === undefined
       ? fallback
       : await config.addMyGear(request)
@@ -692,6 +701,7 @@ async function mockCatalogApi(context: BrowserContext, config: CatalogMockConfig
     const fallbackCategory = requestUrl.pathname.endsWith('/sleeping-pads')
       ? sleepingPadsCategoryResponse
       : stovesCategoryResponse
+
     const fallback = { json: fallbackCategory }
     const response = await resolveMockResponse(config.categoryDetail, request, fallback)
 
@@ -834,9 +844,11 @@ async function clearGearLibraryItemsSnapshot(page: Page): Promise<void> {
     }
 
     const nuxtRoot = globalThis.document.querySelector('#__nuxt')
+
     const vueApp: unknown = nuxtRoot === null
       ? undefined
       : Reflect.get(nuxtRoot, '__vue_app__')
+
     const vueAppConfig = getRequiredProperty(vueApp, 'config')
     const globalProperties = getRequiredProperty(vueAppConfig, 'globalProperties')
     const pinia = getRequiredProperty(globalProperties, '$pinia')
@@ -1010,5 +1022,5 @@ export {
   expectPerdSelectValue,
   hasVisibleFocusOutline,
   waitForInlineEndAnchoring,
-  waitForBlockEndAnchoring,
+  waitForBlockEndAnchoring
 }

@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  compareDecimalNumbers,
-  isFiniteDecimalNumber,
-  normalizeDecimalNumber
-} from '../decimal-number'
+import { compareDecimalNumbers, isFiniteDecimalNumber, normalizeDecimalNumber } from '../decimal-number'
 
 describe(compareDecimalNumbers, () => {
   it.each([

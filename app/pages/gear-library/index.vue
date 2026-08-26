@@ -348,6 +348,7 @@
   const hasSelectedCategory = computed(() => selectedCategory.value !== undefined)
   const myGear = useGearLibraryMyGear()
   const gearLibraryStore = useGearLibraryStore()
+
   const gearLibraryData = await useGearLibraryData({
     hasSavedBrowsingState,
     loadedPageCount,
@@ -567,25 +568,32 @@
   const comparisonModeAction = useTemplateRef('comparisonModeAction')
   const isCategoryConfirmationOpen = ref(false)
   const pendingCategoryValue = ref<string | null>(null)
+
   const showComparisonTray = computed(
     () => isComparisonModeActive.value && hasComparisonSelection.value
   )
+
   const showPageComparisonNotice = computed(
     () => comparisonAnnouncement.value !== '' && showComparisonTray.value === false
   )
+
   const comparisonModeActionText = computed(
     () => isComparisonModeActive.value ? 'Cancel comparison' : 'Compare items'
   )
+
   const showComparisonModeAction = computed(
     () => hasSelectedCategory.value
       && (hasSuccessfulItemsRequest.value || isComparisonModeActive.value)
   )
+
   const categoryConfirmationBody = computed(
     () => `Changing the category removes ${selectedComparisonIds.value.length} selected items.`
   )
+
   const categoryConfirmationButtonText = computed(
     () => pendingCategoryValue.value === '' ? 'Clear category' : 'Change category'
   )
+
   async function handleResultComparisonChange(item: GearLibraryListItemView, selected: boolean) {
     if (selected) {
       await addComparisonItem(item)

@@ -43,6 +43,7 @@ const {
     createWebSocketClientMock: vi.fn<(config: unknown) => MockWriteDb>(() => {
       throw new Error('createWebSocketClient mock is not configured')
     }),
+
     getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
     readValidatedBodyMock: vi.fn<typeof h3.readValidatedBody>(),
     setResponseStatusMock: vi.fn<typeof h3.setResponseStatus>(),
@@ -222,6 +223,7 @@ function createDb(transaction: MockEnumOptionTransaction) {
     $client: {
       end: endMock
     },
+
     transaction: transactionMock
   }
 
@@ -312,6 +314,7 @@ describe('property enum option handlers', () => {
       })
 
       const { insertMock } = createInsertMock([])
+
       const { selectMock } = createSelectMock([{
         rows: []
       }])
@@ -340,6 +343,7 @@ describe('property enum option handlers', () => {
       })
 
       const { insertMock } = createInsertMock([])
+
       const { selectMock } = createSelectMock([{
         rows: [{
           dataType: 'text',
@@ -372,6 +376,7 @@ describe('property enum option handlers', () => {
       })
 
       const { insertMock } = createInsertMock([])
+
       const { selectMock } = createSelectMock([{
         rows: [{
           dataType: 'enum',
@@ -455,6 +460,7 @@ describe('property enum option handlers', () => {
       createWebSocketClientMock.mockReturnValue(dbWrite)
 
       const event = createTestEvent({})
+
       await deletePropertyEnumOptionHandler(event)
 
       const [propertyLockMock] = forMocks
@@ -466,6 +472,7 @@ describe('property enum option handlers', () => {
       const propertyLockCallOrder = Math.min(
         ...forMocks.flatMap((forMock) => forMock.mock.invocationCallOrder)
       )
+
       const usageReadCallOrder = Math.max(...selectMock.mock.invocationCallOrder)
 
       expect(propertyLockCallOrder).toBeLessThan(usageReadCallOrder)
@@ -487,6 +494,7 @@ describe('property enum option handlers', () => {
 
     it('should return 404 when category property does not exist', async () => {
       const { insertMock } = createInsertMock([])
+
       const { selectMock } = createSelectMock([{
         lock: true,
         rows: []
@@ -515,6 +523,7 @@ describe('property enum option handlers', () => {
 
     it('should return 404 when property enum option does not belong to property', async () => {
       const { insertMock } = createInsertMock([])
+
       const { selectMock } = createSelectMock([{
         lock: true,
         rows: []
@@ -549,6 +558,7 @@ describe('property enum option handlers', () => {
       }
 
       const { insertMock } = createInsertMock([])
+
       const { selectMock } = createSelectMock([{
         lock: true,
         rows: [deletedOption]

@@ -1,7 +1,23 @@
 // oxlint-disable max-lines
 // oxlint-disable import/no-relative-parent-imports
 import { sql } from 'drizzle-orm'
-import { boolean, check, index, integer, jsonb, numeric, pgTable, serial, text, timestamp, unique, uuid, varchar } from 'drizzle-orm/pg-core'
+
+import {
+  boolean,
+  check,
+  index,
+  integer,
+  jsonb,
+  numeric,
+  pgTable,
+  serial,
+  text,
+  timestamp,
+  unique,
+  uuid,
+  varchar
+} from 'drizzle-orm/pg-core'
+
 // FIXME: drizzle-kit can't handle #shared/constants, so we have to import it with a relative path
 import { limits } from '../../shared/constants'
 
@@ -308,6 +324,89 @@ const equipmentItemImages = pgTable('equipment_item_images', {
 }, (table) => [
   unique(equipmentItemImageDisplayOrderConstraintName).on(table.itemId, table.displayOrder),
   check('equipment_item_images_displayOrder_check', sql`${table.displayOrder} >= 0`)
+])
+
+const equipmentItemPhotoSubmissionSourceConstraintName = 'equipment_item_photo_submissions_source_check'
+
+/**
+ * Private user-submitted photos awaiting catalog review.
+ *
+ * Approved photos are published separately in `equipment_item_images`.
+ */
+const equipmentItemPhotoSubmissions = pgTable('equipment_item_photo_submissions', {
+  id:
+    uuid()
+    .notNull()
+    .default(sql`uuidv7()`)
+    .primaryKey(),
+
+  itemId:
+    uuid()
+    .notNull()
+    .references(() => equipmentItems.id, {
+      onDelete: 'restrict',
+      onUpdate: 'cascade'
+    }),
+
+  idempotencyKey:
+    uuid()
+    .notNull(),
+
+  cloudflareImageId:
+    text()
+    .notNull()
+    .unique(),
+
+  filename:
+    varchar({ length: limits.maxEquipmentItemImageFilenameLength })
+    .notNull(),
+
+  sourceType:
+    varchar({ length: 16 })
+    .notNull(),
+
+  sourceUrl:
+    varchar({ length: limits.maxEquipmentItemPhotoSubmissionSourceUrlLength }),
+
+  rightsConfirmed:
+    boolean()
+    .notNull(),
+
+  status:
+    varchar({ length: 16 })
+    .notNull()
+    .default('pending'),
+
+  createdBy:
+    uuid()
+    .references(() => users.id, {
+      onDelete: 'set null',
+      onUpdate: 'cascade'
+    }),
+
+  createdAt:
+    timestamp({
+      withTimezone: true
+    })
+    .notNull()
+    .defaultNow(),
+
+  updatedAt:
+    timestamp({
+      withTimezone: true
+    })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => sql`now()`)
+}, (table) => [
+  unique('equipment_item_photo_submissions_createdBy_idempotencyKey_unique')
+    .on(table.createdBy, table.idempotencyKey),
+  index('equipment_item_photo_submissions_creator_history_index')
+    .on(table.createdBy, table.createdAt.desc(), table.id.desc()),
+  check(
+    equipmentItemPhotoSubmissionSourceConstraintName,
+    sql`(${table.sourceType} = 'own' AND ${table.sourceUrl} IS NULL) OR (${table.sourceType} = 'manufacturer' AND NULLIF(BTRIM(${table.sourceUrl}), '') IS NOT NULL)`
+  )
 ])
 
 const categoryPropertyDisplayOrderConstraintName = 'category_properties_categoryId_displayOrder_unique'
@@ -619,6 +718,7 @@ export {
   brands,
   equipmentItems,
   equipmentItemImages,
+  equipmentItemPhotoSubmissions,
   categoryProperties,
   propertyEnumOptions,
   itemPropertyValues,
@@ -627,5 +727,6 @@ export {
   packingListEntries,
   contributions,
   categoryPropertyDisplayOrderConstraintName,
-  equipmentItemImageDisplayOrderConstraintName
+  equipmentItemImageDisplayOrderConstraintName,
+  equipmentItemPhotoSubmissionSourceConstraintName
 }

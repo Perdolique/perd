@@ -1,6 +1,16 @@
 import { and, DrizzleQueryError, eq, max } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody, setResponseStatus } from 'h3'
+
+import {
+  createError,
+  defineEventHandler,
+  getValidatedRouterParams,
+  isError,
+  readValidatedBody,
+  setResponseStatus
+} from 'h3'
+
 import * as v from 'valibot'
+
 import {
   categoryProperties,
   categoryPropertyDisplayOrderConstraintName,
@@ -8,18 +18,11 @@ import {
   equipmentCategories,
   propertyEnumOptions
 } from '#server/database/schema'
+
 import { validateAdminUser } from '#server/utils/admin'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
-
-import {
-  categoryPropertyBaseSelection,
-  propertyEnumOptionBaseSelection
-} from '#server/utils/equipment/base-records'
-
-import {
-  validateCategoryPropertyMutationBody,
-  validateCategoryScopedParams
-} from '#server/utils/validation/schemas'
+import { categoryPropertyBaseSelection, propertyEnumOptionBaseSelection } from '#server/utils/equipment/base-records'
+import { validateCategoryPropertyMutationBody, validateCategoryScopedParams } from '#server/utils/validation/schemas'
 
 interface CreatedCategoryPropertyEnumOption {
   id: number;

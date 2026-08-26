@@ -1,5 +1,5 @@
 <template>
-  <PageContent page-title="Gear submissions">
+  <PageContent page-title="My contributions">
     <template #actions>
       <PerdLink :to="appRoutes.account">
         Back to account
@@ -7,15 +7,15 @@
     </template>
 
     <PagePlaceholder v-if="isGuest" emoji="🔐" title="Account required.">
-      Guest accounts do not have gear submissions.
+      Guest accounts do not have catalog contributions.
     </PagePlaceholder>
 
-    <PageLoadingState v-else-if="isLoading" title="Loading gear submissions" />
+    <PageLoadingState v-else-if="isLoading" title="Loading My contributions" />
 
     <PagePlaceholder
       v-else-if="hasError"
       emoji="🧰"
-      title="Gear submissions unavailable."
+      title="My contributions unavailable."
     >
       Could not load your submissions.
 
@@ -27,11 +27,11 @@
     </PagePlaceholder>
 
     <PagePlaceholder
-      v-else-if="hasNoSubmissions"
+      v-else-if="hasNoContributions"
       emoji="📭"
-      title="No gear submissions yet."
+      title="No contributions yet."
     >
-      Submit missing gear and its review status will appear here.
+      Submit missing gear or a photo and its review status will appear here.
 
       <template #actions>
         <PerdLink :to="appRoutes.gearLibraryNew">
@@ -40,96 +40,186 @@
       </template>
     </PagePlaceholder>
 
-    <div v-else :class="$style.list">
-      <PerdCard
-        v-for="item in submissionCards"
-        :key="item.id"
-        :class="$style.card"
-      >
-        <div :class="$style.header">
-          <div :class="$style.titleGroup">
-            <PerdHeading :level="2">
-              <PerdLink v-if="item.detailPath" :to="item.detailPath">
-                {{ item.name }}
-              </PerdLink>
+    <div v-else :class="$style.content">
+      <section v-if="hasItemSubmissions" :class="$style.section">
+        <PerdHeading :level="2">Item submissions</PerdHeading>
 
-              <template v-else>
-                {{ item.name }}
-              </template>
-            </PerdHeading>
+        <div :class="$style.list">
+          <PerdCard
+            v-for="item in itemSubmissionCards"
+            :key="item.id"
+            :class="$style.card"
+          >
+            <div :class="$style.header">
+              <div :class="$style.titleGroup">
+                <h3 :class="$style.cardTitle">
+                  <PerdLink v-if="item.detailPath" :to="item.detailPath">
+                    {{ item.name }}
+                  </PerdLink>
 
-            <p :class="$style.references">
-              {{ item.brandName }} · {{ item.categoryName }}
-            </p>
-          </div>
+                  <template v-else>
+                    {{ item.name }}
+                  </template>
+                </h3>
 
-          <PerdPill :tone="item.statusTone">
-            {{ item.statusLabel }}
-          </PerdPill>
-        </div>
+                <p :class="$style.references">
+                  {{ item.brandName }} · {{ item.categoryName }}
+                </p>
+              </div>
 
-        <dl :class="$style.metadata">
-          <div :class="$style.metadataGroup">
-            <dt>Submitted</dt>
-
-            <dd>
-              <NuxtTime
-                :datetime="item.createdAt"
-                locale="en"
-                date-style="medium"
-                time-style="short"
-              />
-            </dd>
-          </div>
-
-          <div :class="$style.metadataGroup">
-            <dt>Last updated</dt>
-
-            <dd>
-              <NuxtTime
-                :datetime="item.updatedAt"
-                locale="en"
-                date-style="medium"
-                time-style="short"
-              />
-            </dd>
-          </div>
-        </dl>
-
-        <div v-if="item.hasProperties" :class="$style.properties">
-          <h3 :class="$style.sectionTitle">Known characteristics</h3>
-
-          <dl :class="$style.propertyList">
-            <div
-              v-for="property in item.properties"
-              :key="property.propertyId"
-              :class="$style.property"
-            >
-              <dt>{{ property.name }}</dt>
-              <dd>{{ property.displayValue }}</dd>
+              <PerdPill :tone="item.statusTone">
+                {{ item.statusLabel }}
+              </PerdPill>
             </div>
-          </dl>
+
+            <dl :class="$style.metadata">
+              <div :class="$style.metadataGroup">
+                <dt>Submitted</dt>
+
+                <dd>
+                  <NuxtTime
+                    :datetime="item.createdAt"
+                    locale="en"
+                    date-style="medium"
+                    time-style="short"
+                  />
+                </dd>
+              </div>
+
+              <div :class="$style.metadataGroup">
+                <dt>Last updated</dt>
+
+                <dd>
+                  <NuxtTime
+                    :datetime="item.updatedAt"
+                    locale="en"
+                    date-style="medium"
+                    time-style="short"
+                  />
+                </dd>
+              </div>
+            </dl>
+
+            <div v-if="item.hasProperties" :class="$style.properties">
+              <h4 :class="$style.sectionTitle">Known characteristics</h4>
+
+              <dl :class="$style.propertyList">
+                <div
+                  v-for="property in item.properties"
+                  :key="property.propertyId"
+                  :class="$style.property"
+                >
+                  <dt>{{ property.name }}</dt>
+                  <dd>{{ property.displayValue }}</dd>
+                </div>
+              </dl>
+            </div>
+
+            <div v-if="item.hasRejectionReason" :class="$style.rejection">
+              <strong>Rejection reason</strong>
+              <p>{{ item.rejectionReason }}</p>
+            </div>
+          </PerdCard>
         </div>
 
-        <div v-if="item.rejectionReason !== null" :class="$style.rejection">
-          <strong>Rejection reason</strong>
-          <p>{{ item.rejectionReason }}</p>
+      </section>
+
+      <section v-if="hasPhotoSubmissions" :class="$style.section">
+        <PerdHeading :level="2">Photo submissions</PerdHeading>
+
+        <div :class="$style.list">
+          <PerdCard
+            v-for="photo in photoSubmissionCards"
+            :key="photo.id"
+            :class="$style.card"
+          >
+            <div :class="$style.header">
+              <div :class="$style.titleGroup">
+                <h3 :class="$style.cardTitle">
+                  <PerdLink :to="photo.itemPath">
+                    {{ photo.itemName }}
+                  </PerdLink>
+                </h3>
+
+                <p>{{ photo.filename }}</p>
+                <p :class="$style.references">{{ photo.sourceLabel }}</p>
+
+                <a
+                  v-if="photo.hasSourceUrl"
+                  :href="photo.sourceUrl"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  Manufacturer source
+                </a>
+              </div>
+
+              <PerdPill tone="warning">Pending</PerdPill>
+            </div>
+
+            <dl :class="$style.metadata">
+              <div :class="$style.metadataGroup">
+                <dt>Submitted</dt>
+
+                <dd>
+                  <NuxtTime
+                    :datetime="photo.createdAt"
+                    locale="en"
+                    date-style="medium"
+                    time-style="short"
+                  />
+                </dd>
+              </div>
+
+              <div :class="$style.metadataGroup">
+                <dt>Last updated</dt>
+
+                <dd>
+                  <NuxtTime
+                    :datetime="photo.updatedAt"
+                    locale="en"
+                    date-style="medium"
+                    time-style="short"
+                  />
+                </dd>
+              </div>
+            </dl>
+          </PerdCard>
         </div>
-      </PerdCard>
+
+        <p v-if="hasPhotoLoadMoreError" :class="$style.errorMessage" role="alert">
+          Could not load more photo submissions. Try again.
+        </p>
+
+        <PerdButton
+          v-if="hasMorePhotoSubmissions"
+          variant="secondary"
+          :loading="isLoadingMorePhotos"
+          @click="loadMorePhotoSubmissions"
+        >
+          Load more photo submissions
+        </PerdButton>
+
+        <p
+          v-if="isPhotoPaginationComplete"
+          ref="photoPaginationStatus"
+          :class="$style.paginationStatus"
+          role="status"
+          tabindex="-1"
+        >
+          All photo submissions are loaded.
+        </p>
+      </section>
     </div>
   </PageContent>
 </template>
 
 <script lang="ts" setup>
-  import { computed } from 'vue'
-  import { definePageMeta, useFetch, useUserStore } from '#imports'
+  import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
+  import { definePageMeta, useFetch, useRequestFetch, useUserStore } from '#imports'
   import { NuxtTime } from '#components'
-
-  import type {
-    UserItemSubmission,
-    UserItemSubmissionProperty
-  } from '#server/api/user/item-submissions/index.get'
-
+  import type { UserItemSubmission, UserItemSubmissionProperty } from '#server/api/user/item-submissions/index.get'
+  import type { UserPhotoSubmission } from '#server/api/user/photo-submissions/index.get'
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PerdButton from '~/components/PerdButton.vue'
@@ -152,6 +242,7 @@
     createdAt: Date | string;
     detailPath: string | null;
     hasProperties: boolean;
+    hasRejectionReason: boolean;
     id: string;
     name: string;
     properties: SubmissionPropertyCard[];
@@ -161,27 +252,107 @@
     updatedAt: Date | string;
   }
 
+  interface PhotoSubmissionCard {
+    createdAt: Date | string;
+    filename: string;
+    hasSourceUrl: boolean;
+    id: string;
+    itemName: string;
+    itemPath: string;
+    sourceLabel: string;
+    sourceUrl: string;
+    updatedAt: Date | string;
+  }
+
   definePageMeta({ layout: 'page' })
 
   const { user } = useUserStore()
   const isGuest = computed(() => user.value.isGuest)
+  const requestFetch = useRequestFetch()
+  const photoPaginationStatus = useTemplateRef('photoPaginationStatus')
+  const appendedPhotoSubmissions = ref<UserPhotoSubmission[]>([])
+  const nextPhotoPage = ref<number | null>(null)
+  const isLoadingMorePhotos = ref(false)
+  const hasPhotoLoadMoreError = ref(false)
+  const isPhotoPaginationComplete = ref(false)
 
   const {
-    data: submissions,
-    error,
-    refresh,
-    status
+    data: itemSubmissions,
+    error: itemSubmissionsError,
+    refresh: refreshItemSubmissions,
+    status: itemSubmissionsStatus
   } = useFetch('/api/user/item-submissions', {
     default: () => {
       return { items: [] }
     },
+
     immediate: isGuest.value === false,
     lazy: true
   })
 
-  const isLoading = computed(() => status.value === 'pending')
-  const hasError = computed(() => error.value !== undefined)
-  const hasNoSubmissions = computed(() => submissions.value.items.length === 0)
+  const {
+    data: photoSubmissions,
+    error: photoSubmissionsError,
+    refresh: refreshPhotoSubmissions,
+    status: photoSubmissionsStatus
+  } = useFetch('/api/user/photo-submissions', {
+    default: () => {
+      return {
+        items: [],
+        nextPage: null
+      }
+    },
+
+    immediate: isGuest.value === false,
+    lazy: true,
+
+    query: {
+      page: 1
+    }
+  })
+
+  watch(
+    () => photoSubmissions.value,
+    (response) => {
+      appendedPhotoSubmissions.value = []
+      nextPhotoPage.value = response.nextPage
+      hasPhotoLoadMoreError.value = false
+      isPhotoPaginationComplete.value = false
+    },
+    { immediate: true }
+  )
+
+  const isLoading = computed(
+    () => itemSubmissionsStatus.value === 'pending'
+      || photoSubmissionsStatus.value === 'pending'
+  )
+
+  const hasError = computed(
+    () => itemSubmissionsError.value !== undefined
+      || photoSubmissionsError.value !== undefined
+  )
+
+  const hasItemSubmissions = computed(() => itemSubmissions.value.items.length > 0)
+
+  const allPhotoSubmissions = computed(() => {
+    const submissionsById = new Map<string, UserPhotoSubmission>()
+
+    for (const submission of [
+      ...photoSubmissions.value.items,
+      ...appendedPhotoSubmissions.value
+    ]) {
+      submissionsById.set(submission.id, submission)
+    }
+
+    return [...submissionsById.values()]
+  })
+
+  const hasPhotoSubmissions = computed(() => allPhotoSubmissions.value.length > 0)
+  const hasMorePhotoSubmissions = computed(() => nextPhotoPage.value !== null)
+
+  const hasNoContributions = computed(
+    () => hasItemSubmissions.value === false && hasPhotoSubmissions.value === false
+  )
 
   function formatBoolean(value: boolean) {
     return value ? 'Yes' : 'No'
@@ -196,7 +367,6 @@
     } = property
 
     const value = typeof rawValue === 'boolean' ? formatBoolean(rawValue) : rawValue
-
     const displayValue = unit === null ? value : `${value} ${unit}`
 
     return {
@@ -208,17 +378,26 @@
 
   function getStatusPresentation(statusValue: UserItemSubmission['status']) {
     if (statusValue === 'approved') {
-      return { label: 'Published', tone: 'success' as const }
+      return {
+        label: 'Published',
+        tone: 'success' as const
+      }
     }
 
     if (statusValue === 'rejected') {
-      return { label: 'Rejected', tone: 'danger' as const }
+      return {
+        label: 'Rejected',
+        tone: 'danger' as const
+      }
     }
 
-    return { label: 'Pending', tone: 'warning' as const }
+    return {
+      label: 'Pending',
+      tone: 'warning' as const
+    }
   }
 
-  const submissionCards = computed<SubmissionCard[]>(() => submissions.value.items.map((item) => {
+  const itemSubmissionCards = computed<SubmissionCard[]>(() => itemSubmissions.value.items.map((item) => {
     const detailPath = item.status === 'approved' ? createGearLibraryItemPath(item.id) : null
     const statusPresentation = getStatusPresentation(item.status)
     const properties = item.properties.map(formatProperty)
@@ -229,6 +408,7 @@
       createdAt: item.createdAt,
       detailPath,
       hasProperties: properties.length > 0,
+      hasRejectionReason: item.rejectionReason !== null,
       id: item.id,
       name: item.name,
       properties,
@@ -239,12 +419,70 @@
     }
   }))
 
+  function getPhotoSourceLabel(sourceType: UserPhotoSubmission['sourceType']) {
+    return sourceType === 'own' ? 'Own photo' : 'Official manufacturer photo'
+  }
+
+  const photoSubmissionCards = computed<PhotoSubmissionCard[]>(
+    () => allPhotoSubmissions.value.map((photo) => {
+      return {
+        createdAt: photo.createdAt,
+        filename: photo.filename,
+        hasSourceUrl: photo.sourceUrl !== null,
+        id: photo.id,
+        itemName: photo.item.name,
+        itemPath: createGearLibraryItemPath(photo.item.id),
+        sourceLabel: getPhotoSourceLabel(photo.sourceType),
+        sourceUrl: photo.sourceUrl ?? '',
+        updatedAt: photo.updatedAt
+      }
+    })
+  )
+
+  async function loadMorePhotoSubmissions() {
+    if (isLoadingMorePhotos.value || nextPhotoPage.value === null) {
+      return
+    }
+
+    const page = nextPhotoPage.value
+
+    isLoadingMorePhotos.value = true
+    hasPhotoLoadMoreError.value = false
+
+    try {
+      const response = await requestFetch('/api/user/photo-submissions', {
+        query: { page },
+        retry: 0
+      })
+
+      appendedPhotoSubmissions.value.push(...response.items)
+      nextPhotoPage.value = response.nextPage
+
+      if (response.nextPage === null) {
+        isPhotoPaginationComplete.value = true
+
+        await nextTick()
+
+        photoPaginationStatus.value?.focus()
+      }
+    } catch {
+      hasPhotoLoadMoreError.value = true
+    } finally {
+      isLoadingMorePhotos.value = false
+    }
+  }
+
   async function retry() {
-    await refresh()
+    await Promise.all([
+      refreshItemSubmissions(),
+      refreshPhotoSubmissions()
+    ])
   }
 </script>
 
 <style module>
+  .content,
+  .section,
   .list,
   .card,
   .properties,
@@ -253,12 +491,27 @@
     gap: var(--spacing-16);
   }
 
+  .errorMessage {
+    color: var(--color-danger-primary);
+  }
+
+  .paginationStatus {
+    color: var(--color-text-tertiary);
+  }
+
   .header {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
     gap: var(--spacing-12);
     align-items: start;
+  }
+
+  .cardTitle {
+    color: var(--color-text-primary);
+    font-size: var(--font-size-20);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-snug);
   }
 
   .titleGroup,

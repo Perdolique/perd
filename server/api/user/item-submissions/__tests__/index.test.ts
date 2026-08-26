@@ -24,28 +24,47 @@ describe('get /api/user/item-submissions', () => {
 
   it('should list only the registered owner submissions newest first with final data', async () => {
     const findManyMock = vi.fn(() => [{
-      brand: { id: 1, name: 'MSR' },
-      category: { id: 2, name: 'Stoves' },
+      brand: {
+        id: 1,
+        name: 'MSR'
+      },
+
+      category: {
+        id: 2,
+        name: 'Stoves'
+      },
+
       createdAt: new Date('2026-08-01T12:00:00Z'),
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
       name: 'PocketRocket Deluxe',
+
       propertyValues: [{
-        property: { name: 'Weight', unit: 'g' },
+        property: {
+          name: 'Weight',
+          unit: 'g'
+        },
+
         propertyId: 3,
         valueBoolean: null,
         valueNumber: '83.5',
         valueText: null
       }, {
-        property: { name: 'Piezo ignition', unit: null },
+        property: {
+          name: 'Piezo ignition',
+          unit: null
+        },
+
         propertyId: 4,
         valueBoolean: false,
         valueNumber: null,
         valueText: null
       }],
+
       rejectionReason: 'Duplicate catalog item',
       status: 'rejected',
       updatedAt: new Date('2026-08-02T12:00:00Z')
     }])
+
     const event = createTestEvent({
       query: {
         equipmentItems: { findMany: findManyMock }
@@ -60,8 +79,10 @@ describe('get /api/user/item-submissions', () => {
         createdAt: 'desc',
         id: 'desc'
       },
+
       where: {
         createdBy: 'user-1',
+
         status: {
           in: ['approved', 'pending', 'rejected']
         }
@@ -69,11 +90,20 @@ describe('get /api/user/item-submissions', () => {
     }))
     expect(result).toStrictEqual({
       items: [{
-        brand: { id: 1, name: 'MSR' },
-        category: { id: 2, name: 'Stoves' },
+        brand: {
+          id: 1,
+          name: 'MSR'
+        },
+
+        category: {
+          id: 2,
+          name: 'Stoves'
+        },
+
         createdAt: new Date('2026-08-01T12:00:00Z'),
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
         name: 'PocketRocket Deluxe',
+
         properties: [{
           name: 'Weight',
           propertyId: 3,
@@ -85,6 +115,7 @@ describe('get /api/user/item-submissions', () => {
           unit: null,
           value: false
         }],
+
         rejectionReason: 'Duplicate catalog item',
         status: 'rejected',
         updatedAt: new Date('2026-08-02T12:00:00Z')
@@ -112,8 +143,16 @@ describe('get /api/user/item-submissions', () => {
     'should preserve the %s submission status',
     async (status) => {
       const findManyMock = vi.fn(() => [{
-        brand: { id: 1, name: 'MSR' },
-        category: { id: 2, name: 'Stoves' },
+        brand: {
+          id: 1,
+          name: 'MSR'
+        },
+
+        category: {
+          id: 2,
+          name: 'Stoves'
+        },
+
         createdAt: new Date('2026-08-01T12:00:00Z'),
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
         name: 'PocketRocket Deluxe',
@@ -122,6 +161,7 @@ describe('get /api/user/item-submissions', () => {
         status,
         updatedAt: new Date('2026-08-02T12:00:00Z')
       }])
+
       const event = createTestEvent({
         query: {
           equipmentItems: { findMany: findManyMock }

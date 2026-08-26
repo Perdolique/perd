@@ -1,4 +1,5 @@
 import { defineNuxtRouteMiddleware, navigateTo } from '#imports'
+
 import {
   buildGearLibraryRouteQuery,
   getGearLibraryRouteState,
@@ -10,6 +11,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     compare: comparisonQuery,
     ...browsingQuery
   } = to.query
+
   const isCanonical = isGearLibraryRouteQueryCanonical(browsingQuery)
 
   if (isCanonical) {

@@ -1,5 +1,6 @@
 import type { Locator, Request } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
+
 import {
   comparisonItemIds,
   comparisonItems,
@@ -9,6 +10,7 @@ import {
   mockComparisonApi,
   openComparisonPage
 } from '../fixtures/gear-library-comparison.fixtures.ts'
+
 import {
   buildRouteSearch,
   createDeferred,
@@ -35,6 +37,7 @@ function getRequiredCatalogItem(index: number) {
 
 async function getComparisonColumnWidths(table: Locator) {
   const columnHeaders = await table.getByRole('columnheader').all()
+
   const columnBoxes = await Promise.all(
     columnHeaders.map(async (columnHeader) => getElementBox(columnHeader))
   )
@@ -87,11 +90,13 @@ function createComparisonCatalogItemDetail(itemId?: string) {
         name: item.brand.name,
         slug: item.brand.slug
       },
+
       category: {
         id: comparisonResponse.category.id,
         name: comparisonResponse.category.name,
         slug: comparisonResponse.category.slug
       },
+
       cloudflareImageId: null,
       createdAt: '2088-04-20T12:00:00.000Z',
       id: item.id,
@@ -115,9 +120,11 @@ async function navigateWithinApp(page: Parameters<typeof openComparisonPage>[0],
     }
 
     const nuxtRoot = globalThis.document.querySelector('#__nuxt')
+
     const vueApp: unknown = nuxtRoot === null
       ? undefined
       : Reflect.get(nuxtRoot, '__vue_app__')
+
     const vueAppConfig = getRequiredProperty(vueApp, 'config')
     const globalProperties = getRequiredProperty(vueAppConfig, 'globalProperties')
     const router = getRequiredProperty(globalProperties, '$router')
@@ -137,6 +144,7 @@ function createGatedComparisonResponder(
 ) {
   return (request: Request) => {
     const itemIds = getComparisonItemIds(request)
+
     const response = {
       json: createComparisonResponse(itemIds)
     }
@@ -153,6 +161,7 @@ function createGatedComparisonResponder(
 }
 
 const directItemCounts = [2, 3, 4] as const
+
 const invalidComparisonCases = [
   {
     itemIds: [comparisonItemIds[0]],
@@ -175,6 +184,7 @@ const invalidComparisonCases = [
     name: 'malformed'
   }
 ] as const
+
 const comparisonErrorCases = [
   {
     message: 'These items cannot be compared because they are not all from the same category.',
@@ -205,9 +215,12 @@ test.describe('Gear library comparison page', () => {
       getRequiredCatalogItem(0),
       getRequiredCatalogItem(1)
     ]
+
     const selectedIds = selectedItems.map((item) => item.id)
+
     const selectedResponse = {
       ...comparisonResponse,
+
       items: selectedItems.map((item) => {
         return {
           brand: item.brand,
@@ -216,9 +229,11 @@ test.describe('Gear library comparison page', () => {
           name: item.name
         }
       }),
+
       properties: comparisonResponse.properties.map((property) => {
         return {
           ...property,
+
           values: selectedIds.map((itemId, index) => {
             return {
               itemId,
@@ -243,7 +258,10 @@ test.describe('Gear library comparison page', () => {
     await openGearLibrary(page, `/gear-library${catalogSearch}`)
     await page.getByRole('button', { name: 'Compare items' }).click()
 
-    const compareButton = page.getByRole('button', { name: 'Compare', exact: true })
+    const compareButton = page.getByRole('button', {
+      name: 'Compare',
+      exact: true
+    })
 
     await page.getByRole('checkbox', { name: `Select ${selectedItems[0]?.name}` }).check()
     await expect(compareButton).toBeDisabled()
@@ -254,6 +272,7 @@ test.describe('Gear library comparison page', () => {
 
     await expect(page).toHaveURL(createComparisonPath(selectedIds))
     await expect.poll(() => tracker.comparisons.length).toBe(1)
+
     const comparisonRequest = getRequiredRequest(tracker.comparisons)
 
     expect(getComparisonItemIds(comparisonRequest)).toStrictEqual(selectedIds)
@@ -264,6 +283,7 @@ test.describe('Gear library comparison page', () => {
     await expect(columnHeaders.nth(2)).toContainText(selectedItems[1].name)
 
     await page.goBack()
+
     const selectedCatalogSearch = buildRouteSearch([
       ['q', 'rocket'],
       ['category', 'stoves'],
@@ -293,10 +313,12 @@ test.describe('Gear library comparison page', () => {
       await expect(table.getByRole('rowheader')).toHaveCount(comparisonResponse.properties.length)
 
       const comparisonRequest = getRequiredRequest(tracker.comparisons)
+
       expect(getComparisonItemIds(comparisonRequest)).toStrictEqual(itemIds)
 
       const catalogLink = page.getByRole('link', { name: 'Edit compared items' })
       const expectedCatalogSearch = new globalThis.URLSearchParams()
+
       expectedCatalogSearch.append('category', 'stoves')
 
       for (const itemId of itemIds) {
@@ -379,11 +401,13 @@ test.describe('Gear library comparison page', () => {
     page
   }) => {
     const staleRequestGate = createDeferred()
+
     const staleItemIds = [
       comparisonItemIds[0],
       comparisonItemIds[1],
       comparisonItemIds[3]
     ]
+
     const finalItemIds = [
       comparisonItemIds[1],
       comparisonItemIds[2],
@@ -400,6 +424,7 @@ test.describe('Gear library comparison page', () => {
     const staleRequestStarted = page.waitForRequest((request) => (
       getComparisonItemIds(request).join(',') === staleItemIds.join(',')
     ))
+
     const staleRequestFailure = page.waitForEvent('requestfailed', (request) => (
       new globalThis.URL(request.url()).searchParams.getAll('itemId').join(',')
         === staleItemIds.join(',')
@@ -445,6 +470,7 @@ test.describe('Gear library comparison page', () => {
     const propertyHeaderPosition = await table.getByRole('rowheader').first().evaluate(
       (element) => globalThis.getComputedStyle(element).position
     )
+
     const itemHeaderPosition = await table.getByRole('columnheader').nth(1).evaluate(
       (element) => globalThis.getComputedStyle(element).position
     )
@@ -457,7 +483,11 @@ test.describe('Gear library comparison page', () => {
     context,
     page
   }) => {
-    await page.setViewportSize({ width: 390, height: 844 })
+    await page.setViewportSize({
+      width: 390,
+      height: 844
+    })
+
     const pageRequests: Request[] = []
 
     page.on('request', (request) => {
@@ -480,10 +510,12 @@ test.describe('Gear library comparison page', () => {
     await expect(caption).toHaveText('Stoves, 4 items')
 
     const propertyLabel = cornerHeader.getByText('Property', { exact: true })
+
     const [captionBox, propertyLabelBox] = await Promise.all([
       getElementBox(caption),
       getElementBox(propertyLabel)
     ])
+
     const [captionClipPath, propertyLabelClipPath] = await Promise.all([
       caption.evaluate((element) => globalThis.getComputedStyle(element).clipPath),
       propertyLabel.evaluate((element) => globalThis.getComputedStyle(element).clipPath)
@@ -509,6 +541,7 @@ test.describe('Gear library comparison page', () => {
       'Weight',
       'Piezo ignition'
     ])
+
     const membershipRequests = pageRequests.filter((request) => {
       const requestUrl = new globalThis.URL(request.url())
 
@@ -522,10 +555,15 @@ test.describe('Gear library comparison page', () => {
     context,
     page
   }) => {
-    await page.setViewportSize({ width: 390, height: 500 })
+    await page.setViewportSize({
+      width: 390,
+      height: 500
+    })
+
     const longItemName = 'Enlightened Equipment Enigma 20F Regular'
     const shortItemName = 'Seed Sleeping Bag 03'
     const response = createComparisonResponse(comparisonItemIds)
+
     response.items = [
       {
         ...comparisonItems[0],
@@ -547,18 +585,23 @@ test.describe('Gear library comparison page', () => {
     await openComparisonPage(page, comparisonItemIds)
 
     const table = page.getByRole('table', { name: 'Stoves, 4 items' })
+
     const scrollRegion = page.getByRole('region', {
       name: 'Stoves, 4 items. Scroll horizontally to view all items.'
     })
+
     const longItemRemoveButton = page.getByRole('button', {
       name: `Remove MSR ${longItemName} from comparison`
     })
+
     const longItemLink = page.getByRole('link', {
       name: `View MSR ${longItemName}`
     })
+
     const shortItemRemoveButton = page.getByRole('button', {
       name: `Remove MSR ${shortItemName} from comparison`
     })
+
     const [
       longItemLinkBox,
       longItemRemoveButtonBox,
@@ -570,6 +613,7 @@ test.describe('Gear library comparison page', () => {
       getElementBox(scrollRegion),
       getElementBox(shortItemRemoveButton)
     ])
+
     const scrollGeometry = await scrollRegion.evaluate((element) => {
       return {
         borderBoxWidth: element.getBoundingClientRect().width,
@@ -578,6 +622,7 @@ test.describe('Gear library comparison page', () => {
         scrollWidth: element.scrollWidth
       }
     })
+
     const columnWidths = await getComparisonColumnWidths(table)
     const longItemLinkInlineEnd = longItemLinkBox.x + longItemLinkBox.width
 
@@ -606,10 +651,12 @@ test.describe('Gear library comparison page', () => {
     await page.evaluate(() => {
       globalThis.scrollTo(0, 0)
     })
+
     const scrollRegionPointerX = scrollRegionBox.x + (scrollRegionBox.width / 2)
     const scrollRegionPointerY = scrollRegionBox.y + (scrollRegionBox.height / 2)
 
     await page.mouse.move(scrollRegionPointerX, scrollRegionPointerY)
+
     const pageScrollBeforeWheel = await page.evaluate(() => globalThis.scrollY)
 
     expect(pageScrollBeforeWheel).toBe(0)
@@ -625,9 +672,14 @@ test.describe('Gear library comparison page', () => {
     context,
     page
   }) => {
-    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.setViewportSize({
+      width: 1440,
+      height: 900
+    })
     await page.emulateMedia({ reducedMotion: 'reduce' })
+
     const tracker = await mockComparisonApi(context)
+
     await openComparisonPage(page, comparisonItemIds)
 
     const fourItemTable = page.getByRole('table', { name: 'Stoves, 4 items' })
@@ -636,6 +688,7 @@ test.describe('Gear library comparison page', () => {
     const fourItemRegionBox = await getElementBox(fourItemRegion)
     const fourItemColumnWidths = await getComparisonColumnWidths(fourItemTable)
     const firstPropertyRowBox = await getElementBox(firstPropertyRowHeader)
+
     const reducedMotionDuration = await fourItemRegion.evaluate(
       (element) => globalThis.getComputedStyle(element).transitionDuration
     )
@@ -647,19 +700,24 @@ test.describe('Gear library comparison page', () => {
     const differencesCheckbox = page.getByRole('checkbox', {
       name: 'Show differences only'
     })
+
     await differencesCheckbox.check()
 
     const firstRemoveButton = page.getByRole('button', {
       name: `Remove MSR ${comparisonItems[0].name} from comparison`
     })
+
     await firstRemoveButton.focus()
     await firstRemoveButton.press('Enter')
 
     const threeItemIds = comparisonItemIds.slice(1)
+
     await expect(page).toHaveURL(createComparisonPath(threeItemIds))
+
     const threeItemTable = page.getByRole('table', { name: 'Stoves, 3 items' })
 
     await expect(threeItemTable).toBeVisible()
+
     const threeItemRegionBox = await getElementBox(threeItemTable.locator('..'))
     const threeItemColumnWidths = await getComparisonColumnWidths(threeItemTable)
 
@@ -672,12 +730,14 @@ test.describe('Gear library comparison page', () => {
     const secondRemoveButton = page.getByRole('button', {
       name: `Remove MSR ${comparisonItems[1].name} from comparison`
     })
+
     await expect(secondRemoveButton).toBeFocused()
 
     const expectedCatalogSearch = buildRouteSearch([
       ['category', 'stoves'],
       ...threeItemIds.map((itemId) => ['compare', itemId] as const)
     ])
+
     await expect(page.getByRole('link', { name: 'Edit compared items' })).toHaveAttribute(
       'href',
       `/gear-library${expectedCatalogSearch}`
@@ -686,10 +746,13 @@ test.describe('Gear library comparison page', () => {
     await secondRemoveButton.press('Enter')
 
     const twoItemIds = comparisonItemIds.slice(2)
+
     await expect(page).toHaveURL(createComparisonPath(twoItemIds))
+
     const twoItemTable = page.getByRole('table', { name: 'Stoves, 2 items' })
 
     await expect(twoItemTable).toBeVisible()
+
     const twoItemRegionBox = await getElementBox(twoItemTable.locator('..'))
     const twoItemColumnWidths = await getComparisonColumnWidths(twoItemTable)
     const twoItemColumnWidth = getFirstItemColumnWidth(twoItemColumnWidths)
@@ -718,6 +781,7 @@ test.describe('Gear library comparison page', () => {
       }
     })
     await mockComparisonApi(context)
+
     const pairItemIds = comparisonItemIds.slice(0, 2)
 
     await openComparisonPage(page, pairItemIds)

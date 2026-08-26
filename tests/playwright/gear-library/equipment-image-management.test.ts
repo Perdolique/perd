@@ -1,5 +1,6 @@
 import type { BrowserContext, Page, Request } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
+import { createDeferred } from '../fixtures/gear-library-entry-list.fixtures.ts'
 
 const itemId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
 const firstImageId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8'
@@ -25,9 +26,11 @@ async function navigateWithinApp(page: Page, path: string) {
     }
 
     const nuxtRoot = globalThis.document.querySelector('#__nuxt')
+
     const vueApp: unknown = nuxtRoot === null
       ? undefined
       : Reflect.get(nuxtRoot, '__vue_app__')
+
     const config = getRequiredProperty(vueApp, 'config')
     const globalProperties = getRequiredProperty(config, 'globalProperties')
     const router = getRequiredProperty(globalProperties, '$router')
@@ -53,14 +56,19 @@ const secondImage = {
   id: secondImageId
 }
 
-async function mockImageUploadApi(context: BrowserContext): Promise<Request[]> {
+async function mockSequentialImageUploadApi(context: BrowserContext) {
   const uploadRequests: Request[] = []
+  const firstResponseGate = createDeferred()
 
   await context.route(`**${imagesPath}**`, async (route) => {
     const request = route.request()
 
     if (request.method() === 'POST') {
       uploadRequests.push(request)
+
+      if (uploadRequests.length === 1) {
+        await firstResponseGate.promise
+      }
 
       await route.fulfill({
         json: firstImage,
@@ -73,15 +81,19 @@ async function mockImageUploadApi(context: BrowserContext): Promise<Request[]> {
     await route.fulfill({ json: [] })
   })
 
-  return uploadRequests
+  return {
+    firstResponseGate,
+    uploadRequests
+  }
 }
 
 test.describe('Equipment image management', () => {
-  test('should send the original filename with an image upload', async ({
+  test('should upload multiple images sequentially in selection order', async ({
     context,
     page
   }) => {
-    const filename = 'equipment-item-placeholder.webp'
+    const firstFilename = 'equipment-item-placeholder.webp'
+    const secondFilename = 'photo-submission.webp'
 
     await context.route('**/api/oauth/twitch**', async (route) => {
       await route.fulfill({
@@ -93,23 +105,48 @@ test.describe('Equipment image management', () => {
       })
     })
 
-    const uploadRequests = await mockImageUploadApi(context)
-
+    const { firstResponseGate, uploadRequests } = await mockSequentialImageUploadApi(context)
     const pagePath = `/admin/equipment/items/${itemId}/images`
     const authPath = `/auth/twitch?code=oauth-code&state=${encodeURIComponent(pagePath)}`
 
     await page.goto(authPath)
-    await page.getByLabel('Choose images').setInputFiles(`public/${filename}`)
+
+    const imageInput = page.getByLabel('Choose images', { exact: true })
+
+    await expect(imageInput).toHaveAttribute('multiple', '')
+    await expect(imageInput).toHaveAttribute('accept', 'image/jpeg,image/png,image/webp')
+    await imageInput.setInputFiles([
+      `public/${firstFilename}`,
+      `tests/playwright/fixtures/${secondFilename}`
+    ])
+    await expect(page.getByText('2 files selected', { exact: true })).toBeVisible()
     await page.getByRole('button', { name: 'Upload' }).click()
 
     await expect.poll(() => uploadRequests).toHaveLength(1)
+    await expect(imageInput).toBeDisabled()
 
-    const [uploadRequest] = uploadRequests
-    const requestUrl = new globalThis.URL(uploadRequest.url())
-    const contentType = await uploadRequest.headerValue('content-type')
+    firstResponseGate.resolve()
 
-    expect(requestUrl.searchParams.get('filename')).toBe(filename)
-    expect(contentType).toBe('image/webp')
+    await expect.poll(() => uploadRequests).toHaveLength(2)
+    await expect(imageInput).toBeEnabled()
+    await expect(page.getByRole('button', { name: 'Upload' })).toBeDisabled()
+
+    const uploadFilenames = uploadRequests.map((request) => {
+      const requestUrl = new globalThis.URL(request.url())
+
+      return requestUrl.searchParams.get('filename')
+    })
+
+    const contentTypes = await Promise.all(
+      uploadRequests.map(async (request) => {
+        const contentType = await request.headerValue('content-type')
+
+        return contentType
+      })
+    )
+
+    expect(uploadFilenames).toEqual([firstFilename, secondFilename])
+    expect(contentTypes).toEqual(['image/webp', 'image/webp'])
   })
 
   test('should delete an image and refresh the gallery order', async ({
@@ -225,8 +262,14 @@ test.describe('Equipment image management', () => {
       })
 
       images = [
-        { ...secondImage, displayOrder: 0 },
-        { ...firstImage, displayOrder: 1 }
+        {
+          ...secondImage,
+          displayOrder: 0
+        },
+        {
+          ...firstImage,
+          displayOrder: 1
+        }
       ]
       primaryCloudflareImageId = secondImage.cloudflareImageId
 
@@ -236,8 +279,18 @@ test.describe('Equipment image management', () => {
     await context.route(`/api/equipment/items/${itemId}`, async (route) => {
       await route.fulfill({
         json: {
-          brand: { id: 1, name: 'MSR', slug: 'msr' },
-          category: { id: 2, name: 'Stoves', slug: 'stoves' },
+          brand: {
+            id: 1,
+            name: 'MSR',
+            slug: 'msr'
+          },
+
+          category: {
+            id: 2,
+            name: 'Stoves',
+            slug: 'stoves'
+          },
+
           cloudflareImageId: primaryCloudflareImageId,
           createdAt: '2088-04-20T12:00:00.000Z',
           id: itemId,

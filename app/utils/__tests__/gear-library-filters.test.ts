@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+
 import {
   createGearLibraryAppliedFilterChips,
   createGearLibraryFilterDraft,
@@ -30,10 +31,13 @@ describe(createGearLibraryFilterDraft, () => {
       boolean: {
         'piezo-ignition': 'true'
       },
+
       brand: ['msr'],
+
       enum: {
         'fuel-type': ['canister']
       },
+
       number: {
         weight: {
           max: '100',
@@ -85,9 +89,18 @@ describe(createGearLibraryFilterDraft, () => {
     ])
 
     expect(Object.entries(result.number)).toStrictEqual([
-      ['constructor', { max: '2', min: '1' }],
-      ['toString', { max: '4', min: '3' }],
-      ['__proto__', { max: '6', min: '5' }]
+      ['constructor', {
+        max: '2',
+        min: '1'
+      }],
+      ['toString', {
+        max: '4',
+        min: '3'
+      }],
+      ['__proto__', {
+        max: '6',
+        min: '5'
+      }]
     ])
   })
 })
@@ -273,14 +286,21 @@ describe(removeGearLibraryAppliedFilter, () => {
 describe(createGearLibraryAppliedFilterChips, () => {
   it('should create one labeled removable chip for every applied filter', () => {
     const result = createGearLibraryAppliedFilterChips(appliedFilters, {
-      brands: [{ name: 'MSR', slug: 'msr' }],
+      brands: [{
+        name: 'MSR',
+        slug: 'msr'
+      }],
 
       properties: [{
         name: 'Weight',
         slug: 'weight',
         unit: 'g'
       }, {
-        enumOptions: [{ name: 'Canister', slug: 'canister' }],
+        enumOptions: [{
+          name: 'Canister',
+          slug: 'canister'
+        }],
+
         name: 'Fuel type',
         slug: 'fuel-type',
         unit: null

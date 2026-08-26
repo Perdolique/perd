@@ -69,6 +69,7 @@ function createDetailDb(item?: unknown, images: unknown[] = []) {
         }
       }
     },
+
     findFirstMock
   }
 }
@@ -163,10 +164,12 @@ describe('get /api/equipment/items/[id]', () => {
         property: null
       }]
     }
+
     const images = [{
       cloudflareImageId: 'detail-primary-image',
       itemId: item.id
     }]
+
     const { dbHttp, findFirstMock } = createDetailDb(item, images)
     const event = createTestEvent(dbHttp)
     const result = await itemDetailHandler(event)
@@ -215,6 +218,7 @@ describe('get /api/equipment/items/[id]', () => {
         value: null
       }]
     })
+
     const [findFirstCall] = findFirstMock.mock.calls
     const queryConfig = findFirstCall?.[0]
 

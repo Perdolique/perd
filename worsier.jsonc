@@ -1,0 +1,24 @@
+{
+  "$schema": "./node_modules/worsier/configuration_schema.json",
+  "lineWidth": 120,
+  "verifyAst": true,
+  "rules": {
+    "importLayout": true,
+    "interfaceLayout": 0,
+    "objectPropertySpacing": true,
+    "statementSpacing": {
+      "controlFlowStatements": "separate",
+      "imports": "separate",
+      "returnStatements": "separate",
+      "typeAliases": "separate",
+      "variableDeclarations": "separate"
+    },
+    "semicolons": {
+      "statements": "asNeeded",
+      "classMembers": "asNeeded",
+      "typeMembers": "always"
+    },
+    "trailingCommas": "never"
+  },
+  "ignorePatterns": []
+}

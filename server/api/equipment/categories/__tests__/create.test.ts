@@ -121,6 +121,7 @@ function createDb({
     $client: {
       end: endMock
     },
+
     transaction: transactionMock
   }
 
@@ -254,6 +255,7 @@ describe('post /api/equipment/categories', () => {
   it('should return 500 when contribution logging fails after category creation', async () => {
     const { dbWrite } = createDb({
       contributionError: new Error('contribution failed'),
+
       createdCategory: {
         id: 5,
         name: 'Sleeping Bags',

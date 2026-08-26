@@ -346,9 +346,18 @@
   } = categoryDetailRequest
 
   const booleanOptions = [
-    { label: 'Not specified', value: '' },
-    { label: 'Yes', value: 'true' },
-    { label: 'No', value: 'false' }
+    {
+      label: 'Not specified',
+      value: ''
+    },
+    {
+      label: 'Yes',
+      value: 'true'
+    },
+    {
+      label: 'No',
+      value: 'false'
+    }
   ]
 
   const brandOptions = computed<PerdSelectOption[]>(() => {
@@ -359,7 +368,10 @@
       }
     })
 
-    return [{ label: 'Select a brand', value: '' }, ...options]
+    return [{
+      label: 'Select a brand',
+      value: ''
+    }, ...options]
   })
 
   const categoryOptions = computed<PerdSelectOption[]>(() => {
@@ -370,7 +382,10 @@
       }
     })
 
-    return [{ label: 'Select a category', value: '' }, ...options]
+    return [{
+      label: 'Select a category',
+      value: ''
+    }, ...options]
   })
 
   const hasMandatoryReferenceError = computed(() => (
@@ -405,7 +420,6 @@
   const hasMutationMessage = computed(() => props.mutationMessage !== undefined && props.mutationMessage !== null)
   const isReviewMode = computed(() => props.mode === 'review')
   const submitLabel = computed(() => props.mode === 'review' ? 'Save changes' : 'Submit for review')
-
   const trimmedItemName = computed(() => itemName.value.trim())
 
   const selectedBrand = computed(() => {
@@ -458,11 +472,18 @@
           ? trimmedValue === 'true'
           : trimmedValue
 
-        properties.push({ propertyId: property.id, value })
+        properties.push({
+          propertyId: property.id,
+          value
+        })
       }
     }
 
-    return { errors, hasValidationError, properties }
+    return {
+      errors,
+      hasValidationError,
+      properties
+    }
   }
 
   const submissionProperties = computed(createSubmissionProperties)
@@ -481,7 +502,10 @@
       })
 
       const enumOptions = [
-        { label: 'Not specified', value: '' },
+        {
+          label: 'Not specified',
+          value: ''
+        },
         ...selectableOptions
       ]
 

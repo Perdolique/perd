@@ -1,11 +1,4 @@
-import {
-  nextTick,
-  ref,
-  shallowRef,
-  type Ref,
-  type ShallowRef
-} from 'vue'
-
+import { nextTick, ref, shallowRef, type Ref, type ShallowRef } from 'vue'
 import type { GearLibraryItemsResponse } from '~/types/equipment'
 import { getUniqueGearLibraryItems } from '~/utils/gear-library'
 

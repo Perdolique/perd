@@ -48,6 +48,7 @@ vi.mock(import('#server/utils/session'), () => {
 
 function createListDb(rows: unknown[]) {
   let lastFindManyConfig: MyGearFindManyConfig | null = null
+
   const findManyMock = vi.fn((config: MyGearFindManyConfig) => {
     lastFindManyConfig = config
 
@@ -145,7 +146,7 @@ function createDeleteDb({
   deletedRow,
   deleteError
 }: {
-  deletedRow?: { id: string };
+  deletedRow?: { id: string; };
   deleteError?: Error;
 } = {}) {
   const deleteReturningMock = vi.fn(() => {
@@ -155,6 +156,7 @@ function createDeleteDb({
 
     return deletedRow === undefined ? [] : [deletedRow]
   })
+
   const deleteWhereMock = vi.fn(() => {
     return {
       returning: deleteReturningMock
@@ -171,6 +173,7 @@ function createDeleteDb({
     dbHttp: {
       delete: deleteMock
     },
+
     deleteWhereMock
   }
 }
@@ -271,7 +274,6 @@ describe('user gear handlers', () => {
       }])
 
       const event = createTestEvent(dbHttp)
-
       const result = await listMyGearHandler(event)
 
       expect(result).toStrictEqual([{
@@ -540,6 +542,7 @@ describe('user gear handlers', () => {
           code: '23503'
         })
       })
+
       const event = createTestEvent(dbHttp)
 
       await expect(deleteMyGearHandler(event)).rejects.toMatchObject({

@@ -5,27 +5,53 @@ const databaseMigrationWorkflowUrl = new URL(
   '../../../.github/workflows/database-migration.yml',
   import.meta.url
 )
+
 const databaseMigrationWorkflow = readFileSync(databaseMigrationWorkflowUrl, 'utf8')
+
 const migrationUrl = new URL(
   '../migrations/20260711222621_stormy_captain_marvel/migration.sql',
   import.meta.url
 )
+
 const migrationSql = readFileSync(migrationUrl, 'utf8')
+
 const imagesMigrationUrl = new URL(
   '../migrations/20260730184011_uneven_karma/migration.sql',
   import.meta.url
 )
+
 const imagesMigrationSql = readFileSync(imagesMigrationUrl, 'utf8')
+
 const negativeValuesMigrationUrl = new URL(
   '../migrations/20260808152209_stiff_ultragirl/migration.sql',
   import.meta.url
 )
+
 const negativeValuesMigrationSql = readFileSync(negativeValuesMigrationUrl, 'utf8')
+
 const rejectionReasonMigrationUrl = new URL(
   '../migrations/20260810183449_add-item-submission-rejection-reason/migration.sql',
   import.meta.url
 )
+
 const rejectionReasonMigrationSql = readFileSync(rejectionReasonMigrationUrl, 'utf8')
+
+const photoSubmissionsMigrationUrl = new URL(
+  '../migrations/20260811190742_lean_guardsmen/migration.sql',
+  import.meta.url
+)
+
+const photoSubmissionsMigrationSql = readFileSync(photoSubmissionsMigrationUrl, 'utf8')
+
+const photoSubmissionRecoveryMigrationUrl = new URL(
+  '../migrations/20260823211816_nappy_living_tribunal/migration.sql',
+  import.meta.url
+)
+
+const photoSubmissionRecoveryMigrationSql = readFileSync(
+  photoSubmissionRecoveryMigrationUrl,
+  'utf8'
+)
 
 describe('database migration workflow', () => {
   it('should migrate pull request databases without resetting catalog data', () => {
@@ -90,6 +116,7 @@ describe('category property negative value migration', () => {
     const addColumnPosition = negativeValuesMigrationSql.indexOf(
       'ADD COLUMN "allowsNegativeValues" boolean DEFAULT false NOT NULL'
     )
+
     const temperatureUpdatePosition = negativeValuesMigrationSql.indexOf(
       'SET "allowsNegativeValues" = true'
     )
@@ -127,5 +154,74 @@ describe('equipment item rejection reason migration', () => {
     )
     expect(rejectionReasonMigrationSql).not.toMatch(/DELETE FROM "equipment_items"/iu)
     expect(rejectionReasonMigrationSql).not.toContain('NOT NULL')
+  })
+})
+
+describe('equipment item photo submissions migration', () => {
+  it('should create the pending submission table with protected image ownership', () => {
+    expect(photoSubmissionsMigrationSql).toContain(
+      'CREATE TABLE "equipment_item_photo_submissions"'
+    )
+    expect(photoSubmissionsMigrationSql).toContain(
+      '"cloudflareImageId" text NOT NULL UNIQUE'
+    )
+    expect(photoSubmissionsMigrationSql).toContain(
+      '"status" varchar(16) DEFAULT \'pending\' NOT NULL'
+    )
+  })
+
+  it('should enforce source metadata and preserve item and creator rows correctly', () => {
+    expect(photoSubmissionsMigrationSql).toContain(
+      '"sourceType" = \'own\' AND "sourceUrl" IS NULL'
+    )
+    expect(photoSubmissionsMigrationSql).toContain(
+      '"sourceType" = \'manufacturer\' AND NULLIF(BTRIM("sourceUrl"), \'\') IS NOT NULL'
+    )
+    expect(photoSubmissionsMigrationSql).toMatch(
+      /FOREIGN KEY \("itemId"\).*ON DELETE RESTRICT ON UPDATE CASCADE/u
+    )
+    expect(photoSubmissionsMigrationSql).toMatch(
+      /FOREIGN KEY \("createdBy"\).*ON DELETE SET NULL ON UPDATE CASCADE/u
+    )
+  })
+})
+
+describe('equipment item photo submission recovery migration', () => {
+  it('should backfill idempotency keys before requiring and indexing them', () => {
+    const addColumnPosition = photoSubmissionRecoveryMigrationSql.indexOf(
+      'ADD COLUMN "idempotencyKey" uuid;'
+    )
+
+    const backfillPosition = photoSubmissionRecoveryMigrationSql.indexOf(
+      'SET "idempotencyKey" = "id";'
+    )
+
+    const setNotNullPosition = photoSubmissionRecoveryMigrationSql.indexOf(
+      'ALTER COLUMN "idempotencyKey" SET NOT NULL;'
+    )
+
+    const uniquePosition = photoSubmissionRecoveryMigrationSql.indexOf(
+      'equipment_item_photo_submissions_createdBy_idempotencyKey_unique'
+    )
+
+    expect(addColumnPosition).toBeGreaterThanOrEqual(0)
+    expect(backfillPosition).toBeGreaterThan(addColumnPosition)
+    expect(setNotNullPosition).toBeGreaterThan(backfillPosition)
+    expect(uniquePosition).toBeGreaterThan(setNotNullPosition)
+  })
+
+  it('should reject oversized existing URLs and add the owner history index', () => {
+    expect(photoSubmissionRecoveryMigrationSql).toContain(
+      'char_length("sourceUrl") > 2048'
+    )
+    expect(photoSubmissionRecoveryMigrationSql).toContain(
+      'ALTER COLUMN "sourceUrl" SET DATA TYPE varchar(2048)'
+    )
+    expect(photoSubmissionRecoveryMigrationSql).toContain(
+      'equipment_item_photo_submissions_creator_history_index'
+    )
+    expect(photoSubmissionRecoveryMigrationSql).toContain(
+      '"createdBy","createdAt" DESC NULLS LAST,"id" DESC NULLS LAST'
+    )
   })
 })

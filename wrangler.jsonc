@@ -27,6 +27,17 @@
     "binding": "IMAGES"
   },
 
+  "ratelimits": [
+    {
+      "name": "PHOTO_SUBMISSION_RATE_LIMITER",
+      "namespace_id": "687734001",
+      "simple": {
+        "limit": 3,
+        "period": 60
+      }
+    }
+  ],
+
   "env": {
     "production": {
       "name": "metsik",
@@ -46,7 +57,18 @@
 
       "images": {
         "binding": "IMAGES"
-      }
+      },
+
+      "ratelimits": [
+        {
+          "name": "PHOTO_SUBMISSION_RATE_LIMITER",
+          "namespace_id": "687734003",
+          "simple": {
+            "limit": 3,
+            "period": 60
+          }
+        }
+      ]
     },
 
     "staging": {
@@ -67,7 +89,18 @@
 
       "images": {
         "binding": "IMAGES"
-      }
+      },
+
+      "ratelimits": [
+        {
+          "name": "PHOTO_SUBMISSION_RATE_LIMITER",
+          "namespace_id": "687734002",
+          "simple": {
+            "limit": 3,
+            "period": 60
+          }
+        }
+      ]
     }
   }
 }

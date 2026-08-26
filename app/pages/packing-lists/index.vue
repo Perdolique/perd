@@ -69,12 +69,14 @@
   })
 
   const packingListsStore = usePackingListsStore()
+
   const {
     hasUnavailableError,
     isEmpty,
     isInitialLoading,
     rows: packingLists
   } = storeToRefs(packingListsStore)
+
   const newListName = ref('')
   const createErrorMessage = ref<string | null>(null)
   const creatingList = ref(false)

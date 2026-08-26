@@ -11,7 +11,7 @@
       <ActionPanel
         icon="hugeicons:task-daily-01"
         subtitle="Track pending, published, and rejected catalog contributions."
-        title="Gear submissions"
+        title="My contributions"
         :to="appRoutes.accountSubmissions"
       />
 

@@ -81,29 +81,10 @@
 </template>
 
 <script lang="ts" setup>
-  import {
-    computed,
-    nextTick,
-    ref,
-    useTemplateRef,
-    watch
-  } from 'vue'
-
-  import {
-    definePageMeta,
-    navigateTo,
-    useAsyncData,
-    useRequestFetch,
-    useRoute
-  } from '#imports'
-
+  import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
+  import { definePageMeta, navigateTo, useAsyncData, useRequestFetch, useRoute } from '#imports'
   import type { ComparisonResponse } from '#server/api/equipment/comparisons.get'
-
-  import {
-    createGearLibraryComparisonRows,
-    validateGearLibraryComparisonQuery
-  } from '~/utils/gear-library-comparison'
-
+  import { createGearLibraryComparisonRows, validateGearLibraryComparisonQuery } from '~/utils/gear-library-comparison'
   import { appRoutes, createGearLibraryItemPath } from '~/utils/navigation'
 
   import GearLibraryComparisonTable, {
@@ -137,6 +118,7 @@
   const comparisonValidation = computed(
     () => validateGearLibraryComparisonQuery(route.query.item)
   )
+
   const orderedItemIds = computed(() => comparisonValidation.value.ids)
 
   const comparisonRequest = await useAsyncData('gear-library-comparison', async (_nuxtApp, { signal }) => {
@@ -253,6 +235,7 @@
       brand: {
         name: item.brand.name
       },
+
       cloudflareImageId: item.cloudflareImageId,
       detailPath: createGearLibraryItemPath(itemId),
       id: itemId,
@@ -305,6 +288,7 @@
 
     return {
       path: appRoutes.gearLibrary,
+
       query: {
         category: response.category.slug,
         compare: orderedItemIds.value
@@ -321,6 +305,7 @@
     itemId: string
   ): ComparisonResponse {
     const items = response.items.filter((item) => item.id !== itemId)
+
     const properties = response.properties.map((property) => {
       const values = property.values.filter((value) => value.itemId !== itemId)
 
@@ -340,6 +325,7 @@
         name: response.category.name,
         slug: response.category.slug
       },
+
       items,
       properties
     }
@@ -352,6 +338,7 @@
     const remainingItemIds = orderedItemIds.value.filter(
       (selectedItemId) => selectedItemId !== itemId
     )
+
     const response = comparisonResponse.value
 
     if (response === null) {
@@ -361,6 +348,7 @@
     if (remainingItemIds.length < 2) {
       const catalogLocation = {
         path: appRoutes.gearLibrary,
+
         query: {
           category: response.category.slug,
           compare: remainingItemIds
@@ -381,6 +369,7 @@
 
     const comparisonLocation = {
       path: route.path,
+
       query: {
         item: remainingItemIds
       }

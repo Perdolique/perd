@@ -243,10 +243,12 @@
           properties: body.properties,
           rejectionReason
         },
+
         method: 'PATCH'
       })
 
       submission.value = response
+
       if (decision === undefined) {
         statusMessage.value = 'Changes saved.'
 

@@ -2,12 +2,7 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { clearNuxtData } from '#imports'
 import type { CategoryDetailResponse } from '#server/api/equipment/categories/by-slug/[slug].get'
-
-import type {
-  GearLibraryEntityDetail,
-  GearLibraryItemsResponse,
-  GearLibraryListItem
-} from '~/types/equipment'
+import type { GearLibraryEntityDetail, GearLibraryItemsResponse, GearLibraryListItem } from '~/types/equipment'
 
 interface GearLibraryItemsSnapshot {
   hasNarrowingState: boolean;
@@ -59,6 +54,7 @@ const useGearLibraryStore = defineStore('gear-library', () => {
 
     if (existingIndex === -1) {
       categoryDetails.value.push(categoryDetail)
+
       return
     }
 

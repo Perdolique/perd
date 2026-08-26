@@ -12,7 +12,6 @@ const firstItemId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
 const secondItemId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8'
 const thirdItemId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9'
 const fourthItemId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477da'
-
 const comparisonItemIds = [firstItemId, secondItemId, thirdItemId, fourthItemId]
 
 const { getValidatedQueryMock } = vi.hoisted(() => {
@@ -42,10 +41,12 @@ function createItemRow(id: string, categoryId = 2) {
   return {
     id,
     name: `Item ${id.at(-1)}`,
+
     brand: {
       name: `Brand ${id.at(-1)}`,
       slug: `brand-${id.at(-1)}`
     },
+
     category: {
       id: categoryId,
       name: categoryId === 2 ? 'Stoves' : 'Cookware',
@@ -139,6 +140,7 @@ function createComparisonDb({
 
       select: selectMock
     },
+
     definitionsOrderByMock,
     enumOptionsWhereMock,
     findImagesMock,
@@ -182,7 +184,11 @@ describe('get /api/equipment/comparisons', () => {
 
     const result = await comparisonsHandler(event)
 
-    expect(result.category).toStrictEqual({ id: 2, name: 'Stoves', slug: 'stoves' })
+    expect(result.category).toStrictEqual({
+      id: 2,
+      name: 'Stoves',
+      slug: 'stoves'
+    })
     expect(result.items.map((item) => item.id)).toStrictEqual(itemIds)
     expect(result.properties).toStrictEqual([])
   })
@@ -292,7 +298,11 @@ describe('get /api/equipment/comparisons', () => {
       valueText: 'alcohol'
     }]
 
-    const enumOptions = [{ name: 'Canister', propertyId: 13, slug: 'canister' }, {
+    const enumOptions = [{
+      name: 'Canister',
+      propertyId: 13,
+      slug: 'canister'
+    }, {
       name: 'Alcohol',
       propertyId: 13,
       slug: 'alcohol'
@@ -306,9 +316,17 @@ describe('get /api/equipment/comparisons', () => {
       itemsWhereMock,
       selectMock,
       valuesWhereMock
-    } = createComparisonDb({ definitions, enumOptions, images, items: itemRows, values })
+    } = createComparisonDb({
+      definitions,
+      enumOptions,
+      images,
+      items: itemRows,
+      values
+    })
+
     const event = createTestEvent(dbHttp)
     const result = await comparisonsHandler(event)
+
     const expectedImageIds = new Map([
       [firstItemId, 'compare-primary-image'],
       [secondItemId, null],
@@ -328,6 +346,7 @@ describe('get /api/equipment/comparisons', () => {
           cloudflareImageId: expectedImageIds.get(itemId),
           id: itemId,
           name: `Item ${itemId.at(-1)}`,
+
           brand: {
             name: `Brand ${itemId.at(-1)}`,
             slug: `brand-${itemId.at(-1)}`
@@ -341,11 +360,24 @@ describe('get /api/equipment/comparisons', () => {
         name: 'Weight',
         slug: 'weight',
         unit: 'g',
+
         values: [
-          { itemId: firstItemId, value: 83.5 },
-          { itemId: secondItemId, value: null },
-          { itemId: thirdItemId, value: 100 },
-          { itemId: fourthItemId, value: null }
+          {
+          itemId: firstItemId,
+          value: 83.5
+        },
+          {
+          itemId: secondItemId,
+          value: null
+        },
+          {
+          itemId: thirdItemId,
+          value: 100
+        },
+          {
+          itemId: fourthItemId,
+          value: null
+        }
         ]
       }, {
         dataType: 'text',
@@ -353,11 +385,24 @@ describe('get /api/equipment/comparisons', () => {
         name: 'Notes',
         slug: 'notes',
         unit: null,
+
         values: [
-          { itemId: firstItemId, value: 'three-season' },
-          { itemId: secondItemId, value: null },
-          { itemId: thirdItemId, value: null },
-          { itemId: fourthItemId, value: 'compact' }
+          {
+          itemId: firstItemId,
+          value: 'three-season'
+        },
+          {
+          itemId: secondItemId,
+          value: null
+        },
+          {
+          itemId: thirdItemId,
+          value: null
+        },
+          {
+          itemId: fourthItemId,
+          value: 'compact'
+        }
         ]
       }, {
         dataType: 'boolean',
@@ -365,11 +410,24 @@ describe('get /api/equipment/comparisons', () => {
         name: 'Piezo',
         slug: 'piezo',
         unit: null,
+
         values: [
-          { itemId: firstItemId, value: true },
-          { itemId: secondItemId, value: false },
-          { itemId: thirdItemId, value: null },
-          { itemId: fourthItemId, value: true }
+          {
+          itemId: firstItemId,
+          value: true
+        },
+          {
+          itemId: secondItemId,
+          value: false
+        },
+          {
+          itemId: thirdItemId,
+          value: null
+        },
+          {
+          itemId: fourthItemId,
+          value: true
+        }
         ]
       }, {
         dataType: 'enum',
@@ -377,7 +435,12 @@ describe('get /api/equipment/comparisons', () => {
         name: 'Fuel',
         slug: 'fuel',
         unit: null,
-        values: [{ enumOptionName: 'Canister', itemId: firstItemId, value: 'canister' }, {
+
+        values: [{
+          enumOptionName: 'Canister',
+          itemId: firstItemId,
+          value: 'canister'
+        }, {
           itemId: secondItemId,
           value: 'legacy-fuel'
         }, {
@@ -431,6 +494,7 @@ describe('get /api/equipment/comparisons', () => {
     const { dbHttp, selectMock } = createComparisonDb({
       items: [createItemRow(firstItemId)]
     })
+
     const event = createTestEvent(dbHttp)
 
     getValidatedQueryMock.mockResolvedValue(createQuery(itemIds))
@@ -443,9 +507,11 @@ describe('get /api/equipment/comparisons', () => {
 
   it('should return 400 before enrichment for mixed categories', async () => {
     const itemIds = [firstItemId, secondItemId]
+
     const { dbHttp, selectMock } = createComparisonDb({
       items: [createItemRow(firstItemId), createItemRow(secondItemId, 3)]
     })
+
     const event = createTestEvent(dbHttp)
 
     getValidatedQueryMock.mockResolvedValue(createQuery(itemIds))

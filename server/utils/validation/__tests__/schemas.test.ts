@@ -28,6 +28,9 @@ import {
   validatePackingListEntryUpdateBody,
   validatePackingListIdParams,
   validatePackingListMutationBody,
+  validatePhotoSubmissionCreateBody,
+  validatePhotoSubmissionIdempotencyKey,
+  validatePhotoSubmissionListQuery,
   validatePropertyEnumOptionMutationBody,
   validatePropertyEnumOptionParams,
   validateRedirectTargetQuery,
@@ -56,6 +59,12 @@ describe('validation schemas', () => {
   const tooLongGroupName = 'G'.repeat(limits.maxEquipmentGroupNameLength + 1)
   const tooLongGroupSlug = 'g'.repeat(limits.maxEquipmentGroupSlugLength + 1)
   const tooLongImageFilename = 'i'.repeat(limits.maxEquipmentItemImageFilenameLength + 1)
+  const manufacturerUrlPrefix = 'https://example.com/'
+
+  const maxManufacturerUrl = manufacturerUrlPrefix + 'a'.repeat(
+    limits.maxEquipmentItemPhotoSubmissionSourceUrlLength - manufacturerUrlPrefix.length
+  )
+
   const maxPackingListName = 'P'.repeat(limits.maxPackingListNameLength)
   const tooLongPackingListName = 'P'.repeat(limits.maxPackingListNameLength + 1)
   const maxPackingListEntryCustomName = 'E'.repeat(limits.maxPackingListEntryCustomNameLength)
@@ -555,7 +564,13 @@ describe('validation schemas', () => {
     })
   })
 
-  it.each([{}, { categoryId: '5' }, { categoryId: '0', propertyId: '11' }, { categoryId: '5', propertyId: '01' }])('should reject invalid category property params: %j', (params) => {
+  it.each([{}, { categoryId: '5' }, {
+    categoryId: '0',
+    propertyId: '11'
+  }, {
+    categoryId: '5',
+    propertyId: '01'
+  }])('should reject invalid category property params: %j', (params) => {
     expect(() => validateCategoryPropertyParams(params)).toThrow(/./u)
   })
 
@@ -573,7 +588,18 @@ describe('validation schemas', () => {
     })
   })
 
-  it.each([{}, { categoryId: '5', propertyId: '11' }, { categoryId: 'x', optionId: '21', propertyId: '11' }, { categoryId: '5', optionId: '00', propertyId: '11' }])('should reject invalid property enum option params: %j', (params) => {
+  it.each([{}, {
+    categoryId: '5',
+    propertyId: '11'
+  }, {
+    categoryId: 'x',
+    optionId: '21',
+    propertyId: '11'
+  }, {
+    categoryId: '5',
+    optionId: '00',
+    propertyId: '11'
+  }])('should reject invalid property enum option params: %j', (params) => {
     expect(() => validatePropertyEnumOptionParams(params)).toThrow(/./u)
   })
 
@@ -664,10 +690,12 @@ describe('validation schemas', () => {
     slug: 'fill-type'
   }, {
     dataType: 'boolean',
+
     enumOptions: [{
       name: 'Yes',
       slug: 'yes'
     }],
+
     name: 'Freestanding',
     slug: 'freestanding'
   }, {
@@ -751,19 +779,24 @@ describe('validation schemas', () => {
         propertySlug: 'freestanding',
         value: true
       }],
+
       brandSlug: ['msr'],
       categorySlug: 'stoves',
       direction: 'desc',
+
       enumFilter: [{
         optionSlug: 'isobutane-propane',
         propertySlug: 'fuel-type'
       }],
+
       limit: 10,
+
       numberFilter: [{
         max: '0.12',
         min: '0.08',
         propertySlug: 'weight'
       }],
+
       page: 2,
       search: 'pocket rocket',
       sort: 'property:weight'
@@ -777,6 +810,7 @@ describe('validation schemas', () => {
       '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
       '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
     ]
+
     const result = validateEquipmentComparisonQuery({ itemId })
 
     expect(result).toStrictEqual({ itemId })
@@ -842,14 +876,17 @@ describe('validation schemas', () => {
         'waterproof:false',
         'freestanding:true'
       ],
+
       brandSlug: ['msr', 'sea-to-summit', 'msr', 'therm-a-rest'],
       categorySlug: 'sleeping-bags',
+
       enumFilter: [
         'fill-type:down',
         'fill-type:synthetic',
         'fill-type:down',
         'shell-material:nylon'
       ],
+
       numberFilter: [
         'weight:1:2',
         'comfort-temperature:-10:',
@@ -896,6 +933,7 @@ describe('validation schemas', () => {
   it('should normalize open and equal numeric ranges', () => {
     const result = validateItemsListQuery({
       categorySlug: 'tents',
+
       numberFilter: [
         'minimum-temperature:-12.5:',
         'weight::2.75',
@@ -921,6 +959,7 @@ describe('validation schemas', () => {
   it('should normalize supported decimal filter spellings', () => {
     const result = validateItemsListQuery({
       categorySlug: 'tents',
+
       numberFilter: [
         'minimum-temperature:-0:',
         'weight:.5:',
@@ -972,8 +1011,14 @@ describe('validation schemas', () => {
   })
 
   it.each([
-    { direction: 'asc', sort: 'name' },
-    { direction: 'desc', sort: 'brand' }
+    {
+      direction: 'asc',
+      sort: 'name'
+    },
+    {
+      direction: 'desc',
+      sort: 'brand'
+    }
   ])('should accept non-property sort: %j', ({ direction, sort }) => {
     const result = validateItemsListQuery({
       direction,
@@ -1215,10 +1260,30 @@ describe('validation schemas', () => {
   })
 
   it.each([
-    { brandId: 0, categoryId: 2, name: 'Item', properties: [] },
-    { brandId: 1.5, categoryId: 2, name: 'Item', properties: [] },
-    { brandId: 1, categoryId: -1, name: 'Item', properties: [] },
-    { brandId: 1, categoryId: 2, name: '   ', properties: [] },
+    {
+      brandId: 0,
+      categoryId: 2,
+      name: 'Item',
+      properties: []
+    },
+    {
+      brandId: 1.5,
+      categoryId: 2,
+      name: 'Item',
+      properties: []
+    },
+    {
+      brandId: 1,
+      categoryId: -1,
+      name: 'Item',
+      properties: []
+    },
+    {
+      brandId: 1,
+      categoryId: 2,
+      name: '   ',
+      properties: []
+    },
     {
       brandId: 1,
       categoryId: 2,
@@ -1229,27 +1294,50 @@ describe('validation schemas', () => {
       brandId: 1,
       categoryId: 2,
       name: 'Item',
-      properties: [{ propertyId: 1, value: 12 }]
+
+      properties: [{
+        propertyId: 1,
+        value: 12
+      }]
     },
     {
       brandId: 1,
       categoryId: 2,
       name: 'Item',
-      properties: [{ propertyId: 1, value: 'one' }, { propertyId: 1, value: 'two' }]
+
+      properties: [{
+        propertyId: 1,
+        value: 'one'
+      }, {
+        propertyId: 1,
+        value: 'two'
+      }]
     }
   ])('should reject invalid item submission body: %j', (body) => {
     expect(() => validateItemSubmissionCreateBody(body)).toThrow(/./u)
   })
 
   it('should validate admin item submission pagination boundaries', () => {
-    expect(validateItemSubmissionListQuery({})).toStrictEqual({ limit: 20, page: 1 })
-    expect(validateItemSubmissionListQuery({ limit: '100', page: '2' })).toStrictEqual({
+    expect(validateItemSubmissionListQuery({})).toStrictEqual({
+      limit: 20,
+      page: 1
+    })
+    expect(validateItemSubmissionListQuery({
+      limit: '100',
+      page: '2'
+    })).toStrictEqual({
       limit: 100,
       page: 2
     })
 
-    expect(() => validateItemSubmissionListQuery({ limit: '101', page: '1' })).toThrow(/./u)
-    expect(() => validateItemSubmissionListQuery({ limit: '20', page: '0' })).toThrow(/./u)
+    expect(() => validateItemSubmissionListQuery({
+      limit: '101',
+      page: '1'
+    })).toThrow(/./u)
+    expect(() => validateItemSubmissionListQuery({
+      limit: '20',
+      page: '0'
+    })).toThrow(/./u)
   })
 
   it('should require properties for full item submission replacement', () => {
@@ -1312,10 +1400,22 @@ describe('validation schemas', () => {
   })
 
   it.each([
-    { decision: 'reject', rejectionReason: '' },
-    { decision: 'reject', rejectionReason: '   ' },
-    { decision: 'reject', rejectionReason: 'x'.repeat(257) },
-    { decision: 'publish', rejectionReason: 'Not allowed' },
+    {
+      decision: 'reject',
+      rejectionReason: ''
+    },
+    {
+      decision: 'reject',
+      rejectionReason: '   '
+    },
+    {
+      decision: 'reject',
+      rejectionReason: 'x'.repeat(257)
+    },
+    {
+      decision: 'publish',
+      rejectionReason: 'Not allowed'
+    },
     { rejectionReason: 'Not allowed' }
   ])('should reject an invalid item submission decision: %j', (decision) => {
     expect(() => validateItemSubmissionUpdateBody({
@@ -1353,6 +1453,103 @@ describe('validation schemas', () => {
     { filename: tooLongImageFilename }
   ])('should reject invalid equipment image upload filename: %j', (query) => {
     expect(() => validateItemImageUploadQuery(query)).toThrow(/./u)
+  })
+
+  it('should accept own photo submission metadata without a source URL', () => {
+    expect(validatePhotoSubmissionCreateBody({
+      filename: '  pocketrocket.webp  ',
+      rightsConfirmed: 'true',
+      sourceType: 'own'
+    })).toStrictEqual({
+      filename: 'pocketrocket.webp',
+      rightsConfirmed: 'true',
+      sourceType: 'own'
+    })
+  })
+
+  it('should accept a manufacturer photo with a trimmed HTTPS source', () => {
+    expect(validatePhotoSubmissionCreateBody({
+      filename: 'official.png',
+      rightsConfirmed: 'true',
+      sourceType: 'manufacturer',
+      sourceUrl: '  https://www.msrgear.com/products/pocketrocket  '
+    })).toStrictEqual({
+      filename: 'official.png',
+      rightsConfirmed: 'true',
+      sourceType: 'manufacturer',
+      sourceUrl: 'https://www.msrgear.com/products/pocketrocket'
+    })
+  })
+
+  it('should accept uppercase HTTPS and enforce the manufacturer URL boundary', () => {
+    expect(validatePhotoSubmissionCreateBody({
+      filename: 'official.png',
+      rightsConfirmed: 'true',
+      sourceType: 'manufacturer',
+      sourceUrl: 'HTTPS://www.msrgear.com/products/pocketrocket'
+    }).sourceUrl).toBe('HTTPS://www.msrgear.com/products/pocketrocket')
+
+    expect(validatePhotoSubmissionCreateBody({
+      filename: 'official.png',
+      rightsConfirmed: 'true',
+      sourceType: 'manufacturer',
+      sourceUrl: maxManufacturerUrl
+    }).sourceUrl).toHaveLength(limits.maxEquipmentItemPhotoSubmissionSourceUrlLength)
+
+    expect(() => validatePhotoSubmissionCreateBody({
+      filename: 'official.png',
+      rightsConfirmed: 'true',
+      sourceType: 'manufacturer',
+      sourceUrl: `${maxManufacturerUrl}a`
+    })).toThrow(/./u)
+  })
+
+  it('should validate photo submission idempotency keys and list pages', () => {
+    const idempotencyKey = '550e8400-e29b-41d4-a716-446655440000'
+
+    expect(validatePhotoSubmissionIdempotencyKey(idempotencyKey)).toBe(idempotencyKey)
+    expect(() => validatePhotoSubmissionIdempotencyKey(null)).toThrow(/./u)
+    expect(() => validatePhotoSubmissionIdempotencyKey('not-a-uuid')).toThrow(/./u)
+    expect(validatePhotoSubmissionListQuery({})).toStrictEqual({ page: 1 })
+    expect(validatePhotoSubmissionListQuery({ page: '2' })).toStrictEqual({ page: 2 })
+    expect(() => validatePhotoSubmissionListQuery({ page: '0' })).toThrow(/./u)
+  })
+
+  it.each([
+    {
+      filename: 'official.png',
+      rightsConfirmed: 'true',
+      sourceType: 'manufacturer'
+    },
+    {
+      filename: 'official.png',
+      rightsConfirmed: 'true',
+      sourceType: 'manufacturer',
+      sourceUrl: 'http://www.msrgear.com/products/pocketrocket'
+    },
+    {
+      filename: 'official.png',
+      rightsConfirmed: 'true',
+      sourceType: 'manufacturer',
+      sourceUrl: 'not a URL'
+    },
+    {
+      filename: 'own.png',
+      rightsConfirmed: 'true',
+      sourceType: 'own',
+      sourceUrl: 'https://example.com/own.png'
+    },
+    {
+      filename: 'own.png',
+      sourceType: 'own'
+    },
+    {
+      filename: 'own.png',
+      rightsConfirmed: 'false',
+      sourceType: 'own'
+    }
+  ])('should reject invalid photo submission metadata: %j', (query) => {
+    expect(() => validatePhotoSubmissionCreateBody(query)).toThrow(/./u)
   })
 
   it('should accept canonical uuid v7 inventory id params only', () => {

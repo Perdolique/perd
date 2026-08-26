@@ -1,4 +1,5 @@
 import { expect, test } from '../fixtures/global.fixtures.ts'
+
 import {
   type MutableResponseState,
   type QueryEntry,
@@ -25,7 +26,7 @@ import {
   expectPerdSelectValue,
   hasVisibleFocusOutline,
   waitForInlineEndAnchoring,
-  mockGuestLogin,
+  mockGuestLogin
 } from '../fixtures/gear-library-entry-list.fixtures.ts'
 
 test.describe('Gear library layout and accessibility', () => {
@@ -47,7 +48,10 @@ test.describe('Gear library layout and accessibility', () => {
     const categorySelect = getGearLibrarySelect(searchRegion, 'Category')
     const sortSelect = getGearLibrarySelect(searchRegion, 'Sort by')
 
-    await expect(page.getByRole('heading', { name: 'Gear library', exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', {
+      name: 'Gear library',
+      exact: true
+    })).toBeVisible()
     await expect(searchRegion.getByLabel('Search gear')).toHaveAttribute('type', 'search')
     await expectPerdSelectValue(categorySelect, '')
     await expectPerdSelectValue(sortSelect, 'name:asc')
@@ -214,6 +218,7 @@ test.describe('Gear library layout and accessibility', () => {
     const itemsState: MutableResponseState = {
       response: { json: scrollableItemsResponse }
     }
+
     const tracker = await mockCatalogApi(context, { items: respondFromState(itemsState) })
 
     await openGearLibrary(page)
@@ -224,6 +229,7 @@ test.describe('Gear library layout and accessibility', () => {
     await expect(initialLink).toBeVisible()
 
     const initialRowBox = await getElementBox(initialRow)
+
     const initialViewport = await page.evaluate(() => {
       return {
         clientWidth: globalThis.document.documentElement.clientWidth,
@@ -231,6 +237,7 @@ test.describe('Gear library layout and accessibility', () => {
         scrollHeight: globalThis.document.documentElement.scrollHeight
       }
     })
+
     const itemsBeforeCategory = tracker.items.length
 
     itemsState.response = { json: refreshedSearchResponse }
@@ -244,6 +251,7 @@ test.describe('Gear library layout and accessibility', () => {
     await expect(filteredLink).toBeVisible()
 
     const filteredRowBox = await getElementBox(filteredRow)
+
     const filteredViewport = await page.evaluate(() => {
       return {
         clientWidth: globalThis.document.documentElement.clientWidth,
@@ -315,7 +323,10 @@ test.describe('Gear library layout and accessibility', () => {
     await selectPerdOption(categorySelect, 'stoves')
     await waitForNextItemsRequest(tracker, itemsBeforeCategory)
 
-    const filtersButton = page.getByRole('button', { name: 'Filters', exact: true })
+    const filtersButton = page.getByRole('button', {
+      name: 'Filters',
+      exact: true
+    })
 
     await expect(page.getByRole('complementary', { name: 'Catalog filters' })).toHaveCount(0)
 
@@ -478,6 +489,7 @@ test.describe('Gear library layout and accessibility', () => {
     })
 
     const tracker = await mockCatalogApi(context)
+
     const routeEntries: QueryEntry[] = [
       ['direction', 'sideways'],
       ['sort', 'property:weight'],
@@ -493,6 +505,7 @@ test.describe('Gear library layout and accessibility', () => {
       ['compare', stoveItem.id],
       ['debug', '1']
     ]
+
     const route = `/gear-library${buildRouteSearch(routeEntries)}`
 
     await openGearLibrary(page, route)

@@ -1,4 +1,5 @@
 import { expect, test } from '../fixtures/global.fixtures.ts'
+
 import {
   type LoadMoreFailureState,
   buildRouteSearch,
@@ -19,7 +20,7 @@ import {
   isSecondPageItemsRequest,
   waitForNextItemsRequest,
   expectQueryValues,
-  mockGuestLogin,
+  mockGuestLogin
 } from '../fixtures/gear-library-entry-list.fixtures.ts'
 
 test.describe('Gear library Load more', () => {
@@ -29,6 +30,7 @@ test.describe('Gear library Load more', () => {
 
   test('should append one ten-item page per action without exposing browsing depth in the URL', async ({ context, page }) => {
     const secondPageGate = createDeferred()
+
     const tracker = await mockCatalogApi(context, {
       items: createGatedLoadMoreResponder('2', secondPageGate)
     })
@@ -234,7 +236,6 @@ test.describe('Gear library Load more', () => {
     await waitForNextItemsRequest(tracker, requestsBeforeLoadMore)
 
     const staleRequestFailure = page.waitForEvent('requestfailed', isSecondPageItemsRequest)
-
     const detailNavigation = page.waitForURL((url) => url.pathname === `/gear-library/${detailItem.id}`)
 
     await page.getByRole('link', { name: detailItem.name }).click()
@@ -246,7 +247,10 @@ test.describe('Gear library Load more', () => {
     secondPageGate.resolve()
 
     await detailNavigation
-    await expect(page.getByRole('heading', { level: 1, name: detailItem.name })).toBeVisible()
+    await expect(page.getByRole('heading', {
+      level: 1,
+      name: detailItem.name
+    })).toBeVisible()
 
     const detailUrl = new globalThis.URL(page.url())
 
@@ -289,7 +293,10 @@ test.describe('Gear library Load more', () => {
     await expect(detailLink).toHaveAttribute('href', `/gear-library/${detailItem.id}`)
 
     await detailLink.click()
-    await expect(page.getByRole('heading', { level: 1, name: detailItem.name })).toBeVisible()
+    await expect(page.getByRole('heading', {
+      level: 1,
+      name: detailItem.name
+    })).toBeVisible()
 
     await page.goBack()
     await expectRouteSearch(page, '?q=catalog')
@@ -356,7 +363,10 @@ test.describe('Gear library Load more', () => {
     expect(savedScrollTop).toBeGreaterThan(0)
 
     await detailLink.click()
-    await expect(page.getByRole('heading', { level: 1, name: detailItem.name })).toBeVisible()
+    await expect(page.getByRole('heading', {
+      level: 1,
+      name: detailItem.name
+    })).toBeVisible()
 
     await page.goBack()
     await expectRouteSearch(page, selectedSearch)
@@ -398,7 +408,10 @@ test.describe('Gear library Load more', () => {
     expect(savedScrollTop).toBeGreaterThan(0)
 
     await detailLink.click()
-    await expect(page.getByRole('heading', { level: 1, name: detailItem.name })).toBeVisible()
+    await expect(page.getByRole('heading', {
+      level: 1,
+      name: detailItem.name
+    })).toBeVisible()
     await clearGearLibraryItemsSnapshot(page)
 
     const requestsBeforeBack = tracker.items.length
