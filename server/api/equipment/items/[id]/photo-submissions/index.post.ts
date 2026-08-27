@@ -37,7 +37,7 @@ import {
 
 interface PhotoSubmissionCreateResponse {
   id: string;
-  status: 'pending';
+  status: 'approved' | 'pending' | 'rejected';
 }
 
 function getStringFormDataValue(formData: FormData, name: string): string | undefined {

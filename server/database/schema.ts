@@ -329,9 +329,10 @@ const equipmentItemImages = pgTable('equipment_item_images', {
 const equipmentItemPhotoSubmissionSourceConstraintName = 'equipment_item_photo_submissions_source_check'
 
 /**
- * Private user-submitted photos awaiting catalog review.
+ * User-submitted photos and their review history.
  *
- * Approved photos are published separately in `equipment_item_images`.
+ * Pending and rejected photos remain private. Approved photos are published separately in
+ * `equipment_item_images` while this row preserves the decision history.
  */
 const equipmentItemPhotoSubmissions = pgTable('equipment_item_photo_submissions', {
   id:
@@ -376,6 +377,9 @@ const equipmentItemPhotoSubmissions = pgTable('equipment_item_photo_submissions'
     varchar({ length: 16 })
     .notNull()
     .default('pending'),
+
+  rejectionReason:
+    varchar({ length: limits.maxEquipmentItemRejectionReasonLength }),
 
   createdBy:
     uuid()

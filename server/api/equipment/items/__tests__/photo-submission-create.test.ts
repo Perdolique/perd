@@ -125,12 +125,13 @@ function createPersistedSubmission(options: {
   cloudflareImageId?: string;
   id?: string;
   itemId?: string;
+  status?: 'approved' | 'pending' | 'rejected';
 } = {}): PersistedSubmissionRow {
   return {
     cloudflareImageId: options.cloudflareImageId ?? cloudflareImageId,
     id: options.id ?? submissionId,
     itemId: options.itemId ?? itemId,
-    status: 'pending'
+    status: options.status ?? 'pending'
   }
 }
 
@@ -449,6 +450,24 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
     expect(uploadHostedEquipmentImageMock).not.toHaveBeenCalled()
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
+
+  it.each(['approved', 'rejected'] as const)(
+    'should replay an already %s submission without uploading another image',
+    async (status) => {
+      const existingSubmission = createPersistedSubmission({ status })
+      const readDb = createReadDb({ earlySubmission: existingSubmission })
+      const event = createPhotoSubmissionEvent(readDb.db)
+      const result = await createPhotoSubmissionHandler(event)
+
+      expect(result).toStrictEqual({
+        id: submissionId,
+        status
+      })
+      expect(rateLimitMock).not.toHaveBeenCalled()
+      expect(uploadHostedEquipmentImageMock).not.toHaveBeenCalled()
+      expect(createWebSocketClientMock).not.toHaveBeenCalled()
+    }
+  )
 
   it('should reject an idempotency key already used for another item', async () => {
     const readDb = createReadDb({

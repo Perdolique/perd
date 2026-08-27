@@ -1,0 +1,1 @@
+ALTER TABLE "equipment_item_photo_submissions" ADD COLUMN "rejectionReason" varchar(256);

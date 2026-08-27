@@ -2,6 +2,7 @@ const appRoutes = {
   account: '/account',
   accountSubmissions: '/account/submissions',
   admin: '/admin',
+  adminEquipmentPhotoSubmissions: '/admin/equipment/photo-submissions',
   adminEquipmentSubmissions: '/admin/equipment/submissions',
   gearLibrary: '/gear-library',
   gearLibraryNew: '/gear-library/new',
@@ -44,6 +45,11 @@ function createAdminEquipmentSubmissionPath(itemId: string) {
   return `${appRoutes.adminEquipmentSubmissions}/${itemId}`
 }
 
+/** Creates the admin review path for one equipment photo submission. */
+function createAdminEquipmentPhotoSubmissionPath(submissionId: string) {
+  return `${appRoutes.adminEquipmentPhotoSubmissions}/${submissionId}`
+}
+
 /** Creates the detail path for one packing list. */
 function createPackingListPath(packingListId: string) {
   return `${appRoutes.packingLists}/${packingListId}`
@@ -51,6 +57,7 @@ function createPackingListPath(packingListId: string) {
 
 export {
   appRoutes,
+  createAdminEquipmentPhotoSubmissionPath,
   createAdminEquipmentSubmissionPath,
   createGearLibraryItemPath,
   createGearLibraryPhotoSubmissionPath,

@@ -369,6 +369,27 @@ const photoSubmissionListQuerySchema = v.object({
   page: pageQuerySchema
 })
 
+const photoSubmissionAdminListQuerySchema = itemSubmissionListQuerySchema
+
+const photoSubmissionParamsSchema = v.object({
+  id: canonicalUuidV7Schema
+})
+
+const photoSubmissionDecisionBodySchema = v.variant('decision', [
+  v.strictObject({
+    decision: v.literal('publish'),
+    makePrimary: v.boolean()
+  }),
+  v.strictObject({
+    decision: v.literal('reject'),
+
+    rejectionReason: v.pipe(
+      trimmedNonEmptyStringSchema,
+      v.maxLength(limits.maxEquipmentItemRejectionReasonLength)
+    )
+  })
+])
+
 const minimumEquipmentComparisonItemCount = 2
 const maximumEquipmentComparisonItemCount = 4
 
@@ -853,6 +874,18 @@ function validatePhotoSubmissionListQuery(query: unknown) {
   return v.parse(photoSubmissionListQuerySchema, query)
 }
 
+function validatePhotoSubmissionAdminListQuery(query: unknown) {
+  return v.parse(photoSubmissionAdminListQuerySchema, query)
+}
+
+function validatePhotoSubmissionParams(params: unknown) {
+  return v.parse(photoSubmissionParamsSchema, params)
+}
+
+function validatePhotoSubmissionDecisionBody(body: unknown) {
+  return v.parse(photoSubmissionDecisionBodySchema, body)
+}
+
 function validateEquipmentComparisonQuery(query: unknown) {
   return v.parse(equipmentComparisonQuerySchema, query)
 }
@@ -933,7 +966,10 @@ export {
   itemImageParamsSchema,
   itemImageUploadQuerySchema,
   photoSubmissionCreateBodySchema,
+  photoSubmissionDecisionBodySchema,
+  photoSubmissionAdminListQuerySchema,
   photoSubmissionListQuerySchema,
+  photoSubmissionParamsSchema,
   equipmentComparisonQuerySchema,
   itemsListQuerySchema,
   limitQuerySchema,
@@ -976,8 +1012,11 @@ export {
   validateItemImageParams,
   validateItemImageUploadQuery,
   validatePhotoSubmissionCreateBody,
+  validatePhotoSubmissionDecisionBody,
+  validatePhotoSubmissionAdminListQuery,
   validatePhotoSubmissionIdempotencyKey,
   validatePhotoSubmissionListQuery,
+  validatePhotoSubmissionParams,
   validateEquipmentComparisonQuery,
   validateItemsListQuery,
   validatePackingListAvailableGearQuery,

@@ -29,8 +29,11 @@ import {
   validatePackingListIdParams,
   validatePackingListMutationBody,
   validatePhotoSubmissionCreateBody,
+  validatePhotoSubmissionDecisionBody,
+  validatePhotoSubmissionAdminListQuery,
   validatePhotoSubmissionIdempotencyKey,
   validatePhotoSubmissionListQuery,
+  validatePhotoSubmissionParams,
   validatePropertyEnumOptionMutationBody,
   validatePropertyEnumOptionParams,
   validateRedirectTargetQuery,
@@ -1513,6 +1516,58 @@ describe('validation schemas', () => {
     expect(validatePhotoSubmissionListQuery({})).toStrictEqual({ page: 1 })
     expect(validatePhotoSubmissionListQuery({ page: '2' })).toStrictEqual({ page: 2 })
     expect(() => validatePhotoSubmissionListQuery({ page: '0' })).toThrow(/./u)
+  })
+
+  it('should validate exact photo review decision variants', () => {
+    expect(validatePhotoSubmissionDecisionBody({
+      decision: 'publish',
+      makePrimary: false
+    })).toStrictEqual({
+      decision: 'publish',
+      makePrimary: false
+    })
+
+    expect(validatePhotoSubmissionDecisionBody({
+      decision: 'reject',
+      rejectionReason: '  Duplicate photo  '
+    })).toStrictEqual({
+      decision: 'reject',
+      rejectionReason: 'Duplicate photo'
+    })
+
+    expect(validatePhotoSubmissionAdminListQuery({
+      limit: '10',
+      page: '2'
+    })).toStrictEqual({
+      limit: 10,
+      page: 2
+    })
+
+    expect(validatePhotoSubmissionParams({
+      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+    })).toStrictEqual({
+      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+    })
+  })
+
+  it.each([{
+    decision: 'publish'
+  }, {
+    decision: 'publish',
+    makePrimary: false,
+    rejectionReason: 'No'
+  }, {
+    decision: 'reject',
+    rejectionReason: '   '
+  }, {
+    decision: 'reject',
+    makePrimary: true,
+    rejectionReason: 'No'
+  }, {
+    decision: 'reject',
+    rejectionReason: 'R'.repeat(limits.maxEquipmentItemRejectionReasonLength + 1)
+  }])('should reject invalid or mixed photo review decision body: %j', (body) => {
+    expect(() => validatePhotoSubmissionDecisionBody(body)).toThrow(/./u)
   })
 
   it.each([

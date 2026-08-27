@@ -186,6 +186,10 @@ describe('equipment catalog research schema', () => {
       (column) => column.name === 'status'
     )
 
+    const rejectionReasonColumn = tableConfig.columns.find(
+      (column) => column.name === 'rejectionReason'
+    )
+
     const itemForeignKey = tableConfig.foreignKeys.find(
       (foreignKey) => foreignKey.reference().foreignTable === schema.equipmentItems
     )
@@ -204,6 +208,7 @@ describe('equipment catalog research schema', () => {
       'sourceUrl',
       'rightsConfirmed',
       'status',
+      'rejectionReason',
       'createdBy',
       'createdAt',
       'updatedAt'
@@ -224,6 +229,8 @@ describe('equipment catalog research schema', () => {
     expect(sourceUrlColumn?.notNull).toBe(false)
     expect(sourceUrlColumn?.getSQLType()).toBe('varchar(2048)')
     expect(statusColumn?.default).toBe('pending')
+    expect(rejectionReasonColumn?.notNull).toBe(false)
+    expect(rejectionReasonColumn?.getSQLType()).toBe('varchar(256)')
     expect(itemForeignKey?.onDelete).toBe('restrict')
     expect(creatorForeignKey?.onDelete).toBe('set null')
     expect(tableConfig.checks.map((check) => check.name)).toContain(

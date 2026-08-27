@@ -24,7 +24,9 @@
   },
 
   "images": {
-    "binding": "IMAGES"
+    "binding": "IMAGES",
+    // Hosted Images CRUD requires the high-fidelity remote binding during local development.
+    "remote": true
   },
 
   "ratelimits": [

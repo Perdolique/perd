@@ -190,6 +190,7 @@ test.describe('Account gear submissions', () => {
               name: 'Published corrected stove'
             },
 
+            rejectionReason: null,
             sourceType: 'own',
             sourceUrl: null,
             status: 'pending',
@@ -225,6 +226,7 @@ test.describe('Account gear submissions', () => {
         name: 'Published corrected stove'
       },
 
+      rejectionReason: null,
       sourceType: 'own',
       sourceUrl: null,
       status: 'pending',
@@ -292,5 +294,55 @@ test.describe('Account gear submissions', () => {
 
     await expect(paginationStatus).toHaveText('All photo submissions are loaded.')
     await expect(paginationStatus).toBeFocused()
+  })
+
+  test('should show every photo review status and the rejection reason', async ({ context, page }) => {
+    const photoBase = {
+      createdAt: '2026-08-10T12:00:00.000Z',
+      filename: 'PocketRocket photo.webp',
+
+      item: {
+        id: publishedItemId,
+        name: 'Published corrected stove'
+      },
+
+      rejectionReason: null,
+      sourceType: 'own',
+      sourceUrl: null,
+      updatedAt: '2026-08-10T12:00:00.000Z'
+    } as const
+
+    await context.route((url) => url.pathname === submissionsPath, async (route) => {
+      await route.fulfill({ json: { items: [] } })
+    })
+    await context.route((url) => url.pathname === photoSubmissionsPath, async (route) => {
+      await route.fulfill({
+        json: {
+          items: [{
+            ...photoBase,
+            id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d1',
+            status: 'pending'
+          }, {
+            ...photoBase,
+            id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d2',
+            status: 'approved'
+          }, {
+            ...photoBase,
+            id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d3',
+            rejectionReason: 'The product is not visible',
+            status: 'rejected'
+          }],
+
+          nextPage: null
+        }
+      })
+    })
+
+    await authenticate(context, page, '/account/submissions')
+
+    await expect(page.getByText('Pending', { exact: true })).toBeVisible()
+    await expect(page.getByText('Published', { exact: true })).toBeVisible()
+    await expect(page.getByText('Rejected', { exact: true })).toBeVisible()
+    await expect(page.getByText('The product is not visible')).toBeVisible()
   })
 })

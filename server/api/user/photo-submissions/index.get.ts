@@ -14,9 +14,10 @@ interface UserPhotoSubmission {
   filename: string;
   id: string;
   item: UserPhotoSubmissionItem;
+  rejectionReason: string | null;
   sourceType: 'manufacturer' | 'own';
   sourceUrl: string | null;
-  status: 'pending';
+  status: 'approved' | 'pending' | 'rejected';
   updatedAt: Date | string;
 }
 
@@ -30,6 +31,7 @@ interface UserPhotoSubmissionQueryRow {
   filename: string;
   id: string;
   item: UserPhotoSubmissionItem | null;
+  rejectionReason: string | null;
   sourceType: string;
   sourceUrl: string | null;
   status: string;
@@ -45,7 +47,7 @@ function mapSourceType(sourceType: string): UserPhotoSubmission['sourceType'] {
 }
 
 function mapStatus(status: string): UserPhotoSubmission['status'] {
-  if (status === 'pending') {
+  if (status === 'approved' || status === 'pending' || status === 'rejected') {
     return status
   }
 
@@ -62,6 +64,7 @@ export default defineEventHandler(async (event): Promise<UserPhotoSubmissionsRes
       createdAt: true,
       filename: true,
       id: true,
+      rejectionReason: true,
       sourceType: true,
       sourceUrl: true,
       status: true,
@@ -107,6 +110,7 @@ export default defineEventHandler(async (event): Promise<UserPhotoSubmissionsRes
       filename: submission.filename,
       id: submission.id,
       item: submission.item,
+      rejectionReason: submission.rejectionReason,
       sourceType: mapSourceType(submission.sourceType),
       sourceUrl: submission.sourceUrl,
       status: mapStatus(submission.status),

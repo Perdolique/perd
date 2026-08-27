@@ -53,6 +53,16 @@ const photoSubmissionRecoveryMigrationSql = readFileSync(
   'utf8'
 )
 
+const photoSubmissionReviewMigrationUrl = new URL(
+  '../migrations/20260827175633_mushy_aqueduct/migration.sql',
+  import.meta.url
+)
+
+const photoSubmissionReviewMigrationSql = readFileSync(
+  photoSubmissionReviewMigrationUrl,
+  'utf8'
+)
+
 describe('database migration workflow', () => {
   it('should migrate pull request databases without resetting catalog data', () => {
     expect(databaseMigrationWorkflow).toContain('pull_request:')
@@ -223,5 +233,20 @@ describe('equipment item photo submission recovery migration', () => {
     expect(photoSubmissionRecoveryMigrationSql).toContain(
       '"createdBy","createdAt" DESC NULLS LAST,"id" DESC NULLS LAST'
     )
+  })
+})
+
+describe('equipment item photo submission review migration', () => {
+  it('should add a nullable rejection reason without rebuilding or deleting submissions', () => {
+    expect(photoSubmissionReviewMigrationSql).toBe(
+      'ALTER TABLE "equipment_item_photo_submissions" ADD COLUMN "rejectionReason" varchar(256);'
+    )
+    expect(photoSubmissionReviewMigrationSql).not.toMatch(
+      /(?:CREATE|DROP|TRUNCATE) TABLE (?:IF (?:NOT )?EXISTS )?"equipment_item_photo_submissions"/iu
+    )
+    expect(photoSubmissionReviewMigrationSql).not.toMatch(
+      /DELETE FROM "equipment_item_photo_submissions"/iu
+    )
+    expect(photoSubmissionReviewMigrationSql).not.toContain('NOT NULL')
   })
 })

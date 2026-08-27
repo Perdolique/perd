@@ -6,7 +6,7 @@ interface PersistedPhotoSubmission {
   cloudflareImageId: string;
   id: string;
   itemId: string;
-  status: 'pending';
+  status: 'approved' | 'pending' | 'rejected';
 }
 
 interface PersistedPhotoSubmissionRow {
@@ -30,7 +30,11 @@ function mapPersistedPhotoSubmission(
     return null
   }
 
-  if (submission.status !== 'pending') {
+  if (
+    submission.status !== 'approved'
+    && submission.status !== 'pending'
+    && submission.status !== 'rejected'
+  ) {
     throw new Error(`Unexpected photo submission status: ${submission.status}`)
   }
 
