@@ -25,7 +25,7 @@ function getSessionConfig(event: H3Event) : SessionConfig {
     name: sessionCookieName,
 
     cookie: {
-      sameSite: 'strict',
+      sameSite: 'lax',
       httpOnly: true,
       secure: true
     }
