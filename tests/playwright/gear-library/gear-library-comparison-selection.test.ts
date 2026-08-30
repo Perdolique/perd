@@ -1,4 +1,4 @@
-import type { Locator, Request } from '@playwright/test'
+import type { Locator, Page, Request } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
 
 import {
@@ -29,6 +29,30 @@ function isSecondPageItemDetailRequest(request: Request): boolean {
 
 const respondWithServerErrorItemDetail: typeof respondWithItemDetail = () => serverErrorResponse
 const comparisonLimitMessage = 'You can compare up to 4 items. Remove one to select another.'
+
+interface ComparisonSelectionItem {
+  id: string;
+  name: string;
+}
+
+async function selectComparisonItem(
+  page: Page,
+  item: ComparisonSelectionItem,
+  selectedItems: ComparisonSelectionItem[]
+): Promise<void> {
+  await page.getByRole('checkbox', { name: `Select ${item.name}` }).check()
+
+  const compareParams = selectedItems.map(
+    (selectedItem) => ['compare', selectedItem.id] as const
+  )
+
+  const currentSearch = buildRouteSearch([
+    ['category', 'stoves'],
+    ...compareParams
+  ])
+
+  await expectRouteSearch(page, currentSearch)
+}
 
 async function expectAllCheckboxesDisabled(checkboxes: Locator) {
   await expect.poll(async () => checkboxes.evaluateAll(
@@ -103,10 +127,10 @@ test.describe('Gear library comparison selection', () => {
     const selectedItems = [firstItem, secondItem, thirdItem, fourthItem]
 
     await page.getByRole('button', { name: 'Compare items' }).click()
-    await page.getByRole('checkbox', { name: `Select ${firstItem.name}` }).check()
-    await page.getByRole('checkbox', { name: `Select ${secondItem.name}` }).check()
-    await page.getByRole('checkbox', { name: `Select ${thirdItem.name}` }).check()
-    await page.getByRole('checkbox', { name: `Select ${fourthItem.name}` }).check()
+    await selectComparisonItem(page, firstItem, [firstItem])
+    await selectComparisonItem(page, secondItem, [firstItem, secondItem])
+    await selectComparisonItem(page, thirdItem, [firstItem, secondItem, thirdItem])
+    await selectComparisonItem(page, fourthItem, selectedItems)
 
     const selectedSearch = buildRouteSearch([
       ['category', 'stoves'],
