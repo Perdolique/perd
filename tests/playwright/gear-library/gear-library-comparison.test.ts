@@ -343,6 +343,7 @@ test.describe('Gear library comparison page', () => {
 
       await expect(page.getByText(invalidCase.message, { exact: true })).toBeVisible()
       expect(tracker.comparisons).toHaveLength(0)
+
       await expect(page.getByRole('link', { name: 'Edit compared items' })).toHaveAttribute(
         'href',
         '/gear-library'
@@ -465,6 +466,7 @@ test.describe('Gear library comparison page', () => {
       'Weight',
       'Piezo ignition'
     ])
+
     await expect(table.getByText('—', { exact: true })).toBeVisible()
 
     const propertyHeaderPosition = await table.getByRole('rowheader').first().evaluate(
@@ -529,6 +531,7 @@ test.describe('Gear library comparison page', () => {
     expect(propertyLabelClipPath).toBe('inset(50%)')
     await expect(page.getByRole('combobox')).toHaveCount(0)
     await expect(page.getByRole('button', { name: /my gear/iu })).toHaveCount(0)
+
     await expect(table.getByRole('rowheader')).toHaveText([
       'Weight',
       'Fuel type',
@@ -582,6 +585,7 @@ test.describe('Gear library comparison page', () => {
         return { json: response }
       }
     })
+
     await openComparisonPage(page, comparisonItemIds)
 
     const table = page.getByRole('table', { name: 'Stoves, 4 items' })
@@ -636,6 +640,7 @@ test.describe('Gear library comparison page', () => {
     await scrollRegion.evaluate((element) => {
       element.scrollLeft = element.scrollWidth
     })
+
     await expect.poll(
       async () => scrollRegion.evaluate((element) => element.scrollLeft)
     ).toBeGreaterThan(0)
@@ -676,6 +681,7 @@ test.describe('Gear library comparison page', () => {
       width: 1440,
       height: 900
     })
+
     await page.emulateMedia({ reducedMotion: 'reduce' })
 
     const tracker = await mockComparisonApi(context)
@@ -764,6 +770,7 @@ test.describe('Gear library comparison page', () => {
     expect(twoItemRegionBox.x).toBeCloseTo(fourItemRegionBox.x, 0)
     expect(twoItemColumnWidth).toBeCloseTo(threeItemColumnWidth, 0)
     expect(tracker.comparisons).toHaveLength(1)
+
     await expect(page.getByRole('button', {
       name: `Remove Primus ${comparisonItems[2].name} from comparison`
     })).toBeFocused()
@@ -780,11 +787,13 @@ test.describe('Gear library comparison page', () => {
         return createComparisonCatalogItemDetail(itemId)
       }
     })
+
     await mockComparisonApi(context)
 
     const pairItemIds = comparisonItemIds.slice(0, 2)
 
     await openComparisonPage(page, pairItemIds)
+
     await page.getByRole('button', {
       name: `Remove MSR ${comparisonItems[0].name} from comparison`
     }).click()
@@ -796,10 +805,12 @@ test.describe('Gear library comparison page', () => {
 
     await expect(page).toHaveURL(`/gear-library${catalogSearch}`)
     await expect(page.getByText('1 of 4 selected', { exact: true })).toBeVisible()
+
     await expect(page.getByRole('button', {
       name: 'Compare',
       exact: true
     })).toBeDisabled()
+
     await expect(page.getByRole('button', {
       name: `Remove ${comparisonItems[1].name} from comparison`
     })).toBeVisible()

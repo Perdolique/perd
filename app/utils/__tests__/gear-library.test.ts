@@ -331,6 +331,7 @@ describe(buildGearLibraryRouteQuery, () => {
       'direction',
       'compare'
     ])
+
     expect(result).toStrictEqual({
       boolean: ['freestanding:true'],
       brand: ['msr'],

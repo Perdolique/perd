@@ -93,6 +93,7 @@ test.describe('Gear library item detail', () => {
 
     await page.goto('/login?redirectTo=/gear-library')
     await page.getByRole('button', { name: 'Guest' }).click()
+
     await expect(page.getByRole('button', {
       name: `Add to My gear ${itemSummary.name}`
     })).toBeVisible()
@@ -100,10 +101,12 @@ test.describe('Gear library item detail', () => {
     await page.getByRole('link', { name: itemSummary.name }).click()
 
     await expect(page).toHaveURL(new RegExp(`/gear-library/${itemId}`, 'u'))
+
     await expect(page.getByRole('heading', {
       level: 1,
       name: itemSummary.name
     })).toBeVisible()
+
     await expect(page.getByRole('link', { name: 'Manage images' })).toHaveCount(0)
     await expect(page.getByRole('link', { name: 'Back to gear library' })).toHaveCount(0)
     await expect(page.getByText('83 g')).toHaveCount(0)
@@ -153,6 +156,7 @@ test.describe('Gear library item detail', () => {
     const imageManagementLink = page.getByRole('link', { name: 'Manage images' })
 
     await expect(imageManagementLink).toBeVisible()
+
     await expect(imageManagementLink).toHaveAttribute(
       'href',
       `/admin/equipment/items/${itemId}/images`

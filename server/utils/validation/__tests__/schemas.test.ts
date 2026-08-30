@@ -29,8 +29,11 @@ import {
   validatePackingListIdParams,
   validatePackingListMutationBody,
   validatePhotoSubmissionCreateBody,
+  validatePhotoSubmissionDecisionBody,
+  validatePhotoSubmissionAdminListQuery,
   validatePhotoSubmissionIdempotencyKey,
   validatePhotoSubmissionListQuery,
+  validatePhotoSubmissionParams,
   validatePropertyEnumOptionMutationBody,
   validatePropertyEnumOptionParams,
   validateRedirectTargetQuery,
@@ -1322,6 +1325,7 @@ describe('validation schemas', () => {
       limit: 20,
       page: 1
     })
+
     expect(validateItemSubmissionListQuery({
       limit: '100',
       page: '2'
@@ -1334,6 +1338,7 @@ describe('validation schemas', () => {
       limit: '101',
       page: '1'
     })).toThrow(/./u)
+
     expect(() => validateItemSubmissionListQuery({
       limit: '20',
       page: '0'
@@ -1513,6 +1518,74 @@ describe('validation schemas', () => {
     expect(validatePhotoSubmissionListQuery({})).toStrictEqual({ page: 1 })
     expect(validatePhotoSubmissionListQuery({ page: '2' })).toStrictEqual({ page: 2 })
     expect(() => validatePhotoSubmissionListQuery({ page: '0' })).toThrow(/./u)
+  })
+
+  it('should validate exact photo review decision variants', () => {
+    expect(validatePhotoSubmissionDecisionBody({
+      decision: 'publish',
+      makePrimary: false
+    })).toStrictEqual({
+      decision: 'publish',
+      makePrimary: false
+    })
+
+    expect(validatePhotoSubmissionDecisionBody({
+      decision: 'reject',
+      rejectionReason: '  Duplicate photo  '
+    })).toStrictEqual({
+      decision: 'reject',
+      rejectionReason: 'Duplicate photo'
+    })
+  })
+
+  it('should validate photo review cursors and route parameters', () => {
+    expect(validatePhotoSubmissionAdminListQuery({})).toStrictEqual({
+      limit: 20
+    })
+
+    expect(validatePhotoSubmissionAdminListQuery({
+      afterCreatedAt: '2026-08-01T12:00:00.000Z',
+      afterId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
+      limit: '10'
+    })).toStrictEqual({
+      afterCreatedAt: '2026-08-01T12:00:00.000Z',
+      afterId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
+      limit: 10
+    })
+
+    expect(() => validatePhotoSubmissionAdminListQuery({
+      afterCreatedAt: '2026-08-01T12:00:00.000Z'
+    })).toThrow(/./u)
+
+    expect(() => validatePhotoSubmissionAdminListQuery({
+      afterId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+    })).toThrow(/./u)
+
+    expect(validatePhotoSubmissionParams({
+      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+    })).toStrictEqual({
+      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+    })
+  })
+
+  it.each([{
+    decision: 'publish'
+  }, {
+    decision: 'publish',
+    makePrimary: false,
+    rejectionReason: 'No'
+  }, {
+    decision: 'reject',
+    rejectionReason: '   '
+  }, {
+    decision: 'reject',
+    makePrimary: true,
+    rejectionReason: 'No'
+  }, {
+    decision: 'reject',
+    rejectionReason: 'R'.repeat(limits.maxEquipmentItemRejectionReasonLength + 1)
+  }])('should reject invalid or mixed photo review decision body: %j', (body) => {
+    expect(() => validatePhotoSubmissionDecisionBody(body)).toThrow(/./u)
   })
 
   it.each([

@@ -199,7 +199,9 @@ describe('post /api/equipment/item-submissions', () => {
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
       status: 'pending'
     })
+
     expect(setResponseStatusMock).toHaveBeenCalledWith(event, 201)
+
     expect(transaction.query.brands.findFirst).toHaveBeenCalledWith({
       columns: {
         id: true,
@@ -210,6 +212,7 @@ describe('post /api/equipment/item-submissions', () => {
         id: 1
       }
     })
+
     expect(transaction.query.equipmentCategories.findFirst).toHaveBeenCalledWith({
       columns: {
         id: true,
@@ -264,6 +267,7 @@ describe('post /api/equipment/item-submissions', () => {
       targetId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
       userId: 'user-1'
     })
+
     expect(insertMock).toHaveBeenCalledTimes(2)
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
@@ -299,6 +303,7 @@ describe('post /api/equipment/item-submissions', () => {
     expect(selectMock).toHaveBeenCalledWith({
       id: categoryProperties.id
     })
+
     expect(propertyLockFromMock).toHaveBeenCalledWith(categoryProperties)
     expect(propertyLockForMock).toHaveBeenCalledWith('key share')
 
@@ -345,6 +350,7 @@ describe('post /api/equipment/item-submissions', () => {
       message: 'Number property value must not be negative',
       statusCode: 400
     })
+
     expect(insertMock).not.toHaveBeenCalled()
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
@@ -357,6 +363,7 @@ describe('post /api/equipment/item-submissions', () => {
     await expect(createItemSubmissionHandler(createTestEvent({}))).rejects.toMatchObject({
       statusCode: 401
     })
+
     expect(readValidatedBodyMock).not.toHaveBeenCalled()
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
@@ -369,6 +376,7 @@ describe('post /api/equipment/item-submissions', () => {
     await expect(createItemSubmissionHandler(createTestEvent({}))).rejects.toMatchObject({
       statusCode: 403
     })
+
     expect(readValidatedBodyMock).not.toHaveBeenCalled()
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
@@ -381,6 +389,7 @@ describe('post /api/equipment/item-submissions', () => {
     await expect(createItemSubmissionHandler(createTestEvent({}))).rejects.toMatchObject({
       statusCode: 400
     })
+
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
@@ -410,6 +419,7 @@ describe('post /api/equipment/item-submissions', () => {
     await expect(createItemSubmissionHandler(createTestEvent({}))).rejects.toMatchObject({
       statusCode: 404
     })
+
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
@@ -424,6 +434,7 @@ describe('post /api/equipment/item-submissions', () => {
       message: 'Failed to submit equipment item',
       statusCode: 500
     })
+
     expect(consoleErrorMock).toHaveBeenCalledWith('Failed to submit equipment item', databaseError)
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })

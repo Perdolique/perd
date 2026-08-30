@@ -18,6 +18,10 @@
         <slot />
       </div>
 
+      <p v-if="hasError" :class="$style.error" role="alert">
+        {{ error }}
+      </p>
+
       <div :class="$style.buttons">
         <PerdButton
           variant="secondary"
@@ -43,7 +47,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { useId } from 'vue'
+  import { computed, useId } from 'vue'
   import PerdButton from '~/components/PerdButton.vue'
   import PerdHeading from '~/components/PerdHeading.vue'
   import ModalDialog from './ModalDialog.vue'
@@ -54,6 +58,7 @@
     confirmDisabled?: boolean;
     confirmLoading?: boolean;
     confirmVariant?: 'danger' | 'primary';
+    error?: string | null;
     headerText: string;
     confirmButtonText: string;
   }
@@ -69,11 +74,13 @@
     closeOnConfirm = true,
     confirmDisabled = false,
     confirmLoading = false,
-    confirmVariant = 'primary'
+    confirmVariant = 'primary',
+    error = null
   } = defineProps<Props>()
 
   const emit = defineEmits<Emits>()
   const headingId = useId()
+  const hasError = computed(() => error !== null)
 
   function close() {
     if (confirmLoading) {
@@ -117,6 +124,10 @@
   .body {
     overflow-wrap: anywhere;
     color: var(--color-text-tertiary);
+  }
+
+  .error {
+    color: var(--color-danger-primary);
   }
 
   .buttons {

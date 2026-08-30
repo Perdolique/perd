@@ -115,10 +115,12 @@ test.describe('Equipment image management', () => {
 
     await expect(imageInput).toHaveAttribute('multiple', '')
     await expect(imageInput).toHaveAttribute('accept', 'image/jpeg,image/png,image/webp')
+
     await imageInput.setInputFiles([
       `public/${firstFilename}`,
       `tests/playwright/fixtures/${secondFilename}`
     ])
+
     await expect(page.getByText('2 files selected', { exact: true })).toBeVisible()
     await page.getByRole('button', { name: 'Upload' }).click()
 
@@ -204,14 +206,17 @@ test.describe('Equipment image management', () => {
     const firstPreview = page.getByAltText('Equipment image 1')
 
     await expect(firstPreview).toHaveAttribute('src', firstPreviewUrl)
+
     await expect(firstPreview).toHaveAttribute(
       'srcset',
       `${firstPreviewUrl} 1x, ${firstRetinaPreviewUrl} 2x`
     )
+
     await expect(firstPreview).toHaveJSProperty('currentSrc', firstPreviewUrl)
     await expect(firstPreview).toHaveAttribute('width', '320')
     await expect(firstPreview).toHaveAttribute('height', '320')
     await expect(firstPreview).toHaveAttribute('loading', 'lazy')
+
     await expect.poll(() => previewRequests).toEqual(expect.arrayContaining([
       firstPreviewUrl,
       secondPreviewUrl
@@ -257,6 +262,7 @@ test.describe('Equipment image management', () => {
 
     await context.route(`${imagesPath}/order`, async (route) => {
       expect(route.request().method()).toBe('PATCH')
+
       expect(route.request().postDataJSON()).toStrictEqual({
         imageIds: [secondImageId, firstImageId]
       })
@@ -310,6 +316,7 @@ test.describe('Equipment image management', () => {
     const secondCard = page.getByAltText('Equipment image 2').locator('..')
 
     await firstCard.dragTo(secondCard)
+
     await expect(page.getByAltText('Equipment image 1')).toHaveJSProperty(
       'currentSrc',
       secondPreviewUrl

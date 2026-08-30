@@ -33,6 +33,7 @@ describe(getPrimaryEquipmentImageIds, () => {
       ['item-1', 'cloudflare-image-1'],
       ['item-2', 'cloudflare-image-2']
     ]))
+
     expect(findManyMock).toHaveBeenCalledWith({
       columns: {
         cloudflareImageId: true,

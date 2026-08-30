@@ -53,6 +53,16 @@ const photoSubmissionRecoveryMigrationSql = readFileSync(
   'utf8'
 )
 
+const photoSubmissionReviewMigrationUrl = new URL(
+  '../migrations/20260827175633_mushy_aqueduct/migration.sql',
+  import.meta.url
+)
+
+const photoSubmissionReviewMigrationSql = readFileSync(
+  photoSubmissionReviewMigrationUrl,
+  'utf8'
+)
+
 describe('database migration workflow', () => {
   it('should migrate pull request databases without resetting catalog data', () => {
     expect(databaseMigrationWorkflow).toContain('pull_request:')
@@ -132,12 +142,15 @@ describe('category property negative value migration', () => {
     expect(negativeValuesMigrationSql).not.toMatch(
       /(?:CREATE|DROP|TRUNCATE) TABLE (?:IF (?:NOT )?EXISTS )?"equipment_items"/iu
     )
+
     expect(negativeValuesMigrationSql).not.toMatch(
       /DELETE FROM "equipment_items"/iu
     )
+
     expect(negativeValuesMigrationSql).not.toMatch(
       /(?:CREATE|DROP|TRUNCATE) TABLE (?:IF (?:NOT )?EXISTS )?"equipment_item_images"/iu
     )
+
     expect(negativeValuesMigrationSql).not.toMatch(
       /DELETE FROM "equipment_item_images"/iu
     )
@@ -149,9 +162,11 @@ describe('equipment item rejection reason migration', () => {
     expect(rejectionReasonMigrationSql).toContain(
       'ALTER TABLE "equipment_items" ADD COLUMN "rejectionReason" varchar(256);'
     )
+
     expect(rejectionReasonMigrationSql).not.toMatch(
       /(?:CREATE|DROP|TRUNCATE) TABLE (?:IF (?:NOT )?EXISTS )?"equipment_items"/iu
     )
+
     expect(rejectionReasonMigrationSql).not.toMatch(/DELETE FROM "equipment_items"/iu)
     expect(rejectionReasonMigrationSql).not.toContain('NOT NULL')
   })
@@ -162,9 +177,11 @@ describe('equipment item photo submissions migration', () => {
     expect(photoSubmissionsMigrationSql).toContain(
       'CREATE TABLE "equipment_item_photo_submissions"'
     )
+
     expect(photoSubmissionsMigrationSql).toContain(
       '"cloudflareImageId" text NOT NULL UNIQUE'
     )
+
     expect(photoSubmissionsMigrationSql).toContain(
       '"status" varchar(16) DEFAULT \'pending\' NOT NULL'
     )
@@ -174,12 +191,15 @@ describe('equipment item photo submissions migration', () => {
     expect(photoSubmissionsMigrationSql).toContain(
       '"sourceType" = \'own\' AND "sourceUrl" IS NULL'
     )
+
     expect(photoSubmissionsMigrationSql).toContain(
       '"sourceType" = \'manufacturer\' AND NULLIF(BTRIM("sourceUrl"), \'\') IS NOT NULL'
     )
+
     expect(photoSubmissionsMigrationSql).toMatch(
       /FOREIGN KEY \("itemId"\).*ON DELETE RESTRICT ON UPDATE CASCADE/u
     )
+
     expect(photoSubmissionsMigrationSql).toMatch(
       /FOREIGN KEY \("createdBy"\).*ON DELETE SET NULL ON UPDATE CASCADE/u
     )
@@ -214,14 +234,25 @@ describe('equipment item photo submission recovery migration', () => {
     expect(photoSubmissionRecoveryMigrationSql).toContain(
       'char_length("sourceUrl") > 2048'
     )
+
     expect(photoSubmissionRecoveryMigrationSql).toContain(
       'ALTER COLUMN "sourceUrl" SET DATA TYPE varchar(2048)'
     )
+
     expect(photoSubmissionRecoveryMigrationSql).toContain(
       'equipment_item_photo_submissions_creator_history_index'
     )
+
     expect(photoSubmissionRecoveryMigrationSql).toContain(
       '"createdBy","createdAt" DESC NULLS LAST,"id" DESC NULLS LAST'
+    )
+  })
+})
+
+describe('equipment item photo submission review migration', () => {
+  it('should add a nullable rejection reason without rebuilding or deleting submissions', () => {
+    expect(photoSubmissionReviewMigrationSql).toBe(
+      'ALTER TABLE "equipment_item_photo_submissions" ADD COLUMN "rejectionReason" varchar(256);'
     )
   })
 })

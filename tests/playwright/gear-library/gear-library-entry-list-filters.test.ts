@@ -364,6 +364,7 @@ test.describe('Gear library filters', () => {
       await showFewerButton.click()
 
       await expect(brandCheckboxes).toHaveCount(8)
+
       await expect(brandGroup.getByRole('button', { name: 'Show all 12 brands' }))
         .toHaveAttribute('aria-expanded', 'false')
     })
@@ -882,6 +883,7 @@ test.describe('Gear library filters', () => {
 
     await test.step('discard an escaped draft and reset the expanded view', async () => {
       await msrCheckbox.uncheck()
+
       await expect(filterDialog.getByRole('button', { name: 'Show fewer' }))
         .toHaveAttribute('aria-expanded', 'true')
 

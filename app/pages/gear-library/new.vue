@@ -91,6 +91,7 @@
         body,
         method: 'POST'
       })
+
       isSubmitted.value = true
 
       await nextTick()

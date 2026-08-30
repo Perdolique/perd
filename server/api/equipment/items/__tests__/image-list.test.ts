@@ -33,6 +33,7 @@ describe('get /api/equipment/items/[id]/images', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     validateAdminUserMock.mockResolvedValue('0195f6e8-8f44-74f6-bc9a-5c8f7df477aa')
+
     getValidatedRouterParamsMock.mockResolvedValue({
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
     })
@@ -65,7 +66,9 @@ describe('get /api/equipment/items/[id]/images', () => {
       displayOrder: 0,
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1'
     }])
+
     expect(validateAdminUserMock).toHaveBeenCalledWith(event)
+
     expect(findManyMock).toHaveBeenCalledWith(expect.objectContaining({
       orderBy: {
         displayOrder: 'asc'

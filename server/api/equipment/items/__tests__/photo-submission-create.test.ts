@@ -125,12 +125,13 @@ function createPersistedSubmission(options: {
   cloudflareImageId?: string;
   id?: string;
   itemId?: string;
+  status?: 'approved' | 'pending' | 'rejected';
 } = {}): PersistedSubmissionRow {
   return {
     cloudflareImageId: options.cloudflareImageId ?? cloudflareImageId,
     id: options.id ?? submissionId,
     itemId: options.itemId ?? itemId,
-    status: 'pending'
+    status: options.status ?? 'pending'
   }
 }
 
@@ -378,6 +379,7 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
     const result = await createPhotoSubmissionHandler(event)
 
     expect(rateLimitMock).toHaveBeenCalledWith({ key: userId })
+
     expect(readDb.submissionFindManyMock).toHaveBeenCalledWith({
       columns: { id: true },
 
@@ -389,8 +391,10 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
 
       limit: 3
     })
+
     expect(validatePhotoSubmissionMultipartRequestMock).toHaveBeenCalledWith(event)
     expect(writeDb.lockBuilder.for).toHaveBeenCalledWith('update')
+
     expect(writeDb.submissionValuesMock).toHaveBeenCalledWith({
       cloudflareImageId,
       createdBy: userId,
@@ -402,6 +406,7 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
       sourceUrl: expectedSourceUrl,
       status: 'pending'
     })
+
     expect(writeDb.contributionValuesMock).toHaveBeenCalledWith({
       action: 'submit_item_photo',
 
@@ -415,11 +420,14 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
       targetId: submissionId,
       userId
     })
+
     expect(writeDb.insertMock).not.toHaveBeenCalledWith(equipmentItemImages)
+
     expect(result).toStrictEqual({
       id: submissionId,
       status: 'pending'
     })
+
     expect(setResponseStatusMock).toHaveBeenCalledWith(event, 201)
     expect(writeDb.endMock).toHaveBeenCalledTimes(1)
   })
@@ -430,6 +438,7 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
     await expect(
       createPhotoSubmissionHandler(createPhotoSubmissionEvent(readDb.db, key))
     ).rejects.toMatchObject({ statusCode: 400 })
+
     expect(readDb.submissionFindFirstMock).not.toHaveBeenCalled()
     expect(rateLimitMock).not.toHaveBeenCalled()
   })
@@ -444,11 +453,31 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
       id: submissionId,
       status: 'pending'
     })
+
     expect(rateLimitMock).not.toHaveBeenCalled()
     expect(readLimitedMultipartFormDataMock).not.toHaveBeenCalled()
     expect(uploadHostedEquipmentImageMock).not.toHaveBeenCalled()
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
+
+  it.each(['approved', 'rejected'] as const)(
+    'should replay an already %s submission without uploading another image',
+    async (status) => {
+      const existingSubmission = createPersistedSubmission({ status })
+      const readDb = createReadDb({ earlySubmission: existingSubmission })
+      const event = createPhotoSubmissionEvent(readDb.db)
+      const result = await createPhotoSubmissionHandler(event)
+
+      expect(result).toStrictEqual({
+        id: submissionId,
+        status
+      })
+
+      expect(rateLimitMock).not.toHaveBeenCalled()
+      expect(uploadHostedEquipmentImageMock).not.toHaveBeenCalled()
+      expect(createWebSocketClientMock).not.toHaveBeenCalled()
+    }
+  )
 
   it('should reject an idempotency key already used for another item', async () => {
     const readDb = createReadDb({
@@ -458,6 +487,7 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
     await expect(
       createPhotoSubmissionHandler(createPhotoSubmissionEvent(readDb.db))
     ).rejects.toMatchObject({ statusCode: 409 })
+
     expect(rateLimitMock).not.toHaveBeenCalled()
   })
 
@@ -467,6 +497,7 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
     await expect(
       createPhotoSubmissionHandler(createPhotoSubmissionEvent(readDb.db))
     ).rejects.toMatchObject({ statusCode: 409 })
+
     expect(rateLimitMock).not.toHaveBeenCalled()
     expect(readLimitedMultipartFormDataMock).not.toHaveBeenCalled()
     expect(uploadHostedEquipmentImageMock).not.toHaveBeenCalled()
@@ -496,7 +527,9 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
     await expect(
       createPhotoSubmissionHandler(createPhotoSubmissionEvent(createReadDb().db))
     ).rejects.toMatchObject({ statusCode: 503 })
+
     expect(readLimitedMultipartFormDataMock).not.toHaveBeenCalled()
+
     expect(consoleErrorMock).toHaveBeenCalledWith(
       'Failed to apply photo submission rate limit',
       {
@@ -520,13 +553,16 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
     const result = await createPhotoSubmissionHandler(createPhotoSubmissionEvent(readDb.db))
 
     expect(result.id).toBe(winnerSubmissionId)
+
     expect(deleteUnattachedHostedEquipmentImageMock).toHaveBeenCalledWith({
       binding: { binding: 'images' },
       cloudflareImageId
     })
+
     expect(Math.max(...writeDb.endMock.mock.invocationCallOrder)).toBeLessThan(
       Math.min(...deleteUnattachedHostedEquipmentImageMock.mock.invocationCallOrder)
     )
+
     expect(writeDb.insertMock).not.toHaveBeenCalled()
   })
 
@@ -562,10 +598,12 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
     const result = await createPhotoSubmissionHandler(createPhotoSubmissionEvent(readDb.db))
 
     expect(result.id).toBe(winnerSubmissionId)
+
     expect(deleteUnattachedHostedEquipmentImageMock).toHaveBeenCalledWith({
       binding: { binding: 'images' },
       cloudflareImageId
     })
+
     expect(Math.max(...writeDb.endMock.mock.invocationCallOrder)).toBeLessThan(
       Math.min(...deleteUnattachedHostedEquipmentImageMock.mock.invocationCallOrder)
     )
@@ -588,13 +626,16 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
       statusCode: 500,
       statusMessage: 'Failed to save photo submission'
     })
+
     expect(deleteUnattachedHostedEquipmentImageMock).toHaveBeenCalledWith({
       binding: { binding: 'images' },
       cloudflareImageId
     })
+
     expect(Math.max(...writeDb.endMock.mock.invocationCallOrder)).toBeLessThan(
       Math.min(...deleteUnattachedHostedEquipmentImageMock.mock.invocationCallOrder)
     )
+
     expect(consoleErrorMock).toHaveBeenCalledWith(
       'Failed to save equipment photo submission',
       expect.objectContaining({ error: transactionError })
@@ -615,7 +656,9 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
     await expect(
       createPhotoSubmissionHandler(createPhotoSubmissionEvent(readDb.db))
     ).rejects.toMatchObject({ statusCode: 500 })
+
     expect(deleteUnattachedHostedEquipmentImageMock).not.toHaveBeenCalled()
+
     expect(consoleErrorMock).toHaveBeenCalledWith(
       'Failed to reconcile equipment photo submission',
       expect.objectContaining({ reconciliationError })
@@ -631,7 +674,9 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
     await expect(
       createPhotoSubmissionHandler(createPhotoSubmissionEvent(readDb.db))
     ).rejects.toMatchObject({ statusCode: 409 })
+
     expect(deleteUnattachedHostedEquipmentImageMock).toHaveBeenCalledTimes(1)
+
     expect(Math.max(...writeDb.endMock.mock.invocationCallOrder)).toBeLessThan(
       Math.min(...deleteUnattachedHostedEquipmentImageMock.mock.invocationCallOrder)
     )
@@ -654,6 +699,7 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
       id: submissionId,
       status: 'pending'
     })
+
     expect(consoleErrorMock).toHaveBeenCalledWith(
       'Failed to close photo submission database client',
       {
@@ -671,6 +717,7 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
     await expect(
       createPhotoSubmissionHandler(createPhotoSubmissionEvent(createReadDb().db))
     ).rejects.toBe(authError)
+
     expect(getValidatedRouterParamsMock).not.toHaveBeenCalled()
     expect(rateLimitMock).not.toHaveBeenCalled()
   })

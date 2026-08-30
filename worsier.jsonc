@@ -9,6 +9,7 @@
     "statementSpacing": {
       "controlFlowStatements": "separate",
       "imports": "separate",
+      "multilineCallStatements": "separate",
       "returnStatements": "separate",
       "typeAliases": "separate",
       "variableDeclarations": "separate"

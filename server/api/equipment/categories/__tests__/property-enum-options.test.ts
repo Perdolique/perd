@@ -235,6 +235,7 @@ describe('property enum option handlers', () => {
     vi.clearAllMocks()
 
     validateAdminUserMock.mockResolvedValue('user-1')
+
     getValidatedRouterParamsMock.mockResolvedValue({
       categoryId: 5,
       propertyId: 11
@@ -287,11 +288,13 @@ describe('property enum option handlers', () => {
 
       expect(result).toStrictEqual(createdOption)
       expect(setResponseStatusMock).toHaveBeenCalledWith(event, 201)
+
       expect(valuesMocks[0]).toHaveBeenCalledWith({
         name: 'Down',
         propertyId: 11,
         slug: 'down'
       })
+
       expect(valuesMocks[1]).toHaveBeenCalledWith({
         action: 'create_property_enum_option',
 
@@ -477,6 +480,7 @@ describe('property enum option handlers', () => {
 
       expect(propertyLockCallOrder).toBeLessThan(usageReadCallOrder)
       expect(setResponseStatusMock).toHaveBeenCalledWith(event, 204)
+
       expect(valuesMocks[0]).toHaveBeenCalledWith({
         action: 'delete_property_enum_option',
 

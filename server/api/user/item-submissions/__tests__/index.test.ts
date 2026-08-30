@@ -74,6 +74,7 @@ describe('get /api/user/item-submissions', () => {
     const result = await listUserItemSubmissionsHandler(event)
 
     expect(validateRegisteredUserMock).toHaveBeenCalledWith(event)
+
     expect(findManyMock).toHaveBeenCalledWith(expect.objectContaining({
       orderBy: {
         createdAt: 'desc',
@@ -88,6 +89,7 @@ describe('get /api/user/item-submissions', () => {
         }
       }
     }))
+
     expect(result).toStrictEqual({
       items: [{
         brand: {

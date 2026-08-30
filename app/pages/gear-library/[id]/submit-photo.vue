@@ -36,11 +36,11 @@
 
     <PagePlaceholder
       v-else-if="isSubmitted"
-      emoji="✅"
-      title="Photo submitted."
+      :emoji="submissionConfirmation.emoji"
+      :title="submissionConfirmation.title"
     >
       <p ref="confirmationStatus" role="status" tabindex="-1">
-        Your photo is pending review and will remain private until an administrator approves it.
+        {{ submissionConfirmation.message }}
       </p>
 
       <template #actions>
@@ -215,6 +215,7 @@
   import { useObjectUrl } from '@vueuse/core'
   import { computed, nextTick, ref, shallowRef, useTemplateRef } from 'vue'
   import { definePageMeta, useFetch, useRequestFetch, useRoute, useUserStore } from '#imports'
+  import type { PhotoSubmissionCreateResponse } from '#server/api/equipment/items/[id]/photo-submissions/index.post'
   import { limits } from '#shared/constants'
   import EquipmentImageFilePicker from '~/components/equipment/EquipmentImageFilePicker.vue'
   import PageLoadingState from '~/components/PageLoadingState.vue'
@@ -227,6 +228,7 @@
   import { appRoutes, createGearLibraryItemPath } from '~/utils/navigation'
 
   type PhotoSourceType = 'manufacturer' | 'own'
+  type PhotoSubmissionStatus = PhotoSubmissionCreateResponse['status']
 
   definePageMeta({ layout: 'page' })
 
@@ -255,7 +257,7 @@
   const sourceUrl = ref('')
   const rightsConfirmed = ref(false)
   const isSubmitting = ref(false)
-  const isSubmitted = ref(false)
+  const submissionStatus = ref<PhotoSubmissionStatus | null>(null)
   const mutationMessage = ref<string | null>(null)
   const idempotencyKey = ref<string | null>(null)
 
@@ -297,6 +299,32 @@
   )
 
   const isManufacturerSource = computed(() => sourceType.value === 'manufacturer')
+  const isSubmitted = computed(() => submissionStatus.value !== null)
+
+  const submissionConfirmation = computed(() => {
+    if (submissionStatus.value === 'approved') {
+      return {
+        emoji: '✅',
+        message: 'This submission was already approved and the photo is visible in the catalog gallery.',
+        title: 'Photo already published.'
+      }
+    }
+
+    if (submissionStatus.value === 'rejected') {
+      return {
+        emoji: '🛑',
+        message: 'This submission was already rejected. View My contributions for the review result.',
+        title: 'Photo already reviewed.'
+      }
+    }
+
+    return {
+      emoji: '✅',
+      message: 'Your photo is pending review and will remain private until an administrator approves it.',
+      title: 'Photo submitted.'
+    }
+  })
+
   const selectedFile = computed(() => selectedFiles.value[0] ?? null)
   const previewUrl = useObjectUrl(selectedFile)
   const hasSelectedFile = computed(() => selectedFile.value !== null)
@@ -432,7 +460,7 @@
         formData.set('sourceUrl', sourceUrl.value.trim())
       }
 
-      await requestFetch(`/api/equipment/items/${itemId}/photo-submissions`, {
+      const response = await requestFetch(`/api/equipment/items/${itemId}/photo-submissions`, {
         body: formData,
 
         headers: {
@@ -441,7 +469,8 @@
 
         method: 'POST'
       })
-      isSubmitted.value = true
+
+      submissionStatus.value = response.status
 
       await nextTick()
 

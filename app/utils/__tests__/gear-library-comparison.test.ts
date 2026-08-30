@@ -195,6 +195,7 @@ describe(createGearLibraryComparisonRows, () => {
     )
 
     expect(rows.map((row) => row.slug)).toStrictEqual(['weight', 'season'])
+
     expect(rows[0]?.values).toStrictEqual([
       {
         displayValue: '—',

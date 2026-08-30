@@ -123,9 +123,11 @@ async function mockReferences(context: BrowserContext) {
   await context.route((url) => url.pathname === '/api/equipment/brands', async (route) => {
     await route.fulfill({ json: brands })
   })
+
   await context.route((url) => url.pathname === '/api/equipment/categories', async (route) => {
     await route.fulfill({ json: categories })
   })
+
   await context.route((url) => url.pathname.includes('/categories/by-slug/'), async (route) => {
     const request = route.request()
     const { pathname } = new globalThis.URL(request.url())
@@ -246,6 +248,7 @@ test.describe('Admin gear submission review', () => {
       page,
       target: '/admin'
     })
+
     await page.getByRole('link', { name: /Review gear submissions/u }).click()
 
     await expect(page).toHaveURL(/\/admin\/equipment\/submissions$/u)
@@ -293,6 +296,7 @@ test.describe('Admin gear submission review', () => {
       page,
       target: '/admin/equipment/submissions'
     })
+
     await expect(page.getByText('Gear submissions unavailable.')).toBeVisible()
 
     const requestCountBeforeRetry = requestCount
@@ -310,11 +314,13 @@ test.describe('Admin gear submission review', () => {
     const patchRequests: Request[] = []
 
     await mockReferences(context)
+
     await context.route((url) => url.pathname === detailPath, async (route) => {
       const request = route.request()
 
       if (request.method() === 'PATCH') {
         patchRequests.push(request)
+
         await route.fulfill({
           json: {
             ...detail,
@@ -359,6 +365,7 @@ test.describe('Admin gear submission review', () => {
         value: '83.5'
       }]
     })
+
     await expect(page.getByRole('status')).toHaveText('Changes saved.')
     await expect(page.getByRole('status')).toBeFocused()
     await expect(saveButton).toBeDisabled()
@@ -372,11 +379,13 @@ test.describe('Admin gear submission review', () => {
     const patchRequests: Request[] = []
 
     await mockReferences(context)
+
     await context.route((url) => url.pathname === detailPath, async (route) => {
       const request = route.request()
 
       if (request.method() === 'PATCH') {
         patchRequests.push(request)
+
         await route.fulfill({
           json: {
             ...detail,
@@ -391,13 +400,16 @@ test.describe('Admin gear submission review', () => {
 
       await route.fulfill({ json: detail })
     })
+
     await authenticate({
       context,
       isAdmin: true,
       page,
       target: `/admin/equipment/submissions/${submissionId}`
     })
+
     await page.getByLabel('Item name').fill('Published corrected name')
+
     await page.getByRole('button', {
       name: 'Publish',
       exact: true
@@ -409,7 +421,9 @@ test.describe('Admin gear submission review', () => {
       name: 'Publish',
       exact: true
     }).click()
+
     await expect.poll(() => patchRequests).toHaveLength(1)
+
     expect(patchRequests[0]?.postDataJSON()).toStrictEqual({
       brandId: 10,
       categoryId: 2,
@@ -438,6 +452,7 @@ test.describe('Admin gear submission review', () => {
     const patchRequests: Request[] = []
 
     await mockReferences(context)
+
     await context.route((url) => url.pathname === detailPath, async (route) => {
       const request = route.request()
 
@@ -468,13 +483,16 @@ test.describe('Admin gear submission review', () => {
 
       await route.fulfill({ json: detail })
     })
+
     await authenticate({
       context,
       isAdmin: true,
       page,
       target: `/admin/equipment/submissions/${submissionId}`
     })
+
     await page.getByLabel('Item name').fill('Rejected corrected name')
+
     await page.getByRole('button', {
       name: 'Reject',
       exact: true
@@ -495,16 +513,21 @@ test.describe('Admin gear submission review', () => {
     await expect(dialog).not.toBeVisible()
     await expect(page.getByText('Could not apply this decision. Your edits are still here. Try again.')).toBeVisible()
     await expect(page.getByLabel('Item name')).toHaveValue('Rejected corrected name')
+
     await page.getByRole('button', {
       name: 'Reject',
       exact: true
     }).click()
+
     await expect(dialog.getByLabel('Reason')).toHaveValue('Duplicate catalog item')
+
     await dialog.getByRole('button', {
       name: 'Reject',
       exact: true
     }).click()
+
     await expect.poll(() => patchRequests).toHaveLength(2)
+
     expect(patchRequests[1]?.postDataJSON()).toStrictEqual({
       brandId: 10,
       categoryId: 2,
@@ -536,16 +559,20 @@ test.describe('Admin gear submission review', () => {
     await context.route((url) => url.pathname === '/api/equipment/brands', async (route) => {
       await route.fulfill({ json: brands })
     })
+
     await context.route((url) => url.pathname === '/api/equipment/categories', async (route) => {
       await route.fulfill({ json: categories })
     })
+
     await context.route(
       (url) => url.pathname.includes('/categories/by-slug/'),
       createGatedInitialCategoryResponder(initialCategoryGate.promise)
     )
+
     await context.route((url) => url.pathname === detailPath, async (route) => {
       if (route.request().method() === 'PATCH') {
         patchRequests.push(route.request())
+
         await route.fulfill({
           json: {
             ...detail,
@@ -572,6 +599,7 @@ test.describe('Admin gear submission review', () => {
       page,
       target: `/admin/equipment/submissions/${submissionId}`
     })
+
     await expect(page.getByText('Loading characteristics…')).toBeVisible()
 
     const staleRequestFailure = page.waitForEvent('requestfailed', isStovesCategoryDetailRequest)
@@ -591,6 +619,7 @@ test.describe('Admin gear submission review', () => {
     await expect(page.getByLabel('Weight')).toHaveCount(0)
     await page.getByRole('button', { name: 'Save changes' }).click()
     await expect.poll(() => patchRequests).toHaveLength(1)
+
     expect(patchRequests[0]?.postDataJSON()).toStrictEqual({
       brandId: 10,
       categoryId: 1,
@@ -611,7 +640,9 @@ test.describe('Admin gear submission review', () => {
         height: 800,
         width: 415
       })
+
       await mockReferences(context)
+
       await context.route((url) => url.pathname === detailPath, async (route) => {
         if (route.request().method() === 'PATCH') {
           patchCount += 1

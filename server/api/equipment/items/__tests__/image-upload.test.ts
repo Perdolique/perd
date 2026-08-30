@@ -210,6 +210,7 @@ describe('post /api/equipment/items/[id]/images', () => {
       mediaType: 'image/webp',
       stream: undefined
     })
+
     expect(uploadOptions).toMatchObject({
       binding: { binding: 'images' },
       creator: userId,
@@ -221,12 +222,15 @@ describe('post /api/equipment/items/[id]/images', () => {
 
       requireSignedURLs: false
     })
+
     expect(uploadOptions?.body).toBeDefined()
+
     expect(result).toStrictEqual({
       cloudflareImageId,
       displayOrder: 1,
       id: imageId
     })
+
     expect(setResponseStatusMock).toHaveBeenCalledWith(event, 201)
   })
 
@@ -244,11 +248,14 @@ describe('post /api/equipment/items/[id]/images', () => {
       statusCode: 500,
       statusMessage: 'Failed to save equipment item image'
     })
+
     expect(deleteUnattachedHostedEquipmentImageMock).toHaveBeenCalledWith({
       binding: { binding: 'images' },
       cloudflareImageId
     })
+
     expect(writeDb.$client.end).toHaveBeenCalledTimes(1)
+
     expect(consoleErrorMock).toHaveBeenCalledWith(
       'Failed to save equipment item image',
       expect.objectContaining({ error: databaseError })

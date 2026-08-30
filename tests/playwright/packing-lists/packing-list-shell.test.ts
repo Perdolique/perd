@@ -397,6 +397,7 @@ async function mockPackingListRoutes(context: BrowserContext, page: Page, state:
     }
 
     state.detailRequests += 1
+
     await route.fulfill({
       json: state.detail
     })
@@ -444,11 +445,13 @@ test.describe('Packing list shell', () => {
     await openPackingLists(page)
 
     await expect(page).toHaveURL(/\/packing-lists$/u)
+
     await expect(page.getByRole('heading', {
       level: 1,
       name: 'Packing lists',
       exact: true
     })).toBeVisible()
+
     await expect(page.getByRole('heading', { name: 'No packing lists yet.' })).toBeVisible()
 
     await page.getByRole('button', { name: 'New list' }).first().click()
@@ -477,6 +480,7 @@ test.describe('Packing list shell', () => {
       height: 844,
       width: 390
     })
+
     await mockAuth(context)
     await mockPackingListRoutes(context, page, state)
     await page.goto('/login?redirectTo=/packing-lists')
@@ -523,10 +527,12 @@ test.describe('Packing list shell', () => {
     await page.getByRole('link', { name: /Alpine weekend/iu }).click()
 
     await expect(page).toHaveURL(new RegExp(`/packing-lists/${packingListId}$`, 'u'))
+
     await expect(page.getByRole('heading', {
       level: 1,
       name: 'Alpine weekend'
     })).toBeVisible()
+
     await expect(page.getByText('Rain jacket')).toBeVisible()
     await expect(page.getByText('PocketRocket Deluxe')).toBeVisible()
     await expect(page.getByText('MSR / Stoves')).toBeVisible()
@@ -561,6 +567,7 @@ test.describe('Packing list shell', () => {
     const firstPageKey = createAvailableGearKey('', 1)
 
     state.detail = createPackingListDetail('Weekend trail', [existingEntry])
+
     state.availableGearResponses.set(firstPageKey, [{
       items: [],
       nextPage: null
@@ -588,6 +595,7 @@ test.describe('Packing list shell', () => {
     expect(state.entryDeleteRequests).toBe(1)
     await expect(page.getByRole('button', { name: 'Remove PocketRocket Deluxe' })).toHaveCount(0)
     await expect(page.getByRole('button', { name: /^PocketRocket Deluxe MSR · Stoves Add$/u })).toBeVisible()
+
     expect(state.availableGearRequests).toStrictEqual([{
       page: 1,
       search: ''
@@ -628,6 +636,7 @@ test.describe('Packing list shell', () => {
     const secondPageKey = createAvailableGearKey('', 2)
 
     state.detail = createPackingListDetail('Alpine weekend', createPackingListEntries().slice(0, 1))
+
     state.availableGearResponses.set(firstPageKey, [{
       items: [pocketRocket],
       nextPage: 2
@@ -635,10 +644,12 @@ test.describe('Packing list shell', () => {
       items: [],
       nextPage: null
     }])
+
     state.availableGearResponses.set(secondPageKey, [{
       items: [whisperLite],
       nextPage: null
     }])
+
     state.entryCreateResponses.push(createInventoryEntryMutation(
       whisperLiteInventoryId,
       'WhisperLite Universal',
@@ -655,6 +666,7 @@ test.describe('Packing list shell', () => {
 
     await page.getByText('Add item', { exact: true }).click()
     await expect(page.getByRole('button', { name: /PocketRocket Deluxe/iu })).toBeVisible()
+
     expect(state.availableGearRequests).toStrictEqual([{
       page: 1,
       search: ''
@@ -671,9 +683,11 @@ test.describe('Packing list shell', () => {
     await expect(page.getByText('WhisperLite Universal', { exact: true }).first()).toBeVisible()
     await expect(page.getByText('WhisperLite Universal added.', { exact: true })).toHaveCount(0)
     await expect(page.getByLabel('Find an item')).toBeFocused()
+
     expect(state.entryCreateBodies).toStrictEqual([{
       inventoryId: whisperLiteInventoryId
     }])
+
     expect(state.availableGearRequests).toStrictEqual([{
       page: 1,
       search: ''
@@ -725,6 +739,7 @@ test.describe('Packing list shell', () => {
     await expect(page.getByText(`${customName} added.`, { exact: true })).toHaveCount(0)
     await expect(searchInput).toBeFocused()
     await expect(searchInput).toHaveValue('')
+
     expect(state.entryCreateBodies).toStrictEqual([{
       customName
     }])
@@ -742,15 +757,18 @@ test.describe('Packing list shell', () => {
     await page.getByRole('link', { name: /Empty trail/iu }).click()
 
     await expect(page).toHaveURL(new RegExp(`/packing-lists/${packingListId}$`, 'u'))
+
     await expect(page.getByRole('heading', {
       level: 1,
       name: 'Empty trail'
     })).toBeVisible()
+
     await expect(page.getByText('Add another item', { exact: true })).toBeVisible()
     await expect(page.getByLabel('Find an item')).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Planning' })).toHaveCount(0)
     await expect(page.getByRole('heading', { name: 'Checklist' })).toHaveCount(0)
     expect(state.detailRequests).toBe(1)
+
     expect(state.availableGearRequests).toStrictEqual([{
       page: 1,
       search: ''

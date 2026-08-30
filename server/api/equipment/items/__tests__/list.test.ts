@@ -444,6 +444,7 @@ describe('get /api/equipment/items', () => {
     expect(db.itemsLimitMock).toHaveBeenCalledWith(10)
     expect(db.itemsOffsetMock).toHaveBeenCalledWith(10)
     expect(db.definitionsOrderByMock).toHaveBeenCalledTimes(1)
+
     expect(db.findImagesMock).toHaveBeenCalledWith({
       columns: {
         cloudflareImageId: true,

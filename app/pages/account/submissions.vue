@@ -154,7 +154,9 @@
                 </a>
               </div>
 
-              <PerdPill tone="warning">Pending</PerdPill>
+              <PerdPill :tone="photo.statusTone">
+                {{ photo.statusLabel }}
+              </PerdPill>
             </div>
 
             <dl :class="$style.metadata">
@@ -184,6 +186,11 @@
                 </dd>
               </div>
             </dl>
+
+            <div v-if="photo.hasRejectionReason" :class="$style.rejection">
+              <strong>Rejection reason</strong>
+              <p>{{ photo.rejectionReason }}</p>
+            </div>
           </PerdCard>
         </div>
 
@@ -255,12 +262,16 @@
   interface PhotoSubmissionCard {
     createdAt: Date | string;
     filename: string;
+    hasRejectionReason: boolean;
     hasSourceUrl: boolean;
     id: string;
     itemName: string;
     itemPath: string;
+    rejectionReason: string | null;
     sourceLabel: string;
     sourceUrl: string;
+    statusLabel: string;
+    statusTone: PerdPillTone;
     updatedAt: Date | string;
   }
 
@@ -425,15 +436,21 @@
 
   const photoSubmissionCards = computed<PhotoSubmissionCard[]>(
     () => allPhotoSubmissions.value.map((photo) => {
+      const statusPresentation = getStatusPresentation(photo.status)
+
       return {
         createdAt: photo.createdAt,
         filename: photo.filename,
+        hasRejectionReason: photo.rejectionReason !== null,
         hasSourceUrl: photo.sourceUrl !== null,
         id: photo.id,
         itemName: photo.item.name,
         itemPath: createGearLibraryItemPath(photo.item.id),
+        rejectionReason: photo.rejectionReason,
         sourceLabel: getPhotoSourceLabel(photo.sourceType),
         sourceUrl: photo.sourceUrl ?? '',
+        statusLabel: statusPresentation.label,
+        statusTone: statusPresentation.tone,
         updatedAt: photo.updatedAt
       }
     })

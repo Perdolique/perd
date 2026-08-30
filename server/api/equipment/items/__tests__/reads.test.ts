@@ -226,6 +226,7 @@ describe('get /api/equipment/items/[id]', () => {
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
       status: 'approved'
     })
+
     expect(queryConfig?.with.propertyValues.with.property.columns).toStrictEqual(expect.objectContaining({
       displayOrder: true,
       id: true

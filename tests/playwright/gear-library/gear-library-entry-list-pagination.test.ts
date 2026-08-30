@@ -47,6 +47,7 @@ test.describe('Gear library Load more', () => {
       limit: '10',
       page: '1'
     })
+
     await expect(results.getByRole('listitem')).toHaveCount(10)
     await expect(loadMoreButton).toBeVisible()
     await expect(page.getByRole('button', { name: 'Previous' })).toHaveCount(0)
@@ -81,6 +82,7 @@ test.describe('Gear library Load more', () => {
       limit: '10',
       page: '3'
     })
+
     await expect(results.getByRole('listitem')).toHaveCount(23)
     await expectRouteSearch(page, '')
     await expect(liveRegion).toHaveText('3 more items loaded')
@@ -247,6 +249,7 @@ test.describe('Gear library Load more', () => {
     secondPageGate.resolve()
 
     await detailNavigation
+
     await expect(page.getByRole('heading', {
       level: 1,
       name: detailItem.name
@@ -293,6 +296,7 @@ test.describe('Gear library Load more', () => {
     await expect(detailLink).toHaveAttribute('href', `/gear-library/${detailItem.id}`)
 
     await detailLink.click()
+
     await expect(page.getByRole('heading', {
       level: 1,
       name: detailItem.name
@@ -334,6 +338,7 @@ test.describe('Gear library Load more', () => {
     await mockCatalogApi(context, {
       items: respondWithLoadMore
     })
+
     await mockItemDetailApi(context, detailItem)
     await openGearLibrary(page, catalogPath)
 
@@ -363,6 +368,7 @@ test.describe('Gear library Load more', () => {
     expect(savedScrollTop).toBeGreaterThan(0)
 
     await detailLink.click()
+
     await expect(page.getByRole('heading', {
       level: 1,
       name: detailItem.name
@@ -408,10 +414,12 @@ test.describe('Gear library Load more', () => {
     expect(savedScrollTop).toBeGreaterThan(0)
 
     await detailLink.click()
+
     await expect(page.getByRole('heading', {
       level: 1,
       name: detailItem.name
     })).toBeVisible()
+
     await clearGearLibraryItemsSnapshot(page)
 
     const requestsBeforeBack = tracker.items.length

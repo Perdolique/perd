@@ -429,6 +429,7 @@ describe('user gear handlers', () => {
 
       expect(result).toStrictEqual(createdMyGearRow)
       expect(setResponseStatusMock).toHaveBeenCalledWith(event, 201)
+
       expect(insertValuesMock).toHaveBeenCalledWith({
         itemId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
         userId: 'user-1'

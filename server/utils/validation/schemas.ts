@@ -206,6 +206,10 @@ const itemDetailParamsSchema = v.object({
   id: canonicalUuidV7Schema
 })
 
+const equipmentImageDeliveryParamsSchema = v.object({
+  'cloudflare-image-id': nonEmptyStringSchema
+})
+
 const itemSubmissionPropertyValueSchema = v.union([
   v.boolean(),
   v.string()
@@ -368,6 +372,41 @@ const photoSubmissionCreateBodySchema = v.pipe(
 const photoSubmissionListQuerySchema = v.object({
   page: pageQuerySchema
 })
+
+const photoSubmissionAdminListQuerySchema = v.pipe(
+  v.object({
+    afterCreatedAt: v.optional(v.pipe(
+      v.string(),
+      v.isoTimestamp()
+    )),
+
+    afterId: v.optional(canonicalUuidV7Schema),
+    limit: limitQuerySchema
+  }),
+  v.check(
+    (input) => (input.afterCreatedAt === undefined) === (input.afterId === undefined),
+    'afterCreatedAt and afterId must be provided together'
+  )
+)
+
+const photoSubmissionParamsSchema = v.object({
+  id: canonicalUuidV7Schema
+})
+
+const photoSubmissionDecisionBodySchema = v.variant('decision', [
+  v.strictObject({
+    decision: v.literal('publish'),
+    makePrimary: v.boolean()
+  }),
+  v.strictObject({
+    decision: v.literal('reject'),
+
+    rejectionReason: v.pipe(
+      trimmedNonEmptyStringSchema,
+      v.maxLength(limits.maxEquipmentItemRejectionReasonLength)
+    )
+  })
+])
 
 const minimumEquipmentComparisonItemCount = 2
 const maximumEquipmentComparisonItemCount = 4
@@ -813,6 +852,10 @@ function validateItemDetailParams(params: unknown) {
   return v.parse(itemDetailParamsSchema, params)
 }
 
+function validateEquipmentImageDeliveryParams(params: unknown) {
+  return v.parse(equipmentImageDeliveryParamsSchema, params)
+}
+
 function validateItemSubmissionCreateBody(body: unknown) {
   return v.parse(itemSubmissionCreateBodySchema, body)
 }
@@ -851,6 +894,18 @@ function validatePhotoSubmissionIdempotencyKey(value: unknown) {
 
 function validatePhotoSubmissionListQuery(query: unknown) {
   return v.parse(photoSubmissionListQuerySchema, query)
+}
+
+function validatePhotoSubmissionAdminListQuery(query: unknown) {
+  return v.parse(photoSubmissionAdminListQuerySchema, query)
+}
+
+function validatePhotoSubmissionParams(params: unknown) {
+  return v.parse(photoSubmissionParamsSchema, params)
+}
+
+function validatePhotoSubmissionDecisionBody(body: unknown) {
+  return v.parse(photoSubmissionDecisionBodySchema, body)
 }
 
 function validateEquipmentComparisonQuery(query: unknown) {
@@ -933,7 +988,11 @@ export {
   itemImageParamsSchema,
   itemImageUploadQuerySchema,
   photoSubmissionCreateBodySchema,
+  photoSubmissionDecisionBodySchema,
+  photoSubmissionAdminListQuerySchema,
   photoSubmissionListQuerySchema,
+  photoSubmissionParamsSchema,
+  equipmentImageDeliveryParamsSchema,
   equipmentComparisonQuerySchema,
   itemsListQuerySchema,
   limitQuerySchema,
@@ -976,8 +1035,12 @@ export {
   validateItemImageParams,
   validateItemImageUploadQuery,
   validatePhotoSubmissionCreateBody,
+  validatePhotoSubmissionDecisionBody,
+  validatePhotoSubmissionAdminListQuery,
   validatePhotoSubmissionIdempotencyKey,
   validatePhotoSubmissionListQuery,
+  validatePhotoSubmissionParams,
+  validateEquipmentImageDeliveryParams,
   validateEquipmentComparisonQuery,
   validateItemsListQuery,
   validatePackingListAvailableGearQuery,

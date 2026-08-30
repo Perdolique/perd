@@ -692,6 +692,7 @@ describe('user packing list handlers', () => {
 
       expect(result).toStrictEqual(createdRow)
       expect(setResponseStatusMock).toHaveBeenCalledWith(event, 201)
+
       expect(insertValuesMock).toHaveBeenCalledWith({
         name: 'Alpine weekend',
         userId: 'user-1'
@@ -741,9 +742,11 @@ describe('user packing list handlers', () => {
       const result = await updatePackingListHandler(event)
 
       expect(result).toStrictEqual(updatedRow)
+
       expect(updateSetMock).toHaveBeenCalledWith({
         name: 'Storm kit'
       })
+
       expect(updateWhereMock).toHaveBeenCalledTimes(1)
     })
 
@@ -866,12 +869,15 @@ describe('user packing list handlers', () => {
 
         packingListUpdatedAt: '2026-04-03T09:02:00.000Z'
       })
+
       expect(setResponseStatusMock).toHaveBeenCalledWith(event, 201)
+
       expect(valuesMock).toHaveBeenCalledWith({
         customName: 'Rain jacket',
         packingListId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
         userEquipmentId: undefined
       })
+
       expect(selectMock).toHaveBeenCalledTimes(1)
       expect(setMocks[0]).toHaveBeenCalledTimes(1)
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
@@ -940,11 +946,13 @@ describe('user packing list handlers', () => {
 
         packingListUpdatedAt: '2026-04-03T09:02:00.000Z'
       })
+
       expect(valuesMock).toHaveBeenCalledWith({
         customName: undefined,
         packingListId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
         userEquipmentId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9'
       })
+
       expect(selectMock).toHaveBeenCalledTimes(2)
       expect(setMocks[0]).toHaveBeenCalledTimes(1)
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
@@ -982,6 +990,7 @@ describe('user packing list handlers', () => {
       await expect(createPackingListEntryHandler(event)).rejects.toMatchObject({
         statusCode: 404
       })
+
       expect(insertMock).not.toHaveBeenCalled()
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
@@ -1028,6 +1037,7 @@ describe('user packing list handlers', () => {
         message: 'My gear item is already in this list',
         statusCode: 409
       })
+
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
 
@@ -1059,6 +1069,7 @@ describe('user packing list handlers', () => {
       await expect(createPackingListEntryHandler(event)).rejects.toMatchObject({
         statusCode: 404
       })
+
       expect(insertMock).not.toHaveBeenCalled()
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
@@ -1072,6 +1083,7 @@ describe('user packing list handlers', () => {
       await expect(createPackingListEntryHandler(event)).rejects.toMatchObject({
         statusCode: 400
       })
+
       expect(createWebSocketClientMock).not.toHaveBeenCalled()
     })
   })
@@ -1091,6 +1103,7 @@ describe('user packing list handlers', () => {
         entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
       })
+
       readValidatedBodyMock.mockResolvedValue({
         isPacked: true
       })
@@ -1131,9 +1144,11 @@ describe('user packing list handlers', () => {
 
         packingListUpdatedAt: '2026-04-03T09:04:00.000Z'
       })
+
       expect(setMocks[0]).toHaveBeenCalledWith({
         isPacked: true
       })
+
       expect(setMocks[1]).toHaveBeenCalledTimes(1)
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
@@ -1152,6 +1167,7 @@ describe('user packing list handlers', () => {
         entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e2',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
       })
+
       readValidatedBodyMock.mockResolvedValue({
         isPacked: true
       })
@@ -1207,9 +1223,11 @@ describe('user packing list handlers', () => {
 
         packingListUpdatedAt: '2026-04-03T09:04:00.000Z'
       })
+
       expect(setMocks[0]).toHaveBeenCalledWith({
         isPacked: true
       })
+
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
 
@@ -1218,6 +1236,7 @@ describe('user packing list handlers', () => {
         entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
       })
+
       readValidatedBodyMock.mockResolvedValue({
         isPacked: true
       })
@@ -1244,6 +1263,7 @@ describe('user packing list handlers', () => {
       await expect(updatePackingListEntryHandler(event)).rejects.toMatchObject({
         statusCode: 404
       })
+
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
   })
@@ -1288,6 +1308,7 @@ describe('user packing list handlers', () => {
         deletedEntryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
         packingListUpdatedAt: '2026-04-03T09:05:00.000Z'
       })
+
       expect(whereMock).toHaveBeenCalledTimes(1)
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
@@ -1321,6 +1342,7 @@ describe('user packing list handlers', () => {
       await expect(deletePackingListEntryHandler(event)).rejects.toMatchObject({
         statusCode: 404
       })
+
       expect(deleteMock).not.toHaveBeenCalled()
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })

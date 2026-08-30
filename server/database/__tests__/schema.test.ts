@@ -70,6 +70,7 @@ describe('equipment catalog research schema', () => {
     )
 
     expect(displayOrderColumn?.notNull).toBe(true)
+
     expect(displayOrderConstraint?.columns.map((column) => column.name)).toStrictEqual([
       'categoryId',
       'displayOrder'
@@ -186,6 +187,10 @@ describe('equipment catalog research schema', () => {
       (column) => column.name === 'status'
     )
 
+    const rejectionReasonColumn = tableConfig.columns.find(
+      (column) => column.name === 'rejectionReason'
+    )
+
     const itemForeignKey = tableConfig.foreignKeys.find(
       (foreignKey) => foreignKey.reference().foreignTable === schema.equipmentItems
     )
@@ -204,28 +209,36 @@ describe('equipment catalog research schema', () => {
       'sourceUrl',
       'rightsConfirmed',
       'status',
+      'rejectionReason',
       'createdBy',
       'createdAt',
       'updatedAt'
     ])
+
     expect(tableConfig.columns[0]?.getSQLType()).toBe('uuid')
     expect(idempotencyKeyColumn?.notNull).toBe(true)
     expect(idempotencyKeyColumn?.getSQLType()).toBe('uuid')
+
     expect(idempotencyConstraint?.columns.map((column) => column.name)).toStrictEqual([
       'createdBy',
       'idempotencyKey'
     ])
+
     expect(getIndexColumnNames(historyIndex)).toStrictEqual([
       'createdBy',
       'createdAt',
       'id'
     ])
+
     expect(cloudflareImageIdColumn?.isUnique).toBe(true)
     expect(sourceUrlColumn?.notNull).toBe(false)
     expect(sourceUrlColumn?.getSQLType()).toBe('varchar(2048)')
     expect(statusColumn?.default).toBe('pending')
+    expect(rejectionReasonColumn?.notNull).toBe(false)
+    expect(rejectionReasonColumn?.getSQLType()).toBe('varchar(256)')
     expect(itemForeignKey?.onDelete).toBe('restrict')
     expect(creatorForeignKey?.onDelete).toBe('set null')
+
     expect(tableConfig.checks.map((check) => check.name)).toContain(
       schema.equipmentItemPhotoSubmissionSourceConstraintName
     )

@@ -69,16 +69,19 @@ describe(createOAuthUser, () => {
     expect(userValuesMock).toHaveBeenCalledWith({})
     expect(insertMock).toHaveBeenNthCalledWith(1, users)
     expect(insertMock).toHaveBeenNthCalledWith(2, oauthAccounts)
+
     expect(accountValuesMock).toHaveBeenCalledWith({
       accountId: 'twitch-account-1',
       providerId: 7,
       userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477bb'
     })
+
     expect(result).toStrictEqual({
       isAdmin: false,
       isGuest: false,
       userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477bb'
     })
+
     expect(dbWebsocket.$client.end).toHaveBeenCalledTimes(1)
   })
 })

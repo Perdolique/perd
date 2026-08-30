@@ -52,6 +52,7 @@ test.describe('Gear library layout and accessibility', () => {
       name: 'Gear library',
       exact: true
     })).toBeVisible()
+
     await expect(searchRegion.getByLabel('Search gear')).toHaveAttribute('type', 'search')
     await expectPerdSelectValue(categorySelect, '')
     await expectPerdSelectValue(sortSelect, 'name:asc')
@@ -335,6 +336,7 @@ test.describe('Gear library layout and accessibility', () => {
         top: globalThis.document.documentElement.scrollHeight
       })
     })
+
     await expect.poll(async () => page.evaluate(() => globalThis.scrollY)).toBeGreaterThan(0)
     await expect(filtersButton).toBeInViewport()
 
@@ -380,6 +382,7 @@ test.describe('Gear library layout and accessibility', () => {
       height: 800,
       width: 1280
     })
+
     await filtersButton.click()
 
     await waitForInlineEndAnchoring(filterDialog, 1280)
@@ -451,6 +454,7 @@ test.describe('Gear library layout and accessibility', () => {
     const wideStickyFiltersButtonBox = await getElementBox(filtersButton)
 
     expect(wideStickyFiltersButtonBox.y).toBeGreaterThanOrEqual(0)
+
     expect(wideStickyFiltersButtonBox.y + wideStickyFiltersButtonBox.height)
       .toBeLessThanOrEqual(900)
   })

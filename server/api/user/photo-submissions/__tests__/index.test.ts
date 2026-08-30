@@ -42,6 +42,7 @@ function createPhotoSubmission(index: number) {
       name: 'PocketRocket Deluxe'
     },
 
+    rejectionReason: null,
     sourceType: index % 2 === 0 ? 'manufacturer' : 'own',
     sourceUrl: index % 2 === 0 ? 'https://www.msrgear.com/products/pocketrocket' : null,
     status: 'pending',
@@ -72,11 +73,13 @@ describe('get /api/user/photo-submissions', () => {
 
     expect(validateRegisteredUserMock).toHaveBeenCalledWith(event)
     expect(getValidatedQueryMock).toHaveBeenCalledWith(event, expect.any(Function))
+
     expect(findManyMock).toHaveBeenCalledWith({
       columns: {
         createdAt: true,
         filename: true,
         id: true,
+        rejectionReason: true,
         sourceType: true,
         sourceUrl: true,
         status: true,
@@ -108,6 +111,7 @@ describe('get /api/user/photo-submissions', () => {
         }
       }
     })
+
     expect(result.items).toHaveLength(20)
     expect(result.nextPage).toBe(3)
     expect(JSON.stringify(result)).not.toContain('cloudflareImageId')
@@ -126,6 +130,35 @@ describe('get /api/user/photo-submissions', () => {
 
     expect(result.items).toHaveLength(1)
     expect(result.nextPage).toBeNull()
+  })
+
+  it.each([
+    ['approved', null],
+    ['pending', null],
+    ['rejected', 'Not a usable product photo']
+  ] as const)('should expose the %s owner status without leaking the private image id', async (
+    status,
+    rejectionReason
+  ) => {
+    const submission = {
+      ...createPhotoSubmission(0),
+      rejectionReason,
+      status
+    }
+
+    const event = createTestEvent({
+      query: {
+        equipmentItemPhotoSubmissions: {
+          findMany: vi.fn(() => [submission])
+        }
+      }
+    })
+
+    const result = await listUserPhotoSubmissionsHandler(event)
+
+    expect(result.items[0]?.status).toBe(status)
+    expect(result.items[0]?.rejectionReason).toBe(rejectionReason)
+    expect(JSON.stringify(result)).not.toContain('must-not-leak')
   })
 
   it('should stop before query validation and database access when auth fails', async () => {

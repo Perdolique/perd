@@ -160,9 +160,11 @@ describe('get /api/user/packing-lists/[id]/available-gear', () => {
     vi.clearAllMocks()
 
     validateSessionUserMock.mockResolvedValue('user-1')
+
     getValidatedRouterParamsMock.mockResolvedValue({
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
     })
+
     getValidatedQueryMock.mockResolvedValue({
       page: 1,
       search: ''
@@ -183,6 +185,7 @@ describe('get /api/user/packing-lists/[id]/available-gear', () => {
       items: rows.slice(0, 10),
       nextPage: 2
     })
+
     expect(findFirstMock).toHaveBeenCalledWith({
       columns: {
         id: true
@@ -193,6 +196,7 @@ describe('get /api/user/packing-lists/[id]/available-gear', () => {
         userId: 'user-1'
       }
     })
+
     expect(whereMock).toHaveBeenCalledTimes(1)
     expect(orderByMock).toHaveBeenCalledTimes(1)
     expect(limitMock).toHaveBeenCalledWith(11)
@@ -216,6 +220,7 @@ describe('get /api/user/packing-lists/[id]/available-gear', () => {
       items: rows,
       nextPage: null
     })
+
     expect(orderByMock).toHaveBeenCalledTimes(1)
     expect(offsetMock).toHaveBeenCalledWith(20)
 
@@ -252,6 +257,7 @@ describe('get /api/user/packing-lists/[id]/available-gear', () => {
     await expect(listAvailableGearHandler(event)).rejects.toMatchObject({
       statusCode: 400
     })
+
     expect(findFirstMock).not.toHaveBeenCalled()
     expect(dbHttp.select).not.toHaveBeenCalled()
   })
@@ -266,6 +272,7 @@ describe('get /api/user/packing-lists/[id]/available-gear', () => {
     await expect(listAvailableGearHandler(event)).rejects.toMatchObject({
       statusCode: 401
     })
+
     expect(findFirstMock).not.toHaveBeenCalled()
     expect(dbHttp.select).not.toHaveBeenCalled()
   })
