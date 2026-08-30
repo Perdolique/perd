@@ -1,6 +1,6 @@
 <template>
   <NuxtImg
-    v-if="hasCloudflareImage"
+    v-if="usesCloudflareProvider"
     v-bind="$attrs"
     :alt="alt"
     :fit="fit"
@@ -9,7 +9,7 @@
     :preload="preload"
     provider="cloudflareimages"
     :sizes="sizes"
-    :src="imageSource"
+    :src="cloudflareImageSource"
     :width="width"
     @error="handleError"
   />
@@ -20,8 +20,9 @@
     :alt="alt"
     :height="height"
     :loading="loading"
-    :src="placeholderSource"
+    :src="standardImageSource"
     :width="width"
+    @error="handleError"
   >
 </template>
 
@@ -50,7 +51,27 @@
     () => props.cloudflareImageId !== null && hasLoadError.value === false
   )
 
-  const imageSource = computed(() => props.cloudflareImageId ?? placeholderSource)
+  const usesCloudflareProvider = computed(
+    () => import.meta.dev === false && hasCloudflareImage.value
+  )
+
+  const cloudflareImageSource = computed(
+    () => props.cloudflareImageId ?? placeholderSource
+  )
+
+  const standardImageSource = computed(() => {
+    if (
+      import.meta.dev
+      && props.cloudflareImageId !== null
+      && hasLoadError.value === false
+    ) {
+      const cloudflareImageId = encodeURIComponent(props.cloudflareImageId)
+
+      return `/api/equipment/images/${cloudflareImageId}`
+    }
+
+    return placeholderSource
+  })
 
   watch(() => props.cloudflareImageId, () => {
     hasLoadError.value = false

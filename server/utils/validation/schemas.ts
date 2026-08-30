@@ -206,6 +206,10 @@ const itemDetailParamsSchema = v.object({
   id: canonicalUuidV7Schema
 })
 
+const equipmentImageDeliveryParamsSchema = v.object({
+  'cloudflare-image-id': nonEmptyStringSchema
+})
+
 const itemSubmissionPropertyValueSchema = v.union([
   v.boolean(),
   v.string()
@@ -848,6 +852,10 @@ function validateItemDetailParams(params: unknown) {
   return v.parse(itemDetailParamsSchema, params)
 }
 
+function validateEquipmentImageDeliveryParams(params: unknown) {
+  return v.parse(equipmentImageDeliveryParamsSchema, params)
+}
+
 function validateItemSubmissionCreateBody(body: unknown) {
   return v.parse(itemSubmissionCreateBodySchema, body)
 }
@@ -984,6 +992,7 @@ export {
   photoSubmissionAdminListQuerySchema,
   photoSubmissionListQuerySchema,
   photoSubmissionParamsSchema,
+  equipmentImageDeliveryParamsSchema,
   equipmentComparisonQuerySchema,
   itemsListQuerySchema,
   limitQuerySchema,
@@ -1031,6 +1040,7 @@ export {
   validatePhotoSubmissionIdempotencyKey,
   validatePhotoSubmissionListQuery,
   validatePhotoSubmissionParams,
+  validateEquipmentImageDeliveryParams,
   validateEquipmentComparisonQuery,
   validateItemsListQuery,
   validatePackingListAvailableGearQuery,

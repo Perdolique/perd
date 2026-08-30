@@ -82,11 +82,14 @@ function createComparisonImageResponse(request: Request) {
   return addFirstComparisonImage(response)
 }
 
-function isLegacyImageByteRequest(request: Request): boolean {
+function isInternalImageByteRequest(request: Request): boolean {
   const requestUrl = new globalThis.URL(request.url())
 
   return request.method() === 'GET'
-    && /^\/api\/equipment\/items\/[^/]+\/images\/[^/]+$/u.test(requestUrl.pathname)
+    && (
+      /^\/api\/equipment\/images\/[^/]+$/u.test(requestUrl.pathname)
+      || /^\/api\/equipment\/items\/[^/]+\/images\/[^/]+$/u.test(requestUrl.pathname)
+    )
 }
 
 test.describe('Direct equipment image delivery', () => {
@@ -235,9 +238,11 @@ test.describe('Direct equipment image delivery', () => {
       expect(imageRequest).not.toMatch(/\/(?:catalog|compare|detail|public)$/u)
     }
 
-    const legacyRequests = pageRequests.filter((request) => isLegacyImageByteRequest(request))
+    const internalImageRequests = pageRequests.filter(
+      (request) => isInternalImageByteRequest(request)
+    )
 
-    expect(legacyRequests).toHaveLength(0)
+    expect(internalImageRequests).toHaveLength(0)
   })
 
   test('should use the placeholder for missing and failed catalog images', async ({
