@@ -1325,6 +1325,7 @@ describe('validation schemas', () => {
       limit: 20,
       page: 1
     })
+
     expect(validateItemSubmissionListQuery({
       limit: '100',
       page: '2'
@@ -1337,6 +1338,7 @@ describe('validation schemas', () => {
       limit: '101',
       page: '1'
     })).toThrow(/./u)
+
     expect(() => validateItemSubmissionListQuery({
       limit: '20',
       page: '0'
@@ -1540,6 +1542,7 @@ describe('validation schemas', () => {
     expect(validatePhotoSubmissionAdminListQuery({})).toStrictEqual({
       limit: 20
     })
+
     expect(validatePhotoSubmissionAdminListQuery({
       afterCreatedAt: '2026-08-01T12:00:00.000Z',
       afterId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',

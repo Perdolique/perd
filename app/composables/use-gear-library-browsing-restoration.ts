@@ -102,6 +102,7 @@ function useGearLibraryBrowsingRestoration() {
       left,
       top
     })
+
     hasHandledInitialScroll = true
   }
 

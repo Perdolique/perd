@@ -189,6 +189,7 @@ describe('get /api/equipment/comparisons', () => {
       name: 'Stoves',
       slug: 'stoves'
     })
+
     expect(result.items.map((item) => item.id)).toStrictEqual(itemIds)
     expect(result.properties).toStrictEqual([])
   })
@@ -455,6 +456,7 @@ describe('get /api/equipment/comparisons', () => {
     })
 
     expect(selectMock).toHaveBeenCalledTimes(4)
+
     expect(findImagesMock).toHaveBeenCalledWith({
       columns: {
         cloudflareImageId: true,
@@ -469,6 +471,7 @@ describe('get /api/equipment/comparisons', () => {
         }
       }
     })
+
     expect(valuesWhereMock).toHaveBeenCalledTimes(1)
     expect(enumOptionsWhereMock).toHaveBeenCalledTimes(1)
 
@@ -502,6 +505,7 @@ describe('get /api/equipment/comparisons', () => {
     await expect(comparisonsHandler(event)).rejects.toMatchObject({
       statusCode: 404
     })
+
     expect(selectMock).toHaveBeenCalledTimes(1)
   })
 
@@ -519,6 +523,7 @@ describe('get /api/equipment/comparisons', () => {
     await expect(comparisonsHandler(event)).rejects.toMatchObject({
       statusCode: 400
     })
+
     expect(selectMock).toHaveBeenCalledTimes(1)
   })
 
@@ -532,6 +537,7 @@ describe('get /api/equipment/comparisons', () => {
     await expect(comparisonsHandler(event)).rejects.toMatchObject({
       statusCode: 400
     })
+
     expect(selectMock).not.toHaveBeenCalled()
   })
 })

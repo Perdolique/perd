@@ -57,10 +57,13 @@ describe('post /api/auth/create-session', () => {
     const result = await createGuestSessionHandler(event)
 
     expect(valuesMock).toHaveBeenCalledWith({})
+
     expect(sessionUpdateMock).toHaveBeenCalledWith({
       userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
     })
+
     expect(setResponseStatusMock).toHaveBeenCalledWith(event, 201)
+
     expect(result).toStrictEqual({
       isGuest: true,
       userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'

@@ -236,9 +236,11 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     validateAdminUserMock.mockResolvedValue('admin-1')
+
     getValidatedRouterParamsMock.mockResolvedValue({
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
     })
+
     readValidatedBodyMock.mockResolvedValue({
       brandId: 1,
       categoryId: 2,
@@ -270,6 +272,7 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
     expect(db.selectMock).toHaveBeenCalledWith(expect.objectContaining({
       updatedAt: equipmentItems.updatedAt
     }))
+
     expect(db.itemLockForMock).toHaveBeenCalledWith('update')
     expect(db.propertyLockForMock).toHaveBeenCalledWith('key share')
 
@@ -277,6 +280,7 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
     const propertyLockOrder = Math.min(...db.propertyLockForMock.mock.invocationCallOrder)
 
     expect(itemLockOrder).toBeLessThan(propertyLockOrder)
+
     expect(db.updateSetMock).toHaveBeenCalledWith({
       brandId: 1,
       categoryId: 2,
@@ -284,12 +288,16 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
       rejectionReason: null,
       status: 'pending'
     })
+
     expectIdPredicate(db.updateWhereMock.mock.calls[0]?.[0], 'equipment_items')
+
     expect(db.updateReturningMock).toHaveBeenCalledWith({
       updatedAt: equipmentItems.updatedAt
     })
+
     expect(db.deleteWhereMock).toHaveBeenCalledTimes(1)
     expectIdPredicate(db.deleteWhereMock.mock.calls[0]?.[0], 'item_property_values')
+
     expect(db.propertyValuesMock).toHaveBeenCalledWith([{
       itemId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
       propertyId: 3,
@@ -303,11 +311,13 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
       valueNumber: null,
       valueText: null
     }])
+
     expect(db.contributionValuesMock).toHaveBeenCalledWith(expect.objectContaining({
       action: 'update_equipment_item_submission',
       targetId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
       userId: 'admin-1'
     }))
+
     expect(result.properties).toStrictEqual([
       {
         propertyId: 3,
@@ -318,6 +328,7 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
         value: false
       }
     ])
+
     expect(result.rejectionReason).toBeNull()
     expect(result.status).toBe('pending')
     expect(result.updatedAt).toStrictEqual(new Date('2026-08-01T12:31:00Z'))
@@ -379,6 +390,7 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
         rejectionReason,
         status
       })
+
       expect(db.contributionValuesMock).toHaveBeenCalledTimes(1)
       expect(db.contributionValuesMock).toHaveBeenCalledWith(expect.objectContaining({ action }))
       expect(result.rejectionReason).toBe(rejectionReason)
@@ -390,6 +402,7 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
     const db = createUpdateDb()
 
     createWebSocketClientMock.mockReturnValue(db.dbWrite)
+
     readValidatedBodyMock.mockResolvedValue({
       brandId: 1,
       categoryId: 2,
@@ -462,10 +475,12 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
       message: 'Failed to update equipment item submission',
       statusCode: 500
     })
+
     expect(consoleErrorMock).toHaveBeenCalledWith(
       'Failed to update equipment item submission',
       technicalError
     )
+
     expect(db.transactionMock).toHaveBeenCalledTimes(1)
     expect(db.endMock).toHaveBeenCalledTimes(1)
   })

@@ -146,6 +146,7 @@ async function reconcilePhotoSubmissionFailure(
       binding,
       cloudflareImageId
     })
+
     throwPhotoSubmissionPersistenceError(error, cloudflareImageId, itemId)
   }
 

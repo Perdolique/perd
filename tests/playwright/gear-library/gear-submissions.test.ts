@@ -301,9 +301,11 @@ test.describe('Gear submissions', () => {
     await expect(page).toHaveURL(/\/gear-library\/new$/u)
     await expect(page.getByRole('heading', { name: 'Submit missing gear' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Account required.' })).toBeVisible()
+
     await expect(page.getByText(
       'Guest accounts cannot submit gear for review. Account upgrade options will be available later.'
     )).toBeVisible()
+
     await expect(page.getByRole('link', { name: 'Back to Gear library' })).toBeVisible()
     await expect(page.locator('form')).toHaveCount(0)
   })
@@ -325,10 +327,12 @@ test.describe('Gear submissions', () => {
     const brandsResponder = createRecoveringBrandsResponder()
 
     await mockSubmissionApi(context)
+
     await context.route(
       (url) => url.pathname === '/api/equipment/brands',
       brandsResponder.respond
     )
+
     await openRegisteredSubmissionPage(context, page)
 
     const brandSelect = getSelect(page, 'Brand')
@@ -406,10 +410,12 @@ test.describe('Gear submissions', () => {
     await expect(submissionStatus).toBeFocused()
     await expect(page.getByRole('button', { name: 'Submit for review' })).toHaveCount(0)
     await expect(page.locator(`a[href*="${pendingItemId}"]`)).toHaveCount(0)
+
     await expect(page.getByRole('link', { name: 'View My contributions' })).toHaveAttribute(
       'href',
       '/account/submissions'
     )
+
     expect(getMyGearPostCount()).toBe(0)
   })
 
@@ -419,6 +425,7 @@ test.describe('Gear submissions', () => {
     await mockSubmissionApi(context, {
       submit: submitResponder.respond
     })
+
     await openRegisteredSubmissionPage(context, page)
     await fillBaseFields(page)
     await page.getByLabel('Weight').fill('83.5')
@@ -471,6 +478,7 @@ test.describe('Gear submissions', () => {
       name: 'PocketRocket 2',
       properties: []
     })
+
     await expect(page.getByRole('status')).toContainText('Submitted for review.')
   })
 
@@ -483,12 +491,14 @@ test.describe('Gear submissions', () => {
     await mockSubmissionApi(context, {
       categoryDetail: async (route) => {
         categoryRequestCount += 1
+
         await route.fulfill({
           status: 500,
           json: { statusCode: 500 }
         })
       }
     })
+
     await openRegisteredSubmissionPage(context, page)
     await fillBaseFields(page)
 
@@ -523,6 +533,7 @@ test.describe('Gear submissions', () => {
     await mockSubmissionApi(context, {
       categoryDetail: createStaleCategoryResponder(staleRouteGate.promise)
     })
+
     await openRegisteredSubmissionPage(context, page)
 
     const staleRequestFailedPromise = page.waitForEvent(

@@ -103,6 +103,7 @@ test.describe('Gear library item actions', () => {
     await mockCatalogApi(context, {
       items: respondWithSelectedCategoryItems
     })
+
     await openGearLibrary(page)
 
     const addButtonName = `Add to My gear ${stoveItem.name}`
@@ -188,6 +189,7 @@ test.describe('Gear library item actions', () => {
       height: 844,
       width: 390
     })
+
     await expect.poll(async () => page.evaluate(() => globalThis.innerWidth)).toBe(390)
 
     const cardBottomLeftRadius = await stoveRow.evaluate(
@@ -241,6 +243,7 @@ test.describe('Gear library item actions', () => {
     await mockCatalogApi(context, {
       addMyGear: createRetryingMyGearResponder()
     })
+
     await openGearLibrary(page)
 
     const addButton = page.getByRole('button', {
@@ -276,6 +279,7 @@ test.describe('Gear library item actions', () => {
         return { json: firstPageResponse }
       }
     })
+
     await openGearLibrary(page)
 
     const firstAddButton = page.getByRole('button', {
@@ -291,11 +295,13 @@ test.describe('Gear library item actions', () => {
     await expect(secondAddButton).toBeEnabled()
 
     await secondAddButton.click()
+
     await expect(page.getByRole('listitem').filter({
       has: page.getByRole('link', { name: sleepingPadItem.name })
     }).getByText('In My gear')).toBeVisible()
 
     firstAdditionGate.resolve()
+
     await expect(page.getByRole('listitem').filter({
       has: page.getByRole('link', { name: stoveItem.name })
     }).getByText('In My gear')).toBeVisible()
@@ -328,6 +334,7 @@ test.describe('Gear library item actions', () => {
     await context.route((url) => url.pathname === '/api/user/gear', async (route) => {
       await route.fulfill({ json: [myGearRow] })
     })
+
     await context.route((url) => url.pathname === `/api/user/gear/${myGearRow.id}`, async (route) => {
       await route.fulfill({ status: 204 })
     })
@@ -340,6 +347,7 @@ test.describe('Gear library item actions', () => {
     await expect(page.getByText('No saved gear yet.')).toBeVisible()
 
     await page.getByRole('link', { name: 'Find gear' }).click()
+
     await expect(page.getByRole('button', {
       name: `Add to My gear ${stoveItem.name}`
     })).toBeVisible()

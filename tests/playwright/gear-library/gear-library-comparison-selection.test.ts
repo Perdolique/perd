@@ -95,6 +95,7 @@ test.describe('Gear library comparison selection', () => {
         return { json: scrollableItemsResponse }
       }
     })
+
     await openGearLibrary(page, '/gear-library?category=stoves')
 
     const [firstItem, secondItem, thirdItem, fourthItem, fifthItem] = scrollableItemsResponse.items
@@ -156,6 +157,7 @@ test.describe('Gear library comparison selection', () => {
     await page.getByRole('button', { name: 'Guest' }).click()
 
     await expect(page.getByText('3 of 4 selected')).toBeVisible()
+
     await expect(
       page.getByTestId('gear-library-comparison-tray').getByText(secondItem.name, { exact: true })
     ).toBeVisible()
@@ -219,6 +221,7 @@ test.describe('Gear library comparison selection', () => {
       width: 390,
       height: 844
     })
+
     await mockCatalogApi(context, {
       items: () => {
         return { json: scrollableItemsResponse }
@@ -291,9 +294,11 @@ test.describe('Gear library comparison selection', () => {
       width: 390,
       height: 844
     })
+
     await mockCatalogApi(context, {
       items: respondWithLoadMore
     })
+
     await openGearLibrary(page, '/gear-library?category=stoves')
     await page.getByRole('button', { name: 'Compare items' }).click()
 
@@ -314,6 +319,7 @@ test.describe('Gear library comparison selection', () => {
 
     await tray.getByRole('button', { name: 'Show items' }).click()
     await expectTraySpaceReserved(tray)
+
     await page.evaluate(() => {
       globalThis.scrollTo({ top: globalThis.document.documentElement.scrollHeight })
     })
@@ -327,7 +333,9 @@ test.describe('Gear library comparison selection', () => {
       width: 1280,
       height: 800
     })
+
     await expectTraySpaceReserved(tray)
+
     await page.evaluate(() => {
       globalThis.scrollTo({ top: globalThis.document.documentElement.scrollHeight })
     })
@@ -347,6 +355,7 @@ test.describe('Gear library comparison selection', () => {
         return { json: scrollableItemsResponse }
       }
     })
+
     await openGearLibrary(page, '/gear-library?category=stoves')
 
     const [firstItem] = scrollableItemsResponse.items
@@ -361,6 +370,7 @@ test.describe('Gear library comparison selection', () => {
 
     await page.getByRole('button', { name: 'Compare items' }).click()
     await expect(page.getByTestId('gear-library-comparison-tray')).toHaveCount(0)
+
     await expect.poll(async () => page.evaluate(
       () => globalThis.document.documentElement.scrollHeight
     )).toBe(documentHeightBeforeMode)
@@ -369,6 +379,7 @@ test.describe('Gear library comparison selection', () => {
       name: firstItem.name,
       exact: true
     }).click()
+
     await expect(page).toHaveURL(new RegExp(`/gear-library/${firstItem.id}$`, 'u'))
 
     await page.goBack()
@@ -398,6 +409,7 @@ test.describe('Gear library comparison selection', () => {
         return { json: scrollableItemsResponse }
       }
     })
+
     await page.clock.install()
 
     await openGearLibrary(page, '/gear-library?category=stoves')
@@ -482,6 +494,7 @@ test.describe('Gear library comparison selection', () => {
     ])
 
     await expectRouteSearch(page, canonicalSearch)
+
     await expect(page.getByText(
       'Comparison selection was adjusted: invalid item IDs were removed; duplicate item IDs were removed; only the first 4 items were kept.'
     )).toBeVisible()
@@ -559,9 +572,11 @@ test.describe('Gear library comparison selection', () => {
     await openGearLibrary(page, `/gear-library${rawSearch}`)
 
     await expectRouteSearch(page, buildRouteSearch([['category', 'stoves']]))
+
     await expect(page.getByText(
       'Some comparison items were removed because they are unavailable or belong to another category.'
     )).toBeVisible()
+
     await expect(page.getByTestId('gear-library-comparison-tray')).toHaveCount(0)
   })
 
@@ -623,6 +638,7 @@ test.describe('Gear library comparison selection', () => {
     await openGearLibrary(page, `/gear-library${rawSearch}`)
 
     await expectRouteSearch(page, '')
+
     await expect(page.getByText(
       'Comparison selection was cleared because no category is selected.'
     )).toBeVisible()

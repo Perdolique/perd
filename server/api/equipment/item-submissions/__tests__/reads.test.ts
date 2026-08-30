@@ -81,10 +81,12 @@ describe('admin equipment submission reads', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     validateAdminUserMock.mockResolvedValue('admin-1')
+
     getValidatedQueryMock.mockResolvedValue({
       limit: 20,
       page: 2
     })
+
     getValidatedRouterParamsMock.mockResolvedValue({
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
     })
@@ -117,6 +119,7 @@ describe('admin equipment submission reads', () => {
     const result = await listHandler(event)
 
     expect(validateAdminUserMock).toHaveBeenCalledWith(event)
+
     expect(findManyMock).toHaveBeenCalledWith(expect.objectContaining({
       limit: 20,
       offset: 20,
@@ -139,6 +142,7 @@ describe('admin equipment submission reads', () => {
 
     expect(countQuery.sql).toContain('"equipment_items"."status" = $1')
     expect(countQuery.params).toStrictEqual(['pending'])
+
     expect(result).toStrictEqual({
       items: [{
         author: null,
@@ -225,6 +229,7 @@ describe('admin equipment submission reads', () => {
     const detailQueryConfig = findFirstMock.mock.calls[0]?.[0]
 
     expect(detailQueryConfig?.columns.updatedAt).toBe(true)
+
     expect(result.properties).toStrictEqual([
       {
         propertyId: 3,
@@ -235,6 +240,7 @@ describe('admin equipment submission reads', () => {
         value: false
       }
     ])
+
     expect(result.rejectionReason).toBeNull()
     expect(result.status).toBe('pending')
     expect(result.updatedAt).toStrictEqual(new Date('2026-08-01T12:30:00Z'))

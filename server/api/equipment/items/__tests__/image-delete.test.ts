@@ -259,6 +259,7 @@ describe('delete /api/equipment/items/[id]/images/[image-id]', () => {
     } = createDeleteDb()
 
     createWebSocketClientMock.mockReturnValue(dbWrite)
+
     getCloudflareImageMock.mockImplementation(() => {
       expect(transactionCommitMock).toHaveBeenCalledTimes(1)
 
@@ -377,6 +378,7 @@ describe('delete /api/equipment/items/[id]/images/[image-id]', () => {
 
     expect(transactionCommitMock).toHaveBeenCalledTimes(1)
     expect(waitUntilMock).toHaveBeenCalledTimes(1)
+
     expect(consoleErrorMock).toHaveBeenCalledWith('Failed to delete Cloudflare image', {
       cloudflareImageId: image.cloudflareImageId,
       error: cloudflareError,

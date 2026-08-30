@@ -179,10 +179,12 @@ test.describe('Direct equipment image delivery', () => {
     const catalogImage = catalogRow.locator('img')
 
     await expect(catalogImage).toHaveAttribute('src', catalogUrl)
+
     await expect(catalogImage).toHaveAttribute(
       'srcset',
       `${catalogUrl} 1x, ${catalogRetinaUrl} 2x`
     )
+
     await expect(catalogImage).toHaveJSProperty('currentSrc', catalogUrl)
     await expect(catalogImage).toHaveAttribute('width', '48')
     await expect(catalogImage).toHaveAttribute('height', '48')
@@ -199,6 +201,7 @@ test.describe('Direct equipment image delivery', () => {
     await expect(detailImage).toHaveAttribute('width', '1120')
     await expect(detailImage).toHaveAttribute('height', '840')
     await expect(detailImage).toHaveAttribute('loading', 'eager')
+
     await expect(detailImage).toHaveAttribute(
       'sizes',
       '(max-width: 1023px) 100vw, (max-width: 1535px) 75vw, 1120px'
@@ -216,6 +219,7 @@ test.describe('Direct equipment image delivery', () => {
     await expect(comparisonImage).toHaveAttribute('height', '216')
     await expect(comparisonImage).toHaveAttribute('loading', 'lazy')
     await expect(comparisonImage).toHaveAttribute('alt', '')
+
     await expect(comparisonImage).toHaveAttribute(
       'sizes',
       '(max-width: 599px) 176px, (max-width: 899px) 33vw, (max-width: 1279px) 25vw, 288px'
@@ -251,6 +255,7 @@ test.describe('Direct equipment image delivery', () => {
     await context.route(failedUrl, async (route) => {
       await route.abort('failed')
     })
+
     await context.route(failedRetinaUrl, async (route) => {
       await route.abort('failed')
     })
@@ -298,6 +303,7 @@ test.describe('Direct equipment image delivery', () => {
       }
 
       await page.setViewportSize(viewport)
+
       await context.route('https://imagedelivery.net/**', async (route) => {
         await route.fulfill({
           body: imageBody,
@@ -305,6 +311,7 @@ test.describe('Direct equipment image delivery', () => {
           status: 200
         })
       })
+
       await mockComparisonApi(context, {
         comparison: (request) => {
           const json = createComparisonImageResponse(request)

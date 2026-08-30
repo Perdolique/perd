@@ -231,12 +231,14 @@ describe('equipment item image lifecycle', () => {
     const result = await uploadPromise
 
     expect(imageInfoMock).toHaveBeenCalledWith(expect.any(ReadableStream))
+
     expect(uploadImageMock).toHaveBeenCalledWith(expect.any(ReadableStream), {
       creator: 'user-1',
       filename: 'photo.webp',
       metadata: { itemId: 'item-1' },
       requireSignedURLs: true
     })
+
     expect(result).toBe('cloudflare-image-1')
     expect(closeMock).toHaveBeenCalledTimes(1)
   })
@@ -265,6 +267,7 @@ describe('equipment item image lifecycle', () => {
     })).rejects.toMatchObject({
       statusCode: 415
     })
+
     expect(uploadImageMock).toHaveBeenCalledTimes(1)
     expect(deleteImageMock).toHaveBeenCalledTimes(1)
   })
@@ -290,6 +293,7 @@ describe('equipment item image lifecycle', () => {
     })).rejects.toMatchObject({
       statusCode: 415
     })
+
     expect(uploadImageMock).toHaveBeenCalledTimes(1)
     expect(deleteImageMock).toHaveBeenCalledTimes(1)
   })
@@ -316,6 +320,7 @@ describe('equipment item image lifecycle', () => {
       statusCode: 502,
       statusMessage: 'Image inspection failed'
     })
+
     expect(consoleErrorMock).toHaveBeenCalledWith(
       'Failed to inspect Cloudflare image',
       expect.objectContaining({
@@ -323,6 +328,7 @@ describe('equipment item image lifecycle', () => {
         uploadError: undefined
       })
     )
+
     expect(deleteImageMock).toHaveBeenCalledTimes(1)
   })
 
@@ -347,10 +353,12 @@ describe('equipment item image lifecycle', () => {
       statusCode: 502,
       statusMessage: 'Image upload failed'
     })
+
     expect(consoleErrorMock).toHaveBeenCalledWith(
       'Failed to upload Cloudflare image',
       expect.objectContaining({ error: uploadError })
     )
+
     expect(closeMock).toHaveBeenCalledTimes(1)
   })
 
@@ -371,6 +379,7 @@ describe('equipment item image lifecycle', () => {
     })).rejects.toMatchObject({
       statusCode: 413
     })
+
     expect(deleteImageMock).toHaveBeenCalledTimes(1)
   })
 
@@ -402,6 +411,7 @@ describe('equipment item image lifecycle', () => {
     })).rejects.toMatchObject({
       statusCode: 415
     })
+
     expect(consoleErrorMock).toHaveBeenCalledWith(
       'Failed to delete unattached Cloudflare image',
       expect.objectContaining({ error: deletionError })
@@ -423,6 +433,7 @@ describe('equipment item image lifecycle', () => {
     })).rejects.toMatchObject({
       statusCode: 415
     })
+
     expect(cancelMock).toHaveBeenCalledTimes(1)
   })
 
@@ -437,6 +448,7 @@ describe('equipment item image lifecycle', () => {
     })).rejects.toMatchObject({
       statusCode: 413
     })
+
     expect(cancelMock).toHaveBeenCalledTimes(1)
   })
 
@@ -455,6 +467,7 @@ describe('equipment item image lifecycle', () => {
       binding,
       cloudflareImageId: 'cloudflare-image-1'
     })).resolves.toBeUndefined()
+
     expect(consoleErrorMock).toHaveBeenCalledWith(
       'Failed to delete unattached Cloudflare image',
       {
@@ -538,6 +551,7 @@ describe('photo submission multipart parsing', () => {
     await expect(readLimitedMultipartFormData(event, contentType)).rejects.toMatchObject({
       statusCode: 413
     })
+
     expect(destroyMock.mock.calls.length).toBeGreaterThan(0)
   })
 })

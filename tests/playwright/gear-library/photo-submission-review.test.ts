@@ -137,6 +137,7 @@ test.describe('Admin photo submission review', () => {
       page,
       target: '/admin'
     })
+
     await page.getByRole('link', { name: /Review photo submissions/u }).click()
     await expect(page).toHaveURL(/\/admin\/equipment\/photo-submissions$/u)
     await expect(page.getByRole('link', { name: /PocketRocket Deluxe/u })).toBeVisible()
@@ -166,6 +167,7 @@ test.describe('Admin photo submission review', () => {
 
     await context.route((url) => url.pathname === submissionsPath, async (route) => {
       await queueGate.promise
+
       await route.fulfill({
         json: {
           items: [listItem],
@@ -173,10 +175,12 @@ test.describe('Admin photo submission review', () => {
         }
       })
     })
+
     await context.route((url) => url.pathname === detailPath, async (route) => {
       await detailGate.promise
       await route.fulfill({ json: detail })
     })
+
     await context.route((url) => url.pathname === previewPath, async (route) => {
       await route.fulfill({
         contentType: 'image/webp',
@@ -190,6 +194,7 @@ test.describe('Admin photo submission review', () => {
       page,
       target: '/admin'
     })
+
     await page.getByRole('link', { name: /Review photo submissions/u }).click()
     await expect(page.getByText('Loading photo submissions')).toBeVisible()
     queueGate.resolve()
@@ -211,6 +216,7 @@ test.describe('Admin photo submission review', () => {
       height: 800,
       width: 360
     })
+
     await context.route((url) => url.pathname === submissionsPath, async (route) => {
       await route.fulfill({
         json: {
@@ -219,6 +225,7 @@ test.describe('Admin photo submission review', () => {
         }
       })
     })
+
     await context.route((url) => url.pathname === detailPath, async (route) => {
       await route.fulfill({
         json: {
@@ -227,6 +234,7 @@ test.describe('Admin photo submission review', () => {
         }
       })
     })
+
     await context.route((url) => url.pathname === previewPath, async (route) => {
       await route.fulfill({
         contentType: 'image/webp',
@@ -240,6 +248,7 @@ test.describe('Admin photo submission review', () => {
       page,
       target: '/admin/equipment/photo-submissions'
     })
+
     await expect(page.getByText(longFilename, { exact: true })).toBeVisible()
 
     const queueFitsViewport = await page.evaluate(() =>
@@ -282,6 +291,7 @@ test.describe('Admin photo submission review', () => {
       page,
       target: '/admin/equipment/photo-submissions'
     })
+
     await expect(page.getByText('Photo submissions unavailable.')).toBeVisible()
     shouldSucceed = true
     await page.getByRole('button', { name: 'Retry' }).click()
@@ -300,6 +310,7 @@ test.describe('Admin photo submission review', () => {
 
       if (request.method() === 'PATCH') {
         patchRequests.push(request)
+
         await route.fulfill({
           json: {
             publishedImage: {
@@ -318,6 +329,7 @@ test.describe('Admin photo submission review', () => {
 
       await route.fulfill({ json: detail })
     })
+
     await context.route((url) => url.pathname === previewPath, async (route) => {
       previewRequestCount += 1
 
@@ -359,13 +371,16 @@ test.describe('Admin photo submission review', () => {
     await expect(primaryCheckbox).toBeEnabled()
     await expect(primaryCheckbox).not.toBeChecked()
     await publishButton.click()
+
     await page.getByRole('dialog', { name: 'Publish photo submission' })
       .getByRole('button', {
         name: 'Publish',
         exact: true
       })
       .click()
+
     await expect.poll(() => patchRequests).toHaveLength(1)
+
     expect(patchRequests[0]?.postDataJSON()).toStrictEqual({
       decision: 'publish',
       makePrimary: false
@@ -375,6 +390,7 @@ test.describe('Admin photo submission review', () => {
 
     await expect(terminalStatus).toContainText('Published')
     await expect(terminalStatus).toBeFocused()
+
     await expect(page.getByRole('link', { name: 'View catalog item' })).toHaveAttribute(
       'href',
       `/gear-library/${itemId}`
@@ -389,6 +405,7 @@ test.describe('Admin photo submission review', () => {
 
       if (request.method() === 'PATCH') {
         publishRequests.push(request)
+
         await route.fulfill({
           json: {
             publishedImage: {
@@ -407,6 +424,7 @@ test.describe('Admin photo submission review', () => {
 
       await route.fulfill({ json: detail })
     })
+
     await context.route((url) => url.pathname === previewPath, async (route) => {
       await route.fulfill({
         contentType: 'image/webp',
@@ -420,23 +438,28 @@ test.describe('Admin photo submission review', () => {
       page,
       target: `/admin/equipment/photo-submissions/${submissionId}`
     })
+
     await page.getByRole('checkbox', { name: 'Make primary image' }).check()
+
     await page.getByRole('button', {
       name: 'Publish',
       exact: true
     }).click()
+
     await page.getByRole('dialog', { name: 'Publish photo submission' })
       .getByRole('button', {
         name: 'Publish',
         exact: true
       })
       .click()
+
     await expect.poll(() => publishRequests).toHaveLength(1)
 
     expect(publishRequests[0]?.postDataJSON()).toStrictEqual({
       decision: 'publish',
       makePrimary: true
     })
+
     await expect(page.getByRole('status')).toContainText('Published')
   })
 
@@ -479,6 +502,7 @@ test.describe('Admin photo submission review', () => {
         }
       })
     })
+
     await context.route((url) => url.pathname === previewPath, async (route) => {
       await route.fulfill({
         contentType: 'image/webp',
@@ -498,6 +522,7 @@ test.describe('Admin photo submission review', () => {
     await expect(primaryCheckbox).toBeChecked()
     await expect(primaryCheckbox).toBeDisabled()
     await expect(page.getByText(/first gallery image/u)).toBeVisible()
+
     await page.getByRole('button', {
       name: 'Reject',
       exact: true
@@ -507,27 +532,35 @@ test.describe('Admin photo submission review', () => {
     const reasonInput = dialog.getByLabel('Reason')
 
     await reasonInput.fill('  Product is not visible  ')
+
     await dialog.getByRole('button', {
       name: 'Reject',
       exact: true
     }).click()
+
     await expect(dialog.getByRole('alert')).toHaveText(
       'Could not apply this decision. Your choices are still here. Try again.'
     )
+
     await expect(reasonInput).toHaveValue('  Product is not visible  ')
+
     await dialog.getByRole('button', {
       name: 'Reject',
       exact: true
     }).click()
+
     await expect.poll(() => patchRequests).toHaveLength(2)
+
     expect(patchRequests[0]?.postDataJSON()).toStrictEqual({
       decision: 'reject',
       rejectionReason: 'Product is not visible'
     })
+
     expect(patchRequests[1]?.postDataJSON()).toStrictEqual({
       decision: 'reject',
       rejectionReason: 'Product is not visible'
     })
+
     await expect(page.getByRole('status')).toContainText('Rejected')
     await expect(page.getByRole('status')).toBeFocused()
   })
@@ -545,6 +578,7 @@ test.describe('Admin photo submission review', () => {
 
       await route.fulfill({ json: detail })
     })
+
     await context.route((url) => url.pathname === previewPath, async (route) => {
       await route.fulfill({
         contentType: 'image/webp',
@@ -558,11 +592,14 @@ test.describe('Admin photo submission review', () => {
       page,
       target: `/admin/equipment/photo-submissions/${submissionId}`
     })
+
     await page.getByRole('checkbox', { name: 'Make primary image' }).check()
+
     await page.getByRole('button', {
       name: 'Publish',
       exact: true
     }).click()
+
     await page.getByRole('dialog', { name: 'Publish photo submission' })
       .getByRole('button', {
         name: 'Publish',

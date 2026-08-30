@@ -101,11 +101,13 @@ describe('admin equipment photo submission reads', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     validateAdminUserMock.mockResolvedValue('admin-1')
+
     getValidatedQueryMock.mockResolvedValue({
       afterCreatedAt: '2026-07-31T12:00:00.000Z',
       afterId: cursorSubmissionId,
       limit: 1
     })
+
     getValidatedRouterParamsMock.mockResolvedValue({ id: submissionId })
   })
 
@@ -159,12 +161,15 @@ describe('admin equipment photo submission reads', () => {
         ]
       }
     }))
+
     expect(result.items).toHaveLength(1)
     expect(result.items[0]?.author?.name).toBe('Ada')
+
     expect(result.nextCursor).toStrictEqual({
       createdAt: '2026-08-01T12:00:00.000Z',
       id: submissionId
     })
+
     expect(JSON.stringify(result)).not.toContain('must-not-leak')
   })
 
@@ -185,6 +190,7 @@ describe('admin equipment photo submission reads', () => {
         status: 'pending'
       }
     }))
+
     expect(result.hasExistingImages).toBe(true)
     expect(result.previewUrl).toBe(`/api/equipment/photo-submissions/${submissionId}/image`)
     expect(result.rightsConfirmed).toBe(true)
@@ -292,6 +298,7 @@ describe('admin equipment photo submission reads', () => {
       statusCode: 502,
       statusMessage: 'Photo preview unavailable'
     })
+
     expect(consoleErrorMock).toHaveBeenCalledWith(
       'Failed to load private equipment photo submission image',
       {

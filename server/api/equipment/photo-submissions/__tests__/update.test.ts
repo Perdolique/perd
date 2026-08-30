@@ -374,6 +374,7 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
     const database = createReviewDb()
 
     createWebSocketClientMock.mockReturnValue(database.dbWebsocket)
+
     readValidatedBodyMock.mockResolvedValue({
       decision: 'reject',
       rejectionReason: 'Duplicate photo'
@@ -392,9 +393,11 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
       '"equipment_item_photo_submissions"."id" = $1',
       [submissionId]
     )
+
     expect(getCloudflareImagesBindingMock).not.toHaveBeenCalled()
     expect(sourceImageBytesMock).not.toHaveBeenCalled()
     expect(imageUploadMock).not.toHaveBeenCalled()
+
     expect(database.contributionValuesMock).toHaveBeenCalledWith({
       action: 'reject_item_photo_submission',
 
@@ -407,11 +410,13 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
       targetId: submissionId,
       userId
     })
+
     expect(result).toStrictEqual({
       publishedImage: null,
       rejectionReason: 'Duplicate photo',
       status: 'rejected'
     })
+
     expect(database.endMock).toHaveBeenCalledTimes(1)
   })
 
@@ -419,6 +424,7 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
     const database = createReviewDb({ previousDisplayOrder: 1 })
 
     createWebSocketClientMock.mockReturnValue(database.dbWebsocket)
+
     readValidatedBodyMock.mockResolvedValue({
       decision: 'publish',
       makePrimary: false
@@ -439,6 +445,7 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
     )
 
     expect(imageUploadCallOrder).toBeLessThan(transactionCallOrder)
+
     expect(imageUploadMock).toHaveBeenCalledWith(sourceImageBytes, {
       creator: userId,
       filename,
@@ -449,14 +456,18 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
 
       requireSignedURLs: false
     })
+
     expect(sourceImageDeleteMock).toHaveBeenCalledTimes(1)
     expect(publishedImageDeleteMock).not.toHaveBeenCalled()
+
     expect(database.imageValuesMock).toHaveBeenCalledWith({
       cloudflareImageId: publishedCloudflareImageId,
       displayOrder: 2,
       itemId
     })
+
     expect(database.updateCalls.filter((call) => call.table === equipmentItemImages)).toHaveLength(0)
+
     expect(result).toStrictEqual({
       publishedImage: {
         displayOrder: 2,
@@ -467,6 +478,7 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
       rejectionReason: null,
       status: 'approved'
     })
+
     expect(database.endMock).toHaveBeenCalledTimes(1)
   })
 
@@ -474,6 +486,7 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
     const database = createReviewDb({ previousDisplayOrder: 1 })
 
     createWebSocketClientMock.mockReturnValue(database.dbWebsocket)
+
     readValidatedBodyMock.mockResolvedValue({
       decision: 'publish',
       makePrimary: true
@@ -496,6 +509,7 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
       '"equipment_item_images"."itemId" = $1',
       [itemId]
     )
+
     expectWhereQuery(
       secondImageOrderUpdate.where,
       '"equipment_item_images"."itemId" = $1',
@@ -513,6 +527,7 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
       '"equipment_item_photo_submissions"."id" = $1',
       [submissionId]
     )
+
     expect(database.imageValuesMock).toHaveBeenCalledWith({
       cloudflareImageId: publishedCloudflareImageId,
       displayOrder: 0,
@@ -551,6 +566,7 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
       statusCode: 409,
       statusMessage: 'Equipment item is no longer published'
     })
+
     expect(sourceImageBytesMock).not.toHaveBeenCalled()
     expect(imageUploadMock).not.toHaveBeenCalled()
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
@@ -562,6 +578,7 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
     const database = createReviewDb({ lockedItemStatus: 'rejected' })
 
     createWebSocketClientMock.mockReturnValue(database.dbWebsocket)
+
     readValidatedBodyMock.mockResolvedValue({
       decision: 'publish',
       makePrimary: false
@@ -585,6 +602,7 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
     })
 
     imageUploadMock.mockRejectedValue(providerError)
+
     readValidatedBodyMock.mockResolvedValue({
       decision: 'publish',
       makePrimary: false
@@ -594,12 +612,14 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
       statusCode: 502,
       statusMessage: 'Photo publication failed'
     })
+
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
     expect(database.imageValuesMock).not.toHaveBeenCalled()
     expect(database.updateCalls).toHaveLength(0)
     expect(database.contributionValuesMock).not.toHaveBeenCalled()
     expect(sourceImageDeleteMock).not.toHaveBeenCalled()
     expect(publishedImageDeleteMock).not.toHaveBeenCalled()
+
     expect(consoleErrorMock).toHaveBeenCalledWith(
       'Failed to publish Cloudflare photo submission image',
       {
@@ -619,6 +639,7 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
     })
 
     createWebSocketClientMock.mockReturnValue(database.dbWebsocket)
+
     readValidatedBodyMock.mockResolvedValue({
       decision: 'publish',
       makePrimary: false
@@ -628,12 +649,14 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
       statusCode: 500,
       statusMessage: 'Failed to review photo submission'
     })
+
     expect(imageUploadMock).toHaveBeenCalledTimes(1)
     expect(database.submissionFindFirstMock).toHaveBeenCalledTimes(2)
     expect(database.imageFindFirstMock).toHaveBeenCalledTimes(1)
     expect(publishedImageDeleteMock).toHaveBeenCalledTimes(1)
     expect(sourceImageDeleteMock).not.toHaveBeenCalled()
     expect(database.contributionValuesMock).not.toHaveBeenCalled()
+
     expect(consoleErrorMock).toHaveBeenCalledWith(
       'Failed to review equipment photo submission',
       {
@@ -641,6 +664,7 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
         submissionId
       }
     )
+
     expect(database.endMock).toHaveBeenCalledTimes(1)
   })
 
@@ -662,6 +686,7 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
     })
 
     createWebSocketClientMock.mockReturnValue(database.dbWebsocket)
+
     readValidatedBodyMock.mockResolvedValue({
       decision: 'publish',
       makePrimary: false
@@ -681,8 +706,10 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
       rejectionReason: null,
       status: 'approved'
     })
+
     expect(publishedImageDeleteMock).not.toHaveBeenCalled()
     expect(sourceImageDeleteMock).toHaveBeenCalledTimes(1)
+
     expect(consoleErrorMock).toHaveBeenCalledWith(
       'Reconciled equipment photo publication after transaction failure',
       {
@@ -691,6 +718,7 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
         submissionId
       }
     )
+
     expect(database.endMock).toHaveBeenCalledTimes(1)
   })
 
@@ -708,6 +736,7 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
     })
 
     createWebSocketClientMock.mockReturnValue(database.dbWebsocket)
+
     readValidatedBodyMock.mockResolvedValue({
       decision: 'publish',
       makePrimary: false
@@ -717,8 +746,10 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
       statusCode: 500,
       statusMessage: 'Failed to review photo submission'
     })
+
     expect(publishedImageDeleteMock).not.toHaveBeenCalled()
     expect(sourceImageDeleteMock).not.toHaveBeenCalled()
+
     expect(consoleErrorMock).toHaveBeenCalledWith(
       'Failed to reconcile equipment photo publication',
       {
@@ -728,6 +759,7 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
         submissionId
       }
     )
+
     expect(database.endMock).toHaveBeenCalledTimes(1)
   })
 })

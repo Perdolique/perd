@@ -73,6 +73,7 @@ describe('get /api/user/photo-submissions', () => {
 
     expect(validateRegisteredUserMock).toHaveBeenCalledWith(event)
     expect(getValidatedQueryMock).toHaveBeenCalledWith(event, expect.any(Function))
+
     expect(findManyMock).toHaveBeenCalledWith({
       columns: {
         createdAt: true,
@@ -110,6 +111,7 @@ describe('get /api/user/photo-submissions', () => {
         }
       }
     })
+
     expect(result.items).toHaveLength(20)
     expect(result.nextPage).toBe(3)
     expect(JSON.stringify(result)).not.toContain('cloudflareImageId')

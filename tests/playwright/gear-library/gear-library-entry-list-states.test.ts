@@ -356,6 +356,7 @@ test.describe('Gear library states', () => {
     const filterDialog = await openFilterDialog(page)
 
     await expect(filterDialog.getByRole('group', { name: 'Weight (g)' })).toBeVisible()
+
     await expect(filterDialog.getByRole('alert').filter({
       hasText: 'Category filters unavailable.'
     })).toHaveCount(0)

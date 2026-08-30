@@ -53,6 +53,7 @@ describe('user session helpers', () => {
       isGuest: true,
       userId: 'user-1'
     })
+
     expect(db.query.users.findFirst).toHaveBeenCalledWith({
       columns: {
         id: true,

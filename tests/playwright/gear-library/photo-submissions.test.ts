@@ -121,10 +121,12 @@ async function dropReplacementPhoto(page: Page): Promise<void> {
     const dataTransfer = new globalThis.DataTransfer()
 
     dataTransfer.items.add(photo)
+
     dropZone.dispatchEvent(new globalThis.DragEvent('dragenter', {
       bubbles: true,
       dataTransfer
     }))
+
     dropZone.dispatchEvent(new globalThis.DragEvent('drop', {
       bubbles: true,
       dataTransfer
@@ -183,6 +185,7 @@ test.describe('Photo submissions', () => {
         }
       })
     })
+
     await mockItem(context)
 
     await page.goto(`/login?redirectTo=${encodeURIComponent(itemPath)}`)
@@ -191,10 +194,12 @@ test.describe('Photo submissions', () => {
     await page.getByRole('link', { name: 'Submit photo' }).click()
 
     await expect(page).toHaveURL(new RegExp(`${submissionPath}$`, 'u'))
+
     await expect(page.getByRole('heading', {
       level: 1,
       name: 'Submit a photo'
     })).toBeVisible()
+
     await expect(page.getByRole('heading', { name: 'Account required.' })).toBeVisible()
     await expect(page.locator('form')).toHaveCount(0)
   })
@@ -223,6 +228,7 @@ test.describe('Photo submissions', () => {
     await expect(page.getByRole('img', {
       name: 'Preview of photo-submission.webp'
     })).toBeVisible()
+
     await expect(page.getByText('photo-submission.webp', { exact: true })).toBeVisible()
     await expect(page.getByText('38 B', { exact: true })).toBeVisible()
 
@@ -238,9 +244,11 @@ test.describe('Photo submissions', () => {
     await expect(page.getByRole('img', {
       name: 'Preview of replacement.webp'
     })).toBeVisible()
+
     await expect(page.getByRole('img', {
       name: 'Preview of photo-submission.webp'
     })).toHaveCount(0)
+
     await expect(page.getByText('replacement.webp', { exact: true })).toBeVisible()
     await expect(page.getByText('26.8 KB', { exact: true })).toBeVisible()
     await expect(rightsCheckbox).not.toBeChecked()
@@ -284,6 +292,7 @@ test.describe('Photo submissions', () => {
     const photoInput = page.getByLabel('Photo', { exact: true })
 
     await photoInput.setInputFiles(photoFixturePath)
+
     await dropTestFiles(page, [{
       name: 'notes.txt',
       type: 'text/plain'
@@ -325,6 +334,7 @@ test.describe('Photo submissions', () => {
     }>()
 
     await mockItem(context)
+
     await context.route((url) => url.pathname === photoApiPath, async (route) => {
       const request = route.request()
 
@@ -344,6 +354,7 @@ test.describe('Photo submissions', () => {
         }
       })
     })
+
     await authenticateRegisteredUser(context, page, itemPath)
     await page.getByRole('link', { name: 'Submit photo' }).click()
 
@@ -406,9 +417,11 @@ test.describe('Photo submissions', () => {
 
     expect(Object.fromEntries(requestUrl.searchParams)).toStrictEqual({})
     expect(submissionRequest.headers()['content-type']).toMatch(/^multipart\/form-data; boundary=/u)
+
     expect(submissionRequest.headers()['idempotency-key']).toMatch(
       /^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/u
     )
+
     expect(submissionFormData.get('rightsConfirmed')).toBe('true')
     expect(submissionFormData.get('sourceType')).toBe('manufacturer')
     expect(submissionFormData.get('sourceUrl')).toBe(sourceUrl)
@@ -432,6 +445,7 @@ test.describe('Photo submissions', () => {
     await expect(status).toBeFocused()
     await expect(page.locator('form')).toHaveCount(0)
     await expect(page.getByRole('link', { name: 'Back to item' })).toHaveAttribute('href', itemPath)
+
     await expect(page.getByRole('link', { name: 'View My contributions' })).toHaveAttribute(
       'href',
       '/account/submissions'
@@ -445,6 +459,7 @@ test.describe('Photo submissions', () => {
     const idempotencyKeys: string[] = []
 
     await mockItem(context)
+
     await context.route((url) => url.pathname === photoApiPath, async (route) => {
       idempotencyKeys.push(route.request().headers()['idempotency-key'] ?? '')
 
@@ -453,6 +468,7 @@ test.describe('Photo submissions', () => {
         json: { statusMessage: 'Temporary failure' }
       })
     })
+
     await authenticateRegisteredUser(context, page, submissionPath)
 
     const photoInput = page.getByLabel('Photo', { exact: true })
@@ -478,6 +494,7 @@ test.describe('Photo submissions', () => {
     expect(idempotencyKeys[0]).toMatch(
       /^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/u
     )
+
     expect(idempotencyKeys[1]).toBe(idempotencyKeys[0])
     expect(idempotencyKeys[2]).not.toBe(idempotencyKeys[0])
   })
@@ -498,6 +515,7 @@ test.describe('Photo submissions', () => {
       const idempotencyKeys: string[] = []
 
       await mockItem(context)
+
       await context.route((url) => url.pathname === photoApiPath, async (route) => {
         idempotencyKeys.push(route.request().headers()['idempotency-key'] ?? '')
 
@@ -517,8 +535,10 @@ test.describe('Photo submissions', () => {
           }
         })
       })
+
       await authenticateRegisteredUser(context, page, submissionPath)
       await page.getByLabel('Photo', { exact: true }).setInputFiles(photoFixturePath)
+
       await page.getByLabel(
         'I confirm that this photo can be published in the catalog.'
       ).check()
@@ -553,6 +573,7 @@ test.describe('Photo submissions', () => {
         json: { statusMessage: 'Temporary item failure' }
       })
     })
+
     await authenticateRegisteredUser(context, page, submissionPath)
     await expect(page.getByRole('heading', { name: 'Could not load item.' })).toBeVisible()
     await expect(page.locator('form')).toHaveCount(0)
@@ -569,11 +590,13 @@ test.describe('Photo submissions', () => {
         json: { statusMessage: 'Equipment item not found' }
       })
     })
+
     await authenticateRegisteredUser(context, page, submissionPath)
 
     await expect(page.getByRole('heading', { name: 'Item unavailable.' })).toBeVisible()
     await expect(page.locator('form')).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Retry' })).toHaveCount(0)
+
     await expect(page.getByRole('link', { name: 'Back to gear library' }).first()).toHaveAttribute(
       'href',
       '/gear-library'
@@ -587,8 +610,10 @@ test.describe('Photo submissions', () => {
     let requestCount = 0
 
     await mockItem(context)
+
     await context.route((url) => url.pathname === photoApiPath, async (route) => {
       requestCount += 1
+
       await route.fulfill({
         status: 201,
 
@@ -598,6 +623,7 @@ test.describe('Photo submissions', () => {
         }
       })
     })
+
     await authenticateRegisteredUser(context, page, submissionPath)
     await page.getByRole('radio', { name: 'Official manufacturer photo' }).check()
     await page.getByLabel('Manufacturer source').fill('http://manufacturer.example/product')
@@ -617,9 +643,11 @@ test.describe('Photo submissions', () => {
     expect(oversizedErrorId).not.toBeNull()
     expect(photoDescriptionIds).toContain(oversizedErrorId)
     await expect(page.getByRole('button', { name: 'Submit photo' })).toBeDisabled()
+
     await page.locator('form').evaluate((form: HTMLFormElement) => {
       form.requestSubmit()
     })
+
     expect(requestCount).toBe(0)
   })
 
@@ -631,6 +659,7 @@ test.describe('Photo submissions', () => {
       height: 900,
       width: 1280
     })
+
     await mockItem(context)
     await authenticateRegisteredUser(context, page, submissionPath)
 
@@ -696,12 +725,14 @@ test.describe('Photo submissions', () => {
   ] as const) {
     test(`should show the safe ${status} upload error`, async ({ context, page }) => {
       await mockItem(context)
+
       await context.route((url) => url.pathname === photoApiPath, async (route) => {
         await route.fulfill({
           status,
           json: { statusMessage: 'Internal upload detail' }
         })
       })
+
       await authenticateRegisteredUser(context, page, submissionPath)
       await page.getByLabel('Photo', { exact: true }).setInputFiles(photoFixturePath)
       await page.getByLabel('I confirm that this photo can be published in the catalog.').check()
@@ -719,6 +750,7 @@ test.describe('Photo submissions', () => {
     await context.route((url) => url.pathname === '/api/user/item-submissions', async (route) => {
       await route.fulfill({ json: { items: [] } })
     })
+
     await context.route((url) => url.pathname === '/api/user/photo-submissions', async (route) => {
       await route.fulfill({
         json: {
@@ -742,6 +774,7 @@ test.describe('Photo submissions', () => {
         }
       })
     })
+
     await authenticateRegisteredUser(context, page, '/account/submissions')
 
     const photoSection = page.locator('section').filter({
@@ -752,10 +785,12 @@ test.describe('Photo submissions', () => {
     await expect(photoSection.getByText('PocketRocket official.webp')).toBeVisible()
     await expect(photoSection.getByText('Official manufacturer photo')).toBeVisible()
     await expect(photoSection.getByText('Pending', { exact: true })).toBeVisible()
+
     await expect(photoSection.getByRole('link', { name: 'Manufacturer source' })).toHaveAttribute(
       'href',
       sourceUrl
     )
+
     await expect(photoSection.locator('img')).toHaveCount(0)
     await expect(photoSection).not.toContainText('cloudflare')
   })

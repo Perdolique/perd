@@ -144,6 +144,7 @@ function useGearLibraryComparison(options: UseGearLibraryComparisonOptions) {
           id: item.id,
           name: item.name
         })
+
         hasChanges = true
       }
     }
