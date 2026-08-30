@@ -71,9 +71,14 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, nextTick, ref, useTemplateRef } from 'vue'
+  import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
   import { definePageMeta, useFetch, useRequestFetch } from '#imports'
-  import type { PhotoSubmissionListItem } from '#server/api/equipment/photo-submissions/index.get'
+
+  import type {
+    PhotoSubmissionListCursor,
+    PhotoSubmissionListItem
+  } from '#server/api/equipment/photo-submissions/index.get'
+
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PerdButton from '~/components/PerdButton.vue'
@@ -89,7 +94,7 @@
   const pageSize = 20
   const requestFetch = useRequestFetch()
   const paginationStatus = useTemplateRef('paginationStatus')
-  const currentPage = ref(1)
+  const paginationCursor = ref<PhotoSubmissionListCursor | null>(null)
   const appendedItems = ref<PhotoSubmissionListItem[]>([])
   const isLoadingMore = ref(false)
   const hasLoadMoreError = ref(false)
@@ -101,9 +106,10 @@
     refresh: refreshInitial,
     status: initialStatus
   } = await useFetch('/api/equipment/photo-submissions', {
+    lazy: true,
+
     query: {
-      limit: pageSize,
-      page: 1
+      limit: pageSize
     }
   })
 
@@ -115,8 +121,13 @@
   const isInitialLoading = computed(() => initialStatus.value === 'pending')
   const hasInitialError = computed(() => initialError.value !== undefined)
   const isEmpty = computed(() => allItems.value.length === 0)
-  const total = computed(() => initialResponse.value?.total ?? 0)
-  const hasMore = computed(() => allItems.value.length < total.value)
+  const hasMore = computed(() => paginationCursor.value !== null)
+
+  watch(initialResponse, (response) => {
+    if (response !== undefined) {
+      paginationCursor.value = response.nextCursor
+    }
+  }, { immediate: true })
 
   const dateFormatter = new Intl.DateTimeFormat('en', {
     day: 'numeric',
@@ -153,11 +164,11 @@
   }
 
   async function loadMore() {
-    if (isLoadingMore.value || hasMore.value === false) {
+    const cursor = paginationCursor.value
+
+    if (isLoadingMore.value || cursor === null) {
       return
     }
-
-    const nextPage = currentPage.value + 1
 
     isLoadingMore.value = true
     hasLoadMoreError.value = false
@@ -165,15 +176,16 @@
     try {
       const response = await requestFetch('/api/equipment/photo-submissions', {
         query: {
-          limit: pageSize,
-          page: nextPage
+          afterCreatedAt: cursor.createdAt,
+          afterId: cursor.id,
+          limit: pageSize
         }
       })
 
       appendedItems.value.push(...response.items)
-      currentPage.value = nextPage
+      paginationCursor.value = response.nextCursor
 
-      if (allItems.value.length >= total.value) {
+      if (response.nextCursor === null) {
         isPaginationComplete.value = true
 
         await nextTick()
@@ -189,39 +201,5 @@
 </script>
 
 <style module>
-  .component,
-  .list {
-    display: grid;
-    gap: var(--spacing-16);
-  }
-
-  .card {
-    display: grid;
-    gap: var(--spacing-4);
-    padding: var(--spacing-16);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--border-radius-16);
-    background: var(--color-surface-primary);
-    color: inherit;
-    text-decoration: none;
-
-    &:hover,
-    &:focus-visible {
-      border-color: var(--color-accent-primary);
-    }
-  }
-
-  .name {
-    font-size: var(--font-size-20);
-    font-weight: var(--font-weight-bold);
-  }
-
-  .metadata,
-  .paginationStatus {
-    color: var(--color-text-tertiary);
-  }
-
-  .errorMessage {
-    color: var(--color-danger-primary);
-  }
+  @import '../../../../assets/styles/admin-review-queue.css';
 </style>

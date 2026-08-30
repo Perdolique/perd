@@ -1,6 +1,4 @@
 import * as h3 from 'h3'
-import type { SQL } from 'drizzle-orm'
-import { PgDialect } from 'drizzle-orm/pg-core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import detailHandler from '#server/api/equipment/photo-submissions/[id].get'
 import previewHandler from '#server/api/equipment/photo-submissions/[id]/image.get'
@@ -8,6 +6,7 @@ import listHandler from '#server/api/equipment/photo-submissions/index.get'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
 const submissionId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+const cursorSubmissionId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d6'
 
 const {
   getCloudflareImagesBindingMock,
@@ -48,34 +47,18 @@ vi.mock(import('#server/utils/cloudflare'), () => {
   return { getCloudflareImagesBinding: getCloudflareImagesBindingMock }
 })
 
-function createListDb(items: unknown[], total: number) {
+function createListDb(items: unknown[]) {
   const findManyMock = vi.fn(() => items)
-  const countWhereMock = vi.fn((_condition: SQL | undefined) => [{ total }])
-
-  const countFromMock = vi.fn(() => {
-    return { where: countWhereMock }
-  })
-
-  const selectMock = vi.fn(() => {
-    return { from: countFromMock }
-  })
 
   return {
     dbHttp: {
       query: {
         equipmentItemPhotoSubmissions: { findMany: findManyMock }
-      },
-
-      select: selectMock
+      }
     },
 
-    countWhereMock,
     findManyMock
   }
-}
-
-function expectDefinedSql(value: SQL | undefined): asserts value is SQL {
-  expect(value).toBeDefined()
 }
 
 function createDetailSubmission() {
@@ -119,8 +102,9 @@ describe('admin equipment photo submission reads', () => {
     vi.clearAllMocks()
     validateAdminUserMock.mockResolvedValue('admin-1')
     getValidatedQueryMock.mockResolvedValue({
-      limit: 20,
-      page: 2
+      afterCreatedAt: '2026-07-31T12:00:00.000Z',
+      afterId: cursorSubmissionId,
+      limit: 1
     })
     getValidatedRouterParamsMock.mockResolvedValue({ id: submissionId })
   })
@@ -131,13 +115,23 @@ describe('admin equipment photo submission reads', () => {
 
   it('should list only pending submissions oldest-first without private image IDs', async () => {
     const submission = createDetailSubmission()
-    const { countWhereMock, dbHttp, findManyMock } = createListDb([submission], 21)
+
+    const secondSubmission = {
+      ...submission,
+      createdAt: new Date('2026-08-02T12:00:00Z'),
+      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8'
+    }
+
+    const { dbHttp, findManyMock } = createListDb([
+      submission,
+      secondSubmission
+    ])
+
     const event = createTestEvent(dbHttp)
     const result = await listHandler(event)
 
     expect(findManyMock).toHaveBeenCalledWith(expect.objectContaining({
-      limit: 20,
-      offset: 20,
+      limit: 2,
 
       orderBy: {
         createdAt: 'asc',
@@ -145,20 +139,32 @@ describe('admin equipment photo submission reads', () => {
       },
 
       where: {
-        status: 'pending'
+        status: 'pending',
+
+        OR: [
+          {
+            createdAt: {
+              gt: new Date('2026-07-31T12:00:00.000Z')
+            }
+          },
+          {
+            createdAt: {
+              eq: new Date('2026-07-31T12:00:00.000Z')
+            },
+
+            id: {
+              gt: cursorSubmissionId
+            }
+          }
+        ]
       }
     }))
-
-    const countCondition = countWhereMock.mock.calls[0]?.[0]
-
-    expectDefinedSql(countCondition)
-
-    const countQuery = new PgDialect().sqlToQuery(countCondition)
-
-    expect(countQuery.sql).toContain('"equipment_item_photo_submissions"."status" = $1')
-    expect(countQuery.params).toStrictEqual(['pending'])
-    expect(result.total).toBe(21)
+    expect(result.items).toHaveLength(1)
     expect(result.items[0]?.author?.name).toBe('Ada')
+    expect(result.nextCursor).toStrictEqual({
+      createdAt: '2026-08-01T12:00:00.000Z',
+      id: submissionId
+    })
     expect(JSON.stringify(result)).not.toContain('must-not-leak')
   })
 

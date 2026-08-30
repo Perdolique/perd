@@ -61,7 +61,7 @@
     </div>
 
     <div v-else-if="hasSubmission" :class="$style.component">
-      <PerdCard :class="$style.previewCard">
+      <PerdCard>
         <p v-if="isPreviewLoading" role="status">
           Loading private photo preview…
         </p>
@@ -104,7 +104,7 @@
 
           <div :class="$style.metadataGroup">
             <dt>Filename</dt>
-            <dd>{{ filename }}</dd>
+            <dd :class="$style.filename">{{ filename }}</dd>
           </div>
 
           <div :class="$style.metadataGroup">
@@ -142,10 +142,6 @@
           This is the first gallery image, so it will become primary automatically.
         </p>
 
-        <p v-if="hasMutationError" :class="$style.mutationError" role="alert">
-          {{ mutationError }}
-        </p>
-
         <div :class="$style.buttons">
           <PerdButton :disabled="isDecisionDisabled" @click="openPublishConfirmation">
             Publish
@@ -167,6 +163,7 @@
       :close-on-confirm="false"
       confirm-button-text="Publish"
       :confirm-loading="isSubmitting"
+      :error="mutationError"
       header-text="Publish photo submission"
       @confirm="publishSubmission"
     >
@@ -180,6 +177,7 @@
       :confirm-disabled="isRejectConfirmDisabled"
       :confirm-loading="isSubmitting"
       confirm-variant="danger"
+      :error="mutationError"
       header-text="Reject photo submission"
       @confirm="rejectSubmission"
     >
@@ -239,7 +237,9 @@
     error: submissionError,
     refresh: refreshSubmission,
     status: submissionStatus
-  } = await useFetch(detailPath)
+  } = await useFetch(detailPath, {
+    lazy: true
+  })
 
   const isInitialLoading = computed(() => submissionStatus.value === 'pending')
   const hasInitialError = computed(() => submissionError.value !== undefined)
@@ -260,7 +260,6 @@
   const isPreviewReady = computed(() => previewStatus.value === 'ready')
   const isPreviewHidden = computed(() => isPreviewReady.value === false)
   const isDecisionDisabled = computed(() => isPreviewReady.value === false || isSubmitting.value)
-  const hasMutationError = computed(() => mutationError.value !== null)
   const trimmedRejectionReason = computed(() => rejectionReason.value.trim())
   const isRejectConfirmDisabled = computed(() => isSubmitting.value || trimmedRejectionReason.value === '')
   const itemPath = computed(() => createGearLibraryItemPath(submission.value?.item.id ?? ''))
@@ -365,12 +364,14 @@
 
   function openPublishConfirmation() {
     if (isDecisionDisabled.value === false) {
+      mutationError.value = null
       showPublishConfirmation.value = true
     }
   }
 
   function openRejectConfirmation() {
     if (isDecisionDisabled.value === false) {
+      mutationError.value = null
       showRejectConfirmation.value = true
     }
   }
@@ -434,7 +435,6 @@
 
 <style module>
   .component,
-  .previewCard,
   .detailsCard,
   .decisionCard,
   .itemHeading,
@@ -467,6 +467,10 @@
     }
   }
 
+  .filename {
+    overflow-wrap: anywhere;
+  }
+
   .references,
   .primaryHint {
     color: var(--color-text-tertiary);
@@ -477,10 +481,6 @@
     gap: var(--spacing-8);
     align-items: center;
     font-weight: var(--font-weight-semibold);
-  }
-
-  .mutationError {
-    color: var(--color-danger-primary);
   }
 
   .buttons {

@@ -1,5 +1,6 @@
 import type { BrowserContext, Page, Request } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
+import { createDeferred } from '../fixtures/gear-library-entry-list.fixtures.ts'
 
 /* oxlint-disable vitest/no-conditional-in-test -- Playwright route handlers branch across mocked pages and retries. */
 const adminId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
@@ -99,8 +100,14 @@ test.describe('Admin photo submission review', () => {
   }
 
   test('should navigate from Admin and append the next oldest photo page', async ({ context, page }) => {
+    const listRequests: Request[] = []
+
     await context.route((url) => url.pathname === submissionsPath, async (route) => {
-      const pageNumber = new globalThis.URL(route.request().url()).searchParams.get('page')
+      const request = route.request()
+      const { searchParams } = new globalThis.URL(request.url())
+      const isNextPage = searchParams.get('afterId') === submissionId
+
+      listRequests.push(request)
 
       const secondItem = {
         ...listItem,
@@ -112,10 +119,14 @@ test.describe('Admin photo submission review', () => {
 
       await route.fulfill({
         json: {
-          items: pageNumber === '2' ? [secondItem] : [listItem],
-          limit: 20,
-          page: Number(pageNumber),
-          total: 2
+          items: isNextPage ? [secondItem] : [listItem],
+
+          nextCursor: isNextPage
+            ? null
+            : {
+                createdAt: listItem.createdAt,
+                id: listItem.id
+              }
         }
       })
     })
@@ -131,12 +142,117 @@ test.describe('Admin photo submission review', () => {
     await expect(page.getByRole('link', { name: /PocketRocket Deluxe/u })).toBeVisible()
     await page.getByRole('button', { name: 'Load more' }).click()
     await expect(page.getByRole('link', { name: /Second photo/u })).toContainText('Deleted account')
+    await expect.poll(() => listRequests).toHaveLength(2)
+
+    const [, nextPageRequest] = listRequests
+    const { searchParams: nextPageQuery } = new globalThis.URL(nextPageRequest.url())
+
+    expect(Object.fromEntries(nextPageQuery)).toStrictEqual({
+      afterCreatedAt: listItem.createdAt,
+      afterId: listItem.id,
+      limit: '20'
+    })
 
     const paginationStatus = page.getByRole('status')
 
     await expect(paginationStatus).toHaveText('All pending photo submissions are loaded.')
     await expect(paginationStatus).toBeFocused()
     await expect(page.getByText('UTC').first()).toBeVisible()
+  })
+
+  test('should show queue and detail loading states during client navigation', async ({ context, page }) => {
+    const queueGate = createDeferred()
+    const detailGate = createDeferred()
+
+    await context.route((url) => url.pathname === submissionsPath, async (route) => {
+      await queueGate.promise
+      await route.fulfill({
+        json: {
+          items: [listItem],
+          nextCursor: null
+        }
+      })
+    })
+    await context.route((url) => url.pathname === detailPath, async (route) => {
+      await detailGate.promise
+      await route.fulfill({ json: detail })
+    })
+    await context.route((url) => url.pathname === previewPath, async (route) => {
+      await route.fulfill({
+        contentType: 'image/webp',
+        path: photoFixturePath
+      })
+    })
+
+    await authenticate({
+      context,
+      isAdmin: true,
+      page,
+      target: '/admin'
+    })
+    await page.getByRole('link', { name: /Review photo submissions/u }).click()
+    await expect(page.getByText('Loading photo submissions')).toBeVisible()
+    queueGate.resolve()
+    await page.getByRole('link', { name: /PocketRocket Deluxe/u }).click()
+    await expect(page.getByText('Loading photo submission')).toBeVisible()
+    detailGate.resolve()
+    await expect(page.getByRole('heading', { name: 'Catalog item' })).toBeVisible()
+  })
+
+  test('should keep long filenames inside the mobile review layout', async ({ context, page }) => {
+    const longFilename = `${'a'.repeat(250)}.webp`
+
+    const longFilenameItem = {
+      ...listItem,
+      filename: longFilename
+    }
+
+    await page.setViewportSize({
+      height: 800,
+      width: 360
+    })
+    await context.route((url) => url.pathname === submissionsPath, async (route) => {
+      await route.fulfill({
+        json: {
+          items: [longFilenameItem],
+          nextCursor: null
+        }
+      })
+    })
+    await context.route((url) => url.pathname === detailPath, async (route) => {
+      await route.fulfill({
+        json: {
+          ...detail,
+          filename: longFilename
+        }
+      })
+    })
+    await context.route((url) => url.pathname === previewPath, async (route) => {
+      await route.fulfill({
+        contentType: 'image/webp',
+        path: photoFixturePath
+      })
+    })
+
+    await authenticate({
+      context,
+      isAdmin: true,
+      page,
+      target: '/admin/equipment/photo-submissions'
+    })
+    await expect(page.getByText(longFilename, { exact: true })).toBeVisible()
+
+    const queueFitsViewport = await page.evaluate(() =>
+      globalThis.document.documentElement.scrollWidth <= globalThis.document.documentElement.clientWidth)
+
+    expect(queueFitsViewport).toBe(true)
+    await page.getByRole('link', { name: /PocketRocket Deluxe/u }).click()
+    await expect(page.getByText(longFilename, { exact: true })).toBeVisible()
+
+    const detailFitsViewport = await page.evaluate(() =>
+      globalThis.document.documentElement.scrollWidth <= globalThis.document.documentElement.clientWidth)
+
+    expect(detailFitsViewport).toBe(true)
   })
 
   test('should retry an unavailable queue and show its empty state', async ({ context, page }) => {
@@ -155,9 +271,7 @@ test.describe('Admin photo submission review', () => {
       await route.fulfill({
         json: {
           items: [],
-          limit: 20,
-          page: 1,
-          total: 0
+          nextCursor: null
         }
       })
     })
@@ -267,6 +381,65 @@ test.describe('Admin photo submission review', () => {
     )
   })
 
+  test('should publish an existing-gallery photo as primary when selected', async ({ context, page }) => {
+    const publishRequests: Request[] = []
+
+    await context.route((url) => url.pathname === detailPath, async (route) => {
+      const request = route.request()
+
+      if (request.method() === 'PATCH') {
+        publishRequests.push(request)
+        await route.fulfill({
+          json: {
+            publishedImage: {
+              displayOrder: 0,
+              id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477da',
+              isPrimary: true
+            },
+
+            rejectionReason: null,
+            status: 'approved'
+          }
+        })
+
+        return
+      }
+
+      await route.fulfill({ json: detail })
+    })
+    await context.route((url) => url.pathname === previewPath, async (route) => {
+      await route.fulfill({
+        contentType: 'image/webp',
+        path: photoFixturePath
+      })
+    })
+
+    await authenticate({
+      context,
+      isAdmin: true,
+      page,
+      target: `/admin/equipment/photo-submissions/${submissionId}`
+    })
+    await page.getByRole('checkbox', { name: 'Make primary image' }).check()
+    await page.getByRole('button', {
+      name: 'Publish',
+      exact: true
+    }).click()
+    await page.getByRole('dialog', { name: 'Publish photo submission' })
+      .getByRole('button', {
+        name: 'Publish',
+        exact: true
+      })
+      .click()
+    await expect.poll(() => publishRequests).toHaveLength(1)
+
+    expect(publishRequests[0]?.postDataJSON()).toStrictEqual({
+      decision: 'publish',
+      makePrimary: true
+    })
+    await expect(page.getByRole('status')).toContainText('Published')
+  })
+
   test('should force the first image primary and preserve a rejection reason across retry', async ({
     context,
     page
@@ -338,7 +511,9 @@ test.describe('Admin photo submission review', () => {
       name: 'Reject',
       exact: true
     }).click()
-    await expect(page.getByText('Could not apply this decision. Your choices are still here. Try again.')).toBeVisible()
+    await expect(dialog.getByRole('alert')).toHaveText(
+      'Could not apply this decision. Your choices are still here. Try again.'
+    )
     await expect(reasonInput).toHaveValue('  Product is not visible  ')
     await dialog.getByRole('button', {
       name: 'Reject',

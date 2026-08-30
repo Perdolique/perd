@@ -369,7 +369,21 @@ const photoSubmissionListQuerySchema = v.object({
   page: pageQuerySchema
 })
 
-const photoSubmissionAdminListQuerySchema = itemSubmissionListQuerySchema
+const photoSubmissionAdminListQuerySchema = v.pipe(
+  v.object({
+    afterCreatedAt: v.optional(v.pipe(
+      v.string(),
+      v.isoTimestamp()
+    )),
+
+    afterId: v.optional(canonicalUuidV7Schema),
+    limit: limitQuerySchema
+  }),
+  v.check(
+    (input) => (input.afterCreatedAt === undefined) === (input.afterId === undefined),
+    'afterCreatedAt and afterId must be provided together'
+  )
+)
 
 const photoSubmissionParamsSchema = v.object({
   id: canonicalUuidV7Schema

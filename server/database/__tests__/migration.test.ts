@@ -241,12 +241,5 @@ describe('equipment item photo submission review migration', () => {
     expect(photoSubmissionReviewMigrationSql).toBe(
       'ALTER TABLE "equipment_item_photo_submissions" ADD COLUMN "rejectionReason" varchar(256);'
     )
-    expect(photoSubmissionReviewMigrationSql).not.toMatch(
-      /(?:CREATE|DROP|TRUNCATE) TABLE (?:IF (?:NOT )?EXISTS )?"equipment_item_photo_submissions"/iu
-    )
-    expect(photoSubmissionReviewMigrationSql).not.toMatch(
-      /DELETE FROM "equipment_item_photo_submissions"/iu
-    )
-    expect(photoSubmissionReviewMigrationSql).not.toContain('NOT NULL')
   })
 })

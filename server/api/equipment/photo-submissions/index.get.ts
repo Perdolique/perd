@@ -1,6 +1,4 @@
-import { count, eq } from 'drizzle-orm'
 import { defineEventHandler, getValidatedQuery } from 'h3'
-import { equipmentItemPhotoSubmissions } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
 import { validatePhotoSubmissionAdminListQuery } from '#server/utils/validation/schemas'
 
@@ -29,11 +27,14 @@ interface PhotoSubmissionListItem {
   item: PhotoSubmissionItemSummary;
 }
 
+interface PhotoSubmissionListCursor {
+  createdAt: string;
+  id: string;
+}
+
 interface PhotoSubmissionListResponse {
   items: PhotoSubmissionListItem[];
-  limit: number;
-  page: number;
-  total: number;
+  nextCursor: PhotoSubmissionListCursor | null;
 }
 
 interface PhotoSubmissionListQueryItem {
@@ -54,28 +55,63 @@ interface PhotoSubmissionListQueryRow {
 export default defineEventHandler(async (event): Promise<PhotoSubmissionListResponse> => {
   await validateAdminUser(event)
 
-  const { limit, page } = await getValidatedQuery(event, validatePhotoSubmissionAdminListQuery)
-  const { dbHttp } = event.context
-  const offset = (page - 1) * limit
+  const {
+    afterCreatedAt,
+    afterId,
+    limit
+  } = await getValidatedQuery(event, validatePhotoSubmissionAdminListQuery)
 
-  const itemsPromise = dbHttp.query.equipmentItemPhotoSubmissions.findMany({
+  const { dbHttp } = event.context
+
+  const cursor = afterCreatedAt === undefined || afterId === undefined
+    ? null
+    : {
+        createdAt: new Date(afterCreatedAt),
+        id: afterId
+      }
+
+  const pendingStatus = 'pending' as const
+
+  const where = cursor === null
+    ? {
+        status: pendingStatus
+      }
+    : {
+        status: pendingStatus,
+
+        OR: [
+          {
+            createdAt: {
+              gt: cursor.createdAt
+            }
+          },
+          {
+            createdAt: {
+              eq: cursor.createdAt
+            },
+
+            id: {
+              gt: cursor.id
+            }
+          }
+        ]
+      }
+
+  const rows = await dbHttp.query.equipmentItemPhotoSubmissions.findMany({
     columns: {
       createdAt: true,
       filename: true,
       id: true
     },
 
-    where: {
-      status: 'pending'
-    },
+    where,
 
     orderBy: {
       createdAt: 'asc',
       id: 'asc'
     },
 
-    limit,
-    offset,
+    limit: limit + 1,
 
     with: {
       creator: {
@@ -110,17 +146,10 @@ export default defineEventHandler(async (event): Promise<PhotoSubmissionListResp
     }
   })
 
-  const totalPromise = dbHttp
-    .select({ total: count() })
-    .from(equipmentItemPhotoSubmissions)
-    .where(eq(equipmentItemPhotoSubmissions.status, 'pending'))
+  const hasMore = rows.length > limit
+  const pageRows = rows.slice(0, limit)
 
-  const [rows, totalRows] = await Promise.all([
-    itemsPromise,
-    totalPromise
-  ])
-
-  const items = rows.map((submission: PhotoSubmissionListQueryRow) => {
+  const items = pageRows.map((submission: PhotoSubmissionListQueryRow) => {
     const { item } = submission
 
     if (item === null) {
@@ -146,17 +175,25 @@ export default defineEventHandler(async (event): Promise<PhotoSubmissionListResp
     }
   })
 
+  const lastSubmission = pageRows.at(-1)
+
+  const nextCursor = hasMore && lastSubmission !== undefined
+    ? {
+        createdAt: lastSubmission.createdAt.toISOString(),
+        id: lastSubmission.id
+      }
+    : null
+
   return {
     items,
-    limit,
-    page,
-    total: totalRows[0]?.total ?? 0
+    nextCursor
   }
 })
 
 export type {
   PhotoSubmissionAuthorSummary,
   PhotoSubmissionItemSummary,
+  PhotoSubmissionListCursor,
   PhotoSubmissionListItem,
   PhotoSubmissionListResponse,
   PhotoSubmissionReferenceSummary

@@ -482,6 +482,59 @@ test.describe('Photo submissions', () => {
     expect(idempotencyKeys[2]).not.toBe(idempotencyKeys[0])
   })
 
+  for (const terminalReplay of [{
+    message: 'This submission was already approved and the photo is visible in the catalog gallery.',
+    status: 'approved',
+    title: 'Photo already published.'
+  }, {
+    message: 'This submission was already rejected. View My contributions for the review result.',
+    status: 'rejected',
+    title: 'Photo already reviewed.'
+  }] as const) {
+    test(`should show the ${terminalReplay.status} result of an unchanged idempotent retry`, async ({
+      context,
+      page
+    }) => {
+      const idempotencyKeys: string[] = []
+
+      await mockItem(context)
+      await context.route((url) => url.pathname === photoApiPath, async (route) => {
+        idempotencyKeys.push(route.request().headers()['idempotency-key'] ?? '')
+
+        if (idempotencyKeys.length === 1) {
+          await route.fulfill({
+            status: 500,
+            json: { statusMessage: 'Response lost after commit' }
+          })
+
+          return
+        }
+
+        await route.fulfill({
+          json: {
+            id: submissionId,
+            status: terminalReplay.status
+          }
+        })
+      })
+      await authenticateRegisteredUser(context, page, submissionPath)
+      await page.getByLabel('Photo', { exact: true }).setInputFiles(photoFixturePath)
+      await page.getByLabel(
+        'I confirm that this photo can be published in the catalog.'
+      ).check()
+
+      const submitButton = page.getByRole('button', { name: 'Submit photo' })
+
+      await submitButton.click()
+      await expect(page.getByRole('alert')).toHaveText('Could not submit photo. Try again.')
+      await submitButton.click()
+      await expect(page.getByRole('heading', { name: terminalReplay.title })).toBeVisible()
+      await expect(page.getByRole('status')).toHaveText(terminalReplay.message)
+      expect(idempotencyKeys).toHaveLength(2)
+      expect(idempotencyKeys[1]).toBe(idempotencyKeys[0])
+    })
+  }
+
   test('should keep item load failures out of the form and allow a retry', async ({
     context,
     page

@@ -60,11 +60,28 @@ vi.mock(import('#server/utils/config'), () => {
   return { createWebSocketClientFromEvent: createWebSocketClientMock }
 })
 
+interface ReconciledImage {
+  displayOrder: number;
+  id: string;
+}
+
 interface CreateReviewDbOptions {
   imageInsertError?: Error;
-  itemStatus?: string;
+  lockedItemStatus?: string;
+  lockedSubmissionStatus?: string;
+  preflightItemStatus?: string;
+  preflightSubmissionStatus?: string;
   previousDisplayOrder?: number;
-  submissionStatus?: string;
+  reconciledImage?: ReconciledImage;
+  reconciledSubmissionStatus?: string;
+  reconciliationError?: Error;
+  transactionErrorAfterCallback?: Error;
+}
+
+interface UpdateCall {
+  table: unknown;
+  values: Record<string, unknown> & { displayOrder?: SQL; };
+  where: SQL | null;
 }
 
 function createLockBuilder(row: unknown) {
@@ -89,18 +106,46 @@ function createLockBuilder(row: unknown) {
 }
 
 function createReviewDb(options: CreateReviewDbOptions = {}) {
-  const submissionLock = createLockBuilder({
+  const preflightSubmission = {
     cloudflareImageId,
     createdBy: userId,
     filename,
+
+    item: {
+      status: options.preflightItemStatus ?? 'approved'
+    },
+
     itemId,
     rightsConfirmed: true,
-    status: options.submissionStatus ?? 'pending'
+    status: options.preflightSubmissionStatus ?? 'pending'
+  }
+
+  const submissionFindFirstMock = vi.fn((query: { with?: unknown; }) => {
+    if (query.with !== undefined) {
+      return preflightSubmission
+    }
+
+    if (options.reconciliationError !== undefined) {
+      throw options.reconciliationError
+    }
+
+    return {
+      status: options.reconciledSubmissionStatus ?? 'pending'
+    }
+  })
+
+  const imageFindFirstMock = vi.fn(() => options.reconciledImage)
+
+  const submissionLock = createLockBuilder({
+    cloudflareImageId,
+    itemId,
+    rightsConfirmed: true,
+    status: options.lockedSubmissionStatus ?? 'pending'
   })
 
   const itemLock = createLockBuilder({
     id: itemId,
-    status: options.itemStatus ?? 'approved'
+    status: options.lockedItemStatus ?? options.preflightItemStatus ?? 'approved'
   })
 
   const displayOrderWhereMock = vi.fn(() => [{
@@ -116,21 +161,23 @@ function createReviewDb(options: CreateReviewDbOptions = {}) {
     .mockReturnValueOnce(itemLock.builder)
     .mockReturnValueOnce({ from: displayOrderFromMock })
 
-  const updateCalls: {
-    table: unknown;
-    values: Record<string, unknown> & { displayOrder?: SQL; };
-  }[] = []
+  const updateCalls: UpdateCall[] = []
 
   const updateMock = vi.fn((table: unknown) => {
     return {
-      set(values: Record<string, unknown> & { displayOrder?: SQL; }) {
-        updateCalls.push({
+      set(values: UpdateCall['values']) {
+        const updateCall: UpdateCall = {
           table,
-          values
-        })
+          values,
+          where: null
+        }
+
+        updateCalls.push(updateCall)
 
         return {
-          where: vi.fn()
+          where: vi.fn((condition: SQL) => {
+            updateCall.where = condition
+          })
         }
       }
     }
@@ -173,34 +220,95 @@ function createReviewDb(options: CreateReviewDbOptions = {}) {
     update: updateMock
   }
 
-  /* oxlint-disable promise/prefer-await-to-callbacks -- The mock executes Drizzle's transaction callback. */
+  /* oxlint-disable node/callback-return, promise/prefer-await-to-callbacks -- The mock executes Drizzle's transaction callback. */
   const transactionMock = vi.fn(async (
     callback: (value: typeof transaction) => Promise<unknown>
-  ) => callback(transaction))
+  ) => {
+    const result = await callback(transaction)
 
-  const endMock = vi.fn()
+    if (options.transactionErrorAfterCallback !== undefined) {
+      throw options.transactionErrorAfterCallback
+    }
+
+    return result
+  })
+
+  const endMock = vi.fn(async () => {
+    // The Drizzle client closes successfully.
+  })
 
   return {
-    db: {
+    dbHttp: {
+      query: {
+        equipmentItemImages: {
+          findFirst: imageFindFirstMock
+        },
+
+        equipmentItemPhotoSubmissions: {
+          findFirst: submissionFindFirstMock
+        }
+      }
+    },
+
+    dbWebsocket: {
       $client: { end: endMock },
       transaction: transactionMock
     },
 
     contributionValuesMock,
     endMock,
+    imageFindFirstMock,
     imageValuesMock,
     itemLock,
+    submissionFindFirstMock,
     submissionLock,
+    transactionMock,
     updateCalls
   }
 }
 
-function expectDefinedSql(value: SQL | undefined): asserts value is SQL {
+function expectDefinedSql(value: SQL | null | undefined): asserts value is SQL {
   expect(value).toBeDefined()
+  expect(value).not.toBeNull()
 }
 
-function createReviewEvent() {
-  const event = createTestEvent({})
+function getRequiredValue<Value>(value: Value | undefined, label: string): Value {
+  if (value === undefined) {
+    throw new Error(`Expected ${label}`)
+  }
+
+  return value
+}
+
+function expectWhereQuery(
+  where: SQL | null,
+  expectedSql: string,
+  expectedParams: unknown[]
+): void {
+  expectDefinedSql(where)
+
+  const query = new PgDialect().sqlToQuery(where)
+
+  expect(query.sql).toContain(expectedSql)
+  expect(query.params).toStrictEqual(expectedParams)
+}
+
+function findUpdateCall(
+  updateCalls: UpdateCall[],
+  table: unknown,
+  status: string
+): UpdateCall {
+  const updateCall = updateCalls.find((call) => call.table === table && call.values.status === status)
+
+  if (updateCall === undefined) {
+    throw new Error(`Expected ${status} update call`)
+  }
+
+  return updateCall
+}
+
+function createReviewEvent(database: ReturnType<typeof createReviewDb>) {
+  const event = createTestEvent(database.dbHttp)
 
   Object.assign(event, {
     waitUntil: waitUntilMock
@@ -262,28 +370,31 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
     vi.restoreAllMocks()
   })
 
-  it('should reject atomically without reading or changing the hosted image', async () => {
+  it('should reject atomically with a submission-scoped update', async () => {
     const database = createReviewDb()
 
-    createWebSocketClientMock.mockReturnValue(database.db)
+    createWebSocketClientMock.mockReturnValue(database.dbWebsocket)
     readValidatedBodyMock.mockResolvedValue({
       decision: 'reject',
       rejectionReason: 'Duplicate photo'
     })
 
-    const result = await updateHandler(createTestEvent({}))
+    const result = await updateHandler(createReviewEvent(database))
 
+    const rejectionUpdate = findUpdateCall(
+      database.updateCalls,
+      equipmentItemPhotoSubmissions,
+      'rejected'
+    )
+
+    expectWhereQuery(
+      rejectionUpdate.where,
+      '"equipment_item_photo_submissions"."id" = $1',
+      [submissionId]
+    )
     expect(getCloudflareImagesBindingMock).not.toHaveBeenCalled()
     expect(sourceImageBytesMock).not.toHaveBeenCalled()
     expect(imageUploadMock).not.toHaveBeenCalled()
-    expect(database.updateCalls).toContainEqual({
-      table: equipmentItemPhotoSubmissions,
-
-      values: {
-        rejectionReason: 'Duplicate photo',
-        status: 'rejected'
-      }
-    })
     expect(database.contributionValuesMock).toHaveBeenCalledWith({
       action: 'reject_item_photo_submission',
 
@@ -301,22 +412,33 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
       rejectionReason: 'Duplicate photo',
       status: 'rejected'
     })
+    expect(database.endMock).toHaveBeenCalledTimes(1)
   })
 
-  it('should re-upload the private hosted image publicly at the gallery tail', async () => {
+  it('should prepare the public copy before the transaction and append it to the gallery', async () => {
     const database = createReviewDb({ previousDisplayOrder: 1 })
 
-    createWebSocketClientMock.mockReturnValue(database.db)
+    createWebSocketClientMock.mockReturnValue(database.dbWebsocket)
     readValidatedBodyMock.mockResolvedValue({
       decision: 'publish',
       makePrimary: false
     })
 
-    const result = await updateHandler(createReviewEvent())
+    const result = await updateHandler(createReviewEvent(database))
 
     await waitForBackgroundTasks()
 
-    expect(sourceImageBytesMock).toHaveBeenCalledTimes(1)
+    const imageUploadCallOrder = getRequiredValue(
+      imageUploadMock.mock.invocationCallOrder[0],
+      'Cloudflare upload call order'
+    )
+
+    const transactionCallOrder = getRequiredValue(
+      database.transactionMock.mock.invocationCallOrder[0],
+      'database transaction call order'
+    )
+
+    expect(imageUploadCallOrder).toBeLessThan(transactionCallOrder)
     expect(imageUploadMock).toHaveBeenCalledWith(sourceImageBytes, {
       creator: userId,
       filename,
@@ -335,11 +457,6 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
       itemId
     })
     expect(database.updateCalls.filter((call) => call.table === equipmentItemImages)).toHaveLength(0)
-    expect(database.contributionValuesMock).toHaveBeenCalledWith(expect.objectContaining({
-      action: 'publish_item_photo_submission',
-      targetId: submissionId,
-      userId
-    }))
     expect(result).toStrictEqual({
       publishedImage: {
         displayOrder: 2,
@@ -350,19 +467,19 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
       rejectionReason: null,
       status: 'approved'
     })
+    expect(database.endMock).toHaveBeenCalledTimes(1)
   })
 
-  it('should shift existing image orders through a collision-free offset before primary insert', async () => {
+  it('should scope both primary-order shifts and the approval update', async () => {
     const database = createReviewDb({ previousDisplayOrder: 1 })
 
-    createWebSocketClientMock.mockReturnValue(database.db)
+    createWebSocketClientMock.mockReturnValue(database.dbWebsocket)
     readValidatedBodyMock.mockResolvedValue({
       decision: 'publish',
       makePrimary: true
     })
 
-    await updateHandler(createReviewEvent())
-
+    await updateHandler(createReviewEvent(database))
     await waitForBackgroundTasks()
 
     const imageOrderUpdates = database.updateCalls.filter(
@@ -371,17 +488,31 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
 
     expect(imageOrderUpdates).toHaveLength(2)
 
-    const dialect = new PgDialect()
-    const temporaryOrder = imageOrderUpdates[0]?.values.displayOrder
-    const finalOrder = imageOrderUpdates[1]?.values.displayOrder
+    const firstImageOrderUpdate = getRequiredValue(imageOrderUpdates[0], 'first image order update')
+    const secondImageOrderUpdate = getRequiredValue(imageOrderUpdates[1], 'second image order update')
 
-    expectDefinedSql(temporaryOrder)
-    expectDefinedSql(finalOrder)
+    expectWhereQuery(
+      firstImageOrderUpdate.where,
+      '"equipment_item_images"."itemId" = $1',
+      [itemId]
+    )
+    expectWhereQuery(
+      secondImageOrderUpdate.where,
+      '"equipment_item_images"."itemId" = $1',
+      [itemId, 1]
+    )
 
-    expect(dialect.sqlToQuery(temporaryOrder).sql).toContain('+ $1')
-    expect(dialect.sqlToQuery(temporaryOrder).params).toStrictEqual([3])
-    expect(dialect.sqlToQuery(finalOrder).sql).toContain('- $1 + 1')
-    expect(dialect.sqlToQuery(finalOrder).params).toStrictEqual([3])
+    const approvalUpdate = findUpdateCall(
+      database.updateCalls,
+      equipmentItemPhotoSubmissions,
+      'approved'
+    )
+
+    expectWhereQuery(
+      approvalUpdate.where,
+      '"equipment_item_photo_submissions"."id" = $1',
+      [submissionId]
+    )
     expect(database.imageValuesMock).toHaveBeenCalledWith({
       cloudflareImageId: publishedCloudflareImageId,
       displayOrder: 0,
@@ -391,24 +522,61 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
 
   it.each(['approved', 'rejected'])(
     'should return 409 for an already %s submission before provider or database writes',
-    async (submissionStatus) => {
-      const database = createReviewDb({ submissionStatus })
+    async (preflightSubmissionStatus) => {
+      const database = createReviewDb({ preflightSubmissionStatus })
 
-      createWebSocketClientMock.mockReturnValue(database.db)
       readValidatedBodyMock.mockResolvedValue({
         decision: 'publish',
         makePrimary: false
       })
 
-      await expect(updateHandler(createTestEvent({}))).rejects.toMatchObject({ statusCode: 409 })
+      await expect(updateHandler(createReviewEvent(database))).rejects.toMatchObject({ statusCode: 409 })
       expect(sourceImageBytesMock).not.toHaveBeenCalled()
       expect(imageUploadMock).not.toHaveBeenCalled()
+      expect(createWebSocketClientMock).not.toHaveBeenCalled()
       expect(database.imageValuesMock).not.toHaveBeenCalled()
       expect(database.contributionValuesMock).not.toHaveBeenCalled()
     }
   )
 
-  it('should roll back without database writes when Cloudflare publication fails', async () => {
+  it('should return 409 for an unpublished item before provider or database writes', async () => {
+    const database = createReviewDb({ preflightItemStatus: 'rejected' })
+
+    readValidatedBodyMock.mockResolvedValue({
+      decision: 'publish',
+      makePrimary: false
+    })
+
+    await expect(updateHandler(createReviewEvent(database))).rejects.toMatchObject({
+      statusCode: 409,
+      statusMessage: 'Equipment item is no longer published'
+    })
+    expect(sourceImageBytesMock).not.toHaveBeenCalled()
+    expect(imageUploadMock).not.toHaveBeenCalled()
+    expect(createWebSocketClientMock).not.toHaveBeenCalled()
+    expect(database.imageValuesMock).not.toHaveBeenCalled()
+    expect(database.contributionValuesMock).not.toHaveBeenCalled()
+  })
+
+  it('should delete a prepared copy when the item changes before the transaction lock', async () => {
+    const database = createReviewDb({ lockedItemStatus: 'rejected' })
+
+    createWebSocketClientMock.mockReturnValue(database.dbWebsocket)
+    readValidatedBodyMock.mockResolvedValue({
+      decision: 'publish',
+      makePrimary: false
+    })
+
+    await expect(updateHandler(createReviewEvent(database))).rejects.toMatchObject({ statusCode: 409 })
+    expect(imageUploadMock).toHaveBeenCalledTimes(1)
+    expect(publishedImageDeleteMock).toHaveBeenCalledTimes(1)
+    expect(sourceImageDeleteMock).not.toHaveBeenCalled()
+    expect(database.imageValuesMock).not.toHaveBeenCalled()
+    expect(database.contributionValuesMock).not.toHaveBeenCalled()
+    expect(database.endMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('should stop before opening a transaction when Cloudflare publication fails', async () => {
     const providerError = new Error('provider secret')
     const database = createReviewDb()
 
@@ -417,16 +585,16 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
     })
 
     imageUploadMock.mockRejectedValue(providerError)
-    createWebSocketClientMock.mockReturnValue(database.db)
     readValidatedBodyMock.mockResolvedValue({
       decision: 'publish',
       makePrimary: false
     })
 
-    await expect(updateHandler(createTestEvent({}))).rejects.toMatchObject({
+    await expect(updateHandler(createReviewEvent(database))).rejects.toMatchObject({
       statusCode: 502,
       statusMessage: 'Photo publication failed'
     })
+    expect(createWebSocketClientMock).not.toHaveBeenCalled()
     expect(database.imageValuesMock).not.toHaveBeenCalled()
     expect(database.updateCalls).toHaveLength(0)
     expect(database.contributionValuesMock).not.toHaveBeenCalled()
@@ -442,7 +610,7 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
     )
   })
 
-  it('should delete the unattached public image when the database fails after publication', async () => {
+  it('should delete the unattached public image when the database rolls back', async () => {
     const databaseError = new Error('database unavailable')
     const database = createReviewDb({ imageInsertError: databaseError })
 
@@ -450,17 +618,19 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
       // Expected database failure telemetry.
     })
 
-    createWebSocketClientMock.mockReturnValue(database.db)
+    createWebSocketClientMock.mockReturnValue(database.dbWebsocket)
     readValidatedBodyMock.mockResolvedValue({
       decision: 'publish',
       makePrimary: false
     })
 
-    await expect(updateHandler(createTestEvent({}))).rejects.toMatchObject({
+    await expect(updateHandler(createReviewEvent(database))).rejects.toMatchObject({
       statusCode: 500,
       statusMessage: 'Failed to review photo submission'
     })
     expect(imageUploadMock).toHaveBeenCalledTimes(1)
+    expect(database.submissionFindFirstMock).toHaveBeenCalledTimes(2)
+    expect(database.imageFindFirstMock).toHaveBeenCalledTimes(1)
     expect(publishedImageDeleteMock).toHaveBeenCalledTimes(1)
     expect(sourceImageDeleteMock).not.toHaveBeenCalled()
     expect(database.contributionValuesMock).not.toHaveBeenCalled()
@@ -471,5 +641,93 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
         submissionId
       }
     )
+    expect(database.endMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('should preserve an attached public image when the commit acknowledgement is lost', async () => {
+    const commitError = new Error('commit acknowledgement lost')
+
+    const database = createReviewDb({
+      reconciledImage: {
+        displayOrder: 2,
+        id: imageId
+      },
+
+      reconciledSubmissionStatus: 'approved',
+      transactionErrorAfterCallback: commitError
+    })
+
+    const consoleErrorMock = vi.spyOn(console, 'error').mockImplementation(() => {
+      // Expected reconciliation telemetry.
+    })
+
+    createWebSocketClientMock.mockReturnValue(database.dbWebsocket)
+    readValidatedBodyMock.mockResolvedValue({
+      decision: 'publish',
+      makePrimary: false
+    })
+
+    const result = await updateHandler(createReviewEvent(database))
+
+    await waitForBackgroundTasks()
+
+    expect(result).toStrictEqual({
+      publishedImage: {
+        displayOrder: 2,
+        id: imageId,
+        isPrimary: false
+      },
+
+      rejectionReason: null,
+      status: 'approved'
+    })
+    expect(publishedImageDeleteMock).not.toHaveBeenCalled()
+    expect(sourceImageDeleteMock).toHaveBeenCalledTimes(1)
+    expect(consoleErrorMock).toHaveBeenCalledWith(
+      'Reconciled equipment photo publication after transaction failure',
+      {
+        cloudflareImageId: publishedCloudflareImageId,
+        error: commitError,
+        submissionId
+      }
+    )
+    expect(database.endMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('should keep the public image when reconciliation itself fails', async () => {
+    const databaseError = new Error('database unavailable')
+    const reconciliationError = new Error('read-back unavailable')
+
+    const database = createReviewDb({
+      imageInsertError: databaseError,
+      reconciliationError
+    })
+
+    const consoleErrorMock = vi.spyOn(console, 'error').mockImplementation(() => {
+      // Expected reconciliation telemetry.
+    })
+
+    createWebSocketClientMock.mockReturnValue(database.dbWebsocket)
+    readValidatedBodyMock.mockResolvedValue({
+      decision: 'publish',
+      makePrimary: false
+    })
+
+    await expect(updateHandler(createReviewEvent(database))).rejects.toMatchObject({
+      statusCode: 500,
+      statusMessage: 'Failed to review photo submission'
+    })
+    expect(publishedImageDeleteMock).not.toHaveBeenCalled()
+    expect(sourceImageDeleteMock).not.toHaveBeenCalled()
+    expect(consoleErrorMock).toHaveBeenCalledWith(
+      'Failed to reconcile equipment photo publication',
+      {
+        cloudflareImageId: publishedCloudflareImageId,
+        error: databaseError,
+        reconciliationError,
+        submissionId
+      }
+    )
+    expect(database.endMock).toHaveBeenCalledTimes(1)
   })
 })
