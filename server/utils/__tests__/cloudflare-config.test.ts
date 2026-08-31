@@ -13,4 +13,15 @@ describe('wrangler Cloudflare Images configuration', () => {
     expect(developmentImagesConfig).toContain('"binding": "IMAGES"')
     expect(developmentImagesConfig).not.toContain('"remote": true')
   })
+
+  it('should scope photo submission images and schedule both deployed environments', async () => {
+    const wranglerConfig = await readFile(wranglerConfigPath, 'utf8')
+
+    expect(wranglerConfig.match(/"PHOTO_SUBMISSION_ENVIRONMENT"/gu)).toHaveLength(3)
+    expect(wranglerConfig).toContain('"PHOTO_SUBMISSION_ENVIRONMENT": "development"')
+    expect(wranglerConfig).toContain('"PHOTO_SUBMISSION_ENVIRONMENT": "production"')
+    expect(wranglerConfig).toContain('"PHOTO_SUBMISSION_ENVIRONMENT": "staging"')
+    expect(wranglerConfig).toContain('"crons": ["0 3 * * *"]')
+    expect(wranglerConfig).toContain('"crons": ["15 3 * * *"]')
+  })
 })

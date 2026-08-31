@@ -39,8 +39,12 @@
     "node/no-process-env": ["error", {
       "allowedVariables": [
         "CI",
+        "CLOUDFLARE_ACCOUNT_ID",
+        "CLOUDFLARE_API_TOKEN",
         "NUXT_DATABASE_URL",
-        "NUXT_LOCAL_DATABASE"
+        "NUXT_LOCAL_DATABASE",
+        "PERD_PRODUCTION_DATABASE_URL",
+        "PERD_STAGING_DATABASE_URL"
       ]
     }],
 

@@ -7,6 +7,7 @@
     "#shared/*": "./shared/*.ts"
   },
   "scripts": {
+    "audit:photo-submission-images": "tsx ./tools/audit-photo-submission-images.ts",
     "build": "nuxt build",
     "build:e2e": "nuxt build --dotenv tests/playwright/runtime.env",
     "cf-typegen": "wrangler types server/types/worker-configuration.d.ts",

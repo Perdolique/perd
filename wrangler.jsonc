@@ -23,6 +23,10 @@
     "mode": "smart"
   },
 
+  "vars": {
+    "PHOTO_SUBMISSION_ENVIRONMENT": "development"
+  },
+
   "images": {
     "binding": "IMAGES"
   },
@@ -52,7 +56,12 @@
       ],
 
       "vars": {
-        "NUXT_OAUTH_TWITCH_CLIENT_ID": "76z9coffucmezuwxx68iurur0vnigy"
+        "NUXT_OAUTH_TWITCH_CLIENT_ID": "76z9coffucmezuwxx68iurur0vnigy",
+        "PHOTO_SUBMISSION_ENVIRONMENT": "production"
+      },
+
+      "triggers": {
+        "crons": ["0 3 * * *"]
       },
 
       "images": {
@@ -84,7 +93,12 @@
       ],
 
       "vars": {
-        "NUXT_OAUTH_TWITCH_CLIENT_ID": "58vwcqcpjpf7iz530v11z3sovtgfc5"
+        "NUXT_OAUTH_TWITCH_CLIENT_ID": "58vwcqcpjpf7iz530v11z3sovtgfc5",
+        "PHOTO_SUBMISSION_ENVIRONMENT": "staging"
+      },
+
+      "triggers": {
+        "crons": ["15 3 * * *"]
       },
 
       "images": {
