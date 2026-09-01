@@ -1,4 +1,13 @@
 import { createError, type H3Event } from 'h3'
+import * as v from 'valibot'
+
+const photoSubmissionEnvironmentSchema = v.picklist([
+  'development',
+  'production',
+  'staging'
+])
+
+type PhotoSubmissionEnvironment = v.InferOutput<typeof photoSubmissionEnvironmentSchema>
 
 function getCloudflareImagesBinding(event: H3Event) : Env['IMAGES'] {
   const binding = event.context.cloudflare?.env.IMAGES
@@ -26,7 +35,22 @@ function getPhotoSubmissionRateLimiterBinding(event: H3Event): Env['PHOTO_SUBMIS
   return binding
 }
 
+function getPhotoSubmissionEnvironment(event: H3Event): PhotoSubmissionEnvironment {
+  const environment = event.context.cloudflare?.env.PHOTO_SUBMISSION_ENVIRONMENT
+
+  try {
+    return v.parse(photoSubmissionEnvironmentSchema, environment)
+  } catch (error) {
+    throw createError({
+      cause: error,
+      status: 503,
+      statusMessage: 'Photo submission environment unavailable'
+    })
+  }
+}
+
 export {
   getCloudflareImagesBinding,
+  getPhotoSubmissionEnvironment,
   getPhotoSubmissionRateLimiterBinding
 }

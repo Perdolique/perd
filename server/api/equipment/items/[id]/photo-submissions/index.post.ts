@@ -8,7 +8,12 @@ import {
   type H3Event
 } from 'h3'
 
-import { getCloudflareImagesBinding, getPhotoSubmissionRateLimiterBinding } from '#server/utils/cloudflare'
+import {
+  getCloudflareImagesBinding,
+  getPhotoSubmissionEnvironment,
+  getPhotoSubmissionRateLimiterBinding
+} from '#server/utils/cloudflare'
+
 import { createEquipmentItemImageBody, uploadHostedEquipmentImage } from '#server/utils/equipment/item-images'
 
 import {
@@ -184,6 +189,7 @@ export default defineEventHandler(async (event): Promise<PhotoSubmissionCreateRe
   })
 
   const imagesBinding = getCloudflareImagesBinding(event)
+  const photoSubmissionEnvironment = getPhotoSubmissionEnvironment(event)
 
   const imageBody = await createEquipmentItemImageBody({
     declaredByteLength: photo.size,
@@ -198,6 +204,7 @@ export default defineEventHandler(async (event): Promise<PhotoSubmissionCreateRe
     filename,
 
     metadata: {
+      environment: photoSubmissionEnvironment,
       itemId,
       kind: 'equipment-photo-submission'
     },

@@ -41,6 +41,7 @@ const {
   createWebSocketClientMock,
   deleteUnattachedHostedEquipmentImageMock,
   getCloudflareImagesBindingMock,
+  getPhotoSubmissionEnvironmentMock,
   getPhotoSubmissionRateLimiterBindingMock,
   getValidatedRouterParamsMock,
   readLimitedMultipartFormDataMock,
@@ -55,6 +56,7 @@ const {
     createWebSocketClientMock: vi.fn(),
     deleteUnattachedHostedEquipmentImageMock: vi.fn<typeof deleteUnattachedHostedEquipmentImage>(),
     getCloudflareImagesBindingMock: vi.fn(),
+    getPhotoSubmissionEnvironmentMock: vi.fn(),
     getPhotoSubmissionRateLimiterBindingMock: vi.fn(),
     getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
     readLimitedMultipartFormDataMock: vi.fn<typeof readLimitedMultipartFormData>(),
@@ -90,6 +92,7 @@ vi.mock(import('h3'), async () => {
 vi.mock(import('#server/utils/cloudflare'), () => {
   return {
     getCloudflareImagesBinding: getCloudflareImagesBindingMock,
+    getPhotoSubmissionEnvironment: getPhotoSubmissionEnvironmentMock,
     getPhotoSubmissionRateLimiterBinding: getPhotoSubmissionRateLimiterBindingMock
   }
 })
@@ -329,24 +332,25 @@ function createPhotoSubmissionEvent(dbHttp: unknown, key: string | null = idempo
 }
 
 describe('post /api/equipment/items/[id]/photo-submissions', () => {
+  const imageBody: Awaited<ReturnType<typeof createEquipmentItemImageBody>> = {
+    close: vi.fn(),
+    isLimitExceeded: () => false,
+    mediaType: 'image/webp',
+    stream: new ReadableStream<Uint8Array>()
+  }
+
   const rateLimitMock = vi.fn<Env['PHOTO_SUBMISSION_RATE_LIMITER']['limit']>()
 
   beforeEach(() => {
     vi.clearAllMocks()
 
-    const body = {
-      close: vi.fn(),
-      isLimitExceeded: () => false,
-      mediaType: 'image/webp',
-      stream: new ReadableStream<Uint8Array>()
-    }
-
     const writeDb = createWriteDb()
 
-    createEquipmentItemImageBodyMock.mockResolvedValue(body)
+    createEquipmentItemImageBodyMock.mockResolvedValue(imageBody)
     createWebSocketClientMock.mockReturnValue(writeDb.db)
     deleteUnattachedHostedEquipmentImageMock.mockResolvedValue()
     getCloudflareImagesBindingMock.mockReturnValue({ binding: 'images' })
+    getPhotoSubmissionEnvironmentMock.mockReturnValue('development')
     getPhotoSubmissionRateLimiterBindingMock.mockReturnValue({ limit: rateLimitMock })
     getValidatedRouterParamsMock.mockResolvedValue({ id: itemId })
     rateLimitMock.mockResolvedValue({ success: true })
@@ -430,6 +434,45 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
 
     expect(setResponseStatusMock).toHaveBeenCalledWith(event, 201)
     expect(writeDb.endMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('should tag a private upload with its validated environment', async () => {
+    const readDb = createReadDb()
+
+    await createPhotoSubmissionHandler(createPhotoSubmissionEvent(readDb.db))
+
+    expect(uploadHostedEquipmentImageMock).toHaveBeenCalledWith({
+      binding: { binding: 'images' },
+      body: imageBody,
+      creator: userId,
+      filename,
+
+      metadata: {
+        environment: 'development',
+        itemId,
+        kind: 'equipment-photo-submission'
+      },
+
+      requireSignedURLs: true
+    })
+  })
+
+  it('should not upload when the photo submission environment is unavailable', async () => {
+    const configurationError = createError({
+      status: 503,
+      statusMessage: 'Photo submission environment unavailable'
+    })
+
+    getPhotoSubmissionEnvironmentMock.mockImplementation(() => {
+      throw configurationError
+    })
+
+    await expect(
+      createPhotoSubmissionHandler(createPhotoSubmissionEvent(createReadDb().db))
+    ).rejects.toBe(configurationError)
+
+    expect(createEquipmentItemImageBodyMock).not.toHaveBeenCalled()
+    expect(uploadHostedEquipmentImageMock).not.toHaveBeenCalled()
   })
 
   it.each([null, 'not-a-uuid'])('should reject a missing or invalid idempotency key: %s', async (key) => {
