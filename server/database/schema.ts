@@ -39,6 +39,10 @@ const users = pgTable('users', {
     length: limits.maxUserNameLength
   }),
 
+  guestSessionId:
+    text()
+    .unique(),
+
   createdAt:
     timestamp({
       withTimezone: true

@@ -1,10 +1,11 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "metsik",
+  "name": "metsik-development",
   "account_id": "e19b9bdd14629a58c3f213b37a58281e",
   "compatibility_date": "2026-07-18",
   "main": ".output/server/index.mjs",
   "upload_source_maps": true,
+  "workers_dev": false,
 
   "dev": {
     "port": 8888
@@ -24,6 +25,8 @@
   },
 
   "vars": {
+    "NUXT_PUBLIC_TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
+    "NUXT_TURNSTILE_HOSTNAMES": "localhost,127.0.0.1",
     "PHOTO_SUBMISSION_ENVIRONMENT": "development"
   },
 
@@ -37,6 +40,14 @@
       "namespace_id": "687734001",
       "simple": {
         "limit": 3,
+        "period": 60
+      }
+    },
+    {
+      "name": "GUEST_SESSION_RATE_LIMITER",
+      "namespace_id": "687734004",
+      "simple": {
+        "limit": 5,
         "period": 60
       }
     }
@@ -57,6 +68,8 @@
 
       "vars": {
         "NUXT_OAUTH_TWITCH_CLIENT_ID": "76z9coffucmezuwxx68iurur0vnigy",
+        "NUXT_PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAAEntzYh6QUh27Ji_",
+        "NUXT_TURNSTILE_HOSTNAMES": "metsik.app",
         "PHOTO_SUBMISSION_ENVIRONMENT": "production"
       },
 
@@ -74,6 +87,14 @@
           "namespace_id": "687734003",
           "simple": {
             "limit": 3,
+            "period": 60
+          }
+        },
+        {
+          "name": "GUEST_SESSION_RATE_LIMITER",
+          "namespace_id": "687734006",
+          "simple": {
+            "limit": 5,
             "period": 60
           }
         }
@@ -94,6 +115,8 @@
 
       "vars": {
         "NUXT_OAUTH_TWITCH_CLIENT_ID": "58vwcqcpjpf7iz530v11z3sovtgfc5",
+        "NUXT_PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAAEntzYh6QUh27Ji_",
+        "NUXT_TURNSTILE_HOSTNAMES": "staging.metsik.app",
         "PHOTO_SUBMISSION_ENVIRONMENT": "staging"
       },
 
@@ -111,6 +134,14 @@
           "namespace_id": "687734002",
           "simple": {
             "limit": 3,
+            "period": 60
+          }
+        },
+        {
+          "name": "GUEST_SESSION_RATE_LIMITER",
+          "namespace_id": "687734005",
+          "simple": {
+            "limit": 5,
             "period": 60
           }
         }
