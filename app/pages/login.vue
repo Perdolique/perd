@@ -25,18 +25,29 @@
     </picture>
 
     <main :class="$style.content">
+      <TurnstileWidget
+        ref="turnstileWidget"
+        v-model="turnstileToken"
+        :sitekey="turnstileSiteKey"
+      />
+
+      <p v-if="hasGuestError" :class="$style.error" role="alert">
+        {{ guestError }}
+      </p>
+
       <div :class="$style.buttons">
         <PerdButton
+          variant="secondary"
           icon="hugeicons:game"
           :class="$style.button"
+          :disabled="isGuestDisabled"
           :loading="isAuthenticating"
-          @click="signUp"
+          @click="continueAsGuest"
         >
           Guest
         </PerdButton>
 
         <PerdButton
-          variant="secondary"
           :class="$style.button"
           icon="hugeicons:twitch"
           :loading="isAuthenticating"
@@ -73,21 +84,23 @@
 </template>
 
 <script lang="ts" setup>
-  import { ref } from 'vue'
-  import { $fetch } from 'ofetch'
+  import { computed, ref, useTemplateRef } from 'vue'
 
   import {
     definePageMeta,
     navigateTo,
     useHead,
+    useRequestFetch,
     useRoute,
     useRuntimeConfig,
     useUserStore,
     withMinimumDelay
   } from '#imports'
 
+  import { turnstileResponseFieldName } from '#shared/utils/turnstile'
   import { getRedirectNavigationTarget } from '~/utils/router'
   import PerdButton from '~/components/PerdButton.vue'
+  import TurnstileWidget from '~/components/auth/TurnstileWidget.vue'
 
   definePageMeta({
     layout: false
@@ -112,9 +125,25 @@
   })
 
   const { user } = useUserStore()
+  const requestFetch = useRequestFetch()
   const route = useRoute()
+  const turnstileWidget = useTemplateRef('turnstileWidget')
+  const turnstileToken = ref('')
+  const guestError = ref<string | null>(null)
   const isAuthenticating = ref(false)
-  const { public: { buildCommitSha } } = useRuntimeConfig()
+  const hasGuestError = computed(() => guestError.value !== null)
+
+  const isGuestDisabled = computed(
+    () => isAuthenticating.value || turnstileToken.value === ''
+  )
+
+  const {
+    public: {
+      buildCommitSha,
+      turnstileSiteKey
+    }
+  } = useRuntimeConfig()
+
   const buildCommitShortSha = buildCommitSha.slice(0, 7)
   const buildCommitUrl = `https://github.com/Perdolique/perd/commit/${buildCommitSha}`
 
@@ -131,32 +160,76 @@
     })
   }
 
-  async function signUp() {
-    if (isAuthenticating.value) {
+  function getRequestStatus(error: unknown): number | undefined {
+    if (error === null || typeof error !== 'object') {
+      return
+    }
+
+    const statusCode = Reflect.get(error, 'statusCode')
+
+    if (typeof statusCode === 'number') {
+      return statusCode
+    }
+
+    const status = Reflect.get(error, 'status')
+
+    return typeof status === 'number' ? status : undefined
+  }
+
+  function getGuestErrorMessage(error: unknown): string {
+    const status = getRequestStatus(error)
+
+    if (status === 403) {
+      return 'Security check failed. Try again.'
+    } else if (status === 429) {
+      return 'Too many Guest attempts. Try again in a minute.'
+    } else if (status === 503) {
+      return 'Guest access is temporarily unavailable. Try again.'
+    }
+
+    return 'Could not continue as Guest. Try again.'
+  }
+
+  async function requestGuestSession(requestToken: string) {
+    try {
+      const responsePromise = requestFetch('/api/auth/create-session', {
+        body: {
+          [turnstileResponseFieldName]: requestToken
+        },
+
+        method: 'POST'
+      })
+
+      return await withMinimumDelay(responsePromise, 500)
+    } catch (error) {
+      guestError.value = getGuestErrorMessage(error)
+
+      return null
+    } finally {
+      turnstileWidget.value?.reset()
+      isAuthenticating.value = false
+    }
+  }
+
+  async function continueAsGuest() {
+    if (isGuestDisabled.value) {
       return
     }
 
     startAuthenticating()
+    guestError.value = null
 
-    try {
-      const responsePromise = $fetch('/api/auth/create-session', {
-        method: 'POST'
-      })
+    const response = await requestGuestSession(turnstileToken.value)
 
-      const response = await withMinimumDelay(responsePromise, 500)
-
-      if (typeof response.userId === 'string') {
-        user.value.userId = response.userId
-        user.value.isGuest = response.isGuest
-        user.value.hasData = true
-      }
-
-      await navigateAfterLogin(route.query.redirectTo)
-    } catch (error) {
-      console.error(error)
-    } finally {
-      isAuthenticating.value = false
+    if (response === null) {
+      return
     }
+
+    user.value.userId = response.userId
+    user.value.isGuest = response.isGuest
+    user.value.hasData = true
+
+    await navigateAfterLogin(route.query.redirectTo)
   }
 
   function redirectToTwitch() {
@@ -242,6 +315,15 @@
 
   .button {
     inline-size: 100%;
+  }
+
+  .error {
+    padding: var(--spacing-8) var(--spacing-12);
+    border-radius: var(--border-radius-6);
+    background: var(--color-black);
+    color: var(--color-white);
+    font-size: var(--font-size-14);
+    text-align: center;
   }
 
   .footer {
