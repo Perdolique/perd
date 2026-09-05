@@ -4,6 +4,7 @@ import { useRuntimeConfig } from 'nitropack/runtime'
 import { nonEmptyStringSchema } from '#server/utils/validation/schemas'
 import { createWebSocketClient } from './database'
 import { optionalBooleanSchema, type DatabaseConfig } from './config-env'
+import { validateTurnstileConfig, type TurnstileConfig } from './turnstile-config'
 
 const sessionSecretSchema = v.pipe(
   v.string('Session secret must be a string'),
@@ -29,6 +30,12 @@ function getRuntimeSessionSecret(event: H3Event): string {
   return secret
 }
 
+function getRuntimeTurnstileConfig(event: H3Event): TurnstileConfig {
+  const config = useRuntimeConfig(event)
+
+  return validateTurnstileConfig(config.turnstile)
+}
+
 function createWebSocketClientFromEvent(event: H3Event) {
   const config = getRuntimeDatabaseConfig(event)
 
@@ -38,5 +45,6 @@ function createWebSocketClientFromEvent(event: H3Event) {
 export {
   createWebSocketClientFromEvent,
   getRuntimeDatabaseConfig,
-  getRuntimeSessionSecret
+  getRuntimeSessionSecret,
+  getRuntimeTurnstileConfig
 }
