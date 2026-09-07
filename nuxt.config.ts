@@ -50,8 +50,14 @@ export default defineNuxtConfig({
     localDatabase: '',
     sessionSecret: '',
 
+    turnstile: {
+      hostnames: '',
+      secret: ''
+    },
+
     public: {
-      buildCommitSha: env.GITHUB_SHA ?? ''
+      buildCommitSha: env.GITHUB_SHA ?? '',
+      turnstileSiteKey: ''
     },
 
     oauth: {
@@ -71,6 +77,7 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     '@nuxt/hints',
     '@nuxt/image',
+    '@nuxt/scripts',
     '@pinia/nuxt'
   ],
 
