@@ -1,0 +1,5 @@
+{
+  "extends": "../../.nuxt/tsconfig.node.json",
+  "compilerOptions": { "lib": ["ESNext", "DOM"], "noEmit": true },
+  "include": ["./**/*.ts"]
+}

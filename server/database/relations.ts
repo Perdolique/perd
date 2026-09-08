@@ -4,6 +4,11 @@ import * as schema from './schema'
 export const relations = defineRelations(schema, (relation) => {
   return {
     users: {
+      emailCredential: relation.one.emailCredentials({
+        from: relation.users.id,
+        to: relation.emailCredentials.userId
+      }),
+
       oauthAccounts: relation.many.oauthAccounts({
         from: relation.users.id,
         to: relation.oauthAccounts.userId
@@ -42,6 +47,8 @@ export const relations = defineRelations(schema, (relation) => {
       })
     },
 
+    emailCredentials: {},
+    pendingEmailRegistrations: {},
     equipmentGroups: {},
 
     equipmentCategories: {

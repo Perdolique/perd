@@ -3,6 +3,9 @@
   "name": "metsik-development",
   "account_id": "e19b9bdd14629a58c3f213b37a58281e",
   "compatibility_date": "2026-07-18",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "main": ".output/server/index.mjs",
   "upload_source_maps": true,
   "workers_dev": false,
@@ -27,7 +30,10 @@
   "vars": {
     "NUXT_PUBLIC_TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
     "NUXT_TURNSTILE_HOSTNAMES": "localhost,127.0.0.1",
-    "PHOTO_SUBMISSION_ENVIRONMENT": "development"
+    "PHOTO_SUBMISSION_ENVIRONMENT": "development",
+    "NUXT_PUBLIC_EMAIL_REGISTRATION_ENABLED": "true",
+    "NUXT_EMAIL_REGISTRATION_ORIGIN": "http://localhost:3000",
+    "NUXT_EMAIL_REGISTRATION_ENVIRONMENT": "development"
   },
 
   "images": {
@@ -46,6 +52,22 @@
     {
       "name": "GUEST_SESSION_RATE_LIMITER",
       "namespace_id": "687734004",
+      "simple": {
+        "limit": 5,
+        "period": 60
+      }
+    },
+    {
+      "name": "EMAIL_REGISTRATION_RATE_LIMITER",
+      "namespace_id": "687734007",
+      "simple": {
+        "limit": 3,
+        "period": 60
+      }
+    },
+    {
+      "name": "EMAIL_VERIFICATION_RATE_LIMITER",
+      "namespace_id": "687734010",
       "simple": {
         "limit": 5,
         "period": 60
@@ -70,7 +92,10 @@
         "NUXT_OAUTH_TWITCH_CLIENT_ID": "76z9coffucmezuwxx68iurur0vnigy",
         "NUXT_PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAAEntzYh6QUh27Ji_",
         "NUXT_TURNSTILE_HOSTNAMES": "metsik.app",
-        "PHOTO_SUBMISSION_ENVIRONMENT": "production"
+        "PHOTO_SUBMISSION_ENVIRONMENT": "production",
+        "NUXT_PUBLIC_EMAIL_REGISTRATION_ENABLED": "false",
+        "NUXT_EMAIL_REGISTRATION_ORIGIN": "https://metsik.app",
+        "NUXT_EMAIL_REGISTRATION_ENVIRONMENT": "production"
       },
 
       "triggers": {
@@ -97,6 +122,30 @@
             "limit": 5,
             "period": 60
           }
+        },
+        {
+          "name": "EMAIL_REGISTRATION_RATE_LIMITER",
+          "namespace_id": "687734009",
+          "simple": {
+            "limit": 3,
+            "period": 60
+          }
+        },
+        {
+          "name": "EMAIL_VERIFICATION_RATE_LIMITER",
+          "namespace_id": "687734012",
+          "simple": {
+            "limit": 5,
+            "period": 60
+          }
+        }
+      ],
+      "send_email": [
+        {
+          "name": "EMAIL",
+          "allowed_sender_addresses": [
+            "noreply@metsik.app"
+          ]
         }
       ]
     },
@@ -117,7 +166,10 @@
         "NUXT_OAUTH_TWITCH_CLIENT_ID": "58vwcqcpjpf7iz530v11z3sovtgfc5",
         "NUXT_PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAAEntzYh6QUh27Ji_",
         "NUXT_TURNSTILE_HOSTNAMES": "staging.metsik.app",
-        "PHOTO_SUBMISSION_ENVIRONMENT": "staging"
+        "PHOTO_SUBMISSION_ENVIRONMENT": "staging",
+        "NUXT_PUBLIC_EMAIL_REGISTRATION_ENABLED": "false",
+        "NUXT_EMAIL_REGISTRATION_ORIGIN": "https://staging.metsik.app",
+        "NUXT_EMAIL_REGISTRATION_ENVIRONMENT": "staging"
       },
 
       "triggers": {
@@ -144,8 +196,41 @@
             "limit": 5,
             "period": 60
           }
+        },
+        {
+          "name": "EMAIL_REGISTRATION_RATE_LIMITER",
+          "namespace_id": "687734008",
+          "simple": {
+            "limit": 3,
+            "period": 60
+          }
+        },
+        {
+          "name": "EMAIL_VERIFICATION_RATE_LIMITER",
+          "namespace_id": "687734011",
+          "simple": {
+            "limit": 5,
+            "period": 60
+          }
+        }
+      ],
+      "send_email": [
+        {
+          "name": "EMAIL",
+          "allowed_sender_addresses": [
+            "noreply@metsik.app"
+          ],
+          "allowed_destination_addresses": []
         }
       ]
     }
-  }
+  },
+  "send_email": [
+    {
+      "name": "EMAIL",
+      "allowed_sender_addresses": [
+        "noreply@metsik.app"
+      ]
+    }
+  ]
 }

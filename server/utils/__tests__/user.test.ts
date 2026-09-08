@@ -39,7 +39,7 @@ describe('user session helpers', () => {
     vi.restoreAllMocks()
   })
 
-  it('should derive Guest status from the absence of OAuth accounts', async () => {
+  it('should derive Guest status from the absence of OAuth accounts and verified email', async () => {
     const db = createUserDb({
       id: 'user-1',
       isAdmin: false,
@@ -49,6 +49,7 @@ describe('user session helpers', () => {
     const result = await getSessionUser(createTestEvent(db))
 
     expect(result).toStrictEqual({
+      email: null,
       isAdmin: false,
       isGuest: true,
       userId: 'user-1'
@@ -65,6 +66,8 @@ describe('user session helpers', () => {
       },
 
       with: {
+        emailCredential: { columns: { email: true } },
+
         oauthAccounts: {
           columns: {
             id: true
@@ -74,6 +77,26 @@ describe('user session helpers', () => {
         }
       }
     })
+  })
+
+  it('should expose only verified email and treat an email-only account as registered', async () => {
+    const db = createUserDb({
+      id: 'user-1',
+      isAdmin: false,
+      oauthAccounts: [],
+      emailCredential: { email: 'trip@example.com' }
+    })
+
+    const event = createTestEvent(db)
+
+    await expect(getSessionUser(event)).resolves.toStrictEqual({
+      userId: 'user-1',
+      isAdmin: false,
+      isGuest: false,
+      email: 'trip@example.com'
+    })
+
+    await expect(validateRegisteredUser(event)).resolves.toBe('user-1')
   })
 
   it('should return 401 without a valid session user', async () => {

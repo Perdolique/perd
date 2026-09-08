@@ -2,6 +2,7 @@ import { computed } from 'vue'
 import { useFetch, useState } from '#imports'
 
 interface User {
+  email: string | null;
   userId: string | null;
   isAdmin: boolean;
   isGuest: boolean;
@@ -11,6 +12,7 @@ interface User {
 export function useUserStore() {
   const user = useState<User>('user', () => {
     return {
+      email: null,
       userId: null,
       isAdmin: false,
       isGuest: false,
@@ -24,6 +26,7 @@ export function useUserStore() {
     const { data } = await useFetch('/api/user')
 
     if (data.value?.userId !== undefined) {
+      user.value.email = data.value.email
       user.value.userId = data.value.userId
       user.value.isAdmin = data.value.isAdmin
       user.value.isGuest = data.value.isGuest
@@ -33,6 +36,7 @@ export function useUserStore() {
   }
 
   function resetAuthentication() {
+    user.value.email = null
     user.value.userId = null
     user.value.isAdmin = false
     user.value.isGuest = false

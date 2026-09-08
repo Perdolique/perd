@@ -50,12 +50,19 @@ export default defineNuxtConfig({
     localDatabase: '',
     sessionSecret: '',
 
+    emailRegistration: {
+      origin: '',
+      environment: '',
+      stagingRecipient: ''
+    },
+
     turnstile: {
       hostnames: '',
       secret: ''
     },
 
     public: {
+      emailRegistrationEnabled: false,
       buildCommitSha: env.GITHUB_SHA ?? '',
       turnstileSiteKey: ''
     },

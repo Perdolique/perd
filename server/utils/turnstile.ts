@@ -1,6 +1,5 @@
 import { createError, type H3Event } from 'h3'
 import * as v from 'valibot'
-import { guestSessionTurnstileAction } from '#shared/utils/turnstile'
 import { getRuntimeTurnstileConfig } from '#server/utils/config'
 
 interface TurnstileTelemetryResponse {
@@ -170,10 +169,10 @@ async function readSiteverifyResponse(
   }
 }
 
-async function verifyGuestSessionTurnstile(
+async function verifyTurnstile(
   event: H3Event,
   token: unknown,
-  remoteIp: string
+  { remoteIp, expectedAction }: { remoteIp: string; expectedAction: string; }
 ): Promise<void> {
   if (
     typeof token !== 'string'
@@ -230,13 +229,13 @@ async function verifyGuestSessionTurnstile(
     throw createTurnstileServiceError(telemetryResponse)
   }
 
-  const hasExpectedAction = result.action === guestSessionTurnstileAction
+  const hasExpectedAction = result.action === expectedAction
   const hasExpectedHostname = result.hostname !== undefined && config.hostnames.has(result.hostname)
   const isStrictResultValid = hasExpectedAction && hasExpectedHostname
   const isResultValid = result.success && (config.isTestMode || isStrictResultValid)
 
   if (isResultValid === false) {
-    console.error('Turnstile Siteverify rejected a Guest session', {
+    console.error('Turnstile Siteverify rejected verification', {
       response: telemetryResponse
     })
 
@@ -244,4 +243,4 @@ async function verifyGuestSessionTurnstile(
   }
 }
 
-export { verifyGuestSessionTurnstile }
+export { verifyTurnstile }

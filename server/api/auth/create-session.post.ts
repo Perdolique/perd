@@ -1,9 +1,9 @@
 import { createError, defineEventHandler, readBody, setResponseHeader, setResponseStatus, type H3Event } from 'h3'
-import { turnstileResponseFieldName } from '#shared/utils/turnstile'
+import { guestSessionTurnstileAction, turnstileResponseFieldName } from '#shared/utils/turnstile'
 import { users } from '#server/database/schema'
 import { getGuestClientIp, getGuestSessionRateLimiterBinding } from '#server/utils/cloudflare'
 import { useAppSession } from '#server/utils/session'
-import { verifyGuestSessionTurnstile } from '#server/utils/turnstile'
+import { verifyTurnstile } from '#server/utils/turnstile'
 import { getSessionUser } from '#server/utils/user'
 
 interface GuestSessionResponse {
@@ -105,7 +105,11 @@ export default defineEventHandler(async (event) : Promise<GuestSessionResponse> 
   const turnstileToken = getTurnstileToken(body)
   const clientIp = getGuestClientIp(event, import.meta.dev)
 
-  await verifyGuestSessionTurnstile(event, turnstileToken, clientIp)
+  await verifyTurnstile(event, turnstileToken, {
+    remoteIp: clientIp,
+    expectedAction: guestSessionTurnstileAction
+  })
+
   await enforceGuestSessionRateLimit(event, clientIp)
 
   const currentUser = await getSessionUser(event)

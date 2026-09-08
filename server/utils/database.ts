@@ -23,8 +23,7 @@ function createHttpClient(config: DatabaseConfig) {
 
   const dbHttp = drizzleHttp({
     client: sql,
-    relations,
-    logger: true
+    relations
   })
 
   return dbHttp
@@ -54,8 +53,7 @@ function createWebSocketClient(config: DatabaseConfig) {
 
   return drizzleWebsocket({
     client: pool,
-    relations,
-    logger: true
+    relations
   })
 }
 

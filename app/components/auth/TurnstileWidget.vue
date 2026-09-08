@@ -43,11 +43,11 @@
 <script lang="ts" setup>
   import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, useTemplateRef, watch } from 'vue'
   import { useScript } from '#imports'
-  import { guestSessionTurnstileAction } from '#shared/utils/turnstile'
-  import PerdButton from '~/components/PerdButton.vue'
+    import PerdButton from '~/components/PerdButton.vue'
   import ModalDialog from '~/components/dialogs/ModalDialog.vue'
 
   interface Props {
+    action: string;
     sitekey: string;
   }
 
@@ -74,7 +74,7 @@
     render: (container: HTMLElement, options: TurnstileRenderOptions) => string;
   }
 
-  const { sitekey } = defineProps<Props>()
+  const { action, sitekey } = defineProps<Props>()
 
   const emit = defineEmits<{
     verified: [token: string];
@@ -193,7 +193,7 @@
       const generation = widgetGeneration
 
       widgetId.value = turnstile.render(target, {
-        action: guestSessionTurnstileAction,
+        action,
         appearance: 'interaction-only',
         execution: 'execute',
         retry: 'never',

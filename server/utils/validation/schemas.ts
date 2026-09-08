@@ -9,6 +9,7 @@ import {
   normalizeDecimalNumber
 } from '#shared/utils/decimal-number'
 
+import { isRegistrationPasswordValid, normalizeEmail } from '#shared/utils/email-registration'
 import { sanitizeRedirectPath } from '#shared/utils/redirect'
 
 const nonEmptyStringSchema = v.pipe(
@@ -964,7 +965,39 @@ function validateTwitchOAuthBody(body: unknown) {
   return v.parse(twitchOAuthBodySchema, body)
 }
 
+const registrationPasswordSchema = v.pipe(
+  v.string(),
+  v.check(isRegistrationPasswordValid, 'Use a password between 15 and 128 characters')
+)
+
+const emailRegistrationSchema = v.object({
+  email: v.pipe(v.string(), v.transform(normalizeEmail), v.maxLength(254), v.email()),
+  password: registrationPasswordSchema,
+  redirectTo: v.pipe(v.optional(v.string(), '/'), v.transform((value) => sanitizeRedirectPath(value))),
+  'cf-turnstile-response': v.unknown()
+})
+
+const emailVerificationSchema = v.object({
+  token: v.pipe(v.string(), v.regex(/^[\w-]{43}$/u)),
+  password: registrationPasswordSchema
+})
+
+function validateEmailRegistration(value: unknown) {
+  const parsed = v.safeParse(emailRegistrationSchema, value)
+
+  return parsed.success ? parsed.output : false
+}
+
+function validateEmailVerification(value: unknown) {
+  const parsed = v.safeParse(emailVerificationSchema, value)
+
+  return parsed.success ? parsed.output : false
+}
+
+
 export {
+  validateEmailRegistration,
+  validateEmailVerification,
   brandMutationSchema,
   brandIdParamsSchema,
   brandDetailParamsSchema,

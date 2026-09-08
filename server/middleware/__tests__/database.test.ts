@@ -1,7 +1,8 @@
 import { IncomingMessage, ServerResponse } from 'node:http'
 import { Socket } from 'node:net'
-import { createEvent, sendRedirect } from 'h3'
+import { createEvent, createError, sendRedirect } from 'h3'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { requireEmailRegistrationEnabled } from '#server/utils/config'
 import databaseHandler from '#server/middleware/database'
 
 const {
@@ -22,6 +23,7 @@ vi.mock(import('#server/utils/database'), () => {
 
 vi.mock(import('#server/utils/config'), () => {
   return {
+    requireEmailRegistrationEnabled: vi.fn<() => void>(),
     getRuntimeDatabaseConfig: getRuntimeDatabaseConfigMock
   }
 })
@@ -67,6 +69,19 @@ describe('database middleware', () => {
     databaseHandler(event)
 
     expect(event.handled).toBe(true)
+    expect(getRuntimeDatabaseConfigMock).not.toHaveBeenCalled()
+    expect(createHttpClientMock).not.toHaveBeenCalled()
+  })
+
+  it.each(['/api/auth/email/registration', '/api/auth/email/registration/verify/'])('should return 404 before creating a database client when registration is disabled: %s', (path) => {
+    vi.mocked(requireEmailRegistrationEnabled).mockImplementationOnce(() => {
+      throw createError({ status: 404 })
+    })
+
+    expect(() => {
+      databaseHandler(createMiddlewareEvent(path))
+    }).toThrow(expect.objectContaining({ statusCode: 404 }))
+
     expect(getRuntimeDatabaseConfigMock).not.toHaveBeenCalled()
     expect(createHttpClientMock).not.toHaveBeenCalled()
   })
