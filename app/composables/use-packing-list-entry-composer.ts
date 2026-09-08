@@ -169,6 +169,7 @@ export function usePackingListEntryComposer(options: ComposerOptions) {
 
   async function openComposer() {
     isOpen.value = true
+
     await loadFirstPage(true)
   }
 
@@ -176,6 +177,7 @@ export function usePackingListEntryComposer(options: ComposerOptions) {
     isOpen.value = false
     searchQuery.value = ''
     mutationErrorMessage.value = null
+
     resetReadState()
   }
 

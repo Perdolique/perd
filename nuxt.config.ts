@@ -96,6 +96,7 @@ export default defineNuxtConfig({
 
   experimental: {
     viewTransition: true,
+
     /**
      * FIXME: Disable once @nuxt/icon and other modules
      * stop relying on Nitro auto-imports

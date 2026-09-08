@@ -71,7 +71,6 @@
 
       if (shouldRestoreAddFocus) {
         await nextTick()
-
         addButton.value?.focus()
       }
 
@@ -85,7 +84,6 @@
     pendingSavedFocus.value = false
 
     await nextTick()
-
     savedStatus.value?.focus()
   })
 </script>

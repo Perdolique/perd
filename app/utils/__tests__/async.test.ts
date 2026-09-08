@@ -21,7 +21,6 @@ describe(withMinimumDelay, () => {
     const promise = withMinimumDelay(Promise.resolve('hello'), 100)
 
     await vi.advanceTimersByTimeAsync(100)
-
     await expect(promise).resolves.toBe('hello')
   })
 
@@ -45,7 +44,6 @@ describe(withMinimumDelay, () => {
 
     await vi.advanceTimersByTimeAsync(200)
     expect(resolved).toBe(false)
-
     await vi.advanceTimersByTimeAsync(300)
     expect(resolved).toBe(true)
   })
@@ -54,7 +52,6 @@ describe(withMinimumDelay, () => {
     const promise = withMinimumDelay(slowTask(), 100)
 
     await vi.advanceTimersByTimeAsync(500)
-
     await expect(promise).resolves.toBe('slow')
   })
 
@@ -69,7 +66,6 @@ describe(withMinimumDelay, () => {
 
     await vi.advanceTimersByTimeAsync(200)
     expect(resolved).toBe(false)
-
     await vi.advanceTimersByTimeAsync(50)
     expect(resolved).toBe(true)
   })

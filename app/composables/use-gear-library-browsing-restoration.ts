@@ -121,7 +121,6 @@ function useGearLibraryBrowsingRestoration() {
     isRestoreScheduled = true
 
     await nextTick()
-
     globalThis.requestAnimationFrame(applyInitialScrollPosition)
   }
 

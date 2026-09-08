@@ -52,6 +52,7 @@ function useGearLibraryFilters(options: UseGearLibraryFiltersOptions) {
 
   function handleCancelFilters() {
     resetDraftFilters()
+
     isFilterDialogOpen.value = false
   }
 

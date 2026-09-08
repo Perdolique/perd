@@ -144,11 +144,9 @@ test.describe('Gear library item actions', () => {
     expect(savedFocusShadow).not.toBe('none')
     expect(actionRailBoxAfter.width).toBeCloseTo(actionRailBoxBefore.width, 0)
     expect(weightBoxAfter.x).toBeCloseTo(weightBoxBefore.x, 0)
-
     await savedStatus.click()
     await expect(page).toHaveURL(/\/gear-library$/u)
     await expect(page.getByRole('button', { name: 'Compare items' })).toHaveCount(0)
-
     await selectPerdOption(getGearLibrarySelect(page, 'Category'), 'stoves')
 
     const compareModeButton = page.getByRole('button', { name: 'Compare items' })
@@ -202,9 +200,7 @@ test.describe('Gear library item actions', () => {
 
     await expect(firstSelectionControl).toHaveCSS('border-bottom-left-radius', cardBottomLeftRadius)
     await expect(firstSelectionControl).toHaveCSS('border-bottom-right-radius', cardBottomRightRadius)
-
     await page.getByRole('button', { name: 'Cancel comparison' }).click()
-
     await expect(comparisonTray).toHaveCount(0)
     await expect(page.getByRole('checkbox', { name: /^Select /u })).toHaveCount(0)
     await expect(stoveRow.getByText('In My gear')).toBeVisible()
@@ -231,7 +227,6 @@ test.describe('Gear library item actions', () => {
     })
 
     await openGearLibrary(page)
-
     await expect(page.getByText('In My gear', { exact: true })).toBeVisible()
     expect(tracker.myGear.filter((request) => request.method() === 'GET')).toHaveLength(0)
   })
@@ -252,11 +247,9 @@ test.describe('Gear library item actions', () => {
 
     await addButton.focus()
     await page.keyboard.press('Enter')
-
     await expect(page.getByText('Could not add', { exact: true })).toBeVisible()
     await expect(addButton).toBeEnabled()
     await expect(addButton).toBeFocused()
-
     await page.keyboard.press('Enter')
 
     const savedStatus = page.getByText('In My gear', { exact: true })
@@ -293,7 +286,6 @@ test.describe('Gear library item actions', () => {
     await firstAddButton.click()
     await expect(firstAddButton).toBeDisabled()
     await expect(secondAddButton).toBeEnabled()
-
     await secondAddButton.click()
 
     await expect(page.getByRole('listitem').filter({
@@ -341,11 +333,9 @@ test.describe('Gear library item actions', () => {
 
     await openGearLibrary(page)
     await expect(page.getByText('In My gear', { exact: true })).toBeVisible()
-
     await page.getByRole('link', { name: 'My gear' }).click()
     await page.getByRole('button', { name: 'Remove' }).click()
     await expect(page.getByText('No saved gear yet.')).toBeVisible()
-
     await page.getByRole('link', { name: 'Find gear' }).click()
 
     await expect(page.getByRole('button', {

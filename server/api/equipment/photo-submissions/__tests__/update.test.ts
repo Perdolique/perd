@@ -338,7 +338,9 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
     vi.clearAllMocks()
     validateAdminUserMock.mockResolvedValue(userId)
     getValidatedRouterParamsMock.mockResolvedValue({ id: submissionId })
+
     sourceImageBytes = new ReadableStream<Uint8Array>()
+
     sourceImageBytesMock.mockResolvedValue(sourceImageBytes)
     sourceImageDeleteMock.mockResolvedValue(true)
     publishedImageDeleteMock.mockResolvedValue(true)

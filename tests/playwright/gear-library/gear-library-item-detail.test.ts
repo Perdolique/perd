@@ -88,6 +88,7 @@ test.describe('Gear library item detail', () => {
 
     await context.route('**/api/user/gear**', async (route) => {
       myGearRequestCount += 1
+
       await route.abort()
     })
 
@@ -99,7 +100,6 @@ test.describe('Gear library item detail', () => {
     })).toBeVisible()
 
     await page.getByRole('link', { name: itemSummary.name }).click()
-
     await expect(page).toHaveURL(new RegExp(`/gear-library/${itemId}`, 'u'))
 
     await expect(page.getByRole('heading', {
@@ -111,7 +111,6 @@ test.describe('Gear library item detail', () => {
     await expect(page.getByRole('link', { name: 'Back to gear library' })).toHaveCount(0)
     await expect(page.getByText('83 g')).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Save to my gear' })).toHaveCount(0)
-
     expect(myGearRequestCount).toBe(0)
   })
 
@@ -150,7 +149,6 @@ test.describe('Gear library item detail', () => {
     )
 
     await page.goto(`/auth/twitch?code=oauth-code&state=${encodeURIComponent(`/gear-library/${itemId}`)}`)
-
     await expect(page).toHaveURL(new RegExp(`/gear-library/${itemId}$`, 'u'))
 
     const imageManagementLink = page.getByRole('link', { name: 'Manage images' })

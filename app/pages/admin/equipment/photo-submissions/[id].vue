@@ -393,7 +393,6 @@
       decision.value = response.status
 
       await nextTick()
-
       decisionStatusElement.value?.focus()
     } catch (error) {
       if (getStatusCode(error) === 409) {
@@ -402,7 +401,6 @@
         isConflict.value = true
 
         await nextTick()
-
         conflictStatus.value?.focus()
 
         return

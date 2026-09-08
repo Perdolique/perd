@@ -61,7 +61,6 @@ describe('api session check middleware', () => {
     })
 
     await apiSessionCheckHandler(event)
-
     expect(event.node.res.statusCode).toBe(302)
     expect(event.node.res.getHeader('location')).toBe('/login?redirectTo=%2Fapi%2Fequipment%2Fbrands')
   })

@@ -91,6 +91,7 @@
 
     if (!isRegistrationPasswordValid(password.value)) {
       passwordError.value = 'Enter the password you chose, between 15 and 128 characters.'
+
       passwordInput.value?.focus()
 
       return

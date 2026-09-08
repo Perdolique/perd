@@ -178,6 +178,7 @@ test.describe('Admin photo submission review', () => {
 
     await context.route((url) => url.pathname === detailPath, async (route) => {
       await detailGate.promise
+
       await route.fulfill({ json: detail })
     })
 
@@ -293,7 +294,9 @@ test.describe('Admin photo submission review', () => {
     })
 
     await expect(page.getByText('Photo submissions unavailable.')).toBeVisible()
+
     shouldSucceed = true
+
     await page.getByRole('button', { name: 'Retry' }).click()
     await expect(page.getByText('The photo review queue is clear.')).toBeVisible()
   })

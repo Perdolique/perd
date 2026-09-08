@@ -6,6 +6,7 @@ import { createVerificationToken, hashPassword, hashToken, verifyPassword } from
 import { isRegistrationPasswordValid, normalizeEmail } from '#shared/utils/email-registration'
 
 const password = 'a long password with spaces 🔥'
+
 // oxlint-disable-next-line typescript/strict-void-return -- Node provides a custom promisify implementation for execFile's ChildProcess-returning signature.
 const execFileAsync = promisify(execFile)
 

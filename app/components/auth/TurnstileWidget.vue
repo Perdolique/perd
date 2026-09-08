@@ -140,10 +140,12 @@
 
     isExecuting = false
     errorMessage.value = 'Security check is unavailable. Try again.'
+
     removeWidget()
 
     if (!isOpened.value) {
       hasPendingAttempt = false
+
       emit('error', errorMessage.value)
     }
   }
@@ -157,6 +159,7 @@
     hasPendingAttempt = false
     isOpened.value = false
     errorMessage.value = null
+
     removeWidget()
     emit('verified', nextToken)
   }
@@ -236,6 +239,7 @@
       }
 
       turnstile = api
+
       renderWidget()
     } catch (error) {
       if (generation !== widgetGeneration) {
@@ -280,6 +284,7 @@
       hasPendingAttempt = false
       isExecuting = false
       errorMessage.value = null
+
       removeWidget()
       emit('cancel')
     }
@@ -292,6 +297,7 @@
   onBeforeUnmount(() => {
     isExecuting = false
     hasPendingAttempt = false
+
     removeWidget()
   })
 

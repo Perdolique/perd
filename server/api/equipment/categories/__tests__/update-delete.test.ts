@@ -225,7 +225,6 @@ function createDeleteDb({
 describe('patch /api/equipment/categories/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-
     validateAdminUserMock.mockResolvedValue('user-1')
 
     readValidatedBodyMock.mockResolvedValue({
@@ -399,7 +398,6 @@ describe('patch /api/equipment/categories/[id]', () => {
 describe('delete /api/equipment/categories/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-
     validateAdminUserMock.mockResolvedValue('user-1')
 
     getValidatedRouterParamsMock.mockResolvedValue({
@@ -427,7 +425,6 @@ describe('delete /api/equipment/categories/[id]', () => {
     const event = createTestEvent({})
 
     await deleteCategoryHandler(event)
-
     expect(setResponseStatusMock).toHaveBeenCalledWith(event, 204)
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
 

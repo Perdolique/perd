@@ -193,7 +193,6 @@ test.describe('Direct equipment image delivery', () => {
     await expect(catalogImage).toHaveAttribute('height', '48')
     await expect(catalogImage).toHaveAttribute('loading', 'lazy')
     await expect(catalogImage).toHaveAttribute('alt', '')
-
     await page.getByRole('link', { name: catalogItem.name }).click()
 
     const detailImage = page.getByAltText(catalogItem.name)

@@ -61,13 +61,9 @@ test.describe('Shell navigation', () => {
     await mockGuestLogin(context)
     await mockGearLibraryReads(context)
     await mockLogout(context)
-
     await page.goto('/')
-
     await expect(page).toHaveURL(/\/login\?redirectTo=(?<redirectTo>%2F|\/)$/u)
-
     await page.getByRole('button', { name: 'Guest' }).click()
-
     await expect(page).toHaveURL(/\/$/u)
 
     const sidebar = page.getByTestId('shell-sidebar')
@@ -87,20 +83,14 @@ test.describe('Shell navigation', () => {
     await expect(myGearLink).toBeVisible()
     await expect(packingListsLink).toBeVisible()
     await expect(accountLink).toBeVisible()
-
     await gearLibraryLink.click()
-
     await expect(page).toHaveURL(/\/gear-library$/u)
     await expect(gearLibraryLink).toHaveClass(/active/u)
-
     await accountLink.click()
-
     await expect(page).toHaveURL(/\/account$/u)
     await expect(accountLink).toHaveClass(/active/u)
     await expect(sidebar.getByRole('button', { name: 'Log out' })).toHaveCount(0)
-
     await page.getByRole('button', { name: 'Log out' }).click()
-
     await expect(page).toHaveURL(/\/login$/u)
   })
 
@@ -127,12 +117,9 @@ test.describe('Shell navigation', () => {
     const dockProfileLink = dock.getByRole('link', { name: 'Profile' })
 
     await dockListsLink.click()
-
     await expect(page).toHaveURL(/\/packing-lists$/u)
     await expect(dockListsLink).toHaveClass(/active/u)
-
     await dockProfileLink.click()
-
     await expect(page).toHaveURL(/\/account$/u)
     await expect(dockProfileLink).toHaveClass(/active/u)
   })

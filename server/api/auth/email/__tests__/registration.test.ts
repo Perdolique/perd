@@ -296,7 +296,6 @@ describe('email registration API', () => {
     }, true)
 
     expect(response.status).toBe(409)
-
     expect(updateAppSession).not.toHaveBeenCalled()
   })
 })

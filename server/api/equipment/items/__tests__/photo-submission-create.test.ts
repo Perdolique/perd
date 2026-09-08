@@ -551,7 +551,6 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
     const event = createPhotoSubmissionEvent(readDb.db)
 
     rateLimitMock.mockResolvedValue({ success: false })
-
     await expect(createPhotoSubmissionHandler(event)).rejects.toMatchObject({ statusCode: 429 })
     expect(setResponseHeaderMock).toHaveBeenCalledWith(event, 'retry-after', 60)
     expect(readLimitedMultipartFormDataMock).not.toHaveBeenCalled()

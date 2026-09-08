@@ -65,9 +65,7 @@ test.describe('Gear library Load more', () => {
     })
 
     await expectRouteSearch(page, '')
-
     secondPageGate.resolve()
-
     await expect(results.getByRole('listitem')).toHaveCount(20)
     await expectRouteSearch(page, '')
     await expect(liveRegion).toHaveText('10 more items loaded')
@@ -101,9 +99,7 @@ test.describe('Gear library Load more', () => {
 
     await expectRouteSearch(page, '')
     await expect(results.getByRole('listitem')).toHaveCount(10)
-
     expect(tracker.items.map((request) => request.searchParams.get('page'))).toStrictEqual(['1'])
-
     await loadMoreButton.click()
     await expect(results.getByRole('listitem')).toHaveCount(20)
     await loadMoreButton.click()
@@ -148,7 +144,6 @@ test.describe('Gear library Load more', () => {
     const retryRequest = await waitForNextItemsRequest(tracker, requestsBeforeRetry)
 
     expect(retryRequest.searchParams.get('page')).toBe('2')
-
     await expect(results.getByRole('listitem')).toHaveCount(20)
     await expectRouteSearch(page, '')
     await expect(page.getByTestId('gear-library-load-more-status')).toHaveText('10 more items loaded')
@@ -186,7 +181,6 @@ test.describe('Gear library Load more', () => {
     const retryRequest = await waitForNextItemsRequest(tracker, requestsBeforeRetry)
 
     expect(retryRequest.searchParams.get('page')).toBe('3')
-
     await expect(results.getByRole('listitem')).toHaveCount(23)
     await expectRouteSearch(page, '')
     await expect(liveRegion).toHaveText('3 more items loaded')
@@ -213,9 +207,7 @@ test.describe('Gear library Load more', () => {
     const failedRequest = await staleRequestFailure
 
     expect(failedRequest.failure()?.errorText).toContain('ERR_ABORTED')
-
     secondPageGate.resolve()
-
     await expectRouteSearch(page, '?q=whisper')
     await expect(page.getByRole('link', { name: 'WhisperLite Universal' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Catalog item 11' })).toHaveCount(0)
@@ -245,7 +237,6 @@ test.describe('Gear library Load more', () => {
     const failedRequest = await staleRequestFailure
 
     expect(failedRequest.failure()?.errorText).toContain('ERR_ABORTED')
-
     secondPageGate.resolve()
 
     await detailNavigation
@@ -292,9 +283,7 @@ test.describe('Gear library Load more', () => {
     const savedScrollTop = await page.evaluate(() => globalThis.scrollY)
 
     expect(savedScrollTop).toBeGreaterThan(0)
-
     await expect(detailLink).toHaveAttribute('href', `/gear-library/${detailItem.id}`)
-
     await detailLink.click()
 
     await expect(page.getByRole('heading', {
@@ -305,7 +294,6 @@ test.describe('Gear library Load more', () => {
     await page.goBack()
     await expectRouteSearch(page, '?q=catalog')
     await expect(results.getByRole('listitem')).toHaveCount(20)
-
     await expect.poll(async () => getScrollDistance(page, savedScrollTop)).toBeLessThanOrEqual(2)
 
     const hasUnconsumedBrowsingState = await hasHistoryStateKey(page, 'gearLibraryBrowsing')
@@ -317,7 +305,6 @@ test.describe('Gear library Load more', () => {
     await openGearLibrary(sharedPage, catalogPath)
     await expectRouteSearch(sharedPage, '?q=catalog')
     await expect(sharedPage.getByTestId('gear-library-results-body').getByRole('listitem')).toHaveCount(10)
-
     await expect.poll(async () => sharedPage.evaluate(() => globalThis.scrollY)).toBe(0)
     await sharedPage.close()
   })
@@ -346,7 +333,6 @@ test.describe('Gear library Load more', () => {
 
     await page.getByRole('button', { name: 'Load more' }).click()
     await expect(results.getByRole('listitem')).toHaveCount(20)
-
     await page.getByRole('button', { name: 'Compare items' }).click()
     await page.getByRole('checkbox', { name: `Select ${selectedItem.name}` }).check()
 
@@ -366,7 +352,6 @@ test.describe('Gear library Load more', () => {
     const savedScrollTop = await page.evaluate(() => globalThis.scrollY)
 
     expect(savedScrollTop).toBeGreaterThan(0)
-
     await detailLink.click()
 
     await expect(page.getByRole('heading', {
@@ -412,7 +397,6 @@ test.describe('Gear library Load more', () => {
     const savedScrollTop = await page.evaluate(() => globalThis.scrollY)
 
     expect(savedScrollTop).toBeGreaterThan(0)
-
     await detailLink.click()
 
     await expect(page.getByRole('heading', {

@@ -183,13 +183,13 @@
       })
 
       appendedItems.value.push(...response.items)
+
       paginationCursor.value = response.nextCursor
 
       if (response.nextCursor === null) {
         isPaginationComplete.value = true
 
         await nextTick()
-
         paginationStatus.value?.focus()
       }
     } catch {

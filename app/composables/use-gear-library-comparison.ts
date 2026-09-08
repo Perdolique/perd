@@ -99,12 +99,15 @@ function useGearLibraryComparison(options: UseGearLibraryComparisonOptions) {
 
   function clearLimitAnnouncement() {
     limitAnnouncementTimeout.stop()
+
     limitAnnouncement.value = ''
   }
 
   function showLimitAnnouncement() {
     limitAnnouncementTimeout.stop()
+
     limitAnnouncement.value = comparisonLimitAnnouncement
+
     limitAnnouncementTimeout.start()
   }
 
@@ -282,27 +285,32 @@ function useGearLibraryComparison(options: UseGearLibraryComparisonOptions) {
 
     if (selectedIds.length === 4) {
       announcement.value = ''
+
       showLimitAnnouncement()
 
       return
     }
 
     announcement.value = ''
+
     clearLimitAnnouncement()
     seedVisibleSummaries([item])
-
     await options.handleComparisonChange([...selectedIds, item.id])
   }
 
   function enterMode() {
     announcement.value = ''
+
     clearLimitAnnouncement()
+
     isModeActive.value = true
   }
 
   async function exitMode() {
     announcement.value = ''
+
     clearLimitAnnouncement()
+
     transientFailureIds.value = new Set()
     isModeActive.value = false
 
@@ -315,6 +323,7 @@ function useGearLibraryComparison(options: UseGearLibraryComparisonOptions) {
     const remainingIds = options.selectedIds.value.filter((selectedId) => selectedId !== id)
 
     announcement.value = ''
+
     clearLimitAnnouncement()
     await options.handleComparisonChange(remainingIds)
   }
@@ -335,6 +344,7 @@ function useGearLibraryComparison(options: UseGearLibraryComparisonOptions) {
 
   watch(selectedSignature, async () => {
     clearLimitAnnouncement()
+
     transientFailureIds.value = new Set()
 
     await refreshRestoreRequest()

@@ -241,7 +241,6 @@ function createDb(transaction: MockPropertyTransaction) {
 describe('category property handlers', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-
     validateAdminUserMock.mockResolvedValue('user-1')
   })
 
@@ -654,7 +653,6 @@ describe('category property handlers', () => {
       const event = createTestEvent({})
 
       await deleteCategoryPropertyHandler(event)
-
       expect(setResponseStatusMock).toHaveBeenCalledWith(event, 204)
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
 

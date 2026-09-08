@@ -473,13 +473,13 @@
       })
 
       appendedPhotoSubmissions.value.push(...response.items)
+
       nextPhotoPage.value = response.nextPage
 
       if (response.nextPage === null) {
         isPhotoPaginationComplete.value = true
 
         await nextTick()
-
         photoPaginationStatus.value?.focus()
       }
     } catch {

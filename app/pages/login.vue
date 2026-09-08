@@ -245,8 +245,10 @@
     }
 
     startAuthenticating()
+
     isChecking.value = true
     guestError.value = null
+
     turnstileWidget.value?.execute()
   }
 

@@ -86,6 +86,7 @@ const useGearLibraryStore = defineStore('gear-library', () => {
   function resetPersonalizedState() {
     itemsSnapshot.value = undefined
     membershipOverrides.value = {}
+
     clearNuxtData(gearLibraryItemsAsyncDataKey)
   }
 

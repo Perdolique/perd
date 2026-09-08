@@ -70,7 +70,6 @@
     value.value = ''
 
     await nextTick()
-
     input.value?.focus()
   }
 </script>

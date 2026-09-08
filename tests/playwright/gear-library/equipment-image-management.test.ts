@@ -123,12 +123,9 @@ test.describe('Equipment image management', () => {
 
     await expect(page.getByText('2 files selected', { exact: true })).toBeVisible()
     await page.getByRole('button', { name: 'Upload' }).click()
-
     await expect.poll(() => uploadRequests).toHaveLength(1)
     await expect(imageInput).toBeDisabled()
-
     firstResponseGate.resolve()
-
     await expect.poll(() => uploadRequests).toHaveLength(2)
     await expect(imageInput).toBeEnabled()
     await expect(page.getByRole('button', { name: 'Upload' })).toBeDisabled()
@@ -181,7 +178,6 @@ test.describe('Equipment image management', () => {
 
     await context.route(imagesPath, async (route) => {
       expect(route.request().method()).toBe('GET')
-
       await route.fulfill({ json: images })
     })
 
@@ -198,7 +194,6 @@ test.describe('Equipment image management', () => {
     const authPath = `/auth/twitch?code=oauth-code&state=${encodeURIComponent(pagePath)}`
 
     await page.goto(authPath)
-
     await expect(page).toHaveURL(new RegExp(`${pagePath}$`, 'u'))
     await expect(page.getByRole('button', { name: 'Delete equipment image 1' })).toBeVisible()
     await expect(page.getByRole('button', { name: /^Delete equipment image/u })).toHaveCount(2)
@@ -223,7 +218,6 @@ test.describe('Equipment image management', () => {
     ]))
 
     await page.getByRole('button', { name: 'Delete equipment image 1' }).click()
-
     await expect.poll(() => deleteRequestCount).toBe(1)
     await expect(page.getByRole('button', { name: /^Delete equipment image/u })).toHaveCount(1)
     await expect(page.getByRole('button', { name: 'Delete equipment image 1' })).toBeVisible()

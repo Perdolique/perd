@@ -48,7 +48,6 @@ describe('database middleware', () => {
     const event = createMiddlewareEvent('/login')
 
     databaseHandler(event)
-
     expect(getRuntimeDatabaseConfigMock).not.toHaveBeenCalled()
     expect(createHttpClientMock).not.toHaveBeenCalled()
   })
@@ -57,7 +56,6 @@ describe('database middleware', () => {
     const event = createMiddlewareEvent('/api/_nuxt_icon/hugeicons.json?icons=tent')
 
     databaseHandler(event)
-
     expect(getRuntimeDatabaseConfigMock).not.toHaveBeenCalled()
     expect(createHttpClientMock).not.toHaveBeenCalled()
   })
@@ -67,7 +65,6 @@ describe('database middleware', () => {
 
     await sendRedirect(event, '/login?redirectTo=%2Fapi%2Fequipment%2Fbrands')
     databaseHandler(event)
-
     expect(event.handled).toBe(true)
     expect(getRuntimeDatabaseConfigMock).not.toHaveBeenCalled()
     expect(createHttpClientMock).not.toHaveBeenCalled()
@@ -97,9 +94,7 @@ describe('database middleware', () => {
 
     getRuntimeDatabaseConfigMock.mockReturnValue(databaseConfig)
     createHttpClientMock.mockReturnValue(databaseClient)
-
     databaseHandler(event)
-
     expect(getRuntimeDatabaseConfigMock).toHaveBeenCalledWith(event)
     expect(createHttpClientMock).toHaveBeenCalledWith(databaseConfig)
     expect(event.context.dbHttp).toBe(databaseClient)

@@ -141,6 +141,7 @@
 
     if (!isRegistrationPasswordValid(password.value)) {
       passwordError.value = 'Use a password between 15 and 128 characters.'
+
       passwordInput.value?.focus()
 
       return
@@ -148,18 +149,21 @@
 
     isPending.value = true
     isChecking.value = true
+
     turnstileWidget.value?.execute()
   }
 
   async function verificationCancelled() {
     isChecking.value = false
     isPending.value = false
+
     await nextTick()
     submitButton.value?.focus()
   }
 
   async function verificationFailed(message: string) {
     errorMessage.value = message
+
     await verificationCancelled()
   }
 
@@ -185,6 +189,7 @@
       })
 
       isSent.value = true
+
       await nextTick()
       sentMessage.value?.focus()
     } catch (error) {

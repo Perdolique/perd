@@ -158,7 +158,6 @@ function createAvailableGearRows(count: number): AvailableGearRow[] {
 describe('get /api/user/packing-lists/[id]/available-gear', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-
     validateSessionUserMock.mockResolvedValue('user-1')
 
     getValidatedRouterParamsMock.mockResolvedValue({

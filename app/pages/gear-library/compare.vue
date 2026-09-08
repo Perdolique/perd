@@ -416,7 +416,6 @@
     pendingRemovalFocusItemId.value = undefined
 
     await nextTick()
-
     comparisonTable.value?.focusRemoveButton(focusTargetId)
   })
 </script>

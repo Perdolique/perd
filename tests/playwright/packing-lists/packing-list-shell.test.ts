@@ -443,7 +443,6 @@ test.describe('Packing list shell', () => {
     await mockAuth(context)
     await mockPackingListRoutes(context, page, state)
     await openPackingLists(page)
-
     await expect(page).toHaveURL(/\/packing-lists$/u)
 
     await expect(page.getByRole('heading', {
@@ -453,7 +452,6 @@ test.describe('Packing list shell', () => {
     })).toBeVisible()
 
     await expect(page.getByRole('heading', { name: 'No packing lists yet.' })).toBeVisible()
-
     await page.getByRole('button', { name: 'New list' }).first().click()
     await expect(page.getByRole('heading', { name: 'Create a packing list' })).toBeVisible()
     await page.getByLabel('List name').fill('Alpine weekend')
@@ -466,7 +464,6 @@ test.describe('Packing list shell', () => {
 
     expect(createResponse.status()).toBe(201)
     expect(state.createRequests).toBe(1)
-
     await expect(page).toHaveURL(/\/packing-lists$/u)
     await expect(page.getByRole('heading', { name: 'Create a packing list' })).toHaveCount(0)
     await expect(page.getByRole('link', { name: /Alpine weekend/iu })).toBeVisible()
@@ -509,7 +506,6 @@ test.describe('Packing list shell', () => {
     expect(box.width).toBeLessThan(390)
     expect(inlineOffset).toBeLessThan(2)
     expect(blockOffset).toBeLessThan(2)
-
     await page.keyboard.press('Escape')
     await expect(dialog).toHaveCount(0)
     await expect(opener).toBeFocused()
@@ -523,9 +519,7 @@ test.describe('Packing list shell', () => {
     await mockAuth(context)
     await mockPackingListRoutes(context, page, state)
     await openPackingLists(page)
-
     await page.getByRole('link', { name: /Alpine weekend/iu }).click()
-
     await expect(page).toHaveURL(new RegExp(`/packing-lists/${packingListId}$`, 'u'))
 
     await expect(page.getByRole('heading', {
@@ -622,7 +616,6 @@ test.describe('Packing list shell', () => {
     await expect(searchInput).toBeFocused()
     await searchInput.fill('Rain')
     await searchInput.press('Escape')
-
     await expect(searchInput).toBeHidden()
     await expect(composerSummary).toBeFocused()
     await expect(page.getByText('Add item', { exact: true })).toBeVisible()
@@ -660,10 +653,8 @@ test.describe('Packing list shell', () => {
     await mockPackingListRoutes(context, page, state)
     await openPackingLists(page)
     await page.getByRole('link', { name: /Alpine weekend/iu }).click()
-
     await expect(page.getByText('Add item', { exact: true })).toBeVisible()
     expect(state.availableGearRequests).toHaveLength(0)
-
     await page.getByText('Add item', { exact: true }).click()
     await expect(page.getByRole('button', { name: /PocketRocket Deluxe/iu })).toBeVisible()
 
@@ -678,6 +669,7 @@ test.describe('Packing list shell', () => {
     const createRequestPromise = page.waitForRequest(isPackingListEntryCreateRequest)
 
     await page.getByRole('button', { name: /WhisperLite Universal/iu }).click()
+
     await createRequestPromise
 
     await expect(page.getByText('WhisperLite Universal', { exact: true }).first()).toBeVisible()
@@ -710,10 +702,10 @@ test.describe('Packing list shell', () => {
     }
 
     state.detail = createPackingListDetail('Alpine weekend', createPackingListEntries().slice(0, 1))
+
     state.availableGearResponses.set(createAvailableGearKey('', 1), [emptyPage])
     state.availableGearResponses.set(createAvailableGearKey(customName, 1), [emptyPage])
     state.entryCreateResponses.push(createCustomEntryMutation(customName))
-
     await mockAuth(context)
     await mockPackingListRoutes(context, page, state)
     await openPackingLists(page)
@@ -734,7 +726,6 @@ test.describe('Packing list shell', () => {
     })
 
     await page.getByRole('button', { name: `Add "${customName}" as custom item` }).click()
-
     await expect(page.getByText(customName, { exact: true }).first()).toBeVisible()
     await expect(page.getByText(`${customName} added.`, { exact: true })).toHaveCount(0)
     await expect(searchInput).toBeFocused()
@@ -753,9 +744,7 @@ test.describe('Packing list shell', () => {
     await mockAuth(context)
     await mockPackingListRoutes(context, page, state)
     await openPackingLists(page)
-
     await page.getByRole('link', { name: /Empty trail/iu }).click()
-
     await expect(page).toHaveURL(new RegExp(`/packing-lists/${packingListId}$`, 'u'))
 
     await expect(page.getByRole('heading', {
@@ -792,9 +781,7 @@ test.describe('Packing list shell', () => {
 
     await sidebar.getByRole('link', { name: 'Home' }).click()
     await expect(page).toHaveURL(/\/$/u)
-
     await sidebar.getByRole('link', { name: 'Packing lists' }).click()
-
     await expect(page).toHaveURL(/\/packing-lists$/u)
     await expect(page.getByRole('heading', { name: 'Loading packing lists' })).toHaveCount(0)
     await expect(page.getByRole('link', { name: /Cache trail/iu })).toBeVisible()

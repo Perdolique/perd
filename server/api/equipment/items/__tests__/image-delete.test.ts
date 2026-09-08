@@ -223,7 +223,6 @@ async function waitForBackgroundTasks() : Promise<void> {
 describe('delete /api/equipment/items/[id]/images/[image-id]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-
     validateAdminUserMock.mockResolvedValue('user-1')
 
     getValidatedRouterParamsMock.mockResolvedValue({
@@ -271,7 +270,6 @@ describe('delete /api/equipment/items/[id]/images/[image-id]', () => {
     const event = createDeleteEvent()
 
     await deleteImageHandler(event)
-
     await waitForBackgroundTasks()
 
     expect(findManyMock).toHaveBeenCalledWith({
@@ -322,9 +320,7 @@ describe('delete /api/equipment/items/[id]/images/[image-id]', () => {
     const event = createDeleteEvent()
 
     await deleteImageHandler(event)
-
     await waitForBackgroundTasks()
-
     expect(deleteCloudflareImageMock).toHaveBeenCalledTimes(1)
     expect(deleteWhereMock).toHaveBeenCalledTimes(1)
     expect(waitUntilMock).toHaveBeenCalledTimes(1)
@@ -352,6 +348,7 @@ describe('delete /api/equipment/items/[id]/images/[image-id]', () => {
     deferredDeletion.resolve(true)
 
     await handlerPromise
+
     await waitForBackgroundTasks()
 
     expect(responseResult).toMatchObject({
@@ -373,9 +370,7 @@ describe('delete /api/equipment/items/[id]/images/[image-id]', () => {
     const event = createDeleteEvent()
 
     await deleteImageHandler(event)
-
     await waitForBackgroundTasks()
-
     expect(transactionCommitMock).toHaveBeenCalledTimes(1)
     expect(waitUntilMock).toHaveBeenCalledTimes(1)
 
