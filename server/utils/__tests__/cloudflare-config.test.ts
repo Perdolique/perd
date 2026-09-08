@@ -142,8 +142,8 @@ describe('wrangler Cloudflare configuration', () => {
 
     expect(nuxtConfig).not.toContain('turnstileAlwaysPass')
     expect(nuxtConfig).not.toContain(turnstileAlwaysPassSiteKey)
-    expect(nuxtConfig).toContain("hostnames: ''")
-    expect(nuxtConfig).toContain("secret: ''")
-    expect(nuxtConfig).toContain("turnstileSiteKey: ''")
+    expect(nuxtConfig).toContain('hostnames: \'\'')
+    expect(nuxtConfig).toContain('secret: \'\'')
+    expect(nuxtConfig).toContain('turnstileSiteKey: \'\'')
   })
 })

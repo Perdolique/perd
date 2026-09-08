@@ -78,9 +78,7 @@ test.describe('Gear library filters', () => {
 
     await searchInput.fill('rocket')
     await page.waitForTimeout(100)
-
     expect(tracker.items).toHaveLength(itemsBeforeSearch)
-
     await expectRouteSearch(page, categorySearch)
 
     const searchedRequest = await waitForNextItemsRequest(tracker, itemsBeforeSearch)
@@ -131,7 +129,6 @@ test.describe('Gear library filters', () => {
     ])
 
     await expectRouteSearch(page, orderedRoute)
-
     expect(tracker.items).toHaveLength(itemsBeforeOrdering + 1)
 
     expectQueryValues(orderedRequest, {
@@ -206,11 +203,9 @@ test.describe('Gear library filters', () => {
 
     await expectRouteSearch(page, '')
     await expectPerdSelectValue(sortSelect, 'name:asc')
-
     expect(clearedCategoryRequest.searchParams.get('categorySlug')).toBeNull()
     expect(clearedCategoryRequest.searchParams.get('sort')).toBe('name')
     expect(clearedCategoryRequest.searchParams.get('direction')).toBe('asc')
-
     await expect(page.getByText('Could not refresh results.')).toHaveCount(0)
   })
 
@@ -251,7 +246,6 @@ test.describe('Gear library filters', () => {
     const itemsBeforeNormalization = tracker.items.length
 
     categoriesGate.resolve()
-
     await expectRouteSearch(page, '')
     await waitForNextItemsRequest(tracker, itemsBeforeNormalization)
     await expectPerdSelectValue(categorySelect, '')
@@ -322,7 +316,6 @@ test.describe('Gear library filters', () => {
       const searchBoxAfterSelection = await getElementBox(brandSearchInput)
 
       expect(searchBoxAfterSelection.y).toBeCloseTo(searchBoxBeforeSelection.y, 0)
-
       await alpkitCheckbox.uncheck()
       await expect(filterDialog.getByText('0 filters selected', { exact: true })).toBeVisible()
 
@@ -336,9 +329,7 @@ test.describe('Gear library filters', () => {
       await expect(brandCheckboxes).toHaveCount(1)
       await expect(brandGroup.getByLabel('MSR')).toBeVisible()
       await expect(brandGroup.getByRole('button', { name: 'Show all 12 brands' })).toHaveCount(0)
-
       await brandSearchInput.fill('missing brand')
-
       await expect(brandCheckboxes).toHaveCount(0)
       await expect(brandGroup.getByText('No matching brands.', { exact: true })).toBeVisible()
 
@@ -346,7 +337,6 @@ test.describe('Gear library filters', () => {
 
       await clearBrandSearchButton.focus()
       await page.keyboard.press('Enter')
-
       await expect(brandSearchInput).toHaveValue('')
       await expect(brandSearchInput).toBeFocused()
       await expect(brandCheckboxes).toHaveCount(8)
@@ -360,9 +350,7 @@ test.describe('Gear library filters', () => {
 
       await expect(brandCheckboxes).toHaveCount(12)
       await expect(showFewerButton).toHaveAttribute('aria-expanded', 'true')
-
       await showFewerButton.click()
-
       await expect(brandCheckboxes).toHaveCount(8)
 
       await expect(brandGroup.getByRole('button', { name: 'Show all 12 brands' }))
@@ -376,13 +364,10 @@ test.describe('Gear library filters', () => {
 
       await msrCheckbox.check()
       await expect(brandGroup.getByText('1 selected', { exact: true })).toBeVisible()
-
       await brandGroup.getByRole('button', { name: 'Clear brand search' }).click()
       await expect(brandLabels).toHaveText([...initialBrandNames, 'MSR'])
-
       await msrCheckbox.focus()
       await page.keyboard.press('Space')
-
       await expect(msrCheckbox).not.toBeChecked()
       await expect(msrCheckbox).toBeFocused()
       await expect(brandCheckboxes).toHaveCount(12)
@@ -395,7 +380,6 @@ test.describe('Gear library filters', () => {
 
     expect(tracker.brands).toHaveLength(initialBrandsRequestCount)
     expect(tracker.items).toHaveLength(initialItemsRequestCount)
-
     await expectRouteSearch(page, '')
   })
 
@@ -454,21 +438,16 @@ test.describe('Gear library filters', () => {
 
     await expect(brandGroup.getByLabel('Brand 20')).toBeEnabled()
     await expect(brandGroup.getByLabel('Brand 21')).toBeDisabled()
-
     await page.waitForTimeout(100)
-
     expect(tracker.brands).toHaveLength(initialBrandsRequestCount)
     expect(tracker.items).toHaveLength(initialItemsRequestCount)
-
     await expectRouteSearch(page, '')
     await brandGroup.getByLabel('Brand 01').uncheck()
-
     await expect(brandGroup.getByLabel('Brand 21')).toBeEnabled()
 
     const searchBoxAfterLimit = await getElementBox(brandSearchInput)
 
     expect(searchBoxAfterLimit.y).toBeCloseTo(searchBoxBeforeLimit.y, 0)
-
     await brandGroup.getByLabel('Brand 21').check()
 
     const itemsBeforeApply = tracker.items.length
@@ -551,17 +530,12 @@ test.describe('Gear library filters', () => {
     const itemsBeforeDraftChange = tracker.items.length
 
     await enumGroup.getByLabel('Option 01').uncheck()
-
     await expect(enumGroup.getByLabel('Option 19')).toBeEnabled()
     await expect(availableNumberGroup.getByLabel('Minimum')).toBeEnabled()
     await expect(availableBooleanGroup.getByLabel('Yes')).toBeEnabled()
-
     await enumGroup.getByLabel('Option 19').check()
-
     await page.waitForTimeout(100)
-
     expect(tracker.items).toHaveLength(itemsBeforeDraftChange)
-
     await expectRouteSearch(page, '?category=stoves')
 
     const itemsBeforeApply = tracker.items.length
@@ -626,13 +600,11 @@ test.describe('Gear library filters', () => {
     await expect(rangeError).toHaveCount(1)
     await expect(rangeError).toHaveAttribute('aria-atomic', 'true')
     await expect(rangeError).toBeEmpty()
-
     await showAllBrandsButton.click()
     await brandSearchInput.fill('msr')
     await filterDialog.getByLabel('MSR').check()
     await minimumInput.fill('100')
     await maximumInput.fill('80')
-
     await expect(rangeError).toHaveText('Minimum must not exceed maximum.')
     await expect(minimumInput).toHaveAttribute('aria-invalid', 'true')
     await expect(maximumInput).toHaveAttribute('aria-invalid', 'true')
@@ -644,18 +616,14 @@ test.describe('Gear library filters', () => {
     expect(rangeErrorId).not.toBeNull()
     expect(minimumDescribedBy).toBe(rangeErrorId)
     expect(maximumDescribedBy).toBe(rangeErrorId)
-
     await expect(applyButton).toBeDisabled()
-
     await minimumInput.fill('80')
     await maximumInput.fill('100')
-
     await expect(rangeError).toBeEmpty()
     await expect(minimumInput).not.toHaveAttribute('aria-invalid', 'true')
     await expect(maximumInput).not.toHaveAttribute('aria-invalid', 'true')
     await expect(minimumInput).not.toHaveAttribute('aria-describedby', /.+/u)
     await expect(maximumInput).not.toHaveAttribute('aria-describedby', /.+/u)
-
     await fuelGroup.getByLabel('Canister').check()
     await piezoGroup.getByLabel('Yes').check()
 
@@ -675,9 +643,7 @@ test.describe('Gear library filters', () => {
 
     await expectRouteSearch(page, appliedSearch)
     await page.waitForTimeout(100)
-
     expect(tracker.items).toHaveLength(itemsBeforeApply + 1)
-
     await expect(filterDialog).not.toBeVisible()
 
     expectQueryValues(appliedRequest, {
@@ -695,19 +661,13 @@ test.describe('Gear library filters', () => {
     await expect(appliedFilters.getByText('Weight: 80–100 g', { exact: true })).toBeVisible()
     await expect(appliedFilters.getByText('Fuel type: Canister', { exact: true })).toBeVisible()
     await expect(appliedFilters.getByText('Piezo ignition: Yes', { exact: true })).toBeVisible()
-
     await page.getByRole('button', { name: 'Filters 4' }).click()
-
     await expect(brandSearchInput).toHaveValue('')
     await expect(filterDialog.getByLabel('MSR')).toBeChecked()
     await expect(showAllBrandsButton).toHaveAttribute('aria-expanded', 'false')
-
     await filterDialog.getByLabel('Alpkit').check()
-
     await expect(filterDialog.getByRole('button', { name: 'Reset changes' })).toHaveCount(0)
-
     await closeButton.click()
-
     await expectRouteSearch(page, appliedSearch)
 
     const itemsBeforeRemove = tracker.items.length
@@ -730,21 +690,15 @@ test.describe('Gear library filters', () => {
     })).toBeFocused()
 
     await page.getByRole('button', { name: 'Filters 3' }).click()
-
     await expect(brandSearchInput).toHaveValue('')
     await expect(filterDialog.getByLabel('MSR')).toBeChecked()
     await expect(fuelGroup.getByLabel('Canister')).not.toBeChecked()
-
     await closeButton.click()
     await page.goBack()
-
     await expectRouteSearch(page, appliedSearch)
     await expect(appliedFilters.getByRole('button')).toHaveCount(4)
-
     await page.getByRole('button', { name: 'Filters 4' }).click()
-
     await expect(fuelGroup.getByLabel('Canister')).toBeChecked()
-
     await closeButton.click()
 
     const itemsBeforeRemoveLast = tracker.items.length
@@ -754,7 +708,6 @@ test.describe('Gear library filters', () => {
     }).click()
 
     await waitForNextItemsRequest(tracker, itemsBeforeRemoveLast)
-
     await expect(appliedFilters.getByRole('button')).toHaveCount(3)
 
     await expect(appliedFilters.getByRole('button', {
@@ -766,9 +719,7 @@ test.describe('Gear library filters', () => {
     await page.getByRole('button', { name: 'Clear all' }).click()
     await waitForNextItemsRequest(tracker, itemsBeforeClearAll)
     await page.waitForTimeout(100)
-
     expect(tracker.items).toHaveLength(itemsBeforeClearAll + 1)
-
     await expectRouteSearch(page, '?category=stoves')
     await expect(appliedFilters).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Filters' })).toBeFocused()
@@ -816,13 +767,11 @@ test.describe('Gear library filters', () => {
     expect(filterDialogBox.width).toBeCloseTo(390)
     expect(filterDialogBox.height).toBeCloseTo(844 * 0.9, 0)
     expect(filterDialogBox.y + filterDialogBox.height).toBeCloseTo(844, 0)
-
     await brandSearchInput.fill('msr')
 
     const narrowedFilterDialogBox = await getElementBox(filterDialog)
 
     expect(narrowedFilterDialogBox.height).toBeCloseTo(filterDialogBox.height, 0)
-
     await filterDialog.getByRole('button', { name: 'Clear brand search' }).click()
 
     const restoredFilterDialogBox = await getElementBox(filterDialog)
@@ -844,15 +793,12 @@ test.describe('Gear library filters', () => {
     await test.step('discard a cancelled draft and reset the brand view', async () => {
       await expect(filterDialog).toBeVisible()
       await expect(showAllButton).toHaveAttribute('aria-expanded', 'false')
-
       await brandSearchInput.fill('msr')
       await msrCheckbox.check()
       await expect(filterDialog.getByText('1 selected', { exact: true })).toBeVisible()
-
       await closeButton.click()
       await expect(filterDialog).not.toBeVisible()
       await expectRouteSearch(page, '?category=stoves')
-
       await filtersButton.click()
       await expect(brandSearchInput).toHaveValue('')
       await expect(showAllButton).toHaveAttribute('aria-expanded', 'false')
@@ -892,7 +838,6 @@ test.describe('Gear library filters', () => {
       await page.keyboard.press('Escape')
       await expect(filterDialog).not.toBeVisible()
       await expectRouteSearch(page, '?category=stoves&brand=msr')
-
       await page.getByRole('button', { name: 'Filters 1' }).click()
       await expect(brandSearchInput).toHaveValue('')
       await expect(showAllButton).toHaveAttribute('aria-expanded', 'false')
@@ -905,7 +850,6 @@ test.describe('Gear library filters', () => {
       await page.mouse.click(1, 1)
       await expect(filterDialog).not.toBeVisible()
       await expectRouteSearch(page, '?category=stoves&brand=msr')
-
       await page.getByRole('button', { name: 'Filters 1' }).click()
       await expect(brandSearchInput).toHaveValue('')
       await expect(showAllButton).toHaveAttribute('aria-expanded', 'false')
@@ -924,10 +868,8 @@ test.describe('Gear library filters', () => {
       expect(tracker.items).toHaveLength(itemsBeforeClear + 1)
       await expectRouteSearch(page, '?category=stoves')
       await expect(filterDialog).not.toBeVisible()
-
       await page.goBack()
       await expectRouteSearch(page, '?category=stoves&brand=msr')
-
       await page.getByRole('button', { name: 'Filters 1' }).click()
       await expect(brandSearchInput).toHaveValue('')
       await expect(showAllButton).toHaveAttribute('aria-expanded', 'false')
@@ -978,10 +920,8 @@ test.describe('Gear library filters', () => {
 
     expect(itemsFailure.failure()?.errorText).toContain('ERR_ABORTED')
     expect(categoryDetailFailure.failure()?.errorText).toContain('ERR_ABORTED')
-
     itemsGate.resolve()
     categoryDetailGate.resolve()
-
     await expect(page.getByRole('link', { name: 'NeoAir XLite NXT' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'PocketRocket Deluxe' })).toHaveCount(0)
 

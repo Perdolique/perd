@@ -22,12 +22,13 @@ describe(useDelayedPendingIndicator, () => {
     }))
 
     pending.value = true
+
     vi.advanceTimersByTime(199)
+
     pending.value = false
+
     vi.advanceTimersByTime(1)
-
     expect(isVisible?.value).toBe(false)
-
     scope.stop()
   })
 
@@ -44,12 +45,11 @@ describe(useDelayedPendingIndicator, () => {
     expect(isVisible?.value).toBe(true)
 
     pending.value = false
+
     vi.advanceTimersByTime(299)
     expect(isVisible?.value).toBe(true)
-
     vi.advanceTimersByTime(1)
     expect(isVisible?.value).toBe(false)
-
     scope.stop()
   })
 
@@ -63,16 +63,19 @@ describe(useDelayedPendingIndicator, () => {
     }))
 
     vi.advanceTimersByTime(100)
-    pending.value = false
-    vi.advanceTimersByTime(100)
-    pending.value = true
-    vi.advanceTimersByTime(200)
 
+    pending.value = false
+
+    vi.advanceTimersByTime(100)
+
+    pending.value = true
+
+    vi.advanceTimersByTime(200)
     expect(isVisible?.value).toBe(true)
 
     pending.value = false
-    expect(isVisible?.value).toBe(false)
 
+    expect(isVisible?.value).toBe(false)
     scope.stop()
   })
 
@@ -87,7 +90,6 @@ describe(useDelayedPendingIndicator, () => {
 
     scope.stop()
     vi.advanceTimersByTime(200)
-
     expect(isVisible?.value).toBe(false)
   })
 })

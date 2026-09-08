@@ -172,7 +172,6 @@ test.describe('Modal dialog', () => {
     })
 
     await expectSymmetricInlineInsets(dialog, filterInput)
-
     await expect(filterInput).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(closeButton).toBeFocused()
@@ -180,14 +179,11 @@ test.describe('Modal dialog', () => {
     await expect(opener).not.toBeFocused()
     await page.keyboard.press('Tab')
     await expect(filterInput).toBeFocused()
-
     await page.mouse.click(viewport.width / 2, viewport.height - 2)
     await expect(dialog).toBeVisible()
-
     await page.keyboard.press('Escape')
     await expect(dialog).toHaveCount(0)
     await expect(opener).toBeFocused()
-
     await opener.click()
     await waitForDialogTransition(dialog)
     await page.mouse.click(1, 1)
@@ -254,7 +250,6 @@ test.describe('Modal dialog', () => {
     expect(wideBox.blockStart).toBeCloseTo(0)
     expect(wideBox.height).toBeCloseTo(900)
     expect(wideBox.width).toBeCloseTo(384)
-
     await page.keyboard.press('Tab')
     await expect(filterInput).toBeFocused()
     await page.keyboard.press('Escape')
@@ -363,7 +358,6 @@ test.describe('Modal dialog', () => {
 
     expect(motionStyles.closedTranslate).toBe('0')
     expect(motionStyles.transitionDurations.every((duration) => duration === '0s')).toBe(true)
-
     await dialog.getByRole('button', { name: 'Close bottom sheet' }).click()
 
     await page.setViewportSize({

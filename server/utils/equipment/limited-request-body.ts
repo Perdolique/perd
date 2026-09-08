@@ -79,6 +79,7 @@ async function createLimitedRequestBody(
     }
 
     isReaderReleased = true
+
     reader.releaseLock()
   }
 
@@ -158,6 +159,7 @@ async function createLimitedRequestBody(
       try {
         if (firstChunk !== undefined) {
           controller.enqueue(firstChunk)
+
           firstChunk = undefined
 
           return
@@ -178,6 +180,7 @@ async function createLimitedRequestBody(
 
         if (byteLength > maximumByteLength) {
           isLimitExceeded = true
+
           await closeReader()
           controller.error(new Error('Request body is too large'))
 

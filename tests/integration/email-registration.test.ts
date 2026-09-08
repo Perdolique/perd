@@ -54,8 +54,10 @@ const anonymous: RegistrationActor = {
 // oxlint-disable-next-line init-declarations
 let database: RegistrationDatabase
 let rootDatabase: RegistrationDatabase | null = null
+
 // oxlint-disable-next-line init-declarations
 let schemaName: string
+
 // oxlint-disable-next-line init-declarations
 let passwordHash: string
 
@@ -119,8 +121,10 @@ describe('email registration on local PostgreSQL', () => {
       isLocalDatabase: true
     })
     schemaName = `email_registration_${randomUUID().replaceAll('-', '')}`
+
     await rootDatabase.execute(sql.raw(`CREATE SCHEMA "${schemaName}"`))
     url.searchParams.set('options', `-c search_path=${schemaName}`)
+
     database = createWebSocketClient({
       databaseUrl: url.toString(),
       isLocalDatabase: true

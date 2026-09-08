@@ -37,7 +37,6 @@ test.describe('Gear library states', () => {
     })
 
     await openGearLibrary(page)
-
     await expect(page.getByText('0 items')).toBeVisible()
     await expect(page.getByRole('heading', { name: 'No items yet.' })).toBeVisible()
 
@@ -45,7 +44,6 @@ test.describe('Gear library states', () => {
 
     await page.getByLabel('Search gear').fill('tent')
     await waitForNextItemsRequest(tracker, itemsBeforeSearch)
-
     await expectRouteSearch(page, '?q=tent')
     await expect(page.getByRole('heading', { name: 'No matching gear.' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'No items yet.' })).toHaveCount(0)
@@ -117,11 +115,8 @@ test.describe('Gear library states', () => {
 
     expect(searchBoxDuring.height).toBeCloseTo(searchBoxBefore.height, 1)
     expect(resultsBoxDuring.y).toBeCloseTo(resultsBoxBefore.y, 1)
-
     await expect(page.getByText('Loading category details', { exact: true })).toHaveCount(0)
-
     categoryDetailGate.resolve()
-
     await expect(sortSelect).toBeEnabled()
     await expect(getPerdSelectOption(sortSelect, 'property:weight:asc')).toHaveCount(1)
   })
@@ -159,7 +154,6 @@ test.describe('Gear library states', () => {
 
     expect(initialProgressBox.height).toBeLessThanOrEqual(2)
     expect(resultsSkeletonBox.height).toBeCloseTo(resultsSkeletonRowBox.height, 0)
-
     initialRequestGate.resolve()
 
     await loginClickPromise
@@ -228,7 +222,6 @@ test.describe('Gear library states', () => {
 
     expect(listBoxDuring.y).toBeCloseTo(listBoxBefore.y, 1)
     expect(listBoxDuring.height).toBeCloseTo(listBoxBefore.height, 1)
-
     refreshRequestGate.resolve()
 
     const refreshAlert = page.getByRole('alert').filter({ hasText: 'Could not refresh results.' })
@@ -282,9 +275,7 @@ test.describe('Gear library states', () => {
     const listBoxDuring = await getElementBox(page.getByRole('list'))
 
     expect(listBoxDuring.y).toBeCloseTo(listBoxBefore.y, 1)
-
     returnRequestGate.resolve()
-
     await expect(page.getByRole('link', { name: 'WhisperLite Universal' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'PocketRocket Deluxe' })).toHaveCount(0)
     await expect(page.getByTestId('gear-library-refresh-progress')).toBeHidden()
@@ -389,7 +380,6 @@ test.describe('Gear library states', () => {
     const brandsRetryResponse = await brandsRetryPromise
 
     expect(brandsRetryResponse.status()).toBe(200)
-
     await expect.poll(() => tracker.brands.length).toBeGreaterThan(brandsBeforeRetry)
     await expect(brandsAlert).toHaveCount(0)
     await expect(filterDialog.getByLabel('Alpkit')).toBeVisible()
@@ -420,7 +410,6 @@ test.describe('Gear library states', () => {
 
     await expectRouteSearch(page, '')
     await expect(categorySelect).toBeDisabled()
-
     expect(clearedRequest.searchParams.get('categorySlug')).toBeNull()
   })
 

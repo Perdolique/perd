@@ -297,7 +297,6 @@ test.describe('Gear submissions', () => {
 
     await expect(submitGearLink).toBeVisible()
     await submitGearLink.click()
-
     await expect(page).toHaveURL(/\/gear-library\/new$/u)
     await expect(page.getByRole('heading', { name: 'Submit missing gear' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Account required.' })).toBeVisible()
@@ -316,7 +315,6 @@ test.describe('Gear submissions', () => {
     await mockGuestLogin(context)
     await page.goto('/login?redirectTo=/gear-library/new')
     await page.getByRole('button', { name: 'Guest' }).click()
-
     await expect(page).toHaveURL(/\/gear-library\/new$/u)
     await expect(page.getByRole('heading', { name: 'Account required.' })).toBeVisible()
     await expect(page.locator('form')).toHaveCount(0)
@@ -347,11 +345,12 @@ test.describe('Gear submissions', () => {
 
     brandsResponder.allowSuccess()
     await page.getByRole('button', { name: 'Retry' }).click()
+
     await brandRetryRequestPromise
+
     await expect(brandSelect).toBeEnabled()
     await expect(categorySelect).toBeEnabled()
     expect(brandsResponder.getRequestCount()).toBeGreaterThan(requestCountBeforeRetry)
-
     await fillBaseFields(page)
     await expect(page.getByRole('button', { name: 'Submit for review' })).toBeEnabled()
   })
@@ -430,13 +429,10 @@ test.describe('Gear submissions', () => {
     await fillBaseFields(page)
     await page.getByLabel('Weight').fill('83.5')
     await page.getByRole('button', { name: 'Submit for review' }).click()
-
     await expect(page.getByText('Could not submit item. Try again.')).toBeVisible()
     await expect(page.getByLabel('Item name')).toHaveValue('PocketRocket Deluxe')
     await expect(page.getByLabel('Weight')).toHaveValue('83.5')
-
     await page.getByRole('button', { name: 'Submit for review' }).click()
-
     await expect(page.getByRole('status')).toContainText('Submitted for review.')
     expect(submitResponder.getRequestCount()).toBe(2)
   })
@@ -450,17 +446,17 @@ test.describe('Gear submissions', () => {
     const firstSubmissionRequestPromise = page.waitForRequest(isSubmissionRequest)
 
     await page.getByRole('button', { name: 'Submit for review' }).click()
+
     await firstSubmissionRequestPromise
+
     await expect(page.getByRole('status')).toContainText('Submitted for review.')
     await page.getByRole('button', { name: 'Submit another item' }).click()
-
     await expect(page.getByLabel('Item name')).toHaveValue('')
     await expect(page.getByLabel('Item name')).toBeFocused()
     await expect(getSelect(page, 'Brand')).toHaveAttribute('data-value', '')
     await expect(getSelect(page, 'Category')).toHaveAttribute('data-value', '')
     await expect(page.getByLabel('Weight')).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Submit for review' })).toBeDisabled()
-
     await fillBaseFields(page)
     await page.getByLabel('Item name').fill('PocketRocket 2')
     await expect(page.getByLabel('Weight')).toHaveValue('')
@@ -501,7 +497,6 @@ test.describe('Gear submissions', () => {
 
     await openRegisteredSubmissionPage(context, page)
     await fillBaseFields(page)
-
     await expect(page.getByText(/Could not load characteristics/u)).toBeVisible()
 
     const categoryRequestCountBeforeRetry = categoryRequestCount

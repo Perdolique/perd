@@ -153,6 +153,7 @@ function createGearLibraryFilterDraft(filters: GearLibraryAppliedFilters): GearL
       const selectedOptions = draft.enum[parsedFilter.propertySlug] ?? []
 
       selectedOptions.push(parsedFilter.value)
+
       draft.enum[parsedFilter.propertySlug] = selectedOptions
     }
   }

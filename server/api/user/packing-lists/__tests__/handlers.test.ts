@@ -793,7 +793,6 @@ describe('user packing list handlers', () => {
       const event = createTestEvent(dbHttp)
 
       await expect(deletePackingListHandler(event)).resolves.toBeUndefined()
-
       expect(deleteWhereMock).toHaveBeenCalledTimes(1)
       expect(setResponseStatusMock).toHaveBeenCalledWith(event, 204)
     })

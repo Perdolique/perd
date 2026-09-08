@@ -614,7 +614,6 @@
     }
 
     await nextTick()
-
     comparisonModeAction.value?.focus()
   }
 

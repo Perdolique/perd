@@ -166,6 +166,7 @@ function useGearLibraryItemsData(options: UseGearLibraryItemsDataOptions) {
 
   function cancelAdditionalRequests() {
     activeItemsGeneration += 1
+
     cancelAdditionalRequest()
   }
 

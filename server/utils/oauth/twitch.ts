@@ -14,6 +14,7 @@ interface TwitchUser {
   readonly profile_image_url: string;
   readonly offline_image_url: string;
   readonly created_at: string;
+
   // "user:read:email" scope required
   readonly email?: string;
 }

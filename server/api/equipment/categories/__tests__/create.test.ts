@@ -134,7 +134,6 @@ function createDb({
 describe('post /api/equipment/categories', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-
     validateAdminUserMock.mockResolvedValue('user-1')
 
     readValidatedBodyMock.mockResolvedValue({

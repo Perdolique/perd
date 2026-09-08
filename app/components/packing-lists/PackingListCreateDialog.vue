@@ -127,7 +127,6 @@
     }
 
     await nextTick()
-
     nameInput.value?.focus()
   })
 

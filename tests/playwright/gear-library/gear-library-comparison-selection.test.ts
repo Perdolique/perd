@@ -147,7 +147,6 @@ test.describe('Gear library comparison selection', () => {
     const fifthCheckbox = page.getByRole('checkbox', { name: `Select ${fifthItem.name}` })
 
     await fifthCheckbox.click()
-
     await expect(fifthCheckbox).not.toBeChecked()
     await expect(page.getByText(comparisonLimitMessage)).toBeVisible()
     await expectRouteSearch(page, selectedSearch)
@@ -179,7 +178,6 @@ test.describe('Gear library comparison selection', () => {
     await expectRouteSearch(page, searchedSelection)
     await page.reload()
     await page.getByRole('button', { name: 'Guest' }).click()
-
     await expect(page.getByText('3 of 4 selected')).toBeVisible()
 
     await expect(
@@ -195,9 +193,7 @@ test.describe('Gear library comparison selection', () => {
     })
 
     await openGearLibrary(page)
-
     await expect(page.getByRole('button', { name: 'Compare items' })).toHaveCount(0)
-
     await selectPerdOption(getGearLibrarySelect(page, 'Category'), 'sleeping-pads')
     await page.getByRole('button', { name: 'Compare items' }).click()
 
@@ -205,9 +201,7 @@ test.describe('Gear library comparison selection', () => {
 
     await expect(pendingComparisonCheckboxes).toHaveCount(firstPageResponse.items.length)
     await expectAllCheckboxesDisabled(pendingComparisonCheckboxes)
-
     sleepingPadsGate.resolve()
-
     await expect(pendingComparisonCheckboxes).toHaveCount(1)
     await expectAllCheckboxesEnabled(pendingComparisonCheckboxes)
   })
@@ -226,7 +220,6 @@ test.describe('Gear library comparison selection', () => {
     ])
 
     await openGearLibrary(page, `/gear-library${selectedSearch}`)
-
     await expect(page.getByRole('heading', { name: 'Gear library unavailable.' })).toBeVisible()
     await expect(page.getByTestId('gear-library-comparison-tray')).toBeVisible()
 
@@ -234,7 +227,6 @@ test.describe('Gear library comparison selection', () => {
 
     await expect(cancelComparisonButton).toBeVisible()
     await cancelComparisonButton.click()
-
     await expectRouteSearch(page, buildRouteSearch([['category', 'stoves']]))
     await expect(page.getByTestId('gear-library-comparison-tray')).toHaveCount(0)
     await expect(cancelComparisonButton).toHaveCount(0)
@@ -264,7 +256,6 @@ test.describe('Gear library comparison selection', () => {
     expect(controlBox?.width).toBeGreaterThanOrEqual(44)
     expect(controlBox?.height).toBeGreaterThanOrEqual(44)
     await expect(comparisonControl.getByText('Select', { exact: true })).toBeVisible()
-
     await firstCheckbox.check()
 
     const tray = page.getByTestId('gear-library-comparison-tray')
@@ -273,14 +264,12 @@ test.describe('Gear library comparison selection', () => {
 
     await expect(itemList).toBeHidden()
     await expect(showItemsButton).toHaveAttribute('aria-expanded', 'false')
-
     await showItemsButton.click()
 
     const hideItemsButton = tray.getByRole('button', { name: 'Hide items' })
 
     await expect(itemList).toBeVisible()
     await expect(hideItemsButton).toHaveAttribute('aria-expanded', 'true')
-
     await page.getByRole('checkbox', { name: `Select ${secondItem.name}` }).check()
 
     const twoItemSearch = buildRouteSearch([
@@ -302,13 +291,10 @@ test.describe('Gear library comparison selection', () => {
 
     await firstRemoveButton.focus()
     await page.keyboard.press('Enter')
-
     await expect(secondRemoveButton).toBeFocused()
     await expect(itemList).toBeVisible()
     await expect(hideItemsButton).toHaveAttribute('aria-expanded', 'true')
-
     await page.keyboard.press('Enter')
-
     await expect(tray).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Cancel comparison' })).toBeFocused()
   })
@@ -405,23 +391,17 @@ test.describe('Gear library comparison selection', () => {
     }).click()
 
     await expect(page).toHaveURL(new RegExp(`/gear-library/${firstItem.id}$`, 'u'))
-
     await page.goBack()
-
     await expect(page).toHaveURL(/\/gear-library\?category=stoves$/u)
     await expect(page.getByRole('button', { name: 'Cancel comparison' })).toBeVisible()
     await expect(page.getByTestId('gear-library-comparison-tray')).toHaveCount(0)
-
     await page.reload()
     await page.getByRole('button', { name: 'Guest' }).click()
-
     await expect(page.getByRole('button', { name: 'Compare items' })).toBeVisible()
     await expect(page.getByTestId('gear-library-comparison-tray')).toHaveCount(0)
-
     await page.getByRole('button', { name: 'Compare items' }).click()
     await page.getByRole('checkbox', { name: `Select ${firstItem.name}` }).check()
     await page.getByRole('button', { name: 'Cancel comparison' }).click()
-
     await expectRouteSearch(page, buildRouteSearch([['category', 'stoves']]))
     await expect(page.getByRole('dialog', { name: 'Clear comparison selection?' })).toHaveCount(0)
     await expect(page.getByTestId('gear-library-comparison-tray')).toHaveCount(0)
@@ -435,7 +415,6 @@ test.describe('Gear library comparison selection', () => {
     })
 
     await page.clock.install()
-
     await openGearLibrary(page, '/gear-library?category=stoves')
     await page.getByRole('button', { name: 'Compare items' }).click()
 
@@ -451,17 +430,13 @@ test.describe('Gear library comparison selection', () => {
 
     await fifthCheckbox.click()
     await expect(page.getByText(comparisonLimitMessage)).toBeVisible()
-
     await page.clock.fastForward(3000)
     await expect(page.getByText(comparisonLimitMessage)).toBeVisible()
-
     await fifthCheckbox.click()
     await page.clock.fastForward(3000)
     await expect(page.getByText(comparisonLimitMessage)).toBeVisible()
-
     await page.clock.fastForward(3000)
     await expect(page.getByText(comparisonLimitMessage)).toHaveCount(0)
-
     await fifthCheckbox.click()
     await expect(page.getByText(comparisonLimitMessage)).toBeVisible()
 
@@ -566,14 +541,12 @@ test.describe('Gear library comparison selection', () => {
     ])
 
     await openGearLibrary(page, `/gear-library${selectedSearch}`)
-
     await expect(page.getByText('Could not load selected item.')).toBeVisible()
     await expectRouteSearch(page, selectedSearch)
 
     activeItemDetailResponder = respondWithItemDetail
 
     await page.getByRole('button', { name: 'Retry selected items' }).click()
-
     await expect(page.getByText(secondPageItem.name, { exact: true })).toBeVisible()
     await expectRouteSearch(page, selectedSearch)
   })
@@ -594,7 +567,6 @@ test.describe('Gear library comparison selection', () => {
     ])
 
     await openGearLibrary(page, `/gear-library${rawSearch}`)
-
     await expectRouteSearch(page, buildRouteSearch([['category', 'stoves']]))
 
     await expect(page.getByText(
@@ -640,13 +612,12 @@ test.describe('Gear library comparison selection', () => {
     await expect(dialog).toContainText('Changing the category removes 1 selected items.')
     await dialog.getByRole('button', { name: 'Keep current category' }).click()
     await expectRouteSearch(page, selectedSearch)
-
     await selectPerdOption(categorySelect, 'sleeping-pads')
     await dialog.getByRole('button', { name: 'Change category' }).click()
 
     await staleRequestFailure
-    detailGate.resolve()
 
+    detailGate.resolve()
     await expectRouteSearch(page, buildRouteSearch([['category', 'sleeping-pads']]))
     await expect(page.getByTestId('gear-library-comparison-tray')).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Cancel comparison' })).toBeVisible()
@@ -660,7 +631,6 @@ test.describe('Gear library comparison selection', () => {
     ])
 
     await openGearLibrary(page, `/gear-library${rawSearch}`)
-
     await expectRouteSearch(page, '')
 
     await expect(page.getByText(

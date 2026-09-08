@@ -95,7 +95,6 @@
       isSubmitted.value = true
 
       await nextTick()
-
       confirmationStatus.value?.focus()
     } catch {
       mutationMessage.value = 'Could not submit item. Try again.'

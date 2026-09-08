@@ -33,6 +33,7 @@ function useGearLibraryPageLoader(options: UseGearLibraryPageLoaderOptions) {
   /** Cancels the active page request and clears its retry state. */
   function cancelRequest() {
     requestController?.abort()
+
     requestController = null
     isLoadingMore.value = false
     hasLoadMoreError.value = false
@@ -87,7 +88,9 @@ function useGearLibraryPageLoader(options: UseGearLibraryPageLoaderOptions) {
 
       options.loadedPages.value = [...options.loadedPages.value, response]
       options.loadedPageCount.value = options.loadedPages.value.length
+
       options.storeCurrentPages(signature, hasNarrowingState)
+
       failedPage.value = null
 
       const itemCountAfter = getUniqueGearLibraryItems(options.loadedPages.value).length

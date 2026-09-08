@@ -183,7 +183,6 @@ test.describe('Admin gear submission review', () => {
 
     await expect(dock).toBeVisible()
     await dock.getByRole('link', { name: 'Profile' }).click()
-
     await expect(dock.getByRole('link')).toHaveCount(4)
     await expect(page.getByRole('link', { name: /Admin/u })).toBeVisible()
   })
@@ -250,7 +249,6 @@ test.describe('Admin gear submission review', () => {
     })
 
     await page.getByRole('link', { name: /Review gear submissions/u }).click()
-
     await expect(page).toHaveURL(/\/admin\/equipment\/submissions$/u)
     await expect(page.getByRole('link', { name: /PocketRocket Deluxe/u })).toBeVisible()
     await page.getByRole('button', { name: 'Load more' }).click()
@@ -302,6 +300,7 @@ test.describe('Admin gear submission review', () => {
     const requestCountBeforeRetry = requestCount
 
     allowSuccess = true
+
     await page.getByRole('button', { name: 'Retry' }).click()
     await expect(page.getByText('The review queue is clear.')).toBeVisible()
     expect(requestCount).toBeGreaterThan(requestCountBeforeRetry)

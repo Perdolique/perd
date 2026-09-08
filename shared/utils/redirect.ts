@@ -6,6 +6,7 @@ function sanitizeRedirectPath(redirectTo: unknown): string {
   }
 
   const trimmedRedirectPath = redirectTo.trim()
+
   // Reject URL parser normalization of backslashes and ASCII controls.
   // oxlint-disable-next-line no-control-regex -- These characters can turn a relative redirect into an external URL.
   const hasUnsafeCharacters = /[\\\u0000-\u001F\u007F]/u.test(redirectTo)

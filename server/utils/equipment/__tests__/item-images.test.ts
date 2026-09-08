@@ -117,7 +117,9 @@ async function createMultipartEvent(formData: FormData) {
   event.node.req.method = 'POST'
   event.node.req.headers['content-length'] = String(body.byteLength)
   event.node.req.headers['content-type'] = request.headers.get('content-type') ?? ''
+
   event.node.req.push(body)
+
   // oxlint-disable-next-line unicorn/prefer-single-call -- Node streams accept one chunk per push call.
   event.node.req.push(null)
 
@@ -218,7 +220,6 @@ describe('equipment item image lifecycle', () => {
     })
 
     await Promise.resolve()
-
     expect(uploadImageMock).toHaveBeenCalledTimes(1)
 
     imageInfoGate.resolve({

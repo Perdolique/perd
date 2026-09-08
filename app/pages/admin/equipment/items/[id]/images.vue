@@ -302,6 +302,7 @@
     }
 
     reorderedImages.splice(targetIndex, 0, movedImage)
+
     imagesResponse.value = reorderedImages
     isReordering.value = true
 

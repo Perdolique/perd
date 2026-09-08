@@ -83,6 +83,7 @@ test.describe('Account gear submissions', () => {
 
     await context.route((url) => url.pathname === submissionsPath, async (route) => {
       await responseGate.promise
+
       await route.fulfill({ json: { items: createSubmissions() } })
     })
 
@@ -103,7 +104,6 @@ test.describe('Account gear submissions', () => {
     await submissionsLink.click()
     await expect(page.getByText('Loading My contributions')).toBeVisible()
     responseGate.resolve()
-
     await expect(page).toHaveURL(/\/account\/submissions$/u)
     await expect(page.getByText('Pending', { exact: true })).toBeVisible()
     await expect(page.getByText('Published', { exact: true })).toBeVisible()
@@ -149,7 +149,9 @@ test.describe('Account gear submissions', () => {
 
     await authenticate(context, page, '/account/submissions')
     await expect(page.getByText('My contributions unavailable.')).toBeVisible()
+
     shouldSucceed = true
+
     await page.getByRole('button', { name: 'Retry' }).click()
     await expect(page.getByText('No contributions yet.')).toBeVisible()
 
@@ -216,8 +218,8 @@ test.describe('Account gear submissions', () => {
     const failedPhotoRequestCount = photoRequestCount
 
     shouldPhotoRequestSucceed = true
-    await page.getByRole('button', { name: 'Retry' }).click()
 
+    await page.getByRole('button', { name: 'Retry' }).click()
     await expect(page.getByRole('heading', { name: 'Photo submissions' })).toBeVisible()
     await expect(page.getByText('PocketRocket camp.webp')).toBeVisible()
     await expect(page.getByText('Own photo')).toBeVisible()
@@ -353,7 +355,6 @@ test.describe('Account gear submissions', () => {
     })
 
     await authenticate(context, page, '/account/submissions')
-
     await expect(page.getByText('Pending', { exact: true })).toBeVisible()
     await expect(page.getByText('Published', { exact: true })).toBeVisible()
     await expect(page.getByText('Rejected', { exact: true })).toBeVisible()

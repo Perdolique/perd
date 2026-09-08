@@ -265,11 +265,9 @@ test.describe('Gear library comparison page', () => {
 
     await page.getByRole('checkbox', { name: `Select ${selectedItems[0]?.name}` }).check()
     await expect(compareButton).toBeDisabled()
-
     await page.getByRole('checkbox', { name: `Select ${selectedItems[1]?.name}` }).check()
     await expect(compareButton).toBeEnabled()
     await compareButton.click()
-
     await expect(page).toHaveURL(createComparisonPath(selectedIds))
     await expect.poll(() => tracker.comparisons.length).toBe(1)
 
@@ -281,7 +279,6 @@ test.describe('Gear library comparison page', () => {
 
     await expect(columnHeaders.nth(1)).toContainText(selectedItems[0].name)
     await expect(columnHeaders.nth(2)).toContainText(selectedItems[1].name)
-
     await page.goBack()
 
     const selectedCatalogSearch = buildRouteSearch([
@@ -340,7 +337,6 @@ test.describe('Gear library comparison page', () => {
       const tracker = await mockComparisonApi(context)
 
       await openComparisonPage(page, invalidCase.itemIds)
-
       await expect(page.getByText(invalidCase.message, { exact: true })).toBeVisible()
       expect(tracker.comparisons).toHaveLength(0)
 
@@ -363,7 +359,6 @@ test.describe('Gear library comparison page', () => {
       })
 
       await openComparisonPage(page)
-
       await expect(page.getByText(errorCase.message, { exact: true })).toBeVisible()
       await expect(page.getByRole('button', { name: 'Retry' })).toHaveCount(0)
     })
@@ -387,13 +382,13 @@ test.describe('Gear library comparison page', () => {
     })
 
     await openComparisonPage(page)
-
     await expect(page.getByText('Could not load this comparison.', { exact: true })).toBeVisible()
+
     responseState.response = {
       json: createComparisonResponse(comparisonItemIds.slice(0, 3))
     }
-    await page.getByRole('button', { name: 'Retry' }).click()
 
+    await page.getByRole('button', { name: 'Retry' }).click()
     await expect(page.getByRole('table', { name: 'Stoves, 3 items' })).toBeVisible()
   })
 
@@ -432,14 +427,15 @@ test.describe('Gear library comparison page', () => {
     ))
 
     await navigateWithinApp(page, createComparisonPath(staleItemIds))
+
     await staleRequestStarted
+
     await navigateWithinApp(page, createComparisonPath(finalItemIds))
 
     const failedRequest = await staleRequestFailure
 
     expect(failedRequest.failure()?.errorText).toContain('ERR_ABORTED')
     staleRequestGate.resolve()
-
     await expect(page).toHaveURL(createComparisonPath(finalItemIds))
     await expect(page.getByRole('table', { name: 'Stoves, 3 items' })).toBeVisible()
     await expect(page.getByRole('columnheader').nth(1)).toContainText(comparisonItems[1].name)
@@ -665,7 +661,6 @@ test.describe('Gear library comparison page', () => {
     const pageScrollBeforeWheel = await page.evaluate(() => globalThis.scrollY)
 
     expect(pageScrollBeforeWheel).toBe(0)
-
     await page.mouse.wheel(0, 300)
 
     await expect.poll(

@@ -181,7 +181,6 @@ function createDeleteDb({
 describe('user gear handlers', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-
     validateSessionUserMock.mockResolvedValue('user-1')
 
     getValidatedRouterParamsMock.mockResolvedValue({
@@ -523,7 +522,6 @@ describe('user gear handlers', () => {
       const event = createTestEvent(dbHttp)
 
       await expect(deleteMyGearHandler(event)).resolves.toBeUndefined()
-
       expect(deleteWhereMock).toHaveBeenCalledTimes(1)
       expect(setResponseStatusMock).toHaveBeenCalledWith(event, 204)
     })

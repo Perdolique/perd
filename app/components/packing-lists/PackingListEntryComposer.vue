@@ -258,8 +258,8 @@
     }
 
     details.open = false
-    closeComposer()
 
+    closeComposer()
     await nextTick()
     summaryRef.value?.focus()
   }

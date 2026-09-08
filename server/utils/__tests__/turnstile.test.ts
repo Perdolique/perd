@@ -371,7 +371,6 @@ describe(verifyTurnstile, () => {
     const error = await getVerificationError()
 
     expect(error.statusCode).toBe(503)
-
     expect(console.error).toHaveBeenCalledTimes(1)
 
     const { details, message } = getConsoleErrorCall()

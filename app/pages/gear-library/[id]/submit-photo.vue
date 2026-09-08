@@ -427,7 +427,6 @@
     mutationMessage.value = null
 
     await nextTick()
-
     photoPicker.value?.focus()
   }
 
@@ -473,7 +472,6 @@
       submissionStatus.value = response.status
 
       await nextTick()
-
       confirmationStatus.value?.focus()
     } catch (error) {
       const statusCode = getErrorStatus(error)

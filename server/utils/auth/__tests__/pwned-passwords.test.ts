@@ -25,7 +25,6 @@ describe('pwned Passwords screening', () => {
 
   it('should send only a hash prefix and ignore zero-count padding matches', async () => {
     fetchMock.mockResolvedValue(new Response(`${suffix}:0\r\n${'A'.repeat(35)}:99`))
-
     await assertPasswordNotPwned(password)
 
     expect(fetchMock).toHaveBeenCalledWith(`https://api.pwnedpasswords.com/range/${prefix}`, {
@@ -39,19 +38,16 @@ describe('pwned Passwords screening', () => {
 
   it('should reject a matching breached password', async () => {
     fetchMock.mockResolvedValue(new Response(`${suffix}:1`))
-
     await expect(assertPasswordNotPwned(password)).rejects.toMatchObject({ statusCode: 400 })
   })
 
   it.each(['', 'not a range', `${suffix}:invalid`])('should fail closed on a malformed response %s', async (body) => {
     fetchMock.mockResolvedValue(new Response(body))
-
     await expect(assertPasswordNotPwned(password)).rejects.toMatchObject({ statusCode: 503 })
   })
 
   it('should redact password material from provider diagnostics', async () => {
     fetchMock.mockRejectedValue(new Error(`Network failed: ${password} ${sha1} ${suffix}`))
-
     await expect(assertPasswordNotPwned(password)).rejects.toMatchObject({ statusCode: 503 })
 
     const logged = JSON.stringify(vi.mocked(console.error).mock.calls)

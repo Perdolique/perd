@@ -241,7 +241,6 @@ const test = base.extend<TestFixtures>({
       const requestTarget = `${request.method()} ${requestUrl.pathname}${requestUrl.search}`
 
       unmockedApiRequests.add(requestTarget)
-
       await route.abort('blockedbyclient')
     })
 

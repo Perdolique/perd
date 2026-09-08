@@ -102,7 +102,9 @@ async function setOversizedPhoto(page: Page): Promise<void> {
     const files = new globalThis.DataTransfer()
 
     files.items.add(photo)
+
     element.files = files.files
+
     element.dispatchEvent(new globalThis.Event('change', { bubbles: true }))
   })
 }
@@ -187,12 +189,10 @@ test.describe('Photo submissions', () => {
     })
 
     await mockItem(context)
-
     await page.goto(`/login?redirectTo=${encodeURIComponent(itemPath)}`)
     await page.getByRole('button', { name: 'Guest' }).click()
     await expect(page).toHaveURL(new RegExp(`${itemPath}$`, 'u'))
     await page.getByRole('link', { name: 'Submit photo' }).click()
-
     await expect(page).toHaveURL(new RegExp(`${submissionPath}$`, 'u'))
 
     await expect(page.getByRole('heading', {
@@ -222,7 +222,6 @@ test.describe('Photo submissions', () => {
     await expect(photoInput).not.toHaveAttribute('multiple', '')
     await expect(ownSource).toBeChecked()
     await expect(page.getByLabel('Manufacturer source')).toHaveCount(0)
-
     await photoInput.setInputFiles(photoFixturePath)
 
     await expect(page.getByRole('img', {
@@ -238,7 +237,6 @@ test.describe('Photo submissions', () => {
 
     await rightsCheckbox.check()
     await expect(page.getByRole('button', { name: 'Submit photo' })).toBeEnabled()
-
     await dropReplacementPhoto(page)
 
     await expect(page.getByRole('img', {
@@ -271,13 +269,11 @@ test.describe('Photo submissions', () => {
     })
 
     await page.getByRole('button', { name: 'Remove photo' }).click()
-
     await expect(page.getByRole('img', { name: 'Preview of replacement.webp' })).toHaveCount(0)
     await expect(page.getByText('Click to choose or drag and drop')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Submit photo' })).toBeDisabled()
     await expect(photoInput).toBeFocused()
     await expect(photoInput).toHaveValue('')
-
     await manufacturerSource.check()
     await expect(page.getByLabel('Manufacturer source')).toBeVisible()
   })
@@ -363,7 +359,6 @@ test.describe('Photo submissions', () => {
     })
 
     await expect(page.getByRole('radio', { name: 'My own photo' })).toBeChecked()
-
     await manufacturerSource.check()
 
     const sourceInput = page.getByLabel('Manufacturer source')
@@ -404,7 +399,6 @@ test.describe('Photo submissions', () => {
     })
 
     expect(selectedPhotoSignature).toBe('RIFF')
-
     await page.getByRole('button', { name: 'Submit photo' }).click()
 
     const {
@@ -577,7 +571,9 @@ test.describe('Photo submissions', () => {
     await authenticateRegisteredUser(context, page, submissionPath)
     await expect(page.getByRole('heading', { name: 'Could not load item.' })).toBeVisible()
     await expect(page.locator('form')).toHaveCount(0)
+
     shouldSucceed = true
+
     await page.getByRole('button', { name: 'Retry' }).click()
     await expect(page.getByRole('heading', { name: `Photo for ${item.name}` })).toBeVisible()
     await expect(page.locator('form')).toHaveCount(1)
@@ -592,7 +588,6 @@ test.describe('Photo submissions', () => {
     })
 
     await authenticateRegisteredUser(context, page, submissionPath)
-
     await expect(page.getByRole('heading', { name: 'Item unavailable.' })).toBeVisible()
     await expect(page.locator('form')).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Retry' })).toHaveCount(0)
@@ -737,7 +732,6 @@ test.describe('Photo submissions', () => {
       await page.getByLabel('Photo', { exact: true }).setInputFiles(photoFixturePath)
       await page.getByLabel('I confirm that this photo can be published in the catalog.').check()
       await page.getByRole('button', { name: 'Submit photo' }).click()
-
       await expect(page.getByRole('alert')).toHaveText(message)
       await expect(page.getByText('Internal upload detail')).toHaveCount(0)
     })

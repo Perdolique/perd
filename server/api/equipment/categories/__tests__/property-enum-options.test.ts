@@ -233,7 +233,6 @@ function createDb(transaction: MockEnumOptionTransaction) {
 describe('property enum option handlers', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-
     validateAdminUserMock.mockResolvedValue('user-1')
 
     getValidatedRouterParamsMock.mockResolvedValue({

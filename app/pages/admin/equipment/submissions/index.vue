@@ -167,6 +167,7 @@
       })
 
       appendedItems.value.push(...response.items)
+
       currentPage.value = nextPage
 
       const hasLoadedEveryItem = allItems.value.length >= total.value
@@ -175,7 +176,6 @@
         isPaginationComplete.value = true
 
         await nextTick()
-
         paginationStatus.value?.focus()
       }
     } catch {

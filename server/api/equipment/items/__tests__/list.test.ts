@@ -585,7 +585,6 @@ describe('get /api/equipment/items', () => {
     const event = createTestEvent(db.dbHttp)
 
     getValidatedQueryMock.mockResolvedValue(query)
-
     await listItemsHandler(event)
 
     const where = db.itemsWhereMock.mock.calls[0]?.[0]
@@ -644,7 +643,6 @@ describe('get /api/equipment/items', () => {
       const event = createTestEvent(db.dbHttp)
 
       getValidatedQueryMock.mockResolvedValue(query)
-
       await listItemsHandler(event)
 
       const joinCondition = db.itemsLeftJoinMock.mock.calls[0]?.[1]
@@ -742,7 +740,6 @@ describe('get /api/equipment/items', () => {
     const event = createTestEvent(db.dbHttp)
 
     getValidatedQueryMock.mockResolvedValue(query)
-
     await listItemsHandler(event)
 
     const compiled = compileSql(db.itemsWhereMock.mock.calls[0]?.[0])
@@ -756,7 +753,6 @@ describe('get /api/equipment/items', () => {
     const event = createTestEvent(db.dbHttp)
 
     getValidatedQueryMock.mockRejectedValue(h3.createError({ status: 400 }))
-
     await expect(listItemsHandler(event)).rejects.toMatchObject({ statusCode: 400 })
     expect(db.selectMock).not.toHaveBeenCalled()
   })

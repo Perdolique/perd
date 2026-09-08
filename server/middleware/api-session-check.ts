@@ -80,7 +80,6 @@ export default defineEventHandler(async (event) => {
         const loginPath = new URL('/login', url.origin)
 
         loginPath.searchParams.set('redirectTo', `${url.pathname}${url.search}`)
-
         await sendRedirect(event, `${loginPath.pathname}${loginPath.search}`)
 
         return

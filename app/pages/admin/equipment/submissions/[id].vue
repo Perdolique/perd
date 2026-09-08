@@ -253,21 +253,18 @@
         statusMessage.value = 'Changes saved.'
 
         await nextTick()
-
         saveStatus.value?.focus()
 
         return
       }
 
       await nextTick()
-
       decisionStatusElement.value?.focus()
     } catch (error) {
       if (getStatusCode(error) === 409) {
         isConflict.value = true
 
         await nextTick()
-
         conflictStatus.value?.focus()
 
         return

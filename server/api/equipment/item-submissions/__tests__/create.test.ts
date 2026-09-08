@@ -172,7 +172,6 @@ function createDb(options: CreateDbOptions = {}) {
 describe('post /api/equipment/item-submissions', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-
     validateRegisteredUserMock.mockResolvedValue('user-1')
 
     readValidatedBodyMock.mockResolvedValue({
@@ -297,7 +296,6 @@ describe('post /api/equipment/item-submissions', () => {
     } = createDb()
 
     createWebSocketClientMock.mockReturnValue(dbWrite)
-
     await createItemSubmissionHandler(createTestEvent({}))
 
     expect(selectMock).toHaveBeenCalledWith({

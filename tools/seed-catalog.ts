@@ -95,7 +95,6 @@ function buildCategoryPropertySeedRows(categoryIdBySlug: Map<string, number>) {
 
 async function resetAndSeedCatalog(db: Database) {
   assertSampleItemCoverage()
-
   await reset(db, catalogSchemaForReset)
 
   const groupSlugByName = createSlugMap(groupDefinitions)

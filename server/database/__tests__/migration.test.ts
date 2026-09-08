@@ -134,8 +134,8 @@ describe('category property negative value migration', () => {
     expect(addColumnPosition).toBeGreaterThanOrEqual(0)
     expect(temperatureUpdatePosition).toBeGreaterThan(addColumnPosition)
     expect(negativeValuesMigrationSql).toContain('property."categoryId" = category.id')
-    expect(negativeValuesMigrationSql).toContain("category.slug = 'sleeping-bags'")
-    expect(negativeValuesMigrationSql).toContain("property.slug = 'temperature-rating'")
+    expect(negativeValuesMigrationSql).toContain('category.slug = \'sleeping-bags\'')
+    expect(negativeValuesMigrationSql).toContain('property.slug = \'temperature-rating\'')
   })
 
   it('should preserve equipment items and their images', () => {

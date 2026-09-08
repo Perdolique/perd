@@ -39,6 +39,7 @@ function useGearLibraryMyGear() {
     const nextFailedItemIds = new Set(failedItemIds.value)
 
     nextFailedItemIds.delete(itemId)
+
     failedItemIds.value = nextFailedItemIds
 
     savingItemIds.value = new Set([...savingItemIds.value, itemId])
@@ -50,12 +51,14 @@ function useGearLibraryMyGear() {
       })
 
       gearLibraryStore.markItemSaved(itemId)
+
       announcement.value = `${itemName} added to My gear.`
     } catch (requestError) {
       const statusCode = getErrorStatus(requestError)
 
       if (statusCode === 409) {
         gearLibraryStore.markItemSaved(itemId)
+
         announcement.value = `${itemName} is already in My gear.`
       } else {
         failedItemIds.value = new Set([...failedItemIds.value, itemId])
@@ -65,6 +68,7 @@ function useGearLibraryMyGear() {
       const remainingSavingItemIds = new Set(savingItemIds.value)
 
       remainingSavingItemIds.delete(itemId)
+
       savingItemIds.value = remainingSavingItemIds
     }
   }

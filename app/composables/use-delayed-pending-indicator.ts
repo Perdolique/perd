@@ -66,6 +66,7 @@ function useDelayedPendingIndicator(
     }
 
     hideDelay.value = remainingDuration
+
     hideTimeout.start()
   }
 

@@ -213,7 +213,6 @@ test.describe('Login page', () => {
     await expect(githubLink).toHaveAttribute('href', repositoryUrl)
     await expect(githubLink).toHaveAttribute('target', '_blank')
     await expect(githubLink).toHaveAttribute('rel', 'noreferrer')
-
     await expect(page.locator('footer')).toContainText(`Commit #${buildCommitShortSha}`)
     await expect(commitLink).toBeVisible()
     await expect(commitLink).toHaveAttribute('href', buildCommitUrl)
@@ -243,15 +242,12 @@ test.describe('Login page', () => {
     await expect(page.getByRole('button', { name: 'Twitch' })).toBeEnabled()
     await expect(page.getByRole('status')).toHaveCount(0)
     expect(requestBodies).toStrictEqual([])
-
     await guestButton.click()
     await expect(guestButton).toBeDisabled()
     await expect(guestButton).toHaveAttribute('aria-busy', 'true')
     await expect(page.getByRole('status')).toHaveText('Complete the security check to continue.')
     expect(requestBodies).toStrictEqual([])
-
     await turnstile.complete(page)
-
     await expect(page.getByRole('alert')).toHaveText('Guest access is temporarily unavailable. Try again.')
     await expect(guestButton).toBeEnabled()
     expect(requestBodies).toStrictEqual([{ 'cf-turnstile-response': 'turnstile-token-1' }])
@@ -281,7 +277,6 @@ test.describe('Login page', () => {
       await turnstile[failure](page)
       await expect(dialog.getByRole('alert')).toHaveText('Security check is unavailable. Try again.')
       expect(requestBodies).toStrictEqual([])
-
       await dialog.getByRole('button', { name: 'Try again' }).click()
       await expect(dialog).toBeVisible()
       await expect(dialog.getByRole('alert')).toHaveCount(0)
@@ -290,7 +285,6 @@ test.describe('Login page', () => {
       await expect(dialog).toBeVisible()
       expect(requestBodies).toStrictEqual([])
       await turnstile.complete(page)
-
       await expect(dialog).toHaveCount(0)
       await expect(page.getByRole('alert')).toHaveText('Guest access is temporarily unavailable. Try again.')
       await expect(guestButton).toBeEnabled()
@@ -314,7 +308,6 @@ test.describe('Login page', () => {
     await turnstile.pauseAutomatically(page)
     await page.goto('/login')
     await turnstile.getRenderOptions(page)
-
     await trackSecurityDialogOpenings(page)
 
     const guestButton = page.getByRole('button', { name: 'Guest' })
@@ -358,9 +351,7 @@ test.describe('Login page', () => {
 
       await guestButton.click()
       await expect(dialog.getByRole('heading', { name: 'Security check' })).toBeFocused()
-
       await dismissSecurityDialog(page, dismissal)
-
       await expect(dialog).toHaveCount(0)
       await expect(guestButton).toBeEnabled()
       await expect(guestButton).toBeFocused()
@@ -369,7 +360,6 @@ test.describe('Login page', () => {
       await expect(dialog).toHaveCount(0)
       await expect(page.getByRole('alert')).toHaveCount(0)
       expect(requestBodies).toStrictEqual([])
-
       await guestButton.click()
       await expect(dialog).toBeVisible()
       await turnstile.replayRemovedCallbacks(page)
@@ -429,7 +419,6 @@ test.describe('Login page', () => {
       await page.keyboard.press('Tab')
       await expect(guestButton).not.toBeFocused()
       await expect(twitchButton).not.toBeFocused()
-
       await expectSecurityDialogFitsViewport(page)
       await page.keyboard.press('Escape')
       await expect(dialog).toHaveCount(0)
@@ -449,7 +438,6 @@ test.describe('Login page', () => {
 
     await expect(page.getByRole('button', { name: 'Guest' })).toBeEnabled()
     await expect(page.getByRole('button', { name: 'Twitch' })).toBeEnabled()
-
     await page.unrouteAll({ behavior: 'wait' })
 
     await page.route('**/api/auth/create-session', async (route) => {
@@ -470,6 +458,7 @@ test.describe('Login page', () => {
 
     await page.route('https://challenges.cloudflare.com/turnstile/v0/api.js**', async (route) => {
       await scriptGate.promise
+
       await route.fallback()
     })
 
@@ -485,14 +474,14 @@ test.describe('Login page', () => {
     const scriptRequest = page.waitForRequest('https://challenges.cloudflare.com/turnstile/v0/api.js**')
 
     await page.goto('/login', { waitUntil: 'domcontentloaded' })
+
     await scriptRequest
+
     await page.getByRole('button', { name: 'Guest' }).click()
     await expect(page.getByRole('button', { name: 'Guest' })).toBeDisabled()
     await expect(page.getByRole('button', { name: 'Guest' })).toHaveAttribute('aria-busy', 'true')
     expect(requestBodies).toStrictEqual([])
-
     scriptGate.resolve()
-
     await expect(page.getByRole('alert')).toHaveText('Guest access is temporarily unavailable. Try again.')
     await expect(page.getByRole('button', { name: 'Guest' })).toBeEnabled()
     expect(requestBodies).toStrictEqual([{ 'cf-turnstile-response': 'turnstile-token-1' }])
@@ -524,12 +513,10 @@ test.describe('Login page', () => {
     await turnstile.getRenderOptions(page)
     await page.getByRole('button', { name: 'Guest' }).click()
     await expect(page.getByRole('dialog', { name: 'Security check' })).toBeVisible()
-
     await navigateWithinApp(page, '/__e2e/modal-dialog')
     await expect(page.getByRole('button', { name: 'Open centered dialog' })).toBeVisible()
     await turnstile.replayRemovedCallbacks(page)
     expect(requestBodies).toStrictEqual([])
-
     await navigateWithinApp(page, '/login')
     await expect.poll(async () => turnstile.getRenderOptions(page)).toHaveLength(2)
     await expect(page.getByRole('dialog')).toHaveCount(0)
@@ -551,7 +538,6 @@ test.describe('Login page', () => {
     await page.route(brandsApiRoute, continueRoute)
     await page.goto('/api/equipment/brands')
     await page.unroute(brandsApiRoute, continueRoute)
-
     await expect(page).toHaveURL(/\/login\?redirectTo=\/api\/equipment\/brands$/u)
 
     await page.route('**/api/auth/create-session', async (route) => {
@@ -574,7 +560,6 @@ test.describe('Login page', () => {
     })
 
     await page.getByRole('button', { name: 'Guest' }).click()
-
     await expect(page).toHaveURL(/\/api\/equipment\/brands$/u)
     await expect(page.locator('body')).toHaveText('[]')
 
@@ -599,7 +584,6 @@ test.describe('Login page', () => {
 
     await page.goto('/login?redirectTo=/gear-library/new')
     await page.getByRole('button', { name: 'Guest' }).click()
-
     await expect(page).toHaveURL(/\/gear-library\/new$/u)
     await expect(page.getByText('Guest accounts cannot submit gear for review.')).toBeVisible()
     await expect.poll(async () => getClientUserId(page)).toBe(responseUserId)
@@ -619,7 +603,6 @@ test.describe('Login page', () => {
       const guestButton = page.getByRole('button', { name: 'Guest' })
 
       await guestButton.click()
-
       await expect(page.getByRole('alert')).toHaveText(message)
       await expect(guestButton).toBeEnabled()
     })
@@ -643,11 +626,9 @@ test.describe('Login page', () => {
     await turnstile.complete(page)
     await expect(page.getByRole('alert')).toHaveText('Security check failed. Try again.')
     await expect(guestButton).toBeEnabled()
-
     await guestButton.click()
     await expect(page.getByRole('status')).toBeVisible()
     await turnstile.complete(page)
-
     await expect(page).toHaveURL(/\/gear-library\/new$/u)
 
     expect(requestBodies).toStrictEqual([
@@ -721,7 +702,6 @@ test.describe('Login page', () => {
     })
 
     await page.goto('/auth/twitch?code=oauth-code&state=%2Fapi%2Fequipment%2Fbrands')
-
     await expect(page).toHaveURL(/\/api\/equipment\/brands$/u)
     await expect(page.locator('body')).toHaveText('[]')
   })

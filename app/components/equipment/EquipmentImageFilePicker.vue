@@ -155,6 +155,7 @@
 
     if (nextError !== null) {
       validationError.value = nextError
+
       synchronizeInputFiles(files.value)
 
       return
@@ -187,6 +188,7 @@
     (nextFiles) => {
       if (nextFiles.length === 0) {
         validationError.value = null
+
         synchronizeInputFiles(nextFiles)
       }
     }

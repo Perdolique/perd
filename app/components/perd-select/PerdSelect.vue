@@ -261,7 +261,6 @@
     }
 
     event.preventDefault()
-
     closeDropdown()
   }
 

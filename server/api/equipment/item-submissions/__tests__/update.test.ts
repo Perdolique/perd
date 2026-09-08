@@ -423,7 +423,6 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
     const db = createUpdateDb({ item: undefined })
 
     createWebSocketClientMock.mockReturnValue(db.dbWrite)
-
     await expect(updateHandler(createTestEvent({}))).rejects.toMatchObject({ statusCode: 404 })
     expect(db.propertyValuesMock).not.toHaveBeenCalled()
     expect(db.endMock).toHaveBeenCalledTimes(1)
@@ -436,7 +435,6 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
     } })
 
     createWebSocketClientMock.mockReturnValue(db.dbWrite)
-
     await expect(updateHandler(createTestEvent({}))).rejects.toMatchObject({ statusCode: 409 })
     expect(db.propertyValuesMock).not.toHaveBeenCalled()
     expect(db.endMock).toHaveBeenCalledTimes(1)
@@ -454,7 +452,6 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
     })
 
     createWebSocketClientMock.mockReturnValue(db.dbWrite)
-
     await expect(updateHandler(createTestEvent({}))).rejects.toMatchObject({ statusCode: 409 })
     expect(db.propertyLockForMock).not.toHaveBeenCalled()
     expect(db.updateWhereMock).not.toHaveBeenCalled()
@@ -489,7 +486,6 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
     const authError = h3.createError({ status: 403 })
 
     validateAdminUserMock.mockRejectedValue(authError)
-
     await expect(updateHandler(createTestEvent({}))).rejects.toBe(authError)
     expect(readValidatedBodyMock).not.toHaveBeenCalled()
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
