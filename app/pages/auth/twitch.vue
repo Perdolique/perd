@@ -63,6 +63,7 @@
         throw new Error('Failed to connect Twitch')
       }
 
+      user.value.email = result.email
       user.value.userId = result.userId
       user.value.isAdmin = result.isAdmin
       user.value.isGuest = result.isGuest

@@ -48,7 +48,7 @@
     name: string;
     placeholder?: string;
     required?: boolean;
-    type?: 'text' | 'url';
+    type?: 'text' | 'url' | 'email' | 'password';
   }
 
   const {

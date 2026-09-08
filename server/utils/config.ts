@@ -1,9 +1,11 @@
 import * as v from 'valibot'
-import type { H3Event } from 'h3'
+import { createError, type H3Event } from 'h3'
+import { isEmailRegistrationEnabled } from '#shared/utils/email-registration'
 import { useRuntimeConfig } from 'nitropack/runtime'
 import { nonEmptyStringSchema } from '#server/utils/validation/schemas'
 import { createWebSocketClient } from './database'
 import { optionalBooleanSchema, type DatabaseConfig } from './config-env'
+import { validateEmailRegistrationConfig, type EmailRegistrationConfig } from './auth/email-registration-config'
 import { validateTurnstileConfig, type TurnstileConfig } from './turnstile-config'
 
 const sessionSecretSchema = v.pipe(
@@ -42,9 +44,27 @@ function createWebSocketClientFromEvent(event: H3Event) {
   return createWebSocketClient(config)
 }
 
+function requireEmailRegistrationEnabled(event: H3Event): void {
+  const config = useRuntimeConfig(event)
+
+  if (!isEmailRegistrationEnabled(config.public.emailRegistrationEnabled)) {
+    throw createError({ status: 404 })
+  }
+}
+
+function getEmailRegistrationConfig(event: H3Event): EmailRegistrationConfig {
+  requireEmailRegistrationEnabled(event)
+
+  const config = useRuntimeConfig(event)
+
+  return validateEmailRegistrationConfig(config.emailRegistration)
+}
+
 export {
   createWebSocketClientFromEvent,
+  getEmailRegistrationConfig,
   getRuntimeDatabaseConfig,
   getRuntimeSessionSecret,
-  getRuntimeTurnstileConfig
+  getRuntimeTurnstileConfig,
+  requireEmailRegistrationEnabled
 }

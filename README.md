@@ -45,3 +45,8 @@ destructive catalog reset only for a local or new empty database with
 
 Every canonical catalog or reference-data change must include a targeted,
 one-time SQL migration and the matching update to the seed definitions.
+
+## Email registration
+
+See [Email registration](EMAIL_REGISTRATION.md) for rollout prerequisites, local
+development, and focused verification. Production enablement is gated on #748.

@@ -2,15 +2,17 @@ import { createError, type H3Event } from 'h3'
 import { and, eq } from 'drizzle-orm'
 import type { OAuthProvider } from '#shared/types/oauth'
 import { clearAppSession, useAppSession } from '#server/utils/session'
-import { oauthAccounts, oauthProviders, users } from '#server/database/schema'
+import { emailCredentials, oauthAccounts, oauthProviders, users } from '#server/database/schema'
 
 interface SessionUser {
+  readonly email: string | null;
   readonly userId: string | null;
   readonly isAdmin: boolean;
   readonly isGuest: boolean;
 }
 
 const defaultUser : SessionUser = {
+  email: null,
   userId: null,
   isAdmin: false,
   isGuest: false
@@ -37,6 +39,8 @@ async function getSessionUser(event: H3Event) : Promise<SessionUser> {
       },
 
       with: {
+        emailCredential: { columns: { email: true } },
+
         oauthAccounts: {
           columns: {
             id: true
@@ -53,9 +57,11 @@ async function getSessionUser(event: H3Event) : Promise<SessionUser> {
     return defaultUser
   }
 
-  const isGuest = foundUser.oauthAccounts.length === 0
+  const email = foundUser.emailCredential?.email ?? null
+  const isGuest = foundUser.oauthAccounts.length === 0 && email === null
 
   return {
+    email,
     userId: foundUser.id,
     isAdmin: foundUser.isAdmin,
     isGuest
@@ -69,6 +75,7 @@ async function getUserByOAuthAccount(
 ) : Promise<SessionUser> {
   const [foundUser] = await event.context.dbHttp
     .select({
+      email: emailCredentials.email,
       userId: oauthAccounts.userId,
       isAdmin: users.isAdmin
     })
@@ -85,6 +92,7 @@ async function getUserByOAuthAccount(
       users,
       eq(users.id, oauthAccounts.userId)
     )
+    .leftJoin(emailCredentials, eq(emailCredentials.userId, users.id))
     .where(
       eq(oauthAccounts.accountId, accountId)
     )
@@ -94,6 +102,7 @@ async function getUserByOAuthAccount(
   }
 
   return {
+    email: foundUser.email,
     userId: foundUser.userId,
     isAdmin: foundUser.isAdmin,
     isGuest: false

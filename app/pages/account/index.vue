@@ -8,6 +8,15 @@
         @logout="handleLogout"
       />
 
+      <p v-if="verifiedEmail">Verified email: {{ verifiedEmail }}</p>
+      <ActionPanel
+        v-if="canAddEmail"
+        icon="hugeicons:mail-01"
+        title="Add email"
+        subtitle="Keep access to your account with a verified email and password."
+        to="/register?redirectTo=/account"
+      />
+
       <ActionPanel
         icon="hugeicons:task-daily-01"
         subtitle="Track pending, published, and rejected catalog contributions."
@@ -44,7 +53,8 @@
 
 <script lang="ts" setup>
   import { computed, ref } from 'vue'
-  import { definePageMeta, navigateTo, useRequestFetch, useUserStore } from '#imports'
+  import { definePageMeta, navigateTo, useRequestFetch, useRuntimeConfig, useUserStore } from '#imports'
+  import { isEmailRegistrationEnabled } from '#shared/utils/email-registration'
   import { useGearLibraryStore } from '~/stores/gear-library'
   import { usePackingListsStore } from '~/stores/packing-lists'
   import AccountProfileCard from '~/components/account/AccountProfileCard.vue'
@@ -64,6 +74,9 @@
   const requestFetch = useRequestFetch()
   const showDeleteModal = ref(false)
   const isDeleting = ref(false)
+  const registrationEnabled = isEmailRegistrationEnabled(useRuntimeConfig().public.emailRegistrationEnabled)
+  const verifiedEmail = computed(() => user.value.email)
+  const canAddEmail = computed(() => registrationEnabled && user.value.email === null)
   const role = computed(() => user.value.isAdmin ? 'Admin' : 'User')
   const isAdmin = computed(() => user.value.isAdmin)
   const userIdText = computed(() => user.value.userId ?? '')

@@ -6,6 +6,7 @@ import { getTwitchOAuthToken, getTwitchUserInfo, getRuntimeTwitchConfig } from '
 import { validateTwitchOAuthBody } from '#server/utils/validation/schemas'
 
 interface TwitchOAuthResponse {
+  email: string | null;
   isAdmin: boolean;
   isGuest: boolean;
   userId: string;
@@ -29,7 +30,10 @@ export default defineEventHandler(async (event): Promise<TwitchOAuthResponse> =>
 
       await updateAppSession(event, newUser)
 
-      return newUser
+      return {
+        ...newUser,
+        email: null
+      }
     }
 
     // User already linked their Twitch account
@@ -38,6 +42,7 @@ export default defineEventHandler(async (event): Promise<TwitchOAuthResponse> =>
     })
 
     return {
+      email: foundUser.email,
       isAdmin: foundUser.isAdmin,
       isGuest: foundUser.isGuest,
       userId: foundUser.userId

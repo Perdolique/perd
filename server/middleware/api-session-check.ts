@@ -16,6 +16,8 @@ const apiBase = '/api'
 
 const publicApiPaths = [
   '/auth/create-session',
+  '/auth/email/registration',
+  '/auth/email/registration/verify',
   '/oauth/twitch'
 ] as const
 

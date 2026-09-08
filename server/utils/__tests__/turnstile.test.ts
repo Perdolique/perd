@@ -2,7 +2,7 @@ import { createError, H3Error } from 'h3'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { localTurnstileHostnames, turnstileAlwaysPassSecret } from '#shared/utils/turnstile'
 import { validateTurnstileConfig } from '#server/utils/turnstile-config'
-import { verifyGuestSessionTurnstile } from '#server/utils/turnstile'
+import { verifyTurnstile } from '#server/utils/turnstile'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
 const { getRuntimeTurnstileConfigMock } = vi.hoisted(() => {
@@ -57,7 +57,10 @@ async function getVerificationError(
   const requestIp = options.requestIp ?? remoteIp
 
   try {
-    await verifyGuestSessionTurnstile(event, submittedToken, requestIp)
+    await verifyTurnstile(event, submittedToken, {
+      remoteIp: requestIp,
+      expectedAction: 'guest_session'
+    })
   } catch (error) {
     if (error instanceof H3Error) {
       return error
@@ -116,7 +119,7 @@ function getConsoleErrorCall(): ConsoleErrorCall {
   }
 }
 
-describe(verifyGuestSessionTurnstile, () => {
+describe(verifyTurnstile, () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.stubGlobal('fetch', fetchMock)
@@ -181,7 +184,10 @@ describe(verifyGuestSessionTurnstile, () => {
 
     setTurnstileConfig(encodedSecret)
 
-    await verifyGuestSessionTurnstile(createTestEvent({}), encodedToken, ipv6Address)
+    await verifyTurnstile(createTestEvent({}), encodedToken, {
+      remoteIp: ipv6Address,
+      expectedAction: 'guest_session'
+    })
 
     expect(timeoutMock).toHaveBeenCalledWith(10_000)
     expect(fetchMock).toHaveBeenCalledTimes(1)
@@ -208,7 +214,10 @@ describe(verifyGuestSessionTurnstile, () => {
 
   it('should accept the maximum supported token length', async () => {
     await expect(
-      verifyGuestSessionTurnstile(createTestEvent({}), 'a'.repeat(2048), remoteIp)
+      verifyTurnstile(createTestEvent({}), 'a'.repeat(2048), {
+        remoteIp,
+        expectedAction: 'guest_session'
+      })
     ).resolves.toBeUndefined()
 
     expect(fetchMock).toHaveBeenCalledTimes(1)
@@ -336,7 +345,10 @@ describe(verifyGuestSessionTurnstile, () => {
     })
 
     await expect(
-      verifyGuestSessionTurnstile(createTestEvent({}), token, remoteIp)
+      verifyTurnstile(createTestEvent({}), token, {
+        remoteIp,
+        expectedAction: 'guest_session'
+      })
     ).resolves.toBeUndefined()
   })
 
@@ -454,7 +466,7 @@ describe(verifyGuestSessionTurnstile, () => {
     await getVerificationError()
 
     expect(console.error).toHaveBeenCalledWith(
-      'Turnstile Siteverify rejected a Guest session',
+      'Turnstile Siteverify rejected verification',
       {
         response: {
           action: 'login',

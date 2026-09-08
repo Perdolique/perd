@@ -27,12 +27,16 @@
     <TurnstileWidget
       ref="turnstileWidget"
       :sitekey="turnstileSiteKey"
+      :action="guestSessionTurnstileAction"
       @verified="finishGuestLogin"
       @error="handleVerificationError"
       @cancel="cancelGuestLogin"
     />
 
     <main :class="$style.content">
+      <PerdButton v-if="emailRegistrationEnabled" :to="registrationTarget" :class="$style.button">
+        Create account with email
+      </PerdButton>
       <p v-if="hasGuestError" :class="$style.error" role="alert">
         {{ guestError }}
       </p>
@@ -99,7 +103,8 @@
     withMinimumDelay
   } from '#imports'
 
-  import { turnstileResponseFieldName } from '#shared/utils/turnstile'
+  import { isEmailRegistrationEnabled } from '#shared/utils/email-registration'
+  import { guestSessionTurnstileAction, turnstileResponseFieldName } from '#shared/utils/turnstile'
   import { getRedirectNavigationTarget } from '~/utils/router'
   import PerdButton from '~/components/PerdButton.vue'
   import TurnstileWidget from '~/components/auth/TurnstileWidget.vue'
@@ -126,9 +131,20 @@
     }]
   })
 
+  const route = useRoute()
+  const emailRegistrationEnabled = isEmailRegistrationEnabled(useRuntimeConfig().public.emailRegistrationEnabled)
+
+  const registrationTarget = computed(() => {
+    const redirectTo = getRedirectNavigationTarget(route.query.redirectTo).path
+
+    return {
+      path: '/register',
+      query: { redirectTo }
+    }
+  })
+
   const { user } = useUserStore()
   const requestFetch = useRequestFetch()
-  const route = useRoute()
   const turnstileWidget = useTemplateRef('turnstileWidget')
   const guestButton = useTemplateRef('guestButton')
   const isChecking = ref(false)

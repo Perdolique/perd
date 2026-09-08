@@ -129,6 +129,31 @@ const oauthAccounts = pgTable('oauth_accounts', {
   unique().on(table.providerId, table.accountId)
 ])
 
+/** Verified credentials only; pending registrations never create users. */
+const emailCredentials = pgTable('email_credentials', {
+  userId: uuid().primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+  email: varchar({ length: 254 }).notNull().unique(),
+  passwordHash: text().notNull(),
+  verifiedAt: timestamp({ withTimezone: true }).notNull().defaultNow()
+}, (table) => [
+  check('email_credentials_normalized_email_check', sql`${table.email} = lower(btrim(${table.email}))`)
+])
+
+const pendingEmailRegistrations = pgTable('pending_email_registrations', {
+  tokenHash: varchar({ length: 64 }).primaryKey(),
+  email: varchar({ length: 254 }).notNull(),
+  passwordHash: text().notNull(),
+  redirectTo: text().notNull(),
+  userId: uuid().references(() => users.id, { onDelete: 'cascade' }),
+  sessionIdHash: varchar({ length: 64 }),
+  createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp({ withTimezone: true }).notNull()
+}, (table) => [
+  index('pending_email_registrations_email_index').on(table.email),
+  check('pending_email_registrations_session_check', sql`(${table.userId} IS NULL) = (${table.sessionIdHash} IS NULL)`),
+  check('pending_email_registrations_normalized_email_check', sql`${table.email} = lower(btrim(${table.email}))`)
+])
+
 // ─── Equipment catalog ──────────────────────────────────────────────
 
 /**
@@ -718,6 +743,8 @@ const contributions = pgTable('contributions', {
 })
 
 export {
+  emailCredentials,
+  pendingEmailRegistrations,
   users,
   oauthProviders,
   oauthAccounts,

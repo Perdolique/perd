@@ -14,7 +14,7 @@ const {
   setResponseHeaderMock,
   setResponseStatusMock,
   useAppSessionMock,
-  verifyGuestSessionTurnstileMock
+  verifyTurnstileMock
 } = vi.hoisted(() => {
   return {
     getGuestSessionRateLimiterBindingMock: vi.fn(),
@@ -24,7 +24,7 @@ const {
     setResponseHeaderMock: vi.fn<typeof h3.setResponseHeader>(),
     setResponseStatusMock: vi.fn<typeof h3.setResponseStatus>(),
     useAppSessionMock: vi.fn(),
-    verifyGuestSessionTurnstileMock: vi.fn()
+    verifyTurnstileMock: vi.fn()
   }
 })
 
@@ -56,7 +56,7 @@ vi.mock(import('#server/utils/session'), () => {
 
 vi.mock(import('#server/utils/turnstile'), () => {
   return {
-    verifyGuestSessionTurnstile: verifyGuestSessionTurnstileMock
+    verifyTurnstile: verifyTurnstileMock
   }
 })
 
@@ -148,7 +148,7 @@ describe('post /api/auth/create-session', () => {
       update: sessionUpdateMock
     })
 
-    verifyGuestSessionTurnstileMock.mockImplementation(() => {
+    verifyTurnstileMock.mockImplementation(() => {
       // Successful verification has no return value.
     })
   })
@@ -170,10 +170,13 @@ describe('post /api/auth/create-session', () => {
 
     expect(readBodyMock).toHaveBeenCalledWith(event)
 
-    expect(verifyGuestSessionTurnstileMock).toHaveBeenCalledWith(
+    expect(verifyTurnstileMock).toHaveBeenCalledWith(
       event,
       turnstileToken,
-      clientIp
+      {
+        remoteIp: clientIp,
+        expectedAction: 'guest_session'
+      }
     )
 
     expect(rateLimitMock).toHaveBeenCalledWith({ key: clientIp })
@@ -192,7 +195,7 @@ describe('post /api/auth/create-session', () => {
       userId
     })
 
-    const [verifyOrder = Number.NaN] = verifyGuestSessionTurnstileMock.mock.invocationCallOrder
+    const [verifyOrder = Number.NaN] = verifyTurnstileMock.mock.invocationCallOrder
     const [rateLimitOrder = Number.NaN] = rateLimitMock.mock.invocationCallOrder
     const [databaseOrder = Number.NaN] = getSessionUserMock.mock.invocationCallOrder
 
@@ -258,7 +261,7 @@ describe('post /api/auth/create-session', () => {
       statusCode: 503
     })
 
-    expect(verifyGuestSessionTurnstileMock).not.toHaveBeenCalled()
+    expect(verifyTurnstileMock).not.toHaveBeenCalled()
     expect(rateLimitMock).not.toHaveBeenCalled()
     expect(getSessionUserMock).not.toHaveBeenCalled()
     expect(insertMock).not.toHaveBeenCalled()
@@ -311,7 +314,7 @@ describe('post /api/auth/create-session', () => {
     const event = createGuestEvent(dbHttp)
     const verificationError = createError({ status })
 
-    verifyGuestSessionTurnstileMock.mockRejectedValue(verificationError)
+    verifyTurnstileMock.mockRejectedValue(verificationError)
 
     await expect(createGuestSessionHandler(event)).rejects.toMatchObject({
       statusCode: status

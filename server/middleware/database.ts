@@ -1,6 +1,7 @@
+import { emailRegistrationApiPaths } from '#shared/utils/email-registration'
 import { defineEventHandler, getRequestURL } from 'h3'
 import { createHttpClient } from '#server/utils/database'
-import { getRuntimeDatabaseConfig } from '#server/utils/config'
+import { getRuntimeDatabaseConfig, requireEmailRegistrationEnabled } from '#server/utils/config'
 
 declare module 'h3' {
   interface H3EventContext {
@@ -20,6 +21,10 @@ export default defineEventHandler((event) => {
 
   if (!isApiRequest || isNuxtIconRequest) {
     return
+  }
+
+  if (emailRegistrationApiPaths.some(path => path === pathname.replace(/\/$/u, ''))) {
+    requireEmailRegistrationEnabled(event)
   }
 
   const dbConfig = getRuntimeDatabaseConfig(event)
