@@ -5,7 +5,13 @@ import { useRuntimeConfig } from 'nitropack/runtime'
 import { nonEmptyStringSchema } from '#server/utils/validation/schemas'
 import { createWebSocketClient } from './database'
 import { optionalBooleanSchema, type DatabaseConfig } from './config-env'
-import { validateEmailRegistrationConfig, type EmailRegistrationConfig } from './auth/email-registration-config'
+
+import {
+  validateEmailAuthenticationOrigin,
+  validateEmailRegistrationConfig,
+  type EmailRegistrationConfig
+} from './auth/email-registration-config'
+
 import { validateTurnstileConfig, type TurnstileConfig } from './turnstile-config'
 
 const sessionSecretSchema = v.pipe(
@@ -60,8 +66,15 @@ function getEmailRegistrationConfig(event: H3Event): EmailRegistrationConfig {
   return validateEmailRegistrationConfig(config.emailRegistration)
 }
 
+function getEmailAuthenticationOrigin(event: H3Event): string {
+  const config = useRuntimeConfig(event)
+
+  return validateEmailAuthenticationOrigin(config.emailRegistration)
+}
+
 export {
   createWebSocketClientFromEvent,
+  getEmailAuthenticationOrigin,
   getEmailRegistrationConfig,
   getRuntimeDatabaseConfig,
   getRuntimeSessionSecret,

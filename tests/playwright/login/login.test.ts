@@ -181,17 +181,26 @@ test.describe('Login page', () => {
   }) => {
     await page.goto('/login')
 
-    const guestButton = page.getByRole('button', { name: 'Guest' })
+    const guestButton = page.getByRole('button', {
+      name: 'Continue as guest',
+      exact: true
+    })
+
+    const twitchButton = page.getByRole('button', {
+      name: 'Continue with Twitch',
+      exact: true
+    })
 
     await expect(guestButton).toBeEnabled()
     await expect(guestButton).toHaveClass(/secondary/u)
-    await expect(page.getByRole('button', { name: 'Twitch' })).toBeVisible()
+    await expect(twitchButton).toBeVisible()
+    await expect(twitchButton).toHaveClass(/secondary/u)
     await expect(page.locator('iframe[src*="challenges.cloudflare.com"]')).toHaveCount(0)
 
     const renderOptions = await turnstile.getRenderOptions(page)
 
     expect(renderOptions).toStrictEqual([{
-      action: 'guest_session',
+      action: 'email_sign_in',
       appearance: 'interaction-only',
       execution: 'execute',
       responseField: false,
@@ -289,7 +298,7 @@ test.describe('Login page', () => {
       await expect(page.getByRole('alert')).toHaveText('Guest access is temporarily unavailable. Try again.')
       await expect(guestButton).toBeEnabled()
       expect(requestBodies).toStrictEqual([{ 'cf-turnstile-response': 'turnstile-token-1' }])
-      expect(await turnstile.getRenderOptions(page)).toHaveLength(2)
+      expect(await turnstile.getRenderOptions(page)).toHaveLength(3)
     })
   }
 
@@ -313,7 +322,7 @@ test.describe('Login page', () => {
     const guestButton = page.getByRole('button', { name: 'Guest' })
 
     await guestButton.click()
-    await expect(guestButton).toHaveText('Guest')
+    await expect(guestButton).toHaveText('Continue as guest')
     await expect(guestButton).toHaveAttribute('aria-busy', 'true')
     await expect(page.getByRole('dialog')).toHaveCount(0)
     expect(requestBodies).toStrictEqual([])
@@ -518,7 +527,7 @@ test.describe('Login page', () => {
     await turnstile.replayRemovedCallbacks(page)
     expect(requestBodies).toStrictEqual([])
     await navigateWithinApp(page, '/login')
-    await expect.poll(async () => turnstile.getRenderOptions(page)).toHaveLength(2)
+    await expect.poll(async () => turnstile.getRenderOptions(page)).toHaveLength(3)
     await expect(page.getByRole('dialog')).toHaveCount(0)
     await page.getByRole('button', { name: 'Guest' }).click()
     await expect(page.getByRole('dialog', { name: 'Security check' })).toBeVisible()
@@ -640,7 +649,7 @@ test.describe('Login page', () => {
       }
     ])
 
-    expect(await turnstile.getRenderOptions(page)).toHaveLength(2)
+    expect(await turnstile.getRenderOptions(page)).toHaveLength(3)
   })
 
   test('should start twitch oauth without a Turnstile token', async ({ page, turnstile }) => {

@@ -80,9 +80,9 @@ describe('api session check middleware', () => {
     })
   })
 
-  it('should skip redirects for public api routes', async () => {
+  it.each(['/api/oauth/twitch', '/api/auth/email/sign-in'])('should skip redirects for public api routes: %s', async (path) => {
     const event = createMiddlewareEvent({
-      path: '/api/oauth/twitch',
+      path,
 
       headers: {
         accept: 'text/html',

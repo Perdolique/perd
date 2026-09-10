@@ -61,6 +61,24 @@ const guestRateLimitScenarios = [
   }
 ] as const
 
+const emailSignInRateLimitScenarios = [
+  {
+    environment: 'development',
+    getRateLimits: (config: WranglerConfig) => config.ratelimits,
+    namespaceId: '687734013'
+  },
+  {
+    environment: 'staging',
+    getRateLimits: (config: WranglerConfig) => config.env.staging.ratelimits,
+    namespaceId: '687734014'
+  },
+  {
+    environment: 'production',
+    getRateLimits: (config: WranglerConfig) => config.env.production.ratelimits,
+    namespaceId: '687734015'
+  }
+] as const
+
 async function readWranglerConfig() {
   const source = await readFile(wranglerConfigPath, 'utf8')
   const rawConfig: unknown = JSON.parse(source)
@@ -115,6 +133,40 @@ describe('wrangler Cloudflare configuration', () => {
       })
     }
   )
+
+  it.each(emailSignInRateLimitScenarios)(
+    'should configure the $environment email sign-in limiter namespace',
+    async ({ getRateLimits, namespaceId }) => {
+      const { config } = await readWranglerConfig()
+      const rateLimits = getRateLimits(config)
+      const signInRateLimit = rateLimits.find(({ name }) => name === 'EMAIL_SIGN_IN_RATE_LIMITER')
+
+      expect(signInRateLimit).toStrictEqual({
+        name: 'EMAIL_SIGN_IN_RATE_LIMITER',
+        namespace_id: namespaceId,
+
+        simple: {
+          limit: 5,
+          period: 60
+        }
+      })
+    }
+  )
+
+  it('should keep email sign-in namespaces unique and enable only production registration', async () => {
+    const { config } = await readWranglerConfig()
+
+    const namespaceIds = emailSignInRateLimitScenarios.map(({ getRateLimits }) => {
+      const rateLimits = getRateLimits(config)
+      const signInRateLimit = rateLimits.find(({ name }) => name === 'EMAIL_SIGN_IN_RATE_LIMITER')
+
+      return signInRateLimit?.namespace_id
+    })
+
+    expect(new Set(namespaceIds)).toHaveLength(3)
+    expect(config.env.production.vars.NUXT_PUBLIC_EMAIL_REGISTRATION_ENABLED).toBe('true')
+    expect(config.env.staging.vars.NUXT_PUBLIC_EMAIL_REGISTRATION_ENABLED).toBe('false')
+  })
 
   it('should keep exact deployment-specific Turnstile configuration', async () => {
     const { config, source } = await readWranglerConfig()

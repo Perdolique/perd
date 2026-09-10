@@ -67,6 +67,19 @@ function getGuestSessionRateLimiterBinding(event: H3Event): Env['GUEST_SESSION_R
   return binding
 }
 
+function getEmailSignInRateLimiterBinding(event: H3Event): Env['EMAIL_SIGN_IN_RATE_LIMITER'] {
+  const binding = event.context.cloudflare?.env.EMAIL_SIGN_IN_RATE_LIMITER
+
+  if (binding === undefined) {
+    throw createError({
+      status: 503,
+      statusMessage: 'Email sign-in rate limiter unavailable'
+    })
+  }
+
+  return binding
+}
+
 function getPhotoSubmissionEnvironment(event: H3Event): PhotoSubmissionEnvironment {
   const environment = event.context.cloudflare?.env.PHOTO_SUBMISSION_ENVIRONMENT
 
@@ -83,6 +96,7 @@ function getPhotoSubmissionEnvironment(event: H3Event): PhotoSubmissionEnvironme
 
 export {
   getCloudflareImagesBinding,
+  getEmailSignInRateLimiterBinding,
   getGuestClientIp,
   getGuestSessionRateLimiterBinding,
   getPhotoSubmissionEnvironment,

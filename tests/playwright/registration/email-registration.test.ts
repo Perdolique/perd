@@ -109,8 +109,12 @@ test.describe('Email registration', () => {
     await expect(page.getByRole('button', { name: 'Send verification email' })).toBeFocused()
     await page.keyboard.press('Enter')
     await expect(page.getByRole('status')).toContainText('Check your email')
+    await expect(page.getByRole('status')).toContainText('enter your password again')
     await expect(page.getByRole('status')).toBeFocused()
+    await expect(page.getByLabel('Email', { exact: true })).toHaveValue('trip@example.com')
+    await expect(page.getByLabel('Password', { exact: true })).toHaveValue('')
     await page.screenshot({ path: test.info().outputPath('registration-mobile.png') })
+    await page.getByLabel('Password', { exact: true }).fill(password)
     await page.getByRole('button', { name: 'Send another email' }).click()
     await expect.poll(() => bodies.length).toBe(2)
 

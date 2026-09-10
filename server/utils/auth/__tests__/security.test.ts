@@ -3,7 +3,7 @@ import { Socket } from 'node:net'
 import { createEvent } from 'h3'
 import { DrizzleQueryError } from 'drizzle-orm'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { validateEmailRegistrationConfig } from '../email-registration-config'
+import { validateEmailAuthenticationOrigin, validateEmailRegistrationConfig } from '../email-registration-config'
 import { enforceRegistrationRateLimit } from '../email-registration-request'
 import { sendRegistrationEmail } from '../email-registration-mail'
 import { getAuthErrorDetails } from '../telemetry'
@@ -61,6 +61,14 @@ describe('email registration security configuration', () => {
       origin: 'https://staging.metsik.app',
       stagingRecipient: 'one.trip+test@example.com'
     })
+  })
+
+  it('should allow sign-in origin validation without a staging registration recipient', () => {
+    expect(validateEmailAuthenticationOrigin({
+      environment: 'staging',
+      origin: 'https://staging.metsik.app',
+      stagingRecipient: ''
+    })).toBe('https://staging.metsik.app')
   })
 })
 

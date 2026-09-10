@@ -61,6 +61,7 @@ function createImagesBinding(options: {
     bytes: vi.fn<ImageHandle['bytes']>().mockResolvedValue(null),
     delete: deleteImageMock,
     details: vi.fn<ImageHandle['details']>().mockResolvedValue(imageMetadata),
+    signedUrl: vi.fn<ImageHandle['signedUrl']>(),
     update: vi.fn<ImageHandle['update']>().mockResolvedValue(imageMetadata)
   }
 
@@ -75,11 +76,13 @@ function createImagesBinding(options: {
         listComplete: true
       }),
 
+      createDirectUpload: vi.fn<Env['IMAGES']['hosted']['createDirectUpload']>(),
       upload: uploadImageMock
     },
 
     info: imageInfoMock,
-    input: vi.fn<Env['IMAGES']['input']>()
+    input: vi.fn<Env['IMAGES']['input']>(),
+    text: vi.fn<Env['IMAGES']['text']>()
   }
 
   return {

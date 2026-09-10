@@ -1,7 +1,7 @@
 # Email registration
 
-Registration is implemented in #747. Production stays disabled until email login
-ships in #748. Password reset and Twitch linking have separate follow-up issues.
+Registration is implemented in #747 and email/password sign-in in #748. Password
+reset and Twitch linking have separate follow-up issues.
 
 ## Deployment prerequisites
 
@@ -19,15 +19,21 @@ bindings in every environment:
   for the client IP and normalized email hash.
 - `EMAIL_VERIFICATION_RATE_LIMITER`: 5 requests per 60 seconds, checked separately
   for the client IP and token hash.
+- `EMAIL_SIGN_IN_RATE_LIMITER`: 5 requests per 60 seconds, checked separately for
+  the client IP and normalized email SHA-256 hash.
 
-Each environment has separate rate limiter namespaces. A limited request returns
-`429` with `Retry-After: 60`. Cloudflare rate limits are enforced per location;
-these bindings are not a globally synchronized quota.
+Each environment has separate rate limiter namespaces. Email sign-in uses
+`687734013` in development, `687734014` in staging, and `687734015` in
+production. A limited request returns `429` with `Retry-After: 60`. Cloudflare
+rate limits are eventually consistent and enforced per location; these bindings
+protect against brute-force attempts rather than providing a globally exact
+counter.
 
-`NUXT_PUBLIC_EMAIL_REGISTRATION_ENABLED` is the single UI/server switch. Only
-`true` enables it. When disabled, both new pages and APIs return `404` before
-registration database or mail work. Staging and production are disabled in the
-checked-in configuration.
+`NUXT_PUBLIC_EMAIL_REGISTRATION_ENABLED` controls registration only. Only `true`
+enables registration pages and APIs; when disabled, they return `404` before
+database or mail work. Email sign-in remains available independently of this
+flag. Production registration is enabled in the checked-in configuration;
+staging remains disabled until its verified recipient is configured.
 
 Set the following runtime values before enabling an environment:
 
@@ -61,8 +67,12 @@ Email Sending includes 3,000 messages per month per account, then $0.35 per 1,00
 existing-account notices and resends also count. See the
 [Cloudflare pricing documentation](https://developers.cloudflare.com/email-service/platform/pricing/).
 
-Production enablement belongs to #748 so a newly secured account can subsequently
-sign in with email. Do not enable production as part of #747.
+Before deploying the production activation, confirm all of the following:
+
+1. The Email Sending domain and `noreply@metsik.app` sender are verified.
+2. The production Worker has the existing `EMAIL` binding restricted to that
+   sender.
+3. The `20260907211007_serious_vector` migration from #747 has been applied.
 
 ## Local development
 
@@ -114,9 +124,11 @@ run in parallel; full suites are left to commit hooks.
 ```sh
 vp run format
 vp run test:typecheck
-vp run test:unit:agent server/utils/auth/__tests__ server/api/auth/email/__tests__ server/utils/__tests__/user.test.ts server/utils/__tests__/turnstile.test.ts server/api/auth/__tests__/create-session.test.ts server/middleware/__tests__/database.test.ts shared/utils/__tests__/redirect.test.ts
+vp run test:unit:agent server/utils/auth/__tests__ server/api/auth/email/__tests__ server/utils/__tests__/user.test.ts server/utils/__tests__/turnstile.test.ts server/utils/__tests__/cloudflare-config.test.ts server/api/auth/__tests__/create-session.test.ts server/middleware/__tests__/database.test.ts server/middleware/__tests__/api-session-check.test.ts shared/utils/__tests__/redirect.test.ts
 vp exec node --env-file=.env node_modules/vitest/vitest.mjs run tests/integration/email-registration.test.ts --config tests/integration/vitest.config.ts
-vp run test:e2e tests/playwright/registration/email-registration.test.ts tests/playwright/registration/email-registration-disabled.test.ts tests/playwright/login/login.test.ts
+vp run test:e2e tests/playwright/registration/email-registration.test.ts tests/playwright/registration/email-registration-disabled.test.ts tests/playwright/login/login.test.ts tests/playwright/login/email-sign-in.test.ts
+vp exec wrangler deploy --dry-run --env=staging
+vp exec wrangler deploy --dry-run --env=production
 ```
 
 The PostgreSQL test refuses a remote host or a disabled local database flag. It
