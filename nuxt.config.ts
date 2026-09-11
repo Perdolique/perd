@@ -13,6 +13,7 @@ type TypeScriptCompilerOptions = NonNullable<
 >
 
 const customElements = new Set(['search'])
+const buildCommitSha = env.NUXT_PUBLIC_BUILD_COMMIT_SHA ?? env.GITHUB_SHA ?? ''
 
 const projectTypeScriptCompilerOptions = {
   noFallthroughCasesInSwitch: true,
@@ -83,7 +84,7 @@ export default defineNuxtConfig({
 
     public: {
       emailRegistrationEnabled: false,
-      buildCommitSha: env.GITHUB_SHA ?? '',
+      buildCommitSha,
       turnstileSiteKey: ''
     },
 

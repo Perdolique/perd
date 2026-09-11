@@ -44,7 +44,7 @@ function validateEmailRegistrationConfig(emailRegistration: EmailRegistrationSet
     const recipient = isStaging ? normalizeEmail(stagingRecipient) : null
 
     if (isStaging && !v.is(v.pipe(v.string(), v.email()), recipient)) {
-      throw new Error('Staging registration requires a verified destination')
+      throw new Error('Staging registration requires a destination address')
     }
 
     return {

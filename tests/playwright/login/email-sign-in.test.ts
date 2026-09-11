@@ -1,8 +1,15 @@
 import type { Page, Route } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
 
+interface Deferred {
+  promise: Promise<void>;
+  resolve: () => void;
+}
+
 const email = 'walker@example.com'
 const password = 'correct horse battery staple'
+const tooShortPassword = 'a'.repeat(14)
+const tooLongPassword = 'a'.repeat(129)
 const userId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477dd'
 
 const signInFailureScenarios = [
@@ -25,8 +32,42 @@ const signInFailureScenarios = [
     focus: 'submit',
     message: 'Sign in is temporarily unavailable. Try again.',
     status: 503
+  },
+  {
+    focus: 'submit',
+    message: 'A user is already signed in. Reload the page to continue.',
+    status: 409
   }
 ] as const
+
+const invalidPasswordScenarios = [
+  {
+    label: 'shorter than 15 characters',
+    password: tooShortPassword
+  },
+  {
+    label: 'longer than 128 characters',
+    password: tooLongPassword
+  }
+] as const
+
+function throwUnresolvedDeferred(): never {
+  throw new Error('Deferred resolver was not initialized')
+}
+
+function createDeferred(): Deferred {
+  let resolveDeferred: () => void = throwUnresolvedDeferred
+
+  // oxlint-disable-next-line promise/avoid-new -- The test needs a manually released network response.
+  const promise = new Promise<void>((resolve) => {
+    resolveDeferred = resolve
+  })
+
+  return {
+    promise,
+    resolve: resolveDeferred
+  }
+}
 
 async function getClientUser(page: Page) {
   return page.evaluate(() => {
@@ -172,8 +213,48 @@ test.describe('Email sign-in', () => {
     }])
   })
 
+  for (const invalidPassword of invalidPasswordScenarios) {
+    test(`should reject a password ${invalidPassword.label} before starting the security check`, async ({
+      page,
+      turnstile
+    }) => {
+      const requestBodies: unknown[] = []
+
+      await page.route('**/api/auth/email/sign-in', async (route) => {
+        requestBodies.push(route.request().postDataJSON())
+        await fulfillSuccessfulSignIn(route)
+      })
+
+      await turnstile.pause(page)
+      await page.goto('/login')
+      await turnstile.getRenderOptions(page)
+      await page.getByLabel('Email').fill(email)
+      await page.getByLabel('Password').fill(invalidPassword.password)
+
+      await page.getByRole('button', {
+        name: 'Sign in',
+        exact: true
+      }).click()
+
+      const passwordInput = page.getByLabel('Password')
+
+      await expect(passwordInput).toBeFocused()
+      await expect(passwordInput).toHaveAttribute('aria-invalid', 'true')
+      await expect(page.getByText('Use a password between 15 and 128 characters.')).toBeVisible()
+      expect(requestBodies).toStrictEqual([])
+      expect(await turnstile.getRenderOptions(page)).toHaveLength(1)
+    })
+  }
+
   test('should disable every auth method while showing a spinner only on sign-in', async ({ page, turnstile }) => {
+    const requestStarted = createDeferred()
+    const responseGate = createDeferred()
+
     await page.route('**/api/auth/email/sign-in', async (route) => {
+      requestStarted.resolve()
+
+      await responseGate.promise
+
       await route.fulfill({
         status: 503,
         json: { statusCode: 503 }
@@ -219,6 +300,17 @@ test.describe('Email sign-in', () => {
     await expect(twitchButton).toBeDisabled()
     await expect(twitchButton).not.toHaveAttribute('aria-busy', 'true')
     await turnstile.complete(page)
+
+    await requestStarted.promise
+
+    await expect(emailInput).toBeDisabled()
+    await expect(passwordInput).toBeDisabled()
+    await expect(signInButton).toBeDisabled()
+    await expect(signInButton).toHaveAttribute('aria-busy', 'true')
+    await expect(registrationLink).toHaveAttribute('aria-disabled', 'true')
+    await expect(guestButton).toBeDisabled()
+    await expect(twitchButton).toBeDisabled()
+    responseGate.resolve()
     await expect(page.getByRole('alert')).toHaveText('Sign in is temporarily unavailable. Try again.')
     await expect(signInButton).toBeFocused()
   })

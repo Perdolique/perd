@@ -119,7 +119,11 @@
   import PerdButton from '~/components/PerdButton.vue'
   import TextInput from '~/components/TextInput.vue'
 
-  type AuthenticationMethod = 'email' | 'guest' | 'twitch'
+  type TurnstileAuthenticationMethod = 'email' | 'guest'
+
+  type ActiveAuthentication =
+    | { method: TurnstileAuthenticationMethod; phase: 'request' | 'turnstile'; }
+    | { method: 'twitch'; phase: 'redirect'; }
 
   definePageMeta({
     layout: 'auth'
@@ -134,8 +138,7 @@
   const password = ref('')
   const passwordError = ref<string>()
   const authenticationError = ref<string | null>(null)
-  const activeMethod = ref<AuthenticationMethod | null>(null)
-  const isChecking = ref(false)
+  const activeAuthentication = ref<ActiveAuthentication | null>(null)
   const turnstileAction = ref(emailSignInTurnstileAction)
   const requestFetch = useRequestFetch()
   const { user } = useUserStore()
@@ -144,10 +147,10 @@
   const signInButton = useTemplateRef('signInButton')
   const guestButton = useTemplateRef('guestButton')
   const hasAuthenticationError = computed(() => authenticationError.value !== null)
-  const isAuthenticationBusy = computed(() => activeMethod.value !== null)
-  const isEmailSignInActive = computed(() => activeMethod.value === 'email')
-  const isGuestActive = computed(() => activeMethod.value === 'guest')
-  const isTwitchActive = computed(() => activeMethod.value === 'twitch')
+  const isAuthenticationBusy = computed(() => activeAuthentication.value !== null)
+  const isEmailSignInActive = computed(() => activeAuthentication.value?.method === 'email')
+  const isGuestActive = computed(() => activeAuthentication.value?.method === 'guest')
+  const isTwitchActive = computed(() => activeAuthentication.value?.method === 'twitch')
 
   const registrationTarget = computed(() => {
     const redirectTo = getRedirectNavigationTarget(route.query.redirectTo).path
@@ -211,7 +214,7 @@
     })
   }
 
-  async function focusAfterAttempt(method: AuthenticationMethod, focusPassword = false) {
+  async function focusAfterAttempt(method: TurnstileAuthenticationMethod, focusPassword = false) {
     await nextTick()
 
     if (method === 'email') {
@@ -225,14 +228,21 @@
     }
   }
 
-  async function startTurnstileAuthentication(method: 'email' | 'guest') {
+  async function startTurnstileAuthentication(method: TurnstileAuthenticationMethod) {
     if (isAuthenticationBusy.value) {
       return
     }
 
-    activeMethod.value = method
-    isChecking.value = true
+    activeAuthentication.value = {
+      method,
+      phase: 'turnstile'
+    }
     authenticationError.value = null
+
+    if (method === 'guest') {
+      passwordError.value = undefined
+    }
+
     turnstileAction.value = method === 'email'
       ? emailSignInTurnstileAction
       : guestSessionTurnstileAction
@@ -265,27 +275,29 @@
   }
 
   async function cancelAuthentication() {
-    if (!isChecking.value || activeMethod.value === null) {
+    const state = activeAuthentication.value
+
+    if (state?.phase !== 'turnstile') {
       return
     }
 
-    const method = activeMethod.value
+    const { method } = state
 
-    isChecking.value = false
-    activeMethod.value = null
+    activeAuthentication.value = null
 
     await focusAfterAttempt(method)
   }
 
   async function handleVerificationError(message: string) {
-    if (!isChecking.value || activeMethod.value === null) {
+    const state = activeAuthentication.value
+
+    if (state?.phase !== 'turnstile') {
       return
     }
 
-    const method = activeMethod.value
+    const { method } = state
 
-    isChecking.value = false
-    activeMethod.value = null
+    activeAuthentication.value = null
     authenticationError.value = message
 
     await focusAfterAttempt(method)
@@ -317,7 +329,7 @@
       const focusPassword = status === 401
 
       authenticationError.value = getEmailSignInErrorMessage(status)
-      activeMethod.value = null
+      activeAuthentication.value = null
 
       await focusAfterAttempt('email', focusPassword)
     }
@@ -344,26 +356,29 @@
       const status = getRequestStatus(error)
 
       authenticationError.value = getGuestErrorMessage(status)
-      activeMethod.value = null
+      activeAuthentication.value = null
 
       await focusAfterAttempt('guest')
     }
   }
 
   async function finishAuthentication(token: string) {
-    if (!isChecking.value || activeMethod.value === null) {
+    const state = activeAuthentication.value
+
+    if (state?.phase !== 'turnstile') {
       return
     }
 
-    const method = activeMethod.value
+    const { method } = state
 
-    isChecking.value = false
-
-    if (method === 'email') {
-      await finishEmailSignIn(token)
-    } else if (method === 'guest') {
-      await finishGuestLogin(token)
+    activeAuthentication.value = {
+      method,
+      phase: 'request'
     }
+
+    const finish = method === 'email' ? finishEmailSignIn : finishGuestLogin
+
+    await finish(token)
   }
 
   function redirectToTwitch() {
@@ -371,8 +386,12 @@
       return
     }
 
-    activeMethod.value = 'twitch'
+    activeAuthentication.value = {
+      method: 'twitch',
+      phase: 'redirect'
+    }
     authenticationError.value = null
+    passwordError.value = undefined
 
     const navigationTarget = getRedirectNavigationTarget(route.query.redirectTo)
 

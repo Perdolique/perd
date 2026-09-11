@@ -1,19 +1,17 @@
 import { eq } from 'drizzle-orm'
-
-import {
-  createError,
-  defineEventHandler,
-  getRequestHeader,
-  readValidatedBody,
-  setResponseHeader,
-  type H3Event
-} from 'h3'
-
+import { createError, defineEventHandler, type H3Event } from 'h3'
 import { emailSignInTurnstileAction } from '#shared/utils/turnstile'
 import { emailCredentials, users } from '#server/database/schema'
 import { getEmailAuthenticationOrigin } from '#server/utils/config'
 import { getEmailSignInRateLimiterBinding, getGuestClientIp } from '#server/utils/cloudflare'
 import { getAuthErrorDetails } from '#server/utils/auth/telemetry'
+
+import {
+  enforceEmailAuthenticationRateLimit,
+  readLimitedValidatedJsonBody,
+  validateEmailAuthenticationRequest
+} from '#server/utils/auth/email-authentication-request'
+
 import { hashToken, verifyPassword } from '#server/utils/auth/password'
 import { getAppSession, updateAppSession } from '#server/utils/session'
 import { verifyTurnstile } from '#server/utils/turnstile'
@@ -34,41 +32,31 @@ interface EmailCredentialResult {
 }
 
 const dummyPasswordHash = 'scrypt$16384$8$5$000102030405060708090a0b0c0d0e0f$bc15d746c7f07d6f7ccb16091cdfe92b415017482bc5e0e7f8b2c56feb42a30bc89c78df63d561112afb46bc572a74e4e7e1c4284018ccaeb2e1a42b6929156b'
+const maximumSignInBodyByteLength = 4096
 
-function validateSignInRequest(event: H3Event): void {
-  const contentType = getRequestHeader(event, 'content-type')?.split(';')[0]?.trim().toLowerCase()
-
-  if (contentType !== 'application/json') {
-    throw createError({
-      status: 415,
-      statusMessage: 'JSON is required'
-    })
-  }
-
-  const expectedOrigin = getEmailAuthenticationOrigin(event)
-  const origin = getRequestHeader(event, 'origin')
-  const fetchSite = getRequestHeader(event, 'sec-fetch-site')
-
-  if (origin !== expectedOrigin || fetchSite === 'cross-site') {
-    throw createError({
-      status: 403,
-      statusMessage: 'Request origin is not allowed'
-    })
-  }
-}
-
-async function getEmailSignInRateLimitOutcomes(
+async function findEmailCredential(
   event: H3Event,
-  keys: readonly string[]
-): Promise<RateLimitOutcome[]> {
+  email: string
+): Promise<EmailCredentialResult | undefined> {
   try {
-    const binding = getEmailSignInRateLimiterBinding(event)
+    const [credential] = await event.context.dbHttp
+      .select({
+        email: emailCredentials.email,
+        passwordHash: emailCredentials.passwordHash,
+        userId: emailCredentials.userId,
+        isAdmin: users.isAdmin
+      })
+      .from(emailCredentials)
+      .innerJoin(users, eq(users.id, emailCredentials.userId))
+      .where(
+        eq(emailCredentials.email, email)
+      )
 
-    return await Promise.all(keys.map(async key => binding.limit({ key })))
+    return credential
   } catch (error) {
-    const details = getAuthErrorDetails(error, keys)
+    const details = getAuthErrorDetails(error, [email])
 
-    console.error('Email sign-in rate limit failed', { error: details })
+    console.error('Email sign-in credential lookup failed', { error: details })
 
     throw createError({
       cause: details,
@@ -78,47 +66,26 @@ async function getEmailSignInRateLimitOutcomes(
   }
 }
 
-async function enforceEmailSignInRateLimit(
-  event: H3Event,
-  keys: readonly string[]
-): Promise<void> {
-  const outcomes = await getEmailSignInRateLimitOutcomes(event, keys)
-
-  if (outcomes.some(outcome => !outcome.success)) {
-    setResponseHeader(event, 'Retry-After', 60)
-
-    throw createError({
-      status: 429,
-      statusMessage: 'Too many sign-in attempts. Try again in a minute'
-    })
-  }
-}
-
-async function findEmailCredential(
-  event: H3Event,
-  email: string
-): Promise<EmailCredentialResult | undefined> {
-  const [credential] = await event.context.dbHttp
-    .select({
-      email: emailCredentials.email,
-      passwordHash: emailCredentials.passwordHash,
-      userId: emailCredentials.userId,
-      isAdmin: users.isAdmin
-    })
-    .from(emailCredentials)
-    .innerJoin(users, eq(users.id, emailCredentials.userId))
-    .where(
-      eq(emailCredentials.email, email)
-    )
-
-  return credential
-}
-
 export default defineEventHandler(async (event): Promise<EmailSignInResponse> => {
-  validateSignInRequest(event)
+  const expectedOrigin = getEmailAuthenticationOrigin(event)
 
-  const body = await readValidatedBody(event, validateEmailSignIn)
+  validateEmailAuthenticationRequest(event, expectedOrigin)
+
+  const body = await readLimitedValidatedJsonBody(
+    event,
+    maximumSignInBodyByteLength,
+    validateEmailSignIn
+  )
+
   const clientIp = getGuestClientIp(event, import.meta.dev === true)
+
+  await enforceEmailAuthenticationRateLimit(event, {
+    deniedStatusMessage: 'Too many sign-in attempts. Try again in a minute',
+    getBinding: () => getEmailSignInRateLimiterBinding(event),
+    keys: [`ip:${clientIp}`],
+    logMessage: 'Email sign-in rate limit failed',
+    unavailableStatusMessage: 'Email sign-in is temporarily unavailable'
+  })
 
   await verifyTurnstile(event, body['cf-turnstile-response'], {
     remoteIp: clientIp,
@@ -126,9 +93,14 @@ export default defineEventHandler(async (event): Promise<EmailSignInResponse> =>
   })
 
   const emailHash = hashToken(body.email)
-  const rateLimitKeys = [`ip:${clientIp}`, `email:${emailHash}`]
 
-  await enforceEmailSignInRateLimit(event, rateLimitKeys)
+  await enforceEmailAuthenticationRateLimit(event, {
+    deniedStatusMessage: 'Too many sign-in attempts. Try again in a minute',
+    getBinding: () => getEmailSignInRateLimiterBinding(event),
+    keys: [`email:${emailHash}`],
+    logMessage: 'Email sign-in rate limit failed',
+    unavailableStatusMessage: 'Email sign-in is temporarily unavailable'
+  })
 
   const session = await getAppSession(event)
 

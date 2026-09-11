@@ -28,6 +28,12 @@ async function getElementBox(locator: Locator): Promise<ElementBox> {
 async function waitForDialogTransition(dialog: Locator): Promise<void> {
   await expect(dialog).toBeVisible()
 
+  await dialog.evaluate(async (element) => {
+    await Promise.all(element.getAnimations().map(async ({ finished }) => {
+      await finished
+    }))
+  })
+
   await expect.poll(
     async () => dialog.evaluate((element) => globalThis.getComputedStyle(element).opacity)
   ).toBe('1')

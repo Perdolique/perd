@@ -1,6 +1,6 @@
 import type { BrowserContext, Page, Request } from '@playwright/test'
 import type { ComparisonResponse } from '../../../server/api/equipment/comparisons.get'
-import { expect } from './global.fixtures.ts'
+import { expect, waitForInitialEmailSignInTurnstile } from './global.fixtures.ts'
 
 interface ComparisonMockOptions {
   comparison?: (request: Request) => {
@@ -249,6 +249,7 @@ async function openComparisonPage(
   const redirectTo = encodeURIComponent(path)
 
   await page.goto(`/login?redirectTo=${redirectTo}`)
+  await waitForInitialEmailSignInTurnstile(page)
   await page.getByRole('button', { name: 'Guest' }).click()
 
   await expect.poll(() => {

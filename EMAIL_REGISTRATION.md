@@ -33,7 +33,7 @@ counter.
 enables registration pages and APIs; when disabled, they return `404` before
 database or mail work. Email sign-in remains available independently of this
 flag. Production registration is enabled in the checked-in configuration;
-staging remains disabled until its verified recipient is configured.
+staging registration is enabled and restricted to one controlled recipient.
 
 Set the following runtime values before enabling an environment:
 
@@ -41,7 +41,7 @@ Set the following runtime values before enabling an environment:
 | --- | --- |
 | `NUXT_EMAIL_REGISTRATION_ENVIRONMENT` | `development`, `staging`, or `production` |
 | `NUXT_EMAIL_REGISTRATION_ORIGIN` | Exact public origin, without a trailing slash or path |
-| `NUXT_EMAIL_REGISTRATION_STAGING_RECIPIENT` | One verified recipient, required in staging |
+| `NUXT_EMAIL_REGISTRATION_STAGING_RECIPIENT` | One controlled recipient, required in staging |
 
 Production and staging require HTTPS. The configured origin must match the
 browser's `Origin` header; verification links use this origin, never request
@@ -50,21 +50,22 @@ headers. Turnstile must allow that hostname and validate the server-selected
 
 Before launching staging:
 
-1. Verify the Email Sending domain and `noreply@metsik.app` sender in Cloudflare.
-2. Choose and verify the single staging recipient.
-3. Set that same address in `NUXT_EMAIL_REGISTRATION_STAGING_RECIPIENT` and the
-   staging `EMAIL.allowed_destination_addresses` array in `wrangler.jsonc`.
-   An empty Cloudflare destination list is unrestricted, so the checked-in
-   binding is not launch-ready. Until a recipient is configured, the server
-   rejects other recipients; it never substitutes the test mailbox.
-4. Apply the migration, regenerate Worker types with `vp run cf-typegen`, and
+1. Onboard the `metsik.app` Email Sending domain and use `noreply@metsik.app` as
+   the allowed sender in Cloudflare.
+2. Set the single controlled staging address in both the
+   `NUXT_EMAIL_REGISTRATION_STAGING_RECIPIENT` Worker secret and the staging
+   `EMAIL.allowed_destination_addresses` array in `wrangler.jsonc`. On Workers
+   Paid, this recipient does not need to remain in the account-level Destination
+   Addresses list. The server rejects other recipients; it never substitutes the
+   test mailbox.
+3. Apply the migration, regenerate Worker types with `vp run cf-typegen`, and
    verify the binding and exact staging origin.
-5. Enable the staging flag and check delivery, expiry, retries, and confirmation.
+4. Check delivery, expiry, retries, and confirmation after deployment.
 
-The sender domain, staging recipient, and remaining monthly email allowance have
-not been confirmed by this change. Arbitrary recipients require Workers Paid.
-Email Sending includes 3,000 messages per month per account, then $0.35 per 1,000;
-existing-account notices and resends also count. See the
+The sender domain and staging recipient are configured, but mailbox delivery must
+still be smoke-tested after deployment. Arbitrary recipients require Workers
+Paid. Email Sending includes 3,000 messages per month per account, then $0.35 per
+1,000; existing-account notices and resends also count. See the
 [Cloudflare pricing documentation](https://developers.cloudflare.com/email-service/platform/pricing/).
 
 Before deploying the production activation, confirm all of the following:
@@ -127,6 +128,7 @@ vp run test:typecheck
 vp run test:unit:agent server/utils/auth/__tests__ server/api/auth/email/__tests__ server/utils/__tests__/user.test.ts server/utils/__tests__/turnstile.test.ts server/utils/__tests__/cloudflare-config.test.ts server/api/auth/__tests__/create-session.test.ts server/middleware/__tests__/database.test.ts server/middleware/__tests__/api-session-check.test.ts shared/utils/__tests__/redirect.test.ts
 vp exec node --env-file=.env node_modules/vitest/vitest.mjs run tests/integration/email-registration.test.ts --config tests/integration/vitest.config.ts
 vp run test:e2e tests/playwright/registration/email-registration.test.ts tests/playwright/registration/email-registration-disabled.test.ts tests/playwright/login/login.test.ts tests/playwright/login/email-sign-in.test.ts
+vp run build
 vp exec wrangler deploy --dry-run --env=staging
 vp exec wrangler deploy --dry-run --env=production
 ```

@@ -6,9 +6,9 @@ import type { SessionUser } from '#server/utils/user'
 import { getEmailRegistrationConfig } from '#server/utils/config'
 
 import {
-  enforceRegistrationRateLimit,
-  validateRegistrationRequest
-} from '#server/utils/auth/email-registration-request'
+  enforceEmailAuthenticationRateLimit,
+  validateEmailAuthenticationRequest
+} from '#server/utils/auth/email-authentication-request'
 
 import { hashToken } from '#server/utils/auth/password'
 import { getRegistrationActor, withRegistrationDatabase } from '#server/utils/auth/email-registration'
@@ -22,13 +22,29 @@ interface EmailVerificationResponse {
 export default defineEventHandler(async (event): Promise<EmailVerificationResponse> => {
   const config = getEmailRegistrationConfig(event)
 
-  validateRegistrationRequest(event, config)
+  validateEmailAuthenticationRequest(event, config.origin)
 
   const body = await readValidatedBody(event, validateEmailVerification)
   const clientIp = getGuestClientIp(event, import.meta.dev === true)
   const tokenHash = hashToken(body.token)
 
-  await enforceRegistrationRateLimit(event, 'EMAIL_VERIFICATION_RATE_LIMITER', [`ip:${clientIp}`, `token:${tokenHash}`])
+  await enforceEmailAuthenticationRateLimit(event, {
+    deniedStatusMessage: 'Too many attempts. Try again in a minute',
+
+    getBinding: () => {
+      const binding = event.context.cloudflare?.env.EMAIL_VERIFICATION_RATE_LIMITER
+
+      if (binding === undefined) {
+        throw new Error('Missing binding EMAIL_VERIFICATION_RATE_LIMITER')
+      }
+
+      return binding
+    },
+
+    keys: [`ip:${clientIp}`, `token:${tokenHash}`],
+    logMessage: 'Email registration rate limit failed',
+    unavailableStatusMessage: 'Email registration is temporarily unavailable'
+  })
 
   const sensitiveValues = [body.password, body.token, tokenHash]
 

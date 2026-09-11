@@ -252,6 +252,11 @@ test.describe('Login page', () => {
     await expect(page.getByRole('status')).toHaveCount(0)
     expect(requestBodies).toStrictEqual([])
     await guestButton.click()
+
+    await expect.poll(async () => turnstile.getRenderOptions(page)).toContainEqual(
+      expect.objectContaining({ action: 'guest_session' })
+    )
+
     await expect(guestButton).toBeDisabled()
     await expect(guestButton).toHaveAttribute('aria-busy', 'true')
     await expect(page.getByRole('status')).toHaveText('Complete the security check to continue.')
@@ -277,6 +282,7 @@ test.describe('Login page', () => {
 
       await turnstile.pause(page)
       await page.goto('/login')
+      await turnstile.getRenderOptions(page)
 
       const guestButton = page.getByRole('button', { name: 'Guest' })
       const dialog = page.getByRole('dialog', { name: 'Security check' })
@@ -354,6 +360,7 @@ test.describe('Login page', () => {
 
       await turnstile.pause(page)
       await page.goto('/login')
+      await turnstile.getRenderOptions(page)
 
       const guestButton = page.getByRole('button', { name: 'Guest' })
       const dialog = page.getByRole('dialog', { name: 'Security check' })
@@ -384,6 +391,7 @@ test.describe('Login page', () => {
   test('should cancel a failed security check without submitting a session', async ({ page, turnstile }) => {
     await turnstile.pause(page)
     await page.goto('/login')
+    await turnstile.getRenderOptions(page)
 
     const guestButton = page.getByRole('button', { name: 'Guest' })
     const dialog = page.getByRole('dialog', { name: 'Security check' })
@@ -541,13 +549,14 @@ test.describe('Login page', () => {
     await expect(page.locator('script[src*="challenges.cloudflare.com/turnstile/"]')).toHaveCount(1)
   })
 
-  test('should return to the api document after guest login', async ({ page }) => {
+  test('should return to the api document after guest login', async ({ page, turnstile }) => {
     let guestRequestBody: unknown = null
 
     await page.route(brandsApiRoute, continueRoute)
     await page.goto('/api/equipment/brands')
     await page.unroute(brandsApiRoute, continueRoute)
     await expect(page).toHaveURL(/\/login\?redirectTo=\/api\/equipment\/brands$/u)
+    await turnstile.getRenderOptions(page)
 
     await page.route('**/api/auth/create-session', async (route) => {
       guestRequestBody = route.request().postDataJSON()
@@ -577,7 +586,7 @@ test.describe('Login page', () => {
     })
   })
 
-  test('should carry Guest user state into the original app destination', async ({ page }) => {
+  test('should carry Guest user state into the original app destination', async ({ page, turnstile }) => {
     const responseUserId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
 
     await page.route('**/api/auth/create-session', async (route) => {
@@ -592,6 +601,7 @@ test.describe('Login page', () => {
     })
 
     await page.goto('/login?redirectTo=/gear-library/new')
+    await turnstile.getRenderOptions(page)
     await page.getByRole('button', { name: 'Guest' }).click()
     await expect(page).toHaveURL(/\/gear-library\/new$/u)
     await expect(page.getByText('Guest accounts cannot submit gear for review.')).toBeVisible()
@@ -599,7 +609,7 @@ test.describe('Login page', () => {
   })
 
   for (const { message, status } of guestErrorScenarios) {
-    test(`should show the safe Guest error for ${status}`, async ({ page }) => {
+    test(`should show the safe Guest error for ${status}`, async ({ page, turnstile }) => {
       await page.route('**/api/auth/create-session', async (route) => {
         await route.fulfill({
           json: { statusCode: status },
@@ -608,6 +618,7 @@ test.describe('Login page', () => {
       })
 
       await page.goto('/login')
+      await turnstile.getRenderOptions(page)
 
       const guestButton = page.getByRole('button', { name: 'Guest' })
 
@@ -626,6 +637,7 @@ test.describe('Login page', () => {
 
     await turnstile.pause(page)
     await page.goto('/login?redirectTo=/gear-library/new')
+    await turnstile.getRenderOptions(page)
 
     const guestButton = page.getByRole('button', { name: 'Guest' })
 
@@ -669,6 +681,7 @@ test.describe('Login page', () => {
     })
 
     await page.goto('/login?redirectTo=/')
+    await turnstile.getRenderOptions(page)
     await expect(page.getByRole('button', { name: 'Guest' })).toBeEnabled()
     await page.getByRole('button', { name: 'Twitch' }).click()
 

@@ -10,7 +10,7 @@ import { hashPassword, hashToken } from '#server/utils/auth/password'
 import { getRegistrationActor, withRegistrationDatabase } from '#server/utils/auth/email-registration'
 import { issueEmailRegistration, completeEmailRegistration } from '#server/utils/auth/email-registration-persistence'
 import { sendRegistrationEmail } from '#server/utils/auth/email-registration-mail'
-import { enforceRegistrationRateLimit } from '#server/utils/auth/email-registration-request'
+import { enforceEmailAuthenticationRateLimit } from '#server/utils/auth/email-authentication-request'
 import { updateAppSession } from '#server/utils/session'
 
 vi.mock(import('#server/utils/config'), () => {
@@ -52,12 +52,12 @@ vi.mock(import('#server/utils/auth/email-registration-mail'), () => {
   return { sendRegistrationEmail: vi.fn() }
 })
 
-vi.mock(import('#server/utils/auth/email-registration-request'), async (importOriginal) => {
+vi.mock(import('#server/utils/auth/email-authentication-request'), async (importOriginal) => {
   const actual = await importOriginal()
 
   return {
     ...actual,
-    enforceRegistrationRateLimit: vi.fn()
+    enforceEmailAuthenticationRateLimit: vi.fn()
   }
 })
 
@@ -166,7 +166,7 @@ describe('email registration API', () => {
     })
 
     const [turnstileOrder = Number.NaN] = vi.mocked(verifyTurnstile).mock.invocationCallOrder
-    const [rateOrder = Number.NaN] = vi.mocked(enforceRegistrationRateLimit).mock.invocationCallOrder
+    const [rateOrder = Number.NaN] = vi.mocked(enforceEmailAuthenticationRateLimit).mock.invocationCallOrder
     const [hibpOrder = Number.NaN] = vi.mocked(assertPasswordNotPwned).mock.invocationCallOrder
     const [hashOrder = Number.NaN] = vi.mocked(hashPassword).mock.invocationCallOrder
     const [actorOrder = Number.NaN] = vi.mocked(getRegistrationActor).mock.invocationCallOrder
@@ -203,13 +203,13 @@ describe('email registration API', () => {
     const response = await request(registrationBody())
 
     expect(response.status).toBe(403)
-    expect(enforceRegistrationRateLimit).not.toHaveBeenCalled()
+    expect(enforceEmailAuthenticationRateLimit).not.toHaveBeenCalled()
     expect(assertPasswordNotPwned).not.toHaveBeenCalled()
     expect(withRegistrationDatabase).not.toHaveBeenCalled()
   })
 
   it('should stop rate-limited attempts before password or database work', async () => {
-    vi.mocked(enforceRegistrationRateLimit).mockRejectedValue(createError({ status: 429 }))
+    vi.mocked(enforceEmailAuthenticationRateLimit).mockRejectedValue(createError({ status: 429 }))
 
     const response = await request(registrationBody())
 

@@ -201,6 +201,33 @@ async function getTurnstileStateArray(page: Page, propertyName: string): Promise
   return propertyValue.map((value: unknown) => value)
 }
 
+async function waitForInitialEmailSignInTurnstile(page: Page): Promise<void> {
+  await page.waitForFunction(() => {
+    const state: unknown = Reflect.get(globalThis, '__turnstileMock')
+
+    if (state === null || typeof state !== 'object') {
+      return false
+    }
+
+    const renderOptions: unknown = Reflect.get(state, 'renderOptions')
+
+    if (!Array.isArray(renderOptions) || renderOptions.length !== 1) {
+      return false
+    }
+
+    const options: unknown = renderOptions[0]
+
+    return options !== null
+      && typeof options === 'object'
+      && Reflect.get(options, 'action') === 'email_sign_in'
+      && Reflect.get(options, 'appearance') === 'interaction-only'
+      && Reflect.get(options, 'execution') === 'execute'
+      && Reflect.get(options, 'responseField') === false
+      && Reflect.get(options, 'sitekey') === '1x00000000000000000000AA'
+      && Reflect.get(options, 'size') === 'flexible'
+  })
+}
+
 async function invokeTurnstileCallback(page: Page, callbackName: string) {
   await page.evaluate((name) => {
     const callback: unknown = Reflect.get(globalThis, name)
@@ -380,4 +407,4 @@ const test = base.extend<TestFixtures>({
 })
 
 export { expect } from '@playwright/test'
-export { test }
+export { test, waitForInitialEmailSignInTurnstile }

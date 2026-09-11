@@ -1,5 +1,5 @@
 <template>
-  <AuthFormPanel :title="title">
+  <AuthFormPanel :title="title" :description="description">
     <p v-if="isSent" ref="sentMessage" :class="$style.notice" role="status" tabindex="-1">
       Check your email for the next step. Verification links expire in one hour.
       To send another email, enter your password again.
@@ -96,6 +96,11 @@
   const sentMessage = useTemplateRef('sentMessage')
   const isUpgrade = computed(() => user.value.userId !== null)
   const title = computed(() => isUpgrade.value ? 'Add email access' : 'Create your account')
+
+  const description = computed(() => isUpgrade.value
+    ? 'Keep your gear and packing lists. Confirm your email in this browser to secure your existing account.'
+    : 'Keep your gear ready for the next trip. Confirm your email to finish creating your account.')
+
   const submitLabel = computed(() => isSent.value ? 'Send another email' : 'Send verification email')
   const backPath = computed(() => isUpgrade.value ? '/account' : '/login')
   const backLabel = computed(() => isUpgrade.value ? 'Back to Account' : 'Back to sign in')

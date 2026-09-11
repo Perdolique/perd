@@ -8,7 +8,7 @@ import type {
 } from '../../../app/types/equipment'
 
 import type { CategoryDetailResponse } from '../../../server/api/equipment/categories/by-slug/[slug].get'
-import { expect } from './global.fixtures.ts'
+import { expect, waitForInitialEmailSignInTurnstile } from './global.fixtures.ts'
 
 interface ApiMockResponse {
   json: object;
@@ -768,6 +768,7 @@ async function openGearLibrary(page: Page, path = '/gear-library'): Promise<void
   const redirectTo = encodeURIComponent(path)
 
   await page.goto(`/login?redirectTo=${redirectTo}`)
+  await waitForInitialEmailSignInTurnstile(page)
   await page.getByRole('button', { name: 'Guest' }).click()
 
   await expect.poll(() => {

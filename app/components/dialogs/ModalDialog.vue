@@ -35,11 +35,34 @@
   const closedBy = computed(() => closeDisabled ? 'none' : 'any')
   const isBottomSheet = computed(() => mobilePresentation === 'bottom-sheet')
   const isSideSheet = computed(() => desktopPresentation === 'side-sheet')
+  let interactionTarget: HTMLElement | null = null
+  let returnFocusElement: HTMLElement | null = null
+
+  function rememberInteractionTarget(event: MouseEvent) {
+    if (isOpened.value || !(event.target instanceof globalThis.HTMLElement)) {
+      return
+    }
+
+    interactionTarget = event.target.closest('button, [href], input, select, textarea, [tabindex]')
+
+    globalThis.requestAnimationFrame(() => {
+      interactionTarget = null
+    })
+  }
 
   function preventCloseWhenDisabled(event: Event) {
     if (closeDisabled) {
       event.preventDefault()
     }
+  }
+
+  function synchronizeClosedState() {
+    const elementToFocus = returnFocusElement
+
+    returnFocusElement = null
+    isOpened.value = false
+
+    globalThis.requestAnimationFrame(() => elementToFocus?.focus())
   }
 
   function closeOnFallbackLightDismiss(event: MouseEvent) {
@@ -65,6 +88,7 @@
 
     if (!isWithinDialog) {
       dialog.close()
+      synchronizeClosedState()
     }
   }
 
@@ -80,6 +104,13 @@
         return
       }
 
+      const { activeElement, body } = globalThis.document
+
+      returnFocusElement = activeElement instanceof globalThis.HTMLElement
+        && activeElement !== body
+        ? activeElement
+        : interactionTarget
+
       dialog.showModal()
 
       return
@@ -90,9 +121,8 @@
     }
   })
 
-  useEventListener(dialogRef, 'close', () => {
-    isOpened.value = false
-  })
+  useEventListener(() => globalThis.document, 'click', rememberInteractionTarget, { capture: true })
+  useEventListener(dialogRef, 'close', synchronizeClosedState)
 </script>
 
 <style module>

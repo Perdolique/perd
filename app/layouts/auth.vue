@@ -93,7 +93,6 @@
       var(--spacing-16)
       max(var(--spacing-24), env(safe-area-inset-bottom));
     background: var(--color-background-muted);
-    color: oklch(99% 0 0);
 
     &::after {
       content: "";
@@ -123,28 +122,24 @@
   .backgroundImage {
     inline-size: 100%;
     block-size: 100%;
-    display: block;
     object-fit: cover;
     object-position: center bottom;
   }
 
-  .content {
+  .content,
+  .footer {
     position: relative;
     z-index: 2;
-    grid-row: 1;
     inline-size: min(100%, 28rem);
     min-inline-size: 0;
     margin-inline: auto;
+  }
+
+  .content {
     padding-block: var(--spacing-16);
   }
 
   .footer {
-    position: relative;
-    z-index: 2;
-    grid-row: 2;
-    inline-size: min(100%, 28rem);
-    min-inline-size: 0;
-    margin-inline: auto;
     display: flex;
     flex-wrap: wrap;
     align-items: center;

@@ -27,6 +27,15 @@
     "mode": "smart"
   },
 
+  "secrets": {
+    "required": [
+      "NUXT_DATABASE_URL",
+      "NUXT_OAUTH_TWITCH_CLIENT_SECRET",
+      "NUXT_SESSION_SECRET",
+      "NUXT_TURNSTILE_SECRET"
+    ]
+  },
+
   "vars": {
     "NUXT_PUBLIC_TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
     "NUXT_TURNSTILE_HOSTNAMES": "localhost,127.0.0.1",
@@ -88,6 +97,15 @@
       "name": "metsik",
       "preview_urls": false,
       "workers_dev": true,
+
+      "secrets": {
+        "required": [
+          "NUXT_DATABASE_URL",
+          "NUXT_OAUTH_TWITCH_CLIENT_SECRET",
+          "NUXT_SESSION_SECRET",
+          "NUXT_TURNSTILE_SECRET"
+        ]
+      },
 
       "routes": [
         {
@@ -171,6 +189,16 @@
       "preview_urls": true,
       "workers_dev": true,
 
+      "secrets": {
+        "required": [
+          "NUXT_DATABASE_URL",
+          "NUXT_EMAIL_REGISTRATION_STAGING_RECIPIENT",
+          "NUXT_OAUTH_TWITCH_CLIENT_SECRET",
+          "NUXT_SESSION_SECRET",
+          "NUXT_TURNSTILE_SECRET"
+        ]
+      },
+
       "routes": [
         {
           "pattern": "staging.metsik.app",
@@ -183,7 +211,7 @@
         "NUXT_PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAAEntzYh6QUh27Ji_",
         "NUXT_TURNSTILE_HOSTNAMES": "staging.metsik.app",
         "PHOTO_SUBMISSION_ENVIRONMENT": "staging",
-        "NUXT_PUBLIC_EMAIL_REGISTRATION_ENABLED": "false",
+        "NUXT_PUBLIC_EMAIL_REGISTRATION_ENABLED": "true",
         "NUXT_EMAIL_REGISTRATION_ORIGIN": "https://staging.metsik.app",
         "NUXT_EMAIL_REGISTRATION_ENVIRONMENT": "staging"
       },
@@ -244,7 +272,9 @@
           "allowed_sender_addresses": [
             "noreply@metsik.app"
           ],
-          "allowed_destination_addresses": []
+          "allowed_destination_addresses": [
+            "metsik.app@woof.slmail.me"
+          ]
         }
       ]
     }

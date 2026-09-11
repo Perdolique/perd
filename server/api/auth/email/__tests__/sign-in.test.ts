@@ -1,5 +1,7 @@
+import { DrizzleQueryError } from 'drizzle-orm'
 import { createError, type H3Event, type ValidateFunction } from 'h3'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type * as CloudflareModule from '#server/utils/cloudflare'
 import emailSignInHandler from '#server/api/auth/email/sign-in.post'
 import { emailCredentials, users } from '#server/database/schema'
 import { getEmailSignInRateLimiterBinding } from '#server/utils/cloudflare'
@@ -10,32 +12,30 @@ import { createTestEvent } from '~~/test-utils/create-test-event'
 const {
   getAppSessionMock,
   getEmailAuthenticationOriginMock,
-  readValidatedBodyMock,
-  setResponseHeaderMock,
+  readLimitedValidatedJsonBodyMock,
   updateAppSessionMock
 } = vi.hoisted(() => {
-  type ReadValidatedBodyMock = (
+  type ReadLimitedValidatedJsonBodyMock = (
     event: H3Event,
+    maximumByteLength: number,
     validate: ValidateFunction<unknown>
   ) => Promise<unknown>
 
   return {
     getAppSessionMock: vi.fn(),
     getEmailAuthenticationOriginMock: vi.fn(),
-    readValidatedBodyMock: vi.fn<ReadValidatedBodyMock>(),
-    setResponseHeaderMock: vi.fn(),
+    readLimitedValidatedJsonBodyMock: vi.fn<ReadLimitedValidatedJsonBodyMock>(),
     updateAppSessionMock: vi.fn()
   }
 })
 
-// @ts-expect-error -- The test mock deliberately specializes readValidatedBody's generic contract to unknown.
-vi.mock(import('h3'), async (importOriginal) => {
+// @ts-expect-error -- The test mock deliberately specializes the reader's generic contract to unknown.
+vi.mock(import('#server/utils/auth/email-authentication-request'), async (importOriginal) => {
   const actual = await importOriginal()
 
   return {
     ...actual,
-    readValidatedBody: readValidatedBodyMock,
-    setResponseHeader: setResponseHeaderMock
+    readLimitedValidatedJsonBody: readLimitedValidatedJsonBodyMock
   }
 })
 
@@ -81,9 +81,8 @@ interface CredentialRow {
   isAdmin: boolean;
 }
 
-interface InvalidRequestScenario {
+interface InvalidHeaderScenario {
   scenario: string;
-  body: unknown;
   headers: Record<string, string>;
   status: number;
 }
@@ -91,6 +90,10 @@ interface InvalidRequestScenario {
 const origin = 'https://metsik.app'
 const clientIp = '203.0.113.40'
 const password = 'correct horse battery staple'
+const passwordBelowMinimum = 'a'.repeat(14)
+const minimumLengthPassword = 'a'.repeat(15)
+const maximumLengthPassword = 'a'.repeat(128)
+const passwordAboveMaximum = 'a'.repeat(129)
 const userId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477cc'
 const storedPasswordHash = 'stored-password-hash'
 const rateLimitMock = vi.fn<Env['EMAIL_SIGN_IN_RATE_LIMITER']['limit']>()
@@ -150,7 +153,7 @@ describe('post /api/auth/email/sign-in', () => {
   beforeEach(() => {
     requestBody = signInRequestBody
 
-    readValidatedBodyMock.mockImplementation(async (_event, validate) => {
+    readLimitedValidatedJsonBodyMock.mockImplementation(async (_event, _maximumByteLength, validate) => {
       const result = validate(requestBody)
 
       if (result === false) {
@@ -178,10 +181,16 @@ describe('post /api/auth/email/sign-in', () => {
     vi.restoreAllMocks()
   })
 
-  it('should normalize, verify, rate-limit, authenticate, and update the session in order', async () => {
+  it('should validate, normalize, rate-limit, verify, authenticate, and update the session in order', async () => {
     const { dbHttp, innerJoinMock, selectMock, whereMock } = createCredentialDatabase()
     const event = createSignInEvent(dbHttp)
     const result = await emailSignInHandler(event)
+
+    expect(readLimitedValidatedJsonBodyMock).toHaveBeenCalledWith(
+      event,
+      4096,
+      expect.any(Function)
+    )
 
     expect(verifyTurnstile).toHaveBeenCalledWith(event, 'turnstile-token', {
       remoteIp: clientIp,
@@ -214,16 +223,20 @@ describe('post /api/auth/email/sign-in', () => {
       isGuest: false
     })
 
+    const [originOrder = Number.NaN] = getEmailAuthenticationOriginMock.mock.invocationCallOrder
+    const [bodyOrder = Number.NaN] = readLimitedValidatedJsonBodyMock.mock.invocationCallOrder
+    const [ipLimiterOrder = Number.NaN, emailLimiterOrder = Number.NaN] = rateLimitMock.mock.invocationCallOrder
     const [turnstileOrder = Number.NaN] = vi.mocked(verifyTurnstile).mock.invocationCallOrder
-    const limiterOrders = rateLimitMock.mock.invocationCallOrder
-    const limiterOrder = Math.max(...limiterOrders)
     const [sessionOrder = Number.NaN] = getAppSessionMock.mock.invocationCallOrder
     const [lookupOrder = Number.NaN] = selectMock.mock.invocationCallOrder
     const [passwordOrder = Number.NaN] = vi.mocked(verifyPassword).mock.invocationCallOrder
     const [updateOrder = Number.NaN] = updateAppSessionMock.mock.invocationCallOrder
 
-    expect(turnstileOrder).toBeLessThan(limiterOrder)
-    expect(limiterOrder).toBeLessThan(sessionOrder)
+    expect(originOrder).toBeLessThan(bodyOrder)
+    expect(bodyOrder).toBeLessThan(ipLimiterOrder)
+    expect(ipLimiterOrder).toBeLessThan(turnstileOrder)
+    expect(turnstileOrder).toBeLessThan(emailLimiterOrder)
+    expect(emailLimiterOrder).toBeLessThan(sessionOrder)
     expect(sessionOrder).toBeLessThan(lookupOrder)
     expect(lookupOrder).toBeLessThan(passwordOrder)
     expect(passwordOrder).toBeLessThan(updateOrder)
@@ -269,40 +282,32 @@ describe('post /api/auth/email/sign-in', () => {
     await expect(actualPasswordModule.verifyPassword('not-a-user-password', String(encodedHash))).resolves.toBe(true)
   })
 
-  const invalidRequestScenarios: InvalidRequestScenario[] = [
-    {
-      scenario: 'invalid body',
-      body: {},
-      headers: {},
-      status: 400
-    },
+  const invalidHeaderScenarios: InvalidHeaderScenario[] = [
     {
       scenario: 'invalid content type',
-      body: signInRequestBody,
       headers: { 'content-type': 'text/plain' },
       status: 415
     },
     {
       scenario: 'wrong origin',
-      body: signInRequestBody,
       headers: { origin: 'https://other.example' },
       status: 403
     },
     {
       scenario: 'cross-site request',
-      body: signInRequestBody,
       headers: { 'sec-fetch-site': 'cross-site' },
       status: 403
     }
   ]
 
-  it.each(invalidRequestScenarios)('should reject $scenario before Turnstile and downstream work', async ({ body, headers, status }) => {
-    requestBody = body
+  it.each(invalidHeaderScenarios)('should reject $scenario before reading a malformed body', async ({ headers, status }) => {
+    requestBody = {}
 
     const { dbHttp, selectMock } = createCredentialDatabase()
     const event = createSignInEvent(dbHttp, headers)
 
     await expect(emailSignInHandler(event)).rejects.toMatchObject({ statusCode: status })
+    expect(readLimitedValidatedJsonBodyMock).not.toHaveBeenCalled()
     expect(verifyTurnstile).not.toHaveBeenCalled()
     expect(rateLimitMock).not.toHaveBeenCalled()
     expect(getAppSessionMock).not.toHaveBeenCalled()
@@ -311,26 +316,104 @@ describe('post /api/auth/email/sign-in', () => {
     expect(updateAppSessionMock).not.toHaveBeenCalled()
   })
 
-  it('should stop rejected Turnstile before rate limits, session, credentials, and password work', async () => {
+  it('should reject an invalid body before rate limits, Turnstile, and downstream work', async () => {
+    requestBody = {}
+
     const { dbHttp, selectMock } = createCredentialDatabase()
     const event = createSignInEvent(dbHttp)
 
-    vi.mocked(verifyTurnstile).mockRejectedValue(createError({ status: 403 }))
-    await expect(emailSignInHandler(event)).rejects.toMatchObject({ statusCode: 403 })
+    await expect(emailSignInHandler(event)).rejects.toMatchObject({ statusCode: 400 })
+    expect(readLimitedValidatedJsonBodyMock).toHaveBeenCalledTimes(1)
     expect(rateLimitMock).not.toHaveBeenCalled()
+    expect(verifyTurnstile).not.toHaveBeenCalled()
     expect(getAppSessionMock).not.toHaveBeenCalled()
     expect(selectMock).not.toHaveBeenCalled()
     expect(verifyPassword).not.toHaveBeenCalled()
     expect(updateAppSessionMock).not.toHaveBeenCalled()
   })
 
-  it('should stop a limited attempt before session, credentials, and password work', async () => {
+  it.each([
+    ['below the minimum', passwordBelowMinimum],
+    ['above the maximum', passwordAboveMaximum]
+  ])('should reject a password %s length before rate limits and Turnstile', async (_scenario, invalidPassword) => {
+    requestBody = {
+      ...signInRequestBody,
+      password: invalidPassword
+    }
+
     const { dbHttp, selectMock } = createCredentialDatabase()
     const event = createSignInEvent(dbHttp)
 
-    rateLimitMock.mockResolvedValueOnce({ success: false })
+    await expect(emailSignInHandler(event)).rejects.toMatchObject({ statusCode: 400 })
+    expect(readLimitedValidatedJsonBodyMock).toHaveBeenCalledTimes(1)
+    expect(rateLimitMock).not.toHaveBeenCalled()
+    expect(verifyTurnstile).not.toHaveBeenCalled()
+    expect(selectMock).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['minimum', minimumLengthPassword],
+    ['maximum', maximumLengthPassword]
+  ])('should accept a password at the %s length boundary', async (_scenario, boundaryPassword) => {
+    requestBody = {
+      ...signInRequestBody,
+      password: boundaryPassword
+    }
+
+    const { dbHttp } = createCredentialDatabase()
+    const event = createSignInEvent(dbHttp)
+
+    await expect(emailSignInHandler(event)).resolves.toMatchObject({ userId })
+    expect(verifyPassword).toHaveBeenCalledWith(boundaryPassword, storedPasswordHash)
+  })
+
+  it('should stop rejected Turnstile after the IP limit and before the email limit and downstream work', async () => {
+    const { dbHttp, selectMock } = createCredentialDatabase()
+    const event = createSignInEvent(dbHttp)
+
+    vi.mocked(verifyTurnstile).mockRejectedValue(createError({ status: 403 }))
+    await expect(emailSignInHandler(event)).rejects.toMatchObject({ statusCode: 403 })
+    expect(rateLimitMock.mock.calls).toStrictEqual([[{ key: `ip:${clientIp}` }]])
+    expect(getAppSessionMock).not.toHaveBeenCalled()
+    expect(selectMock).not.toHaveBeenCalled()
+    expect(verifyPassword).not.toHaveBeenCalled()
+    expect(updateAppSessionMock).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    {
+      configureRateLimit: () => {
+        rateLimitMock.mockResolvedValueOnce({ success: false })
+      },
+
+      deniedKey: `ip:${clientIp}`,
+      scope: 'IP',
+      turnstileCallCount: 0
+    },
+    {
+      configureRateLimit: () => {
+        rateLimitMock
+          .mockResolvedValueOnce({ success: true })
+          .mockResolvedValueOnce({ success: false })
+      },
+
+      deniedKey: `email:${hashToken(credential.email)}`,
+      scope: 'email',
+      turnstileCallCount: 1
+    }
+  ] as const)('should stop a denied $scope limit before session, credentials, and password work', async ({
+    configureRateLimit,
+    deniedKey,
+    turnstileCallCount
+  }) => {
+    const { dbHttp, selectMock } = createCredentialDatabase()
+    const event = createSignInEvent(dbHttp)
+
+    configureRateLimit()
     await expect(emailSignInHandler(event)).rejects.toMatchObject({ statusCode: 429 })
-    expect(setResponseHeaderMock).toHaveBeenCalledWith(event, 'Retry-After', 60)
+    expect(event.node.res.getHeader('Retry-After')).toBe(60)
+    expect(verifyTurnstile).toHaveBeenCalledTimes(turnstileCallCount)
+    expect(rateLimitMock).toHaveBeenCalledWith({ key: deniedKey })
     expect(getAppSessionMock).not.toHaveBeenCalled()
     expect(selectMock).not.toHaveBeenCalled()
     expect(verifyPassword).not.toHaveBeenCalled()
@@ -351,12 +434,68 @@ describe('post /api/auth/email/sign-in', () => {
     expect(updateAppSessionMock).not.toHaveBeenCalled()
   })
 
-  it('should return a safe 503 and sanitized diagnostics when the limiter binding fails', async () => {
+  it('should return a safe 503 and sanitized diagnostics when credential lookup fails', async () => {
+    const { dbHttp, whereMock } = createCredentialDatabase()
+    const event = createSignInEvent(dbHttp)
+    const sqlParameter = 'sql-parameter-secret'
+
+    const databaseError = new DrizzleQueryError(
+      'SELECT * FROM email_credentials WHERE email = $1 AND marker = $2',
+      [credential.email, sqlParameter],
+      new Error(`Database unavailable for ${credential.email}`)
+    )
+
+    whereMock.mockRejectedValue(databaseError)
+
+    await expect(emailSignInHandler(event)).rejects.toMatchObject({
+      statusCode: 503,
+      statusMessage: 'Email sign-in is temporarily unavailable'
+    })
+
+    const telemetry = JSON.stringify(vi.mocked(console.error).mock.calls)
+
+    expect(telemetry).toContain('Email sign-in credential lookup failed')
+    expect(telemetry).toContain('Database query failed')
+    expect(telemetry).toContain('Database unavailable for [REDACTED]')
+    expect(telemetry).not.toContain(credential.email)
+    expect(telemetry).not.toContain(sqlParameter)
+    expect(telemetry).not.toContain('SELECT * FROM email_credentials')
+    expect(verifyPassword).not.toHaveBeenCalled()
+    expect(updateAppSessionMock).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    {
+      configureRateLimit: () => {
+        rateLimitMock.mockRejectedValueOnce(new Error(`Limiter failed for ip:${clientIp}`))
+      },
+
+      failedKey: `ip:${clientIp}`,
+      scope: 'IP',
+      turnstileCallCount: 0
+    },
+    {
+      configureRateLimit: () => {
+        const emailKey = `email:${hashToken(credential.email)}`
+
+        rateLimitMock
+          .mockResolvedValueOnce({ success: true })
+          .mockRejectedValueOnce(new Error(`Limiter failed for ${emailKey}`))
+      },
+
+      failedKey: `email:${hashToken(credential.email)}`,
+      scope: 'email',
+      turnstileCallCount: 1
+    }
+  ] as const)('should return a safe 503 and redact the failed $scope limiter key', async ({
+    configureRateLimit,
+    failedKey,
+    turnstileCallCount
+  }) => {
     const { dbHttp, selectMock } = createCredentialDatabase()
     const event = createSignInEvent(dbHttp)
-    const ipKey = `ip:${clientIp}`
 
-    rateLimitMock.mockRejectedValue(new Error(`Limiter failed for ${ipKey}`))
+    configureRateLimit()
 
     await expect(emailSignInHandler(event)).rejects.toMatchObject({
       statusCode: 503,
@@ -367,10 +506,39 @@ describe('post /api/auth/email/sign-in', () => {
 
     expect(telemetry).toContain('Email sign-in rate limit failed')
     expect(telemetry).toContain('[REDACTED]')
-    expect(telemetry).not.toContain(ipKey)
+    expect(telemetry).not.toContain(failedKey)
+    expect(verifyTurnstile).toHaveBeenCalledTimes(turnstileCallCount)
+    expect(rateLimitMock).toHaveBeenCalledWith({ key: failedKey })
     expect(getAppSessionMock).not.toHaveBeenCalled()
     expect(selectMock).not.toHaveBeenCalled()
     expect(verifyPassword).not.toHaveBeenCalled()
     expect(updateAppSessionMock).not.toHaveBeenCalled()
+  })
+
+  it('should read the email sign-in limiter binding independently from the Guest limiter', async () => {
+    const actualCloudflareModule = await vi.importActual<typeof CloudflareModule>(
+      '#server/utils/cloudflare'
+    )
+
+    const emailSignInBinding = {
+      limit: vi.fn<Env['EMAIL_SIGN_IN_RATE_LIMITER']['limit']>()
+    }
+
+    const guestSessionBinding = {
+      limit: vi.fn<Env['GUEST_SESSION_RATE_LIMITER']['limit']>()
+    }
+
+    const event = createTestEvent({})
+
+    Object.assign(event.context, {
+      cloudflare: {
+        env: {
+          EMAIL_SIGN_IN_RATE_LIMITER: emailSignInBinding,
+          GUEST_SESSION_RATE_LIMITER: guestSessionBinding
+        }
+      }
+    })
+
+    expect(actualCloudflareModule.getEmailSignInRateLimiterBinding(event)).toBe(emailSignInBinding)
   })
 })
