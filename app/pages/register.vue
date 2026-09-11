@@ -2,7 +2,7 @@
   <AuthFormPanel :title="title" :description="description">
     <p v-if="isSent" ref="sentMessage" :class="$style.notice" role="status" tabindex="-1">
       Check your email for the next step. Verification links expire in one hour.
-      You can send another email using the form below.
+      To send another email, enter your password again.
     </p>
 
     <form :class="$style.form" @submit.prevent="submit">
@@ -68,7 +68,7 @@
   import { getEmailRegistrationError } from '~/utils/email-registration'
 
   definePageMeta({
-    layout: false,
+    layout: 'auth',
     skipAuth: true
   })
 
@@ -188,6 +188,8 @@
         }
       })
 
+      password.value = ''
+      passwordError.value = undefined
       isSent.value = true
 
       await nextTick()

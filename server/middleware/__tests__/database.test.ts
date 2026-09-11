@@ -99,4 +99,20 @@ describe('database middleware', () => {
     expect(createHttpClientMock).toHaveBeenCalledWith(databaseConfig)
     expect(event.context.dbHttp).toBe(databaseClient)
   })
+
+  it('should attach the database client to email sign-in without checking the registration flag', () => {
+    const databaseConfig = {
+      databaseUrl: 'postgres://unused.invalid/test',
+      isLocalDatabase: false
+    }
+
+    const databaseClient = { query: {} }
+    const event = createMiddlewareEvent('/api/auth/email/sign-in')
+
+    getRuntimeDatabaseConfigMock.mockReturnValue(databaseConfig)
+    createHttpClientMock.mockReturnValue(databaseClient)
+    databaseHandler(event)
+    expect(requireEmailRegistrationEnabled).not.toHaveBeenCalled()
+    expect(event.context.dbHttp).toBe(databaseClient)
+  })
 })

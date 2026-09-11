@@ -1,7 +1,7 @@
 # Email registration
 
-Registration is implemented in #747. Production stays disabled until email login
-ships in #748. Password reset and Twitch linking have separate follow-up issues.
+Registration is implemented in #747 and email/password sign-in in #748. Password
+reset and Twitch linking have separate follow-up issues.
 
 ## Deployment prerequisites
 
@@ -19,15 +19,21 @@ bindings in every environment:
   for the client IP and normalized email hash.
 - `EMAIL_VERIFICATION_RATE_LIMITER`: 5 requests per 60 seconds, checked separately
   for the client IP and token hash.
+- `EMAIL_SIGN_IN_RATE_LIMITER`: 5 requests per 60 seconds, checked separately for
+  the client IP and normalized email SHA-256 hash.
 
-Each environment has separate rate limiter namespaces. A limited request returns
-`429` with `Retry-After: 60`. Cloudflare rate limits are enforced per location;
-these bindings are not a globally synchronized quota.
+Each environment has separate rate limiter namespaces. Email sign-in uses
+`687734013` in development, `687734014` in staging, and `687734015` in
+production. A limited request returns `429` with `Retry-After: 60`. Cloudflare
+rate limits are eventually consistent and enforced per location; these bindings
+protect against brute-force attempts rather than providing a globally exact
+counter.
 
-`NUXT_PUBLIC_EMAIL_REGISTRATION_ENABLED` is the single UI/server switch. Only
-`true` enables it. When disabled, both new pages and APIs return `404` before
-registration database or mail work. Staging and production are disabled in the
-checked-in configuration.
+`NUXT_PUBLIC_EMAIL_REGISTRATION_ENABLED` controls registration only. Only `true`
+enables registration pages and APIs; when disabled, they return `404` before
+database or mail work. Email sign-in remains available independently of this
+flag. Production registration is enabled in the checked-in configuration;
+staging registration is enabled and restricted to one controlled recipient.
 
 Set the following runtime values before enabling an environment:
 
@@ -35,7 +41,7 @@ Set the following runtime values before enabling an environment:
 | --- | --- |
 | `NUXT_EMAIL_REGISTRATION_ENVIRONMENT` | `development`, `staging`, or `production` |
 | `NUXT_EMAIL_REGISTRATION_ORIGIN` | Exact public origin, without a trailing slash or path |
-| `NUXT_EMAIL_REGISTRATION_STAGING_RECIPIENT` | One verified recipient, required in staging |
+| `NUXT_EMAIL_REGISTRATION_STAGING_RECIPIENT` | One controlled recipient, required in staging |
 
 Production and staging require HTTPS. The configured origin must match the
 browser's `Origin` header; verification links use this origin, never request
@@ -44,25 +50,30 @@ headers. Turnstile must allow that hostname and validate the server-selected
 
 Before launching staging:
 
-1. Verify the Email Sending domain and `noreply@metsik.app` sender in Cloudflare.
-2. Choose and verify the single staging recipient.
-3. Set that same address in `NUXT_EMAIL_REGISTRATION_STAGING_RECIPIENT` and the
-   staging `EMAIL.allowed_destination_addresses` array in `wrangler.jsonc`.
-   An empty Cloudflare destination list is unrestricted, so the checked-in
-   binding is not launch-ready. Until a recipient is configured, the server
-   rejects other recipients; it never substitutes the test mailbox.
-4. Apply the migration, regenerate Worker types with `vp run cf-typegen`, and
+1. Onboard the `metsik.app` Email Sending domain and use `noreply@metsik.app` as
+   the allowed sender in Cloudflare.
+2. Set the single controlled staging address in both the
+   `NUXT_EMAIL_REGISTRATION_STAGING_RECIPIENT` Worker secret and the staging
+   `EMAIL.allowed_destination_addresses` array in `wrangler.jsonc`. On Workers
+   Paid, this recipient does not need to remain in the account-level Destination
+   Addresses list. The server rejects other recipients; it never substitutes the
+   test mailbox.
+3. Apply the migration, regenerate Worker types with `vp run cf-typegen`, and
    verify the binding and exact staging origin.
-5. Enable the staging flag and check delivery, expiry, retries, and confirmation.
+4. Check delivery, expiry, retries, and confirmation after deployment.
 
-The sender domain, staging recipient, and remaining monthly email allowance have
-not been confirmed by this change. Arbitrary recipients require Workers Paid.
-Email Sending includes 3,000 messages per month per account, then $0.35 per 1,000;
-existing-account notices and resends also count. See the
+The sender domain and staging recipient are configured, but mailbox delivery must
+still be smoke-tested after deployment. Arbitrary recipients require Workers
+Paid. Email Sending includes 3,000 messages per month per account, then $0.35 per
+1,000; existing-account notices and resends also count. See the
 [Cloudflare pricing documentation](https://developers.cloudflare.com/email-service/platform/pricing/).
 
-Production enablement belongs to #748 so a newly secured account can subsequently
-sign in with email. Do not enable production as part of #747.
+Before deploying the production activation, confirm all of the following:
+
+1. The Email Sending domain and `noreply@metsik.app` sender are verified.
+2. The production Worker has the existing `EMAIL` binding restricted to that
+   sender.
+3. The `20260907211007_serious_vector` migration from #747 has been applied.
 
 ## Local development
 
@@ -114,9 +125,12 @@ run in parallel; full suites are left to commit hooks.
 ```sh
 vp run format
 vp run test:typecheck
-vp run test:unit:agent server/utils/auth/__tests__ server/api/auth/email/__tests__ server/utils/__tests__/user.test.ts server/utils/__tests__/turnstile.test.ts server/api/auth/__tests__/create-session.test.ts server/middleware/__tests__/database.test.ts shared/utils/__tests__/redirect.test.ts
+vp run test:unit:agent server/utils/auth/__tests__ server/api/auth/email/__tests__ server/utils/__tests__/user.test.ts server/utils/__tests__/turnstile.test.ts server/utils/__tests__/cloudflare-config.test.ts server/api/auth/__tests__/create-session.test.ts server/middleware/__tests__/database.test.ts server/middleware/__tests__/api-session-check.test.ts shared/utils/__tests__/redirect.test.ts
 vp exec node --env-file=.env node_modules/vitest/vitest.mjs run tests/integration/email-registration.test.ts --config tests/integration/vitest.config.ts
-vp run test:e2e tests/playwright/registration/email-registration.test.ts tests/playwright/registration/email-registration-disabled.test.ts tests/playwright/login/login.test.ts
+vp run test:e2e tests/playwright/registration/email-registration.test.ts tests/playwright/registration/email-registration-disabled.test.ts tests/playwright/login/login.test.ts tests/playwright/login/email-sign-in.test.ts
+vp run build
+vp exec wrangler deploy --dry-run --env=staging
+vp exec wrangler deploy --dry-run --env=production
 ```
 
 The PostgreSQL test refuses a remote host or a disabled local database flag. It

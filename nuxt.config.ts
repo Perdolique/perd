@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto'
-import { basename } from 'node:path'
+import { watch, type FSWatcher } from 'node:fs'
+import { mkdir } from 'node:fs/promises'
+import { basename, dirname, extname, resolve } from 'node:path'
 import { env } from 'node:process'
 import { fileURLToPath } from 'node:url'
 import type { NuxtOptions } from 'nuxt/schema'
@@ -11,6 +13,7 @@ type TypeScriptCompilerOptions = NonNullable<
 >
 
 const customElements = new Set(['search'])
+const buildCommitSha = env.NUXT_PUBLIC_BUILD_COMMIT_SHA ?? env.GITHUB_SHA ?? ''
 
 const projectTypeScriptCompilerOptions = {
   noFallthroughCasesInSwitch: true,
@@ -22,6 +25,24 @@ const projectTypeScriptCompilerOptions = {
 const modalDialogFixturePath = fileURLToPath(
   new globalThis.URL('tests/nuxt/ModalDialog.vue', import.meta.url)
 )
+
+const localEmailDirectory = fileURLToPath(
+  new globalThis.URL('.wrangler/tmp/email', import.meta.url)
+)
+
+const localEmailFileExtensions = new Map([
+  ['email-html', '.html'],
+  ['email-text', '.txt']
+])
+
+let localEmailFileWatcher: FSWatcher | null = null
+
+function isLocalEmailFile(relativePath: string) : boolean {
+  const formatDirectory = basename(dirname(relativePath))
+  const expectedExtension = localEmailFileExtensions.get(formatDirectory)
+
+  return expectedExtension !== undefined && extname(relativePath) === expectedExtension
+}
 
 function getComponentType(filePath: string) : ComponentType {
   if (filePath.includes('/app/pages/')) {
@@ -63,7 +84,7 @@ export default defineNuxtConfig({
 
     public: {
       emailRegistrationEnabled: false,
-      buildCommitSha: env.GITHUB_SHA ?? '',
+      buildCommitSha,
       turnstileSiteKey: ''
     },
 
@@ -149,6 +170,47 @@ export default defineNuxtConfig({
   },
 
   hooks: {
+    'ready': async (nuxt) => {
+      if (!nuxt.options.dev) {
+        return
+      }
+
+      await mkdir(localEmailDirectory, { recursive: true })
+
+      const reportedFiles = new Set<string>()
+
+      localEmailFileWatcher = watch(
+        localEmailDirectory,
+        { recursive: true },
+        (_eventType, filename) => {
+          if (filename === null) {
+            return
+          }
+
+          const relativePath = filename
+
+          if (!isLocalEmailFile(relativePath)) {
+            return
+          }
+
+          const filePath = resolve(localEmailDirectory, relativePath)
+
+          if (reportedFiles.has(filePath)) {
+            return
+          }
+
+          reportedFiles.add(filePath)
+          globalThis.console.info(`Local email saved: ${filePath}`)
+        }
+      )
+    },
+
+    'close': () => {
+      localEmailFileWatcher?.close()
+
+      localEmailFileWatcher = null
+    },
+
     'pages:extend': (pages) => {
       if (env.PERD_E2E_PAGES !== 'true') {
         return

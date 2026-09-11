@@ -100,6 +100,12 @@ test.describe('Email registration', () => {
     await page.getByRole('link', { name: 'Create account' }).click()
     await expect(page).toHaveURL(`${appBaseUrl}/register?redirectTo=/account`)
     await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible()
+
+    await expect.poll(async () => turnstile.getRenderOptions(page)).toContainEqual(
+      expect.objectContaining({ action: 'email_registration' })
+    )
+
+    await expect(page.getByRole('button', { name: 'Send verification email' })).toBeEnabled()
     await page.getByLabel('Email', { exact: true }).focus()
     await page.keyboard.type('trip@example.com')
     await page.keyboard.press('Tab')
@@ -109,8 +115,12 @@ test.describe('Email registration', () => {
     await expect(page.getByRole('button', { name: 'Send verification email' })).toBeFocused()
     await page.keyboard.press('Enter')
     await expect(page.getByRole('status')).toContainText('Check your email')
+    await expect(page.getByRole('status')).toContainText('enter your password again')
     await expect(page.getByRole('status')).toBeFocused()
+    await expect(page.getByLabel('Email', { exact: true })).toHaveValue('trip@example.com')
+    await expect(page.getByLabel('Password', { exact: true })).toHaveValue('')
     await page.screenshot({ path: test.info().outputPath('registration-mobile.png') })
+    await page.getByLabel('Password', { exact: true }).fill(password)
     await page.getByRole('button', { name: 'Send another email' }).click()
     await expect.poll(() => bodies.length).toBe(2)
 
@@ -138,7 +148,7 @@ test.describe('Email registration', () => {
     expect(overflows).toBe(false)
   })
 
-  test('should confirm in another browser only after entering the password and remove the token from history', async ({ page, browser }) => {
+  test('should confirm in another browser only after entering the password and remove the token from history', async ({ page, browser, turnstile }) => {
     await page.route('**/api/user', async route => route.fulfill({ json: anonymous }))
 
     await page.route('**/api/auth/email/registration', async route => route.fulfill({
@@ -147,6 +157,8 @@ test.describe('Email registration', () => {
     }))
 
     await page.goto('/register')
+    await turnstile.getRenderOptions(page)
+    await expect(page.getByRole('button', { name: 'Send verification email' })).toBeEnabled()
     await page.getByLabel('Email', { exact: true }).fill('trip@example.com')
     await page.getByLabel('Password', { exact: true }).fill(password)
     await page.getByRole('button', { name: 'Send verification email' }).click()
@@ -192,7 +204,7 @@ test.describe('Email registration', () => {
   })
 
   for (const [accountType, isGuest] of [['Guest', true], ['Twitch', false]] as const) {
-    test(`should add email to the current ${accountType} account and preserve its identity and admin access`, async ({ page }) => {
+    test(`should add email to the current ${accountType} account and preserve its identity and admin access`, async ({ page, turnstile }) => {
       await mockCurrentUser(page, isGuest)
 
       await page.route('**/api/auth/email/registration', async route => route.fulfill({
@@ -204,10 +216,13 @@ test.describe('Email registration', () => {
 
       await mockSuccessfulVerification(page, bodies)
       await page.goto('/register?redirectTo=/account')
+      await turnstile.getRenderOptions(page)
       await expect(page.getByRole('heading', { name: 'Add email access' })).toBeVisible()
       await page.getByRole('link', { name: 'Back to Account' }).click()
       await expect(page.getByText(userId, { exact: true })).toBeVisible()
       await page.getByRole('link', { name: /Add email/u }).click()
+      await expect.poll(async () => turnstile.getRenderOptions(page)).toHaveLength(2)
+      await expect(page.getByRole('button', { name: 'Send verification email' })).toBeEnabled()
       await page.getByLabel('Email', { exact: true }).fill('trip@example.com')
       await page.getByLabel('Password', { exact: true }).fill(password)
       await page.getByRole('button', { name: 'Send verification email' }).click()
@@ -260,7 +275,7 @@ test.describe('Email registration', () => {
     await expect(page.getByLabel('Password', { exact: true })).toHaveCount(0)
   })
 
-  test('should focus password errors and sanitize an unsafe redirect before requesting mail', async ({ page }) => {
+  test('should focus password errors and sanitize an unsafe redirect before requesting mail', async ({ page, turnstile }) => {
     const bodies: unknown[] = []
 
     await page.route('**/api/user', async route => route.fulfill({ json: anonymous }))
@@ -275,6 +290,8 @@ test.describe('Email registration', () => {
     })
 
     await page.goto('/register?redirectTo=https://other.example/')
+    await turnstile.getRenderOptions(page)
+    await expect(page.getByRole('button', { name: 'Send verification email' })).toBeEnabled()
     await page.getByLabel('Email', { exact: true }).fill('trip@example.com')
     await page.getByLabel('Password', { exact: true }).fill('too short')
     await page.getByRole('button', { name: 'Send verification email' }).click()

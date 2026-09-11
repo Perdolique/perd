@@ -41,7 +41,7 @@
   import PerdButton from '~/components/PerdButton.vue'
 
   definePageMeta({
-    layout: false,
+    layout: 'auth',
     skipAuth: true
   })
 

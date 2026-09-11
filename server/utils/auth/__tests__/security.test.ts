@@ -3,8 +3,8 @@ import { Socket } from 'node:net'
 import { createEvent } from 'h3'
 import { DrizzleQueryError } from 'drizzle-orm'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { validateEmailRegistrationConfig } from '../email-registration-config'
-import { enforceRegistrationRateLimit } from '../email-registration-request'
+import { validateEmailAuthenticationOrigin, validateEmailRegistrationConfig } from '../email-registration-config'
+import { enforceEmailAuthenticationRateLimit } from '../email-authentication-request'
 import { sendRegistrationEmail } from '../email-registration-mail'
 import { getAuthErrorDetails } from '../telemetry'
 import { isEmailRegistrationEnabled } from '#shared/utils/email-registration'
@@ -62,16 +62,39 @@ describe('email registration security configuration', () => {
       stagingRecipient: 'one.trip+test@example.com'
     })
   })
+
+  it.each([
+    ['development', 'http://localhost:3000'],
+    ['production', 'https://metsik.app'],
+    ['staging', 'https://staging.metsik.app']
+  ])('should allow the %s sign-in origin without a staging registration recipient', (environment, origin) => {
+    expect(validateEmailAuthenticationOrigin({
+      environment,
+      origin,
+      stagingRecipient: ''
+    })).toBe(origin)
+  })
 })
 
-describe('registration rate limiting', () => {
+describe('email authentication rate limiting', () => {
   afterEach(() => vi.restoreAllMocks())
 
-  it.each(['EMAIL_REGISTRATION_RATE_LIMITER', 'EMAIL_VERIFICATION_RATE_LIMITER'] as const)('should check independent IP and subject keys in %s', async (bindingName) => {
+  it('should check independent IP and subject keys', async () => {
     const limit = vi.fn().mockResolvedValueOnce({ success: true }).mockResolvedValueOnce({ success: false })
-    const event = createRequestEvent({ [bindingName]: { limit } })
+    const event = createRequestEvent({})
 
-    await expect(enforceRegistrationRateLimit(event, bindingName, ['ip:203.0.113.1', 'subject:hash'])).rejects.toMatchObject({ statusCode: 429 })
+    await expect(enforceEmailAuthenticationRateLimit(event, {
+      deniedStatusMessage: 'Too many attempts',
+
+      getBinding: () => {
+        return { limit }
+      },
+
+      keys: ['ip:203.0.113.1', 'subject:hash'],
+      logMessage: 'Email authentication rate limit failed',
+      unavailableStatusMessage: 'Email authentication is temporarily unavailable'
+    })).rejects.toMatchObject({ statusCode: 429 })
+
     expect(limit.mock.calls).toStrictEqual([[{ key: 'ip:203.0.113.1' }], [{ key: 'subject:hash' }]])
     expect(event.node.res.getHeader('Retry-After')).toBe(60)
   })
@@ -82,9 +105,19 @@ describe('registration rate limiting', () => {
     })
 
     const limit = vi.fn().mockRejectedValue(new Error('Provider unavailable for ip:203.0.113.1 subject:secret'))
-    const event = createRequestEvent({ EMAIL_REGISTRATION_RATE_LIMITER: { limit } })
+    const event = createRequestEvent({})
 
-    await expect(enforceRegistrationRateLimit(event, 'EMAIL_REGISTRATION_RATE_LIMITER', ['ip:203.0.113.1', 'subject:secret'])).rejects.toMatchObject({ statusCode: 503 })
+    await expect(enforceEmailAuthenticationRateLimit(event, {
+      deniedStatusMessage: 'Too many attempts',
+
+      getBinding: () => {
+        return { limit }
+      },
+
+      keys: ['ip:203.0.113.1', 'subject:secret'],
+      logMessage: 'Email authentication rate limit failed',
+      unavailableStatusMessage: 'Email authentication is temporarily unavailable'
+    })).rejects.toMatchObject({ statusCode: 503 })
 
     const diagnostics = JSON.stringify(log.mock.calls)
 

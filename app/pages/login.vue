@@ -1,92 +1,95 @@
 <template>
-  <div :class="$style.component">
-    <picture :class="$style.backgroundMedia" aria-hidden="true">
-      <source
-        srcset="/images/login-background-desktop.avif"
-        media="(width >= 860px)"
-        type="image/avif"
-      >
-
-      <source
-        srcset="/images/login-background-mobile.avif"
-        type="image/avif"
-      >
-
-      <img
-        :class="$style.backgroundImage"
-        src="/images/login-background-mobile.avif"
-        width="941"
-        height="1672"
-        alt=""
-        decoding="async"
-        fetchpriority="high"
-        loading="eager"
-      >
-    </picture>
-
+  <AuthFormPanel title="Sign in">
     <TurnstileWidget
+      :key="turnstileAction"
       ref="turnstileWidget"
       :sitekey="turnstileSiteKey"
-      :action="guestSessionTurnstileAction"
-      @verified="finishGuestLogin"
+      :action="turnstileAction"
+      @verified="finishAuthentication"
       @error="handleVerificationError"
-      @cancel="cancelGuestLogin"
+      @cancel="cancelAuthentication"
     />
 
-    <main :class="$style.content">
-      <PerdButton v-if="emailRegistrationEnabled" :to="registrationTarget" :class="$style.button">
-        Create account with email
-      </PerdButton>
-      <p v-if="hasGuestError" :class="$style.error" role="alert">
-        {{ guestError }}
-      </p>
+    <p v-if="hasAuthenticationError" :class="$style.error" role="alert">
+      {{ authenticationError }}
+    </p>
 
-      <div :class="$style.buttons">
-        <PerdButton
-          ref="guestButton"
-          variant="secondary"
-          icon="hugeicons:game"
-          :class="$style.button"
-          :loading="isAuthenticating"
-          @click="continueAsGuest"
-        >
-          Guest
-        </PerdButton>
+    <form :class="$style.form" @submit.prevent="startEmailSignIn">
+      <TextInput
+        v-model="email"
+        name="email"
+        label="Email"
+        type="email"
+        autocomplete="username"
+        :maxlength="254"
+        required
+        :disabled="isAuthenticationBusy"
+      />
 
-        <PerdButton
-          :class="$style.button"
-          icon="hugeicons:twitch"
-          :loading="isAuthenticating"
-          @click="redirectToTwitch"
-        >
-          Twitch
-        </PerdButton>
-      </div>
-    </main>
+      <TextInput
+        ref="passwordInput"
+        v-model="password"
+        name="password"
+        label="Password"
+        type="password"
+        autocomplete="current-password"
+        :error="passwordError"
+        required
+        :disabled="isAuthenticationBusy"
+      />
 
-    <footer :class="$style.footer">
-      <a
-        :class="$style.footerLink"
-        href="https://github.com/Perdolique/perd"
-        target="_blank"
-        rel="noreferrer"
+      <PerdButton
+        ref="signInButton"
+        type="submit"
+        :loading="isEmailSignInActive"
+        :disabled="isAuthenticationBusy"
+        block
       >
-        GitHub
-      </a>
+        Sign in
+      </PerdButton>
+    </form>
 
-      <span v-if="buildCommitSha" :class="$style.commit">
-        Commit
-        <a
-          :class="$style.footerLink"
-          :href="buildCommitUrl"
-          target="_blank"
-          rel="noreferrer"
-        >
-          #{{ buildCommitShortSha }}
-        </a>
-      </span>
-    </footer>
-  </div>
+    <PerdButton
+      v-if="emailRegistrationEnabled"
+      :to="registrationTarget"
+      :disabled="isAuthenticationBusy"
+      variant="ghost"
+      block
+    >
+      Create account
+    </PerdButton>
+
+    <div :class="$style.divider" aria-hidden="true">
+      <span :class="$style.dividerLine" />
+      <span>Or continue with</span>
+      <span :class="$style.dividerLine" />
+    </div>
+
+    <div :class="$style.secondaryActions">
+      <PerdButton
+        ref="guestButton"
+        variant="secondary"
+        icon="hugeicons:game"
+        :loading="isGuestActive"
+        :disabled="isAuthenticationBusy"
+        block
+        @click="continueAsGuest"
+      >
+        Continue as guest
+      </PerdButton>
+
+      <PerdButton
+        variant="secondary"
+        icon="hugeicons:twitch"
+        :loading="isTwitchActive"
+        :disabled="isAuthenticationBusy"
+        block
+        @click="redirectToTwitch"
+      >
+        Continue with Twitch
+      </PerdButton>
+    </div>
+  </AuthFormPanel>
 </template>
 
 <script lang="ts" setup>
@@ -95,7 +98,6 @@
   import {
     definePageMeta,
     navigateTo,
-    useHead,
     useRequestFetch,
     useRoute,
     useRuntimeConfig,
@@ -103,36 +105,52 @@
     withMinimumDelay
   } from '#imports'
 
-  import { isEmailRegistrationEnabled } from '#shared/utils/email-registration'
-  import { guestSessionTurnstileAction, turnstileResponseFieldName } from '#shared/utils/turnstile'
+  import { isEmailRegistrationEnabled, isRegistrationPasswordValid } from '#shared/utils/email-registration'
+
+  import {
+    emailSignInTurnstileAction,
+    guestSessionTurnstileAction,
+    turnstileResponseFieldName
+  } from '#shared/utils/turnstile'
+
   import { getRedirectNavigationTarget } from '~/utils/router'
-  import PerdButton from '~/components/PerdButton.vue'
+  import AuthFormPanel from '~/components/auth/AuthFormPanel.vue'
   import TurnstileWidget from '~/components/auth/TurnstileWidget.vue'
+  import PerdButton from '~/components/PerdButton.vue'
+  import TextInput from '~/components/TextInput.vue'
+
+  type TurnstileAuthenticationMethod = 'email' | 'guest'
+
+  type ActiveAuthentication =
+    | { method: TurnstileAuthenticationMethod; phase: 'request' | 'turnstile'; }
+    | { method: 'twitch'; phase: 'redirect'; }
 
   definePageMeta({
-    layout: false
-  })
-
-  useHead({
-    link: [{
-      rel: 'preload',
-      as: 'image',
-      href: '/images/login-background-mobile.avif',
-      type: 'image/avif',
-      media: '(width < 860px)',
-      fetchpriority: 'high'
-    }, {
-      rel: 'preload',
-      as: 'image',
-      href: '/images/login-background-desktop.avif',
-      type: 'image/avif',
-      media: '(width >= 860px)',
-      fetchpriority: 'high'
-    }]
+    layout: 'auth'
   })
 
   const route = useRoute()
-  const emailRegistrationEnabled = isEmailRegistrationEnabled(useRuntimeConfig().public.emailRegistrationEnabled)
+  const runtimeConfig = useRuntimeConfig()
+  const { public: publicRuntimeConfig } = runtimeConfig
+  const emailRegistrationEnabled = isEmailRegistrationEnabled(publicRuntimeConfig.emailRegistrationEnabled)
+  const { turnstileSiteKey } = publicRuntimeConfig
+  const email = ref('')
+  const password = ref('')
+  const passwordError = ref<string>()
+  const authenticationError = ref<string | null>(null)
+  const activeAuthentication = ref<ActiveAuthentication | null>(null)
+  const turnstileAction = ref(emailSignInTurnstileAction)
+  const requestFetch = useRequestFetch()
+  const { user } = useUserStore()
+  const turnstileWidget = useTemplateRef('turnstileWidget')
+  const passwordInput = useTemplateRef('passwordInput')
+  const signInButton = useTemplateRef('signInButton')
+  const guestButton = useTemplateRef('guestButton')
+  const hasAuthenticationError = computed(() => authenticationError.value !== null)
+  const isAuthenticationBusy = computed(() => activeAuthentication.value !== null)
+  const isEmailSignInActive = computed(() => activeAuthentication.value?.method === 'email')
+  const isGuestActive = computed(() => activeAuthentication.value?.method === 'guest')
+  const isTwitchActive = computed(() => activeAuthentication.value?.method === 'twitch')
 
   const registrationTarget = computed(() => {
     const redirectTo = getRedirectNavigationTarget(route.query.redirectTo).path
@@ -142,52 +160,6 @@
       query: { redirectTo }
     }
   })
-
-  const { user } = useUserStore()
-  const requestFetch = useRequestFetch()
-  const turnstileWidget = useTemplateRef('turnstileWidget')
-  const guestButton = useTemplateRef('guestButton')
-  const isChecking = ref(false)
-  const guestError = ref<string | null>(null)
-  const isAuthenticating = ref(false)
-  const hasGuestError = computed(() => guestError.value !== null)
-
-  const {
-    public: {
-      buildCommitSha,
-      turnstileSiteKey
-    }
-  } = useRuntimeConfig()
-
-  const buildCommitShortSha = buildCommitSha.slice(0, 7)
-  const buildCommitUrl = `https://github.com/Perdolique/perd/commit/${buildCommitSha}`
-
-  function handleVerificationError(message: string) {
-    isChecking.value = false
-    isAuthenticating.value = false
-    guestError.value = message
-  }
-
-  async function cancelGuestLogin() {
-    isChecking.value = false
-    isAuthenticating.value = false
-
-    await nextTick()
-    guestButton.value?.focus()
-  }
-
-  function startAuthenticating() {
-    isAuthenticating.value = true
-  }
-
-  async function navigateAfterLogin(redirectTo: unknown) {
-    const navigationTarget = getRedirectNavigationTarget(redirectTo)
-
-    await navigateTo(navigationTarget.path, {
-      replace: true,
-      external: navigationTarget.external
-    })
-  }
 
   function getRequestStatus(error: unknown): number | undefined {
     if (error === null || typeof error !== 'object') {
@@ -205,9 +177,23 @@
     return typeof status === 'number' ? status : undefined
   }
 
-  function getGuestErrorMessage(error: unknown): string {
-    const status = getRequestStatus(error)
+  function getEmailSignInErrorMessage(status: number | undefined): string {
+    if (status === 401) {
+      return 'Email or password is incorrect'
+    } else if (status === 403) {
+      return 'Security check failed. Try again.'
+    } else if (status === 429) {
+      return 'Too many sign-in attempts. Try again in a minute.'
+    } else if (status === 503) {
+      return 'Sign in is temporarily unavailable. Try again.'
+    } else if (status === 409) {
+      return 'A user is already signed in. Reload the page to continue.'
+    }
 
+    return 'Could not sign in. Try again.'
+  }
+
+  function getGuestErrorMessage(status: number | undefined): string {
     if (status === 403) {
       return 'Security check failed. Try again.'
     } else if (status === 429) {
@@ -219,61 +205,193 @@
     return 'Could not continue as Guest. Try again.'
   }
 
-  async function requestGuestSession(requestToken: string) {
+  async function navigateAfterLogin(redirectTo: unknown) {
+    const navigationTarget = getRedirectNavigationTarget(redirectTo)
+
+    await navigateTo(navigationTarget.path, {
+      replace: true,
+      external: navigationTarget.external
+    })
+  }
+
+  async function focusAfterAttempt(method: TurnstileAuthenticationMethod, focusPassword = false) {
+    await nextTick()
+
+    if (method === 'email') {
+      if (focusPassword) {
+        passwordInput.value?.focus()
+      } else {
+        signInButton.value?.focus()
+      }
+    } else if (method === 'guest') {
+      guestButton.value?.focus()
+    }
+  }
+
+  async function startTurnstileAuthentication(method: TurnstileAuthenticationMethod) {
+    if (isAuthenticationBusy.value) {
+      return
+    }
+
+    activeAuthentication.value = {
+      method,
+      phase: 'turnstile'
+    }
+    authenticationError.value = null
+
+    if (method === 'guest') {
+      passwordError.value = undefined
+    }
+
+    turnstileAction.value = method === 'email'
+      ? emailSignInTurnstileAction
+      : guestSessionTurnstileAction
+
+    await nextTick()
+    turnstileWidget.value?.execute()
+  }
+
+  function startEmailSignIn() {
+    if (isAuthenticationBusy.value) {
+      return
+    }
+
+    authenticationError.value = null
+    passwordError.value = undefined
+
+    if (!isRegistrationPasswordValid(password.value)) {
+      passwordError.value = 'Use a password between 15 and 128 characters.'
+
+      passwordInput.value?.focus()
+
+      return
+    }
+
+    void startTurnstileAuthentication('email')
+  }
+
+  function continueAsGuest() {
+    void startTurnstileAuthentication('guest')
+  }
+
+  async function cancelAuthentication() {
+    const state = activeAuthentication.value
+
+    if (state?.phase !== 'turnstile') {
+      return
+    }
+
+    const { method } = state
+
+    activeAuthentication.value = null
+
+    await focusAfterAttempt(method)
+  }
+
+  async function handleVerificationError(message: string) {
+    const state = activeAuthentication.value
+
+    if (state?.phase !== 'turnstile') {
+      return
+    }
+
+    const { method } = state
+
+    activeAuthentication.value = null
+    authenticationError.value = message
+
+    await focusAfterAttempt(method)
+  }
+
+  async function finishEmailSignIn(token: string) {
+    try {
+      const responsePromise = requestFetch('/api/auth/email/sign-in', {
+        method: 'POST',
+
+        body: {
+          email: email.value,
+          password: password.value,
+          [turnstileResponseFieldName]: token
+        }
+      })
+
+      const response = await withMinimumDelay(responsePromise, 500)
+
+      user.value.email = response.email
+      user.value.userId = response.userId
+      user.value.isAdmin = response.isAdmin
+      user.value.isGuest = response.isGuest
+      user.value.hasData = true
+
+      await navigateAfterLogin(route.query.redirectTo)
+    } catch (error) {
+      const status = getRequestStatus(error)
+      const focusPassword = status === 401
+
+      authenticationError.value = getEmailSignInErrorMessage(status)
+      activeAuthentication.value = null
+
+      await focusAfterAttempt('email', focusPassword)
+    }
+  }
+
+  async function finishGuestLogin(token: string) {
     try {
       const responsePromise = requestFetch('/api/auth/create-session', {
         body: {
-          [turnstileResponseFieldName]: requestToken
+          [turnstileResponseFieldName]: token
         },
 
         method: 'POST'
       })
 
-      return await withMinimumDelay(responsePromise, 500)
+      const response = await withMinimumDelay(responsePromise, 500)
+
+      user.value.userId = response.userId
+      user.value.isGuest = response.isGuest
+      user.value.hasData = true
+
+      await navigateAfterLogin(route.query.redirectTo)
     } catch (error) {
-      guestError.value = getGuestErrorMessage(error)
+      const status = getRequestStatus(error)
 
-      return null
-    } finally {
-      isAuthenticating.value = false
+      authenticationError.value = getGuestErrorMessage(status)
+      activeAuthentication.value = null
+
+      await focusAfterAttempt('guest')
     }
   }
 
-  function continueAsGuest() {
-    if (isAuthenticating.value) {
+  async function finishAuthentication(token: string) {
+    const state = activeAuthentication.value
+
+    if (state?.phase !== 'turnstile') {
       return
     }
 
-    startAuthenticating()
+    const { method } = state
 
-    isChecking.value = true
-    guestError.value = null
-
-    turnstileWidget.value?.execute()
-  }
-
-  async function finishGuestLogin(token: string) {
-    if (!isChecking.value) {
-      return
+    activeAuthentication.value = {
+      method,
+      phase: 'request'
     }
 
-    isChecking.value = false
+    const finish = method === 'email' ? finishEmailSignIn : finishGuestLogin
 
-    const response = await requestGuestSession(token)
-
-    if (response === null) {
-      return
-    }
-
-    user.value.userId = response.userId
-    user.value.isGuest = response.isGuest
-    user.value.hasData = true
-
-    await navigateAfterLogin(route.query.redirectTo)
+    await finish(token)
   }
 
   function redirectToTwitch() {
-    startAuthenticating()
+    if (isAuthenticationBusy.value) {
+      return
+    }
+
+    activeAuthentication.value = {
+      method: 'twitch',
+      phase: 'redirect'
+    }
+    authenticationError.value = null
+    passwordError.value = undefined
 
     const navigationTarget = getRedirectNavigationTarget(route.query.redirectTo)
 
@@ -290,118 +408,31 @@
 </script>
 
 <style module>
-  .component {
-    position: relative;
-    isolation: isolate;
-    min-block-size: 100dvh;
-    display: grid;
-    grid-template-rows: 1fr auto;
-    place-items: center;
-    overflow: hidden;
-    padding:
-      max(var(--spacing-24), env(safe-area-inset-top))
-      var(--spacing-16)
-      max(var(--spacing-24), env(safe-area-inset-bottom));
-    background: var(--color-background-muted);
-    color: oklch(99% 0 0);
-
-    &::after {
-      content: "";
-      position: absolute;
-      z-index: 1;
-      inset: 0;
-      background:
-        linear-gradient(
-          180deg,
-          color-mix(in oklch, var(--color-overlay-background), transparent 78%),
-          color-mix(in oklch, var(--color-overlay-background), transparent 6%)
-        );
-      pointer-events: none;
-    }
-
-    @media (width >= 860px) {
-      padding-inline: var(--spacing-32);
-    }
-  }
-
-  .backgroundMedia {
-    position: absolute;
-    z-index: 0;
-    inset: 0;
-  }
-
-  .backgroundImage {
-    inline-size: 100%;
-    block-size: 100%;
-    display: block;
-    object-fit: cover;
-    object-position: center bottom;
-  }
-
-  .content {
-    position: relative;
-    z-index: 2;
-    grid-row: 1;
-    inline-size: min(100%, 24rem);
-    margin-inline: auto;
+  .form,
+  .secondaryActions {
     display: grid;
     gap: var(--spacing-16);
   }
 
-  .buttons {
-    display: grid;
-    gap: var(--spacing-12);
-  }
-
-  .button {
-    inline-size: 100%;
-  }
-
   .error {
-    padding: var(--spacing-8) var(--spacing-12);
-    border-radius: var(--border-radius-6);
-    background: var(--color-black);
-    color: var(--color-white);
-    font-size: var(--font-size-14);
-    text-align: center;
+    padding: var(--spacing-12);
+    border-radius: var(--border-radius-12);
+    background: var(--color-danger-subtle);
+    color: var(--color-danger-primary);
+    overflow-wrap: anywhere;
   }
 
-  .footer {
-    position: relative;
-    z-index: 2;
-    grid-row: 2;
-    inline-size: min(100%, 24rem);
-    margin-inline: auto;
-    display: flex;
-    flex-wrap: wrap;
+  .divider {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    justify-content: center;
-    gap: var(--spacing-8) var(--spacing-16);
-    padding-block: var(--spacing-8);
-    color: color-mix(in oklch, var(--color-white) 82%, transparent);
+    gap: var(--spacing-12);
+    color: var(--color-text-muted);
     font-size: var(--font-size-14);
-    text-align: center;
   }
 
-  .commit {
-    display: inline-flex;
-    align-items: baseline;
-    gap: var(--spacing-4);
-  }
-
-  .footerLink {
-    color: var(--color-white);
-    font-weight: var(--font-weight-semibold);
-    text-decoration: none;
-    text-underline-offset: var(--spacing-4);
-
-    &:hover,
-    &:focus-visible {
-      text-decoration: underline;
-    }
-
-    &:active {
-      color: var(--color-sand-100);
-    }
+  .dividerLine {
+    block-size: 1px;
+    background: var(--color-border-subtle);
   }
 </style>

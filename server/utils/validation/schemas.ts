@@ -982,6 +982,12 @@ const emailVerificationSchema = v.object({
   password: registrationPasswordSchema
 })
 
+const emailSignInSchema = v.object({
+  email: v.pipe(v.string(), v.transform(normalizeEmail), v.maxLength(254), v.email()),
+  password: registrationPasswordSchema,
+  'cf-turnstile-response': v.unknown()
+})
+
 function validateEmailRegistration(value: unknown) {
   const parsed = v.safeParse(emailRegistrationSchema, value)
 
@@ -994,9 +1000,16 @@ function validateEmailVerification(value: unknown) {
   return parsed.success ? parsed.output : false
 }
 
+function validateEmailSignIn(value: unknown) {
+  const parsed = v.safeParse(emailSignInSchema, value)
+
+  return parsed.success ? parsed.output : false
+}
+
 
 export {
   validateEmailRegistration,
+  validateEmailSignIn,
   validateEmailVerification,
   brandMutationSchema,
   brandIdParamsSchema,

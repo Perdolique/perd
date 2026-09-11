@@ -1,14 +1,12 @@
 <template>
-  <main :class="$style.component">
-    <section :class="$style.panel" :aria-labelledby="headingId">
-      <div :class="$style.intro">
-        <p :class="$style.brand">Metsik</p>
-        <h1 :id="headingId" :class="$style.heading">{{ title }}</h1>
-        <p :class="$style.description">{{ description }}</p>
-      </div>
-      <slot />
-    </section>
-  </main>
+  <section :class="$style.component" :aria-labelledby="headingId">
+    <div :class="$style.intro">
+      <p :class="$style.brand">Metsik</p>
+      <h1 :id="headingId" :class="$style.heading">{{ title }}</h1>
+      <p v-if="description" :class="$style.description">{{ description }}</p>
+    </div>
+    <slot />
+  </section>
 </template>
 
 <script lang="ts" setup>
@@ -16,7 +14,7 @@
 
   interface Props {
     title: string;
-    description: string;
+    description?: string;
   }
 
   defineProps<Props>()
@@ -26,22 +24,18 @@
 
 <style module>
   .component {
-    min-block-size: 100dvh;
     display: grid;
-    place-items: center;
-    padding: var(--spacing-24) var(--spacing-16);
-    background: var(--color-background-muted);
-  }
-
-  .panel {
-    inline-size: min(100%, 28rem);
-    display: grid;
-    gap: var(--spacing-24);
+    gap: var(--spacing-20);
     padding: var(--spacing-24);
     background: var(--color-surface-primary);
+    color: var(--color-text-primary);
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--border-radius-24);
     box-shadow: var(--shadow-large);
+
+    @media (width < 360px) {
+      padding-inline: var(--spacing-16);
+    }
   }
 
   .intro {

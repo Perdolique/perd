@@ -18,6 +18,7 @@ const publicApiPaths = [
   '/auth/create-session',
   '/auth/email/registration',
   '/auth/email/registration/verify',
+  '/auth/email/sign-in',
   '/oauth/twitch'
 ] as const
 

@@ -17,9 +17,21 @@ const rateLimitSchema = v.object({
   })
 })
 
+const secretsSchema = v.object({
+  required: v.array(v.string())
+})
+
+const sendEmailSchema = v.object({
+  allowed_destination_addresses: v.optional(v.array(v.string())),
+  allowed_sender_addresses: v.array(v.string()),
+  name: v.string()
+})
+
 const environmentSchema = v.object({
   name: v.string(),
   ratelimits: v.array(rateLimitSchema),
+  secrets: secretsSchema,
+  send_email: v.array(sendEmailSchema),
   vars: v.record(v.string(), v.string()),
   workers_dev: v.boolean()
 })
@@ -37,27 +49,31 @@ const wranglerConfigSchema = v.object({
 
   name: v.string(),
   ratelimits: v.array(rateLimitSchema),
+  secrets: secretsSchema,
   vars: v.record(v.string(), v.string()),
   workers_dev: v.boolean()
 })
 
 type WranglerConfig = v.InferOutput<typeof wranglerConfigSchema>
 
-const guestRateLimitScenarios = [
+const rateLimitEnvironmentScenarios = [
   {
+    emailSignInNamespaceId: '687734013',
     environment: 'development',
     getRateLimits: (config: WranglerConfig) => config.ratelimits,
-    namespaceId: '687734004'
+    guestNamespaceId: '687734004'
   },
   {
+    emailSignInNamespaceId: '687734014',
     environment: 'staging',
     getRateLimits: (config: WranglerConfig) => config.env.staging.ratelimits,
-    namespaceId: '687734005'
+    guestNamespaceId: '687734005'
   },
   {
+    emailSignInNamespaceId: '687734015',
     environment: 'production',
     getRateLimits: (config: WranglerConfig) => config.env.production.ratelimits,
-    namespaceId: '687734006'
+    guestNamespaceId: '687734006'
   }
 ] as const
 
@@ -97,16 +113,16 @@ describe('wrangler Cloudflare configuration', () => {
     expect(source.match(/"crons": \[\]/gu)).toHaveLength(2)
   })
 
-  it.each(guestRateLimitScenarios)(
+  it.each(rateLimitEnvironmentScenarios)(
     'should configure the $environment Guest limiter namespace',
-    async ({ getRateLimits, namespaceId }) => {
-    const { config } = await readWranglerConfig()
+    async ({ getRateLimits, guestNamespaceId }) => {
+      const { config } = await readWranglerConfig()
       const rateLimits = getRateLimits(config)
       const guestRateLimit = rateLimits.find(({ name }) => name === 'GUEST_SESSION_RATE_LIMITER')
 
       expect(guestRateLimit).toStrictEqual({
         name: 'GUEST_SESSION_RATE_LIMITER',
-        namespace_id: namespaceId,
+        namespace_id: guestNamespaceId,
 
         simple: {
           limit: 5,
@@ -116,8 +132,76 @@ describe('wrangler Cloudflare configuration', () => {
     }
   )
 
+  it.each(rateLimitEnvironmentScenarios)(
+    'should configure the $environment email sign-in limiter namespace',
+    async ({ emailSignInNamespaceId, getRateLimits }) => {
+      const { config } = await readWranglerConfig()
+      const rateLimits = getRateLimits(config)
+      const signInRateLimit = rateLimits.find(({ name }) => name === 'EMAIL_SIGN_IN_RATE_LIMITER')
+
+      expect(signInRateLimit).toStrictEqual({
+        name: 'EMAIL_SIGN_IN_RATE_LIMITER',
+        namespace_id: emailSignInNamespaceId,
+
+        simple: {
+          limit: 5,
+          period: 60
+        }
+      })
+    }
+  )
+
+  it('should keep email sign-in namespaces unique and enable deployed registration', async () => {
+    const { config } = await readWranglerConfig()
+
+    const namespaceIds = rateLimitEnvironmentScenarios.map(({ getRateLimits }) => {
+      const rateLimits = getRateLimits(config)
+      const signInRateLimit = rateLimits.find(({ name }) => name === 'EMAIL_SIGN_IN_RATE_LIMITER')
+
+      return signInRateLimit?.namespace_id
+    })
+
+    expect(new Set(namespaceIds)).toHaveLength(3)
+    expect(config.env.production.vars.NUXT_PUBLIC_EMAIL_REGISTRATION_ENABLED).toBe('true')
+    expect(config.env.staging.vars.NUXT_PUBLIC_EMAIL_REGISTRATION_ENABLED).toBe('true')
+  })
+
+  it('should restrict staging email to the configured recipient', async () => {
+    const { config } = await readWranglerConfig()
+
+    expect(config.env.staging.send_email).toStrictEqual([
+      {
+        allowed_destination_addresses: ['metsik.app@woof.slmail.me'],
+        allowed_sender_addresses: ['noreply@metsik.app'],
+        name: 'EMAIL'
+      }
+    ])
+  })
+
+  it('should declare every deployed secret required by the Worker', async () => {
+    const { config } = await readWranglerConfig()
+
+    const sharedSecrets = [
+      'NUXT_DATABASE_URL',
+      'NUXT_OAUTH_TWITCH_CLIENT_SECRET',
+      'NUXT_SESSION_SECRET',
+      'NUXT_TURNSTILE_SECRET'
+    ]
+
+    expect(config.secrets.required).toStrictEqual(sharedSecrets)
+    expect(config.env.production.secrets.required).toStrictEqual(sharedSecrets)
+
+    expect(config.env.staging.secrets.required).toStrictEqual([
+      'NUXT_DATABASE_URL',
+      'NUXT_EMAIL_REGISTRATION_STAGING_RECIPIENT',
+      'NUXT_OAUTH_TWITCH_CLIENT_SECRET',
+      'NUXT_SESSION_SECRET',
+      'NUXT_TURNSTILE_SECRET'
+    ])
+  })
+
   it('should keep exact deployment-specific Turnstile configuration', async () => {
-    const { config, source } = await readWranglerConfig()
+    const { config } = await readWranglerConfig()
 
     expect(config.vars).toMatchObject({
       NUXT_PUBLIC_TURNSTILE_SITE_KEY: turnstileAlwaysPassSiteKey,
@@ -134,7 +218,9 @@ describe('wrangler Cloudflare configuration', () => {
       NUXT_TURNSTILE_HOSTNAMES: 'staging.metsik.app'
     })
 
-    expect(source).not.toContain('NUXT_TURNSTILE_SECRET')
+    expect(config.vars).not.toHaveProperty('NUXT_TURNSTILE_SECRET')
+    expect(config.env.production.vars).not.toHaveProperty('NUXT_TURNSTILE_SECRET')
+    expect(config.env.staging.vars).not.toHaveProperty('NUXT_TURNSTILE_SECRET')
   })
 
   it('should not bake always-pass Turnstile defaults into Nuxt', async () => {
