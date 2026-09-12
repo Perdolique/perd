@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
 import { mockTwitchSignIn } from '../fixtures/twitch-auth.fixtures.ts'
 import { appBaseUrl } from '../constants.ts'
@@ -6,6 +6,12 @@ import { appBaseUrl } from '../constants.ts'
 const password = 'A long exact passphrase 🌲 '
 const token = 'a'.repeat(43)
 const userId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+
+async function expectCompactLink(link: Locator) {
+  const linkHeight = await link.evaluate(element => element.getBoundingClientRect().height)
+
+  expect(linkHeight).toBeLessThan(32)
+}
 
 const anonymous = {
   userId: null,
@@ -101,6 +107,17 @@ test.describe('Email registration', () => {
     await page.getByRole('link', { name: 'Create account' }).click()
     await expect(page).toHaveURL(`${appBaseUrl}/register?redirectTo=/account`)
     await expect(page.getByRole('heading', { name: 'Create your account' })).toBeVisible()
+    await expect(page.getByText('Confirm your email to finish creating your account.')).toBeVisible()
+    await expect(page.getByText(/Keep your gear/u)).toHaveCount(0)
+    await expect(page.getByText('Already have an account?', { exact: true })).toBeVisible()
+
+    const signInLink = page.getByRole('link', {
+      name: 'Sign in',
+      exact: true
+    })
+
+    await expect(signInLink).toHaveAttribute('href', '/login')
+    await expectCompactLink(signInLink)
 
     await expect.poll(async () => turnstile.getRenderOptions(page)).toContainEqual(
       expect.objectContaining({ action: 'email_registration' })
@@ -174,6 +191,11 @@ test.describe('Email registration', () => {
       await mockSuccessfulVerification(verificationPage, bodies)
       await verificationPage.goto(`/auth/verify-email#token=${token}`)
       await expect(verificationPage.getByRole('button', { name: 'Confirm email' })).toBeVisible()
+
+      const requestAnotherEmailLink = verificationPage.getByRole('link', { name: 'Request another email' })
+
+      await expect(requestAnotherEmailLink).toHaveAttribute('href', '/register')
+      await expectCompactLink(requestAnotherEmailLink)
       await expect(verificationPage).toHaveURL(`${appBaseUrl}/auth/verify-email`)
       expect(bodies).toEqual([])
 
@@ -219,7 +241,13 @@ test.describe('Email registration', () => {
       await page.goto('/register?redirectTo=/account')
       await turnstile.getRenderOptions(page)
       await expect(page.getByRole('heading', { name: 'Add email access' })).toBeVisible()
-      await page.getByRole('link', { name: 'Back to Account' }).click()
+      await expect(page.getByText('Confirm your email in this browser to add email access to your current account.')).toBeVisible()
+      await expect(page.getByText(/Keep your gear/u)).toHaveCount(0)
+
+      const accountLink = page.getByRole('link', { name: 'Back to Account' })
+
+      await expectCompactLink(accountLink)
+      await accountLink.click()
       await expect(page.getByText(userId, { exact: true })).toBeVisible()
       await page.getByRole('link', { name: /Add email/u }).click()
       await expect.poll(async () => turnstile.getRenderOptions(page)).toHaveLength(2)

@@ -16,7 +16,9 @@
       <PerdButton type="submit" :loading="isPending" block>Confirm email</PerdButton>
     </form>
     <p v-else :class="$style.notice" role="status">Open the full verification link from your email to continue.</p>
-    <PerdButton to="/register" variant="ghost">Request another email</PerdButton>
+    <p :class="$style.navigation">
+      <PerdLink to="/register">Request another email</PerdLink>
+    </p>
   </AuthFormPanel>
 </template>
 
@@ -40,6 +42,7 @@
   import AuthFormPanel from '~/components/auth/AuthFormPanel.vue'
   import TextInput from '~/components/TextInput.vue'
   import PerdButton from '~/components/PerdButton.vue'
+  import PerdLink from '~/components/PerdLink.vue'
 
   definePageMeta({
     layout: 'auth',
@@ -144,5 +147,13 @@
 
   .error {
     color: var(--color-danger-primary);
+  }
+
+  .navigation {
+    display: flex;
+    justify-content: center;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-14);
+    text-align: center;
   }
 </style>

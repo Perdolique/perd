@@ -1,7 +1,6 @@
 <template>
   <section :class="$style.component" :aria-labelledby="headingId">
     <div :class="$style.intro">
-      <p :class="$style.brand">Metsik</p>
       <h1 :id="headingId" :class="$style.heading">{{ title }}</h1>
       <p v-if="description" :class="$style.description">{{ description }}</p>
     </div>
@@ -41,11 +40,6 @@
   .intro {
     display: grid;
     gap: var(--spacing-12);
-  }
-
-  .brand {
-    color: var(--color-accent-primary);
-    font-weight: var(--font-weight-semibold);
   }
 
   .heading {
