@@ -50,6 +50,15 @@
     </form>
 
     <PerdButton
+      :to="passwordRecoveryTarget"
+      :disabled="isAuthenticationBusy"
+      variant="ghost"
+      block
+    >
+      Forgot password?
+    </PerdButton>
+
+    <PerdButton
       v-if="emailRegistrationEnabled"
       :to="registrationTarget"
       :disabled="isAuthenticationBusy"
@@ -105,7 +114,8 @@
     withMinimumDelay
   } from '#imports'
 
-  import { isEmailRegistrationEnabled, isRegistrationPasswordValid } from '#shared/utils/email-registration'
+  import { isEmailAuthenticationPasswordValid } from '#shared/utils/email-authentication'
+  import { isEmailRegistrationEnabled } from '#shared/utils/email-registration'
 
   import {
     emailSignInTurnstileAction,
@@ -157,6 +167,15 @@
 
     return {
       path: '/register',
+      query: { redirectTo }
+    }
+  })
+
+  const passwordRecoveryTarget = computed(() => {
+    const redirectTo = getRedirectNavigationTarget(route.query.redirectTo).path
+
+    return {
+      path: '/forgot-password',
       query: { redirectTo }
     }
   })
@@ -259,7 +278,7 @@
     authenticationError.value = null
     passwordError.value = undefined
 
-    if (!isRegistrationPasswordValid(password.value)) {
+    if (!isEmailAuthenticationPasswordValid(password.value)) {
       passwordError.value = 'Use a password between 15 and 128 characters.'
 
       passwordInput.value?.focus()

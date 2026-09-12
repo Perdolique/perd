@@ -81,8 +81,11 @@ function createGuestEvent(dbHttp: unknown) {
 }
 
 function createInsertDb(
-  insertResult = [{ userId }],
-  existingGuestResult?: { id: string; }
+  insertResult = [{
+    sessionVersion: 0,
+    userId
+  }],
+  existingGuestResult?: { id: string; sessionVersion: number; }
 ) {
   const returningMock = vi.fn().mockResolvedValue(insertResult)
 
@@ -187,7 +190,12 @@ describe('post /api/auth/create-session', () => {
     })
 
     expect(findFirstMock).not.toHaveBeenCalled()
-    expect(sessionUpdateMock).toHaveBeenCalledWith({ userId })
+
+    expect(sessionUpdateMock).toHaveBeenCalledWith({
+      sessionVersion: 0,
+      userId
+    })
+
     expect(setResponseStatusMock).toHaveBeenCalledWith(event, 201)
 
     expect(result).toStrictEqual({
@@ -209,7 +217,10 @@ describe('post /api/auth/create-session', () => {
       findFirstMock,
       insertMock,
       valuesMock
-    } = createInsertDb([], { id: userId })
+    } = createInsertDb([], {
+      id: userId,
+      sessionVersion: 2
+    })
 
     const event = createGuestEvent(dbHttp)
     const result = await createGuestSessionHandler(event)
@@ -219,7 +230,8 @@ describe('post /api/auth/create-session', () => {
 
     expect(findFirstMock).toHaveBeenCalledWith({
       columns: {
-        id: true
+        id: true,
+        sessionVersion: true
       },
 
       where: {
@@ -227,7 +239,11 @@ describe('post /api/auth/create-session', () => {
       }
     })
 
-    expect(sessionUpdateMock).toHaveBeenCalledWith({ userId })
+    expect(sessionUpdateMock).toHaveBeenCalledWith({
+      sessionVersion: 2,
+      userId
+    })
+
     expect(setResponseStatusMock).toHaveBeenCalledWith(event, 200)
 
     expect(result).toStrictEqual({

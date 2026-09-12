@@ -20,7 +20,7 @@ const defaultUser : SessionUser = {
 
 async function getSessionUser(event: H3Event) : Promise<SessionUser> {
   const session = await useAppSession(event)
-  const { userId } = session.data
+  const { userId, sessionVersion = 0 } = session.data
 
   if (userId === undefined) {
     return defaultUser
@@ -31,7 +31,8 @@ async function getSessionUser(event: H3Event) : Promise<SessionUser> {
     .findFirst({
       columns: {
         id: true,
-        isAdmin: true
+        isAdmin: true,
+        sessionVersion: true
       },
 
       where: {
@@ -51,7 +52,7 @@ async function getSessionUser(event: H3Event) : Promise<SessionUser> {
       }
     })
 
-  if (foundUser?.id === undefined) {
+  if (foundUser?.id === undefined || foundUser.sessionVersion !== sessionVersion) {
     await clearAppSession(event)
 
     return defaultUser

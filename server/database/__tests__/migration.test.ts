@@ -1,12 +1,18 @@
 import { readFileSync } from 'node:fs'
+import { access } from 'node:fs/promises'
 import { describe, expect, it } from 'vitest'
 
-const databaseMigrationWorkflowUrl = new URL(
-  '../../../.github/workflows/database-migration.yml',
+const buildAndDeployWorkflowUrl = new URL(
+  '../../../.github/workflows/build-and-deploy.yml',
   import.meta.url
 )
 
-const databaseMigrationWorkflow = readFileSync(databaseMigrationWorkflowUrl, 'utf8')
+const buildAndDeployWorkflow = readFileSync(buildAndDeployWorkflowUrl, 'utf8')
+
+const standaloneDatabaseMigrationWorkflowUrl = new URL(
+  '../../../.github/workflows/database-migration.yml',
+  import.meta.url
+)
 
 const migrationUrl = new URL(
   '../migrations/20260711222621_stormy_captain_marvel/migration.sql',
@@ -63,12 +69,15 @@ const photoSubmissionReviewMigrationSql = readFileSync(
   'utf8'
 )
 
-describe('database migration workflow', () => {
-  it('should migrate pull request databases without resetting catalog data', () => {
-    expect(databaseMigrationWorkflow).toContain('pull_request:')
-    expect(databaseMigrationWorkflow).toContain('pnpm run db:migrate')
-    expect(databaseMigrationWorkflow).not.toContain('db:seed')
-    expect(databaseMigrationWorkflow).not.toContain('db:reset:catalog')
+describe('build and deploy workflow', () => {
+  it('should gate deployment on one migration job without resetting catalog data', async () => {
+    expect(buildAndDeployWorkflow).toContain('pull_request:')
+    expect(buildAndDeployWorkflow).toContain('migration:')
+    expect(buildAndDeployWorkflow).toContain('needs: migration')
+    expect(buildAndDeployWorkflow).toContain('pnpm run db:migrate')
+    expect(buildAndDeployWorkflow).not.toContain('db:seed')
+    expect(buildAndDeployWorkflow).not.toContain('db:reset:catalog')
+    await expect(access(standaloneDatabaseMigrationWorkflowUrl)).rejects.toMatchObject({ code: 'ENOENT' })
   })
 })
 

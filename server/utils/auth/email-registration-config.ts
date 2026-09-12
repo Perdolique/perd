@@ -1,11 +1,13 @@
 import { createError } from 'h3'
 import * as v from 'valibot'
-import { normalizeEmail } from '#shared/utils/email-registration'
+import { normalizeEmail } from '#shared/utils/email-authentication'
 
-interface EmailRegistrationConfig {
+interface EmailAuthenticationConfig {
   origin: string;
   stagingRecipient: string | null;
 }
+
+type EmailRegistrationConfig = EmailAuthenticationConfig
 
 interface EmailRegistrationSettings {
   origin: string;
@@ -35,7 +37,7 @@ function validateEmailAuthenticationOrigin(emailRegistration: EmailRegistrationS
   }
 }
 
-function validateEmailRegistrationConfig(emailRegistration: EmailRegistrationSettings): EmailRegistrationConfig {
+function validateEmailAuthenticationConfig(emailRegistration: EmailRegistrationSettings): EmailAuthenticationConfig {
   const { environment, stagingRecipient } = emailRegistration
   const isStaging = environment === 'staging'
 
@@ -44,7 +46,7 @@ function validateEmailRegistrationConfig(emailRegistration: EmailRegistrationSet
     const recipient = isStaging ? normalizeEmail(stagingRecipient) : null
 
     if (isStaging && !v.is(v.pipe(v.string(), v.email()), recipient)) {
-      throw new Error('Staging registration requires a destination address')
+      throw new Error('Staging email authentication requires a destination address')
     }
 
     return {
@@ -54,10 +56,21 @@ function validateEmailRegistrationConfig(emailRegistration: EmailRegistrationSet
   } catch {
     throw createError({
       status: 503,
+      statusMessage: 'Email authentication is not configured'
+    })
+  }
+}
+
+function validateEmailRegistrationConfig(emailRegistration: EmailRegistrationSettings): EmailRegistrationConfig {
+  try {
+    return validateEmailAuthenticationConfig(emailRegistration)
+  } catch {
+    throw createError({
+      status: 503,
       statusMessage: 'Email registration is not configured'
     })
   }
 }
 
-export type { EmailRegistrationConfig }
-export { validateEmailAuthenticationOrigin, validateEmailRegistrationConfig }
+export type { EmailAuthenticationConfig, EmailRegistrationConfig }
+export { validateEmailAuthenticationConfig, validateEmailAuthenticationOrigin, validateEmailRegistrationConfig }

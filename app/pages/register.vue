@@ -58,7 +58,8 @@
     useUserStore
   } from '#imports'
 
-  import { isEmailRegistrationEnabled, isRegistrationPasswordValid } from '#shared/utils/email-registration'
+  import { isEmailAuthenticationPasswordValid } from '#shared/utils/email-authentication'
+  import { isEmailRegistrationEnabled } from '#shared/utils/email-registration'
   import { emailRegistrationTurnstileAction, turnstileResponseFieldName } from '#shared/utils/turnstile'
   import { sanitizeRedirectPath } from '#shared/utils/redirect'
   import AuthFormPanel from '~/components/auth/AuthFormPanel.vue'
@@ -139,7 +140,7 @@
     errorMessage.value = null
     passwordError.value = undefined
 
-    if (!isRegistrationPasswordValid(password.value)) {
+    if (!isEmailAuthenticationPasswordValid(password.value)) {
       passwordError.value = 'Use a password between 15 and 128 characters.'
 
       passwordInput.value?.focus()
@@ -203,19 +204,5 @@
 </script>
 
 <style module>
-  .form {
-    display: grid;
-    gap: var(--spacing-16);
-  }
-
-  .notice {
-    padding: var(--spacing-16);
-    border-radius: var(--border-radius-12);
-    background: var(--color-success-subtle);
-    overflow-wrap: anywhere;
-  }
-
-  .error {
-    color: var(--color-danger-primary);
-  }
+  @import '../assets/styles/auth-form.css';
 </style>

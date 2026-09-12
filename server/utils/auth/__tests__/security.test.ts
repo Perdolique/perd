@@ -3,7 +3,13 @@ import { Socket } from 'node:net'
 import { createEvent } from 'h3'
 import { DrizzleQueryError } from 'drizzle-orm'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { validateEmailAuthenticationOrigin, validateEmailRegistrationConfig } from '../email-registration-config'
+
+import {
+  validateEmailAuthenticationConfig,
+  validateEmailAuthenticationOrigin,
+  validateEmailRegistrationConfig
+} from '../email-registration-config'
+
 import { enforceEmailAuthenticationRateLimit } from '../email-authentication-request'
 import { sendRegistrationEmail } from '../email-registration-mail'
 import { getAuthErrorDetails } from '../telemetry'
@@ -54,6 +60,17 @@ describe('email registration security configuration', () => {
 
   it('should enforce the configured staging address without changing it to a different recipient', () => {
     expect(validateEmailRegistrationConfig({
+      environment: 'staging',
+      origin: 'https://staging.metsik.app',
+      stagingRecipient: 'One.Trip+test@Example.com'
+    })).toStrictEqual({
+      origin: 'https://staging.metsik.app',
+      stagingRecipient: 'one.trip+test@example.com'
+    })
+  })
+
+  it('should reuse the normalized staging recipient for recovery without checking the registration flag', () => {
+    expect(validateEmailAuthenticationConfig({
       environment: 'staging',
       origin: 'https://staging.metsik.app',
       stagingRecipient: 'One.Trip+test@Example.com'

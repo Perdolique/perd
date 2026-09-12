@@ -9,7 +9,7 @@ import {
   normalizeDecimalNumber
 } from '#shared/utils/decimal-number'
 
-import { isRegistrationPasswordValid, normalizeEmail } from '#shared/utils/email-registration'
+import { isEmailAuthenticationPasswordValid, normalizeEmail } from '#shared/utils/email-authentication'
 import { sanitizeRedirectPath } from '#shared/utils/redirect'
 
 const nonEmptyStringSchema = v.pipe(
@@ -965,26 +965,38 @@ function validateTwitchOAuthBody(body: unknown) {
   return v.parse(twitchOAuthBodySchema, body)
 }
 
-const registrationPasswordSchema = v.pipe(
+const emailAuthenticationPasswordSchema = v.pipe(
   v.string(),
-  v.check(isRegistrationPasswordValid, 'Use a password between 15 and 128 characters')
+  v.check(isEmailAuthenticationPasswordValid, 'Use a password between 15 and 128 characters')
 )
 
 const emailRegistrationSchema = v.object({
   email: v.pipe(v.string(), v.transform(normalizeEmail), v.maxLength(254), v.email()),
-  password: registrationPasswordSchema,
+  password: emailAuthenticationPasswordSchema,
   redirectTo: v.pipe(v.optional(v.string(), '/'), v.transform((value) => sanitizeRedirectPath(value))),
   'cf-turnstile-response': v.unknown()
 })
 
 const emailVerificationSchema = v.object({
   token: v.pipe(v.string(), v.regex(/^[\w-]{43}$/u)),
-  password: registrationPasswordSchema
+  password: emailAuthenticationPasswordSchema
 })
 
 const emailSignInSchema = v.object({
   email: v.pipe(v.string(), v.transform(normalizeEmail), v.maxLength(254), v.email()),
-  password: registrationPasswordSchema,
+  password: emailAuthenticationPasswordSchema,
+  'cf-turnstile-response': v.unknown()
+})
+
+const passwordRecoveryRequestSchema = v.object({
+  email: v.pipe(v.string(), v.transform(normalizeEmail), v.maxLength(254), v.email()),
+  redirectTo: v.pipe(v.optional(v.string(), '/'), v.transform((value) => sanitizeRedirectPath(value))),
+  'cf-turnstile-response': v.unknown()
+})
+
+const passwordRecoveryResetSchema = v.object({
+  token: v.string(),
+  password: emailAuthenticationPasswordSchema,
   'cf-turnstile-response': v.unknown()
 })
 
@@ -1006,11 +1018,25 @@ function validateEmailSignIn(value: unknown) {
   return parsed.success ? parsed.output : false
 }
 
+function validatePasswordRecoveryRequest(value: unknown) {
+  const parsed = v.safeParse(passwordRecoveryRequestSchema, value)
+
+  return parsed.success ? parsed.output : false
+}
+
+function validatePasswordRecoveryReset(value: unknown) {
+  const parsed = v.safeParse(passwordRecoveryResetSchema, value)
+
+  return parsed.success ? parsed.output : false
+}
+
 
 export {
   validateEmailRegistration,
   validateEmailSignIn,
   validateEmailVerification,
+  validatePasswordRecoveryRequest,
+  validatePasswordRecoveryReset,
   brandMutationSchema,
   brandIdParamsSchema,
   brandDetailParamsSchema,

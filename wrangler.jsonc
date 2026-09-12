@@ -89,6 +89,14 @@
         "limit": 5,
         "period": 60
       }
+    },
+    {
+      "name": "PASSWORD_RECOVERY_RATE_LIMITER",
+      "namespace_id": "687734016",
+      "simple": {
+        "limit": 3,
+        "period": 60
+      }
     }
   ],
 
@@ -170,6 +178,14 @@
           "namespace_id": "687734015",
           "simple": {
             "limit": 5,
+            "period": 60
+          }
+        },
+        {
+          "name": "PASSWORD_RECOVERY_RATE_LIMITER",
+          "namespace_id": "687734018",
+          "simple": {
+            "limit": 3,
             "period": 60
           }
         }
@@ -262,6 +278,14 @@
           "namespace_id": "687734014",
           "simple": {
             "limit": 5,
+            "period": 60
+          }
+        },
+        {
+          "name": "PASSWORD_RECOVERY_RATE_LIMITER",
+          "namespace_id": "687734017",
+          "simple": {
+            "limit": 3,
             "period": 60
           }
         }

@@ -1,36 +1,34 @@
-import { isSamePath, withBase } from 'ufo'
+import { isSamePath } from 'ufo'
 
 import {
   createError,
   defineEventHandler,
   getHeader,
   getRequestURL,
+  isError,
   sendRedirect,
   type EventHandlerRequest,
   type H3Event
 } from 'h3'
 
-import { getAppSession } from '#server/utils/session'
+import { passwordRecoveryApiPaths } from '#shared/utils/email-authentication'
+import { validateSessionUser } from '#server/utils/session'
 
 const apiBase = '/api'
 
 const publicApiPaths = [
-  '/auth/create-session',
-  '/auth/email/registration',
-  '/auth/email/registration/verify',
-  '/auth/email/sign-in',
-  '/oauth/twitch'
+  '/api/auth/create-session',
+  '/api/auth/email/registration',
+  '/api/auth/email/registration/verify',
+  '/api/auth/email/sign-in',
+  '/api/oauth/twitch',
+  ...passwordRecoveryApiPaths
 ] as const
 
 const publicApiPathPrefixes = ['/api/_nuxt_icon/'] as const
 
 function isPublicApiPath(pathname: string) {
-  const hasExactPublicPath = publicApiPaths.some((path) => {
-    const apiPath = withBase(path, apiBase)
-
-    return isSamePath(apiPath, pathname)
-  })
-
+  const hasExactPublicPath = publicApiPaths.some(path => isSamePath(path, pathname))
   const hasPublicPrefix = publicApiPathPrefixes.some((pathPrefix) => pathname.startsWith(pathPrefix))
 
   return hasExactPublicPath || hasPublicPrefix
@@ -71,10 +69,13 @@ export default defineEventHandler(async (event) => {
   const isApiPath = url.pathname.startsWith(apiBase)
 
   if (isApiPath && !isPublicApiPath(url.pathname)) {
-    const session = await getAppSession(event)
-    const { userId } = session.data
+    try {
+      await validateSessionUser(event)
+    } catch (error) {
+      if (!isError(error) || error.statusCode !== 401) {
+        throw error
+      }
 
-    if (userId === undefined) {
       const isBrowserNavigation = isBrowserNavigationRequest(event)
 
       if (isBrowserNavigation) {
@@ -86,9 +87,7 @@ export default defineEventHandler(async (event) => {
         return
       }
 
-      throw createError({
-        status: 401
-      })
+      throw createError({ status: 401 })
     }
   }
 })
