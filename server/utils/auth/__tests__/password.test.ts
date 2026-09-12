@@ -3,14 +3,14 @@ import { execPath } from 'node:process'
 import { promisify } from 'node:util'
 import { describe, expect, it } from 'vitest'
 import { createVerificationToken, hashPassword, hashToken, verifyPassword } from '../password'
-import { isRegistrationPasswordValid, normalizeEmail } from '#shared/utils/email-registration'
+import { isEmailAuthenticationPasswordValid, normalizeEmail } from '#shared/utils/email-authentication'
 
 const password = 'a long password with spaces 🔥'
 
 // oxlint-disable-next-line typescript/strict-void-return -- Node provides a custom promisify implementation for execFile's ChildProcess-returning signature.
 const execFileAsync = promisify(execFile)
 
-describe('registration credentials', () => {
+describe('email authentication credentials', () => {
   it('should use independently salted scrypt hashes and verify only the original password', async () => {
     const first = await hashPassword(password)
     const second = await hashPassword(password)
@@ -41,13 +41,13 @@ describe('registration credentials', () => {
   })
 
   it('should reject an oversized password within a bounded heap', async () => {
-    const moduleUrl = new URL('../../../../shared/utils/email-registration.ts', import.meta.url).href
+    const moduleUrl = new URL('../../../../shared/utils/email-authentication.ts', import.meta.url).href
     const moduleSpecifier = JSON.stringify(moduleUrl)
 
     const source = `
-      import { isRegistrationPasswordValid } from ${moduleSpecifier};
+      import { isEmailAuthenticationPasswordValid } from ${moduleSpecifier};
       const password = 'a'.repeat(16 * 1024 * 1024);
-      process.stdout.write(String(isRegistrationPasswordValid(password)));
+      process.stdout.write(String(isEmailAuthenticationPasswordValid(password)));
     `
 
     const args = [
@@ -74,6 +74,6 @@ describe('registration credentials', () => {
     [`${'🔥'.repeat(127)}a`, true],
     [' '.repeat(15), true]
   ])('should validate Unicode code-point length for %s', (value, expected) => {
-    expect(isRegistrationPasswordValid(value)).toBe(expected)
+    expect(isEmailAuthenticationPasswordValid(value)).toBe(expected)
   })
 })

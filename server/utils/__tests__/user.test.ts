@@ -43,6 +43,7 @@ describe('user session helpers', () => {
     const db = createUserDb({
       id: 'user-1',
       isAdmin: false,
+      sessionVersion: 0,
       oauthAccounts: []
     })
 
@@ -58,7 +59,8 @@ describe('user session helpers', () => {
     expect(db.query.users.findFirst).toHaveBeenCalledWith({
       columns: {
         id: true,
-        isAdmin: true
+        isAdmin: true,
+        sessionVersion: true
       },
 
       where: {
@@ -83,6 +85,7 @@ describe('user session helpers', () => {
     const db = createUserDb({
       id: 'user-1',
       isAdmin: false,
+      sessionVersion: 0,
       oauthAccounts: [],
       emailCredential: { email: 'trip@example.com' }
     })
@@ -115,10 +118,36 @@ describe('user session helpers', () => {
     expect(clearAppSessionMock).toHaveBeenCalledWith(event)
   })
 
+  it('should clear a session whose version was revoked', async () => {
+    useAppSessionMock.mockResolvedValue({
+      data: {
+        sessionVersion: 2,
+        userId: 'user-1'
+      }
+    })
+
+    const event = createTestEvent(createUserDb({
+      id: 'user-1',
+      isAdmin: false,
+      oauthAccounts: [{ id: 'oauth-account-1' }],
+      sessionVersion: 3
+    }))
+
+    await expect(getSessionUser(event)).resolves.toStrictEqual({
+      email: null,
+      isAdmin: false,
+      isGuest: false,
+      userId: null
+    })
+
+    expect(clearAppSessionMock).toHaveBeenCalledWith(event)
+  })
+
   it('should return 403 for a Guest account', async () => {
     const db = createUserDb({
       id: 'user-1',
       isAdmin: false,
+      sessionVersion: 0,
       oauthAccounts: []
     })
 
@@ -131,6 +160,7 @@ describe('user session helpers', () => {
     const db = createUserDb({
       id: 'user-1',
       isAdmin: false,
+      sessionVersion: 0,
       oauthAccounts: [{ id: 'oauth-account-1' }]
     })
 

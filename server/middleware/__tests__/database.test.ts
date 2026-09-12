@@ -115,4 +115,16 @@ describe('database middleware', () => {
     expect(requireEmailRegistrationEnabled).not.toHaveBeenCalled()
     expect(event.context.dbHttp).toBe(databaseClient)
   })
+
+  it.each([
+    '/api/auth/email/password-recovery',
+    '/api/auth/email/password-recovery/reset'
+  ])('should defer password recovery database setup until after request security checks: %s', (path) => {
+    const event = createMiddlewareEvent(path)
+
+    databaseHandler(event)
+    expect(requireEmailRegistrationEnabled).not.toHaveBeenCalled()
+    expect(getRuntimeDatabaseConfigMock).not.toHaveBeenCalled()
+    expect(createHttpClientMock).not.toHaveBeenCalled()
+  })
 })

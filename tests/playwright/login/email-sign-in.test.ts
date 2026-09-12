@@ -176,6 +176,11 @@ test.describe('Email sign-in', () => {
       exact: true
     })
 
+    const recoveryLink = page.getByRole('link', {
+      name: 'Forgot password?',
+      exact: true
+    })
+
     await expect(page.getByRole('heading', {
       name: 'Sign in',
       exact: true
@@ -192,6 +197,7 @@ test.describe('Email sign-in', () => {
     await expect(passwordInput).not.toBeFocused()
     await expect(signInButton).toHaveAttribute('type', 'submit')
     await expect(registrationLink).toHaveAttribute('href', '/register?redirectTo=/my-gear')
+    await expect(recoveryLink).toHaveAttribute('href', '/forgot-password?redirectTo=/my-gear')
 
     await expect(page.getByRole('button', {
       name: 'Continue as guest',
@@ -279,6 +285,11 @@ test.describe('Email sign-in', () => {
       exact: true
     })
 
+    const recoveryLink = page.getByRole('link', {
+      name: 'Forgot password?',
+      exact: true
+    })
+
     const guestButton = page.getByRole('button', {
       name: 'Continue as guest',
       exact: true
@@ -295,6 +306,7 @@ test.describe('Email sign-in', () => {
     await expect(signInButton).toBeDisabled()
     await expect(signInButton).toHaveAttribute('aria-busy', 'true')
     await expect(registrationLink).toHaveAttribute('aria-disabled', 'true')
+    await expect(recoveryLink).toHaveAttribute('aria-disabled', 'true')
     await expect(guestButton).toBeDisabled()
     await expect(guestButton).not.toHaveAttribute('aria-busy', 'true')
     await expect(twitchButton).toBeDisabled()
@@ -308,6 +320,7 @@ test.describe('Email sign-in', () => {
     await expect(signInButton).toBeDisabled()
     await expect(signInButton).toHaveAttribute('aria-busy', 'true')
     await expect(registrationLink).toHaveAttribute('aria-disabled', 'true')
+    await expect(recoveryLink).toHaveAttribute('aria-disabled', 'true')
     await expect(guestButton).toBeDisabled()
     await expect(twitchButton).toBeDisabled()
     responseGate.resolve()

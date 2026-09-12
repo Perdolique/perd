@@ -55,11 +55,42 @@ test.describe('Disabled email registration', () => {
     })
   }
 
+  for (const path of ['/forgot-password', '/auth/reset-password']) {
+    test(`should keep ${path} available when registration is disabled`, async ({ page }) => {
+      const activeWorker = getWorker()
+      const response = await page.goto(`http://${activeWorker.address}:${activeWorker.port}${path}`)
+
+      expect(response?.status()).toBe(200)
+      await expect(page.getByRole('heading')).toBeVisible()
+    })
+  }
+
+  for (const path of ['/api/auth/email/password-recovery', '/api/auth/email/password-recovery/reset']) {
+    test(`should keep ${path} independent of the registration flag`, async () => {
+      const activeWorker = getWorker()
+      const origin = `http://${activeWorker.address}:${activeWorker.port}`
+
+      const response = await activeWorker.fetch(path, {
+        method: 'POST',
+
+        headers: {
+          'content-type': 'application/json',
+          origin
+        },
+
+        body: '{}'
+      })
+
+      expect(response.status).not.toBe(404)
+    })
+  }
+
   test('should hide registration from login', async ({ page }) => {
     const activeWorker = getWorker()
 
     await page.goto(`http://${activeWorker.address}:${activeWorker.port}/login`)
     await expect(page.getByRole('link', { name: 'Create account' })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: 'Forgot password?' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Guest' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Twitch' })).toBeVisible()
   })

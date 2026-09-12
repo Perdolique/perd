@@ -80,6 +80,32 @@ function getEmailSignInRateLimiterBinding(event: H3Event): Env['EMAIL_SIGN_IN_RA
   return binding
 }
 
+function getPasswordRecoveryRateLimiterBinding(event: H3Event): Env['PASSWORD_RECOVERY_RATE_LIMITER'] {
+  const binding = event.context.cloudflare?.env.PASSWORD_RECOVERY_RATE_LIMITER
+
+  if (binding === undefined) {
+    throw createError({
+      status: 503,
+      statusMessage: 'Password recovery rate limiter unavailable'
+    })
+  }
+
+  return binding
+}
+
+function getEmailBinding(event: H3Event): Env['EMAIL'] {
+  const binding = event.context.cloudflare?.env.EMAIL
+
+  if (binding === undefined) {
+    throw createError({
+      status: 503,
+      statusMessage: 'Email delivery is temporarily unavailable'
+    })
+  }
+
+  return binding
+}
+
 function getPhotoSubmissionEnvironment(event: H3Event): PhotoSubmissionEnvironment {
   const environment = event.context.cloudflare?.env.PHOTO_SUBMISSION_ENVIRONMENT
 
@@ -96,9 +122,11 @@ function getPhotoSubmissionEnvironment(event: H3Event): PhotoSubmissionEnvironme
 
 export {
   getCloudflareImagesBinding,
+  getEmailBinding,
   getEmailSignInRateLimiterBinding,
   getGuestClientIp,
   getGuestSessionRateLimiterBinding,
   getPhotoSubmissionEnvironment,
-  getPhotoSubmissionRateLimiterBinding
+  getPhotoSubmissionRateLimiterBinding,
+  getPasswordRecoveryRateLimiterBinding
 }

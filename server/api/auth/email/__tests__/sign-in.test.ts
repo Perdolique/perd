@@ -10,8 +10,8 @@ import { verifyTurnstile } from '#server/utils/turnstile'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
 const {
-  getAppSessionMock,
   getEmailAuthenticationOriginMock,
+  getSessionUserMock,
   readLimitedValidatedJsonBodyMock,
   updateAppSessionMock
 } = vi.hoisted(() => {
@@ -22,8 +22,8 @@ const {
   ) => Promise<unknown>
 
   return {
-    getAppSessionMock: vi.fn(),
     getEmailAuthenticationOriginMock: vi.fn(),
+    getSessionUserMock: vi.fn(),
     readLimitedValidatedJsonBodyMock: vi.fn<ReadLimitedValidatedJsonBodyMock>(),
     updateAppSessionMock: vi.fn()
   }
@@ -65,8 +65,13 @@ vi.mock(import('#server/utils/auth/password'), async (importOriginal) => {
 
 vi.mock(import('#server/utils/session'), () => {
   return {
-    getAppSession: getAppSessionMock,
     updateAppSession: updateAppSessionMock
+  }
+})
+
+vi.mock(import('#server/utils/user'), () => {
+  return {
+    getSessionUser: getSessionUserMock
   }
 })
 
@@ -79,6 +84,7 @@ interface CredentialRow {
   passwordHash: string;
   userId: string;
   isAdmin: boolean;
+  sessionVersion: number;
 }
 
 interface InvalidHeaderScenario {
@@ -109,7 +115,8 @@ const credential: CredentialRow = {
   email: 'one.trip+test@example.com',
   passwordHash: storedPasswordHash,
   userId,
-  isAdmin: true
+  isAdmin: true,
+  sessionVersion: 0
 }
 
 function createCredentialDatabase(rows: CredentialRow[] = [credential]) {
@@ -167,7 +174,14 @@ describe('post /api/auth/email/sign-in', () => {
 
     getEmailAuthenticationOriginMock.mockReturnValue(origin)
     vi.mocked(getEmailSignInRateLimiterBinding).mockReturnValue({ limit: rateLimitMock })
-    getAppSessionMock.mockResolvedValue({ data: {} })
+
+    getSessionUserMock.mockResolvedValue({
+      email: null,
+      isAdmin: false,
+      isGuest: false,
+      userId: null
+    })
+
     vi.mocked(verifyPassword).mockResolvedValue(true)
     rateLimitMock.mockResolvedValue({ success: true })
 
@@ -208,13 +222,18 @@ describe('post /api/auth/email/sign-in', () => {
       email: emailCredentials.email,
       passwordHash: emailCredentials.passwordHash,
       userId: emailCredentials.userId,
-      isAdmin: users.isAdmin
+      isAdmin: users.isAdmin,
+      sessionVersion: users.sessionVersion
     })
 
     expect(innerJoinMock).toHaveBeenCalledTimes(1)
     expect(whereMock).toHaveBeenCalledTimes(1)
     expect(verifyPassword).toHaveBeenCalledWith(password, storedPasswordHash)
-    expect(updateAppSessionMock).toHaveBeenCalledWith(event, { userId })
+
+    expect(updateAppSessionMock).toHaveBeenCalledWith(event, {
+      sessionVersion: 0,
+      userId
+    })
 
     expect(result).toStrictEqual({
       email: credential.email,
@@ -227,7 +246,7 @@ describe('post /api/auth/email/sign-in', () => {
     const [bodyOrder = Number.NaN] = readLimitedValidatedJsonBodyMock.mock.invocationCallOrder
     const [ipLimiterOrder = Number.NaN, emailLimiterOrder = Number.NaN] = rateLimitMock.mock.invocationCallOrder
     const [turnstileOrder = Number.NaN] = vi.mocked(verifyTurnstile).mock.invocationCallOrder
-    const [sessionOrder = Number.NaN] = getAppSessionMock.mock.invocationCallOrder
+    const [sessionOrder = Number.NaN] = getSessionUserMock.mock.invocationCallOrder
     const [lookupOrder = Number.NaN] = selectMock.mock.invocationCallOrder
     const [passwordOrder = Number.NaN] = vi.mocked(verifyPassword).mock.invocationCallOrder
     const [updateOrder = Number.NaN] = updateAppSessionMock.mock.invocationCallOrder
@@ -310,7 +329,7 @@ describe('post /api/auth/email/sign-in', () => {
     expect(readLimitedValidatedJsonBodyMock).not.toHaveBeenCalled()
     expect(verifyTurnstile).not.toHaveBeenCalled()
     expect(rateLimitMock).not.toHaveBeenCalled()
-    expect(getAppSessionMock).not.toHaveBeenCalled()
+    expect(getSessionUserMock).not.toHaveBeenCalled()
     expect(selectMock).not.toHaveBeenCalled()
     expect(verifyPassword).not.toHaveBeenCalled()
     expect(updateAppSessionMock).not.toHaveBeenCalled()
@@ -326,7 +345,7 @@ describe('post /api/auth/email/sign-in', () => {
     expect(readLimitedValidatedJsonBodyMock).toHaveBeenCalledTimes(1)
     expect(rateLimitMock).not.toHaveBeenCalled()
     expect(verifyTurnstile).not.toHaveBeenCalled()
-    expect(getAppSessionMock).not.toHaveBeenCalled()
+    expect(getSessionUserMock).not.toHaveBeenCalled()
     expect(selectMock).not.toHaveBeenCalled()
     expect(verifyPassword).not.toHaveBeenCalled()
     expect(updateAppSessionMock).not.toHaveBeenCalled()
@@ -374,7 +393,7 @@ describe('post /api/auth/email/sign-in', () => {
     vi.mocked(verifyTurnstile).mockRejectedValue(createError({ status: 403 }))
     await expect(emailSignInHandler(event)).rejects.toMatchObject({ statusCode: 403 })
     expect(rateLimitMock.mock.calls).toStrictEqual([[{ key: `ip:${clientIp}` }]])
-    expect(getAppSessionMock).not.toHaveBeenCalled()
+    expect(getSessionUserMock).not.toHaveBeenCalled()
     expect(selectMock).not.toHaveBeenCalled()
     expect(verifyPassword).not.toHaveBeenCalled()
     expect(updateAppSessionMock).not.toHaveBeenCalled()
@@ -414,7 +433,7 @@ describe('post /api/auth/email/sign-in', () => {
     expect(event.node.res.getHeader('Retry-After')).toBe(60)
     expect(verifyTurnstile).toHaveBeenCalledTimes(turnstileCallCount)
     expect(rateLimitMock).toHaveBeenCalledWith({ key: deniedKey })
-    expect(getAppSessionMock).not.toHaveBeenCalled()
+    expect(getSessionUserMock).not.toHaveBeenCalled()
     expect(selectMock).not.toHaveBeenCalled()
     expect(verifyPassword).not.toHaveBeenCalled()
     expect(updateAppSessionMock).not.toHaveBeenCalled()
@@ -424,8 +443,11 @@ describe('post /api/auth/email/sign-in', () => {
     const { dbHttp, selectMock } = createCredentialDatabase()
     const event = createSignInEvent(dbHttp)
 
-    getAppSessionMock.mockResolvedValue({
-      data: { userId }
+    getSessionUserMock.mockResolvedValue({
+      email: credential.email,
+      isAdmin: true,
+      isGuest: false,
+      userId
     })
 
     await expect(emailSignInHandler(event)).rejects.toMatchObject({ statusCode: 409 })
@@ -509,7 +531,7 @@ describe('post /api/auth/email/sign-in', () => {
     expect(telemetry).not.toContain(failedKey)
     expect(verifyTurnstile).toHaveBeenCalledTimes(turnstileCallCount)
     expect(rateLimitMock).toHaveBeenCalledWith({ key: failedKey })
-    expect(getAppSessionMock).not.toHaveBeenCalled()
+    expect(getSessionUserMock).not.toHaveBeenCalled()
     expect(selectMock).not.toHaveBeenCalled()
     expect(verifyPassword).not.toHaveBeenCalled()
     expect(updateAppSessionMock).not.toHaveBeenCalled()

@@ -1,20 +1,20 @@
 import { IncomingMessage, ServerResponse } from 'node:http'
 import { Socket } from 'node:net'
-import { createEvent } from 'h3'
+import { createError, createEvent } from 'h3'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import apiSessionCheckHandler from '#server/middleware/api-session-check'
 
 const {
-  getAppSessionMock
+  validateSessionUserMock
 } = vi.hoisted(() => {
   return {
-    getAppSessionMock: vi.fn()
+    validateSessionUserMock: vi.fn()
   }
 })
 
 vi.mock(import('#server/utils/session'), () => {
   return {
-    getAppSession: getAppSessionMock
+    validateSessionUser: validateSessionUserMock
   }
 })
 
@@ -38,10 +38,7 @@ function createMiddlewareEvent({
 describe('api session check middleware', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-
-    getAppSessionMock.mockResolvedValue({
-      data: {}
-    })
+    validateSessionUserMock.mockRejectedValue(createError({ status: 401 }))
   })
 
   afterEach(() => {
@@ -80,7 +77,12 @@ describe('api session check middleware', () => {
     })
   })
 
-  it.each(['/api/oauth/twitch', '/api/auth/email/sign-in'])('should skip redirects for public api routes: %s', async (path) => {
+  it.each([
+    '/api/oauth/twitch',
+    '/api/auth/email/sign-in',
+    '/api/auth/email/password-recovery',
+    '/api/auth/email/password-recovery/reset'
+  ])('should skip redirects for public api routes: %s', async (path) => {
     const event = createMiddlewareEvent({
       path,
 
@@ -93,7 +95,7 @@ describe('api session check middleware', () => {
 
     await expect(apiSessionCheckHandler(event)).resolves.toBeUndefined()
     expect(event.node.res.getHeader('location')).toBeUndefined()
-    expect(getAppSessionMock).not.toHaveBeenCalled()
+    expect(validateSessionUserMock).not.toHaveBeenCalled()
   })
 
   it('should allow Nuxt Icon collection requests without a session', async () => {
@@ -107,6 +109,22 @@ describe('api session check middleware', () => {
     })
 
     await expect(apiSessionCheckHandler(event)).resolves.toBeUndefined()
-    expect(getAppSessionMock).not.toHaveBeenCalled()
+    expect(validateSessionUserMock).not.toHaveBeenCalled()
+  })
+
+  it('should allow a protected API request with a validated session version', async () => {
+    validateSessionUserMock.mockResolvedValue('user-1')
+
+    const event = createMiddlewareEvent({
+      path: '/api/equipment/brands',
+
+      headers: {
+        accept: 'application/json',
+        host: 'localhost'
+      }
+    })
+
+    await expect(apiSessionCheckHandler(event)).resolves.toBeUndefined()
+    expect(validateSessionUserMock).toHaveBeenCalledWith(event)
   })
 })

@@ -13,6 +13,7 @@ interface GuestSessionResponse {
 
 interface GuestUserResult {
   readonly isCreated: boolean;
+  readonly sessionVersion: number;
   readonly userId: string;
 }
 
@@ -67,19 +68,22 @@ async function createOrReuseGuestUser(
     .values({ guestSessionId })
     .onConflictDoNothing({ target: users.guestSessionId })
     .returning({
+      sessionVersion: users.sessionVersion,
       userId: users.id
     })
 
   if (newUser !== undefined) {
     return {
       isCreated: true,
+      sessionVersion: newUser.sessionVersion,
       userId: newUser.userId
     }
   }
 
   const existingUser = await dbHttp.query.users.findFirst({
     columns: {
-      id: true
+      id: true,
+      sessionVersion: true
     },
 
     where: {
@@ -96,6 +100,7 @@ async function createOrReuseGuestUser(
 
   return {
     isCreated: false,
+    sessionVersion: existingUser.sessionVersion,
     userId: existingUser.id
   }
 }
@@ -135,6 +140,7 @@ export default defineEventHandler(async (event) : Promise<GuestSessionResponse> 
   const guestUser = await createOrReuseGuestUser(event, session.id)
 
   await session.update({
+    sessionVersion: guestUser.sessionVersion,
     userId: guestUser.userId
   })
 

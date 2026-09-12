@@ -7,8 +7,10 @@ import { createWebSocketClient } from './database'
 import { optionalBooleanSchema, type DatabaseConfig } from './config-env'
 
 import {
+  validateEmailAuthenticationConfig,
   validateEmailAuthenticationOrigin,
   validateEmailRegistrationConfig,
+  type EmailAuthenticationConfig,
   type EmailRegistrationConfig
 } from './auth/email-registration-config'
 
@@ -72,8 +74,15 @@ function getEmailAuthenticationOrigin(event: H3Event): string {
   return validateEmailAuthenticationOrigin(config.emailRegistration)
 }
 
+function getEmailAuthenticationConfig(event: H3Event): EmailAuthenticationConfig {
+  const config = useRuntimeConfig(event)
+
+  return validateEmailAuthenticationConfig(config.emailRegistration)
+}
+
 export {
   createWebSocketClientFromEvent,
+  getEmailAuthenticationConfig,
   getEmailAuthenticationOrigin,
   getEmailRegistrationConfig,
   getRuntimeDatabaseConfig,

@@ -1,3 +1,4 @@
+import { passwordRecoveryApiPaths } from '#shared/utils/email-authentication'
 import { emailRegistrationApiPaths } from '#shared/utils/email-registration'
 import { defineEventHandler, getRequestURL } from 'h3'
 import { createHttpClient } from '#server/utils/database'
@@ -23,8 +24,18 @@ export default defineEventHandler((event) => {
     return
   }
 
-  if (emailRegistrationApiPaths.some(path => path === pathname.replace(/\/$/u, ''))) {
+  const normalizedPath = pathname.replace(/\/$/u, '')
+
+  if (emailRegistrationApiPaths.some(path => path === normalizedPath)) {
     requireEmailRegistrationEnabled(event)
+  }
+
+  if (passwordRecoveryApiPaths.some(path => path === normalizedPath)) {
+    return
+  }
+
+  if (Reflect.has(event.context, 'dbHttp')) {
+    return
   }
 
   const dbConfig = getRuntimeDatabaseConfig(event)

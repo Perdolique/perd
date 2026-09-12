@@ -1,0 +1,16 @@
+.form {
+  display: grid;
+  gap: var(--spacing-16);
+  min-inline-size: 0;
+}
+
+.notice {
+  padding: var(--spacing-16);
+  border-radius: var(--border-radius-12);
+  background: var(--color-success-subtle);
+  overflow-wrap: anywhere;
+}
+
+.error {
+  color: var(--color-danger-primary);
+}

@@ -31,8 +31,22 @@ jobs:
           install-dependencies: true
       - run: pnpm run format:check
 
-  deploy:
+  migration:
+    name: Database migration
     needs: format
+    runs-on: ubuntu-24.04
+    environment: ${{ github.event_name == 'pull_request' && 'staging' || 'production' }}
+    steps:
+      - uses: Perdolique/automations/.github/actions/setup-pnpm@v3
+        with:
+          install-dependencies: true
+      - name: Run database migration
+        env:
+          NUXT_DATABASE_URL: ${{ secrets.NUXT_DATABASE_URL }}
+        run: pnpm run db:migrate
+
+  deploy:
+    needs: migration
     uses: Perdolique/automations/.github/workflows/deploy.yml@v3
 
     with:

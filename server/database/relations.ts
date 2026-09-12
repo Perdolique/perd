@@ -47,8 +47,22 @@ export const relations = defineRelations(schema, (relation) => {
       })
     },
 
-    emailCredentials: {},
+    emailCredentials: {
+      passwordResetTokens: relation.many.passwordResetTokens({
+        from: relation.emailCredentials.email,
+        to: relation.passwordResetTokens.email
+      })
+    },
+
     pendingEmailRegistrations: {},
+
+    passwordResetTokens: {
+      emailCredential: relation.one.emailCredentials({
+        from: relation.passwordResetTokens.email,
+        to: relation.emailCredentials.email
+      })
+    },
+
     equipmentGroups: {},
 
     equipmentCategories: {

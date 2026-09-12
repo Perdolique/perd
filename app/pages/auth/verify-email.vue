@@ -33,7 +33,8 @@
     useUserStore
   } from '#imports'
 
-  import { isEmailRegistrationEnabled, isRegistrationPasswordValid } from '#shared/utils/email-registration'
+  import { isEmailAuthenticationPasswordValid } from '#shared/utils/email-authentication'
+  import { isEmailRegistrationEnabled } from '#shared/utils/email-registration'
   import { getRedirectNavigationTarget } from '~/utils/router'
   import { getEmailRegistrationError } from '~/utils/email-registration'
   import AuthFormPanel from '~/components/auth/AuthFormPanel.vue'
@@ -89,7 +90,7 @@
     passwordError.value = undefined
     errorMessage.value = null
 
-    if (!isRegistrationPasswordValid(password.value)) {
+    if (!isEmailAuthenticationPasswordValid(password.value)) {
       passwordError.value = 'Enter the password you chose, between 15 and 128 characters.'
 
       passwordInput.value?.focus()

@@ -53,7 +53,12 @@ const users = pgTable('users', {
   isAdmin:
     boolean()
     .notNull()
-    .default(false)
+    .default(false),
+
+  sessionVersion:
+    integer()
+    .notNull()
+    .default(0)
 })
 
 /**
@@ -152,6 +157,24 @@ const pendingEmailRegistrations = pgTable('pending_email_registrations', {
   index('pending_email_registrations_email_index').on(table.email),
   check('pending_email_registrations_session_check', sql`(${table.userId} IS NULL) = (${table.sessionIdHash} IS NULL)`),
   check('pending_email_registrations_normalized_email_check', sql`${table.email} = lower(btrim(${table.email}))`)
+])
+
+/** One-time password reset tokens. Only SHA-256 token digests are persisted. */
+const passwordResetTokens = pgTable('password_reset_tokens', {
+  tokenHash: varchar({ length: 64 }).primaryKey(),
+
+  email: varchar({ length: 254 }).notNull().references(() => emailCredentials.email, {
+    onDelete: 'cascade',
+    onUpdate: 'cascade'
+  }),
+
+  redirectTo: text().notNull(),
+  createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp({ withTimezone: true }).notNull()
+}, (table) => [
+  index('password_reset_tokens_email_index').on(table.email),
+  index('password_reset_tokens_expires_at_index').on(table.expiresAt),
+  check('password_reset_tokens_normalized_email_check', sql`${table.email} = lower(btrim(${table.email}))`)
 ])
 
 // ─── Equipment catalog ──────────────────────────────────────────────
@@ -745,6 +768,7 @@ const contributions = pgTable('contributions', {
 export {
   emailCredentials,
   pendingEmailRegistrations,
+  passwordResetTokens,
   users,
   oauthProviders,
   oauthAccounts,
