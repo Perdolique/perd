@@ -1,9 +1,5 @@
-import { randomUUID } from 'node:crypto'
-import { readFile, readdir } from 'node:fs/promises'
-import { env } from 'node:process'
 import { eq, sql } from 'drizzle-orm'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { createWebSocketClient } from '#server/utils/database'
 
 import {
   completePasswordRecovery,
@@ -15,6 +11,7 @@ import {
 
 import { emailCredentials, passwordResetTokens, users } from '#server/database/schema'
 import { hashPassword, hashToken, verifyPassword } from '#server/utils/auth/password'
+import { createIsolatedPostgreSQL } from '../../test-utils/isolated-postgresql'
 
 function required<Value>(rows: Value[]): Value {
   const [value] = rows
@@ -26,14 +23,6 @@ function required<Value>(rows: Value[]): Value {
   return value
 }
 
-function requireRootDatabase(database: PasswordRecoveryDatabase | null) {
-  if (database === null) {
-    throw new Error('Expected the root database connection')
-  }
-
-  return database
-}
-
 const email = 'recovery@example.com'
 const oldPassword = 'The original password phrase'
 const newPassword = 'The replacement password phrase'
@@ -41,10 +30,10 @@ const newPassword = 'The replacement password phrase'
 // Connections are initialized only after the local database guard in beforeAll.
 // oxlint-disable-next-line init-declarations
 let database: PasswordRecoveryDatabase
-let rootDatabase: PasswordRecoveryDatabase | null = null
 
 // oxlint-disable-next-line init-declarations
-let schemaName: string
+let rootDatabase: Awaited<ReturnType<typeof createIsolatedPostgreSQL>>['rootDatabase']
+let isolatedPostgreSQL: Awaited<ReturnType<typeof createIsolatedPostgreSQL>> | null = null
 
 // oxlint-disable-next-line init-declarations
 let oldPasswordHash: string
@@ -84,48 +73,15 @@ async function complete(token: string, password = newPassword) {
 
 describe('email password recovery on local PostgreSQL', () => {
   beforeAll(async () => {
-    if (!['true', '1'].includes(env.NUXT_LOCAL_DATABASE ?? '')) {
-      throw new Error('Integration tests require NUXT_LOCAL_DATABASE=true')
-    }
+    isolatedPostgreSQL = await createIsolatedPostgreSQL('email_password_recovery')
 
-    const url = new globalThis.URL(env.NUXT_DATABASE_URL ?? '')
+    const {
+      database: isolatedDatabase,
+      rootDatabase: isolatedRootDatabase
+    } = isolatedPostgreSQL
 
-    if (!['localhost', '127.0.0.1', 'db.localtest.me'].includes(url.hostname)) {
-      throw new Error('Integration tests require a local PostgreSQL host')
-    }
-
-    rootDatabase = createWebSocketClient({
-      databaseUrl: url.toString(),
-      isLocalDatabase: true
-    })
-
-    schemaName = `email_password_recovery_${randomUUID().replaceAll('-', '')}`
-
-    await rootDatabase.execute(sql.raw(`CREATE SCHEMA "${schemaName}"`))
-    url.searchParams.set('options', `-c search_path=${schemaName}`)
-
-    database = createWebSocketClient({
-      databaseUrl: url.toString(),
-      isLocalDatabase: true
-    })
-
-    const schema = await database.execute<{ name: string; }>(sql`SELECT current_schema() AS name`)
-
-    if (schema.rows[0]?.name !== schemaName) {
-      throw new Error('Isolated schema was not selected; refusing to run migrations')
-    }
-
-    const migrations = new globalThis.URL('../../server/database/migrations/', import.meta.url)
-    const folders = await readdir(migrations)
-    const migrationNames = folders.filter(name => /^\d{14}_/u.test(name)).toSorted()
-
-    for (const name of migrationNames) {
-      // oxlint-disable-next-line no-await-in-loop -- Migrations depend on the preceding schema version.
-      const migration = await readFile(new globalThis.URL(`${name}/migration.sql`, migrations), 'utf8')
-
-      // oxlint-disable-next-line no-await-in-loop -- Migrations must be applied in timestamp order.
-      await database.execute(sql.raw(migration))
-    }
+    database = isolatedDatabase
+    rootDatabase = isolatedRootDatabase
 
     oldPasswordHash = await hashPassword(oldPassword)
   })
@@ -135,12 +91,7 @@ describe('email password recovery on local PostgreSQL', () => {
   })
 
   afterAll(async () => {
-    await database.$client.end()
-
-    if (rootDatabase !== null && /^email_password_recovery_[\da-f]{32}$/u.test(schemaName)) {
-      await rootDatabase.execute(sql.raw(`DROP SCHEMA "${schemaName}" CASCADE`))
-      await rootDatabase.$client.end()
-    }
+    await isolatedPostgreSQL?.dispose()
   })
 
   it('stores only the token hash and does nothing for an unknown email', async () => {
@@ -306,9 +257,7 @@ describe('email password recovery on local PostgreSQL', () => {
     await issue('existing-token')
 
     async function countWaitingAdvisoryLocks() {
-      const activeRootDatabase = requireRootDatabase(rootDatabase)
-
-      const result = await activeRootDatabase.execute<{ count: number; }>(sql`
+      const result = await rootDatabase.execute<{ count: number; }>(sql`
         SELECT count(*)::int AS count
         FROM pg_locks
         WHERE locktype = 'advisory' AND granted = false

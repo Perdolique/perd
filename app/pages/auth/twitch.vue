@@ -16,24 +16,26 @@
         <FidgetSpinner v-else :class="$style.spinner" />
       </div>
 
-      <PerdHeading :level="2">
-        {{ statusHeading }}
-      </PerdHeading>
+      <div role="status" aria-live="polite">
+        <PerdHeading :level="2">
+          {{ statusHeading }}
+        </PerdHeading>
+      </div>
 
       <PerdLink
         v-if="isFailed"
-        to="/"
+        to="/login"
       >
-        Return to Home
+        Return to sign in
       </PerdLink>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-  import { computed, onBeforeMount, ref } from 'vue'
-  import { $fetch } from 'ofetch'
-  import { definePageMeta, navigateTo, useRoute, useUserStore } from '#imports'
+  import { computed, onMounted, ref } from 'vue'
+  import { definePageMeta, navigateTo, useHead, useRequestFetch, useRoute, useRouter, useUserStore } from '#imports'
+  import { getTwitchCallbackError } from '~/utils/twitch-oauth'
   import { getRedirectNavigationTarget } from '~/utils/router'
   import FidgetSpinner from '~/components/FidgetSpinner.vue'
   import PerdHeading from '~/components/PerdHeading.vue'
@@ -44,24 +46,37 @@
     skipAuth: true
   })
 
-  const isFailed = ref(false)
+  useHead({ meta: [{
+    name: 'referrer',
+    content: 'no-referrer'
+  }] })
+
+  const errorMessage = ref<string | null>(null)
+  const isFailed = computed(() => errorMessage.value !== null)
+  const requestFetch = useRequestFetch()
+  const router = useRouter()
   const route = useRoute()
   const { user } = useUserStore()
-  const statusHeading = computed(() => isFailed.value ? 'Twitch failed' : 'Connecting Twitch')
+  const statusHeading = computed(() => errorMessage.value ?? 'Connecting Twitch')
 
   async function handleConnect() {
-    try {
-      const result = await $fetch('/api/oauth/twitch', {
-        method: 'POST',
+    const body = {
+      code: route.query.code,
+      error: route.query.error,
+      state: route.query.state
+    }
 
-        body: JSON.stringify({
-          code: route.query.code
-        })
+    try {
+      await router.replace({
+        path: '/auth/twitch',
+        query: {},
+        hash: ''
       })
 
-      if (result === undefined) {
-        throw new Error('Failed to connect Twitch')
-      }
+      const result = await requestFetch('/api/oauth/twitch', {
+        method: 'POST',
+        body
+      })
 
       user.value.email = result.email
       user.value.userId = result.userId
@@ -69,18 +84,18 @@
       user.value.isGuest = result.isGuest
       user.value.hasData = true
 
-      const navigationTarget = getRedirectNavigationTarget(route.query.state)
+      const navigationTarget = getRedirectNavigationTarget(result.redirectTo)
 
       await navigateTo(navigationTarget.path, {
         replace: true,
         external: navigationTarget.external
       })
-    } catch {
-      isFailed.value = true
+    } catch (error) {
+      errorMessage.value = getTwitchCallbackError(error)
     }
   }
 
-  onBeforeMount(() => {
+  onMounted(() => {
     void handleConnect()
   })
 </script>

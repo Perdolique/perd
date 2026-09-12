@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest'
 import {
   getGuestClientIp,
   getGuestSessionRateLimiterBinding,
-  getPhotoSubmissionEnvironment
+  getPhotoSubmissionEnvironment,
+  getTwitchOAuthRateLimiterBinding
 } from '#server/utils/cloudflare'
 
 import { createTestEvent } from '~~/test-utils/create-test-event'
@@ -99,6 +100,39 @@ describe(getGuestSessionRateLimiterBinding, () => {
       expect.objectContaining({
         statusCode: 503,
         statusMessage: 'Guest session rate limiter unavailable'
+      })
+    )
+  })
+})
+
+describe(getTwitchOAuthRateLimiterBinding, () => {
+  it('should return the configured binding', () => {
+    const binding = {
+      limit() {
+        throw new Error('The getter must not call the binding')
+      }
+    }
+
+    const event = createTestEvent({})
+
+    Object.assign(event.context, {
+      cloudflare: {
+        env: {
+          TWITCH_OAUTH_RATE_LIMITER: binding
+        }
+      }
+    })
+
+    expect(getTwitchOAuthRateLimiterBinding(event)).toBe(binding)
+  })
+
+  it('should fail closed when the binding is unavailable', () => {
+    const event = createTestEvent({})
+
+    expect(() => getTwitchOAuthRateLimiterBinding(event)).toThrow(
+      expect.objectContaining({
+        statusCode: 503,
+        statusMessage: 'Twitch OAuth rate limiter unavailable'
       })
     )
   })

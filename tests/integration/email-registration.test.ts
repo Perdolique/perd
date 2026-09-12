@@ -1,9 +1,6 @@
 import { randomUUID } from 'node:crypto'
-import { readFile, readdir } from 'node:fs/promises'
-import { env } from 'node:process'
 import { eq, sql } from 'drizzle-orm'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createWebSocketClient } from '#server/utils/database'
 
 import {
   completeEmailRegistration,
@@ -14,6 +11,7 @@ import {
 
 import { getUserByOAuthAccount } from '#server/utils/user'
 import { createTestEvent } from '../../test-utils/create-test-event'
+import { createIsolatedPostgreSQL } from '../../test-utils/isolated-postgresql'
 import { hashPassword, hashToken } from '#server/utils/auth/password'
 
 import {
@@ -53,10 +51,7 @@ const anonymous: RegistrationActor = {
 // Connections are initialized only after the local database guard in beforeAll.
 // oxlint-disable-next-line init-declarations
 let database: RegistrationDatabase
-let rootDatabase: RegistrationDatabase | null = null
-
-// oxlint-disable-next-line init-declarations
-let schemaName: string
+let isolatedPostgreSQL: Awaited<ReturnType<typeof createIsolatedPostgreSQL>> | null = null
 
 // oxlint-disable-next-line init-declarations
 let passwordHash: string
@@ -106,48 +101,11 @@ describe('email registration on local PostgreSQL', () => {
   }
 
   beforeAll(async () => {
-    if (!['true', '1'].includes(env.NUXT_LOCAL_DATABASE ?? '')) {
-      throw new Error('Integration tests require NUXT_LOCAL_DATABASE=true')
-    }
+    isolatedPostgreSQL = await createIsolatedPostgreSQL('email_registration')
 
-    const url = new globalThis.URL(env.NUXT_DATABASE_URL ?? '')
+    const { database: isolatedDatabase } = isolatedPostgreSQL
 
-    if (!['localhost', '127.0.0.1', 'db.localtest.me'].includes(url.hostname)) {
-      throw new Error('Integration tests require a local PostgreSQL host')
-    }
-
-    rootDatabase = createWebSocketClient({
-      databaseUrl: url.toString(),
-      isLocalDatabase: true
-    })
-    schemaName = `email_registration_${randomUUID().replaceAll('-', '')}`
-
-    await rootDatabase.execute(sql.raw(`CREATE SCHEMA "${schemaName}"`))
-    url.searchParams.set('options', `-c search_path=${schemaName}`)
-
-    database = createWebSocketClient({
-      databaseUrl: url.toString(),
-      isLocalDatabase: true
-    })
-
-    const schema = await database.execute<{ name: string; }>(sql`SELECT current_schema() AS name`)
-
-    if (schema.rows[0]?.name !== schemaName) {
-      throw new Error('Isolated schema was not selected; refusing to run migrations')
-    }
-
-    const migrations = new globalThis.URL('../../server/database/migrations/', import.meta.url)
-    const folders = await readdir(migrations)
-    const migrationNames = folders.filter(name => /^\d{14}_/u.test(name)).toSorted()
-
-    // Each migration depends on the preceding schema version.
-    for (const name of migrationNames) {
-      // oxlint-disable-next-line no-await-in-loop
-      const migration = await readFile(new globalThis.URL(`${name}/migration.sql`, migrations), 'utf8')
-
-      // oxlint-disable-next-line no-await-in-loop
-      await database.execute(sql.raw(migration))
-    }
+    database = isolatedDatabase
 
     passwordHash = await hashPassword(password)
   })
@@ -157,12 +115,7 @@ describe('email registration on local PostgreSQL', () => {
   })
 
   afterAll(async () => {
-    await database.$client.end()
-
-    if (rootDatabase !== null && /^email_registration_[\da-f]{32}$/u.test(schemaName)) {
-      await rootDatabase.execute(sql.raw(`DROP SCHEMA "${schemaName}" CASCADE`))
-      await rootDatabase.$client.end()
-    }
+    await isolatedPostgreSQL?.dispose()
   })
 
   it.each([['same token', 'first'], ['sibling tokens', 'second']])('creates at most one account for concurrent %s', async (_scenario, second) => {
@@ -191,8 +144,8 @@ describe('email registration on local PostgreSQL', () => {
       passwordHash: otherHash,
       redirectTo: '/account'
     }, async () => {
-    // Simulated mail accepted.
-  })
+      // Simulated mail accepted.
+    })
 
     await expect(complete('first', anonymous, otherPassword)).rejects.toMatchObject({ statusCode: 400 })
     await expect(database.select().from(users)).resolves.toHaveLength(0)

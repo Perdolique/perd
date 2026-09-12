@@ -1,3 +1,5 @@
+import { getFetchErrorResponse } from './fetch-error'
+
 const registrationMessages = new Set([
   'Choose a password that has not appeared in a data breach',
   'Password checking is temporarily unavailable',
@@ -10,25 +12,18 @@ const registrationMessages = new Set([
 ])
 
 function getEmailRegistrationError(error: unknown): string {
-  if (error !== null && typeof error === 'object') {
-    const data: unknown = Reflect.get(error, 'data')
+  const { status, statusMessage } = getFetchErrorResponse(error)
 
-    if (data !== null && typeof data === 'object') {
-      const status: unknown = Reflect.get(data, 'statusCode')
-      const message: unknown = Reflect.get(data, 'statusMessage')
+  if (status === 429) {
+    return 'Too many attempts. Try again in a minute.'
+  }
 
-      if (status === 429) {
-        return 'Too many attempts. Try again in a minute.'
-      }
+  if (status === 403) {
+    return 'Security check failed. Try again.'
+  }
 
-      if (status === 403) {
-        return 'Security check failed. Try again.'
-      }
-
-      if (typeof message === 'string' && registrationMessages.has(message)) {
-        return message
-      }
-    }
+  if (statusMessage !== undefined && registrationMessages.has(statusMessage)) {
+    return statusMessage
   }
 
   return 'Could not complete email verification. Try again.'

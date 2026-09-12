@@ -797,9 +797,23 @@ const redirectTargetQuerySchema = v.object({
   )
 })
 
-const twitchOAuthBodySchema = v.object({
-  code: trimmedNonEmptyStringSchema
+const twitchOAuthQuerySchema = v.object({
+  redirectTo: redirectTargetQuerySchema.entries.redirectTo,
+  intent: v.optional(v.picklist(['sign-in', 'link']), 'sign-in')
 })
+
+const twitchOAuthStateSchema = v.pipe(v.string(), v.regex(/^[\w-]{43}$/u))
+
+const twitchOAuthBodySchema = v.union([
+  v.strictObject({
+    code: trimmedNonEmptyStringSchema,
+    state: twitchOAuthStateSchema
+  }),
+  v.strictObject({
+    error: v.pipe(trimmedNonEmptyStringSchema, v.maxLength(128)),
+    state: twitchOAuthStateSchema
+  })
+])
 
 function validateBrandMutationBody(body: unknown) {
   return v.parse(brandMutationSchema, body)
@@ -965,6 +979,10 @@ function validateTwitchOAuthBody(body: unknown) {
   return v.parse(twitchOAuthBodySchema, body)
 }
 
+function validateTwitchOAuthQuery(query: unknown) {
+  return v.parse(twitchOAuthQuerySchema, query)
+}
+
 const emailAuthenticationPasswordSchema = v.pipe(
   v.string(),
   v.check(isEmailAuthenticationPasswordValid, 'Use a password between 15 and 128 characters')
@@ -1083,7 +1101,6 @@ export {
   redirectTargetQuerySchema,
   trimmedNonEmptyStringSchema,
   trimmedStringSchema,
-  twitchOAuthBodySchema,
   userEquipmentCreateBodySchema,
   userEquipmentIdParamsSchema,
   validateBrandDetailParams,
@@ -1125,6 +1142,7 @@ export {
   validatePropertyEnumOptionParams,
   validateRedirectTargetQuery,
   validateTwitchOAuthBody,
+  validateTwitchOAuthQuery,
   validateUserEquipmentCreateBody,
   validateUserEquipmentIdParams
 }

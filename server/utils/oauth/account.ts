@@ -1,5 +1,6 @@
 import { createError, isError, type H3Event } from 'h3'
 import type { OAuthProvider } from '#shared/types/oauth'
+import { getAuthErrorDetails } from '#server/utils/auth/telemetry'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
 import { oauthAccounts, users } from '#server/database/schema'
 
@@ -17,8 +18,8 @@ async function createOAuthUser(
   try {
     const dbWebsocket = createWebSocketClientFromEvent(event)
 
-    try {
-      const newUser = await dbWebsocket.transaction(async (transaction) => {
+    const [transactionResult] = await Promise.allSettled([
+      dbWebsocket.transaction(async (transaction) => {
         const providerData = await transaction.query.oauthProviders.findFirst({
           columns: {
             id: true
@@ -67,16 +68,32 @@ async function createOAuthUser(
           isGuest: false
         }
       })
+    ])
 
-      return {
-        userId: newUser.userId,
-        isAdmin: newUser.isAdmin,
-        isGuest: newUser.isGuest
+    if (transactionResult.status === 'rejected') {
+      try {
+        await dbWebsocket.$client.end()
+      } catch (cleanupError) {
+        const details = getAuthErrorDetails(cleanupError, [])
+
+        console.error('OAuth account database cleanup failed', { error: details })
       }
-    } finally {
-      await dbWebsocket.$client.end()
+
+      throw transactionResult.reason
+    }
+
+    await dbWebsocket.$client.end()
+
+    return {
+      userId: transactionResult.value.userId,
+      isAdmin: transactionResult.value.isAdmin,
+      isGuest: transactionResult.value.isGuest
     }
   } catch (error) {
+    const details = getAuthErrorDetails(error, [])
+
+    console.error('OAuth account creation failed', { error: details })
+
     if (isError(error)) {
       throw error
     }

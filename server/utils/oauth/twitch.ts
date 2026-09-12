@@ -2,6 +2,8 @@ import { type H3Event, createError, getRequestURL } from 'h3'
 import { $fetch } from 'ofetch'
 import { joinURL } from 'ufo'
 import { useRuntimeConfig } from 'nitropack/runtime'
+import { getAuthErrorDetails } from '#server/utils/auth/telemetry'
+import { twitchOAuthMessages } from '#shared/utils/twitch-oauth'
 import { validateTwitchOAuthConfig } from './twitch-config'
 
 interface TwitchUser {
@@ -68,11 +70,13 @@ async function getTwitchOAuthToken(event: H3Event, code: string, config: TwitchO
 
     return tokenResponse.access_token
   } catch (error) {
-    console.error(error)
+    const details = getAuthErrorDetails(error, [code, config.clientSecret])
+
+    console.error('Twitch token exchange failed', { error: details })
 
     throw createError({
-      status: 400,
-      message: 'Failed to obtain OAuth token'
+      status: 503,
+      statusMessage: twitchOAuthMessages.unavailable
     })
   }
 }
@@ -92,11 +96,13 @@ async function getTwitchUserInfo(accessToken: string, clientId: string): Promise
 
     return usersResponse.data[0]
   } catch (error) {
-    console.error(error)
+    const details = getAuthErrorDetails(error, [accessToken])
+
+    console.error('Twitch user lookup failed', { error: details })
 
     throw createError({
-      status: 400,
-      message: 'Failed to get user info'
+      status: 503,
+      statusMessage: twitchOAuthMessages.unavailable
     })
   }
 }
