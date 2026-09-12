@@ -32,7 +32,10 @@
       <PerdButton ref="submitButton" type="submit" :loading="isPending" :disabled="!isAccountReady" block>{{ submitLabel }}</PerdButton>
     </form>
 
-    <PerdButton :to="backPath" variant="ghost">{{ backLabel }}</PerdButton>
+    <p :class="$style.navigation">
+      <span v-if="backPrompt">{{ backPrompt }}</span>
+      <PerdLink :to="backPath">{{ backLabel }}</PerdLink>
+    </p>
     <TurnstileWidget
       ref="turnstileWidget"
       :sitekey="siteKey"
@@ -65,6 +68,7 @@
   import AuthFormPanel from '~/components/auth/AuthFormPanel.vue'
   import TurnstileWidget from '~/components/auth/TurnstileWidget.vue'
   import PerdButton from '~/components/PerdButton.vue'
+  import PerdLink from '~/components/PerdLink.vue'
   import TextInput from '~/components/TextInput.vue'
   import { getEmailRegistrationError } from '~/utils/email-registration'
 
@@ -99,12 +103,13 @@
   const title = computed(() => isUpgrade.value ? 'Add email access' : 'Create your account')
 
   const description = computed(() => isUpgrade.value
-    ? 'Keep your gear and packing lists. Confirm your email in this browser to secure your existing account.'
-    : 'Keep your gear ready for the next trip. Confirm your email to finish creating your account.')
+    ? 'Confirm your email in this browser to add email access to your current account.'
+    : 'Confirm your email to finish creating your account.')
 
   const submitLabel = computed(() => isSent.value ? 'Send another email' : 'Send verification email')
   const backPath = computed(() => isUpgrade.value ? '/account' : '/login')
-  const backLabel = computed(() => isUpgrade.value ? 'Back to Account' : 'Back to sign in')
+  const backPrompt = computed(() => isUpgrade.value ? undefined : 'Already have an account?')
+  const backLabel = computed(() => isUpgrade.value ? 'Back to Account' : 'Sign in')
 
   onMounted(async () => {
     if (!user.value.hasData) {

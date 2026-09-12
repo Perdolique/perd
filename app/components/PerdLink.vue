@@ -1,10 +1,33 @@
 <template>
-  <NuxtLink :class="$style.component">
+  <component
+    :is="rootComponent"
+    :to="linkTarget"
+    :role="linkRole"
+    :aria-disabled="linkAriaDisabled"
+    :tabindex="linkTabIndex"
+    :class="$style.component"
+  >
     <slot />
-  </NuxtLink>
+  </component>
 </template>
 
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+  import { computed } from 'vue'
+  import type { RouteLocationRaw } from 'vue-router'
+  import { NuxtLink } from '#components'
+
+  interface Props {
+    disabled?: boolean;
+    to: RouteLocationRaw;
+  }
+
+  const { disabled, to } = defineProps<Props>()
+  const rootComponent = computed(() => disabled ? 'span' : NuxtLink)
+  const linkTarget = computed(() => disabled ? undefined : to)
+  const linkRole = computed(() => disabled ? 'link' : undefined)
+  const linkAriaDisabled = computed(() => disabled || undefined)
+  const linkTabIndex = computed(() => disabled ? -1 : undefined)
+</script>
 
 <style module>
   .component {
@@ -30,6 +53,12 @@
 
     &:active {
       color: var(--color-accent-active);
+    }
+
+    &[aria-disabled='true'] {
+      color: var(--color-text-muted);
+      cursor: not-allowed;
+      text-decoration: none;
     }
   }
 </style>

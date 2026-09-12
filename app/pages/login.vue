@@ -36,7 +36,16 @@
         :error="passwordError"
         required
         :disabled="isAuthenticationBusy"
-      />
+      >
+        <template #label-action>
+          <PerdLink
+            :to="passwordRecoveryTarget"
+            :disabled="isAuthenticationBusy"
+          >
+            Forgot password?
+          </PerdLink>
+        </template>
+      </TextInput>
 
       <PerdButton
         ref="signInButton"
@@ -48,25 +57,6 @@
         Sign in
       </PerdButton>
     </form>
-
-    <PerdButton
-      :to="passwordRecoveryTarget"
-      :disabled="isAuthenticationBusy"
-      variant="ghost"
-      block
-    >
-      Forgot password?
-    </PerdButton>
-
-    <PerdButton
-      v-if="emailRegistrationEnabled"
-      :to="registrationTarget"
-      :disabled="isAuthenticationBusy"
-      variant="ghost"
-      block
-    >
-      Create account
-    </PerdButton>
 
     <div :class="$style.divider" aria-hidden="true">
       <span :class="$style.dividerLine" />
@@ -98,6 +88,16 @@
         Continue with Twitch
       </PerdButton>
     </div>
+
+    <p v-if="emailRegistrationEnabled" :class="$style.navigation">
+      <span>New here?</span>
+      <PerdLink
+        :to="registrationTarget"
+        :disabled="isAuthenticationBusy"
+      >
+        Create account
+      </PerdLink>
+    </p>
   </AuthFormPanel>
 </template>
 
@@ -127,6 +127,7 @@
   import AuthFormPanel from '~/components/auth/AuthFormPanel.vue'
   import TurnstileWidget from '~/components/auth/TurnstileWidget.vue'
   import PerdButton from '~/components/PerdButton.vue'
+  import PerdLink from '~/components/PerdLink.vue'
   import TextInput from '~/components/TextInput.vue'
 
   type TurnstileAuthenticationMethod = 'email' | 'guest'
@@ -427,7 +428,8 @@
 </script>
 
 <style module>
-  .form,
+  @import '../assets/styles/auth-form.css';
+
   .secondaryActions {
     display: grid;
     gap: var(--spacing-16);
@@ -437,7 +439,6 @@
     padding: var(--spacing-12);
     border-radius: var(--border-radius-12);
     background: var(--color-danger-subtle);
-    color: var(--color-danger-primary);
     overflow-wrap: anywhere;
   }
 

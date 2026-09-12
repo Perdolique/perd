@@ -37,7 +37,9 @@
       </PerdButton>
     </form>
 
-    <PerdButton :to="signInTarget" :disabled="isPending" variant="ghost">Back to sign in</PerdButton>
+    <p :class="$style.navigation">
+      <PerdLink :to="signInTarget" :disabled="isPending">Back to sign in</PerdLink>
+    </p>
 
     <TurnstileWidget
       ref="turnstileWidget"
@@ -59,6 +61,7 @@
   import AuthFormPanel from '~/components/auth/AuthFormPanel.vue'
   import TurnstileWidget from '~/components/auth/TurnstileWidget.vue'
   import PerdButton from '~/components/PerdButton.vue'
+  import PerdLink from '~/components/PerdLink.vue'
   import TextInput from '~/components/TextInput.vue'
 
   definePageMeta({

@@ -160,7 +160,7 @@ function getExpectedFocus(page: Page, focus: 'password' | 'submit') {
 }
 
 test.describe('Email sign-in', () => {
-  test('should expose a password-manager form and keep all login options available', async ({ page, turnstile }) => {
+  test('should expose a password-manager form with compact contextual navigation', async ({ page, turnstile }) => {
     await page.goto('/login?redirectTo=/my-gear')
 
     const emailInput = page.getByLabel('Email')
@@ -186,6 +186,7 @@ test.describe('Email sign-in', () => {
       exact: true
     })).toBeVisible()
 
+    await expect(page.getByText('Metsik', { exact: true })).toHaveCount(0)
     await expect(page.locator('form')).toHaveCount(1)
     await expect(emailInput).toHaveAttribute('type', 'email')
     await expect(emailInput).toHaveAttribute('name', 'email')
@@ -198,6 +199,14 @@ test.describe('Email sign-in', () => {
     await expect(signInButton).toHaveAttribute('type', 'submit')
     await expect(registrationLink).toHaveAttribute('href', '/register?redirectTo=/my-gear')
     await expect(recoveryLink).toHaveAttribute('href', '/forgot-password?redirectTo=/my-gear')
+    await expect(passwordInput.locator('..').getByRole('link', { name: 'Forgot password?' })).toBeVisible()
+    await expect(page.getByText('New here?', { exact: true })).toBeVisible()
+
+    const recoveryLinkHeight = await recoveryLink.evaluate(element => element.getBoundingClientRect().height)
+    const registrationLinkHeight = await registrationLink.evaluate(element => element.getBoundingClientRect().height)
+
+    expect(recoveryLinkHeight).toBeLessThan(32)
+    expect(registrationLinkHeight).toBeLessThan(32)
 
     await expect(page.getByRole('button', {
       name: 'Continue as guest',
@@ -208,6 +217,14 @@ test.describe('Email sign-in', () => {
       name: 'Continue with Twitch',
       exact: true
     })).toBeVisible()
+
+    await emailInput.focus()
+    await page.keyboard.press('Tab')
+    await expect(passwordInput).toBeFocused()
+    await page.keyboard.press('Tab')
+    await expect(recoveryLink).toBeFocused()
+    await page.keyboard.press('Tab')
+    await expect(signInButton).toBeFocused()
 
     expect(await turnstile.getRenderOptions(page)).toStrictEqual([{
       action: 'email_sign_in',
@@ -251,6 +268,37 @@ test.describe('Email sign-in', () => {
       expect(await turnstile.getRenderOptions(page)).toHaveLength(1)
     })
   }
+
+  test('should keep busy navigation inert and outside the tab order', async ({ page, turnstile }) => {
+    await turnstile.pause(page)
+    await page.goto('/login')
+    await turnstile.getRenderOptions(page)
+    await fillSignInForm(page)
+
+    const registrationLink = page.getByRole('link', {
+      name: 'Create account',
+      exact: true
+    })
+
+    const recoveryLink = page.getByRole('link', {
+      name: 'Forgot password?',
+      exact: true
+    })
+
+    await page.getByRole('button', {
+      name: 'Sign in',
+      exact: true
+    }).click()
+
+    await expect(registrationLink).toHaveAttribute('aria-disabled', 'true')
+    await expect(recoveryLink).toHaveAttribute('aria-disabled', 'true')
+    await expect(registrationLink).not.toHaveAttribute('href')
+    await expect(recoveryLink).not.toHaveAttribute('href')
+    await expect(registrationLink).toHaveAttribute('tabindex', '-1')
+    await expect(recoveryLink).toHaveAttribute('tabindex', '-1')
+    await recoveryLink.click({ force: true })
+    await expect(page).toHaveURL(/\/login$/u)
+  })
 
   test('should disable every auth method while showing a spinner only on sign-in', async ({ page, turnstile }) => {
     const requestStarted = createDeferred()

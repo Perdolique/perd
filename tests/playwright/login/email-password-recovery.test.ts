@@ -1,10 +1,16 @@
-import type { Page, Route } from '@playwright/test'
+import type { Locator, Page, Route } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
 import { appBaseUrl } from '../constants.ts'
 
 const email = 'trip@example.com'
 const token = 'a'.repeat(43)
 const password = 'A fresh exact passphrase 🌲 '
+
+async function expectCompactLink(link: Locator) {
+  const linkHeight = await link.evaluate(element => element.getBoundingClientRect().height)
+
+  expect(linkHeight).toBeLessThan(32)
+}
 
 async function fillResetForm(page: Page, selectedPassword = password) {
   await page.getByLabel('New password', { exact: true }).fill(selectedPassword)
@@ -97,6 +103,11 @@ test.describe('Email password recovery', () => {
     await recoveryLink.focus()
     await page.keyboard.press('Enter')
     await expect(page).toHaveURL(`${appBaseUrl}/forgot-password?redirectTo=/account`)
+
+    const signInLink = page.getByRole('link', { name: 'Back to sign in' })
+
+    await expect(signInLink).toHaveAttribute('href', '/login?redirectTo=/account')
+    await expectCompactLink(signInLink)
 
     await expect.poll(async () => turnstile.getRenderOptions(page)).toContainEqual(
       expect.objectContaining({
@@ -220,7 +231,12 @@ test.describe('Email password recovery', () => {
       await page.goto(path)
       await expect(page.getByRole('alert')).toHaveText('This password reset link is invalid or expired.')
       await expect(page.getByRole('alert')).toBeFocused()
-      await expect(page.getByRole('link', { name: 'Request a new reset email' })).toHaveAttribute('href', '/forgot-password?redirectTo=/')
+      await expect(page.getByText('Use a new password for your Metsik account.')).toHaveCount(0)
+
+      const recoveryLink = page.getByRole('link', { name: 'Request a new reset email' })
+
+      await expect(recoveryLink).toHaveAttribute('href', '/forgot-password?redirectTo=/')
+      await expectCompactLink(recoveryLink)
       await expect(page.getByLabel('New password', { exact: true })).toHaveCount(0)
     })
   }
@@ -236,6 +252,7 @@ test.describe('Email password recovery', () => {
     await turnstile.pause(page)
     await page.goto(`/auth/reset-password?redirectTo=/account#token=${token}`)
     await turnstile.getRenderOptions(page)
+    await expectCompactLink(page.getByRole('link', { name: 'Request a new reset email' }))
     await page.getByLabel('New password', { exact: true }).fill(password)
     await page.getByLabel('Confirm password', { exact: true }).fill(`${password} different`)
     await page.getByRole('button', { name: 'Reset password' }).click()
@@ -281,7 +298,10 @@ test.describe('Email password recovery', () => {
       }
     ])
 
-    await page.getByRole('link', { name: 'Continue to sign in' }).click()
+    const signInLink = page.getByRole('link', { name: 'Continue to sign in' })
+
+    await expectCompactLink(signInLink)
+    await signInLink.click()
     await expect(page).toHaveURL(`${appBaseUrl}/login?redirectTo=/account`)
   })
 

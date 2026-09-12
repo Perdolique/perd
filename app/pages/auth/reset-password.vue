@@ -1,7 +1,6 @@
 <template>
   <AuthFormPanel
     title="Choose a new password"
-    description="Use a new password for your Metsik account."
   >
     <p v-if="pageState.phase === 'checking'" :class="$style.notice" role="status">Checking your reset link…</p>
 
@@ -9,14 +8,18 @@
       <p ref="successStatus" :class="$style.notice" role="status" tabindex="-1">
         Your password has been reset. Sign in with your new password.
       </p>
-      <PerdButton :to="signInTarget" variant="ghost">Continue to sign in</PerdButton>
+      <p :class="$style.navigation">
+        <PerdLink :to="signInTarget">Continue to sign in</PerdLink>
+      </p>
     </template>
 
     <template v-else-if="pageState.phase === 'invalid'">
       <p ref="invalidStatus" :class="$style.error" role="alert" tabindex="-1">
         This password reset link is invalid or expired.
       </p>
-      <PerdButton :to="recoveryTarget" variant="ghost">Request a new reset email</PerdButton>
+      <p :class="$style.navigation">
+        <PerdLink :to="recoveryTarget">Request a new reset email</PerdLink>
+      </p>
     </template>
 
     <template v-else>
@@ -58,7 +61,9 @@
         </PerdButton>
       </form>
 
-      <PerdButton :to="recoveryTarget" :disabled="isPending" variant="ghost">Request a new reset email</PerdButton>
+      <p :class="$style.navigation">
+        <PerdLink :to="recoveryTarget" :disabled="isPending">Request a new reset email</PerdLink>
+      </p>
     </template>
 
     <TurnstileWidget
@@ -83,6 +88,7 @@
   import AuthFormPanel from '~/components/auth/AuthFormPanel.vue'
   import TurnstileWidget from '~/components/auth/TurnstileWidget.vue'
   import PerdButton from '~/components/PerdButton.vue'
+  import PerdLink from '~/components/PerdLink.vue'
   import TextInput from '~/components/TextInput.vue'
 
   definePageMeta({

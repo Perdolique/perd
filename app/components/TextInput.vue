@@ -20,6 +20,10 @@
       :type="type"
     >
 
+    <span v-if="$slots['label-action']" :class="$style.labelAction">
+      <slot name="label-action" />
+    </span>
+
     <span v-if="hasHint" :id="hintId" :class="$style.hint">
       {{ hint }}
     </span>
@@ -101,6 +105,7 @@
 <style module>
   .component {
     display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-content: start;
     gap: var(--spacing-8);
   }
@@ -112,6 +117,7 @@
   }
 
   .input {
+    grid-column: 1 / -1;
     inline-size: 100%;
     min-block-size: var(--layout-button-height-medium);
     padding-inline: var(--spacing-12);
@@ -135,6 +141,18 @@
     &[aria-invalid='true'] {
       border-color: var(--color-danger-primary);
     }
+  }
+
+  .labelAction {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: baseline;
+    font-size: var(--font-size-14);
+  }
+
+  .hint,
+  .error {
+    grid-column: 1 / -1;
   }
 
   .hint {
