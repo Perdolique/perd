@@ -1,5 +1,5 @@
 import type { BrowserContext, Locator, Page, Request, Response, Route } from '@playwright/test'
-import { expect, test } from '../fixtures/global.fixtures.ts'
+import { expect, test, waitForInitialEmailSignInTurnstile } from '../fixtures/global.fixtures.ts'
 
 interface PackingListSummary {
   createdAt: string;
@@ -419,6 +419,7 @@ async function mockAuth(context: BrowserContext): Promise<void> {
 
 async function openPackingLists(page: Page): Promise<void> {
   await page.goto('/login?redirectTo=/')
+  await waitForInitialEmailSignInTurnstile(page)
   await page.getByRole('button', { name: 'Guest' }).click()
 
   const sidebar = page.getByTestId('shell-sidebar')
@@ -481,6 +482,7 @@ test.describe('Packing list shell', () => {
     await mockAuth(context)
     await mockPackingListRoutes(context, page, state)
     await page.goto('/login?redirectTo=/packing-lists')
+    await waitForInitialEmailSignInTurnstile(page)
     await page.getByRole('button', { name: 'Guest' }).click()
     await expect(page).toHaveURL(/\/packing-lists$/u)
 
