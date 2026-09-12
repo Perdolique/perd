@@ -93,6 +93,19 @@ function getPasswordRecoveryRateLimiterBinding(event: H3Event): Env['PASSWORD_RE
   return binding
 }
 
+function getTwitchOAuthRateLimiterBinding(event: H3Event): Env['TWITCH_OAUTH_RATE_LIMITER'] {
+  const binding = event.context.cloudflare?.env.TWITCH_OAUTH_RATE_LIMITER
+
+  if (binding === undefined) {
+    throw createError({
+      status: 503,
+      statusMessage: 'Twitch OAuth rate limiter unavailable'
+    })
+  }
+
+  return binding
+}
+
 function getEmailBinding(event: H3Event): Env['EMAIL'] {
   const binding = event.context.cloudflare?.env.EMAIL
 
@@ -128,5 +141,6 @@ export {
   getGuestSessionRateLimiterBinding,
   getPhotoSubmissionEnvironment,
   getPhotoSubmissionRateLimiterBinding,
-  getPasswordRecoveryRateLimiterBinding
+  getPasswordRecoveryRateLimiterBinding,
+  getTwitchOAuthRateLimiterBinding
 }

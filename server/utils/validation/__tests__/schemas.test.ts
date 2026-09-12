@@ -1641,14 +1641,48 @@ describe('validation schemas', () => {
 
   it('should trim twitch oauth body and reject empty code', () => {
     expect(validateTwitchOAuthBody({
-      code: '  oauth-code  '
+      code: '  oauth-code  ',
+      state: 'a'.repeat(43)
     })).toStrictEqual({
-      code: 'oauth-code'
+      code: 'oauth-code',
+      state: 'a'.repeat(43)
     })
 
     expect(() => validateTwitchOAuthBody({
-      code: '   '
+      code: '   ',
+      state: 'a'.repeat(43)
     })).toThrow(/./u)
+  })
+
+  it('should accept a bounded twitch authorization error', () => {
+    expect(validateTwitchOAuthBody({
+      error: '  access_denied  ',
+      state: 'a'.repeat(43)
+    })).toStrictEqual({
+      error: 'access_denied',
+      state: 'a'.repeat(43)
+    })
+  })
+
+  it.each([
+    {
+      code: 'oauth-code',
+      state: 'a'.repeat(42)
+    },
+    {
+      code: 'oauth-code',
+      state: 'a'.repeat(44)
+    },
+    {
+      error: '',
+      state: 'a'.repeat(43)
+    },
+    {
+      error: 'e'.repeat(129),
+      state: 'a'.repeat(43)
+    }
+  ])('should reject an invalid twitch oauth boundary: %j', (body) => {
+    expect(() => validateTwitchOAuthBody(body)).toThrow(/./u)
   })
 
   it('should sanitize redirect query targets', () => {

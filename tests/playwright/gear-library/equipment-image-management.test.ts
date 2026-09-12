@@ -1,6 +1,7 @@
 import type { BrowserContext, Page, Request } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
 import { createDeferred } from '../fixtures/gear-library-entry-list.fixtures.ts'
+import { mockTwitchSignIn } from '../fixtures/twitch-auth.fixtures.ts'
 
 const itemId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
 const firstImageId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8'
@@ -87,6 +88,19 @@ async function mockSequentialImageUploadApi(context: BrowserContext) {
   }
 }
 
+async function authenticateAdmin(context: BrowserContext, page: Page, redirectTo: string) {
+  await mockTwitchSignIn(context, page, {
+    redirectTo,
+
+    user: {
+      email: null,
+      isAdmin: true,
+      isGuest: false,
+      userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
+    }
+  })
+}
+
 test.describe('Equipment image management', () => {
   test('should upload multiple images sequentially in selection order', async ({
     context,
@@ -94,22 +108,10 @@ test.describe('Equipment image management', () => {
   }) => {
     const firstFilename = 'equipment-item-placeholder.webp'
     const secondFilename = 'photo-submission.webp'
-
-    await context.route('**/api/oauth/twitch**', async (route) => {
-      await route.fulfill({
-        json: {
-          isAdmin: true,
-          isGuest: false,
-          userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
-        }
-      })
-    })
-
     const { firstResponseGate, uploadRequests } = await mockSequentialImageUploadApi(context)
     const pagePath = `/admin/equipment/items/${itemId}/images`
-    const authPath = `/auth/twitch?code=oauth-code&state=${encodeURIComponent(pagePath)}`
 
-    await page.goto(authPath)
+    await authenticateAdmin(context, page, pagePath)
 
     const imageInput = page.getByLabel('Choose images', { exact: true })
 
@@ -166,16 +168,6 @@ test.describe('Equipment image management', () => {
       })
     })
 
-    await context.route('**/api/oauth/twitch**', async (route) => {
-      await route.fulfill({
-        json: {
-          isAdmin: true,
-          isGuest: false,
-          userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
-        }
-      })
-    })
-
     await context.route(imagesPath, async (route) => {
       expect(route.request().method()).toBe('GET')
       await route.fulfill({ json: images })
@@ -191,9 +183,8 @@ test.describe('Equipment image management', () => {
     })
 
     const pagePath = `/admin/equipment/items/${itemId}/images`
-    const authPath = `/auth/twitch?code=oauth-code&state=${encodeURIComponent(pagePath)}`
 
-    await page.goto(authPath)
+    await authenticateAdmin(context, page, pagePath)
     await expect(page).toHaveURL(new RegExp(`${pagePath}$`, 'u'))
     await expect(page.getByRole('button', { name: 'Delete equipment image 1' })).toBeVisible()
     await expect(page.getByRole('button', { name: /^Delete equipment image/u })).toHaveCount(2)
@@ -237,16 +228,6 @@ test.describe('Equipment image management', () => {
         body: imageBody,
         contentType: 'image/svg+xml',
         status: 200
-      })
-    })
-
-    await context.route('**/api/oauth/twitch**', async (route) => {
-      await route.fulfill({
-        json: {
-          isAdmin: true,
-          isGuest: false,
-          userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
-        }
       })
     })
 
@@ -301,9 +282,8 @@ test.describe('Equipment image management', () => {
     })
 
     const adminPath = `/admin/equipment/items/${itemId}/images`
-    const authPath = `/auth/twitch?code=oauth-code&state=${encodeURIComponent(adminPath)}`
 
-    await page.goto(authPath)
+    await authenticateAdmin(context, page, adminPath)
     await expect(page).toHaveURL(new RegExp(`${adminPath}$`, 'u'))
 
     const firstCard = page.getByAltText('Equipment image 1').locator('..')

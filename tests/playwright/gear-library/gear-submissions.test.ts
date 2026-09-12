@@ -1,5 +1,6 @@
 import type { BrowserContext, Page, Request, Route } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
+import { mockTwitchSignIn } from '../fixtures/twitch-auth.fixtures.ts'
 
 import {
   createDeferred,
@@ -136,17 +137,17 @@ async function mockSubmissionApi(
 }
 
 async function openRegisteredSubmissionPage(context: BrowserContext, page: Page) {
-  await context.route((url) => url.pathname === '/api/oauth/twitch', async (route) => {
-    await route.fulfill({
-      json: {
-        isAdmin: false,
-        isGuest: false,
-        userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
-      }
-    })
+  await mockTwitchSignIn(context, page, {
+    redirectTo: '/gear-library/new',
+
+    user: {
+      email: null,
+      isAdmin: false,
+      isGuest: false,
+      userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
+    }
   })
 
-  await page.goto('/auth/twitch?code=twitch-code&state=/gear-library/new')
   await expect(page).toHaveURL(/\/gear-library\/new$/u)
 }
 

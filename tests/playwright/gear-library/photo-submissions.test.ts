@@ -2,6 +2,7 @@
 import type { BrowserContext, Locator, Page, Request } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
 import { createDeferred } from '../fixtures/gear-library-entry-list.fixtures.ts'
+import { mockTwitchSignIn } from '../fixtures/twitch-auth.fixtures.ts'
 
 const itemId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
 const userId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
@@ -44,27 +45,25 @@ async function authenticateRegisteredUser(
   page: Page,
   target: string
 ) {
-  await context.route((url) => url.pathname === '/api/oauth/twitch', async (route) => {
-    await route.fulfill({
-      json: {
-        isAdmin: false,
-        isGuest: false,
-        userId
-      }
-    })
+  await mockTwitchSignIn(context, page, {
+    redirectTo: target,
+
+    user: {
+      email: null,
+      isAdmin: false,
+      isGuest: false,
+      userId
+    }
   })
 
-  const state = encodeURIComponent(target)
-
-  await page.goto(`/auth/twitch?code=twitch-code&state=${state}`)
   await expect.poll(() => new globalThis.URL(page.url()).pathname).toBe(target)
 }
 
 async function parseMultipartRequest(request: Request): Promise<FormData> {
   const contentType = request.headers()['content-type']
-  const body = request.postDataBuffer()
+  const body: unknown = request.postDataBuffer()
 
-  if (body === null) {
+  if (!(body instanceof globalThis.Uint8Array)) {
     throw new Error('Expected a multipart request body')
   }
 

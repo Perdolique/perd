@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
+import { mockTwitchSignIn } from '../fixtures/twitch-auth.fixtures.ts'
 import { appBaseUrl } from '../constants.ts'
 
 const password = 'A long exact passphrase 🌲 '
@@ -238,17 +239,19 @@ test.describe('Email registration', () => {
     })
   }
 
-  test('should retain verified email after a later Twitch sign-in', async ({ page }) => {
-    await page.route('**/api/oauth/twitch', async (route) => {
-      await route.fulfill({ json: {
+  test('should retain verified email after a later Twitch sign-in', async ({ context, page }) => {
+    await mockTwitchSignIn(context, page, {
+      code: 'e2e-twitch',
+      redirectTo: '/account',
+
+      user: {
         userId,
         email: 'trip@example.com',
         isGuest: false,
         isAdmin: true
-      } })
+      }
     })
 
-    await page.goto('/auth/twitch?code=e2e-twitch&state=/account')
     await expect(page).toHaveURL(`${appBaseUrl}/account`)
     await expect(page.getByText('Verified email: trip@example.com')).toBeVisible()
     await expect(page.getByRole('link', { name: /Add email/u })).toHaveCount(0)

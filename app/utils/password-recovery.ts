@@ -1,30 +1,12 @@
+import { getFetchErrorResponse } from './fetch-error'
+
 interface PasswordRecoveryError {
   kind: 'compromised-password' | 'generic' | 'invalid-link';
   message: string;
 }
 
-function getErrorResponse(error: unknown): { status?: number; statusMessage?: string; } {
-  if (error === null || typeof error !== 'object') {
-    return {}
-  }
-
-  const data: unknown = Reflect.get(error, 'data')
-
-  if (data === null || typeof data !== 'object') {
-    return {}
-  }
-
-  const rawStatus: unknown = Reflect.get(data, 'statusCode')
-  const rawMessage: unknown = Reflect.get(data, 'statusMessage')
-
-  return {
-    status: typeof rawStatus === 'number' ? rawStatus : undefined,
-    statusMessage: typeof rawMessage === 'string' ? rawMessage : undefined
-  }
-}
-
 function getPasswordRecoveryRequestError(error: unknown): string {
-  const { status } = getErrorResponse(error)
+  const { status } = getFetchErrorResponse(error)
 
   if (status === 403) {
     return 'Security check failed. Try again.'
@@ -38,7 +20,7 @@ function getPasswordRecoveryRequestError(error: unknown): string {
 }
 
 function getPasswordRecoveryResetError(error: unknown): PasswordRecoveryError {
-  const { status, statusMessage } = getErrorResponse(error)
+  const { status, statusMessage } = getFetchErrorResponse(error)
   const isInvalidLink = status === 400 && statusMessage === 'The password reset link is invalid or expired'
   const isCompromisedPassword = status === 400 && statusMessage === 'Choose a password that has not appeared in a data breach'
 

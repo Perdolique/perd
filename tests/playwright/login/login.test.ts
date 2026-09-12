@@ -706,25 +706,4 @@ test.describe('Login page', () => {
     await expect(page.locator('body')).toHaveText('oauth start')
   })
 
-  test('should restore api redirects after the twitch callback', async ({ page }) => {
-    await page.route('**/api/oauth/twitch', async (route) => {
-      await route.fulfill({
-        json: {
-          userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
-          isAdmin: false,
-          isGuest: false
-        }
-      })
-    })
-
-    await page.route('**/api/equipment/brands', async (route) => {
-      await route.fulfill({
-        json: []
-      })
-    })
-
-    await page.goto('/auth/twitch?code=oauth-code&state=%2Fapi%2Fequipment%2Fbrands')
-    await expect(page).toHaveURL(/\/api\/equipment\/brands$/u)
-    await expect(page.locator('body')).toHaveText('[]')
-  })
 })

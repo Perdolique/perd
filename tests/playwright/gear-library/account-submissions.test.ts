@@ -1,6 +1,7 @@
 import type { BrowserContext, Page } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
 import { createDeferred } from '../fixtures/gear-library-entry-list.fixtures.ts'
+import { mockTwitchSignIn } from '../fixtures/twitch-auth.fixtures.ts'
 
 /* oxlint-disable vitest/no-conditional-in-test -- Playwright route handlers branch across sequential mocked responses. */
 const userId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
@@ -9,19 +10,17 @@ const submissionsPath = '/api/user/item-submissions'
 const photoSubmissionsPath = '/api/user/photo-submissions'
 
 async function authenticate(context: BrowserContext, page: Page, target: string) {
-  await context.route((url) => url.pathname === '/api/oauth/twitch', async (route) => {
-    await route.fulfill({
-      json: {
-        isAdmin: false,
-        isGuest: false,
-        userId
-      }
-    })
+  await mockTwitchSignIn(context, page, {
+    redirectTo: target,
+
+    user: {
+      email: null,
+      isAdmin: false,
+      isGuest: false,
+      userId
+    }
   })
 
-  const state = encodeURIComponent(target)
-
-  await page.goto(`/auth/twitch?code=twitch-code&state=${state}`)
   await expect.poll(() => new globalThis.URL(page.url()).pathname).toBe(target)
 }
 

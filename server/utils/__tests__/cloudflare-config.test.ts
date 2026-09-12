@@ -61,19 +61,22 @@ const rateLimitEnvironmentScenarios = [
     emailSignInNamespaceId: '687734013',
     environment: 'development',
     getRateLimits: (config: WranglerConfig) => config.ratelimits,
-    guestNamespaceId: '687734004'
+    guestNamespaceId: '687734004',
+    twitchOAuthNamespaceId: '687734019'
   },
   {
     emailSignInNamespaceId: '687734014',
     environment: 'staging',
     getRateLimits: (config: WranglerConfig) => config.env.staging.ratelimits,
-    guestNamespaceId: '687734005'
+    guestNamespaceId: '687734005',
+    twitchOAuthNamespaceId: '687734020'
   },
   {
     emailSignInNamespaceId: '687734015',
     environment: 'production',
     getRateLimits: (config: WranglerConfig) => config.env.production.ratelimits,
-    guestNamespaceId: '687734006'
+    guestNamespaceId: '687734006',
+    twitchOAuthNamespaceId: '687734021'
   }
 ] as const
 
@@ -133,6 +136,25 @@ describe('wrangler Cloudflare configuration', () => {
   )
 
   it.each(rateLimitEnvironmentScenarios)(
+    'should configure the $environment Twitch OAuth limiter namespace',
+    async ({ getRateLimits, twitchOAuthNamespaceId }) => {
+      const { config } = await readWranglerConfig()
+      const rateLimits = getRateLimits(config)
+      const twitchOAuthRateLimit = rateLimits.find(({ name }) => name === 'TWITCH_OAUTH_RATE_LIMITER')
+
+      expect(twitchOAuthRateLimit).toStrictEqual({
+        name: 'TWITCH_OAUTH_RATE_LIMITER',
+        namespace_id: twitchOAuthNamespaceId,
+
+        simple: {
+          limit: 10,
+          period: 60
+        }
+      })
+    }
+  )
+
+  it.each(rateLimitEnvironmentScenarios)(
     'should configure the $environment email sign-in limiter namespace',
     async ({ emailSignInNamespaceId, getRateLimits }) => {
       const { config } = await readWranglerConfig()
@@ -151,17 +173,18 @@ describe('wrangler Cloudflare configuration', () => {
     }
   )
 
-  it('should keep email sign-in namespaces unique and enable deployed registration', async () => {
+  it('should keep authentication namespaces unique and enable deployed registration', async () => {
     const { config } = await readWranglerConfig()
 
-    const namespaceIds = rateLimitEnvironmentScenarios.map(({ getRateLimits }) => {
+    const namespaceIds = rateLimitEnvironmentScenarios.flatMap(({ getRateLimits }) => {
       const rateLimits = getRateLimits(config)
       const signInRateLimit = rateLimits.find(({ name }) => name === 'EMAIL_SIGN_IN_RATE_LIMITER')
+      const twitchOAuthRateLimit = rateLimits.find(({ name }) => name === 'TWITCH_OAUTH_RATE_LIMITER')
 
-      return signInRateLimit?.namespace_id
+      return [signInRateLimit?.namespace_id, twitchOAuthRateLimit?.namespace_id]
     })
 
-    expect(new Set(namespaceIds)).toHaveLength(3)
+    expect(new Set(namespaceIds)).toHaveLength(6)
     expect(config.env.production.vars.NUXT_PUBLIC_EMAIL_REGISTRATION_ENABLED).toBe('true')
     expect(config.env.staging.vars.NUXT_PUBLIC_EMAIL_REGISTRATION_ENABLED).toBe('true')
   })

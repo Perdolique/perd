@@ -97,6 +97,14 @@
         "limit": 3,
         "period": 60
       }
+    },
+    {
+      "name": "TWITCH_OAUTH_RATE_LIMITER",
+      "namespace_id": "687734019",
+      "simple": {
+        "limit": 10,
+        "period": 60
+      }
     }
   ],
 
@@ -186,6 +194,14 @@
           "namespace_id": "687734018",
           "simple": {
             "limit": 3,
+            "period": 60
+          }
+        },
+        {
+          "name": "TWITCH_OAUTH_RATE_LIMITER",
+          "namespace_id": "687734021",
+          "simple": {
+            "limit": 10,
             "period": 60
           }
         }
@@ -286,6 +302,14 @@
           "namespace_id": "687734017",
           "simple": {
             "limit": 3,
+            "period": 60
+          }
+        },
+        {
+          "name": "TWITCH_OAUTH_RATE_LIMITER",
+          "namespace_id": "687734020",
+          "simple": {
+            "limit": 10,
             "period": 60
           }
         }

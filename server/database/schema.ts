@@ -18,7 +18,7 @@ import {
   varchar
 } from 'drizzle-orm/pg-core'
 
-// FIXME: drizzle-kit can't handle #shared/constants, so we have to import it with a relative path
+// Drizzle-kit cannot resolve #shared/constants, so schema generation uses a relative import.
 import { limits } from '../../shared/constants'
 
 // ─── Auth ───────────────────────────────────────────────────────────
@@ -175,6 +175,19 @@ const passwordResetTokens = pgTable('password_reset_tokens', {
   index('password_reset_tokens_email_index').on(table.email),
   index('password_reset_tokens_expires_at_index').on(table.expiresAt),
   check('password_reset_tokens_normalized_email_check', sql`${table.email} = lower(btrim(${table.email}))`)
+])
+
+/** One pending Twitch authorization per browser session. Only token and session digests are stored. */
+const twitchOAuthStates = pgTable('twitch_oauth_states', {
+  stateHash: varchar({ length: 64 }).primaryKey(),
+  sessionIdHash: varchar({ length: 64 }).notNull().unique(),
+  intent: varchar({ length: 7 }).$type<'sign-in' | 'link'>().notNull(),
+  userId: uuid().references(() => users.id, { onDelete: 'cascade' }),
+  redirectTo: text().notNull(),
+  expiresAt: timestamp({ withTimezone: true }).notNull()
+}, (table) => [
+  index('twitch_oauth_states_expires_at_index').on(table.expiresAt),
+  check('twitch_oauth_states_actor_check', sql`(${table.intent} = 'sign-in' AND ${table.userId} IS NULL) OR (${table.intent} = 'link' AND ${table.userId} IS NOT NULL)`)
 ])
 
 // ─── Equipment catalog ──────────────────────────────────────────────
@@ -766,6 +779,7 @@ const contributions = pgTable('contributions', {
 })
 
 export {
+  twitchOAuthStates,
   emailCredentials,
   pendingEmailRegistrations,
   passwordResetTokens,
