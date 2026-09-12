@@ -1,5 +1,6 @@
 import type { BrowserContext, Page, Request, Route } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
+import { mockTwitchSignIn } from '../fixtures/twitch-auth.fixtures.ts'
 import { createDeferred, selectPerdOption } from '../fixtures/gear-library-entry-list.fixtures.ts'
 
 /* oxlint-disable vitest/no-conditional-in-test -- Playwright route handlers branch on mocked request paths and methods. */
@@ -104,19 +105,16 @@ interface AuthenticationOptions {
 async function authenticate(options: AuthenticationOptions) {
   const { context, isAdmin, page, target } = options
 
-  await context.route((url) => url.pathname === '/api/oauth/twitch', async (route) => {
-    await route.fulfill({
-      json: {
-        isAdmin,
-        isGuest: false,
-        userId: adminId
-      }
-    })
+  await mockTwitchSignIn(context, page, {
+    redirectTo: target,
+
+    user: {
+      email: null,
+      isAdmin,
+      isGuest: false,
+      userId: adminId
+    }
   })
-
-  const state = encodeURIComponent(target)
-
-  await page.goto(`/auth/twitch?code=twitch-code&state=${state}`)
 }
 
 async function mockReferences(context: BrowserContext) {

@@ -1,6 +1,7 @@
 import type { BrowserContext, Page, Request } from '@playwright/test'
 import { expect, test } from '../fixtures/global.fixtures.ts'
 import { createDeferred } from '../fixtures/gear-library-entry-list.fixtures.ts'
+import { mockTwitchSignIn } from '../fixtures/twitch-auth.fixtures.ts'
 
 /* oxlint-disable vitest/no-conditional-in-test -- Playwright route handlers branch across mocked pages and retries. */
 const adminId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
@@ -58,19 +59,16 @@ interface AuthenticationOptions {
 async function authenticate(options: AuthenticationOptions) {
   const { context, isAdmin, page, target } = options
 
-  await context.route((url) => url.pathname === '/api/oauth/twitch', async (route) => {
-    await route.fulfill({
-      json: {
-        isAdmin,
-        isGuest: false,
-        userId: adminId
-      }
-    })
+  await mockTwitchSignIn(context, page, {
+    redirectTo: target,
+
+    user: {
+      email: null,
+      isAdmin,
+      isGuest: false,
+      userId: adminId
+    }
   })
-
-  const state = encodeURIComponent(target)
-
-  await page.goto(`/auth/twitch?code=twitch-code&state=${state}`)
 }
 
 test.describe('Admin photo submission review', () => {

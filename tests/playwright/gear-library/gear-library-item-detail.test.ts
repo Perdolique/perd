@@ -1,4 +1,5 @@
 import { expect, test } from '../fixtures/global.fixtures.ts'
+import { mockTwitchSignIn } from '../fixtures/twitch-auth.fixtures.ts'
 
 const itemId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
 
@@ -115,16 +116,6 @@ test.describe('Gear library item detail', () => {
   })
 
   test('should show the image management link to admins', async ({ context, page }) => {
-    await context.route('**/api/oauth/twitch**', async (route) => {
-      await route.fulfill({
-        json: {
-          isAdmin: true,
-          isGuest: false,
-          userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
-        }
-      })
-    })
-
     await context.route(
       new RegExp(`/api/equipment/items/${itemId}(?:\\?.*)?$`, 'u'),
       async (route) => {
@@ -148,7 +139,17 @@ test.describe('Gear library item detail', () => {
       }
     )
 
-    await page.goto(`/auth/twitch?code=oauth-code&state=${encodeURIComponent(`/gear-library/${itemId}`)}`)
+    await mockTwitchSignIn(context, page, {
+      redirectTo: `/gear-library/${itemId}`,
+
+      user: {
+        email: null,
+        isAdmin: true,
+        isGuest: false,
+        userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
+      }
+    })
+
     await expect(page).toHaveURL(new RegExp(`/gear-library/${itemId}$`, 'u'))
 
     const imageManagementLink = page.getByRole('link', { name: 'Manage images' })
