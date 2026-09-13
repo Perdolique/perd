@@ -2,10 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "metsik-development",
   "account_id": "e19b9bdd14629a58c3f213b37a58281e",
-  "compatibility_date": "2026-07-18",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
+  "compatibility_date": "2026-09-13",
   "main": ".output/server/index.mjs",
   "upload_source_maps": true,
   "workers_dev": false,
