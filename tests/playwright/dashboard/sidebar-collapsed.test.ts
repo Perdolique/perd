@@ -1,5 +1,14 @@
 import type { BrowserContext } from '@playwright/test'
-import { expect, test } from '../fixtures/global.fixtures.ts'
+import { mockAccountUser } from '../fixtures/account-user.fixtures.ts'
+import { expect, test, waitForInitialEmailSignInTurnstile } from '../fixtures/global.fixtures.ts'
+
+const guestUser = {
+  email: null,
+  isAdmin: false,
+  isGuest: true,
+  isTwitchLinked: false,
+  userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+} as const
 
 async function mockGuestLogin(context: BrowserContext) {
   await context.route('**/api/auth/create-session**', async (route) => {
@@ -59,12 +68,14 @@ async function mockLogout(context: BrowserContext) {
 test.describe('Shell navigation', () => {
   test('should show the desktop sidebar, highlight the active route, and allow profile logout', async ({ context, page }) => {
     await mockGuestLogin(context)
+    await mockAccountUser(context, guestUser)
     await mockGearLibraryReads(context)
     await mockLogout(context)
     await page.goto('/')
     await expect(page).toHaveURL(/\/login\?redirectTo=(?<redirectTo>%2F|\/)$/u)
+    await waitForInitialEmailSignInTurnstile(page)
     await page.getByRole('button', { name: 'Guest' }).click()
-    await expect(page).toHaveURL(/\/$/u)
+    await expect.poll(() => new globalThis.URL(page.url()).pathname).toBe('/')
 
     const sidebar = page.getByTestId('shell-sidebar')
 
@@ -96,6 +107,7 @@ test.describe('Shell navigation', () => {
 
   test('should expose mobile dock navigation without the top bar', async ({ context, page }) => {
     await mockGuestLogin(context)
+    await mockAccountUser(context, guestUser)
     await mockGearLibraryReads(context)
     await mockPackingListReads(context)
 
@@ -105,7 +117,9 @@ test.describe('Shell navigation', () => {
     })
 
     await page.goto('/')
+    await waitForInitialEmailSignInTurnstile(page)
     await page.getByRole('button', { name: 'Guest' }).click()
+    await expect.poll(() => new globalThis.URL(page.url()).pathname).toBe('/')
 
     const dock = page.getByTestId('shell-dock')
 

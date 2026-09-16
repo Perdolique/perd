@@ -1,4 +1,4 @@
-import { expect, test } from '../fixtures/global.fixtures.ts'
+import { expect, test, waitForInitialEmailSignInTurnstile } from '../fixtures/global.fixtures.ts'
 
 import {
   type MutableResponseState,
@@ -138,6 +138,7 @@ test.describe('Gear library states', () => {
     const redirectTo = encodeURIComponent('/gear-library')
 
     await page.goto(`/login?redirectTo=${redirectTo}`)
+    await waitForInitialEmailSignInTurnstile(page)
 
     const loginClickPromise = page.getByRole('button', { name: 'Guest' }).click()
     const initialProgress = page.getByTestId('gear-library-initial-progress')

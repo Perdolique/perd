@@ -26,7 +26,8 @@ async function mockCurrentUser(page: Page, isGuest = false) {
       userId,
       email: null,
       isGuest,
-      isAdmin: true
+      isAdmin: true,
+      isTwitchLinked: isGuest === false
     } })
   })
 }
@@ -61,9 +62,35 @@ async function navigateWithinApp(page: Page, destination: string) {
   }, destination)
 }
 
-async function mockSuccessfulVerification(page: Page, bodies: unknown[]) {
+async function mockSuccessfulVerification(
+  page: Page,
+  bodies: unknown[],
+  isTwitchLinked = false
+) {
+  let isVerified = false
+
+  await page.route('**/api/user', async (route) => {
+    if (isVerified === false) {
+      await route.fallback()
+
+      return
+    }
+
+    await route.fulfill({
+      json: {
+        userId,
+        email: 'trip@example.com',
+        isGuest: false,
+        isAdmin: true,
+        isTwitchLinked
+      }
+    })
+  })
+
   await page.route('**/api/auth/email/registration/verify', async (route) => {
     bodies.push(route.request().postDataJSON())
+
+    isVerified = true
 
     await route.fulfill({ json: {
       user: {
@@ -213,7 +240,7 @@ test.describe('Email registration', () => {
       await verificationPage.getByLabel('Password', { exact: true }).fill(password)
       await verificationPage.getByRole('button', { name: 'Confirm email' }).click()
       await expect(verificationPage).toHaveURL(`${appBaseUrl}/account`)
-      await expect(verificationPage.getByText('Verified email: trip@example.com')).toBeVisible()
+      await expect(verificationPage.getByText('trip@example.com', { exact: true })).toBeVisible()
 
       expect(bodies).toEqual([{
         token,
@@ -237,7 +264,7 @@ test.describe('Email registration', () => {
 
       const bodies: unknown[] = []
 
-      await mockSuccessfulVerification(page, bodies)
+      await mockSuccessfulVerification(page, bodies, accountType === 'Twitch')
       await page.goto('/register?redirectTo=/account')
       await turnstile.getRenderOptions(page)
       await expect(page.getByRole('heading', { name: 'Add email access' })).toBeVisible()
@@ -261,13 +288,23 @@ test.describe('Email registration', () => {
       await page.getByRole('button', { name: 'Confirm email' }).click()
       await expect(page).toHaveURL(`${appBaseUrl}/account`)
       await expect(page.getByText(userId, { exact: true })).toBeVisible()
-      await expect(page.getByText('Verified email: trip@example.com')).toBeVisible()
+      await expect(page.getByText('trip@example.com', { exact: true })).toBeVisible()
       await expect(page.getByRole('link', { name: /Admin/u }).last()).toBeVisible()
       await expect(page.getByRole('link', { name: /Add email/u })).toHaveCount(0)
     })
   }
 
   test('should retain verified email after a later Twitch sign-in', async ({ context, page }) => {
+    await page.route('**/api/user', async route => route.fulfill({
+      json: {
+        userId,
+        email: 'trip@example.com',
+        isGuest: false,
+        isAdmin: true,
+        isTwitchLinked: true
+      }
+    }))
+
     await mockTwitchSignIn(context, page, {
       code: 'e2e-twitch',
       redirectTo: '/account',
@@ -281,7 +318,7 @@ test.describe('Email registration', () => {
     })
 
     await expect(page).toHaveURL(`${appBaseUrl}/account`)
-    await expect(page.getByText('Verified email: trip@example.com')).toBeVisible()
+    await expect(page.getByText('trip@example.com', { exact: true })).toBeVisible()
     await expect(page.getByRole('link', { name: /Add email/u })).toHaveCount(0)
   })
 

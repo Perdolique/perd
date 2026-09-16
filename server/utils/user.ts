@@ -9,13 +9,19 @@ interface SessionUser {
   readonly userId: string | null;
   readonly isAdmin: boolean;
   readonly isGuest: boolean;
+  readonly isTwitchLinked: boolean;
 }
 
 const defaultUser : SessionUser = {
   email: null,
   userId: null,
   isAdmin: false,
-  isGuest: false
+  isGuest: false,
+  isTwitchLinked: false
+}
+
+interface SessionOAuthAccount {
+  provider: Pick<typeof oauthProviders.$inferSelect, 'type'> | null;
 }
 
 async function getSessionUser(event: H3Event) : Promise<SessionUser> {
@@ -47,7 +53,13 @@ async function getSessionUser(event: H3Event) : Promise<SessionUser> {
             id: true
           },
 
-          limit: 1
+          with: {
+            provider: {
+              columns: {
+                type: true
+              }
+            }
+          }
         }
       }
     })
@@ -61,11 +73,16 @@ async function getSessionUser(event: H3Event) : Promise<SessionUser> {
   const email = foundUser.emailCredential?.email ?? null
   const isGuest = foundUser.oauthAccounts.length === 0 && email === null
 
+  const isTwitchLinked = foundUser.oauthAccounts.some(
+    (account: SessionOAuthAccount) => account.provider?.type === 'twitch'
+  )
+
   return {
     email,
     userId: foundUser.id,
     isAdmin: foundUser.isAdmin,
-    isGuest
+    isGuest,
+    isTwitchLinked
   }
 }
 
@@ -106,7 +123,8 @@ async function getUserByOAuthAccount(
     email: foundUser.email,
     userId: foundUser.userId,
     isAdmin: foundUser.isAdmin,
-    isGuest: false
+    isGuest: false,
+    isTwitchLinked: true
   }
 }
 

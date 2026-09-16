@@ -38,6 +38,7 @@ import {
   validatePropertyEnumOptionParams,
   validateRedirectTargetQuery,
   validateTwitchOAuthBody,
+  validateTwitchOAuthQuery,
   validateUserEquipmentCreateBody,
   validateUserEquipmentIdParams
 } from '#server/utils/validation/schemas'
@@ -1662,6 +1663,26 @@ describe('validation schemas', () => {
       error: 'access_denied',
       state: 'a'.repeat(43)
     })
+  })
+
+  it('should default Twitch OAuth issuance to redirect mode and accept JSON mode', () => {
+    expect(validateTwitchOAuthQuery({})).toStrictEqual({
+      intent: 'sign-in',
+      redirectTo: '/',
+      responseMode: 'redirect'
+    })
+
+    expect(validateTwitchOAuthQuery({
+      intent: 'link',
+      redirectTo: '/account',
+      responseMode: 'json'
+    })).toStrictEqual({
+      intent: 'link',
+      redirectTo: '/account',
+      responseMode: 'json'
+    })
+
+    expect(() => validateTwitchOAuthQuery({ responseMode: 'html' })).toThrow(/./u)
   })
 
   it.each([

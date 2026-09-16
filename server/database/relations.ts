@@ -47,6 +47,13 @@ export const relations = defineRelations(schema, (relation) => {
       })
     },
 
+    oauthAccounts: {
+      provider: relation.one.oauthProviders({
+        from: relation.oauthAccounts.providerId,
+        to: relation.oauthProviders.id
+      })
+    },
+
     emailCredentials: {
       passwordResetTokens: relation.many.passwordResetTokens({
         from: relation.emailCredentials.email,

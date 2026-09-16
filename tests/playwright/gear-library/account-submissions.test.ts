@@ -1,4 +1,5 @@
 import type { BrowserContext, Page } from '@playwright/test'
+import { mockAccountUser } from '../fixtures/account-user.fixtures.ts'
 import { expect, test } from '../fixtures/global.fixtures.ts'
 import { createDeferred } from '../fixtures/gear-library-entry-list.fixtures.ts'
 import { mockTwitchSignIn } from '../fixtures/twitch-auth.fixtures.ts'
@@ -10,6 +11,14 @@ const submissionsPath = '/api/user/item-submissions'
 const photoSubmissionsPath = '/api/user/photo-submissions'
 
 async function authenticate(context: BrowserContext, page: Page, target: string) {
+  await mockAccountUser(context, {
+    email: null,
+    isAdmin: false,
+    isGuest: false,
+    isTwitchLinked: true,
+    userId
+  })
+
   await mockTwitchSignIn(context, page, {
     redirectTo: target,
 

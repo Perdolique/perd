@@ -1,5 +1,5 @@
 import type { Locator, Page, Request } from '@playwright/test'
-import { expect, test } from '../fixtures/global.fixtures.ts'
+import { expect, test, waitForInitialEmailSignInTurnstile } from '../fixtures/global.fixtures.ts'
 
 import {
   buildRouteSearch,
@@ -177,6 +177,7 @@ test.describe('Gear library comparison selection', () => {
 
     await expectRouteSearch(page, searchedSelection)
     await page.reload()
+    await waitForInitialEmailSignInTurnstile(page)
     await page.getByRole('button', { name: 'Guest' }).click()
     await expect(page.getByText('3 of 4 selected')).toBeVisible()
 
@@ -396,6 +397,7 @@ test.describe('Gear library comparison selection', () => {
     await expect(page.getByRole('button', { name: 'Cancel comparison' })).toBeVisible()
     await expect(page.getByTestId('gear-library-comparison-tray')).toHaveCount(0)
     await page.reload()
+    await waitForInitialEmailSignInTurnstile(page)
     await page.getByRole('button', { name: 'Guest' }).click()
     await expect(page.getByRole('button', { name: 'Compare items' })).toBeVisible()
     await expect(page.getByTestId('gear-library-comparison-tray')).toHaveCount(0)

@@ -243,7 +243,8 @@ describe('email registration on local PostgreSQL', () => {
       userId: user.id,
       email: 'returning@example.com',
       isAdmin: true,
-      isGuest: false
+      isGuest: false,
+      isTwitchLinked: true
     })
   })
 

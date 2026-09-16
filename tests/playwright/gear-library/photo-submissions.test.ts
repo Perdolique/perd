@@ -1,6 +1,6 @@
 /* oxlint-disable vitest/no-conditional-in-test -- Browser callbacks validate DOM types and mocked routes branch across stateful responses. */
 import type { BrowserContext, Locator, Page, Request } from '@playwright/test'
-import { expect, test } from '../fixtures/global.fixtures.ts'
+import { expect, test, waitForInitialEmailSignInTurnstile } from '../fixtures/global.fixtures.ts'
 import { createDeferred } from '../fixtures/gear-library-entry-list.fixtures.ts'
 import { mockTwitchSignIn } from '../fixtures/twitch-auth.fixtures.ts'
 
@@ -189,6 +189,7 @@ test.describe('Photo submissions', () => {
 
     await mockItem(context)
     await page.goto(`/login?redirectTo=${encodeURIComponent(itemPath)}`)
+    await waitForInitialEmailSignInTurnstile(page)
     await page.getByRole('button', { name: 'Guest' }).click()
     await expect(page).toHaveURL(new RegExp(`${itemPath}$`, 'u'))
     await page.getByRole('link', { name: 'Submit photo' }).click()

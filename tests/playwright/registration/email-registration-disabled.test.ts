@@ -1,5 +1,5 @@
 import { unstable_dev, type Unstable_DevWorker } from 'wrangler'
-import { expect, test } from '../fixtures/global.fixtures.ts'
+import { expect, test, waitForInitialEmailSignInTurnstile } from '../fixtures/global.fixtures.ts'
 
 let worker: Unstable_DevWorker | null = null
 
@@ -93,5 +93,41 @@ test.describe('Disabled email registration', () => {
     await expect(page.getByRole('link', { name: 'Forgot password?' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Guest' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Twitch' })).toBeVisible()
+  })
+
+  test('explains why Twitch cannot be disconnected without email registration', async ({ page }) => {
+    const activeWorker = getWorker()
+    const origin = `http://${activeWorker.address}:${activeWorker.port}`
+    const userId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+
+    await page.route('**/api/auth/create-session', async (route) => {
+      await route.fulfill({
+        status: 201,
+
+        json: {
+          isGuest: true,
+          userId
+        }
+      })
+    })
+
+    await page.route('**/api/user', async (route) => {
+      await route.fulfill({
+        json: {
+          email: null,
+          isAdmin: false,
+          isGuest: false,
+          isTwitchLinked: true,
+          userId
+        }
+      })
+    })
+
+    await page.goto(`${origin}/login?redirectTo=/account`)
+    await waitForInitialEmailSignInTurnstile(page)
+    await page.getByRole('button', { name: 'Continue as guest' }).click()
+    await expect(page.getByRole('heading', { name: 'Account' })).toBeVisible()
+    await expect(page.getByText('Twitch cannot be disconnected while email registration is unavailable.')).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Add email' })).toHaveCount(0)
   })
 })

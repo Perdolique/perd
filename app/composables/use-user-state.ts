@@ -6,6 +6,7 @@ interface User {
   userId: string | null;
   isAdmin: boolean;
   isGuest: boolean;
+  isTwitchLinked: boolean;
   hasData: boolean;
 }
 
@@ -16,6 +17,7 @@ export function useUserStore() {
       userId: null,
       isAdmin: false,
       isGuest: false,
+      isTwitchLinked: false,
       hasData: false
     }
   })
@@ -30,6 +32,7 @@ export function useUserStore() {
       user.value.userId = data.value.userId
       user.value.isAdmin = data.value.isAdmin
       user.value.isGuest = data.value.isGuest
+      user.value.isTwitchLinked = data.value.isTwitchLinked
     }
 
     user.value.hasData = true
@@ -40,6 +43,7 @@ export function useUserStore() {
     user.value.userId = null
     user.value.isAdmin = false
     user.value.isGuest = false
+    user.value.isTwitchLinked = false
   }
 
   return {

@@ -799,7 +799,8 @@ const redirectTargetQuerySchema = v.object({
 
 const twitchOAuthQuerySchema = v.object({
   redirectTo: redirectTargetQuerySchema.entries.redirectTo,
-  intent: v.optional(v.picklist(['sign-in', 'link']), 'sign-in')
+  intent: v.optional(v.picklist(['sign-in', 'link']), 'sign-in'),
+  responseMode: v.optional(v.picklist(['redirect', 'json']), 'redirect')
 })
 
 const twitchOAuthStateSchema = v.pipe(v.string(), v.regex(/^[\w-]{43}$/u))

@@ -2,7 +2,6 @@ import { defineEventHandler, readValidatedBody } from 'h3'
 import { validateEmailVerification } from '#server/utils/validation/schemas'
 import { getGuestClientIp } from '#server/utils/cloudflare'
 import { updateAppSession } from '#server/utils/session'
-import type { SessionUser } from '#server/utils/user'
 import { getEmailRegistrationConfig } from '#server/utils/config'
 
 import {
@@ -14,8 +13,15 @@ import { hashToken } from '#server/utils/auth/password'
 import { getRegistrationActor, withRegistrationDatabase } from '#server/utils/auth/email-registration'
 import { completeEmailRegistration } from '#server/utils/auth/email-registration-persistence'
 
+interface EmailVerificationUser {
+  email: string;
+  isAdmin: boolean;
+  isGuest: false;
+  userId: string;
+}
+
 interface EmailVerificationResponse {
-  user: SessionUser;
+  user: EmailVerificationUser;
   redirectTo: string;
 }
 

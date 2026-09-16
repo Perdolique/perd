@@ -23,6 +23,7 @@ describe('get /api/user', () => {
     getSessionUserMock.mockResolvedValue({
       isAdmin: false,
       isGuest: true,
+      isTwitchLinked: false,
       userId: 'user-1'
     })
 
@@ -31,6 +32,7 @@ describe('get /api/user', () => {
     expect(result).toStrictEqual({
       isAdmin: false,
       isGuest: true,
+      isTwitchLinked: false,
       userId: 'user-1'
     })
   })

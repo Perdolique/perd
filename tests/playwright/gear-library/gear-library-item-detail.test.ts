@@ -1,4 +1,4 @@
-import { expect, test } from '../fixtures/global.fixtures.ts'
+import { expect, test, waitForInitialEmailSignInTurnstile } from '../fixtures/global.fixtures.ts'
 import { mockTwitchSignIn } from '../fixtures/twitch-auth.fixtures.ts'
 
 const itemId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
@@ -94,6 +94,7 @@ test.describe('Gear library item detail', () => {
     })
 
     await page.goto('/login?redirectTo=/gear-library')
+    await waitForInitialEmailSignInTurnstile(page)
     await page.getByRole('button', { name: 'Guest' }).click()
 
     await expect(page.getByRole('button', {

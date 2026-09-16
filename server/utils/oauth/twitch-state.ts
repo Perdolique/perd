@@ -6,7 +6,7 @@ import { getAuthErrorDetails } from '#server/utils/auth/telemetry'
 import { twitchOAuthMessages } from '#shared/utils/twitch-oauth'
 import type { TwitchOAuthActor } from './twitch-state-persistence'
 
-async function getTwitchOAuthActor(event: H3Event): Promise<TwitchOAuthActor> {
+async function getTwitchOAuthContext(event: H3Event) {
   const user = await getSessionUser(event)
   const session = await useAppSession(event)
 
@@ -19,9 +19,15 @@ async function getTwitchOAuthActor(event: H3Event): Promise<TwitchOAuthActor> {
 
   const sessionIdHash = hashToken(session.id)
 
+  const actor: TwitchOAuthActor = {
+    userId: user.userId,
+    sessionIdHash
+  }
+
   return {
-    sessionIdHash,
-    userId: user.userId
+    actor,
+    sessionVersion: session.data.sessionVersion ?? 0,
+    user
   }
 }
 
@@ -38,13 +44,28 @@ function getTwitchOAuthError(error: unknown, sensitiveValues: readonly string[])
       })
     }
 
-    if (error.statusCode === 401 || error.statusCode === 409) {
-      const statusMessage = error.statusCode === 401
-        ? twitchOAuthMessages.signInRequired
-        : twitchOAuthMessages.alreadySignedIn
+    if (error.statusCode === 401) {
+      return createError({
+        status: 401,
+        statusMessage: twitchOAuthMessages.signInRequired
+      })
+    }
+
+    if (error.statusCode === 409) {
+      const allowedConflictMessages = new Set<string>([
+        twitchOAuthMessages.alreadyLinked,
+        twitchOAuthMessages.alreadySignedIn,
+        twitchOAuthMessages.linkConflict
+      ])
+
+      const conflictMessage = error.statusMessage
+
+      const statusMessage = conflictMessage !== undefined && allowedConflictMessages.has(conflictMessage)
+        ? conflictMessage
+        : twitchOAuthMessages.linkConflict
 
       return createError({
-        status: error.statusCode,
+        status: 409,
         statusMessage
       })
     }
@@ -56,12 +77,6 @@ function getTwitchOAuthError(error: unknown, sensitiveValues: readonly string[])
       })
     }
 
-    if (error.statusCode === 501 && error.statusMessage === twitchOAuthMessages.linkingUnavailable) {
-      return createError({
-        status: 501,
-        statusMessage: twitchOAuthMessages.linkingUnavailable
-      })
-    }
   }
 
   const details = getAuthErrorDetails(error, sensitiveValues)
@@ -74,4 +89,34 @@ function getTwitchOAuthError(error: unknown, sensitiveValues: readonly string[])
   })
 }
 
-export { getTwitchOAuthActor, getTwitchOAuthError }
+function getTwitchDisconnectError(error: unknown, sensitiveValues: readonly string[]) {
+  if (isError(error)) {
+    if (error.statusCode === 401) {
+      return createError({
+        status: 401,
+        statusMessage: twitchOAuthMessages.disconnectSignInRequired
+      })
+    }
+
+    if (
+      error.statusCode === 409
+      && error.statusMessage === twitchOAuthMessages.disconnectEmailRequired
+    ) {
+      return createError({
+        status: 409,
+        statusMessage: twitchOAuthMessages.disconnectEmailRequired
+      })
+    }
+  }
+
+  const details = getAuthErrorDetails(error, sensitiveValues)
+
+  console.error('Twitch disconnect failed', { error: details })
+
+  return createError({
+    status: 503,
+    statusMessage: twitchOAuthMessages.disconnectUnavailable
+  })
+}
+
+export { getTwitchOAuthContext, getTwitchOAuthError, getTwitchDisconnectError }
