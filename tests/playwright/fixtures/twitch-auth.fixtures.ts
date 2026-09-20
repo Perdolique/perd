@@ -35,6 +35,7 @@ async function mockTwitchSignIn(
     await route.fulfill({
       json: {
         ...options.user,
+        intent: 'sign-in',
         redirectTo: options.redirectTo
       }
     })

@@ -1,4 +1,4 @@
-import { expect, test } from '../fixtures/global.fixtures.ts'
+import { expect, test, waitForInitialEmailSignInTurnstile } from '../fixtures/global.fixtures.ts'
 
 test.describe('Dashboard page', () => {
   test('should restore the dashboard after guest login', async ({ context, page }) => {
@@ -15,8 +15,9 @@ test.describe('Dashboard page', () => {
 
     await page.goto('/')
     await expect(page).toHaveURL(/\/login\?redirectTo=(?<redirectTo>%2F|\/)$/u)
+    await waitForInitialEmailSignInTurnstile(page)
     await page.getByRole('button', { name: 'Guest' }).click()
-    await expect(page).toHaveURL(/\/$/u)
+    await expect.poll(() => new globalThis.URL(page.url()).pathname).toBe('/')
 
     const pageContent = page.getByTestId('page-content')
 

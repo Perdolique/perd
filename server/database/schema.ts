@@ -131,7 +131,8 @@ const oauthAccounts = pgTable('oauth_accounts', {
     .notNull()
     .defaultNow()
 }, (table) => [
-  unique().on(table.providerId, table.accountId)
+  unique().on(table.providerId, table.accountId),
+  unique().on(table.userId, table.providerId)
 ])
 
 /** Verified credentials only; pending registrations never create users. */

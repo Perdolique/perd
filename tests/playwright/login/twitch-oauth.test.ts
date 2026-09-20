@@ -10,6 +10,7 @@ const response = {
   email: null,
   isAdmin: false,
   isGuest: false,
+  intent: 'sign-in',
   redirectTo: '/api/equipment/brands'
 } as const
 
@@ -50,6 +51,12 @@ async function mockTwitchOAuthRetry(page: Page, callbackBodies: unknown[]) {
 }
 
 test.describe('Twitch OAuth callback', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/api/user', async (route) => {
+      await route.fulfill({ json: { userId: null } })
+    })
+  })
+
   test('sends state, removes callback parameters before POST, and uses only the server redirect', async ({ page }) => {
     await page.route('**/api/oauth/twitch', async (route) => {
       expect(route.request().method()).toBe('POST')
@@ -85,6 +92,56 @@ test.describe('Twitch OAuth callback', () => {
     await expect(page).toHaveURL(/\/__e2e\/modal-dialog$/u)
   })
 
+  test('returns a successful link to the Account banner with a full navigation', async ({ page }) => {
+    await page.route('**/api/oauth/twitch', async (route) => {
+      await route.fulfill({
+        json: {
+          ...response,
+          intent: 'link',
+          redirectTo: '/account'
+        }
+      })
+    })
+
+    await page.route('**/account?twitchLink=success', async (route) => {
+      expect(route.request().resourceType()).toBe('document')
+
+      await route.fulfill({
+        body: '<!doctype html><title>Account link success</title>',
+        contentType: 'text/html'
+      })
+    })
+
+    await page.goto(`/auth/twitch?code=oauth-code&state=${state}`)
+    await expect(page).toHaveURL(/\/account\?twitchLink=success$/u)
+  })
+
+  test('returns an ownership conflict to Account without rendering raw errors', async ({ page }) => {
+    await page.route('**/api/oauth/twitch', async (route) => {
+      await route.fulfill({
+        status: 409,
+
+        json: {
+          statusCode: 409,
+          statusMessage: twitchOAuthMessages.linkConflict
+        }
+      })
+    })
+
+    await page.route('**/account?twitchLink=conflict', async (route) => {
+      expect(route.request().resourceType()).toBe('document')
+
+      await route.fulfill({
+        body: '<!doctype html><title>Account link conflict</title>',
+        contentType: 'text/html'
+      })
+    })
+
+    await page.goto(`/auth/twitch?code=oauth-code&state=${state}`)
+    await expect(page).toHaveURL(/\/account\?twitchLink=conflict$/u)
+    await expect(page.locator('body')).not.toContainText('private')
+  })
+
   test('forwards a cancellation and provides an accessible return to sign in', async ({ page }) => {
     await page.route('**/api/oauth/twitch', async (route) => {
       expect(route.request().postDataJSON()).toStrictEqual({
@@ -105,12 +162,33 @@ test.describe('Twitch OAuth callback', () => {
     await page.goto(`/auth/twitch?error=access_denied&error_description=private-provider-description&state=${state}`)
     await expect(page).toHaveURL(/\/auth\/twitch$/u)
     await expect(page.getByRole('status')).toHaveText(twitchOAuthMessages.cancelled)
-    await expect(page.getByRole('link', { name: 'Return to sign in' })).toHaveAttribute('href', '/login')
+    await expect(page.getByRole('link', { name: 'Return to sign in' })).toHaveAttribute('href', '/login?redirectTo=/account')
     await expect(page.locator('meta[name="referrer"]')).toHaveAttribute('content', 'no-referrer')
     await expect(page.locator('body')).not.toContainText('private-provider-description')
     await page.getByRole('link', { name: 'Return to sign in' }).focus()
     await page.keyboard.press('Enter')
-    await expect(page).toHaveURL(/\/login$/u)
+    await expect(page).toHaveURL(/\/login\?redirectTo=\/account$/u)
+  })
+
+  test('returns an authenticated user to Account after a failed link callback', async ({ page }) => {
+    await page.route('**/api/user', async (route) => {
+      await route.fulfill({ json: { userId: response.userId } })
+    })
+
+    await page.route('**/api/oauth/twitch', async (route) => {
+      await route.fulfill({
+        status: 400,
+
+        json: {
+          statusCode: 400,
+          statusMessage: twitchOAuthMessages.cancelled
+        }
+      })
+    })
+
+    await page.goto(`/auth/twitch?error=access_denied&state=${state}`)
+    await expect(page.getByRole('status')).toHaveText(twitchOAuthMessages.cancelled)
+    await expect(page.getByRole('link', { name: 'Return to Account' })).toHaveAttribute('href', '/account')
   })
 
   test('shows a safe verification error for an invalid or expired attempt and starts a fresh attempt on retry', async ({ page }) => {

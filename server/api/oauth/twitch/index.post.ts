@@ -1,9 +1,9 @@
 import { defineEventHandler, createError, readValidatedBody, setResponseHeader } from 'h3'
 import { getUserByOAuthAccount } from '#server/utils/user'
-import { createOAuthUser } from '#server/utils/oauth/account'
+import { createOAuthUser, linkOAuthAccount } from '#server/utils/oauth/account'
 import { updateAppSession } from '#server/utils/session'
 import { getTwitchOAuthToken, getTwitchUserInfo, getRuntimeTwitchConfig } from '#server/utils/oauth/twitch'
-import { getTwitchOAuthActor, getTwitchOAuthError } from '#server/utils/oauth/twitch-state'
+import { getTwitchOAuthContext, getTwitchOAuthError } from '#server/utils/oauth/twitch-state'
 import { consumeTwitchOAuthState } from '#server/utils/oauth/twitch-state-persistence'
 import { hashToken } from '#server/utils/auth/password'
 import { validateTwitchOAuthBody } from '#server/utils/validation/schemas'
@@ -13,6 +13,7 @@ interface TwitchOAuthResponse {
   email: string | null;
   isAdmin: boolean;
   isGuest: boolean;
+  intent: 'sign-in' | 'link';
   userId: string;
   redirectTo: string;
 }
@@ -32,7 +33,7 @@ export default defineEventHandler(async (event): Promise<TwitchOAuthResponse> =>
       sensitiveValues.push(body.code)
     }
 
-    const actor = await getTwitchOAuthActor(event)
+    const { actor, sessionVersion } = await getTwitchOAuthContext(event)
 
     sensitiveValues.push(actor.sessionIdHash)
 
@@ -52,14 +53,6 @@ export default defineEventHandler(async (event): Promise<TwitchOAuthResponse> =>
       throw new Error(`Twitch authorization failed: ${body.error}`)
     }
 
-    if (consumedAttempt.intent === 'link') {
-      // Account linking is implemented separately in #104.
-      throw createError({
-        status: 501,
-        statusMessage: twitchOAuthMessages.linkingUnavailable
-      })
-    }
-
     const twitchConfig = getRuntimeTwitchConfig(event)
 
     sensitiveValues.push(twitchConfig.clientSecret)
@@ -69,6 +62,36 @@ export default defineEventHandler(async (event): Promise<TwitchOAuthResponse> =>
     sensitiveValues.push(token)
 
     const { id: twitchAccountId } = await getTwitchUserInfo(token, twitchConfig.clientId)
+
+    sensitiveValues.push(twitchAccountId)
+
+    if (consumedAttempt.intent === 'link') {
+      const linkUserId = consumedAttempt.userId
+
+      if (typeof linkUserId !== 'string') {
+        throw createError({
+          status: 400,
+          statusMessage: twitchOAuthMessages.invalid
+        })
+      }
+
+      const linkedUser = await linkOAuthAccount(event, {
+        accountId: twitchAccountId,
+        provider: 'twitch',
+        sessionVersion,
+        userId: linkUserId
+      })
+
+      return {
+        email: linkedUser.email,
+        isAdmin: linkedUser.isAdmin,
+        isGuest: linkedUser.isGuest,
+        intent: 'link',
+        userId: linkedUser.userId,
+        redirectTo: consumedAttempt.redirectTo
+      }
+    }
+
     const foundUser = await getUserByOAuthAccount('twitch', twitchAccountId, event)
 
     if (foundUser.userId === null) {
@@ -80,6 +103,7 @@ export default defineEventHandler(async (event): Promise<TwitchOAuthResponse> =>
         email: null,
         isAdmin: newUser.isAdmin,
         isGuest: newUser.isGuest,
+        intent: 'sign-in',
         userId: newUser.userId,
         redirectTo: consumedAttempt.redirectTo
       }
@@ -91,6 +115,7 @@ export default defineEventHandler(async (event): Promise<TwitchOAuthResponse> =>
       email: foundUser.email,
       isAdmin: foundUser.isAdmin,
       isGuest: foundUser.isGuest,
+      intent: 'sign-in',
       userId: foundUser.userId,
       redirectTo: consumedAttempt.redirectTo
     }

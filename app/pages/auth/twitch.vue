@@ -24,9 +24,9 @@
 
       <PerdLink
         v-if="isFailed"
-        to="/login"
+        :to="recoveryTarget"
       >
-        Return to sign in
+        {{ recoveryLabel }}
       </PerdLink>
     </div>
   </div>
@@ -35,6 +35,7 @@
 <script lang="ts" setup>
   import { computed, onMounted, ref } from 'vue'
   import { definePageMeta, navigateTo, useHead, useRequestFetch, useRoute, useRouter, useUserStore } from '#imports'
+  import { twitchOAuthMessages } from '#shared/utils/twitch-oauth'
   import { getTwitchCallbackError } from '~/utils/twitch-oauth'
   import { getRedirectNavigationTarget } from '~/utils/router'
   import FidgetSpinner from '~/components/FidgetSpinner.vue'
@@ -52,12 +53,14 @@
   }] })
 
   const errorMessage = ref<string | null>(null)
+  const recoveryTarget = ref('/login?redirectTo=/account')
   const isFailed = computed(() => errorMessage.value !== null)
   const requestFetch = useRequestFetch()
   const router = useRouter()
   const route = useRoute()
   const { user } = useUserStore()
   const statusHeading = computed(() => errorMessage.value ?? 'Connecting Twitch')
+  const recoveryLabel = computed(() => recoveryTarget.value === '/account' ? 'Return to Account' : 'Return to sign in')
 
   async function handleConnect() {
     const body = {
@@ -78,10 +81,23 @@
         body
       })
 
+      if (result.intent === 'link') {
+        await navigateTo({
+          path: '/account',
+          query: { twitchLink: 'success' }
+        }, {
+          external: true,
+          replace: true
+        })
+
+        return
+      }
+
       user.value.email = result.email
       user.value.userId = result.userId
       user.value.isAdmin = result.isAdmin
       user.value.isGuest = result.isGuest
+      user.value.isTwitchLinked = true
       user.value.hasData = true
 
       const navigationTarget = getRedirectNavigationTarget(result.redirectTo)
@@ -91,7 +107,31 @@
         external: navigationTarget.external
       })
     } catch (error) {
-      errorMessage.value = getTwitchCallbackError(error)
+      const callbackError = getTwitchCallbackError(error)
+
+      if (callbackError === twitchOAuthMessages.linkConflict) {
+        await navigateTo({
+          path: '/account',
+          query: { twitchLink: 'conflict' }
+        }, {
+          external: true,
+          replace: true
+        })
+
+        return
+      }
+
+      errorMessage.value = callbackError
+
+      try {
+        const currentUser = await requestFetch('/api/user', { retry: 0 })
+
+        if (currentUser.userId !== null) {
+          recoveryTarget.value = '/account'
+        }
+      } catch {
+        // The sign-in fallback remains available if the account lookup fails.
+      }
     }
   }
 

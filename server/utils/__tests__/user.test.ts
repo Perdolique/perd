@@ -53,6 +53,7 @@ describe('user session helpers', () => {
       email: null,
       isAdmin: false,
       isGuest: true,
+      isTwitchLinked: false,
       userId: 'user-1'
     })
 
@@ -75,7 +76,13 @@ describe('user session helpers', () => {
             id: true
           },
 
-          limit: 1
+          with: {
+            provider: {
+              columns: {
+                type: true
+              }
+            }
+          }
         }
       }
     })
@@ -96,10 +103,32 @@ describe('user session helpers', () => {
       userId: 'user-1',
       isAdmin: false,
       isGuest: false,
+      isTwitchLinked: false,
       email: 'trip@example.com'
     })
 
     await expect(validateRegisteredUser(event)).resolves.toBe('user-1')
+  })
+
+  it('should expose Twitch connection state without provider account data', async () => {
+    const db = createUserDb({
+      id: 'user-1',
+      isAdmin: false,
+      sessionVersion: 0,
+
+      oauthAccounts: [{
+        id: 'oauth-account-1',
+        provider: { type: 'twitch' }
+      }]
+    })
+
+    await expect(getSessionUser(createTestEvent(db))).resolves.toStrictEqual({
+      email: null,
+      isAdmin: false,
+      isGuest: false,
+      isTwitchLinked: true,
+      userId: 'user-1'
+    })
   })
 
   it('should return 401 without a valid session user', async () => {
@@ -137,6 +166,7 @@ describe('user session helpers', () => {
       email: null,
       isAdmin: false,
       isGuest: false,
+      isTwitchLinked: false,
       userId: null
     })
 

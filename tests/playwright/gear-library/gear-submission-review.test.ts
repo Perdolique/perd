@@ -1,4 +1,5 @@
 import type { BrowserContext, Page, Request, Route } from '@playwright/test'
+import { mockAccountUser } from '../fixtures/account-user.fixtures.ts'
 import { expect, test } from '../fixtures/global.fixtures.ts'
 import { mockTwitchSignIn } from '../fixtures/twitch-auth.fixtures.ts'
 import { createDeferred, selectPerdOption } from '../fixtures/gear-library-entry-list.fixtures.ts'
@@ -163,6 +164,14 @@ test.describe('Admin gear submission review', () => {
     context,
     page
   }) => {
+    await mockAccountUser(context, {
+      email: null,
+      isAdmin: true,
+      isGuest: false,
+      isTwitchLinked: true,
+      userId: adminId
+    })
+
     await authenticate({
       context,
       isAdmin: true,

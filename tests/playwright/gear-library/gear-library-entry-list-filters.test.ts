@@ -1,4 +1,4 @@
-import { expect, test } from '../fixtures/global.fixtures.ts'
+import { expect, test, waitForInitialEmailSignInTurnstile } from '../fixtures/global.fixtures.ts'
 
 import {
   type QueryEntry,
@@ -160,6 +160,7 @@ test.describe('Gear library filters', () => {
 
     const requestsBeforeRestore = tracker.items.length
 
+    await waitForInitialEmailSignInTurnstile(page)
     await page.getByRole('button', { name: 'Guest' }).click()
     await waitForNextItemsRequest(tracker, requestsBeforeRestore)
     await expectRouteSearch(page, orderedRoute)

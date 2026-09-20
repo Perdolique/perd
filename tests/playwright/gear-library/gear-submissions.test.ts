@@ -1,5 +1,5 @@
 import type { BrowserContext, Page, Request, Route } from '@playwright/test'
-import { expect, test } from '../fixtures/global.fixtures.ts'
+import { expect, test, waitForInitialEmailSignInTurnstile } from '../fixtures/global.fixtures.ts'
 import { mockTwitchSignIn } from '../fixtures/twitch-auth.fixtures.ts'
 
 import {
@@ -315,6 +315,7 @@ test.describe('Gear submissions', () => {
 
     await mockGuestLogin(context)
     await page.goto('/login?redirectTo=/gear-library/new')
+    await waitForInitialEmailSignInTurnstile(page)
     await page.getByRole('button', { name: 'Guest' }).click()
     await expect(page).toHaveURL(/\/gear-library\/new$/u)
     await expect(page.getByRole('heading', { name: 'Account required.' })).toBeVisible()

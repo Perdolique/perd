@@ -1,4 +1,5 @@
 import type { Request } from '@playwright/test'
+import { mockAccountUser } from '../fixtures/account-user.fixtures.ts'
 import { expect, test } from '../fixtures/global.fixtures.ts'
 
 import {
@@ -345,7 +346,8 @@ test.describe('Gear library item actions', () => {
 
   test('should clear personalized catalog state on logout', async ({
     context,
-    page
+    page,
+    turnstile
   }) => {
     let isInMyGear = true
 
@@ -370,6 +372,14 @@ test.describe('Gear library item actions', () => {
       await route.fulfill({ status: 204 })
     })
 
+    await mockAccountUser(context, {
+      email: null,
+      isAdmin: false,
+      isGuest: true,
+      isTwitchLinked: false,
+      userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
+    })
+
     await openGearLibrary(page)
     await expect(page.getByText('In My gear', { exact: true })).toBeVisible()
 
@@ -377,6 +387,7 @@ test.describe('Gear library item actions', () => {
 
     await page.getByRole('link', { name: 'Profile' }).click()
     await page.getByRole('button', { name: 'Log out' }).click()
+    await expect.poll(async () => turnstile.getRenderOptions(page)).toHaveLength(2)
     await page.getByRole('button', { name: 'Guest' }).click()
     await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Gear library' }).click()
 

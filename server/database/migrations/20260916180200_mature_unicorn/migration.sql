@@ -1,0 +1,1 @@
+ALTER TABLE "oauth_accounts" ADD CONSTRAINT "oauth_accounts_userId_providerId_unique" UNIQUE("userId","providerId");

@@ -47,6 +47,21 @@ describe('equipmentItems updatedAt', () => {
   })
 })
 
+describe('oauth account ownership', () => {
+  it('should allow only one account per provider and user', () => {
+    const tableConfig = getTableConfig(schema.oauthAccounts)
+
+    const constraint = tableConfig.uniqueConstraints.find(
+      uniqueConstraint => uniqueConstraint.getName() === 'oauth_accounts_userId_providerId_unique'
+    )
+
+    expect(constraint?.columns.map((column) => column.name)).toStrictEqual([
+      'userId',
+      'providerId'
+    ])
+  })
+})
+
 describe('equipment item rejection reason', () => {
   it('should keep rejection reasons nullable and bounded to the shared limit', () => {
     const tableConfig = getTableConfig(schema.equipmentItems)

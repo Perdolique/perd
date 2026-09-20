@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => {
     profile: vi.fn(),
     findUser: vi.fn(),
     createUser: vi.fn(),
+    linkAccount: vi.fn(),
     rateLimit: vi.fn()
   }
 })
@@ -48,7 +49,8 @@ vi.mock(import('#server/utils/user'), () => {
 
 vi.mock(import('#server/utils/oauth/account'), () => {
   return {
-    createOAuthUser: mocks.createUser
+    createOAuthUser: mocks.createUser,
+    linkOAuthAccount: mocks.linkAccount
   }
 })
 
@@ -109,6 +111,7 @@ function assertNoProviderWork() {
   expect(mocks.profile).not.toHaveBeenCalled()
   expect(mocks.findUser).not.toHaveBeenCalled()
   expect(mocks.createUser).not.toHaveBeenCalled()
+  expect(mocks.linkAccount).not.toHaveBeenCalled()
   expect(mocks.updateSession).not.toHaveBeenCalled()
 }
 
@@ -150,9 +153,11 @@ describe('twitch oauth', () => {
     mocks.createUser.mockResolvedValue({
       userId,
       isAdmin: false,
-      isGuest: false
+      isGuest: false,
+      sessionVersion: 0
     })
 
+    mocks.linkAccount.mockResolvedValue(account)
     mocks.rateLimit.mockResolvedValue({ success: true })
   })
 
@@ -172,6 +177,7 @@ describe('twitch oauth', () => {
       expect(nonce).toMatch(/^[\w-]{43}$/u)
       expect(authorizationUrl.origin).toBe('https://id.twitch.tv')
       expect(authorizationUrl.searchParams.get('redirect_uri')).toBe('https://metsik.app/auth/twitch')
+      expect(authorizationUrl.searchParams.has('force_verify')).toBe(false)
 
       expect(mocks.issue).toHaveBeenCalledWith(event.context.dbHttp, {
         actor: {
@@ -257,6 +263,45 @@ describe('twitch oauth', () => {
           sessionIdHash: hashToken('browser-session')
         }
       }))
+
+      const authorizationUrl = new URL(String(mocks.redirect.mock.calls[0]?.[1]))
+
+      expect(authorizationUrl.searchParams.get('force_verify')).toBe('true')
+    })
+
+    it('returns a JSON authorization URL without redirecting', async () => {
+      mocks.user.mockResolvedValue(account)
+
+      const event = createTestEvent({})
+
+      event.node.req.url = '/api/oauth/twitch?intent=link&redirectTo=/account&responseMode=json'
+
+      const result = await startTwitch(event)
+      const authorizationUrl = new URL(String(result?.authorizationUrl))
+
+      expect(authorizationUrl.origin).toBe('https://id.twitch.tv')
+      expect(authorizationUrl.searchParams.get('force_verify')).toBe('true')
+      expect(mocks.redirect).not.toHaveBeenCalled()
+      expect(mocks.issue).toHaveBeenCalledTimes(1)
+    })
+
+    it('rejects a link start when Twitch is already connected', async () => {
+      mocks.user.mockResolvedValue({
+        ...account,
+        isTwitchLinked: true
+      })
+
+      const event = createTestEvent({})
+
+      event.node.req.url = '/api/oauth/twitch?intent=link&responseMode=json'
+
+      await expect(startTwitch(event)).rejects.toMatchObject({
+        statusCode: 409,
+        statusMessage: twitchOAuthMessages.alreadyLinked
+      })
+
+      expect(mocks.issue).not.toHaveBeenCalled()
+      expect(mocks.redirect).not.toHaveBeenCalled()
     })
 
     it.each([
@@ -385,6 +430,7 @@ describe('twitch oauth', () => {
 
       expect(response).toStrictEqual({
         ...account,
+        intent: 'sign-in',
         redirectTo: '/my-gear'
       })
 
@@ -403,6 +449,7 @@ describe('twitch oauth', () => {
         email: null,
         isAdmin: false,
         isGuest: false,
+        intent: 'sign-in',
         redirectTo: '/my-gear'
       })
 
@@ -411,7 +458,8 @@ describe('twitch oauth', () => {
       expect(mocks.updateSession).toHaveBeenCalledWith(event, {
         userId,
         isAdmin: false,
-        isGuest: false
+        isGuest: false,
+        sessionVersion: 0
       })
     })
 
@@ -423,7 +471,12 @@ describe('twitch oauth', () => {
 
     it('passes the actual current identity to atomic consumption', async () => {
       mocks.user.mockResolvedValue(account)
-      mocks.session.mockResolvedValue({ id: 'another-session' })
+
+      mocks.session.mockResolvedValue({
+        id: 'another-session',
+        data: { sessionVersion: 0 }
+      })
+
       mocks.consume.mockRejectedValue(createError({ status: 400 }))
       await expect(completeTwitch(createCallbackEvent(callbackBody))).rejects.toMatchObject({ statusCode: 400 })
 
@@ -469,7 +522,56 @@ describe('twitch oauth', () => {
       assertNoProviderWork()
     })
 
-    it('keeps the linking branch unavailable after validated consumption', async () => {
+    it('links to the current account without replacing its session', async () => {
+      const linkedAccount = {
+        ...account,
+        isGuest: false,
+        isTwitchLinked: true
+      }
+
+      mocks.user.mockResolvedValueOnce(linkedAccount)
+        .mockRejectedValueOnce(new Error('A second session read would fail'))
+
+      mocks.session.mockResolvedValue({
+        id: 'browser-session',
+        data: { sessionVersion: 7 }
+      })
+
+      mocks.linkAccount.mockResolvedValue(linkedAccount)
+
+      mocks.consume.mockResolvedValue({
+        intent: 'link',
+        userId,
+        redirectTo: '/account'
+      })
+
+      const event = createCallbackEvent(callbackBody)
+
+      await expect(completeTwitch(event)).resolves.toStrictEqual({
+        email: linkedAccount.email,
+        isAdmin: linkedAccount.isAdmin,
+        isGuest: false,
+        intent: 'link',
+        redirectTo: '/account',
+        userId
+      })
+
+      expect(mocks.consume).toHaveBeenCalledTimes(1)
+
+      expect(mocks.linkAccount).toHaveBeenCalledWith(event, {
+        accountId: 'twitch-id',
+        provider: 'twitch',
+        sessionVersion: 7,
+        userId
+      })
+
+      expect(mocks.user).toHaveBeenCalledTimes(1)
+      expect(mocks.findUser).not.toHaveBeenCalled()
+      expect(mocks.createUser).not.toHaveBeenCalled()
+      expect(mocks.updateSession).not.toHaveBeenCalled()
+    })
+
+    it('returns a fixed ownership conflict without replacing the session', async () => {
       mocks.user.mockResolvedValue(account)
 
       mocks.consume.mockResolvedValue({
@@ -478,9 +580,40 @@ describe('twitch oauth', () => {
         redirectTo: '/account'
       })
 
-      await expect(completeTwitch(createCallbackEvent(callbackBody))).rejects.toMatchObject({ statusCode: 501 })
-      expect(mocks.consume).toHaveBeenCalledTimes(1)
-      assertNoProviderWork()
+      mocks.linkAccount.mockRejectedValue(createError({
+        status: 409,
+        statusMessage: twitchOAuthMessages.linkConflict
+      }))
+
+      await expect(completeTwitch(createCallbackEvent(callbackBody))).rejects.toMatchObject({
+        statusCode: 409,
+        statusMessage: twitchOAuthMessages.linkConflict
+      })
+
+      expect(mocks.updateSession).not.toHaveBeenCalled()
+    })
+
+    it('keeps raw link diagnostics only in redacted telemetry', async () => {
+      mocks.user.mockResolvedValue(account)
+
+      mocks.consume.mockResolvedValue({
+        intent: 'link',
+        userId,
+        redirectTo: '/account'
+      })
+
+      mocks.linkAccount.mockRejectedValue(new Error('Database failed for twitch-id'))
+
+      await expect(completeTwitch(createCallbackEvent(callbackBody))).rejects.toMatchObject({
+        statusCode: 503,
+        statusMessage: twitchOAuthMessages.unavailable
+      })
+
+      const telemetry = JSON.stringify(vi.mocked(console.error).mock.calls)
+
+      expect(telemetry).toContain('Database failed')
+      expect(telemetry).not.toContain('twitch-id')
+      expect(mocks.updateSession).not.toHaveBeenCalled()
     })
 
     it('fails closed when state storage is unavailable', async () => {

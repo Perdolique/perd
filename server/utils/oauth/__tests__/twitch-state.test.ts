@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getTwitchOAuthActor } from '#server/utils/oauth/twitch-state'
+import { getTwitchOAuthContext } from '#server/utils/oauth/twitch-state'
 import { hashToken } from '#server/utils/auth/password'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
@@ -26,9 +26,21 @@ describe('twitch OAuth session binding', () => {
       data: {}
     })
 
-    await expect(getTwitchOAuthActor(createTestEvent({}))).resolves.toStrictEqual({
-      userId: null,
-      sessionIdHash: hashToken('anonymous-session')
+    await expect(getTwitchOAuthContext(createTestEvent({}))).resolves.toStrictEqual({
+      actor: {
+        userId: null,
+        sessionIdHash: hashToken('anonymous-session')
+      },
+
+      sessionVersion: 0,
+
+      user: {
+        email: null,
+        isAdmin: false,
+        isGuest: false,
+        isTwitchLinked: false,
+        userId: null
+      }
     })
   })
 
@@ -53,9 +65,19 @@ describe('twitch OAuth session binding', () => {
     const findFirst = vi.fn().mockResolvedValue(storedUser)
     const database = { query: { users: { findFirst } } }
 
-    await expect(getTwitchOAuthActor(createTestEvent(database))).resolves.toStrictEqual({
-      userId: 'guest-user',
-      sessionIdHash: hashToken('guest-session')
+    await expect(getTwitchOAuthContext(createTestEvent(database))).resolves.toMatchObject({
+      actor: {
+        userId: 'guest-user',
+        sessionIdHash: hashToken('guest-session')
+      },
+
+      sessionVersion: 2,
+
+      user: {
+        isGuest: true,
+        isTwitchLinked: false,
+        userId: 'guest-user'
+      }
     })
 
     expect(mocks.clear).not.toHaveBeenCalled()
@@ -83,9 +105,16 @@ describe('twitch OAuth session binding', () => {
     const findFirst = vi.fn().mockResolvedValue(storedUser)
     const database = { query: { users: { findFirst } } }
 
-    await expect(getTwitchOAuthActor(createTestEvent(database))).resolves.toStrictEqual({
-      userId: null,
-      sessionIdHash: hashToken('replacement-session')
+    await expect(getTwitchOAuthContext(createTestEvent(database))).resolves.toMatchObject({
+      actor: {
+        userId: null,
+        sessionIdHash: hashToken('replacement-session')
+      },
+
+      user: {
+        isTwitchLinked: false,
+        userId: null
+      }
     })
 
     expect(mocks.clear).toHaveBeenCalledTimes(1)
@@ -93,6 +122,6 @@ describe('twitch OAuth session binding', () => {
 
   it('rejects a missing browser identity', async () => {
     mocks.session.mockResolvedValue({ data: {} })
-    await expect(getTwitchOAuthActor(createTestEvent({}))).rejects.toMatchObject({ statusCode: 400 })
+    await expect(getTwitchOAuthContext(createTestEvent({}))).rejects.toMatchObject({ statusCode: 400 })
   })
 })
