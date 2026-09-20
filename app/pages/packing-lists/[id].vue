@@ -22,6 +22,7 @@
             v-for="entry in entryViews"
             :key="entry.id"
             :entry="entry"
+            @pack-change="handlePackChange"
             @remove="handleRemoveEntry"
           />
 
@@ -47,7 +48,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, ref, useTemplateRef } from 'vue'
+  import { computed, reactive, ref, useTemplateRef } from 'vue'
   import { definePageMeta, useFetch, useRequestFetch, useRoute } from '#imports'
 
   import type {
@@ -73,6 +74,9 @@
   const entryComposerRef = useTemplateRef('entryComposer')
   const removingEntryId = ref<string | null>(null)
   const entryRemoveErrorMessage = ref<string | null>(null)
+  const lastPackingEntryId = ref<string | null>(null)
+  const packingEntryIds = reactive(new Set<string>())
+  const packErrorEntryIds = reactive(new Set<string>())
 
   const packingListId = Array.isArray(route.params.id)
     ? route.params.id[0] ?? ''
@@ -107,10 +111,21 @@
     return removingEntryId.value !== null && removingEntryId.value !== entryId
   }
 
+  function latestUpdatedAt(current: string, incoming: Date | string) {
+    const next = String(incoming)
+
+    return current === '' || Date.parse(next) > Date.parse(current) ? next : current
+  }
+
   function createCustomEntryView(entry: PackingListEntry): PackingListEntryView {
     return {
+      hasPackError: packErrorEntryIds.has(entry.id),
       id: entry.id,
-      isRemoveDisabled: isRemovingAnotherEntry(entry.id),
+      isPacked: entry.isPacked,
+      isPackDisabled: packingEntryIds.has(entry.id) || removingEntryId.value === entry.id,
+      isPackFocusTarget: lastPackingEntryId.value === entry.id,
+      isPacking: packingEntryIds.has(entry.id),
+      isRemoveDisabled: isRemovingAnotherEntry(entry.id) || packingEntryIds.has(entry.id),
       isRemoving: removingEntryId.value === entry.id,
       subtitle: '',
       title: entry.customName ?? 'Unnamed item'
@@ -119,8 +134,13 @@
 
   function createInventoryEntryView(entry: PackingListInventoryEntry): PackingListEntryView {
     return {
+      hasPackError: packErrorEntryIds.has(entry.id),
       id: entry.id,
-      isRemoveDisabled: isRemovingAnotherEntry(entry.id),
+      isPacked: entry.isPacked,
+      isPackDisabled: packingEntryIds.has(entry.id) || removingEntryId.value === entry.id,
+      isPackFocusTarget: lastPackingEntryId.value === entry.id,
+      isPacking: packingEntryIds.has(entry.id),
+      isRemoveDisabled: isRemovingAnotherEntry(entry.id) || packingEntryIds.has(entry.id),
       isRemoving: removingEntryId.value === entry.id,
       subtitle: `${entry.inventory.brand} / ${entry.inventory.category}`,
       title: entry.inventory.itemName
@@ -152,12 +172,70 @@
 
       id: packingListResponse.value.id,
       name: packingListResponse.value.name,
-      updatedAt: packingListUpdatedAt
+      updatedAt: latestUpdatedAt(packingListResponse.value.updatedAt, packingListUpdatedAt)
+    }
+  }
+
+  async function handlePackChange(entryId: string, isPacked: boolean) {
+    if (packingEntryIds.has(entryId) || removingEntryId.value === entryId) {
+      return
+    }
+
+    const currentEntry = packingListResponse.value.entries.find((entry) => entry.id === entryId)
+
+    if (currentEntry === undefined) {
+      return
+    }
+
+    const previousIsPacked = currentEntry.isPacked
+
+    lastPackingEntryId.value = entryId
+
+    packErrorEntryIds.delete(entryId)
+    packingEntryIds.add(entryId)
+
+    const optimisticEntries = packingListResponse.value.entries.map((entry) => entry.id === entryId ? {
+      ...entry,
+      isPacked
+    } : entry)
+
+    packingListResponse.value = {
+      ...packingListResponse.value,
+      entries: optimisticEntries
+    }
+
+    try {
+      const response = await requestFetch(`/api/user/packing-lists/${packingListId}/entries/${entryId}`, {
+        method: 'PATCH',
+        body: { isPacked }
+      })
+
+      const confirmedEntries = packingListResponse.value.entries.map((entry) => entry.id === entryId ? response.entry : entry)
+
+      packingListResponse.value = {
+        ...packingListResponse.value,
+        entries: confirmedEntries,
+        updatedAt: latestUpdatedAt(packingListResponse.value.updatedAt, response.packingListUpdatedAt)
+      }
+    } catch {
+      const restoredEntries = packingListResponse.value.entries.map((entry) => entry.id === entryId ? {
+        ...entry,
+        isPacked: previousIsPacked
+      } : entry)
+
+      packingListResponse.value = {
+        ...packingListResponse.value,
+        entries: restoredEntries
+      }
+
+      packErrorEntryIds.add(entryId)
+    } finally {
+      packingEntryIds.delete(entryId)
     }
   }
 
   async function handleRemoveEntry(entryId: string) {
-    if (removingEntryId.value !== null) {
+    if (removingEntryId.value !== null || packingEntryIds.has(entryId)) {
       return
     }
 
@@ -174,8 +252,10 @@
         entries: packingListResponse.value.entries.filter((entry) => entry.id !== response.deletedEntryId),
         id: packingListResponse.value.id,
         name: packingListResponse.value.name,
-        updatedAt: String(response.packingListUpdatedAt)
+        updatedAt: latestUpdatedAt(packingListResponse.value.updatedAt, response.packingListUpdatedAt)
       }
+
+      packErrorEntryIds.delete(response.deletedEntryId)
 
       void entryComposerRef.value?.refreshAvailableGear()
     } catch {

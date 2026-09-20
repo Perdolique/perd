@@ -207,9 +207,13 @@ export default defineEventHandler(async (event) : Promise<PackingListEntryMutati
       }
     })
   } catch (error) {
-    if (isError(error)) {
+    const isExpectedClientError = isError(error) && error.statusCode < 500
+
+    if (isExpectedClientError) {
       throw error
     }
+
+    console.error('Failed to update packing list entry', error)
 
     throw createError({
       status: 500,

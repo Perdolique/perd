@@ -1265,6 +1265,102 @@ describe('user packing list handlers', () => {
 
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
+
+    it('should keep unexpected update failures in telemetry and return a safe error', async () => {
+      const technicalError = new Error('Database connection refused')
+
+      const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {
+        // Expected failure diagnostics are asserted below.
+      })
+
+      getValidatedRouterParamsMock.mockResolvedValue({
+        entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
+        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+      })
+
+      readValidatedBodyMock.mockResolvedValue({
+        isPacked: true
+      })
+
+      const { selectMock } = createSelectMock([{
+        rows: [{
+          id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+        }]
+      }])
+
+      const { updateMock } = createUpdateMock([{
+        error: technicalError,
+        rows: []
+      }])
+
+      const dbWrite = createEntryMutationDb({
+        select: selectMock,
+        update: updateMock
+      })
+
+      createWebSocketClientMock.mockReturnValue(dbWrite)
+
+      const event = createTestEvent({})
+
+      await expect(updatePackingListEntryHandler(event)).rejects.toMatchObject({
+        message: 'Failed to update packing list entry',
+        statusCode: 500
+      })
+
+      expect(errorLog).toHaveBeenCalledWith('Failed to update packing list entry', technicalError)
+      expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
+    })
+
+    it('should hide an H3 server error when touching the parent packing list fails', async () => {
+      const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {
+        // Expected failure diagnostics are asserted below.
+      })
+
+      getValidatedRouterParamsMock.mockResolvedValue({
+        entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
+        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
+      })
+
+      readValidatedBodyMock.mockResolvedValue({ isPacked: true })
+
+      const { selectMock } = createSelectMock([{
+        rows: [{ id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7' }]
+      }])
+
+      const { updateMock } = createUpdateMock([{
+        rows: [{
+          createdAt: '2026-04-03T09:01:00.000Z',
+          customName: 'Rain jacket',
+          id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
+          isPacked: true,
+          updatedAt: '2026-04-03T09:03:00.000Z',
+          userEquipmentId: null
+        }]
+      }, {
+        rows: []
+      }])
+
+      const dbWrite = createEntryMutationDb({
+        select: selectMock,
+        update: updateMock
+      })
+
+      createWebSocketClientMock.mockReturnValue(dbWrite)
+
+      const event = createTestEvent({})
+
+      await expect(updatePackingListEntryHandler(event)).rejects.toMatchObject({
+        message: 'Failed to update packing list entry',
+        statusCode: 500
+      })
+
+      expect(errorLog).toHaveBeenCalledWith('Failed to update packing list entry', expect.objectContaining({
+        message: 'Failed to touch packing list',
+        statusCode: 500
+      }))
+
+      expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
+    })
   })
 
   describe('delete /api/user/packing-lists/[id]/entries/[entryId]', () => {
