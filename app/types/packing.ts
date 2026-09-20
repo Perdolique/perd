@@ -52,7 +52,12 @@ interface PackingListView extends PackingListSummary {
 }
 
 interface PackingListEntryView {
+  hasPackError: boolean;
   id: string;
+  isPacked: boolean;
+  isPackDisabled: boolean;
+  isPackFocusTarget: boolean;
+  isPacking: boolean;
   isRemoveDisabled: boolean;
   isRemoving: boolean;
   subtitle: string;

@@ -65,6 +65,26 @@ interface PackingListEntryMutationResponse {
   packingListUpdatedAt: string;
 }
 
+interface EntryPatchReply {
+  gate?: Promise<void>;
+  status?: number;
+  updatedAt?: string;
+}
+
+interface EntryPatchRequest {
+  body: unknown;
+  entryId: string;
+}
+
+interface EntryPatchBody {
+  isPacked: boolean;
+}
+
+interface Deferred {
+  promise: Promise<void>;
+  resolve: () => void;
+}
+
 interface PackingListRouteState {
   availableGearRequests: AvailableGearRequest[];
   availableGearResponses: Map<string, AvailableGearResponse[]>;
@@ -74,6 +94,8 @@ interface PackingListRouteState {
   entryCreateBodies: unknown[];
   entryCreateResponses: PackingListEntryMutationResponse[];
   entryDeleteRequests: number;
+  entryPatchReplies: Map<string, EntryPatchReply[]>;
+  entryPatchRequests: EntryPatchRequest[];
   getDelayMs: number;
   getRequests: number;
   rows: PackingListSummary[];
@@ -103,7 +125,7 @@ function createPackingListDetail(name: string, entries: PackingListEntry[] = [])
   }
 }
 
-function createPackingListEntries(): PackingListEntry[] {
+function createPackingListEntries(): [PackingListCustomEntry, PackingListInventoryEntry] {
   return [{
     createdAt: '2026-04-03T09:01:00.000Z',
     customName: 'Rain jacket',
@@ -197,6 +219,8 @@ function createPackingListRouteState(rows: PackingListSummary[]): PackingListRou
     entryCreateBodies: [],
     entryCreateResponses: [],
     entryDeleteRequests: 0,
+    entryPatchReplies: new Map(),
+    entryPatchRequests: [],
     getDelayMs: 0,
     getRequests: 0,
     rows
@@ -225,6 +249,22 @@ function isPackingListEntryDeleteResponse(response: Response): boolean {
   const isDeleteRequest = response.request().method() === 'DELETE'
 
   return isEntryDeletePath && isDeleteRequest
+}
+
+function isPackingListEntryPatchResponse(response: Response): boolean {
+  const responseUrl = new globalThis.URL(response.url())
+  const isEntryPatchPath = responseUrl.pathname.includes(`/api/user/packing-lists/${packingListId}/entries/`)
+  const isPatchRequest = response.request().method() === 'PATCH'
+
+  return isEntryPatchPath && isPatchRequest
+}
+
+function isEntryPatchBody(value: unknown): value is EntryPatchBody {
+  if (typeof value !== 'object' || value === null || !('isPacked' in value)) {
+    return false
+  }
+
+  return typeof value.isPacked === 'boolean'
 }
 
 async function fulfillPackingListCollectionRoute(route: Route, page: Page, state: PackingListRouteState): Promise<void> {
@@ -360,6 +400,63 @@ async function fulfillEntryDeleteRoute(route: Route, state: PackingListRouteStat
   })
 }
 
+async function fulfillEntryPatchRoute(route: Route, state: PackingListRouteState): Promise<void> {
+  const requestUrl = new globalThis.URL(route.request().url())
+  const entryId = requestUrl.pathname.split('/').at(-1) ?? ''
+  const body: unknown = route.request().postDataJSON()
+  const reply = state.entryPatchReplies.get(entryId)?.shift()
+
+  state.entryPatchRequests.push({
+    body,
+    entryId
+  })
+
+  if (reply?.gate !== undefined) {
+    await reply.gate
+  }
+
+  if (reply?.status !== undefined && reply.status !== 200) {
+    await route.fulfill({
+      status: reply.status,
+      json: { message: 'Internal error details must stay hidden' }
+    })
+
+    return
+  }
+
+  const entry = state.detail.entries.find((current) => current.id === entryId)
+
+  if (entry === undefined || !isEntryPatchBody(body)) {
+    await route.fulfill({
+      status: 400,
+      json: { statusCode: 400 }
+    })
+
+    return
+  }
+
+  const updatedAt = reply?.updatedAt ?? '2026-04-03T09:07:00.000Z'
+
+  const updatedEntry = {
+    ...entry,
+    isPacked: body.isPacked,
+    updatedAt
+  }
+
+  state.detail = {
+    ...state.detail,
+    entries: state.detail.entries.map((current) => current.id === entryId ? updatedEntry : current),
+    updatedAt: Date.parse(updatedAt) > Date.parse(state.detail.updatedAt) ? updatedAt : state.detail.updatedAt
+  }
+
+  await route.fulfill({
+    json: {
+      entry: updatedEntry,
+      packingListUpdatedAt: updatedAt
+    }
+  })
+}
+
 async function mockPackingListRoutes(context: BrowserContext, page: Page, state: PackingListRouteState): Promise<void> {
   await context.route('**/api/user/packing-lists**', async (route) => {
     const requestUrl = new globalThis.URL(route.request().url())
@@ -386,6 +483,12 @@ async function mockPackingListRoutes(context: BrowserContext, page: Page, state:
 
     if (requestUrl.pathname.startsWith(`${detailPath}/entries/`) && requestMethod === 'DELETE') {
       await fulfillEntryDeleteRoute(route, state)
+
+      return
+    }
+
+    if (requestUrl.pathname.startsWith(`${detailPath}/entries/`) && requestMethod === 'PATCH') {
+      await fulfillEntryPatchRoute(route, state)
 
       return
     }
@@ -425,6 +528,24 @@ async function openPackingLists(page: Page): Promise<void> {
   const sidebar = page.getByTestId('shell-sidebar')
 
   await sidebar.getByRole('link', { name: 'Packing lists' }).click()
+}
+
+function throwUnresolvedDeferred(): never {
+  throw new Error('Deferred resolver was not initialized')
+}
+
+function createDeferred(): Deferred {
+  let resolveDeferred: () => void = throwUnresolvedDeferred
+
+  // oxlint-disable-next-line promise/avoid-new -- The test needs a manually released response.
+  const promise = new Promise<void>((resolve) => {
+    resolveDeferred = resolve
+  })
+
+  return {
+    promise,
+    resolve: resolveDeferred
+  }
 }
 
 async function getElementBox(locator: Locator) {
@@ -537,6 +658,243 @@ test.describe('Packing list shell', () => {
     await expect(page.getByRole('heading', { name: 'Planning' })).toHaveCount(0)
     await expect(page.getByRole('heading', { name: 'Checklist' })).toHaveCount(0)
     expect(state.detailRequests).toBe(1)
+  })
+
+  test('should pack and unpack both entry types with pointer and keyboard, then restore them from server data', async ({ context, page }) => {
+    const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
+    const [customEntry, inventoryEntry] = createPackingListEntries()
+
+    state.detail = createPackingListDetail('Alpine weekend', [customEntry, inventoryEntry])
+
+    await mockAuth(context)
+    await mockPackingListRoutes(context, page, state)
+    await openPackingLists(page)
+    await page.getByRole('link', { name: /Alpine weekend/iu }).click()
+
+    const customCheckbox = page.getByRole('checkbox', { name: 'Rain jacket' })
+    const inventoryCheckbox = page.getByRole('checkbox', { name: /PocketRocket Deluxe/u })
+
+    await expect(customCheckbox).not.toBeChecked()
+    await expect(inventoryCheckbox).toBeChecked()
+
+    const packResponsePromise = page.waitForResponse(isPackingListEntryPatchResponse)
+
+    await customCheckbox.click()
+
+    const packResponse = await packResponsePromise
+
+    expect(packResponse.status()).toBe(200)
+    expect(packResponse.request().postDataJSON()).toStrictEqual({ isPacked: true })
+    await expect(customCheckbox).toBeChecked()
+    await expect(customCheckbox).toBeEnabled()
+
+    const unpackResponsePromise = page.waitForResponse(isPackingListEntryPatchResponse)
+
+    await inventoryCheckbox.focus()
+    await page.keyboard.press('Space')
+
+    const unpackResponse = await unpackResponsePromise
+
+    expect(unpackResponse.status()).toBe(200)
+    expect(unpackResponse.request().postDataJSON()).toStrictEqual({ isPacked: false })
+    await expect(inventoryCheckbox).not.toBeChecked()
+    await expect(inventoryCheckbox).toBeEnabled()
+    await expect(inventoryCheckbox).toBeFocused()
+    await page.reload()
+
+    // The Guest endpoint is mocked, so a full reload needs the same mocked sign-in again.
+    await waitForInitialEmailSignInTurnstile(page)
+    await page.getByRole('button', { name: /Continue as guest/iu }).click()
+    await expect(page.getByRole('checkbox', { name: 'Rain jacket' })).toBeChecked()
+    await expect(page.getByRole('checkbox', { name: /PocketRocket Deluxe/u })).not.toBeChecked()
+    await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Packing lists' }).click()
+    await page.getByRole('link', { name: /Alpine weekend/iu }).click()
+    await expect(page.getByRole('checkbox', { name: 'Rain jacket' })).toBeChecked()
+    await expect(page.getByRole('checkbox', { name: /PocketRocket Deluxe/u })).not.toBeChecked()
+
+    expect(state.entryPatchRequests).toStrictEqual([{
+      body: { isPacked: true },
+      entryId: customEntry.id
+    }, {
+      body: { isPacked: false },
+      entryId: inventoryEntry.id
+    }])
+  })
+
+  test('should keep other entries usable and merge responses that finish in reverse order', async ({ context, page }) => {
+    const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
+    const [customEntry, inventoryEntry] = createPackingListEntries()
+    const firstGate = createDeferred()
+    const secondGate = createDeferred()
+
+    state.detail = createPackingListDetail('Alpine weekend', [customEntry, inventoryEntry])
+
+    state.entryPatchReplies.set(customEntry.id, [{
+      gate: firstGate.promise,
+      updatedAt: '2026-04-03T09:08:00.000Z'
+    }])
+
+    state.entryPatchReplies.set(inventoryEntry.id, [{
+      gate: secondGate.promise,
+      updatedAt: '2026-04-03T09:09:00.000Z'
+    }])
+
+    await mockAuth(context)
+    await mockPackingListRoutes(context, page, state)
+    await openPackingLists(page)
+    await page.getByRole('link', { name: /Alpine weekend/iu }).click()
+
+    const customCheckbox = page.getByRole('checkbox', { name: 'Rain jacket' })
+    const inventoryCheckbox = page.getByRole('checkbox', { name: /PocketRocket Deluxe/u })
+    const customCard = page.getByRole('listitem').filter({ has: customCheckbox })
+    const inventoryCard = page.getByRole('listitem').filter({ has: inventoryCheckbox })
+
+    try {
+      await customCheckbox.click()
+      await expect(customCheckbox).toBeChecked()
+      await expect(customCheckbox).toBeDisabled()
+      await expect(customCard.getByRole('status')).toHaveText('Saving Rain jacket…')
+      await expect(page.getByRole('button', { name: 'Remove Rain jacket' })).toBeDisabled()
+      await expect(inventoryCheckbox).toBeEnabled()
+      await expect(page.getByRole('button', { name: 'Remove PocketRocket Deluxe' })).toBeEnabled()
+
+      const disabledLabelBox = await getElementBox(page.getByText('Rain jacket', { exact: true }))
+
+      await page.mouse.click(
+        disabledLabelBox.x + disabledLabelBox.width / 2,
+        disabledLabelBox.y + disabledLabelBox.height / 2
+      )
+
+      await expect.poll(() => state.entryPatchRequests.length).toBe(1)
+      await inventoryCheckbox.click()
+      await expect(inventoryCheckbox).not.toBeChecked()
+      await expect(inventoryCheckbox).toBeDisabled()
+      await expect(inventoryCard.getByRole('status')).toHaveText('Saving PocketRocket Deluxe…')
+
+      await expect.poll(() => state.entryPatchRequests).toStrictEqual([{
+        body: { isPacked: true },
+        entryId: customEntry.id
+      }, {
+        body: { isPacked: false },
+        entryId: inventoryEntry.id
+      }])
+
+      secondGate.resolve()
+      await expect(inventoryCheckbox).toBeEnabled()
+      await expect(inventoryCard.getByRole('status')).toHaveCount(0)
+      await expect(inventoryCheckbox).not.toBeChecked()
+      await expect(customCheckbox).toBeChecked()
+      firstGate.resolve()
+      await expect(customCheckbox).toBeEnabled()
+      await expect(customCard.getByRole('status')).toHaveCount(0)
+      await expect(customCheckbox).toBeChecked()
+      await expect(inventoryCheckbox).not.toBeChecked()
+    } finally {
+      firstGate.resolve()
+      secondGate.resolve()
+    }
+  })
+
+  test('should show keyboard focus on a pack checkbox in forced colors', async ({ context, page }) => {
+    const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
+    const [customEntry] = createPackingListEntries()
+
+    state.detail = createPackingListDetail('Alpine weekend', [customEntry])
+
+    await mockAuth(context)
+    await mockPackingListRoutes(context, page, state)
+    await openPackingLists(page)
+    await page.getByRole('link', { name: /Alpine weekend/iu }).click()
+    await page.emulateMedia({ forcedColors: 'active' })
+
+    const checkbox = page.getByRole('checkbox', { name: 'Rain jacket' })
+
+    await checkbox.focus()
+    await expect(checkbox).toHaveCSS('outline-style', 'solid')
+    await expect(checkbox).toHaveCSS('outline-width', '2px')
+  })
+
+  test('should restore focus to the latest changed entry when the first patch finishes first', async ({ context, page }) => {
+    const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
+    const [customEntry, inventoryEntry] = createPackingListEntries()
+    const firstGate = createDeferred()
+    const secondGate = createDeferred()
+
+    state.detail = createPackingListDetail('Alpine weekend', [customEntry, inventoryEntry])
+
+    state.entryPatchReplies.set(customEntry.id, [{ gate: firstGate.promise }])
+    state.entryPatchReplies.set(inventoryEntry.id, [{ gate: secondGate.promise }])
+    await mockAuth(context)
+    await mockPackingListRoutes(context, page, state)
+    await openPackingLists(page)
+    await page.getByRole('link', { name: /Alpine weekend/iu }).click()
+
+    const customCheckbox = page.getByRole('checkbox', { name: 'Rain jacket' })
+    const inventoryCheckbox = page.getByRole('checkbox', { name: /PocketRocket Deluxe/u })
+
+    try {
+      await customCheckbox.click()
+      await expect.poll(() => state.entryPatchRequests.length).toBe(1)
+      await inventoryCheckbox.click()
+      await expect.poll(() => state.entryPatchRequests.length).toBe(2)
+      firstGate.resolve()
+      await expect(customCheckbox).toBeEnabled()
+      await expect(inventoryCheckbox).toBeDisabled()
+      secondGate.resolve()
+      await expect(inventoryCheckbox).toBeEnabled()
+      await expect(inventoryCheckbox).toBeFocused()
+    } finally {
+      firstGate.resolve()
+      secondGate.resolve()
+    }
+  })
+
+  test('should restore a failed pack change and let that entry retry', async ({ context, page }) => {
+    const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
+    const [customEntry, inventoryEntry] = createPackingListEntries()
+
+    state.detail = createPackingListDetail('Alpine weekend', [customEntry, inventoryEntry])
+
+    state.entryPatchReplies.set(customEntry.id, [{ status: 500 }, {}])
+    await mockAuth(context)
+    await mockPackingListRoutes(context, page, state)
+    await openPackingLists(page)
+    await page.getByRole('link', { name: /Alpine weekend/iu }).click()
+
+    const customCheckbox = page.getByRole('checkbox', { name: 'Rain jacket' })
+    const inventoryCheckbox = page.getByRole('checkbox', { name: /PocketRocket Deluxe/u })
+    const customCard = page.getByRole('listitem').filter({ has: customCheckbox })
+    const failureResponsePromise = page.waitForResponse(isPackingListEntryPatchResponse)
+
+    await customCheckbox.click()
+
+    const failureResponse = await failureResponsePromise
+
+    expect(failureResponse.status()).toBe(500)
+    await expect(customCheckbox).not.toBeChecked()
+    await expect(customCheckbox).toBeEnabled()
+    await expect(customCard.getByRole('alert')).toHaveText('Could not update Rain jacket. Try again.')
+    await expect(customCheckbox).toHaveAttribute('aria-describedby', /.+/u)
+    await expect(inventoryCheckbox).toBeChecked()
+
+    const retryResponsePromise = page.waitForResponse(isPackingListEntryPatchResponse)
+
+    await customCheckbox.click()
+
+    const retryResponse = await retryResponsePromise
+
+    expect(retryResponse.status()).toBe(200)
+    await expect(customCheckbox).toBeChecked()
+    await expect(customCard.getByRole('alert')).toHaveCount(0)
+    await expect(inventoryCheckbox).toBeChecked()
+
+    expect(state.entryPatchRequests).toStrictEqual([{
+      body: { isPacked: true },
+      entryId: customEntry.id
+    }, {
+      body: { isPacked: true },
+      entryId: customEntry.id
+    }])
   })
 
   test('should refresh the open item composer after removing an inventory item', async ({ context, page }) => {
