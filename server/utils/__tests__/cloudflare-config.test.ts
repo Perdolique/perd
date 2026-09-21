@@ -37,6 +37,8 @@ const environmentSchema = v.object({
 })
 
 const wranglerConfigSchema = v.object({
+  compatibility_flags: v.optional(v.array(v.string())),
+
   env: v.object({
     production: environmentSchema,
     staging: environmentSchema
@@ -91,6 +93,12 @@ async function readWranglerConfig() {
 }
 
 describe('wrangler Cloudflare configuration', () => {
+  it('should preserve native Node APIs in the Worker bundle', async () => {
+    const { config } = await readWranglerConfig()
+
+    expect(config.compatibility_flags).toStrictEqual(['nodejs_compat'])
+  })
+
   it('should keep the root worker private and separate from production', async () => {
     const { config } = await readWranglerConfig()
 
