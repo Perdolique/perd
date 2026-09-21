@@ -10,10 +10,12 @@ import {
 
 import {
   getCloudflareImagesBinding,
+  getGuestClientIp,
   getPhotoSubmissionEnvironment,
   getPhotoSubmissionRateLimiterBinding
 } from '#server/utils/cloudflare'
 
+import { photoSubmissionTurnstileAction, turnstileTokenHeaderName } from '#shared/utils/turnstile'
 import { createEquipmentItemImageBody, uploadHostedEquipmentImage } from '#server/utils/equipment/item-images'
 
 import {
@@ -33,6 +35,7 @@ import {
 } from '#server/utils/equipment/photo-submission-form'
 
 import { validateRegisteredUser } from '#server/utils/user'
+import { verifyTurnstile } from '#server/utils/turnstile'
 
 import {
   validateItemDetailParams,
@@ -159,6 +162,14 @@ export default defineEventHandler(async (event): Promise<PhotoSubmissionCreateRe
   const userId = await validateRegisteredUser(event)
   const { id: itemId } = await getValidatedRouterParams(event, validateItemDetailParams)
   const idempotencyKey = readIdempotencyKey(event)
+  const turnstileToken = getRequestHeader(event, turnstileTokenHeaderName)
+  const clientIp = getGuestClientIp(event, import.meta.dev === true)
+
+  await verifyTurnstile(event, turnstileToken, {
+    remoteIp: clientIp,
+    expectedAction: photoSubmissionTurnstileAction
+  })
+
   const persistedSubmission = await findPersistedPhotoSubmission(event, userId, idempotencyKey)
 
   if (persistedSubmission !== null) {

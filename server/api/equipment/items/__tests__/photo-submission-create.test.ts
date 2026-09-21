@@ -13,8 +13,10 @@ import type {
   validatePhotoSubmissionMultipartRequest
 } from '#server/utils/equipment/photo-submission-form'
 
+import type { verifyTurnstile } from '#server/utils/turnstile'
 import { contributions, equipmentItemImages, equipmentItemPhotoSubmissions } from '#server/database/schema'
 import createPhotoSubmissionHandler from '#server/api/equipment/items/[id]/photo-submissions/index.post'
+import { photoSubmissionTurnstileAction, turnstileTokenHeaderName } from '#shared/utils/turnstile'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
 const itemId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
@@ -28,6 +30,8 @@ const winnerCloudflareImageId = 'cloudflare-submission-winner'
 const filename = 'PocketRocket official.webp'
 const sourceUrl = 'https://www.msrgear.com/products/pocketrocket'
 const contentType = 'multipart/form-data; boundary=test-boundary'
+const clientIp = '203.0.113.20'
+const turnstileToken = 'turnstile-token'
 
 interface PersistedSubmissionRow {
   cloudflareImageId: string;
@@ -41,6 +45,7 @@ const {
   createWebSocketClientMock,
   deleteUnattachedHostedEquipmentImageMock,
   getCloudflareImagesBindingMock,
+  getGuestClientIpMock,
   getPhotoSubmissionEnvironmentMock,
   getPhotoSubmissionRateLimiterBindingMock,
   getValidatedRouterParamsMock,
@@ -49,13 +54,15 @@ const {
   setResponseStatusMock,
   uploadHostedEquipmentImageMock,
   validatePhotoSubmissionMultipartRequestMock,
-  validateRegisteredUserMock
+  validateRegisteredUserMock,
+  verifyTurnstileMock
 } = vi.hoisted(() => {
   return {
     createEquipmentItemImageBodyMock: vi.fn<typeof createEquipmentItemImageBody>(),
     createWebSocketClientMock: vi.fn(),
     deleteUnattachedHostedEquipmentImageMock: vi.fn<typeof deleteUnattachedHostedEquipmentImage>(),
     getCloudflareImagesBindingMock: vi.fn(),
+    getGuestClientIpMock: vi.fn(),
     getPhotoSubmissionEnvironmentMock: vi.fn(),
     getPhotoSubmissionRateLimiterBindingMock: vi.fn(),
     getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
@@ -64,7 +71,8 @@ const {
     setResponseStatusMock: vi.fn<typeof h3.setResponseStatus>(),
     uploadHostedEquipmentImageMock: vi.fn<typeof uploadHostedEquipmentImage>(),
     validatePhotoSubmissionMultipartRequestMock: vi.fn<typeof validatePhotoSubmissionMultipartRequest>(),
-    validateRegisteredUserMock: vi.fn()
+    validateRegisteredUserMock: vi.fn(),
+    verifyTurnstileMock: vi.fn<typeof verifyTurnstile>()
   }
 })
 
@@ -92,6 +100,7 @@ vi.mock(import('h3'), async () => {
 vi.mock(import('#server/utils/cloudflare'), () => {
   return {
     getCloudflareImagesBinding: getCloudflareImagesBindingMock,
+    getGuestClientIp: getGuestClientIpMock,
     getPhotoSubmissionEnvironment: getPhotoSubmissionEnvironmentMock,
     getPhotoSubmissionRateLimiterBinding: getPhotoSubmissionRateLimiterBindingMock
   }
@@ -121,6 +130,12 @@ vi.mock(import('#server/utils/equipment/photo-submission-form'), () => {
 vi.mock(import('#server/utils/user'), () => {
   return {
     validateRegisteredUser: validateRegisteredUserMock
+  }
+})
+
+vi.mock(import('#server/utils/turnstile'), () => {
+  return {
+    verifyTurnstile: verifyTurnstileMock
   }
 })
 
@@ -321,11 +336,19 @@ function createSubmissionFormData(sourceType: 'manufacturer' | 'own'): FormData 
   return formData
 }
 
-function createPhotoSubmissionEvent(dbHttp: unknown, key: string | null = idempotencyKey) {
+function createPhotoSubmissionEvent(
+  dbHttp: unknown,
+  key: string | null = idempotencyKey,
+  token: string | null = turnstileToken
+) {
   const event = createTestEvent(dbHttp)
 
   if (key !== null) {
     event.node.req.headers['idempotency-key'] = key
+  }
+
+  if (token !== null) {
+    event.node.req.headers[turnstileTokenHeaderName.toLowerCase()] = token
   }
 
   return event
@@ -350,6 +373,7 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
     createWebSocketClientMock.mockReturnValue(writeDb.db)
     deleteUnattachedHostedEquipmentImageMock.mockResolvedValue()
     getCloudflareImagesBindingMock.mockReturnValue({ binding: 'images' })
+    getGuestClientIpMock.mockReturnValue(clientIp)
     getPhotoSubmissionEnvironmentMock.mockReturnValue('development')
     getPhotoSubmissionRateLimiterBindingMock.mockReturnValue({ limit: rateLimitMock })
     getValidatedRouterParamsMock.mockResolvedValue({ id: itemId })
@@ -358,6 +382,7 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
     uploadHostedEquipmentImageMock.mockResolvedValue(cloudflareImageId)
     validatePhotoSubmissionMultipartRequestMock.mockReturnValue(contentType)
     validateRegisteredUserMock.mockResolvedValue(userId)
+    verifyTurnstileMock.mockResolvedValue()
   })
 
   it.each([
@@ -381,6 +406,15 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
     readLimitedMultipartFormDataMock.mockResolvedValue(createSubmissionFormData(sourceType))
 
     const result = await createPhotoSubmissionHandler(event)
+
+    expect(verifyTurnstileMock).toHaveBeenCalledWith(event, turnstileToken, {
+      expectedAction: photoSubmissionTurnstileAction,
+      remoteIp: clientIp
+    })
+
+    expect(Math.max(...verifyTurnstileMock.mock.invocationCallOrder)).toBeLessThan(
+      Math.min(...readDb.submissionFindFirstMock.mock.invocationCallOrder)
+    )
 
     expect(rateLimitMock).toHaveBeenCalledWith({ key: userId })
 
@@ -484,6 +518,45 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
 
     expect(readDb.submissionFindFirstMock).not.toHaveBeenCalled()
     expect(rateLimitMock).not.toHaveBeenCalled()
+    expect(verifyTurnstileMock).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    {
+      status: 403,
+      statusMessage: 'Turnstile verification failed'
+    },
+    {
+      status: 503,
+      statusMessage: 'Turnstile verification unavailable'
+    }
+  ])('should stop before photo-submission work when Turnstile returns $status', async ({
+    status,
+    statusMessage
+  }) => {
+    const verificationError = createError({
+      status,
+      statusMessage
+    })
+
+    const readDb = createReadDb()
+
+    verifyTurnstileMock.mockRejectedValue(verificationError)
+
+    await expect(
+      createPhotoSubmissionHandler(createPhotoSubmissionEvent(readDb.db))
+    ).rejects.toBe(verificationError)
+
+    expect(readDb.submissionFindFirstMock).not.toHaveBeenCalled()
+    expect(readDb.submissionFindManyMock).not.toHaveBeenCalled()
+    expect(readDb.equipmentItemFindFirstMock).not.toHaveBeenCalled()
+    expect(rateLimitMock).not.toHaveBeenCalled()
+    expect(validatePhotoSubmissionMultipartRequestMock).not.toHaveBeenCalled()
+    expect(readLimitedMultipartFormDataMock).not.toHaveBeenCalled()
+    expect(getCloudflareImagesBindingMock).not.toHaveBeenCalled()
+    expect(createEquipmentItemImageBodyMock).not.toHaveBeenCalled()
+    expect(uploadHostedEquipmentImageMock).not.toHaveBeenCalled()
+    expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
   it('should return a completed idempotent replay before consuming a rate token', async () => {
@@ -496,6 +569,12 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
       id: submissionId,
       status: 'pending'
     })
+
+    expect(verifyTurnstileMock).toHaveBeenCalledTimes(1)
+
+    expect(Math.max(...verifyTurnstileMock.mock.invocationCallOrder)).toBeLessThan(
+      Math.min(...readDb.submissionFindFirstMock.mock.invocationCallOrder)
+    )
 
     expect(rateLimitMock).not.toHaveBeenCalled()
     expect(readLimitedMultipartFormDataMock).not.toHaveBeenCalled()
@@ -761,6 +840,8 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
     ).rejects.toBe(authError)
 
     expect(getValidatedRouterParamsMock).not.toHaveBeenCalled()
+    expect(getGuestClientIpMock).not.toHaveBeenCalled()
     expect(rateLimitMock).not.toHaveBeenCalled()
+    expect(verifyTurnstileMock).not.toHaveBeenCalled()
   })
 })

@@ -320,7 +320,8 @@ test.describe('Photo submissions', () => {
 
   test('should upload one manufacturer photo with exact private submission metadata', async ({
     context,
-    page
+    page,
+    turnstile
   }) => {
     const responseGate = createDeferred()
 
@@ -353,6 +354,15 @@ test.describe('Photo submissions', () => {
 
     await authenticateRegisteredUser(context, page, itemPath)
     await page.getByRole('link', { name: 'Submit photo' }).click()
+
+    await expect.poll(async () => turnstile.getRenderOptions(page)).toContainEqual({
+      action: 'photo_submission',
+      appearance: 'interaction-only',
+      execution: 'execute',
+      responseField: false,
+      sitekey: '1x00000000000000000000AA',
+      size: 'flexible'
+    })
 
     const manufacturerSource = page.getByRole('radio', {
       name: 'Official manufacturer photo'
@@ -416,6 +426,10 @@ test.describe('Photo submissions', () => {
       /^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/u
     )
 
+    expect(submissionRequest.headers()['x-turnstile-token']).toBe('turnstile-token-1')
+    expect(submissionFormData.get('cf-turnstile-response')).toBeNull()
+    expect(submissionFormData.get('turnstileToken')).toBeNull()
+    expect([...submissionFormData.values()]).not.toContain('turnstile-token-1')
     expect(submissionFormData.get('rightsConfirmed')).toBe('true')
     expect(submissionFormData.get('sourceType')).toBe('manufacturer')
     expect(submissionFormData.get('sourceUrl')).toBe(sourceUrl)
@@ -431,6 +445,7 @@ test.describe('Photo submissions', () => {
     await expect(sourceInput).toBeDisabled()
     await expect(rightsCheckbox).toBeDisabled()
     await expect(page.getByRole('button', { name: 'Remove photo' })).toBeDisabled()
+    await expect(page.getByRole('dialog', { name: 'Security check' })).toHaveCount(0)
     responseGate.resolve()
 
     const status = page.getByRole('status')
@@ -451,11 +466,13 @@ test.describe('Photo submissions', () => {
     page
   }) => {
     const idempotencyKeys: string[] = []
+    const turnstileTokens: string[] = []
 
     await mockItem(context)
 
     await context.route((url) => url.pathname === photoApiPath, async (route) => {
       idempotencyKeys.push(route.request().headers()['idempotency-key'] ?? '')
+      turnstileTokens.push(route.request().headers()['x-turnstile-token'] ?? '')
 
       await route.fulfill({
         status: 500,
@@ -491,6 +508,159 @@ test.describe('Photo submissions', () => {
 
     expect(idempotencyKeys[1]).toBe(idempotencyKeys[0])
     expect(idempotencyKeys[2]).not.toBe(idempotencyKeys[0])
+
+    expect(turnstileTokens).toStrictEqual([
+      'turnstile-token-1',
+      'turnstile-token-2',
+      'turnstile-token-3'
+    ])
+  })
+
+  test('should cancel an interactive security check by keyboard before POST and return focus', async ({
+    context,
+    page,
+    turnstile
+  }) => {
+    const turnstileTokens: string[] = []
+
+    await turnstile.pause(page)
+    await mockItem(context)
+
+    await context.route((url) => url.pathname === photoApiPath, async (route) => {
+      turnstileTokens.push(route.request().headers()['x-turnstile-token'] ?? '')
+
+      await route.fulfill({
+        status: 201,
+
+        json: {
+          id: submissionId,
+          status: 'pending'
+        }
+      })
+    })
+
+    await authenticateRegisteredUser(context, page, submissionPath)
+    await page.getByLabel('Photo', { exact: true }).setInputFiles(photoFixturePath)
+    await page.getByLabel('I confirm that this photo can be published in the catalog.').check()
+
+    const submitButton = page.getByRole('button', { name: 'Submit photo' })
+    const dialog = page.getByRole('dialog', { name: 'Security check' })
+
+    await submitButton.focus()
+    await page.keyboard.press('Enter')
+    await expect(dialog.getByRole('heading', { name: 'Security check' })).toBeFocused()
+    await expect(submitButton).toBeDisabled()
+    await expect(submitButton).toHaveAttribute('aria-busy', 'true')
+    expect(turnstileTokens).toStrictEqual([])
+    await page.keyboard.press('Escape')
+    await expect(dialog).toHaveCount(0)
+    await expect(submitButton).toBeEnabled()
+    await expect(submitButton).toBeFocused()
+    await expect(submitButton).not.toHaveAttribute('aria-busy', 'true')
+    expect(turnstileTokens).toStrictEqual([])
+    await submitButton.click()
+    await expect(dialog).toBeVisible()
+    await turnstile.complete(page)
+    await expect(page.getByRole('heading', { name: 'Photo submitted.' })).toBeVisible()
+    expect(turnstileTokens).toStrictEqual(['turnstile-token-1'])
+  })
+
+  test('should recover focus without POST when the security check fails', async ({
+    context,
+    page,
+    turnstile
+  }) => {
+    let requestCount = 0
+
+    await turnstile.pauseAutomatically(page)
+    await mockItem(context)
+
+    await context.route((url) => url.pathname === photoApiPath, async (route) => {
+      requestCount += 1
+
+      await route.abort()
+    })
+
+    await authenticateRegisteredUser(context, page, submissionPath)
+    await page.getByLabel('Photo', { exact: true }).setInputFiles(photoFixturePath)
+    await page.getByLabel('I confirm that this photo can be published in the catalog.').check()
+
+    const submitButton = page.getByRole('button', { name: 'Submit photo' })
+
+    await submitButton.click()
+    await expect(submitButton).toBeDisabled()
+    await expect(page.getByRole('dialog', { name: 'Security check' })).toHaveCount(0)
+    await turnstile.failChallenge(page)
+    await expect(page.getByRole('alert')).toHaveText('Security check is unavailable. Try again.')
+    await expect(submitButton).toBeEnabled()
+    await expect(submitButton).toBeFocused()
+    expect(requestCount).toBe(0)
+  })
+
+  test('should retry a rejected security token with a fresh token and the same request key', async ({
+    context,
+    page
+  }) => {
+    const idempotencyKeys: string[] = []
+    const turnstileTokens: string[] = []
+
+    await mockItem(context)
+
+    await context.route((url) => url.pathname === photoApiPath, async (route) => {
+      const request = route.request()
+
+      idempotencyKeys.push(request.headers()['idempotency-key'] ?? '')
+      turnstileTokens.push(request.headers()['x-turnstile-token'] ?? '')
+
+      if (turnstileTokens.length === 1) {
+        await route.fulfill({
+          status: 403,
+          json: { statusMessage: 'Internal Turnstile detail' }
+        })
+
+        return
+      }
+
+      await route.fulfill({
+        status: 201,
+
+        json: {
+          id: submissionId,
+          status: 'pending'
+        }
+      })
+    })
+
+    await authenticateRegisteredUser(context, page, submissionPath)
+
+    const photoInput = page.getByLabel('Photo', { exact: true })
+
+    const rightsCheckbox = page.getByLabel(
+      'I confirm that this photo can be published in the catalog.'
+    )
+
+    const submitButton = page.getByRole('button', { name: 'Submit photo' })
+
+    await photoInput.setInputFiles(photoFixturePath)
+    await rightsCheckbox.check()
+    await submitButton.click()
+    await expect(page.getByRole('alert')).toHaveText('Security check failed. Try again.')
+    await expect(page.getByText('Internal Turnstile detail')).toHaveCount(0)
+    await expect(photoInput).toHaveValue(/photo-submission\.webp$/u)
+    await expect(rightsCheckbox).toBeChecked()
+    await submitButton.click()
+    await expect(page.getByRole('heading', { name: 'Photo submitted.' })).toBeVisible()
+
+    expect(turnstileTokens).toStrictEqual([
+      'turnstile-token-1',
+      'turnstile-token-2'
+    ])
+
+    expect(idempotencyKeys[0]).toMatch(
+      /^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/u
+    )
+
+    expect(idempotencyKeys[1]).toBe(idempotencyKeys[0])
   })
 
   for (const terminalReplay of [{
