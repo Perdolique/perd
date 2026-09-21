@@ -12,6 +12,11 @@ interface SessionUser {
   readonly isTwitchLinked: boolean;
 }
 
+interface RegisteredUserAccess {
+  readonly isAdmin: boolean;
+  readonly userId: string;
+}
+
 const defaultUser : SessionUser = {
   email: null,
   userId: null,
@@ -128,7 +133,7 @@ async function getUserByOAuthAccount(
   }
 }
 
-async function validateRegisteredUser(event: H3Event): Promise<string> {
+async function validateRegisteredUserAccess(event: H3Event): Promise<RegisteredUserAccess> {
   const user = await getSessionUser(event)
 
   if (user.userId === null) {
@@ -139,8 +144,18 @@ async function validateRegisteredUser(event: H3Event): Promise<string> {
     throw createError({ status: 403 })
   }
 
-  return user.userId
+  return {
+    isAdmin: user.isAdmin,
+    userId: user.userId
+  }
 }
 
-export { getSessionUser, getUserByOAuthAccount, validateRegisteredUser }
-export type { SessionUser }
+/** Validates a registered user and returns only the user ID for callers that do not need access flags. */
+async function validateRegisteredUser(event: H3Event): Promise<string> {
+  const { userId } = await validateRegisteredUserAccess(event)
+
+  return userId
+}
+
+export { getSessionUser, getUserByOAuthAccount, validateRegisteredUser, validateRegisteredUserAccess }
+export type { RegisteredUserAccess, SessionUser }

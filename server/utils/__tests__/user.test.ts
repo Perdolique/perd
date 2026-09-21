@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { getSessionUser, validateRegisteredUser } from '#server/utils/user'
+import { getSessionUser, validateRegisteredUser, validateRegisteredUserAccess } from '#server/utils/user'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
 const { clearAppSessionMock, useAppSessionMock } = vi.hoisted(() => {
@@ -197,5 +197,35 @@ describe('user session helpers', () => {
     const result = await validateRegisteredUser(createTestEvent(db))
 
     expect(result).toBe('user-1')
+  })
+
+  it.each([
+    {
+      expectedAccess: {
+        isAdmin: false,
+        userId: 'user-1'
+      },
+
+      isAdmin: false
+    },
+    {
+      expectedAccess: {
+        isAdmin: true,
+        userId: 'user-1'
+      },
+
+      isAdmin: true
+    }
+  ])('should return registered access with isAdmin=$isAdmin', async ({ expectedAccess, isAdmin }) => {
+    const db = createUserDb({
+      id: 'user-1',
+      isAdmin,
+      sessionVersion: 0,
+      oauthAccounts: [{ id: 'oauth-account-1' }]
+    })
+
+    const result = await validateRegisteredUserAccess(createTestEvent(db))
+
+    expect(result).toStrictEqual(expectedAccess)
   })
 })

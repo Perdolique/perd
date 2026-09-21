@@ -439,6 +439,51 @@ test.describe('Gear submissions', () => {
     expect(submitResponder.getRequestCount()).toBe(2)
   })
 
+  test('should explain rate limiting while preserving and re-enabling the form', async ({
+    context,
+    page
+  }) => {
+    const responseGate = createDeferred()
+
+    await mockSubmissionApi(context, {
+      submit: async (route) => {
+        await responseGate.promise
+
+        await route.fulfill({
+          status: 429,
+
+          json: {
+            statusCode: 429,
+            statusMessage: 'Too many item submission attempts'
+          }
+        })
+      }
+    })
+
+    await openRegisteredSubmissionPage(context, page)
+    await fillBaseFields(page)
+    await page.getByLabel('Weight').fill('83.5')
+
+    const submitButton = page.getByRole('button', { name: 'Submit for review' })
+    const submissionRequestPromise = page.waitForRequest(isSubmissionRequest)
+
+    await submitButton.click()
+
+    await submissionRequestPromise
+
+    await expect(submitButton).toBeDisabled()
+    responseGate.resolve()
+
+    await expect(page.getByRole('alert')).toHaveText(
+      'Too many item submission attempts. Try again in a minute.'
+    )
+
+    await expect(page.getByLabel('Item name')).toHaveValue('PocketRocket Deluxe')
+    await expect(page.getByLabel('Weight')).toHaveValue('83.5')
+    await expect(page.getByLabel('Item name')).toBeEnabled()
+    await expect(submitButton).toBeEnabled()
+  })
+
   test('should reset the form and allow another submission after success', async ({ context, page }) => {
     await mockSubmissionApi(context)
     await openRegisteredSubmissionPage(context, page)

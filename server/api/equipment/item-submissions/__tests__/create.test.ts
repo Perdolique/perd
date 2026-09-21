@@ -2,19 +2,29 @@ import * as h3 from 'h3'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { categoryProperties, contributions, equipmentItems, itemPropertyValues } from '#server/database/schema'
 import createItemSubmissionHandler from '#server/api/equipment/item-submissions/index.post'
+import type { RegisteredUserAccess } from '#server/utils/user'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
 const {
   createWebSocketClientMock,
+  getItemSubmissionRateLimiterBindingMock,
+  itemSubmissionLimitMock,
   readValidatedBodyMock,
+  setResponseHeaderMock,
   setResponseStatusMock,
-  validateRegisteredUserMock
+  validateRegisteredUserAccessMock
 } = vi.hoisted(() => {
   return {
     createWebSocketClientMock: vi.fn(),
+    getItemSubmissionRateLimiterBindingMock: vi.fn(),
+    itemSubmissionLimitMock: vi.fn<Env['ITEM_SUBMISSION_RATE_LIMITER']['limit']>(),
     readValidatedBodyMock: vi.fn<typeof h3.readValidatedBody>(),
+    setResponseHeaderMock: vi.fn<typeof h3.setResponseHeader>(),
     setResponseStatusMock: vi.fn<typeof h3.setResponseStatus>(),
-    validateRegisteredUserMock: vi.fn<(event: unknown) => Promise<string>>()
+
+    validateRegisteredUserAccessMock: vi.fn<
+      (event: h3.H3Event) => Promise<RegisteredUserAccess>
+    >()
   }
 })
 
@@ -29,6 +39,10 @@ vi.mock(import('h3'), async () => {
       return readValidatedBodyMock(...args)
     },
 
+    setResponseHeader(...args: Parameters<typeof h3.setResponseHeader>) {
+      setResponseHeaderMock(...args)
+    },
+
     setResponseStatus(...args: Parameters<typeof h3.setResponseStatus>) {
       setResponseStatusMock(...args)
     }
@@ -37,7 +51,13 @@ vi.mock(import('h3'), async () => {
 
 vi.mock(import('#server/utils/user'), () => {
   return {
-    validateRegisteredUser: validateRegisteredUserMock
+    validateRegisteredUserAccess: validateRegisteredUserAccessMock
+  }
+})
+
+vi.mock(import('#server/utils/cloudflare'), () => {
+  return {
+    getItemSubmissionRateLimiterBinding: getItemSubmissionRateLimiterBindingMock
   }
 })
 
@@ -172,7 +192,14 @@ function createDb(options: CreateDbOptions = {}) {
 describe('post /api/equipment/item-submissions', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    validateRegisteredUserMock.mockResolvedValue('user-1')
+
+    validateRegisteredUserAccessMock.mockResolvedValue({
+      isAdmin: false,
+      userId: 'user-1'
+    })
+
+    itemSubmissionLimitMock.mockResolvedValue({ success: true })
+    getItemSubmissionRateLimiterBindingMock.mockReturnValue({ limit: itemSubmissionLimitMock })
 
     readValidatedBodyMock.mockResolvedValue({
       brandId: 1,
@@ -271,6 +298,47 @@ describe('post /api/equipment/item-submissions', () => {
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
+  it('should apply the user limiter after auth and body validation but before the write client', async () => {
+    const { dbWrite } = createDb()
+
+    createWebSocketClientMock.mockReturnValue(dbWrite)
+    await createItemSubmissionHandler(createTestEvent({}))
+    expect(itemSubmissionLimitMock).toHaveBeenCalledTimes(1)
+
+    expect(itemSubmissionLimitMock).toHaveBeenCalledWith({
+      key: 'submit_equipment_item:user:user-1'
+    })
+
+    const authOrder = Math.min(...validateRegisteredUserAccessMock.mock.invocationCallOrder)
+    const bodyOrder = Math.min(...readValidatedBodyMock.mock.invocationCallOrder)
+    const bindingOrder = Math.min(...getItemSubmissionRateLimiterBindingMock.mock.invocationCallOrder)
+    const limiterOrder = Math.min(...itemSubmissionLimitMock.mock.invocationCallOrder)
+    const writeClientOrder = Math.min(...createWebSocketClientMock.mock.invocationCallOrder)
+
+    expect(authOrder).toBeLessThan(bodyOrder)
+    expect(bodyOrder).toBeLessThan(bindingOrder)
+    expect(bindingOrder).toBeLessThan(limiterOrder)
+    expect(limiterOrder).toBeLessThan(writeClientOrder)
+  })
+
+  it('should bypass the limiter entirely for an administrator', async () => {
+    validateRegisteredUserAccessMock.mockResolvedValue({
+      isAdmin: true,
+      userId: 'admin-1'
+    })
+
+    const { dbWrite, itemValuesMock } = createDb()
+
+    createWebSocketClientMock.mockReturnValue(dbWrite)
+    await createItemSubmissionHandler(createTestEvent({}))
+    expect(getItemSubmissionRateLimiterBindingMock).not.toHaveBeenCalled()
+    expect(itemSubmissionLimitMock).not.toHaveBeenCalled()
+
+    expect(itemValuesMock).toHaveBeenCalledWith(expect.objectContaining({
+      createdBy: 'admin-1'
+    }))
+  })
+
   it('should insert normalized non-empty properties in the same transaction', async () => {
     readValidatedBodyMock.mockResolvedValue({
       brandId: 1,
@@ -356,26 +424,30 @@ describe('post /api/equipment/item-submissions', () => {
   it('should require a session before opening the write client', async () => {
     const authError = h3.createError({ status: 401 })
 
-    validateRegisteredUserMock.mockRejectedValue(authError)
+    validateRegisteredUserAccessMock.mockRejectedValue(authError)
 
     await expect(createItemSubmissionHandler(createTestEvent({}))).rejects.toMatchObject({
       statusCode: 401
     })
 
     expect(readValidatedBodyMock).not.toHaveBeenCalled()
+    expect(getItemSubmissionRateLimiterBindingMock).not.toHaveBeenCalled()
+    expect(itemSubmissionLimitMock).not.toHaveBeenCalled()
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
   it('should reject a Guest before validating the body or opening the write client', async () => {
     const guestError = h3.createError({ status: 403 })
 
-    validateRegisteredUserMock.mockRejectedValue(guestError)
+    validateRegisteredUserAccessMock.mockRejectedValue(guestError)
 
     await expect(createItemSubmissionHandler(createTestEvent({}))).rejects.toMatchObject({
       statusCode: 403
     })
 
     expect(readValidatedBodyMock).not.toHaveBeenCalled()
+    expect(getItemSubmissionRateLimiterBindingMock).not.toHaveBeenCalled()
+    expect(itemSubmissionLimitMock).not.toHaveBeenCalled()
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
@@ -388,7 +460,92 @@ describe('post /api/equipment/item-submissions', () => {
       statusCode: 400
     })
 
+    expect(getItemSubmissionRateLimiterBindingMock).not.toHaveBeenCalled()
+    expect(itemSubmissionLimitMock).not.toHaveBeenCalled()
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
+  })
+
+  it('should reject a limited user with telemetry and no write-side effects', async () => {
+    const consoleWarnMock = vi.spyOn(console, 'warn')
+
+    itemSubmissionLimitMock.mockResolvedValue({ success: false })
+
+    const event = createTestEvent({})
+
+    await expect(createItemSubmissionHandler(event)).rejects.toMatchObject({
+      statusCode: 429,
+      statusMessage: 'Too many item submission attempts'
+    })
+
+    expect(setResponseHeaderMock).toHaveBeenCalledWith(event, 'Retry-After', 60)
+
+    expect(consoleWarnMock).toHaveBeenCalledWith({
+      event: 'rate_limit_rejected',
+      operation: 'submit_equipment_item',
+      userId: 'user-1'
+    })
+
+    expect(itemSubmissionLimitMock).toHaveBeenCalledTimes(1)
+    expect(createWebSocketClientMock).not.toHaveBeenCalled()
+    expect(setResponseStatusMock).not.toHaveBeenCalled()
+  })
+
+  it('should fail closed when the limiter binding is unavailable', async () => {
+    const bindingError = h3.createError({
+      status: 503,
+      statusMessage: 'Item submission rate limiter unavailable'
+    })
+
+    const consoleErrorMock = vi.spyOn(console, 'error')
+
+    getItemSubmissionRateLimiterBindingMock.mockImplementationOnce(() => {
+      throw bindingError
+    })
+
+    await expect(createItemSubmissionHandler(createTestEvent({}))).rejects.toMatchObject({
+      cause: bindingError,
+      statusCode: 503,
+      statusMessage: 'Item submission is temporarily unavailable'
+    })
+
+    expect(consoleErrorMock).toHaveBeenCalledWith({
+      error: bindingError,
+      event: 'rate_limit_failed',
+      operation: 'submit_equipment_item',
+      userId: 'user-1'
+    })
+
+    expect(itemSubmissionLimitMock).not.toHaveBeenCalled()
+    expect(createWebSocketClientMock).not.toHaveBeenCalled()
+    expect(setResponseStatusMock).not.toHaveBeenCalled()
+  })
+
+  it('should fail closed with the original limiter error and no write client', async () => {
+    const limiterError = new Error('raw limiter failure')
+    const consoleErrorMock = vi.spyOn(console, 'error')
+
+    itemSubmissionLimitMock.mockRejectedValue(limiterError)
+
+    await expect(createItemSubmissionHandler(createTestEvent({}))).rejects.toMatchObject({
+      cause: limiterError,
+      statusCode: 503,
+      statusMessage: 'Item submission is temporarily unavailable'
+    })
+
+    expect(consoleErrorMock).toHaveBeenCalledWith({
+      error: limiterError,
+      event: 'rate_limit_failed',
+      operation: 'submit_equipment_item',
+      userId: 'user-1'
+    })
+
+    expect(itemSubmissionLimitMock).toHaveBeenCalledWith({
+      key: 'submit_equipment_item:user:user-1'
+    })
+
+    expect(itemSubmissionLimitMock).toHaveBeenCalledTimes(1)
+    expect(createWebSocketClientMock).not.toHaveBeenCalled()
+    expect(setResponseStatusMock).not.toHaveBeenCalled()
   })
 
   it.each([

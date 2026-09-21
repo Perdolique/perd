@@ -69,6 +69,19 @@ function getPhotoSubmissionTurnstileRateLimiterBinding(
   return binding
 }
 
+function getItemSubmissionRateLimiterBinding(event: H3Event): Env['ITEM_SUBMISSION_RATE_LIMITER'] {
+  const binding = event.context.cloudflare?.env.ITEM_SUBMISSION_RATE_LIMITER
+
+  if (binding === undefined) {
+    throw createError({
+      status: 503,
+      statusMessage: 'Item submission rate limiter unavailable'
+    })
+  }
+
+  return binding
+}
+
 function getGuestSessionRateLimiterBinding(event: H3Event): Env['GUEST_SESSION_RATE_LIMITER'] {
   const binding = event.context.cloudflare?.env.GUEST_SESSION_RATE_LIMITER
 
@@ -154,6 +167,7 @@ export {
   getEmailSignInRateLimiterBinding,
   getTrustedClientIp,
   getGuestSessionRateLimiterBinding,
+  getItemSubmissionRateLimiterBinding,
   getPhotoSubmissionEnvironment,
   getPhotoSubmissionRateLimiterBinding,
   getPhotoSubmissionTurnstileRateLimiterBinding,

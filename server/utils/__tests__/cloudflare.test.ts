@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   getGuestSessionRateLimiterBinding,
+  getItemSubmissionRateLimiterBinding,
   getPhotoSubmissionEnvironment,
   getPhotoSubmissionTurnstileRateLimiterBinding,
   getTrustedClientIp,
@@ -101,6 +102,39 @@ describe(getGuestSessionRateLimiterBinding, () => {
       expect.objectContaining({
         statusCode: 503,
         statusMessage: 'Guest session rate limiter unavailable'
+      })
+    )
+  })
+})
+
+describe(getItemSubmissionRateLimiterBinding, () => {
+  it('should return the configured binding', () => {
+    const binding = {
+      limit() {
+        throw new Error('The getter must not call the binding')
+      }
+    }
+
+    const event = createTestEvent({})
+
+    Object.assign(event.context, {
+      cloudflare: {
+        env: {
+          ITEM_SUBMISSION_RATE_LIMITER: binding
+        }
+      }
+    })
+
+    expect(getItemSubmissionRateLimiterBinding(event)).toBe(binding)
+  })
+
+  it('should fail closed when the binding is unavailable', () => {
+    const event = createTestEvent({})
+
+    expect(() => getItemSubmissionRateLimiterBinding(event)).toThrow(
+      expect.objectContaining({
+        statusCode: 503,
+        statusMessage: 'Item submission rate limiter unavailable'
       })
     )
   })
