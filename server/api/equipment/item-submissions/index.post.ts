@@ -1,9 +1,20 @@
 import { and, eq, inArray } from 'drizzle-orm'
-import { createError, defineEventHandler, isError, readValidatedBody, setResponseStatus } from 'h3'
+
+import {
+  createError,
+  defineEventHandler,
+  isError,
+  readValidatedBody,
+  setResponseHeader,
+  setResponseStatus,
+  type H3Event
+} from 'h3'
+
 import { categoryProperties, contributions, equipmentItems, itemPropertyValues } from '#server/database/schema'
+import { getItemSubmissionRateLimiterBinding } from '#server/utils/cloudflare'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
 import { normalizeItemSubmissionProperties } from '#server/utils/equipment/item-submission-properties'
-import { validateRegisteredUser } from '#server/utils/user'
+import { validateRegisteredUserAccess } from '#server/utils/user'
 import { validateItemSubmissionCreateBody } from '#server/utils/validation/schemas'
 
 interface ItemSubmissionCreateResponse {
@@ -11,9 +22,61 @@ interface ItemSubmissionCreateResponse {
   status: 'pending';
 }
 
+const itemSubmissionOperation = 'submit_equipment_item'
+
+async function getItemSubmissionRateLimitOutcome(
+  event: H3Event,
+  userId: string
+): Promise<RateLimitOutcome> {
+  try {
+    const binding = getItemSubmissionRateLimiterBinding(event)
+    const key = `${itemSubmissionOperation}:user:${userId}`
+
+    // Workers Rate Limiting is permissive, eventually consistent, and location-local spam protection, not a strict global quota.
+    return await binding.limit({ key })
+  } catch (error) {
+    console.error({
+      error,
+      event: 'rate_limit_failed',
+      operation: itemSubmissionOperation,
+      userId
+    })
+
+    throw createError({
+      cause: error,
+      status: 503,
+      statusMessage: 'Item submission is temporarily unavailable'
+    })
+  }
+}
+
+async function enforceItemSubmissionRateLimit(event: H3Event, userId: string): Promise<void> {
+  const outcome = await getItemSubmissionRateLimitOutcome(event, userId)
+
+  if (outcome.success === false) {
+    console.warn({
+      event: 'rate_limit_rejected',
+      operation: itemSubmissionOperation,
+      userId
+    })
+
+    setResponseHeader(event, 'Retry-After', 60)
+
+    throw createError({
+      status: 429,
+      statusMessage: 'Too many item submission attempts'
+    })
+  }
+}
+
 export default defineEventHandler(async (event): Promise<ItemSubmissionCreateResponse> => {
-  const userId = await validateRegisteredUser(event)
+  const { isAdmin, userId } = await validateRegisteredUserAccess(event)
   const body = await readValidatedBody(event, validateItemSubmissionCreateBody)
+
+  if (isAdmin === false) {
+    await enforceItemSubmissionRateLimit(event, userId)
+  }
+
   const dbWebsocket = createWebSocketClientFromEvent(event)
 
   try {

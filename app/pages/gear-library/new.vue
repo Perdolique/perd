@@ -53,6 +53,7 @@
   import PerdButton from '~/components/PerdButton.vue'
   import PerdLink from '~/components/PerdLink.vue'
   import PageContent from '~/components/layout/PageContent.vue'
+  import { getFetchErrorResponse } from '~/utils/fetch-error'
   import { appRoutes } from '~/utils/navigation'
 
   definePageMeta({ layout: 'page' })
@@ -96,8 +97,12 @@
 
       await nextTick()
       confirmationStatus.value?.focus()
-    } catch {
-      mutationMessage.value = 'Could not submit item. Try again.'
+    } catch (error) {
+      const { status } = getFetchErrorResponse(error)
+
+      mutationMessage.value = status === 429
+        ? 'Too many item submission attempts. Try again in a minute.'
+        : 'Could not submit item. Try again.'
     } finally {
       isSubmitting.value = false
     }

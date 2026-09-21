@@ -64,6 +64,7 @@ const rateLimitEnvironmentScenarios = [
     environment: 'development',
     getRateLimits: (config: WranglerConfig) => config.ratelimits,
     guestNamespaceId: '687734004',
+    itemSubmissionNamespaceId: '687734025',
     photoTurnstileNamespaceId: '687734022',
     twitchOAuthNamespaceId: '687734019'
   },
@@ -72,6 +73,7 @@ const rateLimitEnvironmentScenarios = [
     environment: 'staging',
     getRateLimits: (config: WranglerConfig) => config.env.staging.ratelimits,
     guestNamespaceId: '687734005',
+    itemSubmissionNamespaceId: '687734026',
     photoTurnstileNamespaceId: '687734023',
     twitchOAuthNamespaceId: '687734020'
   },
@@ -80,6 +82,7 @@ const rateLimitEnvironmentScenarios = [
     environment: 'production',
     getRateLimits: (config: WranglerConfig) => config.env.production.ratelimits,
     guestNamespaceId: '687734006',
+    itemSubmissionNamespaceId: '687734027',
     photoTurnstileNamespaceId: '687734024',
     twitchOAuthNamespaceId: '687734021'
   }
@@ -126,6 +129,28 @@ describe('wrangler Cloudflare configuration', () => {
     expect(source).toContain('"PHOTO_SUBMISSION_ENVIRONMENT": "staging"')
     expect(source.match(/"crons": \[\]/gu)).toHaveLength(2)
   })
+
+  it.each(rateLimitEnvironmentScenarios)(
+    'should configure the $environment item submission limiter namespace',
+    async ({ getRateLimits, itemSubmissionNamespaceId }) => {
+      const { config } = await readWranglerConfig()
+      const rateLimits = getRateLimits(config)
+
+      const itemSubmissionRateLimit = rateLimits.find(
+        ({ name }) => name === 'ITEM_SUBMISSION_RATE_LIMITER'
+      )
+
+      expect(itemSubmissionRateLimit).toStrictEqual({
+        name: 'ITEM_SUBMISSION_RATE_LIMITER',
+        namespace_id: itemSubmissionNamespaceId,
+
+        simple: {
+          limit: 5,
+          period: 60
+        }
+      })
+    }
+  )
 
   it.each(rateLimitEnvironmentScenarios)(
     'should configure the $environment Guest limiter namespace',
