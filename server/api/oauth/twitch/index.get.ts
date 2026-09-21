@@ -4,7 +4,7 @@ import { validateTwitchOAuthQuery } from '#server/utils/validation/schemas'
 import { createVerificationToken, hashToken } from '#server/utils/auth/password'
 import { getTwitchOAuthContext, getTwitchOAuthError } from '#server/utils/oauth/twitch-state'
 import { issueTwitchOAuthState } from '#server/utils/oauth/twitch-state-persistence'
-import { getGuestClientIp, getTwitchOAuthRateLimiterBinding } from '#server/utils/cloudflare'
+import { getTrustedClientIp, getTwitchOAuthRateLimiterBinding } from '#server/utils/cloudflare'
 import { twitchOAuthMessages } from '#shared/utils/twitch-oauth'
 
 interface TwitchOAuthAuthorizationResponse {
@@ -34,7 +34,7 @@ export default defineEventHandler(async (event): Promise<TwitchOAuthAuthorizatio
   try {
     const { redirectTo, intent, responseMode } = await getValidatedQuery(event, validateTwitchOAuthQuery)
     const twitchConfig = getRuntimeTwitchConfig(event)
-    const clientIp = getGuestClientIp(event, import.meta.dev === true)
+    const clientIp = getTrustedClientIp(event, import.meta.dev === true)
 
     sensitiveValues.push(clientIp)
     await enforceTwitchOAuthRateLimit(event, clientIp)

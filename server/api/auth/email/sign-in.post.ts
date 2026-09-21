@@ -3,7 +3,7 @@ import { createError, defineEventHandler, type H3Event } from 'h3'
 import { emailSignInTurnstileAction } from '#shared/utils/turnstile'
 import { emailCredentials, users } from '#server/database/schema'
 import { getEmailAuthenticationOrigin } from '#server/utils/config'
-import { getEmailSignInRateLimiterBinding, getGuestClientIp } from '#server/utils/cloudflare'
+import { getEmailSignInRateLimiterBinding, getTrustedClientIp } from '#server/utils/cloudflare'
 import { getAuthErrorDetails } from '#server/utils/auth/telemetry'
 
 import {
@@ -80,7 +80,7 @@ export default defineEventHandler(async (event): Promise<EmailSignInResponse> =>
     validateEmailSignIn
   )
 
-  const clientIp = getGuestClientIp(event, import.meta.dev === true)
+  const clientIp = getTrustedClientIp(event, import.meta.dev === true)
 
   await enforceEmailAuthenticationRateLimit(event, {
     deniedStatusMessage: 'Too many sign-in attempts. Try again in a minute',

@@ -1,7 +1,7 @@
 import { createError, defineEventHandler, readBody, setResponseHeader, setResponseStatus, type H3Event } from 'h3'
 import { guestSessionTurnstileAction, turnstileResponseFieldName } from '#shared/utils/turnstile'
 import { users } from '#server/database/schema'
-import { getGuestClientIp, getGuestSessionRateLimiterBinding } from '#server/utils/cloudflare'
+import { getGuestSessionRateLimiterBinding, getTrustedClientIp } from '#server/utils/cloudflare'
 import { useAppSession } from '#server/utils/session'
 import { verifyTurnstile } from '#server/utils/turnstile'
 import { getSessionUser } from '#server/utils/user'
@@ -108,7 +108,7 @@ async function createOrReuseGuestUser(
 export default defineEventHandler(async (event) : Promise<GuestSessionResponse> => {
   const body: unknown = await readBody(event)
   const turnstileToken = getTurnstileToken(body)
-  const clientIp = getGuestClientIp(event, import.meta.dev)
+  const clientIp = getTrustedClientIp(event, import.meta.dev)
 
   await verifyTurnstile(event, turnstileToken, {
     remoteIp: clientIp,

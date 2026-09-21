@@ -45,9 +45,10 @@ const {
   createWebSocketClientMock,
   deleteUnattachedHostedEquipmentImageMock,
   getCloudflareImagesBindingMock,
-  getGuestClientIpMock,
   getPhotoSubmissionEnvironmentMock,
   getPhotoSubmissionRateLimiterBindingMock,
+  getPhotoSubmissionTurnstileRateLimiterBindingMock,
+  getTrustedClientIpMock,
   getValidatedRouterParamsMock,
   readLimitedMultipartFormDataMock,
   setResponseHeaderMock,
@@ -62,9 +63,10 @@ const {
     createWebSocketClientMock: vi.fn(),
     deleteUnattachedHostedEquipmentImageMock: vi.fn<typeof deleteUnattachedHostedEquipmentImage>(),
     getCloudflareImagesBindingMock: vi.fn(),
-    getGuestClientIpMock: vi.fn(),
     getPhotoSubmissionEnvironmentMock: vi.fn(),
     getPhotoSubmissionRateLimiterBindingMock: vi.fn(),
+    getPhotoSubmissionTurnstileRateLimiterBindingMock: vi.fn(),
+    getTrustedClientIpMock: vi.fn(),
     getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
     readLimitedMultipartFormDataMock: vi.fn<typeof readLimitedMultipartFormData>(),
     setResponseHeaderMock: vi.fn<typeof h3.setResponseHeader>(),
@@ -100,9 +102,10 @@ vi.mock(import('h3'), async () => {
 vi.mock(import('#server/utils/cloudflare'), () => {
   return {
     getCloudflareImagesBinding: getCloudflareImagesBindingMock,
-    getGuestClientIp: getGuestClientIpMock,
     getPhotoSubmissionEnvironment: getPhotoSubmissionEnvironmentMock,
-    getPhotoSubmissionRateLimiterBinding: getPhotoSubmissionRateLimiterBindingMock
+    getPhotoSubmissionRateLimiterBinding: getPhotoSubmissionRateLimiterBindingMock,
+    getPhotoSubmissionTurnstileRateLimiterBinding: getPhotoSubmissionTurnstileRateLimiterBindingMock,
+    getTrustedClientIp: getTrustedClientIpMock
   }
 })
 
@@ -363,6 +366,7 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
   }
 
   const rateLimitMock = vi.fn<Env['PHOTO_SUBMISSION_RATE_LIMITER']['limit']>()
+  const turnstileRateLimitMock = vi.fn<Env['PHOTO_SUBMISSION_TURNSTILE_RATE_LIMITER']['limit']>()
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -373,11 +377,17 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
     createWebSocketClientMock.mockReturnValue(writeDb.db)
     deleteUnattachedHostedEquipmentImageMock.mockResolvedValue()
     getCloudflareImagesBindingMock.mockReturnValue({ binding: 'images' })
-    getGuestClientIpMock.mockReturnValue(clientIp)
     getPhotoSubmissionEnvironmentMock.mockReturnValue('development')
     getPhotoSubmissionRateLimiterBindingMock.mockReturnValue({ limit: rateLimitMock })
+
+    getPhotoSubmissionTurnstileRateLimiterBindingMock.mockReturnValue({
+      limit: turnstileRateLimitMock
+    })
+
+    getTrustedClientIpMock.mockReturnValue(clientIp)
     getValidatedRouterParamsMock.mockResolvedValue({ id: itemId })
     rateLimitMock.mockResolvedValue({ success: true })
+    turnstileRateLimitMock.mockResolvedValue({ success: true })
     readLimitedMultipartFormDataMock.mockResolvedValue(createSubmissionFormData('manufacturer'))
     uploadHostedEquipmentImageMock.mockResolvedValue(cloudflareImageId)
     validatePhotoSubmissionMultipartRequestMock.mockReturnValue(contentType)
@@ -412,10 +422,23 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
       remoteIp: clientIp
     })
 
-    expect(Math.max(...verifyTurnstileMock.mock.invocationCallOrder)).toBeLessThan(
-      Math.min(...readDb.submissionFindFirstMock.mock.invocationCallOrder)
+    expect(turnstileRateLimitMock).toHaveBeenNthCalledWith(1, { key: `user:${userId}` })
+    expect(turnstileRateLimitMock).toHaveBeenNthCalledWith(2, { key: `ip:${clientIp}` })
+
+    const lastTurnstileRateLimitOrder = Math.max(
+      ...turnstileRateLimitMock.mock.invocationCallOrder
     )
 
+    const lastTurnstileVerificationOrder = Math.max(
+      ...verifyTurnstileMock.mock.invocationCallOrder
+    )
+
+    const firstSubmissionLookupOrder = Math.min(
+      ...readDb.submissionFindFirstMock.mock.invocationCallOrder
+    )
+
+    expect(lastTurnstileRateLimitOrder).toBeLessThan(lastTurnstileVerificationOrder)
+    expect(lastTurnstileVerificationOrder).toBeLessThan(firstSubmissionLookupOrder)
     expect(rateLimitMock).toHaveBeenCalledWith({ key: userId })
 
     expect(readDb.submissionFindManyMock).toHaveBeenCalledWith({
@@ -518,7 +541,35 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
 
     expect(readDb.submissionFindFirstMock).not.toHaveBeenCalled()
     expect(rateLimitMock).not.toHaveBeenCalled()
+    expect(turnstileRateLimitMock).not.toHaveBeenCalled()
     expect(verifyTurnstileMock).not.toHaveBeenCalled()
+  })
+
+  it('should reject a missing Turnstile header before photo-submission work', async () => {
+    const verificationError = createError({
+      status: 403,
+      statusMessage: 'Turnstile verification failed'
+    })
+
+    const readDb = createReadDb()
+
+    verifyTurnstileMock.mockRejectedValue(verificationError)
+
+    await expect(
+      createPhotoSubmissionHandler(createPhotoSubmissionEvent(readDb.db, idempotencyKey, null))
+    ).rejects.toBe(verificationError)
+
+    expect(verifyTurnstileMock).toHaveBeenCalledWith(expect.anything(), undefined, {
+      expectedAction: photoSubmissionTurnstileAction,
+      remoteIp: clientIp
+    })
+
+    expect(readDb.submissionFindFirstMock).not.toHaveBeenCalled()
+    expect(rateLimitMock).not.toHaveBeenCalled()
+    expect(validatePhotoSubmissionMultipartRequestMock).not.toHaveBeenCalled()
+    expect(readLimitedMultipartFormDataMock).not.toHaveBeenCalled()
+    expect(uploadHostedEquipmentImageMock).not.toHaveBeenCalled()
+    expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
   it.each([
@@ -551,6 +602,7 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
     expect(readDb.submissionFindManyMock).not.toHaveBeenCalled()
     expect(readDb.equipmentItemFindFirstMock).not.toHaveBeenCalled()
     expect(rateLimitMock).not.toHaveBeenCalled()
+    expect(turnstileRateLimitMock).toHaveBeenCalledTimes(2)
     expect(validatePhotoSubmissionMultipartRequestMock).not.toHaveBeenCalled()
     expect(readLimitedMultipartFormDataMock).not.toHaveBeenCalled()
     expect(getCloudflareImagesBindingMock).not.toHaveBeenCalled()
@@ -572,10 +624,16 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
 
     expect(verifyTurnstileMock).toHaveBeenCalledTimes(1)
 
-    expect(Math.max(...verifyTurnstileMock.mock.invocationCallOrder)).toBeLessThan(
-      Math.min(...readDb.submissionFindFirstMock.mock.invocationCallOrder)
+    const lastTurnstileVerificationOrder = Math.max(
+      ...verifyTurnstileMock.mock.invocationCallOrder
     )
 
+    const firstSubmissionLookupOrder = Math.min(
+      ...readDb.submissionFindFirstMock.mock.invocationCallOrder
+    )
+
+    expect(lastTurnstileVerificationOrder).toBeLessThan(firstSubmissionLookupOrder)
+    expect(turnstileRateLimitMock).toHaveBeenCalledTimes(2)
     expect(rateLimitMock).not.toHaveBeenCalled()
     expect(readLimitedMultipartFormDataMock).not.toHaveBeenCalled()
     expect(uploadHostedEquipmentImageMock).not.toHaveBeenCalled()
@@ -634,6 +692,46 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
     expect(setResponseHeaderMock).toHaveBeenCalledWith(event, 'retry-after', 60)
     expect(readLimitedMultipartFormDataMock).not.toHaveBeenCalled()
     expect(uploadHostedEquipmentImageMock).not.toHaveBeenCalled()
+  })
+
+  it('should reject before Siteverify when the security burst limit is exhausted', async () => {
+    const readDb = createReadDb()
+    const event = createPhotoSubmissionEvent(readDb.db)
+
+    turnstileRateLimitMock.mockResolvedValue({ success: false })
+    await expect(createPhotoSubmissionHandler(event)).rejects.toMatchObject({ statusCode: 429 })
+    expect(setResponseHeaderMock).toHaveBeenCalledWith(event, 'retry-after', 60)
+    expect(verifyTurnstileMock).not.toHaveBeenCalled()
+    expect(readDb.submissionFindFirstMock).not.toHaveBeenCalled()
+    expect(rateLimitMock).not.toHaveBeenCalled()
+    expect(readLimitedMultipartFormDataMock).not.toHaveBeenCalled()
+    expect(uploadHostedEquipmentImageMock).not.toHaveBeenCalled()
+  })
+
+  it('should fail closed before Siteverify when the security rate limiter is unavailable', async () => {
+    const limiterError = new Error('security limiter unavailable')
+
+    const consoleErrorMock = vi.spyOn(console, 'error').mockImplementation(() => {
+      // Expected limiter failure telemetry.
+    })
+
+    turnstileRateLimitMock.mockRejectedValue(limiterError)
+
+    await expect(
+      createPhotoSubmissionHandler(createPhotoSubmissionEvent(createReadDb().db))
+    ).rejects.toMatchObject({ statusCode: 503 })
+
+    expect(verifyTurnstileMock).not.toHaveBeenCalled()
+    expect(rateLimitMock).not.toHaveBeenCalled()
+    expect(readLimitedMultipartFormDataMock).not.toHaveBeenCalled()
+
+    expect(consoleErrorMock).toHaveBeenCalledWith(
+      'Failed to apply photo submission security rate limit',
+      {
+        error: limiterError,
+        userId
+      }
+    )
   })
 
   it('should fail closed before reading the body when the rate limiter is unavailable', async () => {
@@ -840,8 +938,9 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
     ).rejects.toBe(authError)
 
     expect(getValidatedRouterParamsMock).not.toHaveBeenCalled()
-    expect(getGuestClientIpMock).not.toHaveBeenCalled()
+    expect(getTrustedClientIpMock).not.toHaveBeenCalled()
     expect(rateLimitMock).not.toHaveBeenCalled()
+    expect(turnstileRateLimitMock).not.toHaveBeenCalled()
     expect(verifyTurnstileMock).not.toHaveBeenCalled()
   })
 })

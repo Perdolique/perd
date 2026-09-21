@@ -461,7 +461,7 @@ test.describe('Photo submissions', () => {
     )
   })
 
-  test('should reuse one idempotency key for unchanged retries and replace it after a form change', async ({
+  test('should reuse one idempotency key for unchanged retries and replace it after a source type change', async ({
     context,
     page
   }) => {
@@ -490,6 +490,8 @@ test.describe('Photo submissions', () => {
 
     const submitButton = page.getByRole('button', { name: 'Submit photo' })
 
+    await page.getByRole('radio', { name: 'Official manufacturer photo' }).check()
+    await page.getByLabel('Manufacturer source').fill(sourceUrl)
     await photoInput.setInputFiles(photoFixturePath)
     await rightsCheckbox.check()
     await submitButton.click()
@@ -497,8 +499,7 @@ test.describe('Photo submissions', () => {
     await expect(submitButton).toBeEnabled()
     await submitButton.click()
     await expect.poll(() => idempotencyKeys).toHaveLength(2)
-    await page.getByRole('radio', { name: 'Official manufacturer photo' }).check()
-    await page.getByLabel('Manufacturer source').fill(sourceUrl)
+    await page.getByRole('radio', { name: 'My own photo' }).check()
     await submitButton.click()
     await expect.poll(() => idempotencyKeys).toHaveLength(3)
 
@@ -514,6 +515,45 @@ test.describe('Photo submissions', () => {
       'turnstile-token-2',
       'turnstile-token-3'
     ])
+  })
+
+  test('should replace the idempotency key after a source URL change', async ({
+    context,
+    page
+  }) => {
+    const idempotencyKeys: string[] = []
+
+    await mockItem(context)
+
+    await context.route((url) => url.pathname === photoApiPath, async (route) => {
+      idempotencyKeys.push(route.request().headers()['idempotency-key'] ?? '')
+
+      await route.fulfill({
+        status: 500,
+        json: { statusMessage: 'Temporary failure' }
+      })
+    })
+
+    await authenticateRegisteredUser(context, page, submissionPath)
+    await page.getByRole('radio', { name: 'Official manufacturer photo' }).check()
+
+    const sourceInput = page.getByLabel('Manufacturer source')
+    const submitButton = page.getByRole('button', { name: 'Submit photo' })
+
+    await sourceInput.fill(sourceUrl)
+    await page.getByLabel('Photo', { exact: true }).setInputFiles(photoFixturePath)
+    await page.getByLabel('I confirm that this photo can be published in the catalog.').check()
+    await submitButton.click()
+    await expect(page.getByRole('alert')).toHaveText('Could not submit photo. Try again.')
+    await sourceInput.fill(`${sourceUrl}?view=front`)
+    await submitButton.click()
+    await expect.poll(() => idempotencyKeys).toHaveLength(2)
+
+    expect(idempotencyKeys[0]).toMatch(
+      /^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/u
+    )
+
+    expect(idempotencyKeys[1]).not.toBe(idempotencyKeys[0])
   })
 
   test('should cancel an interactive security check by keyboard before POST and return focus', async ({
@@ -595,6 +635,50 @@ test.describe('Photo submissions', () => {
     await expect(submitButton).toBeEnabled()
     await expect(submitButton).toBeFocused()
     expect(requestCount).toBe(0)
+  })
+
+  test('should restore focus after an interactive check is followed by an API error', async ({
+    context,
+    page,
+    turnstile
+  }) => {
+    const responseGate = createDeferred()
+    let requestCount = 0
+
+    await turnstile.pause(page)
+    await mockItem(context)
+
+    await context.route((url) => url.pathname === photoApiPath, async (route) => {
+      requestCount += 1
+      await responseGate.promise
+
+      await route.fulfill({
+        status: 503,
+        json: { statusMessage: 'Internal upload detail' }
+      })
+    })
+
+    await authenticateRegisteredUser(context, page, submissionPath)
+    await page.getByLabel('Photo', { exact: true }).setInputFiles(photoFixturePath)
+    await page.getByLabel('I confirm that this photo can be published in the catalog.').check()
+
+    const submitButton = page.getByRole('button', { name: 'Submit photo' })
+    const dialog = page.getByRole('dialog', { name: 'Security check' })
+
+    await submitButton.click()
+    await expect(dialog).toBeVisible()
+    await turnstile.complete(page)
+    await expect(dialog).toHaveCount(0)
+    await expect.poll(() => requestCount).toBe(1)
+    await expect(submitButton).toBeDisabled()
+    responseGate.resolve()
+
+    await expect(page.getByRole('alert')).toHaveText(
+      'Photo submission is temporarily unavailable. Try again.'
+    )
+
+    await expect(submitButton).toBeEnabled()
+    await expect(submitButton).toBeFocused()
   })
 
   test('should retry a rejected security token with a fresh token and the same request key', async ({

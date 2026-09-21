@@ -1,7 +1,7 @@
 import { defineEventHandler } from 'h3'
 import { passwordRecoveryResetTurnstileAction } from '#shared/utils/turnstile'
 import { getEmailAuthenticationConfig } from '#server/utils/config'
-import { getGuestClientIp, getPasswordRecoveryRateLimiterBinding } from '#server/utils/cloudflare'
+import { getPasswordRecoveryRateLimiterBinding, getTrustedClientIp } from '#server/utils/cloudflare'
 
 import {
   enforceEmailAuthenticationRateLimit,
@@ -39,7 +39,7 @@ export default defineEventHandler(async (event): Promise<PasswordRecoveryResetRe
     validatePasswordRecoveryReset
   )
 
-  const clientIp = getGuestClientIp(event, import.meta.dev === true)
+  const clientIp = getTrustedClientIp(event, import.meta.dev === true)
 
   await verifyTurnstile(event, body['cf-turnstile-response'], {
     remoteIp: clientIp,

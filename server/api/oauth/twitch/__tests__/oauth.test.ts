@@ -72,7 +72,7 @@ vi.mock(import('#server/utils/oauth/twitch'), () => {
 
 vi.mock(import('#server/utils/cloudflare'), () => {
   return {
-    getGuestClientIp: () => '203.0.113.20',
+    getTrustedClientIp: () => '203.0.113.20',
 
     getTwitchOAuthRateLimiterBinding: () => {
       return { limit: mocks.rateLimit }

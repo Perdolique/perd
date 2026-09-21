@@ -57,6 +57,14 @@
       }
     },
     {
+      "name": "PHOTO_SUBMISSION_TURNSTILE_RATE_LIMITER",
+      "namespace_id": "687734022",
+      "simple": {
+        "limit": 10,
+        "period": 60
+      }
+    },
+    {
       "name": "GUEST_SESSION_RATE_LIMITER",
       "namespace_id": "687734004",
       "simple": {
@@ -152,6 +160,14 @@
           "namespace_id": "687734003",
           "simple": {
             "limit": 3,
+            "period": 60
+          }
+        },
+        {
+          "name": "PHOTO_SUBMISSION_TURNSTILE_RATE_LIMITER",
+          "namespace_id": "687734024",
+          "simple": {
+            "limit": 10,
             "period": 60
           }
         },
@@ -260,6 +276,14 @@
           "namespace_id": "687734002",
           "simple": {
             "limit": 3,
+            "period": 60
+          }
+        },
+        {
+          "name": "PHOTO_SUBMISSION_TURNSTILE_RATE_LIMITER",
+          "namespace_id": "687734023",
+          "simple": {
+            "limit": 10,
             "period": 60
           }
         },

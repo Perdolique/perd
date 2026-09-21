@@ -215,7 +215,7 @@
         :action="photoSubmissionTurnstileAction"
         @verified="submitPhoto"
         @error="handleTurnstileError"
-        @cancel="handleTurnstileCancellation"
+        @cancel="finishTurnstileAttempt"
       />
     </PerdCard>
   </PageContent>
@@ -483,10 +483,6 @@
     submitButton.value?.focus()
   }
 
-  async function handleTurnstileCancellation() {
-    await finishTurnstileAttempt()
-  }
-
   async function handleTurnstileError(message: string) {
     mutationMessage.value = message
 
@@ -503,6 +499,7 @@
     }
 
     const submissionIdempotencyKey = idempotencyKey.value ?? globalThis.crypto.randomUUID()
+    let shouldRestoreSubmitFocus = false
 
     idempotencyKey.value = submissionIdempotencyKey
 
@@ -523,6 +520,8 @@
       await nextTick()
       confirmationStatus.value?.focus()
     } catch (error) {
+      shouldRestoreSubmitFocus = true
+
       const statusCode = getErrorStatus(error)
 
       if (statusCode === 403) {
@@ -543,6 +542,11 @@
     } finally {
       pendingSubmissionFormData = null
       isSubmitting.value = false
+
+      if (shouldRestoreSubmitFocus) {
+        await nextTick()
+        submitButton.value?.focus()
+      }
     }
   }
 </script>

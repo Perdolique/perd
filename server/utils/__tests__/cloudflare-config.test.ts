@@ -64,6 +64,7 @@ const rateLimitEnvironmentScenarios = [
     environment: 'development',
     getRateLimits: (config: WranglerConfig) => config.ratelimits,
     guestNamespaceId: '687734004',
+    photoTurnstileNamespaceId: '687734022',
     twitchOAuthNamespaceId: '687734019'
   },
   {
@@ -71,6 +72,7 @@ const rateLimitEnvironmentScenarios = [
     environment: 'staging',
     getRateLimits: (config: WranglerConfig) => config.env.staging.ratelimits,
     guestNamespaceId: '687734005',
+    photoTurnstileNamespaceId: '687734023',
     twitchOAuthNamespaceId: '687734020'
   },
   {
@@ -78,6 +80,7 @@ const rateLimitEnvironmentScenarios = [
     environment: 'production',
     getRateLimits: (config: WranglerConfig) => config.env.production.ratelimits,
     guestNamespaceId: '687734006',
+    photoTurnstileNamespaceId: '687734024',
     twitchOAuthNamespaceId: '687734021'
   }
 ] as const
@@ -93,7 +96,7 @@ async function readWranglerConfig() {
 }
 
 describe('wrangler Cloudflare configuration', () => {
-  it('should preserve native Node APIs in the Worker bundle', async () => {
+  it('should explicitly enable Node compatibility for Nitro', async () => {
     const { config } = await readWranglerConfig()
 
     expect(config.compatibility_flags).toStrictEqual(['nodejs_compat'])
@@ -144,6 +147,28 @@ describe('wrangler Cloudflare configuration', () => {
   )
 
   it.each(rateLimitEnvironmentScenarios)(
+    'should configure the $environment photo Turnstile limiter namespace',
+    async ({ getRateLimits, photoTurnstileNamespaceId }) => {
+      const { config } = await readWranglerConfig()
+      const rateLimits = getRateLimits(config)
+
+      const turnstileRateLimit = rateLimits.find(
+        ({ name }) => name === 'PHOTO_SUBMISSION_TURNSTILE_RATE_LIMITER'
+      )
+
+      expect(turnstileRateLimit).toStrictEqual({
+        name: 'PHOTO_SUBMISSION_TURNSTILE_RATE_LIMITER',
+        namespace_id: photoTurnstileNamespaceId,
+
+        simple: {
+          limit: 10,
+          period: 60
+        }
+      })
+    }
+  )
+
+  it.each(rateLimitEnvironmentScenarios)(
     'should configure the $environment Twitch OAuth limiter namespace',
     async ({ getRateLimits, twitchOAuthNamespaceId }) => {
       const { config } = await readWranglerConfig()
@@ -181,18 +206,14 @@ describe('wrangler Cloudflare configuration', () => {
     }
   )
 
-  it('should keep authentication namespaces unique and enable deployed registration', async () => {
+  it('should keep rate-limit namespaces unique and enable deployed registration', async () => {
     const { config } = await readWranglerConfig()
 
-    const namespaceIds = rateLimitEnvironmentScenarios.flatMap(({ getRateLimits }) => {
-      const rateLimits = getRateLimits(config)
-      const signInRateLimit = rateLimits.find(({ name }) => name === 'EMAIL_SIGN_IN_RATE_LIMITER')
-      const twitchOAuthRateLimit = rateLimits.find(({ name }) => name === 'TWITCH_OAUTH_RATE_LIMITER')
+    const namespaceIds = rateLimitEnvironmentScenarios.flatMap(
+      ({ getRateLimits }) => getRateLimits(config).map(({ namespace_id: namespaceId }) => namespaceId)
+    )
 
-      return [signInRateLimit?.namespace_id, twitchOAuthRateLimit?.namespace_id]
-    })
-
-    expect(new Set(namespaceIds)).toHaveLength(6)
+    expect(new Set(namespaceIds)).toHaveLength(namespaceIds.length)
     expect(config.env.production.vars.NUXT_PUBLIC_EMAIL_REGISTRATION_ENABLED).toBe('true')
     expect(config.env.staging.vars.NUXT_PUBLIC_EMAIL_REGISTRATION_ENABLED).toBe('true')
   })
