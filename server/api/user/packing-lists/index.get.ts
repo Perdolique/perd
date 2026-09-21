@@ -6,11 +6,13 @@ interface PackingListSummary {
   entryCount: number;
   id: string;
   name: string;
+  packedCount: number;
   updatedAt: Date | string;
 }
 
 interface PackingListEntryCountRow {
   id: string;
+  isPacked: boolean;
 }
 
 interface PackingListQueryRow {
@@ -44,7 +46,8 @@ export default defineEventHandler(async (event) : Promise<PackingListSummary[]> 
     with: {
       entries: {
         columns: {
-          id: true
+          id: true,
+          isPacked: true
         }
       }
     }
@@ -52,12 +55,14 @@ export default defineEventHandler(async (event) : Promise<PackingListSummary[]> 
 
   return rows.map((row) => {
     const entryCount = row.entries.length
+    const packedCount = row.entries.filter((entry) => entry.isPacked).length
 
     return {
       createdAt: row.createdAt,
       entryCount,
       id: row.id,
       name: row.name,
+      packedCount,
       updatedAt: row.updatedAt
     }
   })

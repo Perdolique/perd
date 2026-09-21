@@ -441,27 +441,82 @@ describe('user packing list handlers', () => {
   })
 
   describe('get /api/user/packing-lists', () => {
-    it('should return packing lists scoped to the current user', async () => {
+    it('should return empty, unpacked, partially packed, and fully packed summaries for the current user', async () => {
       const rows = [{
         createdAt: '2026-04-03T09:00:00.000Z',
+        entries: [],
+        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
+        name: 'Empty trail',
+        updatedAt: '2026-04-03T09:00:00.000Z'
+      }, {
+        createdAt: '2026-04-03T09:01:00.000Z',
 
         entries: [{
-          id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1'
-        }, {
-          id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e2'
+          id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
+          isPacked: false
         }],
 
-        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
-        name: 'Alpine weekend',
-        updatedAt: '2026-04-03T09:00:00.000Z'
+        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
+        name: 'Unpacked trail',
+        updatedAt: '2026-04-03T09:01:00.000Z'
+      }, {
+        createdAt: '2026-04-03T09:02:00.000Z',
+
+        entries: [{
+          id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e2',
+          isPacked: true
+        }, {
+          id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e3',
+          isPacked: false
+        }],
+
+        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477da',
+        name: 'Mixed trail',
+        updatedAt: '2026-04-03T09:02:00.000Z'
+      }, {
+        createdAt: '2026-04-03T09:03:00.000Z',
+
+        entries: [{
+          id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e4',
+          isPacked: true
+        }, {
+          id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e5',
+          isPacked: true
+        }],
+
+        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477db',
+        name: 'Ready trail',
+        updatedAt: '2026-04-03T09:03:00.000Z'
       }]
 
       const expectedRows = [{
         createdAt: '2026-04-03T09:00:00.000Z',
-        entryCount: 2,
+        entryCount: 0,
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
-        name: 'Alpine weekend',
+        name: 'Empty trail',
+        packedCount: 0,
         updatedAt: '2026-04-03T09:00:00.000Z'
+      }, {
+        createdAt: '2026-04-03T09:01:00.000Z',
+        entryCount: 1,
+        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
+        name: 'Unpacked trail',
+        packedCount: 0,
+        updatedAt: '2026-04-03T09:01:00.000Z'
+      }, {
+        createdAt: '2026-04-03T09:02:00.000Z',
+        entryCount: 2,
+        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477da',
+        name: 'Mixed trail',
+        packedCount: 1,
+        updatedAt: '2026-04-03T09:02:00.000Z'
+      }, {
+        createdAt: '2026-04-03T09:03:00.000Z',
+        entryCount: 2,
+        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477db',
+        name: 'Ready trail',
+        packedCount: 2,
+        updatedAt: '2026-04-03T09:03:00.000Z'
       }]
 
       const dbHttp = createListDb(rows)
@@ -488,7 +543,8 @@ describe('user packing list handlers', () => {
         with: {
           entries: {
             columns: {
-              id: true
+              id: true,
+              isPacked: true
             }
           }
         }

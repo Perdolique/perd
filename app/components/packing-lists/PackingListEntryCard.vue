@@ -18,7 +18,7 @@
         </span>
       </label>
 
-      <span v-if="entry.isPacking" :class="$style.status" role="status">Saving {{ entry.title }}…</span>
+      <span v-if="entry.isPacking" :class="$style.status">Saving {{ entry.title }}…</span>
 
       <p v-if="entry.hasPackError" :id="packErrorId" :class="$style.error" role="alert">
         Could not update {{ entry.title }}. Try again.
