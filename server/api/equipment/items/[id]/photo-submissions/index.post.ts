@@ -11,9 +11,12 @@ import {
 import {
   getCloudflareImagesBinding,
   getPhotoSubmissionEnvironment,
-  getPhotoSubmissionRateLimiterBinding
+  getPhotoSubmissionRateLimiterBinding,
+  getPhotoSubmissionTurnstileRateLimiterBinding,
+  getTrustedClientIp
 } from '#server/utils/cloudflare'
 
+import { photoSubmissionTurnstileAction, turnstileTokenHeaderName } from '#shared/utils/turnstile'
 import { createEquipmentItemImageBody, uploadHostedEquipmentImage } from '#server/utils/equipment/item-images'
 
 import {
@@ -33,6 +36,7 @@ import {
 } from '#server/utils/equipment/photo-submission-form'
 
 import { validateRegisteredUser } from '#server/utils/user'
+import { verifyTurnstile } from '#server/utils/turnstile'
 
 import {
   validateItemDetailParams,
@@ -143,6 +147,47 @@ async function enforcePhotoSubmissionRateLimit(event: H3Event, userId: string): 
   }
 }
 
+async function getPhotoSubmissionTurnstileRateLimitOutcomes(
+  event: H3Event,
+  userId: string,
+  clientIp: string
+): Promise<readonly [RateLimitOutcome, RateLimitOutcome]> {
+  try {
+    const limiter = getPhotoSubmissionTurnstileRateLimiterBinding(event)
+    const userOutcome = await limiter.limit({ key: `user:${userId}` })
+    const ipOutcome = await limiter.limit({ key: `ip:${clientIp}` })
+
+    return [userOutcome, ipOutcome]
+  } catch (error) {
+    console.error('Failed to apply photo submission security rate limit', {
+      error,
+      userId
+    })
+
+    throw createError({
+      status: 503,
+      statusMessage: 'Photo submission is temporarily unavailable'
+    })
+  }
+}
+
+async function enforcePhotoSubmissionTurnstileRateLimit(
+  event: H3Event,
+  userId: string,
+  clientIp: string
+): Promise<void> {
+  const outcomes = await getPhotoSubmissionTurnstileRateLimitOutcomes(event, userId, clientIp)
+
+  if (outcomes.some(({ success }) => success === false)) {
+    setResponseHeader(event, 'retry-after', 60)
+
+    throw createError({
+      status: 429,
+      statusMessage: 'Too many photo submission attempts'
+    })
+  }
+}
+
 function sendCreatedResponse(
   event: H3Event,
   submission: PersistedPhotoSubmission
@@ -159,6 +204,16 @@ export default defineEventHandler(async (event): Promise<PhotoSubmissionCreateRe
   const userId = await validateRegisteredUser(event)
   const { id: itemId } = await getValidatedRouterParams(event, validateItemDetailParams)
   const idempotencyKey = readIdempotencyKey(event)
+  const turnstileToken = getRequestHeader(event, turnstileTokenHeaderName)
+  const clientIp = getTrustedClientIp(event, import.meta.dev === true)
+
+  await enforcePhotoSubmissionTurnstileRateLimit(event, userId, clientIp)
+
+  await verifyTurnstile(event, turnstileToken, {
+    remoteIp: clientIp,
+    expectedAction: photoSubmissionTurnstileAction
+  })
+
   const persistedSubmission = await findPersistedPhotoSubmission(event, userId, idempotencyKey)
 
   if (persistedSubmission !== null) {

@@ -9,7 +9,7 @@ const photoSubmissionEnvironmentSchema = v.picklist([
 
 type PhotoSubmissionEnvironment = v.InferOutput<typeof photoSubmissionEnvironmentSchema>
 
-function getGuestClientIp(event: H3Event, isDevelopment: boolean): string {
+function getTrustedClientIp(event: H3Event, isDevelopment: boolean): string {
   const cloudflareIp = getRequestHeader(event, 'cf-connecting-ip')?.trim()
 
   if (cloudflareIp !== undefined && cloudflareIp !== '') {
@@ -24,7 +24,7 @@ function getGuestClientIp(event: H3Event, isDevelopment: boolean): string {
 
   throw createError({
     status: 503,
-    statusMessage: 'Guest session client address unavailable'
+    statusMessage: 'Client address unavailable'
   })
 }
 
@@ -48,6 +48,21 @@ function getPhotoSubmissionRateLimiterBinding(event: H3Event): Env['PHOTO_SUBMIS
     throw createError({
       status: 503,
       statusMessage: 'Photo submission rate limiter unavailable'
+    })
+  }
+
+  return binding
+}
+
+function getPhotoSubmissionTurnstileRateLimiterBinding(
+  event: H3Event
+): Env['PHOTO_SUBMISSION_TURNSTILE_RATE_LIMITER'] {
+  const binding = event.context.cloudflare?.env.PHOTO_SUBMISSION_TURNSTILE_RATE_LIMITER
+
+  if (binding === undefined) {
+    throw createError({
+      status: 503,
+      statusMessage: 'Photo submission security rate limiter unavailable'
     })
   }
 
@@ -137,10 +152,11 @@ export {
   getCloudflareImagesBinding,
   getEmailBinding,
   getEmailSignInRateLimiterBinding,
-  getGuestClientIp,
+  getTrustedClientIp,
   getGuestSessionRateLimiterBinding,
   getPhotoSubmissionEnvironment,
   getPhotoSubmissionRateLimiterBinding,
+  getPhotoSubmissionTurnstileRateLimiterBinding,
   getPasswordRecoveryRateLimiterBinding,
   getTwitchOAuthRateLimiterBinding
 }

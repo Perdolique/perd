@@ -198,6 +198,7 @@
 
         <div :class="$style.actions">
           <PerdButton
+            ref="submitButton"
             :class="$style.submitButton"
             :disabled="isSubmitDisabled"
             :loading="isSubmitting"
@@ -207,6 +208,15 @@
           </PerdButton>
         </div>
       </form>
+
+      <TurnstileWidget
+        ref="turnstileWidget"
+        :sitekey="turnstileSiteKey"
+        :action="photoSubmissionTurnstileAction"
+        @verified="submitPhoto"
+        @error="handleTurnstileError"
+        @cancel="finishTurnstileAttempt"
+      />
     </PerdCard>
   </PageContent>
 </template>
@@ -214,9 +224,11 @@
 <script lang="ts" setup>
   import { useObjectUrl } from '@vueuse/core'
   import { computed, nextTick, ref, shallowRef, useTemplateRef } from 'vue'
-  import { definePageMeta, useFetch, useRequestFetch, useRoute, useUserStore } from '#imports'
+  import { definePageMeta, useFetch, useRequestFetch, useRoute, useRuntimeConfig, useUserStore } from '#imports'
   import type { PhotoSubmissionCreateResponse } from '#server/api/equipment/items/[id]/photo-submissions/index.post'
   import { limits } from '#shared/constants'
+  import { photoSubmissionTurnstileAction, turnstileTokenHeaderName } from '#shared/utils/turnstile'
+  import TurnstileWidget from '~/components/auth/TurnstileWidget.vue'
   import EquipmentImageFilePicker from '~/components/equipment/EquipmentImageFilePicker.vue'
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
@@ -233,6 +245,7 @@
   definePageMeta({ layout: 'page' })
 
   const route = useRoute()
+  const runtimeConfig = useRuntimeConfig()
 
   const itemId = Array.isArray(route.params.id)
     ? route.params.id[0] ?? ''
@@ -240,6 +253,7 @@
 
   const itemPath = createGearLibraryItemPath(itemId)
   const requestFetch = useRequestFetch()
+  const { turnstileSiteKey } = runtimeConfig.public
   const { user } = useUserStore()
 
   const {
@@ -251,6 +265,8 @@
 
   const photoPicker = useTemplateRef('photoPicker')
   const submissionForm = useTemplateRef('submissionForm')
+  const submitButton = useTemplateRef('submitButton')
+  const turnstileWidget = useTemplateRef('turnstileWidget')
   const confirmationStatus = useTemplateRef('confirmationStatus')
   const selectedFiles = shallowRef<File[]>([])
   const sourceType = ref<PhotoSourceType>('own')
@@ -260,6 +276,7 @@
   const submissionStatus = ref<PhotoSubmissionStatus | null>(null)
   const mutationMessage = ref<string | null>(null)
   const idempotencyKey = ref<string | null>(null)
+  let pendingSubmissionFormData: FormData | null = null
 
   function getErrorStatus(error: unknown): number | undefined {
     if (typeof error !== 'object' || error === null) {
@@ -435,35 +452,64 @@
   }
 
   async function handleSubmit() {
-    if (isSubmitDisabled.value || selectedFile.value === null) {
+    if (
+      isSubmitDisabled.value
+      || selectedFile.value === null
+      || submissionForm.value === null
+    ) {
       return
     }
 
+    const formData = new globalThis.FormData(submissionForm.value)
+
+    formData.set('rightsConfirmed', 'true')
+
+    if (isManufacturerSource.value) {
+      formData.set('sourceUrl', sourceUrl.value.trim())
+    }
+
+    pendingSubmissionFormData = formData
     mutationMessage.value = null
     isSubmitting.value = true
 
+    turnstileWidget.value?.execute()
+  }
+
+  async function finishTurnstileAttempt() {
+    pendingSubmissionFormData = null
+    isSubmitting.value = false
+
+    await nextTick()
+    submitButton.value?.focus()
+  }
+
+  async function handleTurnstileError(message: string) {
+    mutationMessage.value = message
+
+    await finishTurnstileAttempt()
+  }
+
+  async function submitPhoto(token: string) {
+    if (
+      !isSubmitting.value
+      || selectedFile.value === null
+      || pendingSubmissionFormData === null
+    ) {
+      return
+    }
+
     const submissionIdempotencyKey = idempotencyKey.value ?? globalThis.crypto.randomUUID()
+    let shouldRestoreSubmitFocus = false
 
     idempotencyKey.value = submissionIdempotencyKey
 
     try {
-      if (submissionForm.value === null) {
-        throw new Error('Photo submission form is unavailable')
-      }
-
-      const formData = new globalThis.FormData(submissionForm.value)
-
-      formData.set('rightsConfirmed', 'true')
-
-      if (isManufacturerSource.value) {
-        formData.set('sourceUrl', sourceUrl.value.trim())
-      }
-
       const response = await requestFetch(`/api/equipment/items/${itemId}/photo-submissions`, {
-        body: formData,
+        body: pendingSubmissionFormData,
 
         headers: {
-          'Idempotency-Key': submissionIdempotencyKey
+          'Idempotency-Key': submissionIdempotencyKey,
+          [turnstileTokenHeaderName]: token
         },
 
         method: 'POST'
@@ -474,9 +520,13 @@
       await nextTick()
       confirmationStatus.value?.focus()
     } catch (error) {
+      shouldRestoreSubmitFocus = true
+
       const statusCode = getErrorStatus(error)
 
-      if (statusCode === 413) {
+      if (statusCode === 403) {
+        mutationMessage.value = 'Security check failed. Try again.'
+      } else if (statusCode === 413) {
         mutationMessage.value = 'Choose a photo that is 5 MB or smaller.'
       } else if (statusCode === 415) {
         mutationMessage.value = 'Choose a valid JPEG, PNG, or WebP image.'
@@ -490,7 +540,13 @@
         mutationMessage.value = 'Could not submit photo. Try again.'
       }
     } finally {
+      pendingSubmissionFormData = null
       isSubmitting.value = false
+
+      if (shouldRestoreSubmitFocus) {
+        await nextTick()
+        submitButton.value?.focus()
+      }
     }
   }
 </script>

@@ -3,9 +3,10 @@ import * as v from 'valibot'
 import { describe, expect, it } from 'vitest'
 
 import {
-  getGuestClientIp,
   getGuestSessionRateLimiterBinding,
   getPhotoSubmissionEnvironment,
+  getPhotoSubmissionTurnstileRateLimiterBinding,
+  getTrustedClientIp,
   getTwitchOAuthRateLimiterBinding
 } from '#server/utils/cloudflare'
 
@@ -105,6 +106,39 @@ describe(getGuestSessionRateLimiterBinding, () => {
   })
 })
 
+describe(getPhotoSubmissionTurnstileRateLimiterBinding, () => {
+  it('should return the configured binding', () => {
+    const binding = {
+      limit() {
+        throw new Error('The getter must not call the binding')
+      }
+    }
+
+    const event = createTestEvent({})
+
+    Object.assign(event.context, {
+      cloudflare: {
+        env: {
+          PHOTO_SUBMISSION_TURNSTILE_RATE_LIMITER: binding
+        }
+      }
+    })
+
+    expect(getPhotoSubmissionTurnstileRateLimiterBinding(event)).toBe(binding)
+  })
+
+  it('should fail closed when the binding is unavailable', () => {
+    const event = createTestEvent({})
+
+    expect(() => getPhotoSubmissionTurnstileRateLimiterBinding(event)).toThrow(
+      expect.objectContaining({
+        statusCode: 503,
+        statusMessage: 'Photo submission security rate limiter unavailable'
+      })
+    )
+  })
+})
+
 describe(getTwitchOAuthRateLimiterBinding, () => {
   it('should return the configured binding', () => {
     const binding = {
@@ -138,13 +172,13 @@ describe(getTwitchOAuthRateLimiterBinding, () => {
   })
 })
 
-describe(getGuestClientIp, () => {
+describe(getTrustedClientIp, () => {
   it('should use the trusted Cloudflare client IP', () => {
     const event = createTestEvent({})
 
     event.node.req.headers['cf-connecting-ip'] = ' 203.0.113.20 '
 
-    expect(getGuestClientIp(event, false)).toBe('203.0.113.20')
+    expect(getTrustedClientIp(event, false)).toBe('203.0.113.20')
   })
 
   it('should use the socket IP only during local development', () => {
@@ -155,9 +189,9 @@ describe(getGuestClientIp, () => {
       value: '127.0.0.1'
     })
 
-    expect(getGuestClientIp(event, true)).toBe('127.0.0.1')
+    expect(getTrustedClientIp(event, true)).toBe('127.0.0.1')
 
-    expect(() => getGuestClientIp(event, false)).toThrow(
+    expect(() => getTrustedClientIp(event, false)).toThrow(
       expect.objectContaining({ statusCode: 503 })
     )
   })
@@ -165,10 +199,10 @@ describe(getGuestClientIp, () => {
   it('should fail closed when no client IP is available', () => {
     const event = createTestEvent({})
 
-    expect(() => getGuestClientIp(event, true)).toThrow(
+    expect(() => getTrustedClientIp(event, true)).toThrow(
       expect.objectContaining({
         statusCode: 503,
-        statusMessage: 'Guest session client address unavailable'
+        statusMessage: 'Client address unavailable'
       })
     )
   })
@@ -178,9 +212,9 @@ describe(getGuestClientIp, () => {
 
     event.node.req.headers['x-forwarded-for'] = '127.0.0.1'
 
-    expect(getGuestClientIp(event, true)).toBe('127.0.0.1')
+    expect(getTrustedClientIp(event, true)).toBe('127.0.0.1')
 
-    expect(() => getGuestClientIp(event, false)).toThrow(
+    expect(() => getTrustedClientIp(event, false)).toThrow(
       expect.objectContaining({ statusCode: 503 })
     )
   })

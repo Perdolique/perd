@@ -1,7 +1,7 @@
 import { defineEventHandler, createError, readValidatedBody, setResponseStatus } from 'h3'
 import { emailRegistrationTurnstileAction } from '#shared/utils/turnstile'
 import { validateEmailRegistration } from '#server/utils/validation/schemas'
-import { getGuestClientIp } from '#server/utils/cloudflare'
+import { getTrustedClientIp } from '#server/utils/cloudflare'
 import { verifyTurnstile } from '#server/utils/turnstile'
 import { getEmailRegistrationConfig } from '#server/utils/config'
 
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event): Promise<EmailRegistrationRespon
   validateEmailAuthenticationRequest(event, config.origin)
 
   const body = await readValidatedBody(event, validateEmailRegistration)
-  const clientIp = getGuestClientIp(event, import.meta.dev === true)
+  const clientIp = getTrustedClientIp(event, import.meta.dev === true)
 
   await verifyTurnstile(event, body['cf-turnstile-response'], {
     remoteIp: clientIp,

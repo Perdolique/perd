@@ -1,6 +1,6 @@
 import { defineEventHandler, readValidatedBody } from 'h3'
 import { validateEmailVerification } from '#server/utils/validation/schemas'
-import { getGuestClientIp } from '#server/utils/cloudflare'
+import { getTrustedClientIp } from '#server/utils/cloudflare'
 import { updateAppSession } from '#server/utils/session'
 import { getEmailRegistrationConfig } from '#server/utils/config'
 
@@ -31,7 +31,7 @@ export default defineEventHandler(async (event): Promise<EmailVerificationRespon
   validateEmailAuthenticationRequest(event, config.origin)
 
   const body = await readValidatedBody(event, validateEmailVerification)
-  const clientIp = getGuestClientIp(event, import.meta.dev === true)
+  const clientIp = getTrustedClientIp(event, import.meta.dev === true)
   const tokenHash = hashToken(body.token)
 
   await enforceEmailAuthenticationRateLimit(event, {
