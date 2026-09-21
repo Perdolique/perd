@@ -99,6 +99,7 @@
       entryCount: row.entryCount,
       id: row.id,
       name: row.name,
+      packedCount: row.packedCount,
       updatedAt: row.updatedAt,
       formattedUpdatedAt: formatUpdatedAt(row.updatedAt)
     }

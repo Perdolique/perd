@@ -1,4 +1,5 @@
 import type { BrowserContext, Locator, Page, Request, Response, Route } from '@playwright/test'
+import { mockAccountUser } from '../fixtures/account-user.fixtures.ts'
 import { expect, test, waitForInitialEmailSignInTurnstile } from '../fixtures/global.fixtures.ts'
 
 interface PackingListSummary {
@@ -6,7 +7,14 @@ interface PackingListSummary {
   entryCount: number;
   id: string;
   name: string;
+  packedCount: number;
   updatedAt: string;
+}
+
+interface PackingListSummaryOptions {
+  entryCount?: number;
+  id?: string;
+  packedCount?: number;
 }
 
 interface PackingListEntryInventory {
@@ -68,6 +76,7 @@ interface PackingListEntryMutationResponse {
 interface EntryPatchReply {
   gate?: Promise<void>;
   status?: number;
+  updateState?: boolean;
   updatedAt?: string;
 }
 
@@ -97,6 +106,7 @@ interface PackingListRouteState {
   entryPatchReplies: Map<string, EntryPatchReply[]>;
   entryPatchRequests: EntryPatchRequest[];
   getDelayMs: number;
+  getGates: Promise<void>[];
   getRequests: number;
   rows: PackingListSummary[];
 }
@@ -105,12 +115,21 @@ const packingListId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
 const pocketRocketInventoryId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9'
 const whisperLiteInventoryId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477da'
 
-function createPackingListSummary(name: string): PackingListSummary {
+const guestUser = {
+  email: null,
+  isAdmin: false,
+  isGuest: true,
+  isTwitchLinked: false,
+  userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
+} as const
+
+function createPackingListSummary(name: string, options: PackingListSummaryOptions = {}): PackingListSummary {
   return {
     createdAt: '2026-04-03T09:00:00.000Z',
-    entryCount: 0,
-    id: packingListId,
+    entryCount: options.entryCount ?? 0,
+    id: options.id ?? packingListId,
     name,
+    packedCount: options.packedCount ?? 0,
     updatedAt: '2026-04-03T09:00:00.000Z'
   }
 }
@@ -222,9 +241,22 @@ function createPackingListRouteState(rows: PackingListSummary[]): PackingListRou
     entryPatchReplies: new Map(),
     entryPatchRequests: [],
     getDelayMs: 0,
+    getGates: [],
     getRequests: 0,
     rows
   }
+}
+
+function syncPackingListSummary(state: PackingListRouteState): void {
+  const entryCount = state.detail.entries.length
+  const packedCount = state.detail.entries.filter((entry) => entry.isPacked).length
+
+  state.rows = state.rows.map((row) => row.id === state.detail.id ? {
+    ...row,
+    entryCount,
+    packedCount,
+    updatedAt: state.detail.updatedAt
+  } : row)
 }
 
 function isPackingListCreateResponse(response: Response): boolean {
@@ -233,6 +265,18 @@ function isPackingListCreateResponse(response: Response): boolean {
   const isPostRequest = response.request().method() === 'POST'
 
   return isPackingListCollectionResponse && isPostRequest
+}
+
+function isPackingListCollectionGetRequest(request: Request): boolean {
+  const responseUrl = new globalThis.URL(request.url())
+  const isPackingListCollectionResponse = responseUrl.pathname === '/api/user/packing-lists'
+  const isGetRequest = request.method() === 'GET'
+
+  return isPackingListCollectionResponse && isGetRequest
+}
+
+function isPackingListCollectionGetResponse(response: Response): boolean {
+  return isPackingListCollectionGetRequest(response.request())
 }
 
 function isPackingListEntryCreateRequest(request: Request): boolean {
@@ -274,12 +318,26 @@ async function fulfillPackingListCollectionRoute(route: Route, page: Page, state
   if (method === 'GET') {
     state.getRequests += 1
 
+    const responseRows = state.rows.map((row) => {
+      return { ...row }
+    })
+
+    const getGate = state.getGates.shift()
+
     if (state.getDelayMs > 0) {
       await page.waitForTimeout(state.getDelayMs)
     }
 
+    if (getGate !== undefined) {
+      await getGate
+    }
+
+    if (request.failure() !== null) {
+      return
+    }
+
     await route.fulfill({
-      json: state.rows
+      json: responseRows
     })
 
     return
@@ -357,6 +415,19 @@ async function fulfillEntryCreateRoute(route: Route, state: PackingListRouteStat
     return
   }
 
+  state.detail = {
+    ...state.detail,
+
+    entries: [
+      ...state.detail.entries,
+      response.entry
+    ],
+
+    updatedAt: response.packingListUpdatedAt
+  }
+
+  syncPackingListSummary(state)
+
   await route.fulfill({
     status: 201,
     json: response
@@ -390,6 +461,8 @@ async function fulfillEntryDeleteRoute(route: Route, state: PackingListRouteStat
     updatedAt: '2026-04-03T09:06:00.000Z'
   }
 
+  syncPackingListSummary(state)
+
   await route.fulfill({
     status: 200,
 
@@ -405,6 +478,7 @@ async function fulfillEntryPatchRoute(route: Route, state: PackingListRouteState
   const entryId = requestUrl.pathname.split('/').at(-1) ?? ''
   const body: unknown = route.request().postDataJSON()
   const reply = state.entryPatchReplies.get(entryId)?.shift()
+  const entry = state.detail.entries.find((current) => current.id === entryId)
 
   state.entryPatchRequests.push({
     body,
@@ -424,8 +498,6 @@ async function fulfillEntryPatchRoute(route: Route, state: PackingListRouteState
     return
   }
 
-  const entry = state.detail.entries.find((current) => current.id === entryId)
-
   if (entry === undefined || !isEntryPatchBody(body)) {
     await route.fulfill({
       status: 400,
@@ -443,10 +515,14 @@ async function fulfillEntryPatchRoute(route: Route, state: PackingListRouteState
     updatedAt
   }
 
-  state.detail = {
-    ...state.detail,
-    entries: state.detail.entries.map((current) => current.id === entryId ? updatedEntry : current),
-    updatedAt: Date.parse(updatedAt) > Date.parse(state.detail.updatedAt) ? updatedAt : state.detail.updatedAt
+  if (reply?.updateState !== false) {
+    state.detail = {
+      ...state.detail,
+      entries: state.detail.entries.map((current) => current.id === entryId ? updatedEntry : current),
+      updatedAt: Date.parse(updatedAt) > Date.parse(state.detail.updatedAt) ? updatedAt : state.detail.updatedAt
+    }
+
+    syncPackingListSummary(state)
   }
 
   await route.fulfill({
@@ -520,6 +596,15 @@ async function mockAuth(context: BrowserContext): Promise<void> {
   })
 }
 
+async function mockLogout(context: BrowserContext): Promise<void> {
+  await context.route('**/api/auth/logout**', async (route) => {
+    await route.fulfill({
+      status: 204,
+      body: ''
+    })
+  })
+}
+
 async function openPackingLists(page: Page): Promise<void> {
   await page.goto('/login?redirectTo=/')
   await waitForInitialEmailSignInTurnstile(page)
@@ -556,6 +641,10 @@ async function getElementBox(locator: Locator) {
   }
 
   return box
+}
+
+function getPackingProgress(page: Page, text: string) {
+  return page.getByRole('status').filter({ hasText: text })
 }
 
 test.describe('Packing list shell', () => {
@@ -634,6 +723,45 @@ test.describe('Packing list shell', () => {
     await expect(opener).toBeFocused()
   })
 
+  test('should show empty, partial, and complete progress on narrow overview cards', async ({ context, page }) => {
+    const state = createPackingListRouteState([
+      createPackingListSummary('Empty trail'),
+
+      createPackingListSummary('A very long weekend packing list for a windy coastal trail', {
+        entryCount: 3,
+        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8',
+        packedCount: 1
+      }),
+
+      createPackingListSummary('Ready trail', {
+        entryCount: 2,
+        id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
+        packedCount: 2
+      })
+    ])
+
+    await page.setViewportSize({
+      height: 844,
+      width: 390
+    })
+
+    await mockAuth(context)
+    await mockPackingListRoutes(context, page, state)
+    await page.goto('/login?redirectTo=/packing-lists')
+    await waitForInitialEmailSignInTurnstile(page)
+    await page.getByRole('button', { name: 'Guest' }).click()
+    await expect(page).toHaveURL(/\/packing-lists$/u)
+    await expect(getPackingProgress(page, '0 items')).toHaveText('0 items')
+    await expect(getPackingProgress(page, '1 of 3 packed')).toHaveText('1 of 3 packed')
+    await expect(getPackingProgress(page, '2 of 2 packed · All packed')).toHaveText('2 of 2 packed · All packed')
+
+    const hasHorizontalOverflow = await page.evaluate(
+      () => globalThis.document.documentElement.scrollWidth > globalThis.document.documentElement.clientWidth
+    )
+
+    expect(hasHorizontalOverflow).toBe(false)
+  })
+
   test('should route from a list card to the item list page', async ({ context, page }) => {
     const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
 
@@ -655,9 +783,61 @@ test.describe('Packing list shell', () => {
     await expect(page.getByText('MSR / Stoves')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Remove Rain jacket' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Remove PocketRocket Deluxe' })).toBeVisible()
+    await expect(getPackingProgress(page, '1 of 2 packed')).toHaveText('1 of 2 packed')
     await expect(page.getByRole('heading', { name: 'Planning' })).toHaveCount(0)
     await expect(page.getByRole('heading', { name: 'Checklist' })).toHaveCount(0)
     expect(state.detailRequests).toBe(1)
+  })
+
+  test('should seed optimistic summary state without marking the overview loaded', async ({ context, page }) => {
+    const state = createPackingListRouteState([createPackingListSummary('Direct trail', {
+      entryCount: 2,
+      packedCount: 1
+    })])
+
+    const [customEntry, inventoryEntry] = createPackingListEntries()
+    const patchGate = createDeferred()
+    const collectionGate = createDeferred()
+
+    state.detail = createPackingListDetail('Direct trail', [customEntry, inventoryEntry])
+
+    state.entryPatchReplies.set(customEntry.id, [{ gate: patchGate.promise }])
+    await mockAuth(context)
+    await mockPackingListRoutes(context, page, state)
+    await page.goto(`/login?redirectTo=/packing-lists/${packingListId}`)
+    await waitForInitialEmailSignInTurnstile(page)
+    await page.getByRole('button', { name: 'Guest' }).click()
+    await expect(page).toHaveURL(new RegExp(`/packing-lists/${packingListId}$`, 'u'))
+    await expect(getPackingProgress(page, '1 of 2 packed')).toHaveText('1 of 2 packed')
+    expect(state.getRequests).toBe(0)
+
+    const patchResponsePromise = page.waitForResponse(isPackingListEntryPatchResponse)
+    const collectionResponsePromise = page.waitForResponse(isPackingListCollectionGetResponse)
+
+    try {
+      await page.getByRole('checkbox', { name: 'Rain jacket' }).click()
+      await expect(getPackingProgress(page, '2 of 2 packed · All packed')).toHaveText('2 of 2 packed · All packed')
+      await expect.poll(() => state.entryPatchRequests.length).toBe(1)
+      state.getGates.push(collectionGate.promise)
+      await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Packing lists' }).click()
+      await expect(page.getByRole('heading', { name: 'Loading packing lists' })).toBeVisible()
+      await expect(page.getByRole('link', { name: /Direct trail/iu })).toHaveCount(0)
+      await expect.poll(() => state.getRequests).toBe(1)
+      collectionGate.resolve()
+
+      await collectionResponsePromise
+
+      await expect(page.getByRole('link', { name: /Direct trail/iu })).toBeVisible()
+      await expect(getPackingProgress(page, '2 of 2 packed · All packed')).toHaveText('2 of 2 packed · All packed')
+      patchGate.resolve()
+
+      await patchResponsePromise
+
+      await expect(getPackingProgress(page, '2 of 2 packed · All packed')).toHaveText('2 of 2 packed · All packed')
+    } finally {
+      patchGate.resolve()
+      collectionGate.resolve()
+    }
   })
 
   test('should pack and unpack both entry types with pointer and keyboard, then restore them from server data', async ({ context, page }) => {
@@ -676,6 +856,7 @@ test.describe('Packing list shell', () => {
 
     await expect(customCheckbox).not.toBeChecked()
     await expect(inventoryCheckbox).toBeChecked()
+    await expect(getPackingProgress(page, '1 of 2 packed')).toHaveText('1 of 2 packed')
 
     const packResponsePromise = page.waitForResponse(isPackingListEntryPatchResponse)
 
@@ -687,6 +868,7 @@ test.describe('Packing list shell', () => {
     expect(packResponse.request().postDataJSON()).toStrictEqual({ isPacked: true })
     await expect(customCheckbox).toBeChecked()
     await expect(customCheckbox).toBeEnabled()
+    await expect(getPackingProgress(page, '2 of 2 packed · All packed')).toHaveText('2 of 2 packed · All packed')
 
     const unpackResponsePromise = page.waitForResponse(isPackingListEntryPatchResponse)
 
@@ -700,6 +882,7 @@ test.describe('Packing list shell', () => {
     await expect(inventoryCheckbox).not.toBeChecked()
     await expect(inventoryCheckbox).toBeEnabled()
     await expect(inventoryCheckbox).toBeFocused()
+    await expect(getPackingProgress(page, '1 of 2 packed')).toHaveText('1 of 2 packed')
     await page.reload()
 
     // The Guest endpoint is mocked, so a full reload needs the same mocked sign-in again.
@@ -707,10 +890,12 @@ test.describe('Packing list shell', () => {
     await page.getByRole('button', { name: /Continue as guest/iu }).click()
     await expect(page.getByRole('checkbox', { name: 'Rain jacket' })).toBeChecked()
     await expect(page.getByRole('checkbox', { name: /PocketRocket Deluxe/u })).not.toBeChecked()
+    await expect(getPackingProgress(page, '1 of 2 packed')).toHaveText('1 of 2 packed')
     await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Packing lists' }).click()
     await page.getByRole('link', { name: /Alpine weekend/iu }).click()
     await expect(page.getByRole('checkbox', { name: 'Rain jacket' })).toBeChecked()
     await expect(page.getByRole('checkbox', { name: /PocketRocket Deluxe/u })).not.toBeChecked()
+    await expect(getPackingProgress(page, '1 of 2 packed')).toHaveText('1 of 2 packed')
 
     expect(state.entryPatchRequests).toStrictEqual([{
       body: { isPacked: true },
@@ -721,11 +906,156 @@ test.describe('Packing list shell', () => {
     }])
   })
 
+  test('should keep optimistic progress when returning before stale requests finish', async ({ context, page }) => {
+    const state = createPackingListRouteState([createPackingListSummary('Fast trail', {
+      entryCount: 2,
+      packedCount: 1
+    })])
+
+    const [customEntry, inventoryEntry] = createPackingListEntries()
+    const patchGate = createDeferred()
+    const collectionGate = createDeferred()
+
+    state.detail = createPackingListDetail('Fast trail', [customEntry, inventoryEntry])
+
+    state.entryPatchReplies.set(customEntry.id, [{ gate: patchGate.promise }])
+    await mockAuth(context)
+    await mockPackingListRoutes(context, page, state)
+    await openPackingLists(page)
+    await page.getByRole('link', { name: /Fast trail/iu }).click()
+
+    const checkbox = page.getByRole('checkbox', { name: 'Rain jacket' })
+
+    try {
+      await checkbox.click()
+      await expect(getPackingProgress(page, '2 of 2 packed · All packed')).toHaveText('2 of 2 packed · All packed')
+      await expect.poll(() => state.entryPatchRequests.length).toBe(1)
+      state.getGates.push(collectionGate.promise)
+
+      const collectionResponsePromise = page.waitForResponse(isPackingListCollectionGetResponse)
+      const patchResponsePromise = page.waitForResponse(isPackingListEntryPatchResponse)
+
+      await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Packing lists' }).click()
+      await expect(page).toHaveURL(/\/packing-lists$/u)
+      await expect(getPackingProgress(page, '2 of 2 packed · All packed')).toHaveText('2 of 2 packed · All packed')
+      await expect.poll(() => state.getRequests).toBe(2)
+      patchGate.resolve()
+
+      await patchResponsePromise
+
+      collectionGate.resolve()
+
+      await collectionResponsePromise
+
+      await expect(getPackingProgress(page, '2 of 2 packed · All packed')).toHaveText('2 of 2 packed · All packed')
+      await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Home' }).click()
+      await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Packing lists' }).click()
+      await expect(getPackingProgress(page, '2 of 2 packed · All packed')).toHaveText('2 of 2 packed · All packed')
+    } finally {
+      patchGate.resolve()
+      collectionGate.resolve()
+    }
+  })
+
+  test('should keep a pending entry locked after leaving and reopening its detail page', async ({ context, page }) => {
+    const state = createPackingListRouteState([createPackingListSummary('Remount trail', {
+      entryCount: 2,
+      packedCount: 1
+    })])
+
+    const [customEntry, inventoryEntry] = createPackingListEntries()
+    const patchGate = createDeferred()
+    const collectionGate = createDeferred()
+
+    state.detail = createPackingListDetail('Remount trail', [customEntry, inventoryEntry])
+
+    state.entryPatchReplies.set(customEntry.id, [{ gate: patchGate.promise }])
+    await mockAuth(context)
+    await mockPackingListRoutes(context, page, state)
+    await openPackingLists(page)
+    await page.getByRole('link', { name: /Remount trail/iu }).click()
+
+    try {
+      await page.getByRole('checkbox', { name: 'Rain jacket' }).click()
+      await expect.poll(() => state.entryPatchRequests.length).toBe(1)
+      state.getGates.push(collectionGate.promise)
+      await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Packing lists' }).click()
+      await expect.poll(() => state.getRequests).toBe(2)
+      await page.getByRole('link', { name: /Remount trail/iu }).click()
+
+      const remountedCheckbox = page.getByRole('checkbox', { name: 'Rain jacket' })
+
+      await expect(remountedCheckbox).toBeChecked()
+      await expect(remountedCheckbox).toBeDisabled()
+      await expect(page.getByRole('button', { name: 'Remove Rain jacket' })).toBeDisabled()
+      expect(state.entryPatchRequests).toHaveLength(1)
+      patchGate.resolve()
+      await expect(remountedCheckbox).toBeEnabled()
+      await expect(remountedCheckbox).toBeChecked()
+      expect(state.entryPatchRequests).toHaveLength(1)
+      collectionGate.resolve()
+    } finally {
+      patchGate.resolve()
+      collectionGate.resolve()
+    }
+  })
+
+  test('should roll overview progress back when a pending pack request fails after navigation', async ({ context, page }) => {
+    const state = createPackingListRouteState([createPackingListSummary('Retry trail', {
+      entryCount: 2,
+      packedCount: 1
+    })])
+
+    const [customEntry, inventoryEntry] = createPackingListEntries()
+    const patchGate = createDeferred()
+    const collectionGate = createDeferred()
+
+    state.detail = createPackingListDetail('Retry trail', [customEntry, inventoryEntry])
+
+    state.entryPatchReplies.set(customEntry.id, [{
+      gate: patchGate.promise,
+      status: 500
+    }])
+
+    await mockAuth(context)
+    await mockPackingListRoutes(context, page, state)
+    await openPackingLists(page)
+    await page.getByRole('link', { name: /Retry trail/iu }).click()
+
+    try {
+      await page.getByRole('checkbox', { name: 'Rain jacket' }).click()
+      await expect.poll(() => state.entryPatchRequests.length).toBe(1)
+      state.getGates.push(collectionGate.promise)
+
+      const patchResponsePromise = page.waitForResponse(isPackingListEntryPatchResponse)
+      const collectionResponsePromise = page.waitForResponse(isPackingListCollectionGetResponse)
+
+      await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Packing lists' }).click()
+      await expect(getPackingProgress(page, '2 of 2 packed · All packed')).toHaveText('2 of 2 packed · All packed')
+      await expect.poll(() => state.getRequests).toBe(2)
+      patchGate.resolve()
+
+      const patchResponse = await patchResponsePromise
+
+      expect(patchResponse.status()).toBe(500)
+      await expect(getPackingProgress(page, '1 of 2 packed')).toHaveText('1 of 2 packed')
+      collectionGate.resolve()
+
+      await collectionResponsePromise
+
+      await expect(getPackingProgress(page, '1 of 2 packed')).toHaveText('1 of 2 packed')
+    } finally {
+      patchGate.resolve()
+      collectionGate.resolve()
+    }
+  })
+
   test('should keep other entries usable and merge responses that finish in reverse order', async ({ context, page }) => {
     const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
     const [customEntry, inventoryEntry] = createPackingListEntries()
     const firstGate = createDeferred()
     const secondGate = createDeferred()
+    const collectionGate = createDeferred()
 
     state.detail = createPackingListDetail('Alpine weekend', [customEntry, inventoryEntry])
 
@@ -753,7 +1083,8 @@ test.describe('Packing list shell', () => {
       await customCheckbox.click()
       await expect(customCheckbox).toBeChecked()
       await expect(customCheckbox).toBeDisabled()
-      await expect(customCard.getByRole('status')).toHaveText('Saving Rain jacket…')
+      await expect(customCard.getByText('Saving Rain jacket…', { exact: true })).toBeVisible()
+      await expect(customCard.getByRole('status')).toHaveCount(0)
       await expect(page.getByRole('button', { name: 'Remove Rain jacket' })).toBeDisabled()
       await expect(inventoryCheckbox).toBeEnabled()
       await expect(page.getByRole('button', { name: 'Remove PocketRocket Deluxe' })).toBeEnabled()
@@ -769,7 +1100,8 @@ test.describe('Packing list shell', () => {
       await inventoryCheckbox.click()
       await expect(inventoryCheckbox).not.toBeChecked()
       await expect(inventoryCheckbox).toBeDisabled()
-      await expect(inventoryCard.getByRole('status')).toHaveText('Saving PocketRocket Deluxe…')
+      await expect(inventoryCard.getByText('Saving PocketRocket Deluxe…', { exact: true })).toBeVisible()
+      await expect(inventoryCard.getByRole('status')).toHaveCount(0)
 
       await expect.poll(() => state.entryPatchRequests).toStrictEqual([{
         body: { isPacked: true },
@@ -779,19 +1111,37 @@ test.describe('Packing list shell', () => {
         entryId: inventoryEntry.id
       }])
 
+      state.getGates.push(collectionGate.promise)
+
+      const collectionResponsePromise = page.waitForResponse(isPackingListCollectionGetResponse)
+
+      await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Packing lists' }).click()
+      await expect.poll(() => state.getRequests).toBe(2)
+      await expect(getPackingProgress(page, '1 of 2 packed')).toHaveText('1 of 2 packed')
+
+      const secondResponsePromise = page.waitForResponse(isPackingListEntryPatchResponse)
+
       secondGate.resolve()
-      await expect(inventoryCheckbox).toBeEnabled()
-      await expect(inventoryCard.getByRole('status')).toHaveCount(0)
-      await expect(inventoryCheckbox).not.toBeChecked()
-      await expect(customCheckbox).toBeChecked()
+
+      await secondResponsePromise
+
+      collectionGate.resolve()
+
+      await collectionResponsePromise
+
+      await expect(getPackingProgress(page, '1 of 2 packed')).toHaveText('1 of 2 packed')
+
+      const firstResponsePromise = page.waitForResponse(isPackingListEntryPatchResponse)
+
       firstGate.resolve()
-      await expect(customCheckbox).toBeEnabled()
-      await expect(customCard.getByRole('status')).toHaveCount(0)
-      await expect(customCheckbox).toBeChecked()
-      await expect(inventoryCheckbox).not.toBeChecked()
+
+      await firstResponsePromise
+
+      await expect(getPackingProgress(page, '1 of 2 packed')).toHaveText('1 of 2 packed')
     } finally {
       firstGate.resolve()
       secondGate.resolve()
+      collectionGate.resolve()
     }
   })
 
@@ -934,6 +1284,7 @@ test.describe('Packing list shell', () => {
     await mockPackingListRoutes(context, page, state)
     await openPackingLists(page)
     await page.getByRole('link', { name: /Weekend trail/iu }).click()
+    await expect(getPackingProgress(page, '1 of 1 packed · All packed')).toHaveText('1 of 1 packed · All packed')
     await page.getByText('Add item', { exact: true }).click()
     await expect(page.getByText('No available My gear items. Type a name to add a custom item.')).toBeVisible()
 
@@ -948,6 +1299,7 @@ test.describe('Packing list shell', () => {
     expect(deleteResponseUrl.pathname).toBe(`/api/user/packing-lists/${packingListId}/entries/${existingEntry.id}`)
     expect(state.entryDeleteRequests).toBe(1)
     await expect(page.getByRole('button', { name: 'Remove PocketRocket Deluxe' })).toHaveCount(0)
+    await expect(getPackingProgress(page, 'packed')).toHaveCount(0)
     await expect(page.getByRole('button', { name: /^PocketRocket Deluxe MSR · Stoves Add$/u })).toBeVisible()
 
     expect(state.availableGearRequests).toStrictEqual([{
@@ -957,6 +1309,71 @@ test.describe('Packing list shell', () => {
       page: 1,
       search: ''
     }])
+  })
+
+  test('should keep packed counts correct while removing unpacked and packed entries', async ({ context, page }) => {
+    const state = createPackingListRouteState([createPackingListSummary('Removal trail', {
+      entryCount: 2,
+      packedCount: 1
+    })])
+
+    const [customEntry, inventoryEntry] = createPackingListEntries()
+    const firstCollectionGate = createDeferred()
+    const secondCollectionGate = createDeferred()
+
+    state.detail = createPackingListDetail('Removal trail', [customEntry, inventoryEntry])
+
+    await mockAuth(context)
+    await mockPackingListRoutes(context, page, state)
+    await openPackingLists(page)
+    await page.getByRole('link', { name: /Removal trail/iu }).click()
+    await expect(getPackingProgress(page, '1 of 2 packed')).toHaveText('1 of 2 packed')
+
+    try {
+      const unpackedDeleteResponsePromise = page.waitForResponse(isPackingListEntryDeleteResponse)
+
+      await page.getByRole('button', { name: 'Remove Rain jacket' }).click()
+
+      await unpackedDeleteResponsePromise
+
+      await expect(getPackingProgress(page, '1 of 1 packed · All packed')).toHaveText('1 of 1 packed · All packed')
+      state.getGates.push(firstCollectionGate.promise)
+
+      const firstCollectionResponsePromise = page.waitForResponse(isPackingListCollectionGetResponse)
+
+      await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Packing lists' }).click()
+      await expect.poll(() => state.getRequests).toBe(2)
+      await expect(getPackingProgress(page, '1 of 1 packed · All packed')).toHaveText('1 of 1 packed · All packed')
+      firstCollectionGate.resolve()
+
+      await firstCollectionResponsePromise
+
+      await page.getByRole('link', { name: /Removal trail/iu }).click()
+
+      const packedDeleteResponsePromise = page.waitForResponse(isPackingListEntryDeleteResponse)
+
+      await page.getByRole('button', { name: 'Remove PocketRocket Deluxe' }).click()
+
+      await packedDeleteResponsePromise
+
+      await expect(getPackingProgress(page, '0 items')).toHaveText('0 items')
+      state.getGates.push(secondCollectionGate.promise)
+
+      const secondCollectionResponsePromise = page.waitForResponse(isPackingListCollectionGetResponse)
+
+      await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Packing lists' }).click()
+      await expect.poll(() => state.getRequests).toBe(3)
+      await expect(getPackingProgress(page, '0 items')).toHaveText('0 items')
+      secondCollectionGate.resolve()
+
+      await secondCollectionResponsePromise
+
+      await expect(getPackingProgress(page, '0 items')).toHaveText('0 items')
+      expect(state.entryDeleteRequests).toBe(2)
+    } finally {
+      firstCollectionGate.resolve()
+      secondCollectionGate.resolve()
+    }
   })
 
   test('should close the item composer with Escape and restore focus', async ({ context, page }) => {
@@ -987,8 +1404,13 @@ test.describe('Packing list shell', () => {
     const whisperLite = createAvailableGearItem(whisperLiteInventoryId, 'WhisperLite Universal')
     const firstPageKey = createAvailableGearKey('', 1)
     const secondPageKey = createAvailableGearKey('', 2)
+    const [customEntry] = createPackingListEntries()
+    const collectionGate = createDeferred()
 
-    state.detail = createPackingListDetail('Alpine weekend', createPackingListEntries().slice(0, 1))
+    state.detail = createPackingListDetail('Alpine weekend', [{
+      ...customEntry,
+      isPacked: true
+    }])
 
     state.availableGearResponses.set(firstPageKey, [{
       items: [pocketRocket],
@@ -1013,6 +1435,7 @@ test.describe('Packing list shell', () => {
     await mockPackingListRoutes(context, page, state)
     await openPackingLists(page)
     await page.getByRole('link', { name: /Alpine weekend/iu }).click()
+    await expect(getPackingProgress(page, '1 of 1 packed · All packed')).toHaveText('1 of 1 packed · All packed')
     await expect(page.getByText('Add item', { exact: true })).toBeVisible()
     expect(state.availableGearRequests).toHaveLength(0)
     await page.getByText('Add item', { exact: true }).click()
@@ -1033,12 +1456,31 @@ test.describe('Packing list shell', () => {
     await createRequestPromise
 
     await expect(page.getByText('WhisperLite Universal', { exact: true }).first()).toBeVisible()
+    await expect(getPackingProgress(page, '1 of 2 packed')).toHaveText('1 of 2 packed')
+    await expect(page.getByText('All packed', { exact: true })).toHaveCount(0)
     await expect(page.getByText('WhisperLite Universal added.', { exact: true })).toHaveCount(0)
     await expect(page.getByLabel('Find an item')).toBeFocused()
 
     expect(state.entryCreateBodies).toStrictEqual([{
       inventoryId: whisperLiteInventoryId
     }])
+
+    state.getGates.push(collectionGate.promise)
+
+    const collectionResponsePromise = page.waitForResponse(isPackingListCollectionGetResponse)
+
+    try {
+      await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Packing lists' }).click()
+      await expect.poll(() => state.getRequests).toBe(2)
+      await expect(getPackingProgress(page, '1 of 2 packed')).toHaveText('1 of 2 packed')
+      collectionGate.resolve()
+
+      await collectionResponsePromise
+
+      await expect(getPackingProgress(page, '1 of 2 packed')).toHaveText('1 of 2 packed')
+    } finally {
+      collectionGate.resolve()
+    }
 
     expect(state.availableGearRequests).toStrictEqual([{
       page: 1,
@@ -1096,11 +1538,13 @@ test.describe('Packing list shell', () => {
     }])
   })
 
-  test('should show an empty item list page', async ({ context, page }) => {
+  test('should keep one progress status while adding the first item to an empty list', async ({ context, page }) => {
     const state = createPackingListRouteState([createPackingListSummary('Empty trail')])
+    const customName = 'Emergency blanket'
 
     state.detail = createPackingListDetail('Empty trail')
 
+    state.entryCreateResponses.push(createCustomEntryMutation(customName))
     await mockAuth(context)
     await mockPackingListRoutes(context, page, state)
     await openPackingLists(page)
@@ -1114,6 +1558,8 @@ test.describe('Packing list shell', () => {
 
     await expect(page.getByText('Add another item', { exact: true })).toBeVisible()
     await expect(page.getByLabel('Find an item')).toBeVisible()
+    await expect(getPackingProgress(page, '0 items')).toHaveText('0 items')
+    await expect(page.getByRole('status')).toHaveCount(1)
     await expect(page.getByRole('heading', { name: 'Planning' })).toHaveCount(0)
     await expect(page.getByRole('heading', { name: 'Checklist' })).toHaveCount(0)
     expect(state.detailRequests).toBe(1)
@@ -1122,6 +1568,111 @@ test.describe('Packing list shell', () => {
       page: 1,
       search: ''
     }])
+
+    await page.getByLabel('Find an item').fill(customName)
+    await page.getByRole('button', { name: `Add "${customName}" as custom item` }).click()
+    await expect(getPackingProgress(page, '0 of 1 packed')).toHaveText('0 of 1 packed')
+    await expect(page.getByRole('status')).toHaveCount(1)
+  })
+
+  test('should abort a stale collection request and keep reset state after logout', async ({ context, page }) => {
+    const state = createPackingListRouteState([createPackingListSummary('Old session trail')])
+    const staleCollectionGate = createDeferred()
+    const freshCollectionGate = createDeferred()
+
+    await mockAuth(context)
+    await mockAccountUser(context, guestUser)
+    await mockLogout(context)
+    await mockPackingListRoutes(context, page, state)
+    await openPackingLists(page)
+    await expect(page.getByRole('link', { name: /Old session trail/iu })).toBeVisible()
+
+    try {
+      state.getGates.push(staleCollectionGate.promise)
+
+      const failedRequestPromise = page.waitForEvent('requestfailed', isPackingListCollectionGetRequest)
+      const sidebar = page.getByTestId('shell-sidebar')
+
+      await sidebar.getByRole('link', { name: 'Home' }).click()
+      await sidebar.getByRole('link', { name: 'Packing lists' }).click()
+      await expect.poll(() => state.getRequests).toBe(2)
+      await sidebar.getByRole('link', { name: 'Profile' }).click()
+      await page.getByRole('button', { name: 'Log out' }).click()
+
+      const failedRequest = await failedRequestPromise
+
+      expect(failedRequest.failure()?.errorText).toMatch(/ERR_ABORTED/u)
+      staleCollectionGate.resolve()
+      await expect(page).toHaveURL(/\/login$/u)
+
+      state.rows = [createPackingListSummary('New session trail')]
+      state.detail = createPackingListDetail('New session trail')
+
+      state.getGates.push(freshCollectionGate.promise)
+      await page.getByRole('button', { name: 'Guest' }).click()
+      await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Packing lists' }).click()
+      await expect.poll(() => state.getRequests).toBe(3)
+      await expect(page.getByRole('heading', { name: 'Loading packing lists' })).toBeVisible()
+      await expect(page.getByRole('link', { name: /Old session trail/iu })).toHaveCount(0)
+      freshCollectionGate.resolve()
+      await expect(page.getByRole('link', { name: /New session trail/iu })).toBeVisible()
+    } finally {
+      staleCollectionGate.resolve()
+      freshCollectionGate.resolve()
+    }
+  })
+
+  test('should ignore a failed entry mutation that finishes after logout reset', async ({ context, page }) => {
+    const state = createPackingListRouteState([createPackingListSummary('Old mutation trail', {
+      entryCount: 1
+    })])
+
+    const [customEntry] = createPackingListEntries()
+    const patchGate = createDeferred()
+
+    state.detail = createPackingListDetail('Old mutation trail', [customEntry])
+
+    state.entryPatchReplies.set(customEntry.id, [{
+      gate: patchGate.promise,
+      status: 500,
+      updateState: false
+    }])
+
+    await mockAuth(context)
+    await mockAccountUser(context, guestUser)
+    await mockLogout(context)
+    await mockPackingListRoutes(context, page, state)
+    await openPackingLists(page)
+    await page.getByRole('link', { name: /Old mutation trail/iu }).click()
+
+    const patchResponsePromise = page.waitForResponse(isPackingListEntryPatchResponse)
+
+    try {
+      await page.getByRole('checkbox', { name: 'Rain jacket' }).click()
+      await expect.poll(() => state.entryPatchRequests.length).toBe(1)
+      await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Profile' }).click()
+      await page.getByRole('button', { name: 'Log out' }).click()
+      await expect(page).toHaveURL(/\/login$/u)
+
+      state.rows = [createPackingListSummary('New mutation trail', {
+        entryCount: 1
+      })]
+
+      state.detail = createPackingListDetail('New mutation trail', [customEntry])
+
+      await page.getByRole('button', { name: 'Guest' }).click()
+      await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Packing lists' }).click()
+      await expect(getPackingProgress(page, '0 of 1 packed')).toHaveText('0 of 1 packed')
+      patchGate.resolve()
+
+      const patchResponse = await patchResponsePromise
+
+      expect(patchResponse.status()).toBe(500)
+      await expect(getPackingProgress(page, '0 of 1 packed')).toHaveText('0 of 1 packed')
+      await expect(getPackingProgress(page, '-1 of 1 packed')).toHaveCount(0)
+    } finally {
+      patchGate.resolve()
+    }
   })
 
   test('should show cached lists while refreshing on return', async ({ context, page }) => {

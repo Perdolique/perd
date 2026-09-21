@@ -3,6 +3,7 @@ interface PackingListSummary {
   entryCount: number;
   id: string;
   name: string;
+  packedCount: number;
   updatedAt: string;
 }
 
@@ -18,6 +19,19 @@ interface PackingListAvailableGearItem {
   category: string;
   inventoryId: string;
   itemName: string;
+}
+
+type PackingListEntryCreateBody = {
+  customName: string;
+} | {
+  inventoryId: string;
+}
+
+interface PackingListEntryUpdateOptions {
+  entryId: string;
+  isPacked: boolean;
+  packingListId: string;
+  previousIsPacked: boolean;
 }
 
 interface PackingListEntryBase {
@@ -68,8 +82,10 @@ export type {
   PackingListAvailableGearItem,
   PackingListDetail,
   PackingListEntry,
+  PackingListEntryCreateBody,
   PackingListCustomEntry,
   PackingListEntryInventory,
+  PackingListEntryUpdateOptions,
   PackingListInventoryEntry,
   PackingListEntryView,
   PackingListSummary,

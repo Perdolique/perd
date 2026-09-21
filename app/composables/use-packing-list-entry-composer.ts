@@ -2,6 +2,7 @@ import { computed, onScopeDispose, ref, watch } from 'vue'
 import { watchDebounced } from '@vueuse/core'
 import { useRequestFetch } from '#imports'
 import type { PackingListAvailableGearItem, PackingListEntry } from '~/types/packing'
+import { usePackingListsStore } from '~/stores/packing-lists'
 
 interface ComposerOptions {
   initiallyOpen: boolean;
@@ -16,6 +17,7 @@ interface ErrorWithStatus {
 
 export function usePackingListEntryComposer(options: ComposerOptions) {
   const requestFetch = useRequestFetch()
+  const packingListsStore = usePackingListsStore()
   const availableGearItems = ref<PackingListAvailableGearItem[]>([])
   const nextPage = ref<number | null>(null)
   const searchQuery = ref('')
@@ -209,12 +211,8 @@ export function usePackingListEntryComposer(options: ComposerOptions) {
     creatingInventoryId.value = item.inventoryId
 
     try {
-      const response = await requestFetch(`/api/user/packing-lists/${options.packingListId}/entries`, {
-        method: 'POST',
-
-        body: {
-          inventoryId: item.inventoryId
-        }
+      const response = await packingListsStore.createPackingListEntry(options.packingListId, {
+        inventoryId: item.inventoryId
       })
 
       await applySuccessfulCreation(response.entry, response.packingListUpdatedAt)
@@ -244,12 +242,8 @@ export function usePackingListEntryComposer(options: ComposerOptions) {
     isCreatingCustomEntry.value = true
 
     try {
-      const response = await requestFetch(`/api/user/packing-lists/${options.packingListId}/entries`, {
-        method: 'POST',
-
-        body: {
-          customName
-        }
+      const response = await packingListsStore.createPackingListEntry(options.packingListId, {
+        customName
       })
 
       await applySuccessfulCreation(response.entry, response.packingListUpdatedAt)
