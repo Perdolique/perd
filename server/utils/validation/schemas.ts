@@ -245,7 +245,14 @@ const itemSubmissionCreateBodySchema = v.pipe(
       v.maxLength(limits.maxEquipmentItemNameLength)
     ),
 
-    properties: v.optional(v.array(itemSubmissionPropertySchema), [])
+    properties: v.optional(v.array(itemSubmissionPropertySchema), []),
+
+    sourceUrl: v.pipe(
+      trimmedNonEmptyStringSchema,
+      v.maxLength(limits.maxEquipmentItemSubmissionSourceUrlLength),
+      v.regex(/^https:\/\//iu, 'sourceUrl must be an absolute HTTPS URL'),
+      v.url()
+    )
   }),
   v.check((input) => {
     const propertyIds = input.properties.map((property) => property.propertyId)

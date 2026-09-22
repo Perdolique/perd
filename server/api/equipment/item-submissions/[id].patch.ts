@@ -45,6 +45,7 @@ export default defineEventHandler(async (event): Promise<ItemSubmissionDetailRes
           createdAt: equipmentItems.createdAt,
           createdBy: equipmentItems.createdBy,
           id: equipmentItems.id,
+          sourceUrl: equipmentItems.sourceUrl,
           status: equipmentItems.status,
           updatedAt: equipmentItems.updatedAt
         })
@@ -245,6 +246,7 @@ export default defineEventHandler(async (event): Promise<ItemSubmissionDetailRes
         name: body.name,
         properties: normalizedProperties.map((property) => mapNormalizedProperty(property)),
         rejectionReason,
+        sourceUrl: item.sourceUrl,
         status,
         updatedAt: updatedItem.updatedAt
       }

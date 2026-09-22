@@ -10,6 +10,7 @@ import {
   selectPerdOption
 } from '../fixtures/gear-library-entry-list.fixtures.ts'
 
+const sourceUrl = 'https://shop.example/product?ref=gear#details'
 const pendingItemId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477ee'
 
 const brands = [{
@@ -157,6 +158,7 @@ function getSelect(page: Page, label: 'Brand' | 'Category' | 'Fuel type' | 'Piez
 
 async function fillBaseFields(page: Page) {
   await page.getByLabel('Item name').fill('PocketRocket Deluxe')
+  await page.getByLabel('Source URL').fill(sourceUrl)
   await selectPerdOption(getSelect(page, 'Brand'), '10')
   await selectPerdOption(getSelect(page, 'Category'), 'stoves')
 }
@@ -357,6 +359,116 @@ test.describe('Gear submissions', () => {
     await expect(page.getByRole('button', { name: 'Submit for review' })).toBeEnabled()
   })
 
+  test('should require a valid HTTPS source URL before submitting and trim it in the request', async ({ context, page }) => {
+    const requests: Request[] = []
+
+    await mockSubmissionApi(context, {
+      submit: async (route) => {
+        requests.push(route.request())
+
+        await route.fulfill({
+          status: 201,
+
+          json: {
+            id: pendingItemId,
+            status: 'pending'
+          }
+        })
+      }
+    })
+
+    await openRegisteredSubmissionPage(context, page)
+
+    const sourceInput = page.getByLabel('Source URL')
+    const submitButton = page.getByRole('button', { name: 'Submit for review' })
+
+    await expect(sourceInput).toHaveAttribute('required', '')
+    await expect(sourceInput).toHaveAttribute('type', 'url')
+    await expect(sourceInput).not.toHaveAttribute('aria-invalid', 'true')
+    await expect(page.getByText('Enter a source URL.')).toHaveCount(0)
+    await fillBaseFields(page)
+    await sourceInput.clear()
+    await expect(submitButton).toBeDisabled()
+    await expect(sourceInput).toHaveAttribute('aria-invalid', 'true')
+    await expect(sourceInput).toHaveAccessibleDescription(/Enter a source URL\./u)
+    await sourceInput.press('Enter')
+    expect(requests).toHaveLength(0)
+    await sourceInput.fill('http://example.com/product')
+    await expect(submitButton).toBeDisabled()
+    await expect(sourceInput).toHaveAccessibleDescription(/Enter a valid HTTPS URL\./u)
+    await sourceInput.press('Enter')
+    expect(requests).toHaveLength(0)
+    await sourceInput.fill('https:example.com')
+    await expect(submitButton).toBeDisabled()
+    await expect(sourceInput).toHaveAccessibleDescription(/Enter a valid HTTPS URL\./u)
+    await sourceInput.fill('https:/example.com')
+    await expect(submitButton).toBeDisabled()
+    await expect(sourceInput).toHaveAccessibleDescription(/Enter a valid HTTPS URL\./u)
+    await sourceInput.fill('https://')
+    await expect(submitButton).toBeDisabled()
+    await expect(sourceInput).toHaveAccessibleDescription(/Enter a valid HTTPS URL\./u)
+    await sourceInput.fill('not a URL')
+    await expect(submitButton).toBeDisabled()
+    await expect(sourceInput).toHaveAccessibleDescription(/Enter a valid HTTPS URL\./u)
+    await sourceInput.fill(`  ${sourceUrl}  `)
+    await expect(sourceInput).not.toHaveAttribute('aria-invalid', 'true')
+    await expect(submitButton).toBeEnabled()
+    await submitButton.click()
+    await expect(page.getByRole('status')).toContainText('Submitted for review.')
+    expect(requests).toHaveLength(1)
+    expect(requests[0]?.postDataJSON()).toMatchObject({ sourceUrl })
+  })
+
+  test('should preserve pasted source URLs and validate their trimmed length', async ({ context, page }) => {
+    await mockSubmissionApi(context)
+    await openRegisteredSubmissionPage(context, page)
+    await fillBaseFields(page)
+
+    const sourceInput = page.getByLabel('Source URL')
+    const submitButton = page.getByRole('button', { name: 'Submit for review' })
+    const prefix = 'https://shop.example/'
+    const sourceAtLimit = `${prefix}${'a'.repeat(2048 - prefix.length)}`
+    const overlongSource = `${sourceAtLimit}b`
+    const paddedSource = `  ${sourceAtLimit}  `
+
+    await sourceInput.clear()
+    await sourceInput.focus()
+    await page.keyboard.insertText(overlongSource)
+    await expect(sourceInput).toHaveValue(overlongSource)
+    await expect(sourceInput).toHaveAccessibleDescription(/Use a source URL with 2,048 characters or fewer\./u)
+    await expect(submitButton).toBeDisabled()
+    await sourceInput.clear()
+    await page.keyboard.insertText(paddedSource)
+    await expect(sourceInput).toHaveValue(paddedSource)
+    await expect(sourceInput).not.toHaveAttribute('aria-invalid', 'true')
+    await expect(submitButton).toBeEnabled()
+
+    const requestPromise = page.waitForRequest(isSubmissionRequest)
+
+    await submitButton.click()
+
+    const request = await requestPromise
+
+    expect(request.postDataJSON()).toMatchObject({ sourceUrl: sourceAtLimit })
+    await expect(page.getByRole('status')).toContainText('Submitted for review.')
+  })
+
+  test('should preserve the source URL when changing category', async ({ context, page }) => {
+    await mockSubmissionApi(context)
+    await openRegisteredSubmissionPage(context, page)
+    await fillBaseFields(page)
+    await page.getByLabel('Weight').fill('83.5')
+    await selectPerdOption(getSelect(page, 'Category'), 'sleeping-pads')
+
+    await page.getByRole('button', {
+      name: 'Change category',
+      exact: true
+    }).click()
+
+    await expect(page.getByLabel('R-value')).toBeVisible()
+    await expect(page.getByLabel('Source URL')).toHaveValue(sourceUrl)
+  })
+
   test('should submit exact typed properties and replace the form with confirmation', async ({
     context,
     page
@@ -389,6 +501,7 @@ test.describe('Gear submissions', () => {
       brandId: 10,
       categoryId: 2,
       name: 'PocketRocket Deluxe',
+      sourceUrl,
 
       properties: [{
         propertyId: 21,
@@ -434,6 +547,7 @@ test.describe('Gear submissions', () => {
     await expect(page.getByText('Could not submit item. Try again.')).toBeVisible()
     await expect(page.getByLabel('Item name')).toHaveValue('PocketRocket Deluxe')
     await expect(page.getByLabel('Weight')).toHaveValue('83.5')
+    await expect(page.getByLabel('Source URL')).toHaveValue(sourceUrl)
     await page.getByRole('button', { name: 'Submit for review' }).click()
     await expect(page.getByRole('status')).toContainText('Submitted for review.')
     expect(submitResponder.getRequestCount()).toBe(2)
@@ -480,7 +594,9 @@ test.describe('Gear submissions', () => {
 
     await expect(page.getByLabel('Item name')).toHaveValue('PocketRocket Deluxe')
     await expect(page.getByLabel('Weight')).toHaveValue('83.5')
+    await expect(page.getByLabel('Source URL')).toHaveValue(sourceUrl)
     await expect(page.getByLabel('Item name')).toBeEnabled()
+    await expect(page.getByLabel('Source URL')).toBeEnabled()
     await expect(submitButton).toBeEnabled()
   })
 
@@ -499,6 +615,8 @@ test.describe('Gear submissions', () => {
     await expect(page.getByRole('status')).toContainText('Submitted for review.')
     await page.getByRole('button', { name: 'Submit another item' }).click()
     await expect(page.getByLabel('Item name')).toHaveValue('')
+    await expect(page.getByLabel('Source URL')).toHaveValue('')
+    await expect(page.getByLabel('Source URL')).not.toHaveAttribute('aria-invalid', 'true')
     await expect(page.getByLabel('Item name')).toBeFocused()
     await expect(getSelect(page, 'Brand')).toHaveAttribute('data-value', '')
     await expect(getSelect(page, 'Category')).toHaveAttribute('data-value', '')
@@ -519,6 +637,7 @@ test.describe('Gear submissions', () => {
       brandId: 10,
       categoryId: 2,
       name: 'PocketRocket 2',
+      sourceUrl,
       properties: []
     })
 
@@ -562,6 +681,7 @@ test.describe('Gear submissions', () => {
       brandId: 10,
       categoryId: 2,
       name: 'PocketRocket Deluxe',
+      sourceUrl,
       properties: []
     })
   })

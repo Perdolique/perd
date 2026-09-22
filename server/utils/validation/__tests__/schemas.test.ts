@@ -1228,13 +1228,15 @@ describe('validation schemas', () => {
     const result = validateItemSubmissionCreateBody({
       brandId: 1,
       categoryId: 2,
-      name: '  PocketRocket Deluxe  '
+      name: '  PocketRocket Deluxe  ',
+      sourceUrl: '  https://example.com/product  '
     })
 
     expect(result).toStrictEqual({
       brandId: 1,
       categoryId: 2,
       name: 'PocketRocket Deluxe',
+      sourceUrl: 'https://example.com/product',
       properties: []
     })
   })
@@ -1244,6 +1246,7 @@ describe('validation schemas', () => {
       brandId: 1,
       categoryId: 2,
       name: 'PocketRocket Deluxe',
+      sourceUrl: 'https://example.com/product',
 
       properties: [{
         propertyId: 3,
@@ -1268,36 +1271,42 @@ describe('validation schemas', () => {
       brandId: 0,
       categoryId: 2,
       name: 'Item',
+      sourceUrl: 'https://example.com/product',
       properties: []
     },
     {
       brandId: 1.5,
       categoryId: 2,
       name: 'Item',
+      sourceUrl: 'https://example.com/product',
       properties: []
     },
     {
       brandId: 1,
       categoryId: -1,
       name: 'Item',
+      sourceUrl: 'https://example.com/product',
       properties: []
     },
     {
       brandId: 1,
       categoryId: 2,
       name: '   ',
+      sourceUrl: 'https://example.com/product',
       properties: []
     },
     {
       brandId: 1,
       categoryId: 2,
       name: 'I'.repeat(limits.maxEquipmentItemNameLength + 1),
+      sourceUrl: 'https://example.com/product',
       properties: []
     },
     {
       brandId: 1,
       categoryId: 2,
       name: 'Item',
+      sourceUrl: 'https://example.com/product',
 
       properties: [{
         propertyId: 1,
@@ -1308,6 +1317,7 @@ describe('validation schemas', () => {
       brandId: 1,
       categoryId: 2,
       name: 'Item',
+      sourceUrl: 'https://example.com/product',
 
       properties: [{
         propertyId: 1,
@@ -1319,6 +1329,64 @@ describe('validation schemas', () => {
     }
   ])('should reject invalid item submission body: %j', (body) => {
     expect(() => validateItemSubmissionCreateBody(body)).toThrow(/./u)
+  })
+
+  it.each([
+    undefined,
+    null,
+    '',
+    '   ',
+    42,
+    {},
+    'not a URL',
+    '/product',
+    'http://example.com/product',
+    'https:example.com',
+    'https:/example.com',
+    'https://',
+    'https://exa mple.com/product',
+
+    // oxlint-disable-next-line no-script-url -- Deliberate invalid input verifies rejection of executable URLs.
+    'javascript:alert(1)',
+    'data:text/html,hello',
+    `https://example.com/${'a'.repeat(2030)}`
+  ])('should reject an invalid item submission source URL: %j', (sourceUrl) => {
+    expect(() => validateItemSubmissionCreateBody({
+      brandId: 1,
+      categoryId: 2,
+      name: 'Item',
+      sourceUrl
+    })).toThrow(/./u)
+  })
+
+  it('should accept an uppercase HTTPS scheme without rewriting the source URL', () => {
+    const sourceUrl = 'HTTPS://example.com/product?ref=gear#details'
+
+    const result = validateItemSubmissionCreateBody({
+      brandId: 1,
+      categoryId: 2,
+      name: 'Item',
+      sourceUrl
+    })
+
+    expect(result.sourceUrl).toBe(sourceUrl)
+  })
+
+  it('should accept a source URL at the length limit without changing its query or fragment', () => {
+    const prefix = 'https://shop.example/product?ref='
+    const suffix = '#details'
+    const paddingLength = limits.maxEquipmentItemSubmissionSourceUrlLength - prefix.length - suffix.length
+    const sourceUrl = `${prefix}${'a'.repeat(paddingLength)}${suffix}`
+
+    const result = validateItemSubmissionCreateBody({
+      brandId: 1,
+      categoryId: 2,
+      name: 'Item',
+      sourceUrl
+    })
+
+    expect(result.sourceUrl).toBe(sourceUrl)
+    expect(result.sourceUrl).toHaveLength(2048)
   })
 
   it('should validate admin item submission pagination boundaries', () => {

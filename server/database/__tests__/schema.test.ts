@@ -75,6 +75,13 @@ describe('equipment item rejection reason', () => {
   })
 })
 
+describe('equipment item submission source', () => {
+  it('should allow legacy null sources and limit URLs to 2048 characters', () => {
+    expect(schema.equipmentItems.sourceUrl.notNull).toBe(false)
+    expect(schema.equipmentItems.sourceUrl.getSQLType()).toBe('varchar(2048)')
+  })
+})
+
 describe('equipment catalog research schema', () => {
   it('should require a unique display order within each category', () => {
     const tableConfig = getTableConfig(schema.categoryProperties)

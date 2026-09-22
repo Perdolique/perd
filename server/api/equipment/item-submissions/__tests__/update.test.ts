@@ -48,6 +48,7 @@ vi.mock(import('#server/utils/config'), () => {
 interface UpdateDbOptions {
   contributionError?: Error;
   item?: unknown;
+  sourceUrl?: string | null;
 }
 
 function expectIdPredicate(
@@ -70,6 +71,7 @@ function createUpdateDb(options: UpdateDbOptions = {}) {
   const defaultItem = {
     createdAt: new Date('2026-08-01T12:00:00Z'),
     createdBy: 'author-1',
+    sourceUrl: options.sourceUrl === undefined ? 'https://example.com/product' : options.sourceUrl,
     id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
     status: 'pending',
     updatedAt: new Date('2026-08-01T12:30:00Z')
@@ -115,7 +117,7 @@ function createUpdateDb(options: UpdateDbOptions = {}) {
     return { returning: updateReturningMock }
   })
 
-  const updateSetMock = vi.fn(() => {
+  const updateSetMock = vi.fn((_values: unknown) => {
     return { where: updateWhereMock }
   })
 
@@ -397,6 +399,63 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
       expect(result.status).toBe(status)
     }
   )
+
+  it.each([
+    {
+      decision: undefined,
+      rejectionReason: undefined,
+      sourceUrl: 'https://example.com/product'
+    },
+    {
+      decision: 'publish',
+      rejectionReason: undefined,
+      sourceUrl: 'https://example.com/product'
+    },
+    {
+      decision: 'reject',
+      rejectionReason: 'Duplicate item',
+      sourceUrl: 'https://example.com/product'
+    },
+    {
+      decision: undefined,
+      rejectionReason: undefined,
+      sourceUrl: null
+    },
+    {
+      decision: 'publish',
+      rejectionReason: undefined,
+      sourceUrl: null
+    },
+    {
+      decision: 'reject',
+      rejectionReason: 'Duplicate item',
+      sourceUrl: null
+    }
+  ] as const)('should preserve the original source URL for $decision with $sourceUrl', async ({ decision, rejectionReason, sourceUrl }) => {
+    const db = createUpdateDb({ sourceUrl })
+
+    createWebSocketClientMock.mockReturnValue(db.dbWrite)
+
+    readValidatedBodyMock.mockResolvedValue({
+      brandId: 1,
+      categoryId: 2,
+      decision,
+      expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
+      name: 'Updated item',
+      properties: [],
+      rejectionReason,
+      sourceUrl: 'https://example.com/replacement'
+    })
+
+    const result = await updateHandler(createTestEvent({}))
+
+    expect(db.selectMock).toHaveBeenCalledWith(expect.objectContaining({
+      sourceUrl: equipmentItems.sourceUrl
+    }))
+
+    expect(db.updateSetMock.mock.calls[0]?.[0]).not.toHaveProperty('sourceUrl')
+    expect(result.sourceUrl).toBe(sourceUrl)
+  })
 
   it('should delete all EAV values without inserting replacements when properties are empty', async () => {
     const db = createUpdateDb()

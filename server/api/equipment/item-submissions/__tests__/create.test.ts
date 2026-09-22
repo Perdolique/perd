@@ -205,6 +205,7 @@ describe('post /api/equipment/item-submissions', () => {
       brandId: 1,
       categoryId: 2,
       name: 'PocketRocket Deluxe',
+      sourceUrl: 'https://example.com/product',
       properties: []
     })
   })
@@ -274,6 +275,7 @@ describe('post /api/equipment/item-submissions', () => {
       categoryId: 2,
       createdBy: 'user-1',
       name: 'PocketRocket Deluxe',
+      sourceUrl: 'https://example.com/product',
       status: 'pending'
     })
 
@@ -344,6 +346,7 @@ describe('post /api/equipment/item-submissions', () => {
       brandId: 1,
       categoryId: 2,
       name: 'PocketRocket Deluxe',
+      sourceUrl: 'https://example.com/product',
 
       properties: [{
         propertyId: 3,
@@ -401,6 +404,7 @@ describe('post /api/equipment/item-submissions', () => {
       brandId: 1,
       categoryId: 2,
       name: 'PocketRocket Deluxe',
+      sourceUrl: 'https://example.com/product',
 
       properties: [{
         propertyId: 3,
@@ -448,6 +452,35 @@ describe('post /api/equipment/item-submissions', () => {
     expect(readValidatedBodyMock).not.toHaveBeenCalled()
     expect(getItemSubmissionRateLimiterBindingMock).not.toHaveBeenCalled()
     expect(itemSubmissionLimitMock).not.toHaveBeenCalled()
+    expect(createWebSocketClientMock).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    undefined,
+    'not a URL'
+  ])('should reject source URL %j through body validation before rate limiting or writes', async (sourceUrl) => {
+    const actualH3 = await vi.importActual<typeof h3>('h3')
+
+    readValidatedBodyMock.mockImplementationOnce(actualH3.readValidatedBody)
+
+    const event = createTestEvent({})
+
+    const body = JSON.stringify({
+      brandId: 1,
+      categoryId: 2,
+      name: 'Item',
+      sourceUrl
+    })
+
+    event.node.req.method = 'POST'
+    event.node.req.headers['content-type'] = 'application/json'
+
+    event.node.req.push(body)
+
+    // oxlint-disable-next-line unicorn/prefer-single-call -- Readable streams end with a separate null chunk.
+    event.node.req.push(null)
+    await expect(createItemSubmissionHandler(event)).rejects.toMatchObject({ statusCode: 400 })
+    expect(getItemSubmissionRateLimiterBindingMock).not.toHaveBeenCalled()
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 

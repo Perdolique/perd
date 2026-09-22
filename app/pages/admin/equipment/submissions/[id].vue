@@ -75,6 +75,22 @@
             <time :datetime="submittedDateTime">{{ submittedDateLabel }}</time>
           </dd>
         </div>
+
+        <div :class="$style.metadataGroup">
+          <dt :class="$style.metadataTerm">Source</dt>
+          <dd>
+            <a
+              v-if="hasSourceUrl"
+              :href="sourceUrl"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              Open source (opens in a new tab)
+            </a>
+
+            <span v-else>Not provided</span>
+          </dd>
+        </div>
       </dl>
 
       <p
@@ -138,6 +154,8 @@
 
   const isInitialLoading = computed(() => submissionStatus.value === 'pending')
   const hasInitialError = computed(() => submissionError.value !== undefined)
+  const sourceUrl = computed(() => submission.value?.sourceUrl ?? '')
+  const hasSourceUrl = computed(() => sourceUrl.value !== '')
 
   const decisionStatus = computed(() => {
     const status = submission.value?.status
