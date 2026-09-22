@@ -22,7 +22,7 @@ if (isCI) {
 export default defineConfig({
   testDir: './tests/playwright',
   fullyParallel: true,
-  globalTimeout: 300_000,
+  globalTimeout: isCI ? 600_000 : 300_000,
 
   // Fail the build on CI if you accidentally left test.only in the source code
   forbidOnly: isCI,

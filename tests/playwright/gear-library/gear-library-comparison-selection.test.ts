@@ -320,9 +320,11 @@ test.describe('Gear library comparison selection', () => {
       getRequiredLoadMoreItem(3)
     ]
 
-    for (const item of selectedItems) {
+    for (const [itemIndex, item] of selectedItems.entries()) {
+      const currentSelection = selectedItems.slice(0, itemIndex + 1)
+
       // oxlint-disable-next-line no-await-in-loop -- URL-backed selections must update in order.
-      await page.getByRole('checkbox', { name: `Select ${item.name}` }).check()
+      await selectComparisonItem(page, item, currentSelection)
     }
 
     const tray = page.getByTestId('gear-library-comparison-tray')
@@ -423,9 +425,11 @@ test.describe('Gear library comparison selection', () => {
     const [firstItem, secondItem, thirdItem, fourthItem, fifthItem] = scrollableItemsResponse.items
     const selectedItems = [firstItem, secondItem, thirdItem, fourthItem]
 
-    for (const item of selectedItems) {
+    for (const [itemIndex, item] of selectedItems.entries()) {
+      const currentSelection = selectedItems.slice(0, itemIndex + 1)
+
       // oxlint-disable-next-line no-await-in-loop -- URL-backed selections must update in order.
-      await page.getByRole('checkbox', { name: `Select ${item.name}` }).check()
+      await selectComparisonItem(page, item, currentSelection)
     }
 
     const fifthCheckbox = page.getByRole('checkbox', { name: `Select ${fifthItem.name}` })
