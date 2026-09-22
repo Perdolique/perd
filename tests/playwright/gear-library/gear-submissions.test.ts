@@ -27,6 +27,10 @@ const categories = [{
   id: 1,
   name: 'Sleeping Pads',
   slug: 'sleeping-pads'
+}, {
+  id: 3,
+  name: 'Sleeping Bags',
+  slug: 'sleeping-bags'
 }]
 
 const stovesCategory = {
@@ -35,24 +39,28 @@ const stovesCategory = {
   slug: 'stoves',
 
   properties: [{
+    allowsNegativeValues: false,
     dataType: 'number',
     id: 21,
     name: 'Weight',
     slug: 'weight',
     unit: 'g'
   }, {
+    allowsNegativeValues: false,
     dataType: 'text',
     id: 24,
     name: 'Notes',
     slug: 'notes',
     unit: null
   }, {
+    allowsNegativeValues: false,
     dataType: 'text',
     id: 25,
     name: 'Manufacturer code',
     slug: 'manufacturer-code',
     unit: null
   }, {
+    allowsNegativeValues: false,
     dataType: 'enum',
 
     enumOptions: [{
@@ -66,6 +74,7 @@ const stovesCategory = {
     slug: 'fuel-type',
     unit: null
   }, {
+    allowsNegativeValues: false,
     dataType: 'boolean',
     id: 22,
     name: 'Piezo ignition',
@@ -80,6 +89,7 @@ const sleepingPadsCategory = {
   slug: 'sleeping-pads',
 
   properties: [{
+    allowsNegativeValues: false,
     dataType: 'number',
     id: 11,
     name: 'R-value',
@@ -92,6 +102,28 @@ interface SubmissionReferenceMockOptions {
   categoryDetail?: (route: Route) => Promise<void>;
   submit?: (route: Route) => Promise<void>;
 }
+
+const sleepingBagsCategory = {
+  id: 3,
+  name: 'Sleeping Bags',
+  slug: 'sleeping-bags',
+
+  properties: [{
+    allowsNegativeValues: false,
+    dataType: 'number',
+    id: 31,
+    name: 'Weight',
+    slug: 'weight',
+    unit: 'g'
+  }, {
+    allowsNegativeValues: true,
+    dataType: 'number',
+    id: 32,
+    name: 'Temperature rating',
+    slug: 'temperature-rating',
+    unit: '°C'
+  }]
+} as const
 
 async function mockSubmissionApi(
   context: BrowserContext,
@@ -114,6 +146,13 @@ async function mockSubmissionApi(
 
     const request = route.request()
     const { pathname } = new globalThis.URL(request.url())
+
+    if (pathname.endsWith('/sleeping-bags')) {
+      await route.fulfill({ json: sleepingBagsCategory })
+
+      return
+    }
+
     const response = pathname.endsWith('/sleeping-pads') ? sleepingPadsCategory : stovesCategory
 
     await route.fulfill({ json: response })
@@ -358,6 +397,162 @@ test.describe('Gear submissions', () => {
     await fillBaseFields(page)
     await expect(page.getByRole('button', { name: 'Submit for review' })).toBeEnabled()
   })
+
+  test('should block negative characteristics and preserve the form until corrected', async ({ context, page }) => {
+    const requests: Request[] = []
+
+    await mockSubmissionApi(context, {
+      submit: async (route) => {
+        requests.push(route.request())
+
+        await route.fulfill({
+          status: 201,
+
+          json: {
+            id: pendingItemId,
+            status: 'pending'
+          }
+        })
+      }
+    })
+
+    await openRegisteredSubmissionPage(context, page)
+    await fillBaseFields(page)
+    await page.getByLabel('Notes').fill('Keep this note')
+    await selectPerdOption(getSelect(page, 'Fuel type'), 'canister')
+    await selectPerdOption(getSelect(page, 'Piezo ignition'), 'false')
+
+    const weightInput = page.getByLabel('Weight')
+    const submitButton = page.getByRole('button', { name: 'Submit for review' })
+
+    await weightInput.fill('-5')
+    await expect(weightInput).toBeFocused()
+    await expect(weightInput).toHaveAttribute('aria-invalid', 'true')
+    await expect(weightInput).toHaveAccessibleDescription('Unit: g Enter zero or a positive number.')
+    await expect(page.getByRole('alert')).toHaveText('Enter zero or a positive number.')
+    await expect(submitButton).toBeDisabled()
+    await weightInput.press('Enter')
+    expect(requests).toHaveLength(0)
+    await weightInput.fill('-0.5')
+    await expect(submitButton).toBeDisabled()
+    await expect(weightInput).toHaveAttribute('aria-invalid', 'true')
+    await weightInput.press('Enter')
+    expect(requests).toHaveLength(0)
+    await weightInput.fill('83.5')
+    await expect(weightInput).not.toHaveAttribute('aria-invalid', 'true')
+    await expect(weightInput).toHaveAccessibleDescription('Unit: g')
+    await expect(page.getByText('Enter zero or a positive number.')).toHaveCount(0)
+    await expect(page.getByLabel('Item name')).toHaveValue('PocketRocket Deluxe')
+    await expect(page.getByLabel('Source URL')).toHaveValue(sourceUrl)
+    await expect(page.getByLabel('Notes')).toHaveValue('Keep this note')
+    await expect(submitButton).toBeEnabled()
+    await submitButton.click()
+    await expect(page.getByRole('status')).toContainText('Submitted for review.')
+    expect(requests).toHaveLength(1)
+
+    expect(requests[0]?.postDataJSON()).toStrictEqual({
+      brandId: 10,
+      categoryId: 2,
+      name: 'PocketRocket Deluxe',
+      sourceUrl,
+
+      properties: [{
+        propertyId: 21,
+        value: '83.5'
+      }, {
+        propertyId: 24,
+        value: 'Keep this note'
+      }, {
+        propertyId: 23,
+        value: 'canister'
+      }, {
+        propertyId: 22,
+        value: false
+      }]
+    })
+  })
+
+  test('should submit negative temperatures without allowing negative weight', async ({ context, page }) => {
+    await mockSubmissionApi(context)
+    await openRegisteredSubmissionPage(context, page)
+    await fillBaseFields(page)
+    await selectPerdOption(getSelect(page, 'Category'), 'sleeping-bags')
+
+    const temperatureInput = page.getByLabel('Temperature rating')
+    const weightInput = page.getByLabel('Weight')
+    const submitButton = page.getByRole('button', { name: 'Submit for review' })
+
+    await temperatureInput.fill('-10.5')
+    await expect(temperatureInput).not.toHaveAttribute('aria-invalid', 'true')
+    await expect(submitButton).toBeEnabled()
+    await weightInput.fill('-1')
+    await expect(weightInput).toHaveAttribute('aria-invalid', 'true')
+    await expect(submitButton).toBeDisabled()
+    await weightInput.fill('800')
+
+    const requestPromise = page.waitForRequest(isSubmissionRequest)
+
+    await submitButton.click()
+
+    const request = await requestPromise
+
+    expect(request.postDataJSON()).toMatchObject({
+      categoryId: 3,
+
+      properties: [{
+        propertyId: 31,
+        value: '800'
+      }, {
+        propertyId: 32,
+        value: '-10.5'
+      }]
+    })
+
+    await expect(page.getByRole('status')).toContainText('Submitted for review.')
+  })
+
+  for (const { weight, properties } of [{
+    weight: '0',
+
+    properties: [{
+      propertyId: 21,
+      value: '0'
+    }]
+  }, {
+    weight: '-0',
+
+    properties: [{
+      propertyId: 21,
+      value: '0'
+    }]
+  }, {
+    weight: '',
+    properties: []
+  }]) {
+    test(`should accept zero or omitted weight: "${weight}"`, async ({ context, page }) => {
+      await mockSubmissionApi(context)
+      await openRegisteredSubmissionPage(context, page)
+      await fillBaseFields(page)
+
+      const weightInput = page.getByLabel('Weight')
+      const submitButton = page.getByRole('button', { name: 'Submit for review' })
+
+      await weightInput.fill('-1')
+      await expect(submitButton).toBeDisabled()
+      await weightInput.fill(weight)
+      await expect(weightInput).not.toHaveAttribute('aria-invalid', 'true')
+      await expect(submitButton).toBeEnabled()
+
+      const requestPromise = page.waitForRequest(isSubmissionRequest)
+
+      await submitButton.click()
+
+      const request = await requestPromise
+
+      expect(request.postDataJSON()).toMatchObject({ properties })
+      await expect(page.getByRole('status')).toContainText('Submitted for review.')
+    })
+  }
 
   test('should require a valid HTTPS source URL before submitting and trim it in the request', async ({ context, page }) => {
     const requests: Request[] = []

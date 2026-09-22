@@ -11,6 +11,7 @@
       :disabled="disabled"
       :name="name"
       :aria-describedby="describedBy"
+      :aria-invalid="ariaInvalid"
       type="number"
       inputmode="decimal"
       step="any"
@@ -60,6 +61,7 @@
   const errorId = `${componentId}-error`
   const hasUnit = computed(() => unit !== undefined && unit !== null)
   const hasError = computed(() => error !== undefined)
+  const ariaInvalid = computed(() => hasError.value || undefined)
 
   const describedBy = computed(() => {
     const ids = []
@@ -99,7 +101,7 @@
     color: var(--color-text-primary);
     font: inherit;
 
-    &:hover:not(:disabled) {
+    &:hover:not(:disabled, [aria-invalid='true']) {
       border-color: var(--color-accent-primary);
     }
 
@@ -108,6 +110,10 @@
       outline: 2px solid var(--color-accent-primary);
       outline-offset: 2px;
       box-shadow: var(--shadow-focus);
+    }
+
+    &[aria-invalid='true'] {
+      border-color: var(--color-danger-primary);
     }
   }
 

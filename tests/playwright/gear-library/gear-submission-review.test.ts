@@ -40,6 +40,7 @@ const stovesCategory = {
   slug: 'stoves',
 
   properties: [{
+    allowsNegativeValues: false,
     dataType: 'number',
     id: 21,
     name: 'Weight',
@@ -54,6 +55,7 @@ const sleepingPadsCategory = {
   slug: 'sleeping-pads',
 
   properties: [{
+    allowsNegativeValues: false,
     dataType: 'number',
     id: 11,
     name: 'R-value',
@@ -312,6 +314,83 @@ test.describe('Admin gear submission review', () => {
     await page.getByRole('button', { name: 'Retry' }).click()
     await expect(page.getByText('The review queue is clear.')).toBeVisible()
     expect(requestCount).toBeGreaterThan(requestCountBeforeRetry)
+  })
+
+  test('should block negative characteristics during review until corrected', async ({ context, page }) => {
+    const patchRequests: Request[] = []
+
+    await mockReferences(context)
+
+    await context.route((url) => url.pathname === detailPath, async (route) => {
+      const request = route.request()
+
+      if (request.method() === 'PATCH') {
+        patchRequests.push(request)
+
+        await route.fulfill({
+          json: {
+            ...detail,
+
+            properties: [{
+              propertyId: 21,
+              value: '90'
+            }],
+
+            updatedAt: '2026-08-01T12:31:00.000Z'
+          }
+        })
+
+        return
+      }
+
+      await route.fulfill({ json: detail })
+    })
+
+    await authenticate({
+      context,
+      isAdmin: true,
+      page,
+      target: `/admin/equipment/submissions/${submissionId}`
+    })
+
+    const weightInput = page.getByLabel('Weight')
+    const saveButton = page.getByRole('button', { name: 'Save changes' })
+
+    const publishButton = page.getByRole('button', {
+      name: 'Publish',
+      exact: true
+    })
+
+    const rejectButton = page.getByRole('button', {
+      name: 'Reject',
+      exact: true
+    })
+
+    await weightInput.fill('-0.5')
+    await expect(weightInput).toHaveAttribute('aria-invalid', 'true')
+    await expect(weightInput).toHaveAccessibleDescription('Unit: g Enter zero or a positive number.')
+    await expect(saveButton).toBeDisabled()
+    await expect(publishButton).toBeDisabled()
+    await expect(rejectButton).toBeDisabled()
+    await weightInput.press('Enter')
+    expect(patchRequests).toHaveLength(0)
+    await weightInput.fill('90')
+    await expect(weightInput).not.toHaveAttribute('aria-invalid', 'true')
+    await expect(saveButton).toBeEnabled()
+    await expect(publishButton).toBeEnabled()
+    await expect(rejectButton).toBeEnabled()
+    await saveButton.click()
+    await expect(page.getByRole('status')).toHaveText('Changes saved.')
+    expect(patchRequests).toHaveLength(1)
+
+    expect(patchRequests[0]?.postDataJSON()).toMatchObject({
+      name: detail.name,
+
+      properties: [{
+        propertyId: 21,
+        value: '90'
+      }]
+    })
   })
 
   test('should prefill, save an exact full replacement, and adopt the response baseline', async ({
