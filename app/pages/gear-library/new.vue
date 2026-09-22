@@ -39,7 +39,7 @@
         :is-submitting="isSubmitting"
         mode="create"
         :mutation-message="mutationMessage"
-        @submit="handleSubmit"
+        @create="handleSubmit"
       />
     </div>
   </PageContent>
@@ -48,7 +48,12 @@
 <script lang="ts" setup>
   import { computed, nextTick, ref, useTemplateRef } from 'vue'
   import { definePageMeta, useRequestFetch, useUserStore } from '#imports'
-  import EquipmentItemEditor, { type EquipmentItemEditorValue } from '~/components/equipment/EquipmentItemEditor.vue'
+
+  import EquipmentItemEditor, {
+    type EquipmentItemEditorValue,
+    type EquipmentItemSubmissionValue
+  } from '~/components/equipment/EquipmentItemEditor.vue'
+
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PerdButton from '~/components/PerdButton.vue'
   import PerdLink from '~/components/PerdLink.vue'
@@ -83,7 +88,7 @@
     isSubmitted.value = false
   }
 
-  async function handleSubmit(body: EquipmentItemEditorValue) {
+  async function handleSubmit(body: EquipmentItemSubmissionValue) {
     mutationMessage.value = null
     isSubmitting.value = true
 

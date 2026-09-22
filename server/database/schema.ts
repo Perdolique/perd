@@ -315,6 +315,9 @@ const equipmentItems = pgTable('equipment_items', {
   rejectionReason:
     varchar({ length: limits.maxEquipmentItemRejectionReasonLength }),
 
+  sourceUrl:
+    varchar({ length: limits.maxEquipmentItemSubmissionSourceUrlLength }),
+
   createdBy:
     uuid()
     .references(() => users.id, {

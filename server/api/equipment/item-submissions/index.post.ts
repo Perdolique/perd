@@ -161,6 +161,7 @@ export default defineEventHandler(async (event): Promise<ItemSubmissionCreateRes
           categoryId: body.categoryId,
           createdBy: userId,
           name: body.name,
+          sourceUrl: body.sourceUrl,
           status: 'pending'
         })
         .returning({

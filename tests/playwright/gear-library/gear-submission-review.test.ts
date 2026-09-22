@@ -92,6 +92,7 @@ const detail = {
   }],
 
   rejectionReason: null,
+  sourceUrl: 'https://example.com/product',
   status: 'pending',
   updatedAt: '2026-08-01T12:30:00.000Z'
 }
@@ -348,6 +349,13 @@ test.describe('Admin gear submission review', () => {
       target: `/admin/equipment/submissions/${submissionId}`
     })
 
+    const sourceLink = page.getByRole('link', { name: 'Open source (opens in a new tab)' })
+
+    await expect(sourceLink).toHaveAttribute('href', detail.sourceUrl)
+    await expect(sourceLink).toHaveAttribute('target', '_blank')
+    await expect(sourceLink).toHaveAttribute('rel', 'noopener noreferrer')
+    await expect(page.getByRole('textbox', { name: 'Source URL' })).toHaveCount(0)
+
     const saveButton = page.getByRole('button', { name: 'Save changes' })
 
     await expect(page.getByLabel('Item name')).toHaveValue('PocketRocket Deluxe')
@@ -376,7 +384,113 @@ test.describe('Admin gear submission review', () => {
     await expect(page.getByRole('status')).toBeFocused()
     await expect(saveButton).toBeDisabled()
     await expect(page.getByText('UTC')).toBeVisible()
+    await expect(sourceLink).toHaveAttribute('href', detail.sourceUrl)
+
+    await context.route(detail.sourceUrl, async (route) => {
+      await route.fulfill({
+        contentType: 'text/html',
+        body: '<h1>Source page</h1>'
+      })
+    })
+
+    const popupPromise = page.waitForEvent('popup')
+
+    await sourceLink.click()
+
+    const popup = await popupPromise
+
+    await expect(popup).toHaveURL(detail.sourceUrl)
+    await expect(popup.getByRole('heading', { name: 'Source page' })).toBeVisible()
+    await popup.close()
+    await expect(page.getByLabel('Item name')).toHaveValue('PocketRocket Deluxe 2')
   })
+
+  for (const scenario of [{
+    actionLabel: 'Save changes',
+    decision: 'save',
+    expectedMessage: 'Changes saved.',
+    rejectionReason: null,
+    status: 'pending'
+  }, {
+    actionLabel: 'Publish',
+    decision: 'publish',
+    expectedMessage: 'Published',
+    rejectionReason: null,
+    status: 'approved'
+  }, {
+    actionLabel: 'Reject',
+    decision: 'reject',
+    expectedMessage: 'Rejected',
+    rejectionReason: 'Duplicate item',
+    status: 'rejected'
+  }] as const) {
+    const { actionLabel, decision, expectedMessage, rejectionReason, status } = scenario
+
+    test(`should ${decision} a legacy submission without a source URL`, async ({ context, page }) => {
+      const patchRequests: Request[] = []
+
+      const legacyDetail = {
+        ...detail,
+        sourceUrl: null
+      }
+
+      await mockReferences(context)
+
+      await context.route((url) => url.pathname === detailPath, async (route) => {
+        if (route.request().method() === 'PATCH') {
+          patchRequests.push(route.request())
+
+          await route.fulfill({
+            json: {
+              ...legacyDetail,
+              name: 'Updated item',
+              rejectionReason,
+              status,
+              updatedAt: '2026-08-01T12:31:00.000Z'
+            }
+          })
+
+          return
+        }
+
+        await route.fulfill({ json: legacyDetail })
+      })
+
+      await authenticate({
+        context,
+        isAdmin: true,
+        page,
+        target: `/admin/equipment/submissions/${submissionId}`
+      })
+
+      await expect(page.getByText('Not provided', { exact: true })).toBeVisible()
+      await expect(page.getByRole('link', { name: 'Open source (opens in a new tab)' })).toHaveCount(0)
+      await expect(page.getByRole('textbox', { name: 'Source URL' })).toHaveCount(0)
+      await page.getByLabel('Item name').fill('Updated item')
+
+      await page.getByRole('button', {
+        name: actionLabel,
+        exact: true
+      }).click()
+
+      if (decision !== 'save') {
+        const dialog = page.getByRole('dialog')
+
+        if (decision === 'reject') {
+          await dialog.getByLabel('Reason').fill('Duplicate item')
+        }
+
+        await dialog.getByRole('button', {
+          name: actionLabel,
+          exact: true
+        }).click()
+      }
+
+      await expect(page.getByRole('status')).toContainText(expectedMessage)
+      expect(patchRequests).toHaveLength(1)
+      expect(patchRequests[0]?.postDataJSON()).not.toHaveProperty('sourceUrl')
+    })
+  }
 
   test('should publish the current unsaved edits and focus the terminal state', async ({
     context,

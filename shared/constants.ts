@@ -13,6 +13,7 @@ const limits = {
   maxEquipmentItemImageByteLength: 5_000_000,
   maxEquipmentItemImageFilenameLength: 255,
   maxEquipmentItemPhotoSubmissionSourceUrlLength: 2048,
+  maxEquipmentItemSubmissionSourceUrlLength: 2048,
   maxEquipmentItemNameLength: 256,
   maxEquipmentItemRejectionReasonLength: 256,
   maxEquipmentItemsFilterCount: 20,

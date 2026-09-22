@@ -7,6 +7,10 @@ import { createWebSocketClient } from '#server/utils/database'
 
 type TestDatabase = ReturnType<typeof createWebSocketClient>
 
+interface IsolatedPostgreSQLOptions {
+  beforeMigration?: string;
+}
+
 interface IsolatedPostgreSQLContext {
   database: TestDatabase;
   rootDatabase: TestDatabase;
@@ -42,14 +46,21 @@ function getLocalDatabaseUrl(): URL {
   return databaseUrl
 }
 
-async function applyMigrations(database: TestDatabase): Promise<void> {
+async function applyMigrations(database: TestDatabase, beforeMigration?: string): Promise<void> {
   const migrations = new URL('../server/database/migrations/', import.meta.url)
   const folders = await readdir(migrations)
 
   // oxlint-disable-next-line unicorn/no-array-sort -- The project TypeScript target does not expose ES2023 Array#toSorted.
   const migrationNames = folders.filter(name => /^\d{14}_/u.test(name)).sort()
+  const endIndex = beforeMigration === undefined ? migrationNames.length : migrationNames.indexOf(beforeMigration)
 
-  for (const name of migrationNames) {
+  if (endIndex === -1) {
+    throw new Error(`Unknown migration boundary: ${beforeMigration}`)
+  }
+
+  const migrationsToApply = migrationNames.slice(0, endIndex)
+
+  for (const name of migrationsToApply) {
     // oxlint-disable-next-line no-await-in-loop -- Migrations depend on the preceding schema version.
     const migration = await readFile(new URL(`${name}/migration.sql`, migrations), 'utf8')
 
@@ -95,7 +106,10 @@ async function releaseDatabaseResources(resources: DatabaseResources): Promise<v
 }
 
 /** Creates a migrated local PostgreSQL schema and owns its complete cleanup lifecycle. */
-async function createIsolatedPostgreSQL(schemaPrefix: string): Promise<IsolatedPostgreSQLContext> {
+async function createIsolatedPostgreSQL(
+  schemaPrefix: string,
+  options: IsolatedPostgreSQLOptions = {}
+): Promise<IsolatedPostgreSQLContext> {
   if (!schemaPrefixPattern.test(schemaPrefix)) {
     throw new Error('Invalid isolated PostgreSQL schema prefix')
   }
@@ -129,7 +143,7 @@ async function createIsolatedPostgreSQL(schemaPrefix: string): Promise<IsolatedP
       throw new Error('Isolated schema was not selected; refusing to run migrations')
     }
 
-    await applyMigrations(resources.database)
+    await applyMigrations(resources.database, options.beforeMigration)
 
     let isDisposed = false
 

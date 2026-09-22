@@ -11,6 +11,7 @@ interface ItemSubmissionPropertyValue {
 interface ItemSubmissionDetailResponse extends ItemSubmissionListItem {
   properties: ItemSubmissionPropertyValue[];
   rejectionReason: string | null;
+  sourceUrl: string | null;
   status: 'approved' | 'pending' | 'rejected';
   updatedAt: Date | string;
 }
@@ -51,6 +52,7 @@ export default defineEventHandler(async (event): Promise<ItemSubmissionDetailRes
       id: true,
       name: true,
       rejectionReason: true,
+      sourceUrl: true,
       status: true,
       updatedAt: true
     },
@@ -114,6 +116,7 @@ export default defineEventHandler(async (event): Promise<ItemSubmissionDetailRes
     name: item.name,
     properties: item.propertyValues.map(mapPropertyValue),
     rejectionReason: item.rejectionReason,
+    sourceUrl: item.sourceUrl,
     status: 'pending',
     updatedAt: item.updatedAt
   }

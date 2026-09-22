@@ -47,6 +47,21 @@
         />
       </div>
 
+      <TextInput
+        v-if="isCreateMode"
+        v-model="sourceUrl"
+        autocomplete="url"
+        :disabled="isSubmitting"
+        :error="sourceUrlError"
+        hint="Link to a page with this item's details."
+        label="Source URL"
+        name="sourceUrl"
+        placeholder="https://example.com/product"
+        required
+        type="url"
+        @update:model-value="sourceUrlTouched = true"
+      />
+
       <section
         v-if="hasSelectedCategory"
         :class="$style.properties"
@@ -205,7 +220,11 @@
     properties: EquipmentItemEditorProperty[];
   }
 
-  export type { EquipmentItemEditorValue }
+  interface EquipmentItemSubmissionValue extends EquipmentItemEditorValue {
+    sourceUrl: string;
+  }
+
+  export type { EquipmentItemEditorValue, EquipmentItemSubmissionValue }
 </script>
 
 <script lang="ts" setup>
@@ -230,6 +249,7 @@
   }
 
   interface Emits {
+    create: [value: EquipmentItemSubmissionValue];
     publish: [value: EquipmentItemEditorValue];
     reject: [value: EquipmentItemEditorValue, rejectionReason: string];
     submit: [value: EquipmentItemEditorValue];
@@ -262,6 +282,9 @@
   const itemNameInput = useTemplateRef('itemNameInput')
   const maxItemNameLength = limits.maxEquipmentItemNameLength
   const maxRejectionReasonLength = limits.maxEquipmentItemRejectionReasonLength
+  const maxSourceUrlLength = limits.maxEquipmentItemSubmissionSourceUrlLength
+  const sourceUrl = ref('')
+  const sourceUrlTouched = ref(false)
   const itemName = ref('')
   const selectedBrandId = ref('')
   const selectedCategorySlug = ref('')
@@ -419,6 +442,34 @@
 
   const hasMutationMessage = computed(() => props.mutationMessage !== undefined && props.mutationMessage !== null)
   const isReviewMode = computed(() => props.mode === 'review')
+  const isCreateMode = computed(() => props.mode === 'create')
+  const trimmedSourceUrl = computed(() => sourceUrl.value.trim())
+
+  const sourceUrlValidationMessage = computed(() => {
+    const { value } = trimmedSourceUrl
+
+    if (value === '') {
+      return 'Enter a source URL.'
+    }
+
+    if (value.length > maxSourceUrlLength) {
+      return 'Use a source URL with 2,048 characters or fewer.'
+    }
+
+    const hasHttpsAuthority = /^https:\/\//iu.test(value)
+    const isValidUrl = globalThis.URL.canParse(value)
+
+    return hasHttpsAuthority && isValidUrl ? undefined : 'Enter a valid HTTPS URL.'
+  })
+
+  const sourceUrlError = computed(() => sourceUrlTouched.value
+    ? sourceUrlValidationMessage.value
+    : undefined)
+
+  const hasInvalidSourceUrl = computed(() => (
+    isCreateMode.value && sourceUrlValidationMessage.value !== undefined
+  ))
+
   const submitLabel = computed(() => props.mode === 'review' ? 'Save changes' : 'Submit for review')
   const trimmedItemName = computed(() => itemName.value.trim())
 
@@ -589,6 +640,7 @@
 
   const isSubmitDisabled = computed(() => (
     currentValue.value === null
+    || hasInvalidSourceUrl.value
     || isMandatoryReferenceReady.value === false
     || isReviewDetailUnavailable.value
     || props.isSubmitting
@@ -666,6 +718,18 @@
     const { value } = currentValue
 
     if (isSubmitDisabled.value || value === null) {
+      return
+    }
+
+    if (isCreateMode.value) {
+      emit('create', {
+        brandId: value.brandId,
+        categoryId: value.categoryId,
+        name: value.name,
+        properties: value.properties,
+        sourceUrl: trimmedSourceUrl.value
+      })
+
       return
     }
 

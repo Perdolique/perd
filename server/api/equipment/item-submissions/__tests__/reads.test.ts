@@ -168,7 +168,7 @@ describe('admin equipment submission reads', () => {
     })
   })
 
-  it('should preserve decimal strings and boolean false in pending detail', async () => {
+  it.each(['https://example.com/product', null])('should preserve properties and source URL %j in pending detail', async (sourceUrl) => {
     const findFirstMock = vi.fn((_config: DetailQueryConfig) => {
       return {
         brand: {
@@ -204,6 +204,7 @@ describe('admin equipment submission reads', () => {
         }],
 
         rejectionReason: null,
+        sourceUrl,
         status: 'pending',
         updatedAt: new Date('2026-08-01T12:30:00Z')
       }
@@ -229,6 +230,8 @@ describe('admin equipment submission reads', () => {
     const detailQueryConfig = findFirstMock.mock.calls[0]?.[0]
 
     expect(detailQueryConfig?.columns.updatedAt).toBe(true)
+    expect(detailQueryConfig?.columns.sourceUrl).toBe(true)
+    expect(result.sourceUrl).toBe(sourceUrl)
 
     expect(result.properties).toStrictEqual([
       {
