@@ -31,6 +31,7 @@ interface CategoryPropertyEnumOption {
 }
 
 interface CategoryDetailProperty {
+  allowsNegativeValues: boolean;
   dataType: string;
   enumOptions?: CategoryPropertyEnumOption[];
   id: number;
@@ -46,15 +47,35 @@ interface CategoryDetail {
   slug: string;
 }
 
+interface CategoryPropertyColumns {
+  allowsNegativeValues: boolean;
+}
+
+interface CategoryPropertyOrder {
+  displayOrder: 'asc';
+  id: 'asc';
+}
+
+interface CategoryPropertyEnumOptionQuery {
+  columns: Record<keyof CategoryPropertyEnumOption, boolean>;
+}
+
+interface CategoryPropertyRelations {
+  enumOptions: CategoryPropertyEnumOptionQuery;
+}
+
+interface CategoryPropertyQuery {
+  columns: CategoryPropertyColumns;
+  orderBy: CategoryPropertyOrder;
+  with: CategoryPropertyRelations;
+}
+
+interface CategoryDetailRelations {
+  properties: CategoryPropertyQuery;
+}
+
 interface CategoryDetailQuery {
-  with: {
-    properties: {
-      orderBy: {
-        displayOrder: 'asc';
-        id: 'asc';
-      };
-    };
-  };
+  with: CategoryDetailRelations;
 }
 
 function createDetailDb(category?: CategoryDetail) {
@@ -93,6 +114,7 @@ describe('get /api/equipment/categories/by-slug/[slug]', () => {
       slug: 'sleeping-bags',
 
       properties: [{
+        allowsNegativeValues: false,
         dataType: 'number',
         id: 11,
         name: 'Weight',
@@ -100,6 +122,15 @@ describe('get /api/equipment/categories/by-slug/[slug]', () => {
         unit: 'g',
         enumOptions: []
       }, {
+        allowsNegativeValues: true,
+        dataType: 'number',
+        id: 13,
+        name: 'Temperature rating',
+        slug: 'temperature-rating',
+        unit: '°C',
+        enumOptions: []
+      }, {
+        allowsNegativeValues: false,
         dataType: 'enum',
         id: 12,
         name: 'Fill Type',
@@ -124,12 +155,21 @@ describe('get /api/equipment/categories/by-slug/[slug]', () => {
       slug: 'sleeping-bags',
 
       properties: [{
+        allowsNegativeValues: false,
         dataType: 'number',
         id: 11,
         name: 'Weight',
         slug: 'weight',
         unit: 'g'
       }, {
+        allowsNegativeValues: true,
+        dataType: 'number',
+        id: 13,
+        name: 'Temperature rating',
+        slug: 'temperature-rating',
+        unit: '°C'
+      }, {
+        allowsNegativeValues: false,
         dataType: 'enum',
         id: 12,
         name: 'Fill Type',
@@ -148,9 +188,21 @@ describe('get /api/equipment/categories/by-slug/[slug]', () => {
 
     const query = findFirstMock.mock.calls[0]?.[0]
 
+    expect(query?.with.properties.columns.allowsNegativeValues).toBe(true)
+
     expect(query?.with.properties.orderBy).toStrictEqual({
       displayOrder: 'asc',
       id: 'asc'
+    })
+
+    expect(query?.with.properties.with).toStrictEqual({
+      enumOptions: {
+        columns: {
+          id: true,
+          name: true,
+          slug: true
+        }
+      }
     })
   })
 

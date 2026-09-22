@@ -232,7 +232,7 @@
   import { computed, onMounted, ref, useId, useTemplateRef, watch } from 'vue'
   import { useAsyncData, useFetch, useRequestFetch } from '#imports'
   import { limits } from '#shared/constants'
-  import { isFiniteDecimalNumber } from '#shared/utils/decimal-number'
+  import { isFiniteDecimalNumber, normalizeDecimalNumber } from '#shared/utils/decimal-number'
   import type { CategoryDetailResponse } from '#server/api/equipment/categories/by-slug/[slug].get'
   import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue'
   import NumberInput from '~/components/NumberInput.vue'
@@ -270,7 +270,7 @@
   }
 
   interface SubmissionPropertiesResult {
-    errors: Record<number, boolean>;
+    errors: Partial<Record<number, string>>;
     hasValidationError: boolean;
     properties: EquipmentItemEditorProperty[];
   }
@@ -500,7 +500,7 @@
   }
 
   function createSubmissionProperties(): SubmissionPropertiesResult {
-    const errors: Record<number, boolean> = {}
+    const errors: Partial<Record<number, string>> = {}
     const properties: EquipmentItemEditorProperty[] = []
     const definitions = categoryDetail.value?.properties ?? []
     let hasValidationError = false
@@ -511,11 +511,21 @@
       const hasValue = trimmedValue !== ''
       const isNumberProperty = property.dataType === 'number'
 
-      const hasError = hasValue
-        && isNumberProperty
-        && isFiniteDecimalNumber(trimmedValue) === false
+      if (hasValue && isNumberProperty) {
+        if (isFiniteDecimalNumber(trimmedValue)) {
+          const normalizedValue = normalizeDecimalNumber(trimmedValue)
+          const isNegativeValue = normalizedValue.startsWith('-')
 
-      errors[property.id] = hasError
+          if (isNegativeValue && property.allowsNegativeValues === false) {
+            errors[property.id] = 'Enter zero or a positive number.'
+          }
+        } else {
+          errors[property.id] = 'Enter a valid decimal number.'
+        }
+      }
+
+      const hasError = errors[property.id] !== undefined
+
       hasValidationError ||= hasError
 
       if (hasValue && hasError === false) {
@@ -561,10 +571,7 @@
       ]
 
       const value = getPropertyFieldValue(propertyValues.value[property.id])
-
-      const error = submissionProperties.value.errors[property.id] === true
-        ? 'Enter a valid decimal number.'
-        : undefined
+      const error = submissionProperties.value.errors[property.id]
 
       function setValue(nextValue: string) {
         propertyValues.value[property.id] = nextValue

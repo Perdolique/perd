@@ -299,12 +299,14 @@ const stovesCategoryResponse: CategoryDetailResponse = {
   slug: 'stoves',
 
   properties: [{
+    allowsNegativeValues: false,
     dataType: 'number',
     id: 21,
     name: 'Weight',
     slug: 'weight',
     unit: 'g'
   }, {
+    allowsNegativeValues: false,
     dataType: 'enum',
 
     enumOptions: [{
@@ -322,6 +324,7 @@ const stovesCategoryResponse: CategoryDetailResponse = {
     slug: 'fuel-type',
     unit: null
   }, {
+    allowsNegativeValues: false,
     dataType: 'boolean',
     id: 22,
     name: 'Piezo ignition',
@@ -336,6 +339,7 @@ const sleepingPadsCategoryResponse: CategoryDetailResponse = {
   slug: 'sleeping-pads',
 
   properties: [{
+    allowsNegativeValues: false,
     dataType: 'number',
     id: 11,
     name: 'R-value',
@@ -350,18 +354,21 @@ const filterLimitCategoryResponse: CategoryDetailResponse = {
   slug: 'stoves',
 
   properties: [{
+    allowsNegativeValues: false,
     dataType: 'number',
     id: 101,
     name: 'Active number',
     slug: 'active-number',
     unit: null
   }, {
+    allowsNegativeValues: false,
     dataType: 'number',
     id: 102,
     name: 'Available number',
     slug: 'available-number',
     unit: null
   }, {
+    allowsNegativeValues: false,
     dataType: 'enum',
 
     enumOptions: Array.from({ length: 19 }, (_value, index) => {
@@ -379,12 +386,14 @@ const filterLimitCategoryResponse: CategoryDetailResponse = {
     slug: 'filter-option',
     unit: null
   }, {
+    allowsNegativeValues: false,
     dataType: 'boolean',
     id: 104,
     name: 'Active boolean',
     slug: 'active-boolean',
     unit: null
   }, {
+    allowsNegativeValues: false,
     dataType: 'boolean',
     id: 105,
     name: 'Available boolean',

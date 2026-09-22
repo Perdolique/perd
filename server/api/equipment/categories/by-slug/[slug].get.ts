@@ -9,6 +9,7 @@ interface CategoryDetailEnumOption {
 }
 
 interface CategoryDetailProperty {
+  allowsNegativeValues: boolean;
   dataType: EquipmentPropertyDataType;
   enumOptions?: CategoryDetailEnumOption[];
   id: number;
@@ -41,6 +42,7 @@ export default defineEventHandler(async (event) : Promise<CategoryDetailResponse
     with: {
       properties: {
         columns: {
+          allowsNegativeValues: true,
           dataType: true,
           id: true,
           name: true,
@@ -83,6 +85,7 @@ export default defineEventHandler(async (event) : Promise<CategoryDetailResponse
     }
 
     return {
+      allowsNegativeValues: property.allowsNegativeValues,
       dataType,
       id: property.id,
       name: property.name,
