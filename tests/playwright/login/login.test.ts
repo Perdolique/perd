@@ -446,7 +446,16 @@ test.describe('Login page', () => {
 
   test('should fail safely when the Turnstile script cannot load', async ({ page, turnstile }) => {
     await turnstile.failScriptLoad(page)
+
+    const scriptFailure = page.waitForEvent('requestfailed', (request) => (
+      request.url() === 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
+    ))
+
     await page.goto('/login')
+
+    // The script starts on mount, so its failure also confirms the login controls are hydrated.
+    await scriptFailure
+
     await page.getByRole('button', { name: 'Guest' }).click()
 
     await expect(page.getByRole('alert')).toHaveText(
