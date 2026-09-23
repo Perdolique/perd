@@ -7,6 +7,7 @@ import {
   getRequestURL,
   isError,
   sendRedirect,
+  setResponseHeader,
   type EventHandlerRequest,
   type H3Event
 } from 'h3'
@@ -21,6 +22,8 @@ const publicApiPaths = [
   '/api/auth/email/registration',
   '/api/auth/email/registration/verify',
   '/api/auth/email/sign-in',
+  '/api/auth/passkeys/options',
+  '/api/auth/passkeys/verify',
   '/api/oauth/twitch',
   ...passwordRecoveryApiPaths
 ] as const
@@ -66,6 +69,11 @@ function isBrowserNavigationRequest(event: H3Event<EventHandlerRequest>) {
 
 export default defineEventHandler(async (event) => {
   const url = getRequestURL(event)
+
+  if (/^\/api\/(?:account|auth)\/passkeys(?:\/|$)/u.test(url.pathname)) {
+    setResponseHeader(event, 'Cache-Control', 'no-store')
+  }
+
   const isApiPath = url.pathname.startsWith(apiBase)
 
   if (isApiPath && !isPublicApiPath(url.pathname)) {

@@ -1056,8 +1056,89 @@ function validatePasswordRecoveryReset(value: unknown) {
   return parsed.success ? parsed.output : false
 }
 
+const passkeyNameSchema = v.object({
+  name: v.pipe(trimmedNonEmptyStringSchema, v.maxLength(64))
+})
+
+const passkeyIdParamsSchema = v.object({ id: canonicalUuidV7Schema })
+const passkeyOptionsBodySchema = v.object({})
+const passkeyBase64Schema = v.pipe(v.string(), v.nonEmpty(), v.regex(/^[\w-]+$/u))
+const passkeyTransportsSchema = v.array(v.picklist(['ble', 'cable', 'hybrid', 'internal', 'nfc', 'smart-card', 'usb']))
+
+const passkeyRegistrationSchema = v.object({
+  ceremonyId: canonicalUuidV7Schema,
+
+  credential: v.object({
+    id: passkeyBase64Schema,
+    rawId: passkeyBase64Schema,
+    type: v.literal('public-key'),
+    authenticatorAttachment: v.optional(v.picklist(['platform', 'cross-platform'])),
+
+    clientExtensionResults: v.object({
+      credProps: v.optional(v.object({ rk: v.optional(v.boolean()) }))
+    }),
+
+    response: v.object({
+      clientDataJSON: passkeyBase64Schema,
+      attestationObject: passkeyBase64Schema,
+      transports: v.optional(passkeyTransportsSchema)
+    })
+  })
+})
+
+const passkeyAuthenticationSchema = v.object({
+  ceremonyId: canonicalUuidV7Schema,
+
+  credential: v.object({
+    id: passkeyBase64Schema,
+    rawId: passkeyBase64Schema,
+    type: v.literal('public-key'),
+    authenticatorAttachment: v.optional(v.picklist(['platform', 'cross-platform'])),
+    clientExtensionResults: v.object({}),
+
+    response: v.object({
+      clientDataJSON: passkeyBase64Schema,
+      authenticatorData: passkeyBase64Schema,
+      signature: passkeyBase64Schema,
+      userHandle: passkeyBase64Schema
+    })
+  })
+})
+
+function validatePasskeyName(value: unknown) {
+  const parsed = v.safeParse(passkeyNameSchema, value)
+
+  return parsed.success ? parsed.output : false
+}
+
+function validatePasskeyOptions(value: unknown) {
+  const parsed = v.safeParse(passkeyOptionsBodySchema, value)
+
+  return parsed.success ? parsed.output : false
+}
+
+function validatePasskeyIdParams(value: unknown) {
+  return v.parse(passkeyIdParamsSchema, value)
+}
+
+function validatePasskeyRegistration(value: unknown) {
+  const parsed = v.safeParse(passkeyRegistrationSchema, value)
+
+  return parsed.success ? parsed.output : false
+}
+
+function validatePasskeyAuthentication(value: unknown) {
+  const parsed = v.safeParse(passkeyAuthenticationSchema, value)
+
+  return parsed.success ? parsed.output : false
+}
 
 export {
+  validatePasskeyAuthentication,
+  validatePasskeyRegistration,
+  validatePasskeyName,
+  validatePasskeyOptions,
+  validatePasskeyIdParams,
   validateEmailRegistration,
   validateEmailSignIn,
   validateEmailVerification,

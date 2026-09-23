@@ -20,7 +20,7 @@
         name="email"
         label="Email"
         type="email"
-        autocomplete="username"
+        :autocomplete="emailAutocomplete"
         :maxlength="254"
         required
         :disabled="isAuthenticationBusy"
@@ -65,6 +65,18 @@
     </div>
 
     <div :class="$style.secondaryActions">
+      <PerdButton
+        v-if="passkeysSupported"
+        ref="passkeyButton"
+        variant="secondary"
+        :loading="isPasskeyActive"
+        :disabled="isAuthenticationBusy"
+        block
+        @click="startPasskeySignIn"
+      >
+        Sign in with a passkey
+      </PerdButton>
+
       <PerdButton
         ref="guestButton"
         variant="secondary"
@@ -124,6 +136,7 @@
   } from '#shared/utils/turnstile'
 
   import { getRedirectNavigationTarget } from '~/utils/router'
+  import { usePasskeySignIn } from '~/composables/use-passkey-sign-in'
   import AuthFormPanel from '~/components/auth/AuthFormPanel.vue'
   import TurnstileWidget from '~/components/auth/TurnstileWidget.vue'
   import PerdButton from '~/components/PerdButton.vue'
@@ -157,8 +170,51 @@
   const passwordInput = useTemplateRef('passwordInput')
   const signInButton = useTemplateRef('signInButton')
   const guestButton = useTemplateRef('guestButton')
+  const passkeyButton = useTemplateRef('passkeyButton')
+
+  async function navigateAfterLogin(redirectTo: unknown) {
+    const navigationTarget = getRedirectNavigationTarget(redirectTo)
+
+    await navigateTo(navigationTarget.path, {
+      replace: true,
+      external: navigationTarget.external
+    })
+  }
+
+  const {
+    cancel: cancelPasskeySignIn,
+    rearmAutofill: rearmPasskeyAutofill,
+    start: startPasskey,
+    supported: passkeysSupported,
+    supportsAutofill,
+    isActive: isPasskeyActive,
+    isVerifying: isPasskeyVerifying
+  } = usePasskeySignIn({
+    canStart: () => activeAuthentication.value === null,
+
+    async onSuccess(response) {
+      user.value.email = response.email
+      user.value.userId = response.userId
+      user.value.isAdmin = response.isAdmin
+      user.value.isGuest = response.isGuest
+      user.value.isTwitchLinked = response.isTwitchLinked
+      user.value.hasData = true
+      password.value = ''
+
+      await navigateAfterLogin(route.query.redirectTo)
+    },
+
+    async onError(message) {
+      authenticationError.value = message
+
+      await nextTick()
+      passkeyButton.value?.focus()
+    }
+  })
+
+  const emailAutocomplete = computed(() => supportsAutofill.value ? 'username webauthn' : 'username')
   const hasAuthenticationError = computed(() => authenticationError.value !== null)
-  const isAuthenticationBusy = computed(() => activeAuthentication.value !== null)
+  const isAuthenticationBusy = computed(() => activeAuthentication.value !== null || isPasskeyVerifying.value)
   const isEmailSignInActive = computed(() => activeAuthentication.value?.method === 'email')
   const isGuestActive = computed(() => activeAuthentication.value?.method === 'guest')
   const isTwitchActive = computed(() => activeAuthentication.value?.method === 'twitch')
@@ -225,15 +281,6 @@
     return 'Could not continue as Guest. Try again.'
   }
 
-  async function navigateAfterLogin(redirectTo: unknown) {
-    const navigationTarget = getRedirectNavigationTarget(redirectTo)
-
-    await navigateTo(navigationTarget.path, {
-      replace: true,
-      external: navigationTarget.external
-    })
-  }
-
   async function focusAfterAttempt(method: TurnstileAuthenticationMethod, focusPassword = false) {
     await nextTick()
 
@@ -252,6 +299,8 @@
     if (isAuthenticationBusy.value) {
       return
     }
+
+    void cancelPasskeySignIn()
 
     activeAuthentication.value = {
       method,
@@ -294,6 +343,16 @@
     void startTurnstileAuthentication('guest')
   }
 
+  function startPasskeySignIn() {
+    if (isAuthenticationBusy.value) {
+      return
+    }
+
+    authenticationError.value = null
+    passwordError.value = undefined
+    void startPasskey()
+  }
+
   async function cancelAuthentication() {
     const state = activeAuthentication.value
 
@@ -306,6 +365,7 @@
     activeAuthentication.value = null
 
     await focusAfterAttempt(method)
+    rearmPasskeyAutofill()
   }
 
   async function handleVerificationError(message: string) {
@@ -321,6 +381,7 @@
     authenticationError.value = message
 
     await focusAfterAttempt(method)
+    rearmPasskeyAutofill()
   }
 
   async function finishEmailSignIn(token: string) {
@@ -352,6 +413,7 @@
       activeAuthentication.value = null
 
       await focusAfterAttempt('email', focusPassword)
+      rearmPasskeyAutofill()
     }
   }
 
@@ -379,6 +441,7 @@
       activeAuthentication.value = null
 
       await focusAfterAttempt('guest')
+      rearmPasskeyAutofill()
     }
   }
 
@@ -401,10 +464,12 @@
     await finish(token)
   }
 
-  function redirectToTwitch() {
+  async function redirectToTwitch() {
     if (isAuthenticationBusy.value) {
       return
     }
+
+    const cancelled = cancelPasskeySignIn()
 
     activeAuthentication.value = {
       method: 'twitch',
@@ -412,6 +477,8 @@
     }
     authenticationError.value = null
     passwordError.value = undefined
+
+    await cancelled
 
     const navigationTarget = getRedirectNavigationTarget(route.query.redirectTo)
 

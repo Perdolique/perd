@@ -2,7 +2,6 @@
 import { drizzle as drizzleHttp } from 'drizzle-orm/neon-http'
 import { drizzle as drizzleWebsocket } from 'drizzle-orm/neon-serverless'
 import { neon, neonConfig, Pool } from '@neondatabase/serverless'
-import ws from 'ws'
 import { relations } from '../database/relations'
 import type { DatabaseConfig } from './config-env'
 
@@ -36,7 +35,7 @@ function createWebSocketPool(config: DatabaseConfig) {
     neonConfig.wsProxy = 'db.localtest.me:4444/v2'
   }
 
-  neonConfig.webSocketConstructor = ws
+  neonConfig.webSocketConstructor = globalThis.WebSocket
 
   return new Pool({ connectionString: config.databaseUrl })
 }

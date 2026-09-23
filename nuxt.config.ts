@@ -26,6 +26,10 @@ const modalDialogFixturePath = fileURLToPath(
   new globalThis.URL('tests/nuxt/ModalDialog.vue', import.meta.url)
 )
 
+const passkeyErrorHandlerPath = fileURLToPath(
+  new globalThis.URL('server/utils/auth/passkey-error-handler.ts', import.meta.url)
+)
+
 const localEmailDirectory = fileURLToPath(
   new globalThis.URL('.wrangler/tmp/email', import.meta.url)
 )
@@ -70,6 +74,10 @@ export default defineNuxtConfig({
     databaseUrl: '',
     localDatabase: '',
     sessionSecret: '',
+
+    passkeys: {
+      origin: ''
+    },
 
     emailRegistration: {
       origin: '',
@@ -170,6 +178,13 @@ export default defineNuxtConfig({
   },
 
   hooks: {
+    'nitro:config': (config) => {
+      // Keep Nuxt's error-page handler after the scoped passkey handler.
+      const errorHandlers = [config.errorHandler ?? []].flat()
+
+      config.errorHandler = [passkeyErrorHandlerPath, ...errorHandlers]
+    },
+
     'ready': async (nuxt) => {
       if (!nuxt.options.dev) {
         return
@@ -225,6 +240,7 @@ export default defineNuxtConfig({
   },
 
   nitro: {
+    moduleSideEffects: ['reflect-metadata'],
     preset: 'cloudflare_module',
 
     typescript: {
