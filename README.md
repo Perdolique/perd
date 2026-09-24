@@ -65,3 +65,6 @@ one-time SQL migration and the matching update to the seed definitions.
 
 See [Email registration](EMAIL_REGISTRATION.md) for rollout prerequisites, local
 development, and focused verification. Production enablement is gated on #748.
+
+See [Passkeys](PASSKEYS.md) for passkey configuration, migration, testing, and
+release order.
