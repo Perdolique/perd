@@ -35,6 +35,7 @@
   },
 
   "vars": {
+    "NUXT_PASSKEYS_ORIGIN": "http://localhost:8888",
     "NUXT_PUBLIC_TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
     "NUXT_TURNSTILE_HOSTNAMES": "localhost,127.0.0.1",
     "PHOTO_SUBMISSION_ENVIRONMENT": "development",
@@ -48,6 +49,7 @@
   },
 
   "ratelimits": [
+    { "name": "PASSKEY_RATE_LIMITER", "namespace_id": "687734028", "simple": { "limit": 10, "period": 60 } },
     {
       "name": "PHOTO_SUBMISSION_RATE_LIMITER",
       "namespace_id": "687734001",
@@ -145,6 +147,7 @@
       ],
 
       "vars": {
+        "NUXT_PASSKEYS_ORIGIN": "https://metsik.app",
         "NUXT_OAUTH_TWITCH_CLIENT_ID": "76z9coffucmezuwxx68iurur0vnigy",
         "NUXT_PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAAEntzYh6QUh27Ji_",
         "NUXT_TURNSTILE_HOSTNAMES": "metsik.app",
@@ -163,6 +166,7 @@
       },
 
       "ratelimits": [
+        { "name": "PASSKEY_RATE_LIMITER", "namespace_id": "687734030", "simple": { "limit": 10, "period": 60 } },
         {
           "name": "PHOTO_SUBMISSION_RATE_LIMITER",
           "namespace_id": "687734003",
@@ -269,6 +273,7 @@
       ],
 
       "vars": {
+        "NUXT_PASSKEYS_ORIGIN": "https://staging.metsik.app",
         "NUXT_OAUTH_TWITCH_CLIENT_ID": "58vwcqcpjpf7iz530v11z3sovtgfc5",
         "NUXT_PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAAEntzYh6QUh27Ji_",
         "NUXT_TURNSTILE_HOSTNAMES": "staging.metsik.app",
@@ -287,6 +292,7 @@
       },
 
       "ratelimits": [
+        { "name": "PASSKEY_RATE_LIMITER", "namespace_id": "687734029", "simple": { "limit": 10, "period": 60 } },
         {
           "name": "PHOTO_SUBMISSION_RATE_LIMITER",
           "namespace_id": "687734002",

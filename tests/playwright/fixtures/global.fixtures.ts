@@ -20,6 +20,7 @@ interface TurnstileFixture {
 }
 
 interface TestFixtures {
+  conditionalPasskeys: boolean;
   turnstile: TurnstileFixture;
 }
 
@@ -241,7 +242,9 @@ async function invokeTurnstileCallback(page: Page, callbackName: string) {
 }
 
 const test = base.extend<TestFixtures>({
-  context: async ({ context }, use) => {
+  conditionalPasskeys: [false, { option: true }],
+
+  context: async ({ context, conditionalPasskeys }, use) => {
     const unmockedApiRequests = new Set<string>()
 
     await context.route(
@@ -269,6 +272,22 @@ const test = base.extend<TestFixtures>({
 
       unmockedApiRequests.add(requestTarget)
       await route.abort('blockedbyclient')
+    })
+
+    // Most suites exercise other sign-in methods. Passkey suites opt into conditional UI.
+    await context.addInitScript((enabled) => {
+      globalThis.PublicKeyCredential.isConditionalMediationAvailable = async () => {
+        await Promise.resolve()
+
+        return enabled
+      }
+    }, conditionalPasskeys)
+
+    await context.route('**/api/account/passkeys', async (route) => {
+      await route.fulfill({ json: {
+        items: [],
+        canRegister: false
+      } })
     })
 
     await use(context)

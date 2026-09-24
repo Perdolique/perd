@@ -37,6 +37,21 @@ The priority is the user workflow, not internal admin tooling.
 - [Neon](https://neon.tech/)
 - [Drizzle ORM](https://orm.drizzle.team/)
 
+## Local sign-in
+
+For a local Worker with all Cloudflare bindings, copy `.env.example` to `.env`
+and set the local database URL and session secret. Set both
+`NUXT_EMAIL_REGISTRATION_ORIGIN` and `NUXT_PASSKEYS_ORIGIN` to
+`http://localhost:8888`. Then run `vp run db:migrate:local`, `vp run build`,
+and `vp run preview:local`. The local preview uses the test Turnstile keys from
+`.env.example`, local rate limits, and simulated email delivery. Verification
+emails are saved under `.wrangler/tmp/email`.
+
+Twitch sign-in also needs a Twitch application. Set its client ID and secret
+in `.env`, then register `http://localhost:8888/auth/twitch` as an OAuth
+redirect URL in Twitch. Without those credentials, the other local sign-in
+methods still work.
+
 ## Database changes
 
 Migrations are the only automatic way to change existing environments. Run the
@@ -50,3 +65,6 @@ one-time SQL migration and the matching update to the seed definitions.
 
 See [Email registration](EMAIL_REGISTRATION.md) for rollout prerequisites, local
 development, and focused verification. Production enablement is gated on #748.
+
+See [Passkeys](PASSKEYS.md) for passkey configuration, migration, testing, and
+release order.

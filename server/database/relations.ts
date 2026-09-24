@@ -63,6 +63,8 @@ export const relations = defineRelations(schema, (relation) => {
 
     pendingEmailRegistrations: {},
     twitchOAuthStates: {},
+    passkeyCredentials: {},
+    passkeyChallenges: {},
 
     passwordResetTokens: {
       emailCredential: relation.one.emailCredentials({

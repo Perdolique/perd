@@ -9,9 +9,11 @@ type TestDatabase = ReturnType<typeof createWebSocketClient>
 
 interface IsolatedPostgreSQLOptions {
   beforeMigration?: string;
+  httpAccess?: boolean;
 }
 
 interface IsolatedPostgreSQLContext {
+  databaseUrl: string;
   database: TestDatabase;
   rootDatabase: TestDatabase;
   dispose: () => Promise<void>;
@@ -21,6 +23,7 @@ interface DatabaseResources {
   database: TestDatabase | null;
   rootDatabase: TestDatabase | null;
   schemaName: string;
+  roleName: string | null;
 }
 
 const localDatabaseHosts = new Set([
@@ -88,6 +91,14 @@ async function releaseDatabaseResources(resources: DatabaseResources): Promise<v
     }
   }
 
+  if (resources.rootDatabase !== null && resources.roleName !== null) {
+    try {
+      await resources.rootDatabase.execute(sql.raw(`DROP ROLE IF EXISTS "${resources.roleName}"`))
+    } catch (error) {
+      errors.push(error)
+    }
+  }
+
   if (resources.rootDatabase !== null) {
     try {
       await resources.rootDatabase.$client.end()
@@ -120,7 +131,8 @@ async function createIsolatedPostgreSQL(
   const resources: DatabaseResources = {
     database: null,
     rootDatabase: null,
-    schemaName
+    schemaName,
+    roleName: null
   }
 
   try {
@@ -145,9 +157,29 @@ async function createIsolatedPostgreSQL(
 
     await applyMigrations(resources.database, options.beforeMigration)
 
+    // The local Neon HTTP proxy does not preserve URL search_path options.
+    // A temporary role keeps HTTP and WebSocket requests in the same isolated schema.
+    if (options.httpAccess === true) {
+      const roleName = `${schemaName}_http`
+      const password = randomUUID()
+
+      await resources.rootDatabase.execute(sql.raw(`CREATE ROLE "${roleName}" LOGIN PASSWORD '${password}'`))
+
+      resources.roleName = roleName
+
+      await resources.rootDatabase.execute(sql.raw(`ALTER ROLE "${roleName}" SET search_path TO "${schemaName}"`))
+      await resources.rootDatabase.execute(sql.raw(`GRANT USAGE ON SCHEMA "${schemaName}" TO "${roleName}"`))
+      await resources.rootDatabase.execute(sql.raw(`GRANT ALL ON ALL TABLES IN SCHEMA "${schemaName}" TO "${roleName}"`))
+      await resources.rootDatabase.execute(sql.raw(`GRANT ALL ON ALL SEQUENCES IN SCHEMA "${schemaName}" TO "${roleName}"`))
+
+      databaseUrl.username = roleName
+      databaseUrl.password = password
+    }
+
     let isDisposed = false
 
     return {
+      databaseUrl: databaseUrl.toString(),
       database: resources.database,
       rootDatabase: resources.rootDatabase,
 

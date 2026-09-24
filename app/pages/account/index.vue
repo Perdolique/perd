@@ -40,6 +40,8 @@
         to="/register?redirectTo=/account"
       />
 
+      <AccountPasskeys />
+
       <ActionPanel
         icon="hugeicons:task-daily-01"
         subtitle="Track pending, published, and rejected catalog contributions."
@@ -96,6 +98,7 @@
   import { usePackingListsStore } from '~/stores/packing-lists'
   import AccountProfileCard from '~/components/account/AccountProfileCard.vue'
   import AccountSignInMethods from '~/components/account/AccountSignInMethods.vue'
+  import AccountPasskeys from '~/components/account/AccountPasskeys.vue'
   import ActionPanel from '~/components/ActionPanel.vue'
   import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue'
   import DangerActionCard from '~/components/DangerActionCard.vue'

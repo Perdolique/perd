@@ -3,6 +3,7 @@
 import { sql } from 'drizzle-orm'
 
 import {
+  bigint,
   boolean,
   check,
   index,
@@ -43,6 +44,8 @@ const users = pgTable('users', {
     text()
     .unique(),
 
+  passkeyUserHandle: varchar({ length: 43 }).unique(),
+
   createdAt:
     timestamp({
       withTimezone: true
@@ -60,6 +63,48 @@ const users = pgTable('users', {
     .notNull()
     .default(0)
 })
+
+const passkeyCredentials = pgTable('passkey_credentials', {
+  id: uuid().primaryKey().default(sql`uuidv7()`),
+  credentialId: text().notNull().unique(),
+  userId: uuid().notNull().references(() => users.id, { onDelete: 'cascade' }),
+  publicKey: text().notNull(),
+  counter: bigint({ mode: 'number' }).notNull(),
+  transports: text().array().notNull(),
+  backupEligible: boolean().notNull(),
+  backedUp: boolean().notNull(),
+  name: varchar({ length: 64 }).notNull(),
+  createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  lastUsedAt: timestamp({ withTimezone: true })
+}, (table) => [
+  index('passkey_credentials_user_index').on(table.userId),
+  check('passkey_credentials_counter_check', sql`${table.counter} BETWEEN 0 AND 4294967295`),
+  check('passkey_credentials_backup_check', sql`NOT ${table.backedUp} OR ${table.backupEligible}`)
+])
+
+/** Only digests of the challenge and application session ID are persisted. */
+const passkeyChallenges = pgTable('passkey_challenges', {
+  id: uuid().primaryKey().default(sql`uuidv7()`),
+  challengeHash: varchar({ length: 64 }).notNull(),
+  sessionIdHash: varchar({ length: 64 }).notNull(),
+  operation: text({ enum: ['registration', 'authentication'] }).notNull(),
+  userId: uuid().references(() => users.id, { onDelete: 'cascade' }),
+  sessionVersion: integer(),
+  name: varchar({ length: 64 }),
+  rpId: text().notNull(),
+  origin: text().notNull(),
+  createdAt: timestamp({ withTimezone: true }).notNull(),
+  expiresAt: timestamp({ withTimezone: true }).notNull()
+}, (table) => [
+  unique().on(table.sessionIdHash, table.operation),
+  index('passkey_challenges_expiry_index').on(table.expiresAt),
+  check('passkey_challenges_actor_check', sql`
+    (${table.operation} = 'registration' AND ${table.userId} IS NOT NULL
+      AND ${table.sessionVersion} IS NOT NULL AND ${table.name} IS NOT NULL)
+    OR (${table.operation} = 'authentication' AND ${table.userId} IS NULL
+      AND ${table.sessionVersion} IS NULL AND ${table.name} IS NULL)
+  `)
+])
 
 /**
  * Supported OAuth providers (e.g. Twitch).
@@ -783,6 +828,8 @@ const contributions = pgTable('contributions', {
 })
 
 export {
+  passkeyCredentials,
+  passkeyChallenges,
   twitchOAuthStates,
   emailCredentials,
   pendingEmailRegistrations,
