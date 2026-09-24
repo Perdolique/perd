@@ -16,12 +16,12 @@
       <li v-for="passkey in passkeys" :key="passkey.id" :class="$style.entry">
         <div :class="$style.details">
           <strong>{{ passkey.name }}</strong>
-          <span>Added {{ formatDate(passkey.createdAt) }}</span>
+          <span>Added {{ formatDateTime(passkey.createdAt) }}</span>
           <span>{{ lastUsedLabel(passkey.lastUsedAt) }}</span>
         </div>
         <div :class="$style.actions">
-          <PerdButton size="small" variant="secondary" :disabled="isBusy" @click="editPasskey(passkey)">Rename</PerdButton>
-          <PerdButton size="small" variant="danger" :disabled="isBusy" @click="confirmRemoval(passkey)">Remove</PerdButton>
+          <PerdButton size="small" variant="secondary" :aria-label="passkeyActionLabel('Rename', passkey)" :disabled="isBusy" @click="editPasskey(passkey)">Rename</PerdButton>
+          <PerdButton size="small" variant="danger" :aria-label="passkeyActionLabel('Remove', passkey)" :disabled="isBusy" @click="confirmRemoval(passkey)">Remove</PerdButton>
         </div>
       </li>
     </ul>
@@ -127,14 +127,21 @@
   let optionsController: AbortController | null = null
   let listController: AbortController | null = null
 
-  function formatDate(value: string) {
+  function passkeyActionLabel(action: 'Remove' | 'Rename', passkey: PasskeySummary) {
+    return `${action} ${passkey.name}`
+  }
+
+  function formatDateTime(value: string) {
     const date = new Date(value)
 
-    return date.toLocaleDateString(undefined, { dateStyle: 'medium' })
+    return date.toLocaleString(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    })
   }
 
   function lastUsedLabel(value: string | null) {
-    return value === null ? 'Never used' : `Last used ${formatDate(value)}`
+    return value === null ? 'Never used' : `Last used ${formatDateTime(value)}`
   }
 
   async function announce(text: string, isError = false) {

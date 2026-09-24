@@ -24,7 +24,7 @@ function usePasskeySignIn(options: PasskeySignInOptions) {
   const isVerifying = computed(() => phase.value === 'verify')
   const isActive = computed(() => !conditional.value && phase.value !== 'idle')
 
-  async function cancel() {
+  function cancel(): void {
     attempt += 1
 
     controller?.abort()
@@ -32,8 +32,10 @@ function usePasskeySignIn(options: PasskeySignInOptions) {
     controller = null
 
     phase.value = 'idle'
+  }
 
-    return optionsSettled
+  async function waitForOptionsToSettle(): Promise<void> {
+    await optionsSettled
   }
 
   function ownsAttempt(currentAttempt: number): boolean {
@@ -95,7 +97,7 @@ function usePasskeySignIn(options: PasskeySignInOptions) {
       return
     }
 
-    void cancel()
+    cancel()
 
     const currentAttempt = attempt
     const currentController = new globalThis.AbortController()
@@ -206,7 +208,7 @@ function usePasskeySignIn(options: PasskeySignInOptions) {
   onBeforeUnmount(() => {
     disposed = true
 
-    void cancel()
+    cancel()
   })
 
   return {
@@ -216,7 +218,8 @@ function usePasskeySignIn(options: PasskeySignInOptions) {
     rearmAutofill,
     start,
     supported,
-    supportsAutofill
+    supportsAutofill,
+    waitForOptionsToSettle
   }
 }
 

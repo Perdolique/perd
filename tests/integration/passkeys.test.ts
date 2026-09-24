@@ -314,7 +314,10 @@ describe('passkeys on isolated PostgreSQL', () => {
       backedUp: false
     }).returning()
 
-    await changePasskey(database, actor, { id: required(credentialRows).id })
+    await changePasskey(database, actor, {
+      action: 'remove',
+      id: required(credentialRows).id
+    })
 
     const again = await preparePasskeyEnrollment(database, actor)
 
@@ -336,15 +339,21 @@ describe('passkeys on isolated PostgreSQL', () => {
     })).rejects.toMatchObject({ statusCode: 409 })
 
     await expect(changePasskey(database, other, {
+      action: 'rename',
       id: saved.id,
       name: 'Stolen'
     })).rejects.toMatchObject({ statusCode: 404 })
 
-    await expect(changePasskey(database, other, { id: saved.id })).rejects.toMatchObject({ statusCode: 404 })
+    await expect(changePasskey(database, other, {
+      action: 'remove',
+      id: saved.id
+    })).rejects.toMatchObject({ statusCode: 404 })
+
     await expect(listPasskeys(database, actor.userId)).resolves.toStrictEqual([saved])
     expect(Object.keys(saved)).toStrictEqual(['id', 'name', 'createdAt', 'lastUsedAt'])
 
     await changePasskey(database, actor, {
+      action: 'rename',
       id: saved.id,
       name: 'Renamed'
     })
@@ -366,7 +375,11 @@ describe('passkeys on isolated PostgreSQL', () => {
   it('rechecks durable identity and session version before saving', async () => {
     const { actor, challenge, registration, saved } = await enroll()
 
-    await changePasskey(database, actor, { id: saved.id })
+    await changePasskey(database, actor, {
+      action: 'remove',
+      id: saved.id
+    })
+
     await database.update(users).set({ sessionVersion: 1 }).where(eq(users.id, actor.userId))
 
     await expect(savePasskeyRegistration(database, {

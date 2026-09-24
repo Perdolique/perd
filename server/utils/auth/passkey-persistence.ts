@@ -28,6 +28,8 @@ interface PasskeySessionResult {
   sessionVersion: number;
 }
 
+type PasskeyChange = { action: 'remove'; id: string; } | { action: 'rename'; id: string; name: string; }
+
 const passkeySummaryColumns = {
   id: passkeyCredentials.id,
   name: passkeyCredentials.name,
@@ -231,8 +233,8 @@ async function authenticatePasskey(
   })
 }
 
-async function changePasskey(database: PasskeyWriteDatabase, actor: PasskeyActor, options: { id: string; name?: string; }) {
-  const { id, name } = options
+async function changePasskey(database: PasskeyWriteDatabase, actor: PasskeyActor, change: PasskeyChange) {
+  const { id } = change
   const { userId, sessionVersion } = actor
 
   if (userId === null || sessionVersion === null) {
@@ -244,9 +246,9 @@ async function changePasskey(database: PasskeyWriteDatabase, actor: PasskeyActor
 
     const condition = and(eq(passkeyCredentials.id, id), eq(passkeyCredentials.userId, userId))
 
-    const rows = name === undefined
+    const rows = change.action === 'remove'
       ? await transaction.delete(passkeyCredentials).where(condition).returning(passkeySummaryColumns)
-      : await transaction.update(passkeyCredentials).set({ name }).where(condition).returning(passkeySummaryColumns)
+      : await transaction.update(passkeyCredentials).set({ name: change.name }).where(condition).returning(passkeySummaryColumns)
 
     const [changed] = rows
 

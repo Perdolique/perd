@@ -22,6 +22,7 @@ export default defineEventHandler(async (event): Promise<PasskeySummary> => hand
     const { name } = await readLimitedValidatedJsonBody(event, 1024, validatePasskeyName)
 
     return withPasskeyDatabase(event, sensitiveValues, async database => changePasskey(database, actor, {
+      action: 'rename',
       id,
       name
     }))

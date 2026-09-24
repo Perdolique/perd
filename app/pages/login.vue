@@ -24,6 +24,7 @@
         :maxlength="254"
         required
         :disabled="isAuthenticationBusy"
+        @focusin="rearmPasskeyAutofill"
       />
 
       <TextInput
@@ -188,7 +189,8 @@
     supported: passkeysSupported,
     supportsAutofill,
     isActive: isPasskeyActive,
-    isVerifying: isPasskeyVerifying
+    isVerifying: isPasskeyVerifying,
+    waitForOptionsToSettle: waitForPasskeyOptionsToSettle
   } = usePasskeySignIn({
     canStart: () => activeAuthentication.value === null,
 
@@ -300,7 +302,7 @@
       return
     }
 
-    void cancelPasskeySignIn()
+    cancelPasskeySignIn()
 
     activeAuthentication.value = {
       method,
@@ -469,7 +471,7 @@
       return
     }
 
-    const cancelled = cancelPasskeySignIn()
+    cancelPasskeySignIn()
 
     activeAuthentication.value = {
       method: 'twitch',
@@ -478,7 +480,7 @@
     authenticationError.value = null
     passwordError.value = undefined
 
-    await cancelled
+    await waitForPasskeyOptionsToSettle()
 
     const navigationTarget = getRedirectNavigationTarget(route.query.redirectTo)
 

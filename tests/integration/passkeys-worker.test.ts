@@ -320,6 +320,9 @@ describe('passkeys in the built Nuxt Worker', () => {
 
     expect(loginOptions.status).toBe(200)
 
+    const anonymousCookieHeader = loginOptions.headers.getSetCookie().find(value => value.startsWith('perdSession='))
+    const anonymousCookieValue = required(anonymousCookieHeader)
+    const anonymousCookie = required(anonymousCookieValue.split(';')[0])
     const loginJson: unknown = await loginOptions.json()
     const ceremony = v.parse(authenticationSchema, loginJson)
 
@@ -335,6 +338,10 @@ describe('passkeys in the built Nuxt Worker', () => {
       rpId: 'localhost',
       userHandle: enrollment.options.user.id
     })
+
+    const counter = Buffer.from(credential.response.authenticatorData, 'base64url').readUInt32BE(33)
+
+    expect(counter).toBe(0)
 
     const signed = await stranger('/api/auth/passkeys/verify', {
       body: {
@@ -354,7 +361,9 @@ describe('passkeys in the built Nuxt Worker', () => {
 
     expect(v.parse(userSchema, currentJson).userId).toBe(account.id)
 
-    const replay = await createClient()('/api/auth/passkeys/verify', {
+    const replayClient = createClient(anonymousCookie)
+
+    const replay = await replayClient('/api/auth/passkeys/verify', {
       body: {
         ceremonyId: ceremony.ceremonyId,
         credential
@@ -362,6 +371,10 @@ describe('passkeys in the built Nuxt Worker', () => {
     })
 
     expect(replay.status).toBe(401)
+
+    const replaySession = await replayClient('/api/user')
+
+    expect(replaySession.status).toBe(401)
 
     const invalidClient = createClient()
     const invalidOptions = await invalidClient('/api/auth/passkeys/options', { body: {} })

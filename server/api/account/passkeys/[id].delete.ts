@@ -19,7 +19,10 @@ export default defineEventHandler(async (event): Promise<void> => {
     const { actor } = await getPasskeyActor(event, 'management')
     const { id } = await getValidatedRouterParams(event, validatePasskeyIdParams)
 
-    await withPasskeyDatabase(event, sensitiveValues, async database => changePasskey(database, actor, { id }))
+    await withPasskeyDatabase(event, sensitiveValues, async database => changePasskey(database, actor, {
+      action: 'remove',
+      id
+    }))
   })
 
   sendNoContent(event)

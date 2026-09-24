@@ -117,7 +117,11 @@ test.describe('passkeys', () => {
     }).click()
 
     await expect(list.getByRole('listitem')).toHaveCount(2)
-    await list.getByRole('listitem').filter({ hasText: 'Laptop' }).getByRole('button', { name: 'Rename' }).click()
+
+    await list.getByRole('listitem').filter({ hasText: 'Laptop' }).getByRole('button', {
+      name: 'Rename Laptop',
+      exact: true
+    }).click()
 
     const rename = page.getByRole('dialog', { name: 'Rename passkey' })
 
@@ -165,7 +169,7 @@ test.describe('passkeys', () => {
     const laptop = list.getByRole('listitem').filter({ hasText: 'Travel laptop' })
 
     await laptop.getByRole('button', {
-      name: 'Remove',
+      name: 'Remove Travel laptop',
       exact: true
     }).click()
 
@@ -175,7 +179,7 @@ test.describe('passkeys', () => {
     await expect(laptop).toBeVisible()
 
     await laptop.getByRole('button', {
-      name: 'Remove',
+      name: 'Remove Travel laptop',
       exact: true
     }).click()
 
@@ -197,6 +201,88 @@ test.describe('passkeys', () => {
     }).click()
 
     await expect(list.getByText('Laptop again', { exact: true })).toBeVisible()
+  })
+
+  test('names each key action and shows creation and last-used times', async ({ page }) => {
+    const { items } = await mockPasskeyAccount(page)
+    const createdAt = '2026-09-24T10:15:00.000Z'
+    const lastUsedAt = '2026-09-24T14:45:00.000Z'
+
+    items.push({
+      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d1',
+      name: 'Laptop',
+      createdAt,
+      lastUsedAt
+    }, {
+      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d2',
+      name: 'Security key',
+      createdAt,
+      lastUsedAt: null
+    })
+
+    await openPasskeyAccount(page)
+
+    const list = page.getByRole('list', { name: 'Your passkeys' })
+    const laptop = list.getByRole('listitem').filter({ hasText: 'Laptop' })
+    const securityKey = list.getByRole('listitem').filter({ hasText: 'Security key' })
+    const createdTime = await page.evaluate(value => new Date(value).toLocaleTimeString(undefined, { timeStyle: 'short' }), createdAt)
+    const lastUsedTime = await page.evaluate(value => new Date(value).toLocaleTimeString(undefined, { timeStyle: 'short' }), lastUsedAt)
+
+    await expect(laptop.getByText(/^Added /u)).toContainText(createdTime)
+    await expect(laptop.getByText(/^Last used /u)).toContainText(lastUsedTime)
+    await expect(securityKey.getByText('Never used')).toBeVisible()
+
+    await expect(laptop.getByRole('button', {
+      name: 'Rename Laptop',
+      exact: true
+    })).toBeVisible()
+
+    await expect(laptop.getByRole('button', {
+      name: 'Remove Laptop',
+      exact: true
+    })).toBeVisible()
+
+    await expect(securityKey.getByRole('button', {
+      name: 'Rename Security key',
+      exact: true
+    })).toBeVisible()
+
+    await expect(securityKey.getByRole('button', {
+      name: 'Remove Security key',
+      exact: true
+    })).toBeVisible()
+  })
+
+  test('rejects an assertion with an invalid signature without signing in', async ({ page, context }) => {
+    const mock = await mockPasskeyAccount(page)
+    const session = await context.newCDPSession(page)
+
+    await session.send('WebAuthn.enable')
+    await addVirtualAuthenticator(session)
+    await openPasskeyAccount(page)
+
+    await page.getByRole('textbox', {
+      name: 'Passkey name',
+      exact: true
+    }).fill('Signature test key')
+
+    await page.getByRole('button', {
+      name: 'Add passkey',
+      exact: true
+    }).click()
+
+    await expect(page.getByRole('list', { name: 'Your passkeys' }).getByText('Signature test key')).toBeVisible()
+
+    await page.getByRole('button', {
+      name: 'Log out',
+      exact: true
+    }).click()
+
+    mock.invalidateNextAuthenticationSignature()
+    await page.goto('/login')
+    await page.getByRole('button', { name: 'Sign in with a passkey' }).click()
+    await expect(page.getByRole('alert')).toHaveText('Could not verify the passkey. Try again.')
+    await expect(page).toHaveURL(/\/login$/u)
   })
 
   test('aborts registration options, preserves the name and focus, then retries', async ({ page, context }) => {
@@ -537,7 +623,10 @@ test.describe('passkeys', () => {
     expect(bounds.x).toBeGreaterThanOrEqual(0)
     expect(bounds.x + bounds.width).toBeLessThanOrEqual(320)
 
-    const rename = item.getByRole('button', { name: 'Rename' })
+    const rename = item.getByRole('button', {
+      name: `Rename ${name}`,
+      exact: true
+    })
 
     await rename.focus()
     await page.keyboard.press('Enter')
@@ -683,7 +772,7 @@ test.describe('conditional passkeys', () => {
     await expect.poll(async () => getPasskeyAuthenticatorStarts(page)).toBe(2)
   })
 
-  test('does not restart conditional autofill after the native prompt is canceled', async ({ page }) => {
+  test('rearms conditional autofill on a later email focus without an automatic retry', async ({ page }) => {
     await mockPasskeyAccount(page)
 
     await page.addInitScript(() => {
@@ -706,6 +795,16 @@ test.describe('conditional passkeys', () => {
     await page.waitForTimeout(100)
     expect(await getPasskeyAuthenticatorStarts(page)).toBe(1)
     await expect(page.getByRole('alert')).toHaveCount(0)
+    await page.getByRole('button', { name: 'Sign in with a passkey' }).focus()
+
+    await page.getByRole('textbox', {
+      name: 'Email',
+      exact: true
+    }).focus()
+
+    await expect.poll(async () => getPasskeyAuthenticatorStarts(page)).toBe(2)
+    await page.waitForTimeout(100)
+    expect(await getPasskeyAuthenticatorStarts(page)).toBe(2)
   })
 
   for (const method of ['email', 'guest', 'twitch', 'explicit', 'navigation'] as const) {

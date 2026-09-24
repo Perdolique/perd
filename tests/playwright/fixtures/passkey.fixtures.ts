@@ -43,11 +43,16 @@ async function mockPasskeyAccount(page: Page) {
   let activeAuthentication: { id: string; challenge: string; } | null = null
   let signedIn = true
   let loseRegistrationResponse = false
+  let invalidateNextAuthentication = false
 
-  await page.route('**/api/user', async route => route.fulfill({ json: signedIn ? account : {
-    ...account,
-    userId: null
-  } }))
+  await page.route('**/api/user', async (route) => {
+    const responseUser = signedIn ? account : {
+      ...account,
+      userId: null
+    }
+
+    await route.fulfill({ json: responseUser })
+  })
 
   await page.route('**/api/auth/create-session', async (route) => {
     signedIn = true
@@ -108,6 +113,10 @@ async function mockPasskeyAccount(page: Page) {
       throw new Error('Invalid registration name')
     }
 
+    const excludedCredentials = Array.from(credentials.values(), (credential) => {
+      return { id: credential.id }
+    })
+
     const options = await generateRegistrationOptions({
       rpName: 'Metsik',
       rpID: 'localhost',
@@ -120,9 +129,7 @@ async function mockPasskeyAccount(page: Page) {
         userVerification: 'required'
       },
 
-      excludeCredentials: [...credentials.values()].map(credential => {
-        return { id: credential.id }
-      })
+      excludeCredentials: excludedCredentials
     })
 
     activeRegistration = {
@@ -221,14 +228,47 @@ async function mockPasskeyAccount(page: Page) {
       return
     }
 
+    let assertion = body.credential
+
+    if (invalidateNextAuthentication) {
+      invalidateNextAuthentication = false
+
+      const signature = isoBase64URL.toBuffer(assertion.response.signature)
+      const lastByte = signature.at(-1)
+
+      if (lastByte === undefined) {
+        throw new Error('Authentication signature is missing')
+      }
+
+      signature[signature.length - 1] = (lastByte + 1) % 256
+
+      assertion = {
+        ...assertion,
+
+        response: {
+          ...assertion.response,
+          signature: isoBase64URL.fromBuffer(signature)
+        }
+      }
+    }
+
     const result = await verifyAuthenticationResponse({
-      response: body.credential,
+      response: assertion,
       credential,
       expectedChallenge: ceremony.challenge,
       expectedOrigin: appBaseUrl,
       expectedRPID: 'localhost',
       requireUserVerification: true
     })
+
+    if (!result.verified) {
+      await route.fulfill({
+        status: 401,
+        json: {}
+      })
+
+      return
+    }
 
     credential.counter = result.authenticationInfo.newCounter
     signedIn = true
@@ -238,7 +278,8 @@ async function mockPasskeyAccount(page: Page) {
 
   return {
     items,
-    loseNextRegistrationResponse() { loseRegistrationResponse = true }
+    loseNextRegistrationResponse() { loseRegistrationResponse = true },
+    invalidateNextAuthenticationSignature() { invalidateNextAuthentication = true }
   }
 }
 
