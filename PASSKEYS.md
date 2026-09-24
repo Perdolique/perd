@@ -14,7 +14,7 @@ Set the private runtime setting `passkeys.origin` with `NUXT_PASSKEYS_ORIGIN`:
 | Local Worker preview | `http://localhost:8888` | `localhost` |
 | Browser and Worker tests | `http://localhost:8888` | `localhost` |
 
-`vp run dev` uses the origin from `.env`. `vp run preview` uses the local Worker origin from `wrangler.jsonc`. Keep each origin aligned with that server's port.
+Set `NUXT_PASSKEYS_ORIGIN` in `.env` to `http://localhost:3000` for `vp run dev`. Change it to `http://localhost:8888` before `vp run preview` or `vp run preview:local`. Wrangler loads `.env` over the default in `wrangler.jsonc`.
 
 The server derives the RP ID from this setting. Request headers cannot change it. Mutations require the exact Origin and JSON content type, except DELETE, which has no body. Verification bodies are limited to 64 KiB. All passkey API responses use `Cache-Control: no-store`.
 
