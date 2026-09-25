@@ -1,3 +1,5 @@
+import type { RouteLocationRaw } from 'vue-router'
+
 interface GearLibraryEntitySummary {
   name: string;
   slug: string;
@@ -27,7 +29,7 @@ interface GearLibraryListItemView {
   brand: GearLibraryEntitySummary;
   category: GearLibraryEntitySummary;
   cloudflareImageId: string | null;
-  detailPath: string;
+  detailLocation: RouteLocationRaw;
   id: string;
   isInMyGear: boolean;
   name: string;
@@ -63,16 +65,6 @@ interface ItemProperty {
 
 interface GearLibraryListProperty extends ItemProperty {
   enumOptionName?: string;
-}
-
-interface ItemDetailResponse {
-  brand: GearLibraryEntityDetail;
-  category: GearLibraryEntityDetail;
-  cloudflareImageId: string | null;
-  createdAt: string;
-  id: string;
-  name: string;
-  properties: ItemProperty[];
 }
 
 interface ItemDisplayProperty extends ItemProperty {
@@ -117,7 +109,6 @@ export type {
   MyGearItem,
   MyGearRecord,
   MyGearRecordView,
-  ItemDetailResponse,
   ItemDisplayProperty,
   ItemProperty
 }

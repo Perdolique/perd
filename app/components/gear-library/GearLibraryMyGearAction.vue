@@ -1,5 +1,5 @@
 <template>
-  <div :class="$style.component">
+  <div :class="[$style.component, { isBlock: props.block }]">
     <span
       v-if="isSaved"
       ref="savedStatus"
@@ -14,10 +14,11 @@
       <PerdButton
         ref="addButton"
         :aria-describedby="errorDescriptionId"
+        :block="props.block"
         :loading="isSaving"
         icon="hugeicons:backpack-03"
-        size="small"
-        variant="soft"
+        :size="props.size"
+        :variant="props.variant"
         @click="handleAdd"
       >
         Add to My gear
@@ -36,17 +37,24 @@
   import PerdButton from '~/components/PerdButton.vue'
 
   interface Props {
+    block?: boolean;
     hasError: boolean;
     isSaved: boolean;
     isSaving: boolean;
     itemName: string;
+    size?: 'medium' | 'small';
+    variant?: 'primary' | 'soft';
   }
 
   interface Emits {
     add: [];
   }
 
-  const props = defineProps<Props>()
+  const props = withDefaults(defineProps<Props>(), {
+    size: 'small',
+    variant: 'soft'
+  })
+
   const emit = defineEmits<Emits>()
   const pendingSavedFocus = ref(false)
   const errorId = useId()
@@ -94,6 +102,10 @@
     flex-wrap: wrap;
     align-items: center;
     gap: var(--spacing-8);
+
+    &:global(.isBlock) {
+      inline-size: 100%;
+    }
   }
 
   .saved {

@@ -6,6 +6,7 @@ import {
   type GearLibraryRouteState,
   buildGearLibraryRouteQuery,
   getGearLibraryItemsApiQuery,
+  getGearLibraryDetailComparison,
   getGearLibraryRouteState,
   getRestorableGearLibraryPages,
   getGearLibraryTotalPages,
@@ -122,6 +123,102 @@ describe(getGearLibraryRouteState, () => {
     })
 
     expect(result.brand).toStrictEqual(['MSR', 'msr'])
+  })
+})
+
+describe(getGearLibraryDetailComparison, () => {
+  it('should start a category comparison from a direct item link', () => {
+    const result = getGearLibraryDetailComparison(
+      createRouteState(),
+      firstComparisonId,
+      'stoves'
+    )
+
+    expect(result).toStrictEqual({
+      isAlreadySelected: false,
+      isLimitReached: false,
+
+      nextState: createRouteState({
+        category: 'stoves',
+        compare: [firstComparisonId]
+      })
+    })
+  })
+
+  it('should retain catalog filters and append to the ordered selection', () => {
+    const currentState = createRouteState({
+      brand: ['msr'],
+      category: 'stoves',
+      compare: [firstComparisonId],
+      q: 'rocket',
+      sort: 'brand'
+    })
+
+    const result = getGearLibraryDetailComparison(currentState, secondComparisonId, 'stoves')
+
+    expect(result.nextState).toStrictEqual(createRouteState({
+      brand: ['msr'],
+      category: 'stoves',
+      compare: [firstComparisonId, secondComparisonId],
+      q: 'rocket',
+      sort: 'brand'
+    }))
+  })
+
+  it('should clear category-specific state when the item belongs to another category', () => {
+    const currentState = createRouteState({
+      boolean: ['freestanding:true'],
+      brand: ['msr'],
+      category: 'tents',
+      compare: [firstComparisonId],
+      direction: 'desc',
+      enum: ['season:three'],
+      number: ['weight:100:200'],
+      q: 'camp',
+      sort: 'property:weight'
+    })
+
+    const result = getGearLibraryDetailComparison(currentState, secondComparisonId, 'stoves')
+
+    expect(result.nextState).toStrictEqual(createRouteState({
+      brand: ['msr'],
+      category: 'stoves',
+      compare: [secondComparisonId],
+      q: 'camp'
+    }))
+  })
+
+  it('should keep an already selected item once in the comparison', () => {
+    const currentState = createRouteState({
+      category: 'stoves',
+      compare: [firstComparisonId, secondComparisonId]
+    })
+
+    const result = getGearLibraryDetailComparison(currentState, secondComparisonId, 'stoves')
+
+    expect(result.isAlreadySelected).toBe(true)
+    expect(result.isLimitReached).toBe(false)
+    expect(result.nextState.compare).toStrictEqual([firstComparisonId, secondComparisonId])
+  })
+
+  it('should retain all four selected items without adding a fifth', () => {
+    const selectedIds = [
+      firstComparisonId,
+      secondComparisonId,
+      thirdComparisonId,
+      fourthComparisonId
+    ]
+
+    const currentState = createRouteState({
+      category: 'stoves',
+      compare: selectedIds
+    })
+
+    const result = getGearLibraryDetailComparison(currentState, fifthComparisonId, 'stoves')
+
+    expect(result.isAlreadySelected).toBe(false)
+    expect(result.isLimitReached).toBe(true)
+    expect(result.nextState.compare).toStrictEqual(selectedIds)
   })
 })
 

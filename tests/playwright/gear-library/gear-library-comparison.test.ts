@@ -326,6 +326,13 @@ test.describe('Gear library comparison page', () => {
         'href',
         `/gear-library?${expectedCatalogSearch.toString()}`
       )
+
+      await expect(table.getByRole('link', {
+        name: `View ${comparisonItems[0].brand.name} ${comparisonItems[0].name}`
+      })).toHaveAttribute(
+        'href',
+        `/gear-library/${itemIds[0]}?${expectedCatalogSearch.toString()}`
+      )
     })
   }
 

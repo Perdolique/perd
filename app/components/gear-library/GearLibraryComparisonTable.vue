@@ -59,7 +59,7 @@
 
               <PerdLink
                 :class="$style.itemName"
-                :to="item.detailPath"
+                :to="item.detailLocation"
                 :aria-label="`View ${item.brand.name} ${item.name}`"
               >
                 {{ item.name }}
@@ -89,6 +89,7 @@
 </template>
 
 <script lang="ts">
+  import type { RouteLocationRaw } from 'vue-router'
   import type { GearLibraryComparisonRow } from '~/utils/gear-library-comparison'
 
   interface GearLibraryComparisonTableItemBrand {
@@ -98,7 +99,7 @@
   interface GearLibraryComparisonTableItem {
     brand: GearLibraryComparisonTableItemBrand;
     cloudflareImageId: string | null;
-    detailPath: string;
+    detailLocation: RouteLocationRaw;
     id: string;
     name: string;
   }

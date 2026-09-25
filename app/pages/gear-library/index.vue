@@ -270,6 +270,7 @@
   import { useGearLibraryStore } from '~/stores/gear-library'
   import { useGearLibraryBrowsingRestoration } from '~/composables/use-gear-library-browsing-restoration'
   import { createGearLibraryAppliedFilterChips } from '~/utils/gear-library-filters'
+  import { buildGearLibraryRouteQuery } from '~/utils/gear-library'
   import { appRoutes, createGearLibraryItemPath, navigationLabels } from '~/utils/navigation'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PageSummaryHeader from '~/components/PageSummaryHeader.vue'
@@ -522,21 +523,29 @@
     () => isBrowsingStateReady.value && (canLoadMore.value || isLoadingMore.value)
   )
 
-  const gearLibraryItems = computed(() => lastSuccessfulItemsResponse.value.items.map((item) => {
-    const detailPath = createGearLibraryItemPath(item.id)
-    const isInMyGear = gearLibraryStore.resolveIsInMyGear(item)
+  const gearLibraryItems = computed(() => {
+    const detailQuery = buildGearLibraryRouteQuery(routeState.value)
 
-    return {
-      brand: item.brand,
-      category: item.category,
-      cloudflareImageId: item.cloudflareImageId,
-      detailPath,
-      id: item.id,
-      isInMyGear,
-      name: item.name,
-      properties: item.properties
-    }
-  }))
+    return lastSuccessfulItemsResponse.value.items.map((item) => {
+      const detailLocation = {
+        path: createGearLibraryItemPath(item.id),
+        query: detailQuery
+      }
+
+      const isInMyGear = gearLibraryStore.resolveIsInMyGear(item)
+
+      return {
+        brand: item.brand,
+        category: item.category,
+        cloudflareImageId: item.cloudflareImageId,
+        detailLocation,
+        id: item.id,
+        isInMyGear,
+        name: item.name,
+        properties: item.properties
+      }
+    })
+  })
 
   const selectedComparisonIds = computed(() => routeState.value.compare)
   const isComparisonLimitReached = computed(() => selectedComparisonIds.value.length >= 4)

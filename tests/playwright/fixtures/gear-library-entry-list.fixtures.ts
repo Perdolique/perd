@@ -3,11 +3,11 @@ import type { BrowserContext, Locator, Page, Request, Route } from '@playwright/
 import type {
   GearLibraryEntityDetail,
   GearLibraryItemsResponse,
-  GearLibraryListItem,
-  ItemDetailResponse
+  GearLibraryListItem
 } from '../../../app/types/equipment'
 
 import type { CategoryDetailResponse } from '../../../server/api/equipment/categories/by-slug/[slug].get'
+import type { ItemDetailResponse } from '../../../server/api/equipment/items/[id].get'
 import { expect, waitForInitialEmailSignInTurnstile } from './global.fixtures.ts'
 
 interface ApiMockResponse {
@@ -438,6 +438,7 @@ function createItemDetailResponse(item: GearLibraryListItem): ItemDetailResponse
     createdAt: '2026-07-18T00:00:00.000Z',
     id: item.id,
     cloudflareImageId: item.cloudflareImageId,
+    isInMyGear: item.isInMyGear,
     name: item.name,
     properties: item.properties,
 

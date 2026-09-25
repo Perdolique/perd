@@ -3,9 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import itemDetailHandler from '#server/api/equipment/items/[id].get'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
-const { getValidatedRouterParamsMock } = vi.hoisted(() => {
+const { getValidatedRouterParamsMock, validateSessionUserMock } = vi.hoisted(() => {
   return {
-    getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>()
+    getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
+    validateSessionUserMock: vi.fn<(event: unknown) => Promise<string>>()
   }
 })
 
@@ -22,6 +23,12 @@ vi.mock(import('h3'), async () => {
   }
 })
 
+vi.mock(import('#server/utils/session'), () => {
+  return {
+    validateSessionUser: validateSessionUserMock
+  }
+})
+
 interface DetailPropertyColumns {
   displayOrder: boolean;
   id: boolean;
@@ -29,6 +36,14 @@ interface DetailPropertyColumns {
 
 interface DetailPropertyConfig {
   columns: DetailPropertyColumns;
+  with: {
+    enumOptions: {
+      columns: {
+        name: boolean;
+        slug: boolean;
+      };
+    };
+  };
 }
 
 interface DetailPropertyRelationConfig {
@@ -41,6 +56,12 @@ interface DetailPropertyValuesConfig {
 
 interface DetailRelationsConfig {
   propertyValues: DetailPropertyValuesConfig;
+  userEquipment: {
+    limit: number;
+    where: {
+      userId: string;
+    };
+  };
 }
 
 interface DetailWhereConfig {
@@ -77,6 +98,7 @@ function createDetailDb(item?: unknown, images: unknown[] = []) {
 describe('get /api/equipment/items/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    validateSessionUserMock.mockResolvedValue('0195f6e8-8f44-74f6-bc9a-5c8f7df477aa')
 
     getValidatedRouterParamsMock.mockResolvedValue({
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
@@ -92,6 +114,7 @@ describe('get /api/equipment/items/[id]', () => {
       createdAt: '2026-04-01T00:00:00Z',
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
       name: 'PocketRocket Deluxe',
+      userEquipment: [{ id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477a1' }],
 
       brand: {
         id: 1,
@@ -107,7 +130,7 @@ describe('get /api/equipment/items/[id]', () => {
 
       propertyValues: [{
         valueBoolean: null,
-        valueNumber: '83',
+        valueNumber: '0',
         valueText: null,
 
         property: {
@@ -119,7 +142,7 @@ describe('get /api/equipment/items/[id]', () => {
           unit: 'g'
         }
       }, {
-        valueBoolean: true,
+        valueBoolean: false,
         valueNumber: null,
         valueText: null,
 
@@ -155,7 +178,12 @@ describe('get /api/equipment/items/[id]', () => {
           id: 2,
           name: 'Fuel',
           slug: 'fuel',
-          unit: null
+          unit: null,
+
+          enumOptions: [{
+            name: 'Gas canister',
+            slug: 'canister'
+          }]
         }
       }, {
         valueBoolean: null,
@@ -178,6 +206,7 @@ describe('get /api/equipment/items/[id]', () => {
       cloudflareImageId: 'detail-primary-image',
       createdAt: '2026-04-01T00:00:00Z',
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
+      isInMyGear: true,
       name: 'PocketRocket Deluxe',
 
       brand: {
@@ -197,10 +226,11 @@ describe('get /api/equipment/items/[id]', () => {
         name: 'Piezo',
         slug: 'piezo',
         unit: null,
-        value: true
+        value: false
       }, {
         dataType: 'enum',
         name: 'Fuel',
+        enumOptionName: 'Gas canister',
         slug: 'fuel',
         unit: null,
         value: 'canister'
@@ -209,7 +239,7 @@ describe('get /api/equipment/items/[id]', () => {
         name: 'Weight',
         slug: 'weight',
         unit: 'g',
-        value: 83
+        value: 0
       }, {
         dataType: 'text',
         name: 'Notes',
@@ -231,6 +261,49 @@ describe('get /api/equipment/items/[id]', () => {
       displayOrder: true,
       id: true
     }))
+
+    expect(queryConfig?.with.propertyValues.with.property.with.enumOptions.columns).toStrictEqual({
+      name: true,
+      slug: true
+    })
+
+    expect(queryConfig?.with.userEquipment).toMatchObject({
+      limit: 1,
+
+      where: {
+        userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
+      }
+    })
+  })
+
+  it('should report an unsaved item with no characteristics', async () => {
+    const item = {
+      createdAt: '2026-04-01T00:00:00Z',
+      id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
+      name: 'PocketRocket Deluxe',
+
+      brand: {
+        id: 1,
+        name: 'MSR',
+        slug: 'msr'
+      },
+
+      category: {
+        id: 2,
+        name: 'Stoves',
+        slug: 'stoves'
+      },
+
+      propertyValues: [],
+      userEquipment: []
+    }
+
+    const { dbHttp } = createDetailDb(item)
+    const event = createTestEvent(dbHttp)
+    const result = await itemDetailHandler(event)
+
+    expect(result.isInMyGear).toBe(false)
+    expect(result.properties).toStrictEqual([])
   })
 
   it('should return 400 when route params validation fails', async () => {

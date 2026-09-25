@@ -9,6 +9,7 @@ import {
 } from '#server/utils/equipment/property-values'
 
 import { validateItemDetailParams } from '#server/utils/validation/schemas'
+import { validateSessionUser } from '#server/utils/session'
 
 interface ItemDetailBrand {
   id: number;
@@ -24,6 +25,7 @@ interface ItemDetailCategory {
 
 interface ItemProperty {
   dataType: EquipmentPropertyDataType;
+  enumOptionName?: string;
   name: string;
   slug: string;
   unit: string | null;
@@ -36,12 +38,14 @@ interface ItemDetailResponse {
   cloudflareImageId: string | null;
   createdAt: Date | string;
   id: string;
+  isInMyGear: boolean;
   name: string;
   properties: ItemProperty[];
 }
 
 export default defineEventHandler(async (event) : Promise<ItemDetailResponse> => {
   const { id } = await getValidatedRouterParams(event, validateItemDetailParams)
+  const userId = await validateSessionUser(event)
 
   const itemPromise = event.context.dbHttp.query.equipmentItems.findFirst({
     columns: {
@@ -56,6 +60,18 @@ export default defineEventHandler(async (event) : Promise<ItemDetailResponse> =>
     },
 
     with: {
+      userEquipment: {
+        columns: {
+          id: true
+        },
+
+        where: {
+          userId
+        },
+
+        limit: 1
+      },
+
       brand: {
         columns: {
           id: true,
@@ -88,6 +104,15 @@ export default defineEventHandler(async (event) : Promise<ItemDetailResponse> =>
               name: true,
               slug: true,
               unit: true
+            },
+
+            with: {
+              enumOptions: {
+                columns: {
+                  name: true,
+                  slug: true
+                }
+              }
             }
           }
         }
@@ -154,13 +179,23 @@ export default defineEventHandler(async (event) : Promise<ItemDetailResponse> =>
         valueText: propertyValue.valueText
       })
 
-      properties.push({
+      const itemProperty: ItemProperty = {
         dataType,
         name: property.name,
         slug: property.slug,
         unit: property.unit,
         value
-      })
+      }
+
+      if (dataType === 'enum' && typeof value === 'string') {
+        const enumOption = property.enumOptions.find((option: { name: string; slug: string; }) => option.slug === value)
+
+        if (enumOption !== undefined) {
+          itemProperty.enumOptionName = enumOption.name
+        }
+      }
+
+      properties.push(itemProperty)
     }
   }
 
@@ -182,7 +217,10 @@ export default defineEventHandler(async (event) : Promise<ItemDetailResponse> =>
     cloudflareImageId,
     createdAt: item.createdAt,
     id: item.id,
+    isInMyGear: item.userEquipment.length > 0,
     name: item.name,
     properties
   }
 })
+
+export type { ItemDetailResponse }

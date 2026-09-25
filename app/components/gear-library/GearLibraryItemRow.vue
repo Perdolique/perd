@@ -26,7 +26,7 @@
         </div>
 
         <h2 :class="$style.heading">
-          <PerdLink :class="$style.detailLink" :to="item.detailPath">
+          <PerdLink :class="$style.detailLink" :to="item.detailLocation">
             {{ item.name }}
           </PerdLink>
         </h2>
