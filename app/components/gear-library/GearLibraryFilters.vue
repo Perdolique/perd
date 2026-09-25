@@ -128,7 +128,7 @@
     (event: 'remove', filter: GearLibraryAppliedFilter): void;
   }
 
-  const props = defineProps<Props>()
+  const { appliedFilterChips, appliedFilterCount } = defineProps<Props>()
   const emit = defineEmits<Emits>()
   const draftFilters = defineModel<GearLibraryFilterDraft>('draftFilters', { required: true })
   const isDialogOpen = defineModel<boolean>('isDialogOpen', { required: true })
@@ -139,16 +139,16 @@
   const filterTitleId = `${componentId}-filter-title`
   const filterTrigger = useTemplateRef('filterTrigger')
   const chipRefs = useTemplateRef('chipRefs')
-  const appliedFilterIds = computed(() => props.appliedFilterChips.map((chip) => chip.id))
-  const hasAppliedFilterCount = computed(() => props.appliedFilterCount > 0)
-  const hasAppliedFilterChips = computed(() => props.appliedFilterChips.length > 0)
+  const appliedFilterIds = computed(() => appliedFilterChips.map((chip) => chip.id))
+  const hasAppliedFilterCount = computed(() => appliedFilterCount > 0)
+  const hasAppliedFilterChips = computed(() => appliedFilterChips.length > 0)
 
   function focusFilterTrigger() {
     filterTrigger.value?.focus()
   }
 
   function emitRemove(chip: GearLibraryAppliedFilterChip, index: number) {
-    const nextChip = props.appliedFilterChips[index + 1] ?? props.appliedFilterChips[index - 1]
+    const nextChip = appliedFilterChips[index + 1] ?? appliedFilterChips[index - 1]
 
     pendingFocusTarget.value = nextChip?.id ?? null
 

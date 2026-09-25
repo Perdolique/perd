@@ -5,7 +5,7 @@
     </PerdHeading>
 
     <div
-      v-if="status === 'loading'"
+      v-if="isMethodsLoading"
       role="status"
       aria-live="polite"
       aria-busy="true"
@@ -14,7 +14,7 @@
       Loading sign-in methods…
     </div>
 
-    <div v-else-if="status === 'error'" role="alert" :class="$style.feedback">
+    <div v-else-if="hasMethodsError" role="alert" :class="$style.feedback">
       <p>Could not load sign-in methods. Try again.</p>
 
       <PerdButton size="small" variant="secondary" @click="emit('retry')">
@@ -26,12 +26,12 @@
       <dl :class="$style.methods">
         <div :class="$style.method">
           <dt>Verified email</dt>
-          <dd>{{ email ?? 'Not added' }}</dd>
+          <dd>{{ emailLabel }}</dd>
         </div>
 
         <div :class="$style.method">
           <dt>Twitch</dt>
-          <dd>{{ isTwitchLinked ? 'Connected' : 'Not connected' }}</dd>
+          <dd>{{ twitchLabel }}</dd>
         </div>
       </dl>
 
@@ -98,9 +98,13 @@
     retry: [];
   }
 
-  const { email, emailRegistrationEnabled, isTwitchLinked } = defineProps<Props>()
+  const { email, emailRegistrationEnabled, isTwitchLinked, status } = defineProps<Props>()
   const emit = defineEmits<Emits>()
   const disconnectSuccessMessage = useTemplateRef('disconnectSuccessMessage')
+  const isMethodsLoading = computed(() => status === 'loading')
+  const hasMethodsError = computed(() => status === 'error')
+  const emailLabel = computed(() => email ?? 'Not added')
+  const twitchLabel = computed(() => isTwitchLinked ? 'Connected' : 'Not connected')
 
   const disconnectEmailRequirement = computed(() => emailRegistrationEnabled
     ? twitchOAuthMessages.disconnectEmailRequired

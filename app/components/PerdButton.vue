@@ -6,7 +6,7 @@
     :to="linkTarget"
     :role="linkRole"
     :disabled="buttonDisabled"
-    :aria-disabled="linkAriaDisabled"
+    :aria-disabled="ariaDisabled"
     :aria-busy="ariaBusy"
     :tabindex="linkTabIndex"
     :class="[$style.component, {
@@ -62,10 +62,9 @@
   type ButtonRoot = ComponentPublicInstance | HTMLElement
 
   const {
-    block = false,
     disabled,
     iconRight,
-    loading = false,
+    loading,
     size = 'medium',
     to,
     type = 'button',
@@ -86,10 +85,10 @@
   })
 
   const buttonType = computed(() => isLink.value ? undefined : type)
-  const buttonDisabled = computed(() => isLink.value ? undefined : isButtonDisabled.value)
+  const buttonDisabled = computed(() => isLink.value ? undefined : disabled)
   const linkTarget = computed(() => isLinkDisabled.value ? undefined : to)
   const linkRole = computed(() => isLinkDisabled.value ? 'link' : undefined)
-  const linkAriaDisabled = computed(() => isLinkDisabled.value || undefined)
+  const ariaDisabled = computed(() => isButtonDisabled.value || undefined)
   const linkTabIndex = computed(() => isLinkDisabled.value ? -1 : undefined)
   const ariaBusy = computed(() => loading || undefined)
   const isSmallSize = computed(() => size === 'small')
@@ -102,7 +101,7 @@
   const showRightIcon = computed(() => iconRight !== undefined && iconRight !== '' && loading === false)
 
   function handleClick(event: MouseEvent) {
-    if (isLinkDisabled.value) {
+    if (isButtonDisabled.value) {
       event.preventDefault()
       event.stopImmediatePropagation()
     }

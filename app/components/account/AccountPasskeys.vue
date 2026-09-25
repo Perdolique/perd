@@ -13,15 +13,15 @@
     <p v-if="isEmpty">No passkeys added yet.</p>
 
     <ul v-if="hasPasskeys" :class="$style.list" aria-label="Your passkeys">
-      <li v-for="passkey in passkeys" :key="passkey.id" :class="$style.entry">
+      <li v-for="passkey in passkeyViews" :key="passkey.id" :class="$style.entry">
         <div :class="$style.details">
           <strong>{{ passkey.name }}</strong>
-          <span>Added {{ formatDateTime(passkey.createdAt) }}</span>
-          <span>{{ lastUsedLabel(passkey.lastUsedAt) }}</span>
+          <span>Added {{ passkey.createdAtLabel }}</span>
+          <span>{{ passkey.lastUsedLabel }}</span>
         </div>
         <div :class="$style.actions">
-          <PerdButton size="small" variant="secondary" :aria-label="passkeyActionLabel('Rename', passkey)" :disabled="isBusy" @click="editPasskey(passkey)">Rename</PerdButton>
-          <PerdButton size="small" variant="danger" :aria-label="passkeyActionLabel('Remove', passkey)" :disabled="isBusy" @click="confirmRemoval(passkey)">Remove</PerdButton>
+          <PerdButton size="small" variant="secondary" :aria-label="passkey.renameLabel" :disabled="isBusy" @click="editPasskey(passkey.source)">Rename</PerdButton>
+          <PerdButton size="small" variant="danger" :aria-label="passkey.removeLabel" :disabled="isBusy" @click="confirmRemoval(passkey.source)">Remove</PerdButton>
         </div>
       </li>
     </ul>
@@ -72,7 +72,7 @@
       :error="dialogError"
       @confirm="removePasskey"
     >
-      Remove “{{ selectedPasskey?.name }}”? It will no longer work for sign-in. Your other passkeys, email, and Twitch stay available.
+      Remove “{{ selectedPasskeyName }}”? It will no longer work for sign-in. Your other passkeys, email, and Twitch stay available.
     </ConfirmationDialog>
   </PerdCard>
 </template>
@@ -105,6 +105,7 @@
   const nameError = ref<string>()
   const editedName = ref('')
   const selectedPasskey = ref<PasskeySummary | null>(null)
+  const selectedPasskeyName = computed(() => selectedPasskey.value?.name ?? '')
   const showRename = ref(false)
   const showRemove = ref(false)
   const dialogError = ref<string | null>(null)
@@ -122,27 +123,36 @@
   const showUnsupported = computed(() => hasLoaded.value && canRegister.value && !supported.value)
   const canCancelRegistration = computed(() => registrationPhase.value === 'options' || registrationPhase.value === 'authenticator')
   const isRenameDisabled = computed(() => editedName.value.trim().length === 0 || isSaving.value)
+
+  const dateFormatter = new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  })
+
+  const passkeyViews = computed(() => passkeys.value.map((passkey) => {
+    const createdAt = new Date(passkey.createdAt)
+    const createdAtLabel = dateFormatter.format(createdAt)
+    const lastUsedAt = passkey.lastUsedAt === null ? null : new Date(passkey.lastUsedAt)
+    const lastUsedTime = lastUsedAt === null ? null : dateFormatter.format(lastUsedAt)
+    const lastUsedLabel = lastUsedTime === null ? 'Never used' : `Last used ${lastUsedTime}`
+    const renameLabel = `Rename ${passkey.name}`
+    const removeLabel = `Remove ${passkey.name}`
+
+    return {
+      createdAtLabel,
+      id: passkey.id,
+      lastUsedLabel,
+      name: passkey.name,
+      removeLabel,
+      renameLabel,
+      source: passkey
+    }
+  }))
+
   let attempt = 0
   let disposed = false
   let optionsController: AbortController | null = null
   let listController: AbortController | null = null
-
-  function passkeyActionLabel(action: 'Remove' | 'Rename', passkey: PasskeySummary) {
-    return `${action} ${passkey.name}`
-  }
-
-  function formatDateTime(value: string) {
-    const date = new Date(value)
-
-    return date.toLocaleString(undefined, {
-      dateStyle: 'medium',
-      timeStyle: 'short'
-    })
-  }
-
-  function lastUsedLabel(value: string | null) {
-    return value === null ? 'Never used' : `Last used ${formatDateTime(value)}`
-  }
 
   async function announce(text: string, isError = false) {
     if (disposed) {

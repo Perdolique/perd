@@ -232,6 +232,7 @@
     selectedIds: string[]
   ): GearLibraryComparisonTableItem {
     const itemId = item.id
+    const detailPath = createGearLibraryItemPath(itemId)
 
     return {
       brand: {
@@ -241,7 +242,7 @@
       cloudflareImageId: item.cloudflareImageId,
 
       detailLocation: {
-        path: createGearLibraryItemPath(itemId),
+        path: detailPath,
 
         query: {
           category: categorySlug,

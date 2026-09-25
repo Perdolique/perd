@@ -194,7 +194,15 @@ test.describe('Gear library states', () => {
     })
 
     await openGearLibrary(page)
-    await expect(page.getByRole('link', { name: 'PocketRocket Deluxe' })).toBeVisible()
+
+    const staleItemLink = page.getByRole('link', { name: 'PocketRocket Deluxe' })
+
+    await expect(staleItemLink).toBeVisible()
+
+    const originalDetailHref = await staleItemLink.getAttribute('href')
+    const expectedDetailHref = String(originalDetailHref)
+
+    expect(originalDetailHref).not.toBeNull()
 
     const list = page.getByRole('list')
     const listBoxBefore = await getElementBox(list)
@@ -212,6 +220,7 @@ test.describe('Gear library states', () => {
 
     await expect(refreshProgress).toBeVisible()
     await expect(page.getByRole('link', { name: 'PocketRocket Deluxe' })).toBeVisible()
+    await expect(staleItemLink).toHaveAttribute('href', expectedDetailHref)
 
     const refreshStatus = page.getByText('Refreshing results', { exact: true })
     const refreshStatusBox = await getElementBox(refreshStatus)
@@ -229,6 +238,7 @@ test.describe('Gear library states', () => {
 
     await expect(refreshAlert).toBeVisible()
     await expect(page.getByRole('link', { name: 'PocketRocket Deluxe' })).toBeVisible()
+    await expect(staleItemLink).toHaveAttribute('href', expectedDetailHref)
 
     itemsState.response = { json: refreshedSearchResponse }
 

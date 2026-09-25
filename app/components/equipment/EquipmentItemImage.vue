@@ -44,11 +44,11 @@
 
   defineOptions({ inheritAttrs: false })
 
-  const props = defineProps<Props>()
+  const { cloudflareImageId } = defineProps<Props>()
   const hasLoadError = ref(false)
 
   const hasCloudflareImage = computed(
-    () => props.cloudflareImageId !== null && hasLoadError.value === false
+    () => cloudflareImageId !== null && hasLoadError.value === false
   )
 
   const usesCloudflareProvider = computed(
@@ -56,24 +56,24 @@
   )
 
   const cloudflareImageSource = computed(
-    () => props.cloudflareImageId ?? placeholderSource
+    () => cloudflareImageId ?? placeholderSource
   )
 
   const standardImageSource = computed(() => {
     if (
       import.meta.dev
-      && props.cloudflareImageId !== null
+      && cloudflareImageId !== null
       && hasLoadError.value === false
     ) {
-      const cloudflareImageId = encodeURIComponent(props.cloudflareImageId)
+      const encodedCloudflareImageId = encodeURIComponent(cloudflareImageId)
 
-      return `/api/equipment/images/${cloudflareImageId}`
+      return `/api/equipment/images/${encodedCloudflareImageId}`
     }
 
     return placeholderSource
   })
 
-  watch(() => props.cloudflareImageId, () => {
+  watch(() => cloudflareImageId, () => {
     hasLoadError.value = false
   })
 

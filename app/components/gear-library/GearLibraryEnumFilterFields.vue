@@ -40,7 +40,7 @@
     properties: GearLibraryFilterProperty[];
   }
 
-  const props = defineProps<Props>()
+  const { isLimitReached, properties } = defineProps<Props>()
   const selectedOptionsByProperty = defineModel<Record<string, string[]>>({ required: true })
   const componentId = useId()
   const nameCollator = new Intl.Collator('en')
@@ -52,7 +52,7 @@
       : []
   }
 
-  const propertyViews = computed(() => props.properties
+  const propertyViews = computed(() => properties
     .filter((property) => property.dataType === 'enum')
     .map((property) => {
       const selectedOptions = new Set(getSelectedOptions(property.slug))
@@ -65,7 +65,7 @@
           return {
             isChecked,
             controlId: `${componentId}-${property.slug}-${option.slug}`,
-            isDisabled: props.isLimitReached && isChecked === false,
+            isDisabled: isLimitReached && isChecked === false,
             name: option.name,
             slug: option.slug
           }

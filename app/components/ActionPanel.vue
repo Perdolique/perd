@@ -2,10 +2,10 @@
   <NuxtLink
     :to="to"
     :class="[$style.component, {
-      'with-media': $slots.media !== undefined || showIcon
+      'with-media': hasMedia()
     }]"
   >
-    <span v-if="$slots.media !== undefined || showIcon" :class="$style.media">
+    <span v-if="hasMedia()" :class="$style.media">
       <slot name="media">
         <Icon :name="iconName" aria-hidden="true" />
       </slot>
@@ -16,7 +16,7 @@
         {{ title }}
       </span>
 
-      <span v-if="$slots.subtitle !== undefined || showSubtitle" :class="$style.subtitle">
+      <span v-if="hasSubtitle()" :class="$style.subtitle">
         <slot name="subtitle">
           {{ subtitle }}
         </slot>
@@ -24,7 +24,7 @@
     </span>
 
     <span :class="$style.trailingGroup">
-      <span v-if="$slots.trailing !== undefined" :class="$style.trailing">
+      <span v-if="$slots.trailing" :class="$style.trailing">
         <slot name="trailing" />
       </span>
 
@@ -34,7 +34,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed } from 'vue'
+  import { computed, useSlots } from 'vue'
 
   interface Props {
     icon?: string;
@@ -43,10 +43,19 @@
     to: string;
   }
 
-  const props = defineProps<Props>()
-  const showIcon = computed(() => props.icon !== undefined && props.icon !== '')
-  const showSubtitle = computed(() => props.subtitle !== undefined && props.subtitle !== '')
-  const iconName = computed(() => props.icon ?? '')
+  const { icon, subtitle } = defineProps<Props>()
+  const slots = useSlots()
+  const showIcon = computed(() => icon !== undefined && icon !== '')
+  const showSubtitle = computed(() => subtitle !== undefined && subtitle !== '')
+  const iconName = computed(() => icon ?? '')
+
+  function hasMedia() {
+    return slots.media !== undefined || showIcon.value
+  }
+
+  function hasSubtitle() {
+    return slots.subtitle !== undefined || showSubtitle.value
+  }
 </script>
 
 <style module>

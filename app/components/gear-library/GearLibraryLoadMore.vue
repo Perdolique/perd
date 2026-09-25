@@ -36,9 +36,9 @@
     retry: [];
   }
 
-  const props = defineProps<Props>()
+  const { hasError, isVisible } = defineProps<Props>()
   const emit = defineEmits<Emits>()
-  const showComponent = computed(() => props.isVisible || props.hasError)
+  const showComponent = computed(() => isVisible || hasError)
 
   function emitLoadMore() {
     emit('loadMore')

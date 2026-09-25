@@ -67,7 +67,7 @@
     value: string;
   }
 
-  const props = defineProps<Props>()
+  const { errors, isLimitReached, properties } = defineProps<Props>()
   const ranges = defineModel<Record<string, GearLibraryNumberRangeDraft>>({ required: true })
   const componentId = useId()
 
@@ -83,16 +83,16 @@
     }
   }
 
-  const propertyViews = computed(() => props.properties
+  const propertyViews = computed(() => properties
     .filter((property) => property.dataType === 'number')
     .map((property) => {
       const range = getNumberRange(property.slug)
-      const errorMessage = getOwnRecordValue(props.errors, property.slug)
+      const errorMessage = getOwnRecordValue(errors, property.slug)
       const hasError = errorMessage !== undefined
       const errorId = `${componentId}-error-${property.slug}`
       const hasUnit = property.unit !== null && property.unit !== ''
       const isActive = range.min.trim() !== '' || range.max.trim() !== ''
-      const isDisabled = props.isLimitReached && isActive === false
+      const isDisabled = isLimitReached && isActive === false
 
       const sharedFieldState = {
         ariaDescribedby: hasError ? errorId : undefined,

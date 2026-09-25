@@ -356,6 +356,7 @@
     hasNarrowingState,
     itemsApiQuery,
     itemsApiQuerySignature,
+    routeState,
     selectedCategory
   })
 
@@ -381,6 +382,7 @@
     itemsStatus,
     lastSuccessfulHasNarrowingState,
     lastSuccessfulItemsResponse,
+    lastSuccessfulRouteState,
     loadMore,
     loadMoreAnnouncement,
     refreshBrands,
@@ -524,11 +526,23 @@
   )
 
   const gearLibraryItems = computed(() => {
-    const detailQuery = buildGearLibraryRouteQuery(routeState.value)
+    const displayedState = lastSuccessfulRouteState.value
+    const currentState = routeState.value
+
+    const compare = displayedState.category === currentState.category
+      ? currentState.compare
+      : displayedState.compare
+
+    const detailQuery = buildGearLibraryRouteQuery({
+      ...displayedState,
+      compare
+    })
 
     return lastSuccessfulItemsResponse.value.items.map((item) => {
+      const detailPath = createGearLibraryItemPath(item.id)
+
       const detailLocation = {
-        path: createGearLibraryItemPath(item.id),
+        path: detailPath,
         query: detailQuery
       }
 

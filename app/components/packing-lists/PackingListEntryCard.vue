@@ -50,34 +50,34 @@
     remove: [entryId: string];
   }
 
-  const props = defineProps<Props>()
+  const { entry } = defineProps<Props>()
   const emit = defineEmits<Emits>()
   const packCheckbox = useTemplateRef('packCheckbox')
   const packErrorId = useId()
   let shouldRestorePackFocus = false
-  const hasSubtitle = computed(() => props.entry.subtitle !== '')
-  const packErrorDescriptionId = computed(() => props.entry.hasPackError ? packErrorId : undefined)
-  const removeLabel = computed(() => `Remove ${props.entry.title}`)
+  const hasSubtitle = computed(() => entry.subtitle !== '')
+  const packErrorDescriptionId = computed(() => entry.hasPackError ? packErrorId : undefined)
+  const removeLabel = computed(() => `Remove ${entry.title}`)
 
   function handlePackChange(event: Event) {
     const checkbox = event.currentTarget as HTMLInputElement
 
-    if (props.entry.isPackDisabled) {
-      checkbox.checked = props.entry.isPacked
+    if (entry.isPackDisabled) {
+      checkbox.checked = entry.isPacked
 
       return
     }
 
     shouldRestorePackFocus = globalThis.document.activeElement === checkbox
 
-    emit('packChange', props.entry.id, checkbox.checked)
+    emit('packChange', entry.id, checkbox.checked)
   }
 
   function emitRemove() {
-    emit('remove', props.entry.id)
+    emit('remove', entry.id)
   }
 
-  watch(() => props.entry.isPacking, async (isPacking, wasPacking) => {
+  watch(() => entry.isPacking, async (isPacking, wasPacking) => {
     if (wasPacking === false || isPacking || shouldRestorePackFocus === false) {
       return
     }
@@ -86,7 +86,7 @@
 
     await nextTick()
 
-    if (props.entry.isPackFocusTarget && globalThis.document.activeElement === globalThis.document.body) {
+    if (entry.isPackFocusTarget && globalThis.document.activeElement === globalThis.document.body) {
       packCheckbox.value?.focus()
     }
   })

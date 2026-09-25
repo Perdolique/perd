@@ -99,7 +99,7 @@
 
   const {
     errorMessage = null,
-    loading = false
+    loading
   } = defineProps<Props>()
 
   const emit = defineEmits<Emits>()

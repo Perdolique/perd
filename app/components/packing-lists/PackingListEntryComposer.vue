@@ -149,7 +149,7 @@
   type Emits = (event: 'created', entry: PackingListEntry, packingListUpdatedAt: string) => void
 
   const {
-    initiallyOpen = false,
+    initiallyOpen,
     packingListId
   } = defineProps<Props>()
 

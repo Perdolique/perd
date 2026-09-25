@@ -393,7 +393,7 @@ test.describe('Gear library comparison selection', () => {
       exact: true
     }).click()
 
-    await expect(page).toHaveURL(new RegExp(`/gear-library/${firstItem.id}$`, 'u'))
+    await expect(page).toHaveURL(new RegExp(`/gear-library/${firstItem.id}\\?category=stoves$`, 'u'))
     await page.goBack()
     await expect(page).toHaveURL(/\/gear-library\?category=stoves$/u)
     await expect(page.getByRole('button', { name: 'Cancel comparison' })).toBeVisible()

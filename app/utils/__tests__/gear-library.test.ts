@@ -128,20 +128,23 @@ describe(getGearLibraryRouteState, () => {
 
 describe(getGearLibraryDetailComparison, () => {
   it('should start a category comparison from a direct item link', () => {
+    const currentState = createRouteState()
+
     const result = getGearLibraryDetailComparison(
-      createRouteState(),
+      currentState,
       firstComparisonId,
       'stoves'
     )
 
+    const nextState = createRouteState({
+      category: 'stoves',
+      compare: [firstComparisonId]
+    })
+
     expect(result).toStrictEqual({
       isAlreadySelected: false,
       isLimitReached: false,
-
-      nextState: createRouteState({
-        category: 'stoves',
-        compare: [firstComparisonId]
-      })
+      nextState
     })
   })
 
@@ -156,13 +159,15 @@ describe(getGearLibraryDetailComparison, () => {
 
     const result = getGearLibraryDetailComparison(currentState, secondComparisonId, 'stoves')
 
-    expect(result.nextState).toStrictEqual(createRouteState({
+    const expectedState = createRouteState({
       brand: ['msr'],
       category: 'stoves',
       compare: [firstComparisonId, secondComparisonId],
       q: 'rocket',
       sort: 'brand'
-    }))
+    })
+
+    expect(result.nextState).toStrictEqual(expectedState)
   })
 
   it('should clear category-specific state when the item belongs to another category', () => {
@@ -180,12 +185,14 @@ describe(getGearLibraryDetailComparison, () => {
 
     const result = getGearLibraryDetailComparison(currentState, secondComparisonId, 'stoves')
 
-    expect(result.nextState).toStrictEqual(createRouteState({
+    const expectedState = createRouteState({
       brand: ['msr'],
       category: 'stoves',
       compare: [secondComparisonId],
       q: 'camp'
-    }))
+    })
+
+    expect(result.nextState).toStrictEqual(expectedState)
   })
 
   it('should keep an already selected item once in the comparison', () => {

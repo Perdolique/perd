@@ -1,141 +1,170 @@
 <template>
-  <div :class="$style.component">
+  <main :class="$style.component">
     <PerdLink :class="$style.backLink" :to="backToCatalogLocation">
       <Icon name="hugeicons:arrow-left-02" aria-hidden="true" />
       Back to gear library
     </PerdLink>
 
-    <h1
-      v-if="itemResponse === null || itemResponse === undefined"
-      :class="$style.fallbackTitle"
-    >
+    <h1 v-if="showFallbackTitle">
       Gear item
     </h1>
 
-    <PageLoadingState v-if="isItemLoading" title="Loading equipment item" />
+    <span :class="$style.visuallyHidden" role="status" aria-live="polite" aria-atomic="true">
+      {{ itemLoadAnnouncement }}
+    </span>
+
+    <PageLoadingState v-if="showItemLoadingState" title="Loading equipment item" />
 
     <PagePlaceholder
-      v-else-if="hasItemLoadError"
+      v-else-if="showItemLoadError"
       emoji="🧰"
       full-width
-      :title="isItemNotFound ? 'Item unavailable.' : 'Could not load item.'"
+      :title="itemLoadErrorTitle"
     >
-      {{ isItemNotFound
-        ? 'This item is not available in the gear library.'
-        : 'The equipment item could not be loaded. Try again.'
-      }}
+      {{ itemLoadErrorMessage }}
 
-      <template v-if="isItemNotFound === false" #actions>
-        <PerdButton variant="secondary" @click="refreshItem">
+      <template v-if="canRetryItemLoad" #actions>
+        <PerdButton :loading="isRetryingItem" variant="secondary" @click="handleRetryItem">
           Retry
         </PerdButton>
       </template>
     </PagePlaceholder>
 
     <article v-else-if="itemResponse" :class="$style.item">
-      <header :class="$style.header">
-        <p :class="$style.kicker">
-          {{ itemResponse.brand.name }}
-          <span aria-hidden="true">·</span>
-          {{ itemResponse.category.name }}
-        </p>
+      <div :class="$style.intro">
+        <header :class="$style.header">
+          <p :class="$style.kicker">
+            {{ itemResponse.brand.name }}
+            <span aria-hidden="true">·</span>
+            {{ itemResponse.category.name }}
+          </p>
 
-        <PerdHeading :level="1" :class="$style.title">
-          {{ itemResponse.name }}
-        </PerdHeading>
+          <PerdHeading ref="itemHeading" :level="1" :class="$style.title" tabindex="-1">
+            {{ itemResponse.name }}
+          </PerdHeading>
+        </header>
 
         <div :class="$style.actions">
           <GearLibraryMyGearAction
-            block
+            :class="$style.myGearAction"
             :has-error="hasMyGearError"
             :is-saved="isInMyGear"
             :is-saving="isSavingMyGear"
             :item-name="itemResponse.name"
+            saved-appearance="action"
             size="medium"
             variant="primary"
             @add="handleMyGearAdd"
           />
 
           <PerdButton
-            block
+            v-if="isComparisonAddAction"
+            :class="$style.comparisonAction"
             icon="hugeicons:arrow-data-transfer-horizontal"
             variant="secondary"
             @click="handleComparisonAction"
           >
             {{ comparisonActionLabel }}
           </PerdButton>
+          <PerdButton
+            v-else
+            :class="$style.comparisonAction"
+            icon="hugeicons:arrow-data-transfer-horizontal"
+            :to="comparisonLocation"
+            variant="secondary"
+          >
+            {{ comparisonActionLabel }}
+          </PerdButton>
+
+          <details
+            ref="moreActions"
+            :class="$style.moreActions"
+            @keydown.esc.prevent.stop="handleMoreEscape"
+          >
+            <summary :class="$style.moreTrigger">
+              <Icon name="hugeicons:more-horizontal" aria-hidden="true" />
+              More
+            </summary>
+
+            <div :class="$style.moreMenu">
+              <PerdLink :class="$style.moreLink" :to="photoSubmissionLocation">
+                <Icon name="hugeicons:camera-01" aria-hidden="true" />
+                Submit photo
+              </PerdLink>
+
+              <PerdLink
+                v-if="user.isAdmin"
+                :class="$style.moreLink"
+                :to="imagesManagementPath"
+              >
+                <Icon name="hugeicons:image-02" aria-hidden="true" />
+                Manage images
+              </PerdLink>
+            </div>
+          </details>
+
+          <p v-if="isComparisonLimitReached" :class="$style.comparisonHint">
+            You can compare up to 4 items. Remove one to add this item.
+          </p>
+
+          <span
+            :class="$style.visuallyHidden"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {{ myGear.announcement.value }}
+          </span>
         </div>
-
-        <p v-if="isComparisonLimitReached" :class="$style.comparisonHint">
-          You can compare up to 4 items. Remove one to add this item.
-        </p>
-
-        <span
-          :class="$style.visuallyHidden"
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          {{ myGear.announcement.value }}
-        </span>
-      </header>
-
-      <div :class="$style.imageFrame">
-        <EquipmentItemImage
-          :class="$style.image"
-          :alt="itemResponse.name"
-          :cloudflare-image-id="itemResponse.cloudflareImageId"
-          fit="inside"
-          :height="840"
-          loading="eager"
-          preload
-          sizes="sm:100vw lg:720px"
-          :width="1120"
-        />
       </div>
 
-      <section :class="$style.specifications" aria-labelledby="specifications-heading">
-        <PerdHeading id="specifications-heading" :level="2">
-          Characteristics
-        </PerdHeading>
+      <div :class="$style.detailBody">
+        <div :class="$style.imageFrame">
+          <EquipmentItemImage
+            :class="$style.image"
+            :alt="itemResponse.name"
+            :cloudflare-image-id="itemResponse.cloudflareImageId"
+            fit="inside"
+            :height="660"
+            loading="eager"
+            preload
+            sizes="sm:100vw lg:440px"
+            :width="880"
+          />
+        </div>
 
-        <dl v-if="specificationRows.length > 0" :class="$style.specificationList">
-          <div
-            v-for="property in specificationRows"
-            :key="property.slug"
-            :class="$style.specificationRow"
-          >
-            <dt :class="$style.specificationName">
-              {{ property.name }}
-            </dt>
-            <dd :class="$style.specificationValue">
-              {{ property.value }}
-            </dd>
-          </div>
-        </dl>
+        <section :class="$style.specifications" :aria-labelledby="specificationsHeadingId">
+          <PerdHeading :id="specificationsHeadingId" :level="2">
+            Characteristics
+          </PerdHeading>
 
-        <p v-else :class="$style.emptySpecifications">
-          No characteristics yet.
-        </p>
-      </section>
+          <dl v-if="hasSpecifications" :class="$style.specificationList">
+            <div
+              v-for="property in specificationRows"
+              :key="property.slug"
+              :class="$style.specificationRow"
+            >
+              <dt :class="$style.specificationName">
+                {{ property.name }}
+              </dt>
+              <dd :class="$style.specificationValue">
+                {{ property.value }}
+              </dd>
+            </div>
+          </dl>
 
-      <footer :class="$style.footer">
-        <PerdLink :to="photoSubmissionPath">
-          Submit photo
-        </PerdLink>
-
-        <PerdLink v-if="user.isAdmin" :to="imagesManagementPath">
-          Manage images
-        </PerdLink>
-      </footer>
+          <p v-else :class="$style.emptySpecifications">
+            No characteristics yet.
+          </p>
+        </section>
+      </div>
     </article>
-  </div>
+  </main>
 </template>
 
 <script lang="ts" setup>
-  import { computed } from 'vue'
-  import { definePageMeta, navigateTo, useFetch, useRoute, useUserStore } from '#imports'
-  import type { ItemDetailResponse } from '#server/api/equipment/items/[id].get'
+  import { computed, nextTick, ref, useId, useTemplateRef } from 'vue'
+  import { definePageMeta, navigateTo, useFetch, useHead, useRoute, useUserStore } from '#imports'
   import { useGearLibraryMyGear } from '~/composables/use-gear-library-my-gear'
   import { useGearLibraryStore } from '~/stores/gear-library'
 
@@ -166,6 +195,10 @@
   const { user } = useUserStore()
   const gearLibraryStore = useGearLibraryStore()
   const myGear = useGearLibraryMyGear()
+  const moreActions = useTemplateRef('moreActions')
+  const itemHeading = useTemplateRef('itemHeading')
+  const specificationsHeadingId = useId()
+  const isRetryingItem = ref(false)
 
   const itemId = Array.isArray(route.params.id)
     ? route.params.id[0] ?? ''
@@ -179,20 +212,30 @@
     error: itemError,
     refresh: refreshItem,
     status: itemStatus
-  } = useFetch<ItemDetailResponse>(`/api/equipment/items/${itemId}`, {
+  } = useFetch(`/api/equipment/items/${itemId}`, {
     lazy: true
   })
 
   const catalogRouteState = computed(() => getGearLibraryRouteState(route.query))
+  const catalogQuery = computed(() => buildGearLibraryRouteQuery(catalogRouteState.value))
+
+  const photoSubmissionLocation = computed(() => {
+    return {
+      path: photoSubmissionPath,
+      query: catalogQuery.value
+    }
+  })
 
   const backToCatalogLocation = computed(() => {
     return {
       path: appRoutes.gearLibrary,
-      query: buildGearLibraryRouteQuery(catalogRouteState.value)
+      query: catalogQuery.value
     }
   })
 
   const isItemLoading = computed(() => itemStatus.value === 'idle' || itemStatus.value === 'pending')
+  const showItemLoadingState = computed(() => isItemLoading.value && isRetryingItem.value === false)
+  const showFallbackTitle = computed(() => itemResponse.value === null || itemResponse.value === undefined)
 
   const hasItemLoadError = computed(() => {
     const hasError = itemError.value !== null && itemError.value !== undefined
@@ -214,6 +257,13 @@
   })
 
   const isItemNotFound = computed(() => itemErrorStatus.value === 404)
+  const canRetryItemLoad = computed(() => isItemNotFound.value === false)
+  const showItemLoadError = computed(() => hasItemLoadError.value || isRetryingItem.value)
+  const itemLoadErrorTitle = computed(() => isItemNotFound.value ? 'Item unavailable.' : 'Could not load item.')
+
+  const itemLoadErrorMessage = computed(() => isItemNotFound.value
+    ? 'This item is not available in the gear library.'
+    : 'The equipment item could not be loaded. Try again.')
 
   const isInMyGear = computed(() => {
     const item = itemResponse.value
@@ -226,33 +276,27 @@
   const isSavingMyGear = computed(() => myGear.savingItemIds.value.includes(itemId))
   const hasMyGearError = computed(() => myGear.failedItemIds.value.includes(itemId))
 
-  function formatPropertyValue(property: ItemDetailResponse['properties'][number]): string {
-    if (property.value === null) {
-      return 'Not set'
-    }
-
-    if (property.dataType === 'boolean') {
-      return property.value ? 'Yes' : 'No'
-    }
-
-    if (property.dataType === 'enum') {
-      return property.enumOptionName ?? String(property.value)
-    }
-
-    if (property.dataType === 'number' && property.unit) {
-      return `${property.value} ${property.unit}`
-    }
-
-    return String(property.value)
-  }
-
   const specificationRows = computed<SpecificationRow[]>(() => itemResponse.value?.properties.map((property) => {
+    let value = String(property.value ?? 'Not set')
+
+    if (property.value !== null) {
+      if (property.dataType === 'boolean') {
+        value = property.value ? 'Yes' : 'No'
+      } else if (property.dataType === 'enum') {
+        value = property.enumOptionName ?? value
+      } else if (property.dataType === 'number' && property.unit) {
+        value = `${property.value} ${property.unit}`
+      }
+    }
+
     return {
       name: property.name,
       slug: property.slug,
-      value: formatPropertyValue(property)
+      value
     }
   }) ?? [])
+
+  const hasSpecifications = computed(() => specificationRows.value.length > 0)
 
   const comparisonAction = computed(() => {
     const categorySlug = itemResponse.value?.category.slug
@@ -272,6 +316,45 @@
     return isComparisonLimitReached.value ? 'Edit comparison' : 'Add to comparison'
   })
 
+  const isComparisonAddAction = computed(() => comparisonAction.value?.isAlreadySelected === false
+    && isComparisonLimitReached.value === false)
+
+  const comparisonLocation = computed(() => {
+    const nextState = comparisonAction.value?.nextState ?? catalogRouteState.value
+    const query = buildGearLibraryRouteQuery(nextState)
+
+    return {
+      path: appRoutes.gearLibrary,
+      query
+    }
+  })
+
+  const itemLoadAnnouncement = computed(() => {
+    if (isRetryingItem.value) {
+      return 'Retrying equipment item.'
+    }
+
+    if (showItemLoadingState.value) {
+      return 'Loading equipment item.'
+    }
+
+    return hasItemLoadError.value ? `${itemLoadErrorTitle.value} ${itemLoadErrorMessage.value}` : ''
+  })
+
+  const pageTitle = computed(() => {
+    if (showItemLoadingState.value || isRetryingItem.value) {
+      return 'Loading equipment item | Perd'
+    }
+
+    const item = itemResponse.value
+
+    return item === null || item === undefined
+      ? `${itemLoadErrorTitle.value} | Perd`
+      : `${item.name} — ${item.brand.name} | Perd`
+  })
+
+  useHead({ title: pageTitle })
+
   function handleMyGearAdd() {
     const item = itemResponse.value
 
@@ -287,17 +370,55 @@
       return
     }
 
+    const query = buildGearLibraryRouteQuery(action.nextState)
+
     await navigateTo({
       path: appRoutes.gearLibrary,
-      query: buildGearLibraryRouteQuery(action.nextState)
+      query
     })
+  }
+
+  async function handleRetryItem(event: MouseEvent) {
+    if (isRetryingItem.value) {
+      return
+    }
+
+    const retryButton = event.currentTarget
+
+    isRetryingItem.value = true
+
+    try {
+      await refreshItem()
+    } finally {
+      const shouldFocusItem = globalThis.document.activeElement === retryButton
+
+      isRetryingItem.value = false
+
+      if (shouldFocusItem && itemResponse.value !== null && itemResponse.value !== undefined) {
+        await nextTick()
+
+        if (globalThis.document.activeElement === globalThis.document.body) {
+          itemHeading.value?.$el?.focus()
+        }
+      }
+    }
+  }
+
+  function handleMoreEscape() {
+    const details = moreActions.value
+
+    if (details === null) {
+      return
+    }
+
+    details.open = false
+
+    details.querySelector('summary')?.focus()
   }
 </script>
 
 <style module>
   .component {
-    inline-size: min(100%, 45rem);
-    margin-inline: auto;
     display: grid;
     gap: var(--spacing-24);
     container-type: inline-size;
@@ -312,53 +433,157 @@
     font-size: var(--font-size-14);
   }
 
-  .fallbackTitle {
-    margin: 0;
-  }
-
   .item {
     display: grid;
-    gap: var(--spacing-32);
+    gap: var(--spacing-24);
     min-inline-size: 0;
+  }
+
+  .intro {
+    display: grid;
+    gap: var(--spacing-20);
+    min-inline-size: 0;
+
+    @container (width >= 60rem) {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      gap: var(--spacing-24);
+    }
   }
 
   .header {
     display: grid;
-    gap: var(--spacing-16);
+    gap: var(--spacing-8);
+    min-inline-size: 0;
   }
 
   .kicker {
     display: flex;
     flex-wrap: wrap;
     gap: var(--spacing-8);
-    margin: 0;
     color: var(--color-text-secondary);
     font-size: var(--font-size-14);
     font-weight: var(--font-weight-semibold);
   }
 
   .title {
-    margin: 0;
-    text-wrap: balance;
+    overflow-wrap: anywhere;
   }
 
   .actions {
     display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: var(--spacing-12);
     align-items: start;
+    min-inline-size: 0;
 
-    @container (width >= 32rem) {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+    @container (width >= 35rem) {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    @container (width >= 60rem) {
+      justify-content: flex-end;
+    }
+  }
+
+  .myGearAction {
+    grid-column: 1 / -1;
+  }
+
+  .comparisonAction {
+    grid-column: 1;
+    white-space: normal;
+  }
+
+  .moreActions {
+    grid-column: 2;
+    position: relative;
+  }
+
+  .moreTrigger {
+    min-block-size: var(--layout-button-height-medium);
+    min-inline-size: 7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-8);
+    padding-inline: var(--spacing-20);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--layout-button-radius);
+    background-color: var(--color-background-elevated);
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+
+    &:hover,
+    .moreActions[open] & {
+      background-color: var(--color-accent-subtle-hover);
+    }
+  }
+
+  .moreMenu {
+    position: absolute;
+    z-index: 2;
+    inset-block-start: calc(100% + var(--spacing-8));
+    inset-inline-end: 0;
+    inline-size: max-content;
+    min-inline-size: 100%;
+    max-inline-size: min(18rem, calc(100vw - 2rem));
+    display: grid;
+    gap: var(--spacing-4);
+    padding: var(--spacing-8);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--border-radius-14);
+    background-color: var(--color-background-elevated);
+    box-shadow: var(--shadow-medium);
+  }
+
+  .moreLink {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-12);
+    min-block-size: var(--layout-touch-target);
+    padding-inline: var(--spacing-12);
+    border-radius: var(--border-radius-10);
+    color: var(--color-text-primary);
+    white-space: nowrap;
+
+    &:hover,
+    &:focus-visible {
+      background-color: var(--color-accent-subtle);
     }
   }
 
   .comparisonHint {
-    margin: 0;
     color: var(--color-text-secondary);
     font-size: var(--font-size-14);
+
+    @container (width >= 35rem) {
+      flex-basis: 100%;
+      text-align: end;
+    }
+  }
+
+  .detailBody {
+    display: grid;
+    grid-template-areas:
+      'image'
+      'specifications';
+    gap: var(--spacing-24);
+    min-inline-size: 0;
+
+    @container (width >= 46rem) {
+      grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+      grid-template-areas: 'specifications image';
+      align-items: start;
+      gap: var(--spacing-32);
+    }
   }
 
   .imageFrame {
+    grid-area: image;
     overflow: hidden;
     border: 1px solid var(--color-border-subtle);
     border-radius: var(--border-radius-16);
@@ -366,19 +591,19 @@
   }
 
   .image {
-    display: block;
     inline-size: 100%;
-    aspect-ratio: 4 / 3;
+    block-size: clamp(14rem, 30cqi, 19rem);
     object-fit: contain;
   }
 
   .specifications {
+    grid-area: specifications;
     display: grid;
     gap: var(--spacing-16);
+    min-inline-size: 0;
   }
 
   .specificationList {
-    margin: 0;
     border-block-start: 1px solid var(--color-border-subtle);
   }
 
@@ -386,31 +611,22 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: var(--spacing-16);
-    padding-block: var(--spacing-16);
+    padding-block: var(--spacing-12);
     border-block-end: 1px solid var(--color-border-subtle);
   }
 
   .specificationName {
     color: var(--color-text-secondary);
+    overflow-wrap: anywhere;
   }
 
   .specificationValue {
-    margin: 0;
     font-weight: var(--font-weight-semibold);
     overflow-wrap: anywhere;
   }
 
   .emptySpecifications {
-    margin: 0;
     color: var(--color-text-secondary);
-  }
-
-  .footer {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-16);
-    padding-block: var(--spacing-24);
-    border-block-start: 1px solid var(--color-border-subtle);
   }
 
   .visuallyHidden {

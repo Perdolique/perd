@@ -34,16 +34,22 @@ interface DetailPropertyColumns {
   id: boolean;
 }
 
+interface DetailEnumOptionColumns {
+  name: boolean;
+  slug: boolean;
+}
+
+interface DetailEnumOptionsConfig {
+  columns: DetailEnumOptionColumns;
+}
+
+interface DetailPropertyWithConfig {
+  enumOptions: DetailEnumOptionsConfig;
+}
+
 interface DetailPropertyConfig {
   columns: DetailPropertyColumns;
-  with: {
-    enumOptions: {
-      columns: {
-        name: boolean;
-        slug: boolean;
-      };
-    };
-  };
+  with: DetailPropertyWithConfig;
 }
 
 interface DetailPropertyRelationConfig {
@@ -56,12 +62,16 @@ interface DetailPropertyValuesConfig {
 
 interface DetailRelationsConfig {
   propertyValues: DetailPropertyValuesConfig;
-  userEquipment: {
-    limit: number;
-    where: {
-      userId: string;
-    };
-  };
+  userEquipment: DetailUserEquipmentConfig;
+}
+
+interface DetailUserEquipmentWhere {
+  userId: string;
+}
+
+interface DetailUserEquipmentConfig {
+  limit: number;
+  where: DetailUserEquipmentWhere;
 }
 
 interface DetailWhereConfig {

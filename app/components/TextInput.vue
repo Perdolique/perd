@@ -57,14 +57,8 @@
 
   const {
     autocomplete = 'off',
-    disabled,
     error,
     hint,
-    label,
-    maxlength,
-    name,
-    placeholder,
-    required,
     type = 'text'
   } = defineProps<Props>()
 

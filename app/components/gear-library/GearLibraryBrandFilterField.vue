@@ -68,7 +68,7 @@
         variant="ghost"
         :aria-controls="brandListId"
         :aria-expanded="isExpanded"
-        @click="isExpanded = !isExpanded"
+        @click="toggleExpanded"
       >
         {{ toggleLabel }}
       </PerdButton>
@@ -94,7 +94,7 @@
   }
 
   const initialVisibleBrandCount = 8
-  const props = defineProps<Props>()
+  const { brands, isLimitReached } = defineProps<Props>()
   const emit = defineEmits<Emits>()
   const selectedBrands = defineModel<string[]>({ required: true })
   const searchValue = defineModel<string>('searchValue', { required: true })
@@ -103,7 +103,7 @@
   const brandListId = `${componentId}-brand-list`
   const nameCollator = new Intl.Collator('en')
 
-  const sortedBrands = computed(() => props.brands.toSorted(
+  const sortedBrands = computed(() => brands.toSorted(
     (left, right) => nameCollator.compare(left.name, right.name)
   ))
 
@@ -154,7 +154,7 @@
     return {
       controlId: `${componentId}-brand-${brand.slug}`,
       isChecked,
-      isDisabled: props.isLimitReached && isChecked === false,
+      isDisabled: isLimitReached && isChecked === false,
       name: brand.name,
       slug: brand.slug
     }
@@ -175,6 +175,10 @@
 
     return `Show all ${sortedBrands.value.length} brands`
   })
+
+  function toggleExpanded() {
+    isExpanded.value = !isExpanded.value
+  }
 
   function handleBrandChange(brandSlug: string, event: Event) {
     const input = event.currentTarget as HTMLInputElement

@@ -1,7 +1,7 @@
 import { ref, shallowRef, watch, type ComputedRef, type Ref } from 'vue'
 import { useAsyncData, useRequestFetch } from '#imports'
 import type { CategoryDetailResponse } from '#server/api/equipment/categories/by-slug/[slug].get'
-import type { GearLibraryItemsApiQuery } from '~/utils/gear-library'
+import type { GearLibraryItemsApiQuery, GearLibraryRouteState } from '~/utils/gear-library'
 import { useGearLibraryItemsData } from '~/composables/use-gear-library-items-data'
 import { useGearLibraryStore } from '~/stores/gear-library'
 
@@ -11,6 +11,7 @@ interface UseGearLibraryDataOptions {
   hasNarrowingState: ComputedRef<boolean>;
   itemsApiQuery: ComputedRef<GearLibraryItemsApiQuery>;
   itemsApiQuerySignature: ComputedRef<string>;
+  routeState: ComputedRef<GearLibraryRouteState>;
   selectedCategory: ComputedRef<string | undefined>;
 }
 
@@ -186,6 +187,7 @@ async function useGearLibraryData(options: UseGearLibraryDataOptions) {
     itemsStatus: itemsData.itemsStatus,
     lastSuccessfulHasNarrowingState: itemsData.lastSuccessfulHasNarrowingState,
     lastSuccessfulItemsResponse: itemsData.lastSuccessfulItemsResponse,
+    lastSuccessfulRouteState: itemsData.lastSuccessfulRouteState,
     loadMore: itemsData.loadMore,
     loadMoreAnnouncement: itemsData.loadMoreAnnouncement,
     refreshItems: itemsData.refreshItems,

@@ -112,7 +112,13 @@
   }
 
   const weightPropertySlug = 'weight'
-  const props = defineProps<Props>()
+
+  const {
+    isComparisonLimitReached,
+    isComparisonSelected,
+    item
+  } = defineProps<Props>()
+
   const emit = defineEmits<Emits>()
   const comparisonControlId = useId()
 
@@ -126,14 +132,14 @@
     const selected = checkbox.checked
 
     const shouldRejectSelection = selected
-      && props.isComparisonSelected === false
-      && props.isComparisonLimitReached
+      && isComparisonSelected === false
+      && isComparisonLimitReached
 
     if (shouldRejectSelection) {
       checkbox.checked = false
     }
 
-    emit('comparisonChange', props.item, selected)
+    emit('comparisonChange', item, selected)
   }
 
   /** Formats one list property for compact catalog display. */
@@ -157,10 +163,10 @@
     return String(property.value)
   }
 
-  const hasProperties = computed(() => props.item.properties.length > 0)
+  const hasProperties = computed(() => item.properties.length > 0)
 
   const displayProperties = computed<ItemDisplayProperty[]>(() => {
-    const orderedProperties = props.item.properties.toSorted((left, right) => {
+    const orderedProperties = item.properties.toSorted((left, right) => {
       const leftPriority = left.slug === weightPropertySlug ? 0 : 1
       const rightPriority = right.slug === weightPropertySlug ? 0 : 1
 

@@ -1,4 +1,5 @@
 import type { Request } from '@playwright/test'
+import type { ItemDetailResponse } from '#server/api/equipment/items/[id].get'
 import { expect, test } from '../fixtures/global.fixtures.ts'
 
 import {
@@ -111,7 +112,7 @@ test.describe('Direct equipment image delivery', () => {
 
     const catalogUrl = createFlexibleImageUrl(catalogImageId, 'w=48,h=48,fit=cover')
     const catalogRetinaUrl = createFlexibleImageUrl(catalogImageId, 'w=96,h=96,fit=cover')
-    const detailUrl = createFlexibleImageUrl(detailImageId, 'w=1120,h=840,fit=scale-down')
+    const detailUrlPrefix = createFlexibleImageUrl(detailImageId, '')
     const compareUrl = createFlexibleImageUrl(compareImageId, 'w=288,h=216,fit=contain')
 
     page.on('request', (request) => {
@@ -145,9 +146,10 @@ test.describe('Direct equipment image delivery', () => {
             cloudflareImageId: detailImageId,
             createdAt: '2088-04-20T12:00:00.000Z',
             id: catalogItem.id,
+            isInMyGear: false,
             name: catalogItem.name,
             properties: catalogItem.properties
-          }
+          } satisfies ItemDetailResponse
         }
       },
 
@@ -197,16 +199,28 @@ test.describe('Direct equipment image delivery', () => {
 
     const detailImage = page.getByAltText(catalogItem.name)
     const detailSrcset = await detailImage.getAttribute('srcset')
+    const detailCurrentSrc = await detailImage.evaluate((image: HTMLImageElement) => image.currentSrc)
+    const detailVariant = detailCurrentSrc.slice(detailUrlPrefix.length)
+    const detailDimensions = /^w=(?<width>\d+),h=(?<height>\d+),fit=scale-down$/u.exec(detailVariant)
 
-    expect(detailSrcset).toContain(`${detailUrl} 1120w`)
-    await expect(detailImage).toHaveJSProperty('currentSrc', detailUrl)
-    await expect(detailImage).toHaveAttribute('width', '1120')
-    await expect(detailImage).toHaveAttribute('height', '840')
+    expect(detailCurrentSrc.startsWith(detailUrlPrefix)).toBe(true)
+    expect(detailDimensions).not.toBeNull()
+
+    const detailWidth = Number(detailDimensions?.groups?.width)
+    const detailHeight = Number(detailDimensions?.groups?.height)
+
+    expect(detailWidth).toBeGreaterThan(0)
+    expect(detailWidth).toBeLessThanOrEqual(880)
+    expect(detailHeight).toBeGreaterThan(0)
+    expect(detailHeight).toBeLessThanOrEqual(660)
+    expect(detailSrcset).toContain(detailCurrentSrc)
+    await expect(detailImage).toHaveAttribute('width', '880')
+    await expect(detailImage).toHaveAttribute('height', '660')
     await expect(detailImage).toHaveAttribute('loading', 'eager')
 
     await expect(detailImage).toHaveAttribute(
       'sizes',
-      '(max-width: 1023px) 100vw, (max-width: 1535px) 75vw, 1120px'
+      '(max-width: 1023px) 100vw, 440px'
     )
 
     await openComparisonPage(page, comparedItemIds)
@@ -229,7 +243,7 @@ test.describe('Direct equipment image delivery', () => {
 
     await expect.poll(() => imageRequests).toEqual(expect.arrayContaining([
       catalogUrl,
-      detailUrl,
+      detailCurrentSrc,
       compareUrl
     ]))
 

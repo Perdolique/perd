@@ -35,10 +35,10 @@
   }
 
   const {
-    disabled = false,
+    disabled,
     icon,
     label,
-    loading = false,
+    loading,
     type = 'button',
     variant = 'neutral'
   } = defineProps<Props>()

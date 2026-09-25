@@ -29,7 +29,7 @@
         :disabled="isPending"
       />
       <p v-if="errorMessage" :class="$style.error" role="alert">{{ errorMessage }}</p>
-      <PerdButton ref="submitButton" type="submit" :loading="isPending" :disabled="!isAccountReady" block>{{ submitLabel }}</PerdButton>
+      <PerdButton ref="submitButton" type="submit" :loading="isPending" :disabled="isSubmitDisabled" block>{{ submitLabel }}</PerdButton>
     </form>
 
     <p :class="$style.navigation">
@@ -91,6 +91,7 @@
   const passwordError = ref<string>()
   const errorMessage = ref<string | null>(null)
   const isAccountReady = ref(user.value.hasData)
+  const isSubmitDisabled = computed(() => isAccountReady.value === false)
   const isPending = ref(false)
   const isChecking = ref(false)
   const isSent = ref(false)
