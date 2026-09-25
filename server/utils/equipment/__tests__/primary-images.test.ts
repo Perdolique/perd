@@ -15,13 +15,13 @@ describe(getPrimaryEquipmentImageIds, () => {
 
     const findManyMock = vi.fn(() => rows)
 
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Drizzle's fluent client type is impractical to construct in a focused unit test.
     const dbHttp = {
       query: {
         equipmentItemImages: {
           findMany: findManyMock
         }
       }
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Drizzle's fluent client type is impractical to construct in a focused unit test.
     } as unknown as PrimaryImageOptions['dbHttp']
 
     const result = await getPrimaryEquipmentImageIds({
@@ -53,13 +53,13 @@ describe(getPrimaryEquipmentImageIds, () => {
   it('should return an empty map without querying for an empty item list', async () => {
     const findManyMock = vi.fn()
 
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Drizzle's fluent client type is impractical to construct in a focused unit test.
     const dbHttp = {
       query: {
         equipmentItemImages: {
           findMany: findManyMock
         }
       }
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Drizzle's fluent client type is impractical to construct in a focused unit test.
     } as unknown as PrimaryImageOptions['dbHttp']
 
     const result = await getPrimaryEquipmentImageIds({

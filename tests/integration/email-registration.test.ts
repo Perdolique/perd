@@ -87,19 +87,19 @@ async function readAccountData() {
   ])
 }
 
-describe('email registration on local PostgreSQL', () => {
-  async function addOAuthIdentity(enabled: boolean, userId: string) {
-    if (enabled) {
-      const provider = required(await database.select().from(oauthProviders).where(eq(oauthProviders.type, 'twitch')))
+async function addOAuthIdentity(enabled: boolean, userId: string) {
+  if (enabled) {
+    const provider = required(await database.select().from(oauthProviders).where(eq(oauthProviders.type, 'twitch')))
 
-      await database.insert(oauthAccounts).values({
-        userId,
-        providerId: provider.id,
-        accountId: 'existing-twitch'
-      })
-    }
+    await database.insert(oauthAccounts).values({
+      userId,
+      providerId: provider.id,
+      accountId: 'existing-twitch'
+    })
   }
+}
 
+describe('email registration on local PostgreSQL', () => {
   beforeAll(async () => {
     isolatedPostgreSQL = await createIsolatedPostgreSQL('email_registration')
 

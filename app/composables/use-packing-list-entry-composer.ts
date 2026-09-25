@@ -15,6 +15,16 @@ interface ErrorWithStatus {
   statusCode?: number;
 }
 
+function getErrorStatus(error: unknown) {
+  if (typeof error !== 'object' || error === null) {
+    return
+  }
+
+  const errorWithStatus = error as ErrorWithStatus
+
+  return errorWithStatus.statusCode ?? errorWithStatus.status
+}
+
 export function usePackingListEntryComposer(options: ComposerOptions) {
   const requestFetch = useRequestFetch()
   const packingListsStore = usePackingListsStore()
@@ -66,16 +76,6 @@ export function usePackingListEntryComposer(options: ComposerOptions) {
 
   function abortActiveFetch() {
     activeFetchController?.abort()
-  }
-
-  function getErrorStatus(error: unknown) {
-    if (typeof error !== 'object' || error === null) {
-      return
-    }
-
-    const errorWithStatus = error as ErrorWithStatus
-
-    return errorWithStatus.statusCode ?? errorWithStatus.status
   }
 
   function resetReadState() {
