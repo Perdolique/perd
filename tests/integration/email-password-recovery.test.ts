@@ -71,6 +71,25 @@ async function complete(token: string, password = newPassword) {
   })
 }
 
+async function countWaitingAdvisoryLocks() {
+  const result = await rootDatabase.execute<{ count: number; }>(sql`
+    SELECT count(*)::int AS count
+    FROM pg_locks
+    WHERE locktype = 'advisory' AND granted = false
+  `)
+
+  return required(result.rows).count
+}
+
+async function holdEmailLock(release: Promise<boolean>, acquired: () => boolean) {
+  await database.transaction(async (transaction) => {
+    await transaction.execute(sql`select pg_advisory_xact_lock(hashtextextended(${email}, 749))`)
+    acquired()
+
+    await release
+  })
+}
+
 describe('email password recovery on local PostgreSQL', () => {
   beforeAll(async () => {
     isolatedPostgreSQL = await createIsolatedPostgreSQL('email_password_recovery')
@@ -255,25 +274,6 @@ describe('email password recovery on local PostgreSQL', () => {
   it('makes issuance and completion wait for the same email advisory lock', async () => {
     await createCredential()
     await issue('existing-token')
-
-    async function countWaitingAdvisoryLocks() {
-      const result = await rootDatabase.execute<{ count: number; }>(sql`
-        SELECT count(*)::int AS count
-        FROM pg_locks
-        WHERE locktype = 'advisory' AND granted = false
-      `)
-
-      return required(result.rows).count
-    }
-
-    async function holdEmailLock(release: Promise<boolean>, acquired: () => boolean) {
-      await database.transaction(async (transaction) => {
-        await transaction.execute(sql`select pg_advisory_xact_lock(hashtextextended(${email}, 749))`)
-        acquired()
-
-        await release
-      })
-    }
 
     const issuanceLock = Promise.withResolvers<boolean>()
     const issuanceLockAcquired = Promise.withResolvers<boolean>()
