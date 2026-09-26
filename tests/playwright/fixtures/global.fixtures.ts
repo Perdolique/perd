@@ -20,11 +20,13 @@ interface TurnstileFixture {
 }
 
 interface TestFixtures {
+  appOrigin: string;
   conditionalPasskeys: boolean;
   turnstile: TurnstileFixture;
 }
 
-const appOrigin = new globalThis.URL(appBaseUrl).origin
+const appUrl = new globalThis.URL(appBaseUrl)
+const defaultAppOrigin = appUrl.origin
 const frameworkWarningPattern = /(?:\[Vue warn\]|Failed to resolve component|Hydration)/u
 const turnstileScriptOrigin = 'https://challenges.cloudflare.com'
 const turnstileScriptPath = '/turnstile/v0/api.js'
@@ -156,7 +158,7 @@ const turnstileMockScript = String.raw`
 })();
 `
 
-function isApplicationConsoleMessage(message: ConsoleMessage) {
+function isApplicationConsoleMessage(message: ConsoleMessage, appOrigin: string) {
   const sourceUrl = message.location().url
 
   if (sourceUrl === '') {
@@ -164,14 +166,16 @@ function isApplicationConsoleMessage(message: ConsoleMessage) {
   }
 
   try {
-    return new globalThis.URL(sourceUrl).origin === appOrigin
+    const source = new globalThis.URL(sourceUrl)
+
+    return source.origin === appOrigin
   } catch {
     return true
   }
 }
 
-function isUnexpectedConsoleMessage(message: ConsoleMessage) {
-  if (!isApplicationConsoleMessage(message)) {
+function isUnexpectedConsoleMessage(message: ConsoleMessage, appOrigin: string) {
+  if (!isApplicationConsoleMessage(message, appOrigin)) {
     return false
   }
 
@@ -242,9 +246,10 @@ async function invokeTurnstileCallback(page: Page, callbackName: string) {
 }
 
 const test = base.extend<TestFixtures>({
+  appOrigin: [defaultAppOrigin, { option: true }],
   conditionalPasskeys: [false, { option: true }],
 
-  context: async ({ context, conditionalPasskeys }, use) => {
+  context: async ({ context, conditionalPasskeys, appOrigin }, use) => {
     const unmockedApiRequests = new Set<string>()
 
     await context.route(
@@ -299,11 +304,11 @@ const test = base.extend<TestFixtures>({
     }
   },
 
-  page: async ({ page }, use) => {
+  page: async ({ page, appOrigin }, use) => {
     const runtimeIssues: BrowserRuntimeIssue[] = []
 
     page.on('console', (message) => {
-      if (!isUnexpectedConsoleMessage(message)) {
+      if (!isUnexpectedConsoleMessage(message, appOrigin)) {
         return
       }
 

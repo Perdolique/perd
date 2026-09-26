@@ -14,6 +14,15 @@ function getWorker() {
 test.describe('Disabled email registration', () => {
   test.describe.configure({ mode: 'serial' })
 
+  test.use({
+    appOrigin: async ({ appOrigin: _appOrigin }, use) => {
+      const activeWorker = getWorker()
+      const origin = `http://${activeWorker.address}:${activeWorker.port}`
+
+      await use(origin)
+    }
+  })
+
   test.beforeAll(async () => {
     worker = await unstable_dev('.output/server/index.mjs', {
       config: 'wrangler.jsonc',
@@ -94,6 +103,89 @@ test.describe('Disabled email registration', () => {
     await expect(page.getByRole('button', { name: 'Guest' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Twitch' })).toBeVisible()
   })
+
+  for (const path of ['/gear-library/new', '/gear-library/0195f6e8-8f44-74f6-bc9a-5c8f7df477d7/submit-photo']) {
+    test(`should offer only Account for guest upgrade from ${path}`, async ({ page }) => {
+      const activeWorker = getWorker()
+      const origin = `http://${activeWorker.address}:${activeWorker.port}`
+      const userId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
+
+      await page.route('**/api/auth/create-session', async (route) => {
+        await route.fulfill({
+          status: 201,
+
+          json: {
+            isGuest: true,
+            userId
+          }
+        })
+      })
+
+      await page.route('**/api/equipment/items/*', async (route) => {
+        await route.fulfill({
+          status: 404,
+          json: { statusCode: 404 }
+        })
+      })
+
+      await page.route('**/api/user', async (route) => {
+        await route.fulfill({ json: {
+          email: null,
+          isAdmin: false,
+          isGuest: true,
+          isTwitchLinked: false,
+          userId
+        } })
+      })
+
+      await test.step('Check guest upgrade without email registration', async () => {
+        const loginRedirect = encodeURIComponent(path)
+        const loginPath = `${origin}/login?redirectTo=${loginRedirect}`
+
+        await page.goto(loginPath)
+        await waitForInitialEmailSignInTurnstile(page)
+        await page.getByRole('button', { name: 'Continue as guest' }).click()
+        await expect(page.getByRole('heading', { name: 'Account required.' })).toBeVisible()
+        await expect(page.getByText('Connect Twitch in Account to continue.', { exact: false })).toBeVisible()
+        await expect(page.getByText('Account upgrade options will be available later.', { exact: false })).toHaveCount(0)
+
+        await expect(page.getByRole('link', {
+          name: 'Add email',
+          exact: true
+        })).toHaveCount(0)
+
+        await expect(page.locator('form')).toHaveCount(0)
+      })
+
+      await test.step('Open Account and check Twitch upgrade', async () => {
+        const accountLink = page.getByRole('link', {
+          name: 'Open Account',
+          exact: true
+        })
+
+        await expect(accountLink).toHaveAttribute('href', '/account')
+        await accountLink.focus()
+        await page.keyboard.press('Enter')
+
+        await expect(page.getByRole('heading', {
+          name: 'Account',
+          exact: true
+        })).toBeVisible()
+
+        await expect(page.getByRole('button', {
+          name: 'Connect Twitch',
+          exact: true
+        })).toBeEnabled()
+
+        await expect(page.getByText(userId, { exact: true })).toBeVisible()
+
+        await expect(page.getByRole('link', {
+          name: 'Add email',
+          exact: true
+        })).toHaveCount(0)
+      })
+    })
+  }
 
   test('explains why Twitch cannot be disconnected without email registration', async ({ page }) => {
     const activeWorker = getWorker()

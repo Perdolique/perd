@@ -7,7 +7,17 @@
     </template>
 
     <PagePlaceholder v-if="isGuest" emoji="🔐" title="Account required.">
-      Guest accounts cannot submit gear for review. Account upgrade options will be available later.
+      Guest accounts cannot submit gear for review. {{ guestUpgradeMessage }}
+
+      <template #actions>
+        <PerdLink v-if="registrationEnabled" :to="registrationLocation">
+          Add email
+        </PerdLink>
+
+        <PerdLink :to="appRoutes.account">
+          Open Account
+        </PerdLink>
+      </template>
     </PagePlaceholder>
 
     <div v-else>
@@ -47,7 +57,8 @@
 
 <script lang="ts" setup>
   import { computed, nextTick, ref, useTemplateRef } from 'vue'
-  import { definePageMeta, useRequestFetch, useUserStore } from '#imports'
+  import { definePageMeta, useRequestFetch, useRuntimeConfig, useUserStore } from '#imports'
+  import { isEmailRegistrationEnabled } from '#shared/utils/email-registration'
 
   import EquipmentItemEditor, {
     type EquipmentItemEditorValue,
@@ -71,7 +82,19 @@
   }
 
   const requestFetch = useRequestFetch()
+  const runtimeConfig = useRuntimeConfig()
   const { user } = useUserStore()
+  const registrationEnabled = isEmailRegistrationEnabled(runtimeConfig.public.emailRegistrationEnabled)
+
+  const registrationLocation = {
+    path: '/register',
+    query: { redirectTo: appRoutes.gearLibraryNew }
+  }
+
+  const guestUpgradeMessage = registrationEnabled
+    ? 'Add email access or connect Twitch in Account to continue.'
+    : 'Connect Twitch in Account to continue.'
+
   const confirmationStatus = useTemplateRef('confirmationStatus')
   const isSubmitting = ref(false)
   const isSubmitted = ref(false)
