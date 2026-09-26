@@ -11,8 +11,8 @@
       <p
         v-if="twitchLinkOutcome"
         ref="twitchLinkBanner"
-        :class="[$style.banner, { error: twitchLinkOutcome === 'conflict' }]"
-        :role="twitchLinkOutcome === 'conflict' ? 'alert' : 'status'"
+        :class="[$style.banner, { error: isTwitchConflict }]"
+        :role="twitchLinkRole"
         tabindex="-1"
       >
         {{ twitchLinkMessage }}
@@ -157,6 +157,9 @@
 
     return requestedTwitchLinkOutcome.value
   })
+
+  const isTwitchConflict = computed(() => twitchLinkOutcome.value === 'conflict')
+  const twitchLinkRole = computed(() => isTwitchConflict.value ? 'alert' : 'status')
 
   const twitchLinkMessage = computed(() => {
     if (twitchLinkOutcome.value === 'success') {

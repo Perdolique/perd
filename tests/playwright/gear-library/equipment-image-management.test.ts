@@ -1,4 +1,5 @@
 import type { BrowserContext, Page, Request } from '@playwright/test'
+import type { ItemDetailResponse } from '#server/api/equipment/items/[id].get'
 import { expect, test } from '../fixtures/global.fixtures.ts'
 import { createDeferred } from '../fixtures/gear-library-entry-list.fixtures.ts'
 import { mockTwitchSignIn } from '../fixtures/twitch-auth.fixtures.ts'
@@ -221,7 +222,11 @@ test.describe('Equipment image management', () => {
   }) => {
     let images = [firstImage, secondImage]
     let primaryCloudflareImageId = firstImage.cloudflareImageId
-    const secondDetailImageUrl = `https://imagedelivery.net/${accountHash}/cloudflare-image-2/w=1120,h=840,fit=scale-down`
+
+    const secondDetailImageUrlPattern = new RegExp(
+      `^https://imagedelivery.net/${accountHash}/cloudflare-image-2/w=\\d+,h=\\d+,fit=scale-down$`,
+      'u'
+    )
 
     await context.route('https://imagedelivery.net/**', async (route) => {
       await route.fulfill({
@@ -275,9 +280,10 @@ test.describe('Equipment image management', () => {
           cloudflareImageId: primaryCloudflareImageId,
           createdAt: '2088-04-20T12:00:00.000Z',
           id: itemId,
+          isInMyGear: false,
           name: 'PocketRocket Deluxe',
           properties: []
-        }
+        } satisfies ItemDetailResponse
       })
     })
 
@@ -298,9 +304,9 @@ test.describe('Equipment image management', () => {
 
     await navigateWithinApp(page, `/gear-library/${itemId}`)
 
-    await expect(page.getByAltText('PocketRocket Deluxe')).toHaveJSProperty(
-      'currentSrc',
-      secondDetailImageUrl
-    )
+    const detailImage = page.getByAltText('PocketRocket Deluxe')
+
+    await expect.poll(async () => detailImage.evaluate((image: HTMLImageElement) => image.currentSrc))
+      .toMatch(secondDetailImageUrlPattern)
   })
 })

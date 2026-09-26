@@ -33,7 +33,7 @@
         :loading="isPending"
         block
       >
-        {{ isAccepted ? 'Send another email' : 'Send reset email' }}
+        {{ submitLabel }}
       </PerdButton>
     </form>
 
@@ -76,6 +76,7 @@
   const email = ref('')
   const errorMessage = ref<string | null>(null)
   const isAccepted = ref(false)
+  const submitLabel = computed(() => isAccepted.value ? 'Send another email' : 'Send reset email')
   const isPending = ref(false)
   const acceptedStatus = useTemplateRef('acceptedStatus')
   const submitButton = useTemplateRef('submitButton')

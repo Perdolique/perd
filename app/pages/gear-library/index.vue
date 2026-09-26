@@ -270,6 +270,7 @@
   import { useGearLibraryStore } from '~/stores/gear-library'
   import { useGearLibraryBrowsingRestoration } from '~/composables/use-gear-library-browsing-restoration'
   import { createGearLibraryAppliedFilterChips } from '~/utils/gear-library-filters'
+  import { buildGearLibraryRouteQuery } from '~/utils/gear-library'
   import { appRoutes, createGearLibraryItemPath, navigationLabels } from '~/utils/navigation'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PageSummaryHeader from '~/components/PageSummaryHeader.vue'
@@ -355,6 +356,7 @@
     hasNarrowingState,
     itemsApiQuery,
     itemsApiQuerySignature,
+    routeState,
     selectedCategory
   })
 
@@ -380,6 +382,7 @@
     itemsStatus,
     lastSuccessfulHasNarrowingState,
     lastSuccessfulItemsResponse,
+    lastSuccessfulRouteState,
     loadMore,
     loadMoreAnnouncement,
     refreshBrands,
@@ -522,21 +525,41 @@
     () => isBrowsingStateReady.value && (canLoadMore.value || isLoadingMore.value)
   )
 
-  const gearLibraryItems = computed(() => lastSuccessfulItemsResponse.value.items.map((item) => {
-    const detailPath = createGearLibraryItemPath(item.id)
-    const isInMyGear = gearLibraryStore.resolveIsInMyGear(item)
+  const gearLibraryItems = computed(() => {
+    const displayedState = lastSuccessfulRouteState.value
+    const currentState = routeState.value
 
-    return {
-      brand: item.brand,
-      category: item.category,
-      cloudflareImageId: item.cloudflareImageId,
-      detailPath,
-      id: item.id,
-      isInMyGear,
-      name: item.name,
-      properties: item.properties
-    }
-  }))
+    const compare = displayedState.category === currentState.category
+      ? currentState.compare
+      : displayedState.compare
+
+    const detailQuery = buildGearLibraryRouteQuery({
+      ...displayedState,
+      compare
+    })
+
+    return lastSuccessfulItemsResponse.value.items.map((item) => {
+      const detailPath = createGearLibraryItemPath(item.id)
+
+      const detailLocation = {
+        path: detailPath,
+        query: detailQuery
+      }
+
+      const isInMyGear = gearLibraryStore.resolveIsInMyGear(item)
+
+      return {
+        brand: item.brand,
+        category: item.category,
+        cloudflareImageId: item.cloudflareImageId,
+        detailLocation,
+        id: item.id,
+        isInMyGear,
+        name: item.name,
+        properties: item.properties
+      }
+    })
+  })
 
   const selectedComparisonIds = computed(() => routeState.value.compare)
   const isComparisonLimitReached = computed(() => selectedComparisonIds.value.length >= 4)

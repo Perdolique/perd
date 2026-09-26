@@ -18,12 +18,7 @@
     padding?: 'large' | 'medium' | 'none' | 'small';
   }
 
-  const {
-    elevated = false,
-    interactive = false,
-    padding = 'medium'
-  } = defineProps<Props>()
-
+  const { padding = 'medium' } = defineProps<Props>()
   const paddingClass = computed(() => `padding-${padding}`)
 </script>
 

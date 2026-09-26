@@ -1,4 +1,5 @@
 import type { Locator, Request } from '@playwright/test'
+import type { ItemDetailResponse } from '#server/api/equipment/items/[id].get'
 import { expect, test } from '../fixtures/global.fixtures.ts'
 
 import {
@@ -100,9 +101,10 @@ function createComparisonCatalogItemDetail(itemId?: string) {
       cloudflareImageId: null,
       createdAt: '2088-04-20T12:00:00.000Z',
       id: item.id,
+      isInMyGear: false,
       name: item.name,
       properties: []
-    }
+    } satisfies ItemDetailResponse
   }
 }
 
@@ -325,6 +327,13 @@ test.describe('Gear library comparison page', () => {
       await expect(catalogLink).toHaveAttribute(
         'href',
         `/gear-library?${expectedCatalogSearch.toString()}`
+      )
+
+      await expect(table.getByRole('link', {
+        name: `View ${comparisonItems[0].brand.name} ${comparisonItems[0].name}`
+      })).toHaveAttribute(
+        'href',
+        `/gear-library/${itemIds[0]}?${expectedCatalogSearch.toString()}`
       )
     })
   }

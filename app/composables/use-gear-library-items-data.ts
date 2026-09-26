@@ -8,7 +8,8 @@ import {
   getRestorableGearLibraryPages,
   getGearLibraryTotalPages,
   getUniqueGearLibraryItems,
-  type GearLibraryItemsApiQuery
+  type GearLibraryItemsApiQuery,
+  type GearLibraryRouteState
 } from '~/utils/gear-library'
 
 import { gearLibraryItemsAsyncDataKey, useGearLibraryStore } from '~/stores/gear-library'
@@ -20,6 +21,7 @@ interface UseGearLibraryItemsDataOptions {
   hasNarrowingState: ComputedRef<boolean>;
   itemsApiQuery: ComputedRef<GearLibraryItemsApiQuery>;
   itemsApiQuerySignature: ComputedRef<string>;
+  routeState: ComputedRef<GearLibraryRouteState>;
 }
 
 const emptyItemsResponse: GearLibraryItemsResponse = {
@@ -74,6 +76,7 @@ function useGearLibraryItemsData(options: UseGearLibraryItemsDataOptions) {
 
   const hasSuccessfulItemsRequest = ref(initialPages.length > 0 || itemsStatus.value === 'success')
   const lastSuccessfulHasNarrowingState = ref(initialItemsSnapshot?.hasNarrowingState ?? false)
+  const lastSuccessfulRouteState = shallowRef(options.routeState.value)
   const loadedPages = shallowRef<GearLibraryItemsResponse[]>(initialPages)
   const isBrowsingStateReady = ref(false)
   const canRestoreSavedBrowsingState = ref(hasRestorableInitialSnapshot)
@@ -179,6 +182,7 @@ function useGearLibraryItemsData(options: UseGearLibraryItemsDataOptions) {
     shouldPreserveInitialSnapshot = false
     hasSuccessfulItemsRequest.value = true
     lastSuccessfulHasNarrowingState.value = activeHasNarrowingState
+    lastSuccessfulRouteState.value = options.routeState.value
 
     if (shouldPreserveSnapshot === false) {
       loadedPages.value = [firstPage]
@@ -230,6 +234,7 @@ function useGearLibraryItemsData(options: UseGearLibraryItemsDataOptions) {
     if (cachedSnapshot !== undefined) {
       hasSuccessfulItemsRequest.value = true
       lastSuccessfulHasNarrowingState.value = cachedSnapshot.hasNarrowingState
+      lastSuccessfulRouteState.value = options.routeState.value
       loadedPages.value = cachedSnapshot.pages.slice(0, 1)
     }
 
@@ -263,6 +268,7 @@ function useGearLibraryItemsData(options: UseGearLibraryItemsDataOptions) {
     itemsStatus,
     initialItemsRequest: itemsAsyncData,
     lastSuccessfulHasNarrowingState,
+    lastSuccessfulRouteState,
     lastSuccessfulItemsResponse,
     loadMore,
     loadMoreAnnouncement,

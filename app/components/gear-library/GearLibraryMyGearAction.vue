@@ -3,7 +3,7 @@
     <span
       v-if="isSaved"
       ref="savedStatus"
-      :class="$style.saved"
+      :class="[$style.saved, { isAction: isActionSavedAppearance }]"
       tabindex="-1"
     >
       <Icon name="hugeicons:tick-02" aria-hidden="true" />
@@ -14,10 +14,11 @@
       <PerdButton
         ref="addButton"
         :aria-describedby="errorDescriptionId"
+        :block="isActionSavedAppearance"
         :loading="isSaving"
         icon="hugeicons:backpack-03"
-        size="small"
-        variant="soft"
+        :size="size"
+        :variant="variant"
         @click="handleAdd"
       >
         Add to My gear
@@ -40,19 +41,30 @@
     isSaved: boolean;
     isSaving: boolean;
     itemName: string;
+    savedAppearance?: 'inline' | 'action';
+    size?: 'medium' | 'small';
+    variant?: 'primary' | 'soft';
   }
 
   interface Emits {
     add: [];
   }
 
-  const props = defineProps<Props>()
+  const {
+    hasError,
+    isSaved,
+    savedAppearance,
+    size = 'small',
+    variant = 'soft'
+  } = defineProps<Props>()
+
   const emit = defineEmits<Emits>()
   const pendingSavedFocus = ref(false)
   const errorId = useId()
   const addButton = useTemplateRef('addButton')
   const savedStatus = useTemplateRef('savedStatus')
-  const errorDescriptionId = computed(() => props.hasError ? errorId : undefined)
+  const errorDescriptionId = computed(() => hasError ? errorId : undefined)
+  const isActionSavedAppearance = computed(() => savedAppearance === 'action')
 
   function handleAdd(event: MouseEvent) {
     pendingSavedFocus.value = event.detail === 0
@@ -61,10 +73,10 @@
   }
 
   watch([
-    () => props.isSaved,
-    () => props.hasError
-  ], async ([isSaved, hasError]) => {
-    if (hasError) {
+    () => isSaved,
+    () => hasError
+  ], async ([savedNow, errorNow]) => {
+    if (errorNow) {
       const shouldRestoreAddFocus = pendingSavedFocus.value
 
       pendingSavedFocus.value = false
@@ -77,7 +89,7 @@
       return
     }
 
-    if (isSaved === false || pendingSavedFocus.value === false) {
+    if (savedNow === false || pendingSavedFocus.value === false) {
       return
     }
 
@@ -105,6 +117,15 @@
     font-size: var(--font-size-14);
     font-weight: var(--font-weight-semibold);
     white-space: nowrap;
+
+    &:global(.isAction) {
+      inline-size: 100%;
+      justify-content: center;
+      min-block-size: var(--layout-button-height-medium);
+      padding-inline: var(--spacing-24);
+      color: var(--color-accent-primary);
+      font-size: var(--font-size-16);
+    }
 
     &:focus-visible {
       border-radius: var(--border-radius-10);

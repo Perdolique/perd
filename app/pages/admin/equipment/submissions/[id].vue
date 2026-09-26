@@ -94,7 +94,7 @@
       </dl>
 
       <p
-        v-if="statusMessage !== null"
+        v-if="hasStatusMessage"
         ref="saveStatus"
         :class="$style.statusMessage"
         role="status"
@@ -144,6 +144,7 @@
   const isConflict = ref(false)
   const mutationMessage = ref<string | null>(null)
   const statusMessage = ref<string | null>(null)
+  const hasStatusMessage = computed(() => statusMessage.value !== null)
 
   const {
     data: submission,

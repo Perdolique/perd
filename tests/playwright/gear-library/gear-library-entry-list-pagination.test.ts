@@ -283,7 +283,7 @@ test.describe('Gear library Load more', () => {
     const savedScrollTop = await page.evaluate(() => globalThis.scrollY)
 
     expect(savedScrollTop).toBeGreaterThan(0)
-    await expect(detailLink).toHaveAttribute('href', `/gear-library/${detailItem.id}`)
+    await expect(detailLink).toHaveAttribute('href', `/gear-library/${detailItem.id}?q=catalog`)
     await detailLink.click()
 
     await expect(page.getByRole('heading', {

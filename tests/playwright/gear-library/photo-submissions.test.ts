@@ -192,6 +192,7 @@ test.describe('Photo submissions', () => {
     await waitForInitialEmailSignInTurnstile(page)
     await page.getByRole('button', { name: 'Guest' }).click()
     await expect(page).toHaveURL(new RegExp(`${itemPath}$`, 'u'))
+    await page.getByText('More', { exact: true }).click()
     await page.getByRole('link', { name: 'Submit photo' }).click()
     await expect(page).toHaveURL(new RegExp(`${submissionPath}$`, 'u'))
 
@@ -353,6 +354,7 @@ test.describe('Photo submissions', () => {
     })
 
     await authenticateRegisteredUser(context, page, itemPath)
+    await page.getByText('More', { exact: true }).click()
     await page.getByRole('link', { name: 'Submit photo' }).click()
 
     await expect.poll(async () => turnstile.getRenderOptions(page)).toContainEqual({

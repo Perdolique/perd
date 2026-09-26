@@ -59,7 +59,7 @@
         placeholder="https://example.com/product"
         required
         type="url"
-        @update:model-value="sourceUrlTouched = true"
+        @update:model-value="markSourceUrlTouched"
       />
 
       <section
@@ -275,7 +275,7 @@
     properties: EquipmentItemEditorProperty[];
   }
 
-  const props = defineProps<Props>()
+  const { autofocus, initialValue, isSubmitting, mode, mutationMessage } = defineProps<Props>()
   const emit = defineEmits<Emits>()
   const requestFetch = useRequestFetch()
   const knownPropertiesTitleId = useId()
@@ -301,12 +301,12 @@
 
   const brandsRequestPromise = useFetch('/api/equipment/brands', {
     default: () => [],
-    key: `equipment-item-editor-brands-${props.mode}`
+    key: `equipment-item-editor-brands-${mode}`
   })
 
   const categoriesRequestPromise = useFetch('/api/equipment/categories', {
     default: () => [],
-    key: `equipment-item-editor-categories-${props.mode}`
+    key: `equipment-item-editor-categories-${mode}`
   })
 
   const [brandsRequest, categoriesRequest] = await Promise.all([
@@ -328,17 +328,17 @@
     status: categoriesStatus
   } = categoriesRequest
 
-  itemName.value = props.initialValue.name
-  selectedBrandId.value = props.initialValue.brandId === 0 ? '' : `${props.initialValue.brandId}`
+  itemName.value = initialValue.name
+  selectedBrandId.value = initialValue.brandId === 0 ? '' : `${initialValue.brandId}`
 
   const initialCategory = categoriesResponse.value.find(
-    (category) => category.id === props.initialValue.categoryId
+    (category) => category.id === initialValue.categoryId
   )
 
   selectedCategorySlug.value = initialCategory?.slug ?? ''
 
   const categoryDetailRequest = await useAsyncData(
-    `equipment-item-editor-category-detail-${props.mode}`,
+    `equipment-item-editor-category-detail-${mode}`,
     async (_nuxtApp, { signal }): Promise<CategoryDetailResponse | null> => {
       const categorySlug = selectedCategorySlug.value
 
@@ -424,7 +424,7 @@
   ))
 
   const isMandatorySelectDisabled = computed(() => (
-    props.isSubmitting || isMandatoryReferenceReady.value === false
+    isSubmitting || isMandatoryReferenceReady.value === false
   ))
 
   const mandatoryAriaBusy = computed(() => isMandatoryReferenceLoading.value || undefined)
@@ -436,13 +436,13 @@
 
   const hasCategoryDetailError = computed(() => categoryDetailError.value !== undefined)
 
-  const categoryDetailErrorMessage = computed(() => props.mode === 'review'
+  const categoryDetailErrorMessage = computed(() => mode === 'review'
     ? 'Could not load characteristics. Retry before saving the full submission.'
     : 'Could not load characteristics. You can still submit the basic item.')
 
-  const hasMutationMessage = computed(() => props.mutationMessage !== undefined && props.mutationMessage !== null)
-  const isReviewMode = computed(() => props.mode === 'review')
-  const isCreateMode = computed(() => props.mode === 'create')
+  const hasMutationMessage = computed(() => mutationMessage !== undefined && mutationMessage !== null)
+  const isReviewMode = computed(() => mode === 'review')
+  const isCreateMode = computed(() => mode === 'create')
   const trimmedSourceUrl = computed(() => sourceUrl.value.trim())
 
   const sourceUrlValidationMessage = computed(() => {
@@ -470,7 +470,7 @@
     isCreateMode.value && sourceUrlValidationMessage.value !== undefined
   ))
 
-  const submitLabel = computed(() => props.mode === 'review' ? 'Save changes' : 'Submit for review')
+  const submitLabel = computed(() => mode === 'review' ? 'Save changes' : 'Submit for review')
   const trimmedItemName = computed(() => itemName.value.trim())
 
   const selectedBrand = computed(() => {
@@ -637,11 +637,11 @@
   const isDirty = computed(() => {
     const { value } = currentValue
 
-    return value !== null && serializeValue(value) !== serializeValue(props.initialValue)
+    return value !== null && serializeValue(value) !== serializeValue(initialValue)
   })
 
   const isReviewDetailUnavailable = computed(() => (
-    props.mode === 'review'
+    mode === 'review'
     && (categoryDetail.value === null || hasCategoryDetailError.value || isCategoryDetailLoading.value)
   ))
 
@@ -650,22 +650,26 @@
     || hasInvalidSourceUrl.value
     || isMandatoryReferenceReady.value === false
     || isReviewDetailUnavailable.value
-    || props.isSubmitting
-    || (props.mode === 'review' && isDirty.value === false)
+    || isSubmitting
+    || (mode === 'review' && isDirty.value === false)
   ))
 
   const isDecisionDisabled = computed(() => (
     currentValue.value === null
     || isMandatoryReferenceReady.value === false
     || isReviewDetailUnavailable.value
-    || props.isSubmitting
+    || isSubmitting
   ))
 
   const trimmedRejectionReason = computed(() => rejectionReason.value.trim())
 
   const isRejectConfirmDisabled = computed(() => (
-    props.isSubmitting || trimmedRejectionReason.value === ''
+    isSubmitting || trimmedRejectionReason.value === ''
   ))
+
+  function markSourceUrlTouched() {
+    sourceUrlTouched.value = true
+  }
 
   function clearPropertyState() {
     propertyValues.value = {}
@@ -680,10 +684,10 @@
       (value) => getPropertyFieldValue(value) !== ''
     )
 
-    const hasUnavailableInitialProperties = props.mode === 'review'
-      && selectedCategory.value?.id === props.initialValue.categoryId
+    const hasUnavailableInitialProperties = mode === 'review'
+      && selectedCategory.value?.id === initialValue.categoryId
       && categoryDetail.value === null
-      && props.initialValue.properties.length > 0
+      && initialValue.properties.length > 0
 
     return hasLoadedPropertyValues || hasUnavailableInitialProperties
   }
@@ -795,13 +799,13 @@
   }
 
   watch(
-    () => props.initialValue,
+    () => initialValue,
     (value) => reset(value),
     { immediate: true }
   )
 
   watch(categoriesResponse, () => {
-    const category = categoriesResponse.value.find((entry) => entry.id === props.initialValue.categoryId)
+    const category = categoriesResponse.value.find((entry) => entry.id === initialValue.categoryId)
 
     if (selectedCategorySlug.value === '' && category !== undefined) {
       selectedCategorySlug.value = category.slug
@@ -817,15 +821,15 @@
   })
 
   watch(categoryDetail, (value) => {
-    if (value?.id === props.initialValue.categoryId) {
+    if (value?.id === initialValue.categoryId) {
       propertyValues.value = Object.fromEntries(
-        props.initialValue.properties.map((property) => [property.propertyId, property.value])
+        initialValue.properties.map((property) => [property.propertyId, property.value])
       )
     }
   }, { immediate: true })
 
   onMounted(() => {
-    if (props.autofocus) {
+    if (autofocus) {
       focusNameInput()
     }
   })

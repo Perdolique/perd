@@ -87,7 +87,7 @@
     (event: 'retry-categories' | 'retry-category-detail'): void;
   }
 
-  const props = defineProps<Props>()
+  const { categories, categoryValue, orderingOptions, orderingValue } = defineProps<Props>()
   const emit = defineEmits<Emits>()
 
   const searchValue = defineModel<string>('searchValue', {
@@ -95,7 +95,7 @@
   })
 
   const categorySelectOptions = computed<PerdSelectOption[]>(() => {
-    const categoryOptions = props.categories.map((category) => {
+    const categoryOptions = categories.map((category) => {
       return {
         disabled: category.isDisabled,
         label: category.name,
@@ -110,7 +110,7 @@
   })
 
   const orderingSelectOptions = computed<PerdSelectOption[]>(() => (
-    props.orderingOptions.map((option) => {
+    orderingOptions.map((option) => {
       return {
         disabled: option.isDisabled,
         label: option.label,
@@ -120,12 +120,12 @@
   ))
 
   const categorySelectValue = computed({
-    get: () => props.categoryValue,
+    get: () => categoryValue,
     set: (value: string) => emit('category-change', value)
   })
 
   function handleOrderingChange(value: string) {
-    const selectedOption = props.orderingOptions.find((option) => option.value === value)
+    const selectedOption = orderingOptions.find((option) => option.value === value)
 
     if (selectedOption === undefined) {
       return
@@ -140,7 +140,7 @@
   }
 
   const orderingSelectValue = computed({
-    get: () => props.orderingValue,
+    get: () => orderingValue,
     set: handleOrderingChange
   })
 </script>

@@ -63,14 +63,12 @@
               :class="$style.toggleButton"
               :aria-controls="itemListId"
               :aria-expanded="isItemListExpanded"
-              :icon-right="isItemListExpanded
-                ? 'hugeicons:arrow-up-01'
-                : 'hugeicons:arrow-down-01'"
+              :icon-right="toggleIcon"
               size="small"
               variant="ghost"
-              @click="isItemListExpanded = !isItemListExpanded"
+              @click="toggleItemList"
             >
-              {{ isItemListExpanded ? 'Hide items' : 'Show items' }}
+              {{ toggleLabel }}
             </PerdButton>
           </div>
         </header>
@@ -138,10 +136,16 @@
     retry: [];
   }
 
-  const props = defineProps<Props>()
+  const { items } = defineProps<Props>()
   const emit = defineEmits<Emits>()
   const headingId = useId()
   const isItemListExpanded = ref(false)
+
+  const toggleIcon = computed(() => isItemListExpanded.value
+    ? 'hugeicons:arrow-up-01'
+    : 'hugeicons:arrow-down-01')
+
+  const toggleLabel = computed(() => isItemListExpanded.value ? 'Hide items' : 'Show items')
   const pendingFocusTarget = ref<string>()
   const itemListId = useId()
   const removeButtons = useTemplateRef('removeButtons')
@@ -151,11 +155,11 @@
     box: 'border-box'
   })
 
-  const hasItems = computed(() => props.items.length > 0)
+  const hasItems = computed(() => items.length > 0)
   const hasNoItems = computed(() => hasItems.value === false)
-  const isCompareDisabled = computed(() => props.items.length < 2)
-  const selectedItemIds = computed(() => props.items.map((item) => item.id))
-  const selectionCountText = computed(() => `${props.items.length} of 4 selected`)
+  const isCompareDisabled = computed(() => items.length < 2)
+  const selectedItemIds = computed(() => items.map((item) => item.id))
+  const selectionCountText = computed(() => `${items.length} of 4 selected`)
 
   const componentStyle = computed<CSSProperties>(() => {
     return {
@@ -163,7 +167,7 @@
     }
   })
 
-  const displayItems = computed(() => props.items.map((item, index) => {
+  const displayItems = computed(() => items.map((item, index) => {
     const position = index + 1
     const isResolved = item.status === 'resolved'
     const isLoading = item.status === 'loading'
@@ -184,11 +188,15 @@
 
   function handleRemove(id: string, index: number, event: MouseEvent) {
     const restoreFocus = event.detail === 0
-    const focusTarget = props.items[index + 1] ?? props.items[index - 1]
+    const focusTarget = items[index + 1] ?? items[index - 1]
 
     pendingFocusTarget.value = restoreFocus ? focusTarget?.id : undefined
 
     emit('remove', id, restoreFocus)
+  }
+
+  function toggleItemList() {
+    isItemListExpanded.value = !isItemListExpanded.value
   }
 
   watch(selectedItemIds, async () => {

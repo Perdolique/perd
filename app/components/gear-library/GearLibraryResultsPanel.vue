@@ -39,7 +39,7 @@
     myGearAdd: [item: GearLibraryListItemView];
   }
 
-  const props = defineProps<Props>()
+  const { items, myGearFailedItemIds, myGearSavingItemIds, selectedCategory, selectedComparisonIds } = defineProps<Props>()
   const emit = defineEmits<Emits>()
 
   function handleComparisonChange(item: GearLibraryListItemView, selected: boolean) {
@@ -51,16 +51,15 @@
   }
 
   const resultItems = computed(() => {
-    const failedMyGearIdSet = new Set(props.myGearFailedItemIds)
-    const savingMyGearIdSet = new Set(props.myGearSavingItemIds)
-    const selectedIdSet = new Set(props.selectedComparisonIds)
-    const { selectedCategory } = props
+    const failedMyGearIdSet = new Set(myGearFailedItemIds)
+    const savingMyGearIdSet = new Set(myGearSavingItemIds)
+    const selectedIdSet = new Set(selectedComparisonIds)
     const hasSelectedCategory = selectedCategory !== undefined
 
     const isComparisonDatasetReady = hasSelectedCategory
-      && props.items.every((item) => item.category.slug === selectedCategory)
+      && items.every((item) => item.category.slug === selectedCategory)
 
-    return props.items.map((item) => {
+    return items.map((item) => {
       return {
         hasMyGearError: failedMyGearIdSet.has(item.id),
         isComparisonDisabled: isComparisonDatasetReady === false,

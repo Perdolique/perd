@@ -54,7 +54,7 @@
     value: 'false'
   }]
 
-  const props = defineProps<Props>()
+  const { isLimitReached, properties } = defineProps<Props>()
   const componentId = useId()
 
   const selectedValues = defineModel<Record<string, GearLibraryBooleanDraftValue>>({
@@ -68,7 +68,7 @@
       : 'any'
   }
 
-  const propertyViews = computed(() => props.properties
+  const propertyViews = computed(() => properties
     .filter((property) => property.dataType === 'boolean')
     .map((property) => {
       const selectedValue = getSelectedValue(property.slug)
@@ -80,7 +80,7 @@
         return {
           controlId: `${componentId}-${property.slug}-${option.value}`,
           isChecked: selectedValue === option.value,
-          isDisabled: props.isLimitReached && addsPropertyFilter,
+          isDisabled: isLimitReached && addsPropertyFilter,
           label: option.label,
           value: option.value
         }

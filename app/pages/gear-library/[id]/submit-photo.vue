@@ -28,7 +28,7 @@
           Retry
         </PerdButton>
 
-        <PerdLink :to="appRoutes.gearLibrary">
+        <PerdLink :to="catalogLocation">
           Back to gear library
         </PerdLink>
       </template>
@@ -44,7 +44,7 @@
       </p>
 
       <template #actions>
-        <PerdLink :to="itemPath">
+        <PerdLink :to="itemLocation">
           Back to item
         </PerdLink>
 
@@ -237,6 +237,7 @@
   import PerdLink from '~/components/PerdLink.vue'
   import TextInput from '~/components/TextInput.vue'
   import PageContent from '~/components/layout/PageContent.vue'
+  import { buildGearLibraryRouteQuery, getGearLibraryRouteState } from '~/utils/gear-library'
   import { appRoutes, createGearLibraryItemPath } from '~/utils/navigation'
 
   type PhotoSourceType = 'manufacturer' | 'own'
@@ -252,6 +253,27 @@
     : route.params.id ?? ''
 
   const itemPath = createGearLibraryItemPath(itemId)
+
+  const catalogQuery = computed(() => {
+    const routeState = getGearLibraryRouteState(route.query)
+
+    return buildGearLibraryRouteQuery(routeState)
+  })
+
+  const catalogLocation = computed(() => {
+    return {
+      path: appRoutes.gearLibrary,
+      query: catalogQuery.value
+    }
+  })
+
+  const itemLocation = computed(() => {
+    return {
+      path: itemPath,
+      query: catalogQuery.value
+    }
+  })
+
   const requestFetch = useRequestFetch()
   const { turnstileSiteKey } = runtimeConfig.public
   const { user } = useUserStore()
@@ -406,7 +428,7 @@
   )
 
   const backLinkPath = computed(
-    () => hasLoadedItem.value ? itemPath : appRoutes.gearLibrary
+    () => hasLoadedItem.value ? itemLocation.value : catalogLocation.value
   )
 
   const backLinkLabel = computed(

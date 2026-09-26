@@ -227,9 +227,12 @@
   })
 
   function createTableItem(
-    item: ComparisonResponse['items'][number]
+    item: ComparisonResponse['items'][number],
+    categorySlug: string,
+    selectedIds: string[]
   ): GearLibraryComparisonTableItem {
     const itemId = item.id
+    const detailPath = createGearLibraryItemPath(itemId)
 
     return {
       brand: {
@@ -237,15 +240,33 @@
       },
 
       cloudflareImageId: item.cloudflareImageId,
-      detailPath: createGearLibraryItemPath(itemId),
+
+      detailLocation: {
+        path: detailPath,
+
+        query: {
+          category: categorySlug,
+          compare: selectedIds
+        }
+      },
+
       id: itemId,
       name: item.name
     }
   }
 
-  const tableItems = computed(
-    () => comparisonResponse.value?.items.map(createTableItem) ?? []
-  )
+  const tableItems = computed(() => {
+    const response = comparisonResponse.value
+
+    if (response === null) {
+      return []
+    }
+
+    const categorySlug = response.category.slug
+    const selectedIds = orderedItemIds.value
+
+    return response.items.map((item) => createTableItem(item, categorySlug, selectedIds))
+  })
 
   const comparisonRows = computed(() => {
     const response = comparisonResponse.value

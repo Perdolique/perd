@@ -144,7 +144,7 @@
 
   type Emits = (event: 'apply' | 'cancel' | 'clear' | 'retry-brands' | 'retry-properties') => void
 
-  const props = defineProps<Props>()
+  const { draftFilterCount, hasDraftChanges, hasDraftFilters, hasNumberRangeErrors } = defineProps<Props>()
   const emit = defineEmits<Emits>()
   const draftFilters = defineModel<GearLibraryFilterDraft>({ required: true })
   const brandSearchValue = defineModel<string>('brandSearchValue', { required: true })
@@ -245,13 +245,13 @@
   const filterLimitTone = computed(() => filterLimitState.value.hasFilterLimitErrors ? 'danger' : 'warning')
 
   const isApplyDisabled = computed(
-    () => filterLimitState.value.hasFilterLimitErrors || props.hasNumberRangeErrors || props.hasDraftChanges === false
+    () => filterLimitState.value.hasFilterLimitErrors || hasNumberRangeErrors || hasDraftChanges === false
   )
 
-  const isClearDisabled = computed(() => props.hasDraftFilters === false && props.hasDraftChanges === false)
+  const isClearDisabled = computed(() => hasDraftFilters === false && hasDraftChanges === false)
 
   const draftFilterCountLabel = computed(() => {
-    const count = props.draftFilterCount
+    const count = draftFilterCount
 
     return count === 1 ? '1 filter selected' : `${count} filters selected`
   })

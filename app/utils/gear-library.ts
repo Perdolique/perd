@@ -1,6 +1,6 @@
 import type { LocationQuery, LocationQueryRaw, LocationQueryValue, LocationQueryValueRaw } from 'vue-router'
 import type { GearLibraryItemsResponse, GearLibraryListItem } from '~/types/equipment'
-import { normalizeGearLibraryComparisonQuery } from '~/utils/gear-library-comparison'
+import { maximumGearLibraryComparisonItems, normalizeGearLibraryComparisonQuery } from '~/utils/gear-library-comparison'
 
 type GearLibrarySort = 'name' | 'brand' | `property:${string}`
 type GearLibraryDirection = 'asc' | 'desc'
@@ -33,6 +33,12 @@ interface GearLibraryItemsApiQuery {
   direction: GearLibraryDirection;
   limit: number;
   page: number;
+}
+
+interface GearLibraryDetailComparison {
+  isAlreadySelected: boolean;
+  isLimitReached: boolean;
+  nextState: GearLibraryRouteState;
 }
 
 interface SupportedQueryEntry {
@@ -142,6 +148,47 @@ function getGearLibraryRouteState(query: LocationQuery): GearLibraryRouteState {
   }
 
   return routeState
+}
+
+/** Adds a detail item to the catalog comparison without mixing category-specific state. */
+function getGearLibraryDetailComparison(
+  currentState: GearLibraryRouteState,
+  itemId: string,
+  categorySlug: string
+): GearLibraryDetailComparison {
+  const isSameCategory = currentState.category === categorySlug
+
+  const baseState: GearLibraryRouteState = isSameCategory
+    ? currentState
+    : {
+        ...currentState,
+        boolean: [],
+        category: categorySlug,
+        compare: [],
+        direction: 'asc',
+        enum: [],
+        number: [],
+        sort: 'name'
+      }
+
+  const isAlreadySelected = baseState.compare.includes(itemId)
+
+  const isLimitReached = isAlreadySelected === false
+    && baseState.compare.length >= maximumGearLibraryComparisonItems
+
+  const compare = isAlreadySelected || isLimitReached
+    ? baseState.compare
+    : [...baseState.compare, itemId]
+
+  return {
+    isAlreadySelected,
+    isLimitReached,
+
+    nextState: {
+      ...baseState,
+      compare
+    }
+  }
 }
 
 /** Converts normalized route state into the equipment items API query. */
@@ -333,6 +380,7 @@ export {
   buildGearLibraryRouteQuery,
   gearLibraryPageSize,
   getGearLibraryItemsApiQuery,
+  getGearLibraryDetailComparison,
   getRestorableGearLibraryPages,
   getGearLibraryRouteState,
   getGearLibraryTotalPages,

@@ -15,7 +15,7 @@
         <col :class="$style.propertyColumn">
 
         <col
-          v-for="item in items"
+          v-for="item in itemViews"
           :key="item.id"
         >
       </colgroup>
@@ -27,7 +27,7 @@
           </th>
 
           <th
-            v-for="(item, itemIndex) in items"
+            v-for="(item, itemIndex) in itemViews"
             :key="item.id"
             :class="[$style.headerCell, $style.itemHeader]"
             scope="col"
@@ -50,7 +50,7 @@
                 ref="removeButtons"
                 type="button"
                 :class="$style.removeButton"
-                :aria-label="`Remove ${item.brand.name} ${item.name} from comparison`"
+                :aria-label="item.removeLabel"
                 :data-item-id="item.id"
                 @click="handleRemove(item.id, itemIndex, $event)"
               >
@@ -59,8 +59,8 @@
 
               <PerdLink
                 :class="$style.itemName"
-                :to="item.detailPath"
-                :aria-label="`View ${item.brand.name} ${item.name}`"
+                :to="item.detailLocation"
+                :aria-label="item.viewLabel"
               >
                 {{ item.name }}
               </PerdLink>
@@ -89,6 +89,7 @@
 </template>
 
 <script lang="ts">
+  import type { RouteLocationRaw } from 'vue-router'
   import type { GearLibraryComparisonRow } from '~/utils/gear-library-comparison'
 
   interface GearLibraryComparisonTableItemBrand {
@@ -98,7 +99,7 @@
   interface GearLibraryComparisonTableItem {
     brand: GearLibraryComparisonTableItemBrand;
     cloudflareImageId: string | null;
-    detailPath: string;
+    detailLocation: RouteLocationRaw;
     id: string;
     name: string;
   }
@@ -125,20 +126,35 @@
     remove: [itemId: string, focusTargetId?: string];
   }
 
-  const props = defineProps<GearLibraryComparisonTableProps>()
+  const { caption, items } = defineProps<GearLibraryComparisonTableProps>()
   const emit = defineEmits<Emits>()
   const removeButtons = useTemplateRef('removeButtons')
 
+  const itemViews = computed(() => items.map((item) => {
+    const removeLabel = `Remove ${item.brand.name} ${item.name} from comparison`
+    const viewLabel = `View ${item.brand.name} ${item.name}`
+
+    return {
+      brand: item.brand,
+      cloudflareImageId: item.cloudflareImageId,
+      detailLocation: item.detailLocation,
+      id: item.id,
+      name: item.name,
+      removeLabel,
+      viewLabel
+    }
+  }))
+
   const scrollRegionLabel = computed(
-    () => `${props.caption}. Scroll horizontally to view all items.`
+    () => `${caption}. Scroll horizontally to view all items.`
   )
 
   const imageSizes = computed(() => {
-    if (props.items.length === 2) {
+    if (items.length === 2) {
       return '320:176px 600:33vw 900:25vw xl:288px'
     }
 
-    if (props.items.length === 3) {
+    if (items.length === 3) {
       return '320:176px 800:23vw 900:176px 1050:20vw 1440:288px'
     }
 
@@ -147,13 +163,13 @@
 
   const componentStyle = computed<CSSProperties>(() => {
     return {
-      '--comparison-item-count': props.items.length
+      '--comparison-item-count': items.length
     }
   })
 
   function handleRemove(itemId: string, itemIndex: number, event: MouseEvent) {
     const shouldRestoreFocus = event.detail === 0
-    const focusTarget = props.items[itemIndex + 1] ?? props.items[itemIndex - 1]
+    const focusTarget = items[itemIndex + 1] ?? items[itemIndex - 1]
     const focusTargetId = shouldRestoreFocus ? focusTarget?.id : undefined
 
     emit('remove', itemId, focusTargetId)

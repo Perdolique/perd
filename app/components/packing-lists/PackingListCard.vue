@@ -35,12 +35,12 @@
     packingList: PackingListView;
   }
 
-  const props = defineProps<Props>()
-  const packingListPath = computed(() => createPackingListPath(props.packingList.id))
+  const { packingList } = defineProps<Props>()
+  const packingListPath = computed(() => createPackingListPath(packingList.id))
 
   const packingProgressText = computed(() => formatPackingProgress(
-    props.packingList.packedCount,
-    props.packingList.entryCount
+    packingList.packedCount,
+    packingList.entryCount
   ))
 </script>
 

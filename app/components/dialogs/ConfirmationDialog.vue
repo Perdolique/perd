@@ -72,8 +72,7 @@
   const {
     cancelButtonText = 'Cancel',
     closeOnConfirm = true,
-    confirmDisabled = false,
-    confirmLoading = false,
+    confirmLoading,
     confirmVariant = 'primary',
     error = null
   } = defineProps<Props>()

@@ -62,11 +62,11 @@
 
   type Emits = (event: 'remove', myGearId: string) => void
 
-  const props = defineProps<Props>()
+  const { myGearRow } = defineProps<Props>()
   const emit = defineEmits<Emits>()
 
   function emitRemove() {
-    emit('remove', props.myGearRow.id)
+    emit('remove', myGearRow.id)
   }
 </script>
 

@@ -2,9 +2,9 @@
   <AuthFormPanel
     title="Choose a new password"
   >
-    <p v-if="pageState.phase === 'checking'" :class="$style.notice" role="status">Checking your reset link…</p>
+    <p v-if="isCheckingResetLink" :class="$style.notice" role="status">Checking your reset link…</p>
 
-    <template v-else-if="pageState.phase === 'complete'">
+    <template v-else-if="isResetComplete">
       <p ref="successStatus" :class="$style.notice" role="status" tabindex="-1">
         Your password has been reset. Sign in with your new password.
       </p>
@@ -13,7 +13,7 @@
       </p>
     </template>
 
-    <template v-else-if="pageState.phase === 'invalid'">
+    <template v-else-if="isResetLinkInvalid">
       <p ref="invalidStatus" :class="$style.error" role="alert" tabindex="-1">
         This password reset link is invalid or expired.
       </p>
@@ -67,7 +67,7 @@
     </template>
 
     <TurnstileWidget
-      v-if="pageState.phase === 'ready'"
+      v-if="isResetReady"
       ref="turnstileWidget"
       :sitekey="turnstileSiteKey"
       :action="passwordRecoveryResetTurnstileAction"
@@ -115,6 +115,10 @@
   const runtimeConfig = useRuntimeConfig()
   const { turnstileSiteKey } = runtimeConfig.public
   const pageState = ref<ResetPageState>({ phase: 'checking' })
+  const isCheckingResetLink = computed(() => pageState.value.phase === 'checking')
+  const isResetComplete = computed(() => pageState.value.phase === 'complete')
+  const isResetLinkInvalid = computed(() => pageState.value.phase === 'invalid')
+  const isResetReady = computed(() => pageState.value.phase === 'ready')
   const password = ref('')
   const confirmation = ref('')
   const passwordError = ref<string>()
