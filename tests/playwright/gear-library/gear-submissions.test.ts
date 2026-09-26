@@ -330,25 +330,86 @@ test.describe('Gear submissions', () => {
     expect(currentUrl.searchParams.get('redirectTo')).toBe('/gear-library/new')
   })
 
-  test('should open the protected submission page from the Gear library CTA', async ({ context, page }) => {
+  test('should offer guest upgrade paths from the protected gear submission page', async ({ context, page }) => {
+    await page.setViewportSize({
+      width: 320,
+      height: 844
+    })
+
     await mockGuestLogin(context)
     await mockCatalogApi(context)
-    await openGearLibrary(page)
 
-    const submitGearLink = page.getByRole('link', { name: 'Submit gear' })
+    await page.route('**/api/auth/email/registration', async (route) => {
+      await route.fulfill({
+        status: 202,
+        json: { accepted: true }
+      })
+    })
 
-    await expect(submitGearLink).toBeVisible()
-    await submitGearLink.click()
-    await expect(page).toHaveURL(/\/gear-library\/new$/u)
-    await expect(page.getByRole('heading', { name: 'Submit missing gear' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Account required.' })).toBeVisible()
+    await test.step('Open protected submission page', async () => {
+      await openGearLibrary(page)
 
-    await expect(page.getByText(
-      'Guest accounts cannot submit gear for review. Account upgrade options will be available later.'
-    )).toBeVisible()
+      const submitGearLink = page.getByRole('link', { name: 'Submit gear' })
 
-    await expect(page.getByRole('link', { name: 'Back to Gear library' })).toBeVisible()
-    await expect(page.locator('form')).toHaveCount(0)
+      await expect(submitGearLink).toBeVisible()
+      await submitGearLink.click()
+      await expect(page).toHaveURL(/\/gear-library\/new$/u)
+      await expect(page.getByRole('heading', { name: 'Submit missing gear' })).toBeVisible()
+    })
+
+    await test.step('Check guest upgrade actions', async () => {
+      await expect(page.getByRole('heading', { name: 'Account required.' })).toBeVisible()
+
+      await expect(page.getByText(
+        'Guest accounts cannot submit gear for review. Add email access or connect Twitch in Account to continue.'
+      )).toBeVisible()
+
+      await expect(page.getByRole('link', { name: 'Back to Gear library' })).toBeVisible()
+      await expect(page.locator('form')).toHaveCount(0)
+
+      const emailLink = page.getByRole('link', {
+        name: 'Add email',
+        exact: true
+      })
+
+      const accountLink = page.getByRole('link', {
+        name: 'Open Account',
+        exact: true
+      })
+
+      await expect(emailLink).toBeInViewport({ ratio: 1 })
+      await expect(accountLink).toBeInViewport({ ratio: 1 })
+      await expect(accountLink).toHaveAttribute('href', '/account')
+      await emailLink.click({ trial: true })
+      await emailLink.focus()
+      await page.keyboard.press('Tab')
+      await expect(accountLink).toBeFocused()
+      await page.keyboard.press('Shift+Tab')
+      await expect(emailLink).toBeFocused()
+      await page.keyboard.press('Enter')
+      await expect(page.getByRole('heading', { name: 'Add email access' })).toBeVisible()
+      await expect(page).toHaveURL((url) => url.pathname === '/register')
+    })
+
+    await test.step('Submit email registration with return target', async () => {
+      const registrationUrlValue = page.url()
+      const registrationUrl = new globalThis.URL(registrationUrlValue)
+      const redirectTo = registrationUrl.searchParams.get('redirectTo')
+
+      expect(redirectTo).toBe('/gear-library/new')
+      await page.getByLabel('Email', { exact: true }).fill('gear@example.com')
+      await page.getByLabel('Password', { exact: true }).fill('A long exact passphrase for gear')
+
+      const registrationRequest = page.waitForRequest('**/api/auth/email/registration')
+
+      await page.getByRole('button', { name: 'Send verification email' }).click()
+
+      const request = await registrationRequest
+      const registrationBody: unknown = request.postDataJSON()
+
+      expect(registrationBody).toMatchObject({ redirectTo: '/gear-library/new' })
+      await expect(page.getByRole('status')).toContainText('Check your email')
+    })
   })
 
   test('should not load submission data or submit for a Guest', async ({ context, page }) => {

@@ -7,7 +7,17 @@
     </template>
 
     <PagePlaceholder v-if="isGuest" emoji="🔐" title="Account required.">
-      Guest accounts cannot submit photos for review. Account upgrade options will be available later.
+      Guest accounts cannot submit photos for review. {{ guestUpgradeMessage }}
+
+      <template #actions>
+        <PerdLink v-if="registrationEnabled" :to="registrationLocation">
+          Add email
+        </PerdLink>
+
+        <PerdLink :to="appRoutes.account">
+          Open Account
+        </PerdLink>
+      </template>
     </PagePlaceholder>
 
     <PageLoadingState v-else-if="isItemLoading" title="Loading equipment item" />
@@ -223,10 +233,12 @@
 
 <script lang="ts" setup>
   import { useObjectUrl } from '@vueuse/core'
+  import { withQuery } from 'ufo'
   import { computed, nextTick, ref, shallowRef, useTemplateRef } from 'vue'
   import { definePageMeta, useFetch, useRequestFetch, useRoute, useRuntimeConfig, useUserStore } from '#imports'
   import type { PhotoSubmissionCreateResponse } from '#server/api/equipment/items/[id]/photo-submissions/index.post'
   import { limits } from '#shared/constants'
+  import { isEmailRegistrationEnabled } from '#shared/utils/email-registration'
   import { photoSubmissionTurnstileAction, turnstileTokenHeaderName } from '#shared/utils/turnstile'
   import TurnstileWidget from '~/components/auth/TurnstileWidget.vue'
   import EquipmentImageFilePicker from '~/components/equipment/EquipmentImageFilePicker.vue'
@@ -238,7 +250,7 @@
   import TextInput from '~/components/TextInput.vue'
   import PageContent from '~/components/layout/PageContent.vue'
   import { buildGearLibraryRouteQuery, getGearLibraryRouteState } from '~/utils/gear-library'
-  import { appRoutes, createGearLibraryItemPath } from '~/utils/navigation'
+  import { appRoutes, createGearLibraryItemPath, createGearLibraryPhotoSubmissionPath } from '~/utils/navigation'
 
   type PhotoSourceType = 'manufacturer' | 'own'
   type PhotoSubmissionStatus = PhotoSubmissionCreateResponse['status']
@@ -247,6 +259,11 @@
 
   const route = useRoute()
   const runtimeConfig = useRuntimeConfig()
+  const registrationEnabled = isEmailRegistrationEnabled(runtimeConfig.public.emailRegistrationEnabled)
+
+  const guestUpgradeMessage = registrationEnabled
+    ? 'Add email access or connect Twitch in Account to continue.'
+    : 'Connect Twitch in Account to continue.'
 
   const itemId = Array.isArray(route.params.id)
     ? route.params.id[0] ?? ''
@@ -258,6 +275,16 @@
     const routeState = getGearLibraryRouteState(route.query)
 
     return buildGearLibraryRouteQuery(routeState)
+  })
+
+  const registrationLocation = computed(() => {
+    const path = createGearLibraryPhotoSubmissionPath(itemId)
+    const redirectTo = withQuery(path, catalogQuery.value)
+
+    return {
+      path: '/register',
+      query: { redirectTo }
+    }
   })
 
   const catalogLocation = computed(() => {

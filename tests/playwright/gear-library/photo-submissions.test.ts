@@ -175,7 +175,16 @@ async function getRequiredBoundingBox(locator: Locator) {
 }
 
 test.describe('Photo submissions', () => {
-  test('should open the dedicated form from an item and deny a Guest', async ({ context, page }) => {
+  test('should offer guest upgrade paths and preserve photo submission context', async ({ context, page }) => {
+    const catalogQuery = `q=PocketRocket&category=stoves&brand=msr&compare=${itemId}`
+    const itemLocation = `${itemPath}?${catalogQuery}`
+    const submissionLocation = `${submissionPath}?${catalogQuery}`
+
+    await page.setViewportSize({
+      width: 320,
+      height: 844
+    })
+
     await context.route((url) => url.pathname === '/api/auth/create-session', async (route) => {
       await route.fulfill({
         status: 201,
@@ -187,22 +196,91 @@ test.describe('Photo submissions', () => {
       })
     })
 
+    await page.route('**/api/auth/email/registration', async (route) => {
+      await route.fulfill({
+        status: 202,
+        json: { accepted: true }
+      })
+    })
+
     await mockItem(context)
-    await page.goto(`/login?redirectTo=${encodeURIComponent(itemPath)}`)
-    await waitForInitialEmailSignInTurnstile(page)
-    await page.getByRole('button', { name: 'Guest' }).click()
-    await expect(page).toHaveURL(new RegExp(`${itemPath}$`, 'u'))
-    await page.getByText('More', { exact: true }).click()
-    await page.getByRole('link', { name: 'Submit photo' }).click()
-    await expect(page).toHaveURL(new RegExp(`${submissionPath}$`, 'u'))
 
-    await expect(page.getByRole('heading', {
-      level: 1,
-      name: 'Submit a photo'
-    })).toBeVisible()
+    await test.step('Open protected submission page', async () => {
+      const loginRedirect = encodeURIComponent(itemLocation)
+      const loginPath = `/login?redirectTo=${loginRedirect}`
 
-    await expect(page.getByRole('heading', { name: 'Account required.' })).toBeVisible()
-    await expect(page.locator('form')).toHaveCount(0)
+      await page.goto(loginPath)
+      await waitForInitialEmailSignInTurnstile(page)
+      await page.getByRole('button', { name: 'Guest' }).click()
+
+      await expect(page).toHaveURL((url) => {
+        const location = `${url.pathname}${url.search}`
+
+        return location === itemLocation
+      })
+
+      await page.getByText('More', { exact: true }).click()
+      await page.getByRole('link', { name: 'Submit photo' }).click()
+
+      await expect(page).toHaveURL((url) => {
+        const location = `${url.pathname}${url.search}`
+
+        return location === submissionLocation
+      })
+
+      await expect(page.getByRole('heading', {
+        level: 1,
+        name: 'Submit a photo'
+      })).toBeVisible()
+    })
+
+    await test.step('Check guest upgrade actions', async () => {
+      await expect(page.getByRole('heading', { name: 'Account required.' })).toBeVisible()
+      await expect(page.locator('form')).toHaveCount(0)
+
+      await expect(page.getByText(
+        'Guest accounts cannot submit photos for review. Add email access or connect Twitch in Account to continue.'
+      )).toBeVisible()
+
+      const emailLink = page.getByRole('link', {
+        name: 'Add email',
+        exact: true
+      })
+
+      const accountLink = page.getByRole('link', {
+        name: 'Open Account',
+        exact: true
+      })
+
+      await expect(emailLink).toBeInViewport({ ratio: 1 })
+      await expect(accountLink).toBeInViewport({ ratio: 1 })
+      await expect(accountLink).toHaveAttribute('href', '/account')
+      await emailLink.click({ trial: true })
+      await emailLink.focus()
+      await page.keyboard.press('Enter')
+      await expect(page.getByRole('heading', { name: 'Add email access' })).toBeVisible()
+      await expect(page).toHaveURL((url) => url.pathname === '/register')
+    })
+
+    await test.step('Submit email registration with return target', async () => {
+      const registrationUrlValue = page.url()
+      const registrationUrl = new globalThis.URL(registrationUrlValue)
+      const redirectTo = registrationUrl.searchParams.get('redirectTo')
+
+      expect(redirectTo).toBe(submissionLocation)
+      await page.getByLabel('Email', { exact: true }).fill('photo@example.com')
+      await page.getByLabel('Password', { exact: true }).fill('A long exact passphrase for photos')
+
+      const registrationRequest = page.waitForRequest('**/api/auth/email/registration')
+
+      await page.getByRole('button', { name: 'Send verification email' }).click()
+
+      const request = await registrationRequest
+      const registrationBody: unknown = request.postDataJSON()
+
+      expect(registrationBody).toMatchObject({ redirectTo: submissionLocation })
+      await expect(page.getByRole('status')).toContainText('Check your email')
+    })
   })
 
   test('should preview, replace, and remove a selected WebP photo', async ({
