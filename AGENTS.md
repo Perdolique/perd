@@ -4,6 +4,11 @@
 
 - Keep all Markdown headings in Sentence case.
 
+## Task selection
+
+- When choosing the next task, check open issues in the [Perd project](https://github.com/users/Perdolique/projects/4) first. Follow its priorities and task dependencies.
+- Consider issues outside the project only when no suitable project task matches the user's request.
+
 ## Web baseline 2025
 
 - The project targets **Baseline 2025** across all web technologies, including CSS, HTML, and JS browser APIs.
