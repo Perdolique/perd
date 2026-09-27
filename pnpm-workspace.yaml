@@ -31,21 +31,63 @@ minimumReleaseAgeExclude:
   - worsier-win32-arm64-msvc@3.6.0
   - worsier-win32-x64-msvc@3.6.0
   - worsier@3.6.0
-  - wrangler@4.139.0
+  - wrangler@4.142.0
   - '@nuxt/devtools-kit@3.4.2'
   - '@nuxt/devtools-wizard@3.4.2'
-  - '@cloudflare/workerd-darwin-64@1.20260911.1'
-  - '@cloudflare/workerd-darwin-arm64@1.20260911.1'
-  - '@cloudflare/workerd-linux-64@1.20260911.1'
-  - '@cloudflare/workerd-linux-arm64@1.20260911.1'
-  - '@cloudflare/workerd-windows-64@1.20260911.1'
-  - miniflare@5.20260911.0-alpha || 5.20260923.0-alpha
-  - workerd@1.20260911.1
+  - '@cloudflare/workerd-darwin-64@1.20260926.1'
+  - '@cloudflare/workerd-darwin-arm64@1.20260926.1'
+  - '@cloudflare/workerd-linux-64@1.20260926.1'
+  - '@cloudflare/workerd-linux-arm64@1.20260926.1'
+  - '@cloudflare/workerd-windows-64@1.20260926.1'
+  - miniflare@5.20260926.0-alpha
+  - workerd@1.20260926.1
   - '@oxlint-tsgolint/darwin-arm64@7.0.2003'
   - '@oxlint-tsgolint/darwin-x64@7.0.2003'
   - '@oxlint-tsgolint/linux-arm64@7.0.2003'
   - '@oxlint-tsgolint/linux-x64@7.0.2003'
   - '@oxlint-tsgolint/win32-arm64@7.0.2003'
   - '@oxlint-tsgolint/win32-x64@7.0.2003'
+  - '@img/sharp-darwin-arm64@0.35.5'
+  - '@img/sharp-darwin-x64@0.35.5'
+  - '@img/sharp-freebsd-wasm32@0.35.5'
+  - '@img/sharp-libvips-darwin-arm64@1.3.4'
+  - '@img/sharp-libvips-darwin-x64@1.3.4'
+  - '@img/sharp-libvips-linux-arm@1.3.4'
+  - '@img/sharp-libvips-linux-arm64@1.3.4'
+  - '@img/sharp-libvips-linux-ppc64@1.3.4'
+  - '@img/sharp-libvips-linux-riscv64@1.3.4'
+  - '@img/sharp-libvips-linux-s390x@1.3.4'
+  - '@img/sharp-libvips-linux-x64@1.3.4'
+  - '@img/sharp-libvips-linuxmusl-arm64@1.3.4'
+  - '@img/sharp-libvips-linuxmusl-x64@1.3.4'
+  - '@img/sharp-linux-arm@0.35.5'
+  - '@img/sharp-linux-arm64@0.35.5'
+  - '@img/sharp-linux-ppc64@0.35.5'
+  - '@img/sharp-linux-riscv64@0.35.5'
+  - '@img/sharp-linux-s390x@0.35.5'
+  - '@img/sharp-linux-x64@0.35.5'
+  - '@img/sharp-linuxmusl-arm64@0.35.5'
+  - '@img/sharp-linuxmusl-x64@0.35.5'
+  - '@img/sharp-wasm32@0.35.5'
+  - '@img/sharp-webcontainers-wasm32@0.35.5'
+  - '@img/sharp-win32-arm64@0.35.5'
+  - '@img/sharp-win32-ia32@0.35.5'
+  - '@img/sharp-win32-x64@0.35.5'
+  - '@peculiar/asn1-android@2.10.0'
+  - '@peculiar/asn1-asym-key@2.10.0'
+  - '@peculiar/asn1-cms@2.10.0'
+  - '@peculiar/asn1-csr@2.10.0'
+  - '@peculiar/asn1-ecc@2.10.0'
+  - '@peculiar/asn1-pfx@2.10.0'
+  - '@peculiar/asn1-pkcs8@2.10.0'
+  - '@peculiar/asn1-pkcs9@2.10.0'
+  - '@peculiar/asn1-rsa@2.10.0'
+  - '@peculiar/asn1-schema@2.10.0'
+  - '@peculiar/asn1-x509@2.10.0'
+  - '@peculiar/asn1-x509-attr@2.10.0'
+  - '@peculiar/asn1-x509-post-quantum@2.10.0'
+  - ansi-regex@6.4.0
+  - html-validate@11.16.1
+  - sharp@0.35.5
 publicHoistPattern:
   - h3
