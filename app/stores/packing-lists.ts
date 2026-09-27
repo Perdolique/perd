@@ -47,6 +47,11 @@ interface PackingListEntryRollbackState {
   updatedAt: string;
 }
 
+interface PackingListConfirmedName {
+  name: string;
+  updatedAt: string;
+}
+
 interface PackingListEntryOperationOptions {
   entryId: string;
   generation: number;
@@ -64,6 +69,8 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
   const serverRows = ref<PackingListSummary[]>([])
   const summaryStates = reactive(new Map<string, PackingListSummaryState>())
   const entryOperations = reactive(new Map<string, PackingListEntryOperation>())
+  const renamingListIds = reactive(new Set<string>())
+  const confirmedNames = reactive(new Map<string, PackingListConfirmedName>())
   const hasLoaded = ref(false)
   const loading = ref(false)
   const errorMessage = ref<string | null>(null)
@@ -213,6 +220,7 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
 
   function getPackingListDetailView(packingList: PackingListDetail): PackingListDetail {
     const entries: PackingListEntry[] = []
+    const name = confirmedNames.get(packingList.id)?.name ?? packingList.name
 
     for (const entry of packingList.entries) {
       const currentEntry = applyEntryOperation(packingList.id, entry)
@@ -224,8 +232,13 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
 
     return {
       ...packingList,
-      entries
+      entries,
+      name
     }
+  }
+
+  function isPackingListRenaming(packingListId: string) {
+    return renamingListIds.has(packingListId)
   }
 
   function isPackingListEntryOperationPending(packingListId: string, entryId: string) {
@@ -414,12 +427,66 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     return createdList
   }
 
+  async function renamePackingList(packingListId: string, name: string) {
+    if (renamingListIds.has(packingListId)) {
+      throw new Error('Packing list rename already pending')
+    }
+
+    const operation = beginSummaryOperation(packingListId)
+
+    renamingListIds.add(packingListId)
+
+    try {
+      const response = await requestFetch(`/api/user/packing-lists/${packingListId}`, {
+        method: 'PATCH',
+        body: { name },
+        retry: 0
+      })
+
+      if (operation.generation === generation) {
+        confirmedNames.set(packingListId, {
+          name: response.name,
+          updatedAt: response.updatedAt
+        })
+      }
+
+      finishSummaryOperation(operation, (summary) => {
+        const updatedAt = latestPackingListUpdatedAt(summary.updatedAt, response.updatedAt)
+
+        return {
+          ...summary,
+          name: response.name,
+          updatedAt
+        }
+      })
+
+      return response
+    } catch (error) {
+      finishSummaryOperation(operation)
+
+      throw error
+    } finally {
+      if (operation.generation === generation) {
+        renamingListIds.delete(packingListId)
+      }
+    }
+  }
+
   function initializePackingListSummary(packingList: PackingListDetail) {
     if (packingList.id === '') {
       return
     }
 
     reconcileEntryOperations(packingList)
+
+    const confirmedName = confirmedNames.get(packingList.id)
+
+    const isNameRefreshed = confirmedName !== undefined
+      && Date.parse(packingList.updatedAt) >= Date.parse(confirmedName.updatedAt)
+
+    if (isNameRefreshed) {
+      confirmedNames.delete(packingList.id)
+    }
 
     const currentState = summaryStates.get(packingList.id)
 
@@ -581,6 +648,8 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
 
     summaryStates.clear()
     entryOperations.clear()
+    renamingListIds.clear()
+    confirmedNames.clear()
 
     hasLoaded.value = false
     loading.value = false
@@ -604,7 +673,9 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     isPackingListEntryOperationPending,
     isPackingListEntryRemoving,
     isPackingListEntryUpdating,
+    isPackingListRenaming,
     loading,
+    renamePackingList,
     rows,
     updatePackingListEntry
   }
