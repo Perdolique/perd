@@ -20,23 +20,40 @@
     }]"
     @click.capture="handleClick"
   >
+    <span v-if="hasLeadingIcon" :class="$style.leadingIcon" aria-hidden="true">
+      <FidgetSpinner
+        v-if="loading"
+        :class="$style.icon"
+      />
+
+      <Icon
+        v-else-if="icon"
+        :name="icon"
+        :class="$style.icon"
+      />
+    </span>
+
+    <span :class="[$style.label, { isLoading: isLoadingOverlay }]">
+      <slot />
+    </span>
+
+    <span v-if="hasTrailingIcon" :class="$style.trailingIcon" aria-hidden="true">
+      <FidgetSpinner
+        v-if="isTrailingIconLoading"
+        :class="$style.icon"
+      />
+
+      <Icon
+        v-else
+        :name="rightIconName"
+        :class="$style.icon"
+      />
+    </span>
+
     <FidgetSpinner
-      v-if="loading"
-      :class="$style.icon"
-    />
-
-    <Icon
-      v-else-if="icon"
-      :name="icon"
-      :class="$style.icon"
-    />
-
-    <slot />
-
-    <Icon
-      v-if="showRightIcon"
-      :name="rightIconName"
-      :class="$style.icon"
+      v-if="isLoadingOverlay"
+      :class="$style.loadingOverlay"
+      aria-hidden="true"
     />
   </component>
 </template>
@@ -63,6 +80,7 @@
 
   const {
     disabled,
+    icon,
     iconRight,
     loading,
     size = 'medium',
@@ -97,8 +115,11 @@
   const isSoftVariant = computed(() => variant === 'soft')
   const isGhostVariant = computed(() => variant === 'ghost')
   const isDangerVariant = computed(() => variant === 'danger')
+  const hasLeadingIcon = computed(() => Boolean(icon))
+  const hasTrailingIcon = computed(() => Boolean(iconRight))
+  const isTrailingIconLoading = computed(() => loading && !hasLeadingIcon.value)
+  const isLoadingOverlay = computed(() => loading && !hasLeadingIcon.value && !hasTrailingIcon.value)
   const rightIconName = computed(() => iconRight ?? '')
-  const showRightIcon = computed(() => iconRight !== undefined && iconRight !== '' && loading === false)
 
   function handleClick(event: MouseEvent) {
     if (isButtonDisabled.value) {
@@ -130,6 +151,7 @@
     --button-text-color: var(--color-accent-contrast);
 
     appearance: none;
+    position: relative;
     border: 1px solid var(--button-border-color);
     cursor: pointer;
     display: inline-flex;
@@ -253,9 +275,31 @@
     }
   }
 
+  .leadingIcon,
+  .trailingIcon {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 1.1em;
+    block-size: 1.1em;
+    flex-shrink: 0;
+  }
+
   .icon {
     font-size: 1.1em;
     flex-shrink: 0;
+  }
+
+  .label {
+    &:global(.isLoading) {
+      opacity: 0;
+    }
+  }
+
+  .loadingOverlay {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    font-size: 1.1em;
   }
 
 </style>
