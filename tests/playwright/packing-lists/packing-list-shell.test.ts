@@ -711,60 +711,94 @@ async function expectInvalidRename(dialog: Locator, name: string, message: strin
   await expect(dialog.getByRole('alert')).toHaveText(message)
 }
 
+async function captureRenameFailure(page: Page) {
+  await page.evaluate(() => {
+    const originalError = globalThis.console.error
+
+    // Capture only the expected diagnostic; other errors still reach the runtime guard.
+    globalThis.console.error = (...args: unknown[]) => {
+      const [message, error] = args
+
+      if (args.length === 2 && message === 'Failed to rename packing list:' && error instanceof Error) {
+        Reflect.set(globalThis, 'renameFailure', {
+          message: error.message,
+          name: error.name,
+          stack: error.stack
+        })
+
+        return
+      }
+
+      originalError(...args)
+    }
+  })
+}
+
 test.describe('Packing list shell', () => {
   test('should rename a list and preserve its entries through navigation and reload', async ({ context, page }) => {
     const entries = createPackingListEntries()
-    const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
-
-    state.detail = createPackingListDetail('Alpine weekend', entries)
-
-    syncPackingListSummary(state)
-    await mockAuth(context)
-    await mockPackingListRoutes(context, page, state)
-    await openPackingLists(page)
-    await page.getByRole('link', { name: /Alpine weekend/iu }).click()
-
-    await page.getByRole('button', {
-      name: 'Rename',
-      exact: true
-    }).click()
-
+    const summary = createPackingListSummary('Alpine weekend')
+    const state = createPackingListRouteState([summary])
+    const detailPathPattern = `/packing-lists/${packingListId}$`
+    const detailUrl = new RegExp(detailPathPattern, 'u')
     const dialog = page.getByRole('dialog', { name: 'Rename packing list' })
     const input = dialog.getByLabel('List name')
 
-    await expect(input).toHaveValue('Alpine weekend')
-    await expect(input).toBeFocused()
-    await expect(dialog.getByRole('button', { name: 'Save name' })).toBeDisabled()
-    await input.fill('  Storm kit  ')
-    await input.press('Enter')
-    await expect(dialog).toHaveCount(0)
+    await test.step('Open an existing list with packed and unpacked entries', async () => {
+      state.detail = createPackingListDetail('Alpine weekend', entries)
 
-    await expect(page.getByRole('heading', {
-      level: 1,
-      name: 'Storm kit',
-      exact: true
-    })).toBeVisible()
+      syncPackingListSummary(state)
+      await mockAuth(context)
+      await mockPackingListRoutes(context, page, state)
+      await openPackingLists(page)
+      await page.getByRole('link', { name: /Alpine weekend/iu }).click()
 
-    await expect(page.getByText('Packing list renamed.', { exact: true })).toHaveCount(1)
-    expect(state.renameBodies).toStrictEqual([{ name: 'Storm kit' }])
-    expect(state.detail.entries).toStrictEqual(entries)
-    await expect(page.getByRole('checkbox', { checked: true })).toHaveCount(1)
-    await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Packing lists' }).click()
-    await expect(page.getByRole('link', { name: /Storm kit/iu })).toBeVisible()
-    await page.getByRole('link', { name: /Storm kit/iu }).click()
-    await expect(page).toHaveURL(new RegExp(`/packing-lists/${packingListId}$`, 'u'))
-    await page.reload()
-    await waitForInitialEmailSignInTurnstile(page)
-    await page.getByRole('button', { name: /Continue as guest/iu }).click()
+      await page.getByRole('button', {
+        name: 'Rename',
+        exact: true
+      }).click()
+    })
 
-    await expect(page.getByRole('heading', {
-      level: 1,
-      name: 'Storm kit',
-      exact: true
-    })).toBeVisible()
+    await test.step('Save a trimmed name without replacing either entry', async () => {
+      await expect(input).toHaveValue('Alpine weekend')
+      await expect(input).toBeFocused()
+      await expect(dialog.getByRole('button', { name: 'Save name' })).toBeDisabled()
+      await input.fill('  Storm kit  ')
+      await input.press('Enter')
+      await expect(dialog).toHaveCount(0)
 
-    await expect(page.getByRole('checkbox', { checked: true })).toHaveCount(1)
-    await expect(page.getByRole('checkbox')).toHaveCount(2)
+      await expect(page.getByRole('heading', {
+        level: 1,
+        name: 'Storm kit',
+        exact: true
+      })).toBeVisible()
+
+      await expect(page.getByText('Packing list renamed.', { exact: true })).toHaveCount(1)
+      expect(state.renameBodies).toStrictEqual([{ name: 'Storm kit' }])
+      await expect(page.getByRole('checkbox')).toHaveCount(2)
+      await expect(page.getByRole('checkbox', { name: 'Rain jacket' })).not.toBeChecked()
+      await expect(page.getByRole('checkbox', { name: 'PocketRocket Deluxe' })).toBeChecked()
+    })
+
+    await test.step('Keep the name in the overview and after reload', async () => {
+      await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Packing lists' }).click()
+      await expect(page.getByRole('link', { name: /Storm kit/iu })).toBeVisible()
+      await page.getByRole('link', { name: /Storm kit/iu }).click()
+      await expect(page).toHaveURL(detailUrl)
+      await page.reload()
+      await waitForInitialEmailSignInTurnstile(page)
+      await page.getByRole('button', { name: /Continue as guest/iu }).click()
+
+      await expect(page.getByRole('heading', {
+        level: 1,
+        name: 'Storm kit',
+        exact: true
+      })).toBeVisible()
+
+      await expect(page.getByRole('checkbox')).toHaveCount(2)
+      await expect(page.getByRole('checkbox', { name: 'Rain jacket' })).not.toBeChecked()
+      await expect(page.getByRole('checkbox', { name: 'PocketRocket Deluxe' })).toBeChecked()
+    })
   })
 
   for (const dismissal of [{
@@ -787,7 +821,8 @@ test.describe('Packing list shell', () => {
     }
   }]) {
     test(`should cancel rename by ${dismissal.name} without saving`, async ({ context, page }) => {
-      const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
+      const summary = createPackingListSummary('Alpine weekend')
+      const state = createPackingListRouteState([summary])
 
       await mockAuth(context)
       await mockPackingListRoutes(context, page, state)
@@ -822,7 +857,8 @@ test.describe('Packing list shell', () => {
   }
 
   test('should validate rename without losing input and accept the name length limit', async ({ context, page }) => {
-    const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
+    const summary = createPackingListSummary('Alpine weekend')
+    const state = createPackingListRouteState([summary])
     const longName = 'A'.repeat(129)
     const validName = 'A'.repeat(128)
 
@@ -857,91 +893,185 @@ test.describe('Packing list shell', () => {
   })
 
   test('should lock pending rename and keep its draft after a failure for retry', async ({ context, page }) => {
-    const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
+    const summary = createPackingListSummary('Alpine weekend')
+    const state = createPackingListRouteState([summary])
     const gate = createDeferred()
-
-    state.renameReplies.push({
-      gate: gate.promise,
-      status: 500
-    })
-
-    await mockAuth(context)
-    await mockPackingListRoutes(context, page, state)
-    await openPackingLists(page)
-    await page.getByRole('link', { name: /Alpine weekend/iu }).click()
-
-    await page.getByRole('button', {
-      name: 'Rename',
-      exact: true
-    }).click()
-
     const dialog = page.getByRole('dialog', { name: 'Rename packing list' })
     const input = dialog.getByLabel('List name')
     const save = dialog.getByRole('button', { name: 'Save name' })
+    const cancel = dialog.getByRole('button', { name: 'Cancel' })
+
+    await test.step('Open a rename dialog with a deferred failure', async () => {
+      state.renameReplies.push({
+        gate: gate.promise,
+        status: 500
+      })
+
+      await mockAuth(context)
+      await mockPackingListRoutes(context, page, state)
+      await openPackingLists(page)
+      await page.getByRole('link', { name: /Alpine weekend/iu }).click()
+
+      await page.setViewportSize({
+        width: 345,
+        height: 740
+      })
+
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+      await captureRenameFailure(page)
+
+      await page.getByRole('button', {
+        name: 'Rename',
+        exact: true
+      }).click()
+
+      await input.fill('Storm kit')
+    })
 
     try {
-      await input.fill('Storm kit')
-      await save.click()
-      await expect.poll(() => state.renameBodies.length).toBe(1)
-      await expect(input).toBeDisabled()
-      await expect(save).toBeDisabled()
-      await expect(dialog.getByRole('button', { name: 'Cancel' })).toBeDisabled()
-      await page.keyboard.press('Enter')
-      await page.keyboard.press('Escape')
-      await page.mouse.click(5, 5)
-      await expect(dialog).toBeVisible()
-      expect(state.renameBodies).toHaveLength(1)
-      gate.resolve()
-      await expect(dialog.getByRole('alert')).toHaveText('Could not save the name. Try again.')
-      await expect(input).toHaveValue('Storm kit')
-      await expect(save).toBeEnabled()
+      await test.step('Lock duplicate saves and dismissal while pending', async () => {
+        await input.press('Enter')
+        await expect.poll(() => state.renameBodies.length).toBe(1)
+        await expect(input).toBeDisabled()
+        await expect(save).toBeDisabled()
+        await expect(cancel).toBeDisabled()
+        await page.keyboard.press('Enter')
+        await page.keyboard.press('Escape')
+        await page.mouse.click(5, 5)
+        await expect(dialog).toBeVisible()
+        expect(state.renameBodies).toHaveLength(1)
+      })
 
-      await expect(page.getByRole('heading', {
-        level: 1,
-        name: 'Alpine weekend',
-        exact: true
-      })).toBeVisible()
+      await test.step('Keep diagnostics and return keyboard focus after failure', async () => {
+        gate.resolve()
+        await expect(dialog.getByRole('alert')).toHaveText('Could not save the name. Try again.')
+        await expect(input).toHaveValue('Storm kit')
+        await expect(input).toBeFocused()
+        await expect(save).toBeEnabled()
 
-      await save.click()
-      await expect(dialog).toHaveCount(0)
+        const failure: unknown = await page.evaluate(() => {
+          const recordedFailure: unknown = Reflect.get(globalThis, 'renameFailure')
 
-      await expect(page.getByRole('heading', {
-        level: 1,
-        name: 'Storm kit',
-        exact: true
-      })).toBeVisible()
+          return recordedFailure
+        })
 
-      expect(state.renameBodies).toHaveLength(2)
+        expect(failure).toMatchObject({
+          message: expect.stringContaining('500'),
+          name: 'FetchError',
+          stack: expect.stringContaining('FetchError')
+        })
+
+        await expect(page.getByRole('heading', {
+          level: 1,
+          name: 'Alpine weekend',
+          exact: true
+        })).toBeVisible()
+      })
+
+      await test.step('Edit the retained draft and retry from the keyboard', async () => {
+        await page.keyboard.press('End')
+        await page.keyboard.type(' revised')
+        await expect(input).toHaveValue('Storm kit revised')
+        await input.press('Enter')
+        await expect(dialog).toHaveCount(0)
+
+        await expect(page.getByRole('heading', {
+          level: 1,
+          name: 'Storm kit revised',
+          exact: true
+        })).toBeVisible()
+
+        expect(state.renameBodies).toStrictEqual([{ name: 'Storm kit' }, { name: 'Storm kit revised' }])
+      })
     } finally {
       gate.resolve()
     }
   })
 
   test('should preserve rename and packed progress when older requests finish later', async ({ context, page }) => {
-    const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
+    const summary = createPackingListSummary('Alpine weekend')
+    const state = createPackingListRouteState([summary])
     const [customEntry, inventoryEntry] = createPackingListEntries()
     const collectionGate = createDeferred()
     const entryGate = createDeferred()
-
-    state.detail = createPackingListDetail('Alpine weekend', [customEntry, inventoryEntry])
-
-    syncPackingListSummary(state)
-    state.entryPatchReplies.set(customEntry.id, [{ gate: entryGate.promise }])
-    await mockAuth(context)
-    await mockPackingListRoutes(context, page, state)
-    await openPackingLists(page)
-    await expect(page.getByRole('link', { name: /Alpine weekend/iu })).toBeVisible()
-
+    const freshGate = createDeferred()
     const sidebar = page.getByTestId('shell-sidebar')
 
+    await test.step('Prepare the list and deferred responses', async () => {
+      state.detail = createPackingListDetail('Alpine weekend', [customEntry, inventoryEntry])
+
+      syncPackingListSummary(state)
+      state.entryPatchReplies.set(customEntry.id, [{ gate: entryGate.promise }])
+      await mockAuth(context)
+      await mockPackingListRoutes(context, page, state)
+      await openPackingLists(page)
+      await expect(page.getByRole('link', { name: /Alpine weekend/iu })).toBeVisible()
+    })
+
     try {
-      state.getGates.push(collectionGate.promise)
-      await sidebar.getByRole('link', { name: 'Home' }).click()
-      await sidebar.getByRole('link', { name: 'Packing lists' }).click()
-      await expect.poll(() => state.getRequests).toBe(2)
+      await test.step('Start older collection and packing requests before renaming', async () => {
+        state.getGates.push(collectionGate.promise)
+        await sidebar.getByRole('link', { name: 'Home' }).click()
+        await sidebar.getByRole('link', { name: 'Packing lists' }).click()
+        await expect.poll(() => state.getRequests).toBe(2)
+        await page.getByRole('link', { name: /Alpine weekend/iu }).click()
+        await page.getByRole('checkbox', { name: 'Rain jacket' }).click()
+        await expect.poll(() => state.entryPatchRequests.length).toBe(1)
+
+        await page.getByRole('button', {
+          name: 'Rename',
+          exact: true
+        }).click()
+
+        await page.getByLabel('List name').fill('Storm kit')
+        await page.getByRole('button', { name: 'Save name' }).click()
+        await expect(page.getByRole('dialog', { name: 'Rename packing list' })).toHaveCount(0)
+      })
+
+      await test.step('Accept older replies without losing the confirmed name', async () => {
+        entryGate.resolve()
+        await expect(page.getByRole('checkbox', { name: 'Rain jacket' })).toBeEnabled()
+        await expect(page.getByRole('checkbox', { name: 'Rain jacket' })).toBeChecked()
+
+        await expect(page.getByRole('heading', {
+          level: 1,
+          name: 'Storm kit',
+          exact: true
+        })).toBeVisible()
+
+        const collectionResponse = page.waitForResponse(isPackingListCollectionGetResponse)
+
+        collectionGate.resolve()
+
+        await collectionResponse
+      })
+
+      await test.step('Show the reconciled cached card before another GET completes', async () => {
+        // Only the reconciled cache can satisfy the assertion while this response is held.
+        state.getGates.push(freshGate.promise)
+        await sidebar.getByRole('link', { name: 'Packing lists' }).click()
+        await expect.poll(() => state.getRequests).toBe(3)
+        await expect(page.getByRole('link', { name: /Storm kit/iu })).toContainText('2 of 2 packed · All packed')
+        await expect(page.getByRole('link', { name: /Alpine weekend/iu })).toHaveCount(0)
+      })
+    } finally {
+      entryGate.resolve()
+      collectionGate.resolve()
+      freshGate.resolve()
+    }
+  })
+
+  test('should keep pending rename locked after leaving and reopening the list', async ({ context, page }) => {
+    const summary = createPackingListSummary('Alpine weekend')
+    const state = createPackingListRouteState([summary])
+    const gate = createDeferred()
+
+    await test.step('Start a delayed rename', async () => {
+      state.renameReplies.push({ gate: gate.promise })
+      await mockAuth(context)
+      await mockPackingListRoutes(context, page, state)
+      await openPackingLists(page)
       await page.getByRole('link', { name: /Alpine weekend/iu }).click()
-      await page.getByRole('checkbox', { name: 'Rain jacket' }).click()
-      await expect.poll(() => state.entryPatchRequests.length).toBe(1)
 
       await page.getByRole('button', {
         name: 'Rename',
@@ -949,146 +1079,170 @@ test.describe('Packing list shell', () => {
       }).click()
 
       await page.getByLabel('List name').fill('Storm kit')
-      await page.getByRole('button', { name: 'Save name' }).click()
-      await expect(page.getByRole('dialog', { name: 'Rename packing list' })).toHaveCount(0)
-      entryGate.resolve()
-      await expect(page.getByRole('checkbox', { name: 'Rain jacket' })).toBeEnabled()
-      await expect(page.getByRole('checkbox', { name: 'Rain jacket' })).toBeChecked()
-
-      await expect(page.getByRole('heading', {
-        level: 1,
-        name: 'Storm kit',
-        exact: true
-      })).toBeVisible()
-
-      const collectionResponse = page.waitForResponse(response => isPackingListCollectionGetRequest(response.request()))
-
-      collectionGate.resolve()
-
-      await collectionResponse
-
-      // Hold the next fresh response so only the reconciled cache can satisfy the assertion.
-      const freshGate = createDeferred()
-
-      state.getGates.push(freshGate.promise)
-
-      try {
-        await sidebar.getByRole('link', { name: 'Packing lists' }).click()
-        await expect.poll(() => state.getRequests).toBe(3)
-        await expect(page.getByRole('link', { name: /Storm kit/iu })).toContainText('2 of 2 packed · All packed')
-        await expect(page.getByRole('link', { name: /Alpine weekend/iu })).toHaveCount(0)
-      } finally {
-        freshGate.resolve()
-      }
-    } finally {
-      entryGate.resolve()
-      collectionGate.resolve()
-    }
-  })
-
-  test('should keep pending rename locked after leaving and reopening the list', async ({ context, page }) => {
-    const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
-    const gate = createDeferred()
-
-    state.renameReplies.push({ gate: gate.promise })
-    await mockAuth(context)
-    await mockPackingListRoutes(context, page, state)
-    await openPackingLists(page)
-    await page.getByRole('link', { name: /Alpine weekend/iu }).click()
-
-    await page.getByRole('button', {
-      name: 'Rename',
-      exact: true
-    }).click()
-
-    await page.getByLabel('List name').fill('Storm kit')
+    })
 
     try {
-      await page.getByRole('button', { name: 'Save name' }).click()
-      await expect.poll(() => state.renameBodies.length).toBe(1)
-      await page.goBack()
-      await expect(page).toHaveURL(/\/packing-lists$/u)
-      await page.getByRole('link', { name: /Alpine weekend/iu }).click()
+      await test.step('Leave and reopen the list while the save is pending', async () => {
+        await page.getByRole('button', { name: 'Save name' }).click()
+        await expect.poll(() => state.renameBodies.length).toBe(1)
+        await page.goBack()
+        await expect(page).toHaveURL(/\/packing-lists$/u)
+        await page.getByRole('link', { name: /Alpine weekend/iu }).click()
 
-      await expect(page.getByRole('button', {
-        name: 'Rename',
-        exact: true
-      })).toBeDisabled()
+        await expect(page.getByRole('button', {
+          name: 'Rename',
+          exact: true
+        })).toBeDisabled()
+      })
 
-      gate.resolve()
+      await test.step('Apply the single save and unlock the reopened page', async () => {
+        gate.resolve()
 
-      await expect(page.getByRole('heading', {
-        level: 1,
-        name: 'Storm kit',
-        exact: true
-      })).toBeVisible()
+        await expect(page.getByRole('heading', {
+          level: 1,
+          name: 'Storm kit',
+          exact: true
+        })).toBeVisible()
 
-      await expect(page.getByRole('button', {
-        name: 'Rename',
-        exact: true
-      })).toBeEnabled()
+        await expect(page.getByRole('button', {
+          name: 'Rename',
+          exact: true
+        })).toBeEnabled()
 
-      expect(state.renameBodies).toStrictEqual([{ name: 'Storm kit' }])
+        expect(state.renameBodies).toStrictEqual([{ name: 'Storm kit' }])
+      })
     } finally {
       gate.resolve()
     }
   })
 
   test('should keep rename usable on mobile with a long unbroken name', async ({ context, page }) => {
-    const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
+    const summary = createPackingListSummary('Alpine weekend')
+    const state = createPackingListRouteState([summary])
     const longName = 'A'.repeat(128)
-
-    await page.setViewportSize({
-      width: 320,
-      height: 740
-    })
-
-    await mockAuth(context)
-    await mockPackingListRoutes(context, page, state)
-    await page.goto(`/login?redirectTo=/packing-lists/${packingListId}`)
-    await waitForInitialEmailSignInTurnstile(page)
-    await page.getByRole('button', { name: /Continue as guest/iu }).click()
-
-    await page.getByRole('button', {
-      name: 'Rename',
-      exact: true
-    }).click()
-
+    const loginPath = `/login?redirectTo=/packing-lists/${packingListId}`
+    const gate = createDeferred()
     const dialog = page.getByRole('dialog', { name: 'Rename packing list' })
+    const input = dialog.getByLabel('List name')
+    const save = dialog.getByRole('button', { name: 'Save name' })
+    const saveLabel = save.getByText('Save name', { exact: true })
+    const saveSpinner = save.locator('[aria-hidden="true"]')
+    const cancel = dialog.getByRole('button', { name: 'Cancel' })
+    const controls = [dialog, input, save, cancel]
 
-    await dialog.getByLabel('List name').fill(longName)
-    await expect(dialog.getByLabel('List name')).toHaveValue(longName)
+    await test.step('Open a long draft on the narrow viewport', async () => {
+      state.renameReplies.push({ gate: gate.promise })
 
-    const controls = [dialog, dialog.getByLabel('List name'), dialog.getByRole('button', { name: 'Save name' }), dialog.getByRole('button', { name: 'Cancel' })]
-    const boxes = await Promise.all(controls.map(async control => getElementBox(control)))
+      await page.setViewportSize({
+        width: 320,
+        height: 740
+      })
 
-    for (const box of boxes) {
+      await page.emulateMedia({ reducedMotion: 'reduce' })
+      await mockAuth(context)
+      await mockPackingListRoutes(context, page, state)
+      await page.goto(loginPath)
+      await waitForInitialEmailSignInTurnstile(page)
+      await page.getByRole('button', { name: /Continue as guest/iu }).click()
 
-      expect(box.x).toBeGreaterThanOrEqual(0)
-      expect(box.x + box.width).toBeLessThanOrEqual(320)
-    }
+      await page.getByRole('button', {
+        name: 'Rename',
+        exact: true
+      }).click()
 
-    await dialog.getByRole('button', { name: 'Save name' }).click()
-    await expect(dialog).toHaveCount(0)
+      await input.fill(longName)
+      await expect(input).toHaveValue(longName)
 
-    const heading = page.getByRole('heading', {
-      level: 1,
-      name: longName,
-      exact: true
+      await page.evaluate(async () => {
+        await globalThis.document.fonts.ready
+      })
     })
 
-    await expect(heading).toBeVisible()
+    try {
+      await test.step('Keep controls inside the viewport and stable during saving', async () => {
+        await expect(saveLabel).toHaveCSS('opacity', '1')
 
-    const headingBox = await getElementBox(heading)
+        const saveBox = await getElementBox(save)
+        const labelBox = await getElementBox(saveLabel)
+        const saveCenter = saveBox.x + saveBox.width / 2
+        const labelCenter = labelBox.x + labelBox.width / 2
 
-    const renameBox = await getElementBox(page.getByRole('button', {
-      name: 'Rename',
-      exact: true
-    }))
+        expect(labelCenter).toBeCloseTo(saveCenter, 1)
 
-    expect(headingBox.x + headingBox.width).toBeLessThanOrEqual(320)
-    expect(renameBox.x + renameBox.width).toBeLessThanOrEqual(320)
-    await expect.poll(async () => page.evaluate(() => globalThis.document.documentElement.scrollWidth)).toBeLessThanOrEqual(320)
+        const boxRequests = []
+
+        for (const control of controls) {
+          const boxRequest = getElementBox(control)
+
+          boxRequests.push(boxRequest)
+        }
+
+        const boxes = await Promise.all(boxRequests)
+
+        for (const box of boxes) {
+          const rightEdge = box.x + box.width
+
+          expect(box.x).toBeGreaterThanOrEqual(0)
+          expect(rightEdge).toBeLessThanOrEqual(320)
+        }
+
+        await save.click()
+        await expect.poll(() => state.renameBodies.length).toBe(1)
+        await expect(save).toBeDisabled()
+        await expect(save).toHaveAccessibleName('Save name')
+        await expect(saveLabel).toHaveCSS('opacity', '0')
+        await expect(saveSpinner).toBeVisible()
+        await expect(saveSpinner).toHaveCSS('mask-image', /url\(/u)
+
+        const spinnerBox = await getElementBox(saveSpinner)
+        const spinnerCenter = spinnerBox.x + spinnerBox.width / 2
+        const spinnerMiddle = spinnerBox.y + spinnerBox.height / 2
+        const saveMiddle = saveBox.y + saveBox.height / 2
+
+        expect(spinnerCenter).toBeCloseTo(saveCenter, 1)
+        expect(spinnerMiddle).toBeCloseTo(saveMiddle, 1)
+
+        const pendingBoxRequests = []
+
+        for (const control of controls) {
+          const boxRequest = getElementBox(control)
+
+          pendingBoxRequests.push(boxRequest)
+        }
+
+        const pendingBoxes = await Promise.all(pendingBoxRequests)
+
+        expect(pendingBoxes).toStrictEqual(boxes)
+        gate.resolve()
+        await expect(dialog).toHaveCount(0)
+      })
+
+      await test.step('Keep the saved long title and rename action visible', async () => {
+        const heading = page.getByRole('heading', {
+          level: 1,
+          name: longName,
+          exact: true
+        })
+
+        const renameButton = page.getByRole('button', {
+          name: 'Rename',
+          exact: true
+        })
+
+        await expect(heading).toBeVisible()
+
+        const headingBox = await getElementBox(heading)
+        const renameBox = await getElementBox(renameButton)
+        const headingRightEdge = headingBox.x + headingBox.width
+        const renameRightEdge = renameBox.x + renameBox.width
+
+        expect(headingRightEdge).toBeLessThanOrEqual(320)
+        expect(renameRightEdge).toBeLessThanOrEqual(320)
+        await expect.poll(async () => page.evaluate(() => globalThis.document.documentElement.scrollWidth)).toBeLessThanOrEqual(320)
+      })
+    } finally {
+      gate.resolve()
+    }
   })
 
   test('should create a list and stay on the packing lists page', async ({ context, page }) => {

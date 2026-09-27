@@ -2,8 +2,9 @@
   <PageContent :class="$style.component" :page-title="pageTitle">
     <template v-if="canRenamePackingList" #actions>
       <PerdButton
-        variant="ghost"
+        variant="secondary"
         size="small"
+        icon="hugeicons:pencil-edit-02"
         aria-haspopup="dialog"
         :disabled="isRenaming"
         @click="openRenameDialog"
@@ -134,12 +135,13 @@
   const renameErrorMessage = ref<string | null>(null)
   const renameAnnouncement = ref('')
   let isPageActive = true
+  const nameLengthMessage = `Use ${limits.maxPackingListNameLength} characters or fewer.`
 
   const nameSchema = v.pipe(
     v.string(),
     v.trim(),
     v.nonEmpty('Enter a list name.'),
-    v.maxLength(limits.maxPackingListNameLength, `Use ${limits.maxPackingListNameLength} characters or fewer.`)
+    v.maxLength(limits.maxPackingListNameLength, nameLengthMessage)
   )
 
   const packingListId = Array.isArray(route.params.id)
@@ -292,8 +294,20 @@
 
       isRenameDialogVisible.value = false
       renameAnnouncement.value = 'Packing list renamed.'
-    } catch {
+    } catch (error) {
+      console.error('Failed to rename packing list:', error)
+
+      if (!isPageActive) {
+        return
+      }
+
       renameErrorMessage.value = 'Could not save the name. Try again.'
+
+      await nextTick()
+
+      if (isPageActive) {
+        renameInput.value?.focus()
+      }
     }
   }
 

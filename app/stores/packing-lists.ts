@@ -437,7 +437,9 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     renamingListIds.add(packingListId)
 
     try {
-      const response = await requestFetch(`/api/user/packing-lists/${packingListId}`, {
+      const renamePath = `/api/user/packing-lists/${packingListId}` as const
+
+      const response = await requestFetch(renamePath, {
         method: 'PATCH',
         body: { name },
         retry: 0
