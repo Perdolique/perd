@@ -338,25 +338,44 @@ describe('patch /api/equipment/brands/[id]', () => {
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
-  it('should return 500 when brand slug already exists', async () => {
+  it.each([
+    ['name', 'brands_name_key', 'Brand name already exists'],
+    ['slug', 'brands_slug_key', 'Brand slug already exists']
+  ])('should return 409 when brand %s already exists', async (_field, constraint, statusMessage) => {
     const { dbWrite } = createPatchDb({})
+    const duplicateError = new Error('duplicate value')
 
-    dbWrite.transaction.mockRejectedValue(new Error('duplicate slug'))
+    const databaseError = Object.assign(duplicateError, {
+      code: '23505',
+      constraint
+    })
+
+    const queryError = new Error('query failed', { cause: databaseError })
+
+    dbWrite.transaction.mockRejectedValue(queryError)
     createWebSocketClientMock.mockReturnValue(dbWrite)
+
+    const errorLog = vi.spyOn(console, 'error').mockImplementation((message, details: { error: unknown; }) => {
+      expect(message).toBe('Failed to update brand')
+      expect(details.error).toBe(queryError)
+    })
 
     const event = createTestEvent({})
 
     await expect(updateBrandHandler(event)).rejects.toMatchObject({
-      message: 'Failed to update brand',
-      statusCode: 500
+      statusCode: 409,
+      statusMessage
     })
 
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
+    expect(errorLog).toHaveBeenCalledTimes(1)
   })
 
   it('should return 500 when contribution logging fails after brand update', async () => {
+    const contributionError = new Error('contribution failed')
+
     const { dbWrite } = createPatchDb({
-      contributionError: new Error('contribution failed'),
+      contributionError,
 
       updatedBrand: {
         id: 12,
@@ -378,8 +397,10 @@ describe('patch /api/equipment/brands/[id]', () => {
   })
 
   it('should return 500 when brand update fails', async () => {
+    const updateError = new Error('update failed')
+
     const { dbWrite } = createPatchDb({
-      updateError: new Error('update failed')
+      updateError
     })
 
     createWebSocketClientMock.mockReturnValue(dbWrite)
@@ -468,6 +489,37 @@ describe('delete /api/equipment/brands/[id]', () => {
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
+  it('should return 409 when equipment uses the brand', async () => {
+    const { dbWrite } = createDeleteDb({})
+    const foreignKeyError = new Error('foreign key violation')
+
+    const databaseError = Object.assign(foreignKeyError, {
+      code: '23503',
+      constraint: 'equipment_items_brandId_brands_id_fkey'
+    })
+
+    const queryError = new Error('query failed', { cause: databaseError })
+
+    dbWrite.transaction.mockRejectedValue(queryError)
+    createWebSocketClientMock.mockReturnValue(dbWrite)
+
+    const errorLog = vi.spyOn(console, 'error').mockImplementation((message, details: { error: unknown; }) => {
+      expect(message).toBe('Failed to delete brand')
+      expect(details.error).toBe(queryError)
+    })
+
+    const event = createTestEvent({})
+
+    await expect(deleteBrandHandler(event)).rejects.toMatchObject({
+      statusCode: 409,
+      statusMessage: 'Brand is used by equipment'
+    })
+
+    expect(setResponseStatusMock).not.toHaveBeenCalled()
+    expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
+    expect(errorLog).toHaveBeenCalledTimes(1)
+  })
+
   it.each([
     'msr',
     '12-msr'
@@ -489,8 +541,10 @@ describe('delete /api/equipment/brands/[id]', () => {
   })
 
   it('should return 500 when contribution logging fails after brand delete', async () => {
+    const contributionError = new Error('contribution failed')
+
     const { dbWrite } = createDeleteDb({
-      contributionError: new Error('contribution failed'),
+      contributionError,
 
       deletedBrand: {
         id: 12,
@@ -512,8 +566,10 @@ describe('delete /api/equipment/brands/[id]', () => {
   })
 
   it('should return 500 when brand delete fails', async () => {
+    const deleteError = new Error('delete failed')
+
     const { dbWrite } = createDeleteDb({
-      deleteError: new Error('delete failed')
+      deleteError
     })
 
     createWebSocketClientMock.mockReturnValue(dbWrite)

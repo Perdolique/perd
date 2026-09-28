@@ -2,6 +2,7 @@ const appRoutes = {
   account: '/account',
   accountSubmissions: '/account/submissions',
   admin: '/admin',
+  adminEquipmentBrands: '/admin/equipment/brands',
   adminEquipmentPhotoSubmissions: '/admin/equipment/photo-submissions',
   adminEquipmentSubmissions: '/admin/equipment/submissions',
   gearLibrary: '/gear-library',

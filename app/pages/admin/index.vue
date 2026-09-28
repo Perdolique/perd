@@ -2,6 +2,13 @@
   <PageContent page-title="Admin">
     <div :class="$style.component">
       <ActionPanel
+        icon="hugeicons:tag-01"
+        subtitle="Add, rename, and remove brands used by the gear catalog."
+        title="Manage brands"
+        :to="appRoutes.adminEquipmentBrands"
+      />
+
+      <ActionPanel
         icon="hugeicons:task-edit-01"
         subtitle="Check and correct pending gear before a publish decision."
         title="Review gear submissions"
