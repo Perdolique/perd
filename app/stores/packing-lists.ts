@@ -70,6 +70,8 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
   const summaryStates = reactive(new Map<string, PackingListSummaryState>())
   const entryOperations = reactive(new Map<string, PackingListEntryOperation>())
   const renamingListIds = reactive(new Set<string>())
+  const deletingListIds = reactive(new Set<string>())
+  const deletedListIds = reactive(new Set<string>())
   const confirmedNames = reactive(new Map<string, PackingListConfirmedName>())
   const hasLoaded = ref(false)
   const loading = ref(false)
@@ -241,6 +243,26 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     return renamingListIds.has(packingListId)
   }
 
+  function isPackingListDeleting(packingListId: string) {
+    return deletingListIds.has(packingListId)
+  }
+
+  function isPackingListDeleted(packingListId: string) {
+    return deletedListIds.has(packingListId)
+  }
+
+  function isPackingListMutationPending(packingListId: string) {
+    const pendingOperations = summaryStates.get(packingListId)?.pendingOperations ?? 0
+
+    return pendingOperations > 0 || deletingListIds.has(packingListId)
+  }
+
+  function assertPackingListWritable(packingListId: string) {
+    if (deletingListIds.has(packingListId) || deletedListIds.has(packingListId)) {
+      throw new Error('Packing list is being deleted or is no longer available')
+    }
+  }
+
   function isPackingListEntryOperationPending(packingListId: string, entryId: string) {
     return getEntryOperation(packingListId, entryId)?.isPending === true
   }
@@ -384,7 +406,8 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
         return
       }
 
-      const normalizedRows = fetchedRows.map((row) => normalizePackingListSummary(row))
+      const availableRows = fetchedRows.filter((row) => !deletedListIds.has(row.id))
+      const normalizedRows = availableRows.map((row) => normalizePackingListSummary(row))
 
       reconcileFetchedSummaries(normalizedRows, summarySnapshots)
 
@@ -428,6 +451,8 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
   }
 
   async function renamePackingList(packingListId: string, name: string) {
+    assertPackingListWritable(packingListId)
+
     if (renamingListIds.has(packingListId)) {
       throw new Error('Packing list rename already pending')
     }
@@ -474,8 +499,70 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     }
   }
 
+  function removeDeletedPackingList(packingListId: string) {
+    deletedListIds.add(packingListId)
+
+    serverRows.value = serverRows.value.filter((row) => row.id !== packingListId)
+
+    summaryStates.delete(packingListId)
+    confirmedNames.delete(packingListId)
+    renamingListIds.delete(packingListId)
+
+    for (const [key, operation] of entryOperations) {
+      if (operation.packingListId === packingListId) {
+        entryOperations.delete(key)
+      }
+    }
+
+    void fetchPackingLists()
+  }
+
+  async function deletePackingList(packingListId: string) {
+    assertPackingListWritable(packingListId)
+
+    if (isPackingListMutationPending(packingListId)) {
+      throw new Error('Packing list changes are still pending')
+    }
+
+    const operationGeneration = generation
+    const deletePath = `/api/user/packing-lists/${packingListId}` as const
+
+    deletingListIds.add(packingListId)
+
+    try {
+      await requestFetch(deletePath, {
+        method: 'DELETE',
+        retry: 0
+      })
+    } catch (error) {
+      if (operationGeneration !== generation) {
+        return false
+      }
+
+      const statusCode: unknown = typeof error === 'object' && error !== null
+        ? Reflect.get(error, 'statusCode') ?? Reflect.get(error, 'status')
+        : undefined
+
+      if (statusCode !== 404) {
+        throw error
+      }
+    } finally {
+      if (operationGeneration === generation) {
+        deletingListIds.delete(packingListId)
+      }
+    }
+
+    if (operationGeneration !== generation) {
+      return false
+    }
+
+    removeDeletedPackingList(packingListId)
+
+    return true
+  }
+
   function initializePackingListSummary(packingList: PackingListDetail) {
-    if (packingList.id === '') {
+    if (packingList.id === '' || deletedListIds.has(packingList.id)) {
       return
     }
 
@@ -518,6 +605,8 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
   }
 
   async function createPackingListEntry(packingListId: string, body: PackingListEntryCreateBody) {
+    assertPackingListWritable(packingListId)
+
     const operation = beginSummaryOperation(packingListId)
 
     try {
@@ -552,6 +641,8 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
       packingListId,
       previousIsPacked
     } = options
+
+    assertPackingListWritable(packingListId)
 
     const packedCountChange = Number(isPacked) - Number(previousIsPacked)
 
@@ -604,6 +695,8 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
   }
 
   async function deletePackingListEntry(packingListId: string, entryId: string, isPacked: boolean) {
+    assertPackingListWritable(packingListId)
+
     const entryOperation = beginEntryOperation({
       entryId,
       generation,
@@ -651,6 +744,8 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     summaryStates.clear()
     entryOperations.clear()
     renamingListIds.clear()
+    deletingListIds.clear()
+    deletedListIds.clear()
     confirmedNames.clear()
 
     hasLoaded.value = false
@@ -662,6 +757,7 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     clearPackingLists,
     createPackingList,
     createPackingListEntry,
+    deletePackingList,
     deletePackingListEntry,
     errorMessage,
     fetchPackingLists,
@@ -672,9 +768,12 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     initializePackingListSummary,
     isEmpty,
     isInitialLoading,
+    isPackingListDeleted,
+    isPackingListDeleting,
     isPackingListEntryOperationPending,
     isPackingListEntryRemoving,
     isPackingListEntryUpdating,
+    isPackingListMutationPending,
     isPackingListRenaming,
     loading,
     renamePackingList,

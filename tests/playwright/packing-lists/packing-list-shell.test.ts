@@ -1,4 +1,5 @@
 import type { BrowserContext, Locator, Page, Request, Response, Route } from '@playwright/test'
+import type { StoreGeneric } from 'pinia'
 import * as v from 'valibot'
 import { mockAccountUser } from '../fixtures/account-user.fixtures.ts'
 import { expect, test, waitForInitialEmailSignInTurnstile } from '../fixtures/global.fixtures.ts'
@@ -86,6 +87,12 @@ interface RenameReply {
   status?: number;
 }
 
+interface DeleteReply {
+  abort?: boolean;
+  gate?: Promise<void>;
+  status?: number;
+}
+
 interface EntryPatchRequest {
   body: unknown;
   entryId: string;
@@ -104,16 +111,22 @@ interface PackingListRouteState {
   availableGearRequests: AvailableGearRequest[];
   availableGearResponses: Map<string, AvailableGearResponse[]>;
   createRequests: number;
+  deleteReplies: DeleteReply[];
+  deleteRequests: number;
   detail: PackingListDetail;
   detailRequests: number;
   entryCreateBodies: unknown[];
+  entryCreateGate: Promise<void> | null;
   entryCreateResponses: PackingListEntryMutationResponse[];
+  entryDeleteGate: Promise<void> | null;
   entryDeleteRequests: number;
   entryPatchReplies: Map<string, EntryPatchReply[]>;
   entryPatchRequests: EntryPatchRequest[];
   getDelayMs: number;
   getGates: Promise<void>[];
   getRequests: number;
+  getStatus: number;
+  isDeleted: boolean;
   renameBodies: unknown[];
   renameReplies: RenameReply[];
   rows: PackingListSummary[];
@@ -241,16 +254,22 @@ function createPackingListRouteState(rows: PackingListSummary[]): PackingListRou
     availableGearRequests: [],
     availableGearResponses: new Map(),
     createRequests: 0,
+    deleteReplies: [],
+    deleteRequests: 0,
     detail: createPackingListDetail(detailName),
     detailRequests: 0,
     entryCreateBodies: [],
+    entryCreateGate: null,
     entryCreateResponses: [],
+    entryDeleteGate: null,
     entryDeleteRequests: 0,
     entryPatchReplies: new Map(),
     entryPatchRequests: [],
     getDelayMs: 0,
     getGates: [],
     getRequests: 0,
+    getStatus: 200,
+    isDeleted: false,
     renameBodies: [],
     renameReplies: [],
     rows
@@ -306,6 +325,11 @@ function isPackingListEntryDeleteResponse(response: Response): boolean {
   return isEntryDeletePath && isDeleteRequest
 }
 
+function isPackingListDeleteResponse(response: Response): boolean {
+  return response.request().method() === 'DELETE'
+    && response.url().endsWith(`/api/user/packing-lists/${packingListId}`)
+}
+
 function isPackingListEntryPatchResponse(response: Response): boolean {
   const responseUrl = new globalThis.URL(response.url())
   const isEntryPatchPath = responseUrl.pathname.includes(`/api/user/packing-lists/${packingListId}/entries/`)
@@ -348,6 +372,7 @@ async function fulfillPackingListCollectionRoute(route: Route, page: Page, state
     }
 
     await route.fulfill({
+      status: state.getStatus,
       json: responseRows
     })
 
@@ -414,6 +439,8 @@ async function fulfillEntryCreateRoute(route: Route, state: PackingListRouteStat
 
   state.entryCreateBodies.push(body)
 
+  await state.entryCreateGate
+
   if (response === undefined) {
     await route.fulfill({
       status: 500,
@@ -451,6 +478,8 @@ async function fulfillEntryDeleteRoute(route: Route, state: PackingListRouteStat
   const entryExists = state.detail.entries.some((entry) => entry.id === entryId)
 
   state.entryDeleteRequests += 1
+
+  await state.entryDeleteGate
 
   if (entryExists === false) {
     await route.fulfill({
@@ -580,6 +609,32 @@ async function fulfillRenameRoute(route: Route, state: PackingListRouteState): P
   })
 }
 
+async function fulfillDeleteRoute(route: Route, state: PackingListRouteState): Promise<void> {
+  const reply = state.deleteReplies.shift()
+  const status = reply?.status ?? 204
+
+  state.deleteRequests += 1
+
+  await reply?.gate
+
+  if (reply?.abort === true) {
+    await route.abort('failed')
+
+    return
+  }
+
+  if (status === 204 || status === 404) {
+    state.isDeleted = true
+    state.rows = state.rows.filter((row) => row.id !== state.detail.id)
+  }
+
+  await route.fulfill({
+    status,
+    body: status === 204 ? '' : JSON.stringify({ message: 'Private database failure' }),
+    contentType: 'application/json'
+  })
+}
+
 async function mockPackingListRoutes(context: BrowserContext, page: Page, state: PackingListRouteState): Promise<void> {
   await context.route('**/api/user/packing-lists**', async (route) => {
     const requestUrl = new globalThis.URL(route.request().url())
@@ -594,6 +649,12 @@ async function mockPackingListRoutes(context: BrowserContext, page: Page, state:
 
     if (requestUrl.pathname === detailPath && requestMethod === 'PATCH') {
       await fulfillRenameRoute(route, state)
+
+      return
+    }
+
+    if (requestUrl.pathname === detailPath && requestMethod === 'DELETE') {
+      await fulfillDeleteRoute(route, state)
 
       return
     }
@@ -629,6 +690,15 @@ async function mockPackingListRoutes(context: BrowserContext, page: Page, state:
     }
 
     state.detailRequests += 1
+
+    if (state.isDeleted) {
+      await route.fulfill({
+        status: 404,
+        json: { statusCode: 404 }
+      })
+
+      return
+    }
 
     await route.fulfill({
       json: state.detail
@@ -734,7 +804,777 @@ async function captureRenameFailure(page: Page) {
   })
 }
 
+async function captureDeleteFailure(page: Page) {
+  await page.evaluate(() => {
+    const originalError = globalThis.console.error
+
+    // Keep the raw deletion error observable without suppressing other diagnostics.
+    globalThis.console.error = (...args: unknown[]) => {
+      const [message, error] = args
+
+      if (args.length === 2 && message === 'Failed to delete packing list:' && error instanceof Error) {
+        const data: unknown = Reflect.get(error, 'data')
+
+        Reflect.set(globalThis, 'deleteFailure', {
+          data,
+          message: error.message,
+          name: error.name,
+          stack: error.stack
+        })
+
+        return
+      }
+
+      originalError(...args)
+    }
+  })
+}
+
+async function observeListDeletionCompletion(page: Page) {
+  const completion = createDeferred()
+
+  await page.exposeFunction('onListDeletionFinished', completion.resolve)
+
+  await page.evaluate(() => {
+    // oxlint-disable-next-line unicorn/consistent-function-scoping -- page.evaluate callbacks must be self-contained.
+    function getRequiredProperty(value: unknown, key: string): unknown {
+      if (typeof value !== 'object' || value === null) {
+        throw new Error(`Expected an object containing ${key}`)
+      }
+
+      return Reflect.get(value, key)
+    }
+
+    const root = globalThis.document.querySelector('#__nuxt')
+    const app = getRequiredProperty(root, '__vue_app__')
+    const config = getRequiredProperty(app, 'config')
+    const globals = getRequiredProperty(config, 'globalProperties')
+    const pinia = getRequiredProperty(globals, '$pinia')
+    const stores = getRequiredProperty(pinia, '_s')
+
+    if (!(stores instanceof Map)) {
+      throw new Error('Expected the Pinia store registry')
+    }
+
+    const store: unknown = stores.get('packing-lists')
+    const subscribe = getRequiredProperty(store, '$onAction')
+    const notify: unknown = Reflect.get(globalThis, 'onListDeletionFinished')
+
+    if (typeof subscribe !== 'function' || typeof notify !== 'function') {
+      throw new TypeError('Expected a store action subscription and completion callback')
+    }
+
+    const onAction: Parameters<StoreGeneric['$onAction']>[0] = ({ name, after, onError }) => {
+      if (name === 'deletePackingList') {
+        const finish = () => { Reflect.apply(notify, globalThis, []) }
+
+        after(finish)
+        onError(finish)
+      }
+    }
+
+    // Observe the real action across route unmounts and session resets.
+    Reflect.apply(subscribe, store, [onAction, true])
+  })
+
+  return completion
+}
+
 test.describe('Packing list shell', () => {
+  for (const dismissal of [{
+    name: 'Cancel',
+    dismiss: async (page: Page) => { await page.keyboard.press('Enter') }
+  }, {
+    name: 'Escape',
+    dismiss: async (page: Page) => { await page.keyboard.press('Escape') }
+  }, {
+    name: 'backdrop',
+    dismiss: async (page: Page) => { await page.mouse.click(5, 5) }
+  }]) {
+    test(`should cancel list deletion by ${dismissal.name} and restore focus`, async ({ context, page }) => {
+      const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
+      const dialog = page.getByRole('dialog', { name: 'Delete packing list' })
+
+      const opener = page.getByRole('button', {
+        name: 'Delete',
+        exact: true
+      })
+
+      await mockAuth(context)
+      await mockPackingListRoutes(context, page, state)
+      await openPackingLists(page)
+      await page.getByRole('link', { name: /Alpine weekend/iu }).click()
+      await opener.focus()
+      await opener.press('Enter')
+      await expect(dialog).toContainText('Delete “Alpine weekend” and all its list items?')
+      await expect(dialog).toContainText('Items in My gear and the gear library will stay. This cannot be undone.')
+      await expect(dialog.getByRole('button', { name: 'Cancel' })).toBeFocused()
+      await dismissal.dismiss(page)
+      await expect(dialog).toHaveCount(0)
+      await expect(opener).toBeFocused()
+
+      await expect(page.getByRole('heading', {
+        name: 'Alpine weekend',
+        exact: true
+      })).toBeVisible()
+
+      expect(state.deleteRequests).toBe(0)
+    })
+  }
+
+  for (const scenario of [{
+    name: 'an empty',
+    entries: []
+  }, {
+    name: 'a filled',
+    entries: createPackingListEntries()
+  }]) {
+    test(`should delete ${scenario.name} list and keep other lists through navigation`, async ({ context, page }) => {
+      const otherList = createPackingListSummary('Winter kit', { id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477b1' })
+      const state = createPackingListRouteState([createPackingListSummary('Alpine weekend'), otherList])
+
+      state.detail = createPackingListDetail('Alpine weekend', scenario.entries)
+
+      syncPackingListSummary(state)
+      await mockAuth(context)
+      await mockPackingListRoutes(context, page, state)
+      await openPackingLists(page)
+      await page.getByRole('link', { name: /Alpine weekend/iu }).click()
+
+      await page.getByRole('button', {
+        name: 'Delete',
+        exact: true
+      }).click()
+
+      await page.getByRole('button', {
+        name: 'Delete list',
+        exact: true
+      }).click()
+
+      await expect(page).toHaveURL(/\/packing-lists$/u)
+
+      await expect(page.getByRole('heading', {
+        name: 'Packing lists',
+        exact: true
+      })).toBeFocused()
+
+      await expect(page.getByRole('link', { name: /Alpine weekend/iu })).toHaveCount(0)
+      await expect(page.getByRole('link', { name: /Winter kit/iu })).toBeVisible()
+      expect(state.deleteRequests).toBe(1)
+      expect(state.entryDeleteRequests).toBe(0)
+      await page.goBack()
+      await expect(page).toHaveURL(/\/packing-lists$/u)
+      await page.goto(`/packing-lists/${packingListId}`)
+      await waitForInitialEmailSignInTurnstile(page)
+      await page.getByRole('button', { name: /Continue as guest/iu }).click()
+      await expect(page.getByRole('heading', { name: 'Packing list not found.' })).toBeVisible()
+
+      await expect(page.getByRole('button', {
+        name: 'Delete',
+        exact: true
+      })).toHaveCount(0)
+
+      await expect(page.getByRole('button', {
+        name: 'Rename',
+        exact: true
+      })).toHaveCount(0)
+
+      await expect(page.getByRole('button', {
+        name: 'Retry',
+        exact: true
+      })).toHaveCount(0)
+
+      await page.reload()
+      await waitForInitialEmailSignInTurnstile(page)
+      await page.getByRole('button', { name: /Continue as guest/iu }).click()
+      await expect(page.getByRole('heading', { name: 'Packing list not found.' })).toBeVisible()
+      await page.getByRole('link', { name: 'Back to packing lists' }).click()
+      await expect(page.getByRole('link', { name: /Winter kit/iu })).toBeVisible()
+      await expect(page.getByRole('link', { name: /Alpine weekend/iu })).toHaveCount(0)
+    })
+  }
+
+  for (const scenario of [{
+    name: 'server',
+    abort: false,
+
+    expectedFailure: {
+      data: { message: 'Private database failure' },
+      message: expect.stringContaining('500')
+    }
+  }, {
+    name: 'network',
+    abort: true,
+    expectedFailure: { message: expect.stringContaining('fetch') }
+  }]) {
+    test(`should keep a failed list deletion retryable after a ${scenario.name} failure`, async ({ context, page }) => {
+      const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
+      const gate = createDeferred()
+      const dialog = page.getByRole('dialog', { name: 'Delete packing list' })
+
+      const confirm = dialog.getByRole('button', {
+        name: 'Delete list',
+        exact: true
+      })
+
+      state.deleteReplies.push({
+        abort: scenario.abort,
+        gate: gate.promise,
+        status: 500
+      })
+
+      await mockAuth(context)
+      await mockPackingListRoutes(context, page, state)
+      await openPackingLists(page)
+      await page.getByRole('link', { name: /Alpine weekend/iu }).click()
+      await captureDeleteFailure(page)
+
+      await page.getByRole('button', {
+        name: 'Delete',
+        exact: true
+      }).click()
+
+      try {
+        await confirm.focus()
+        await confirm.press('Enter')
+        await expect.poll(() => state.deleteRequests).toBe(1)
+        await expect(confirm).toBeDisabled()
+        await expect(confirm).toHaveAttribute('aria-busy', 'true')
+        await expect(dialog.getByRole('button', { name: 'Cancel' })).toBeDisabled()
+        await page.keyboard.press('Enter')
+        await page.keyboard.press('Escape')
+        await page.mouse.click(5, 5)
+        await expect(dialog).toBeVisible()
+        expect(state.deleteRequests).toBe(1)
+        gate.resolve()
+        await expect(dialog.getByRole('alert')).toHaveText('Could not delete the list. Try again.')
+        await expect(confirm).toBeEnabled()
+        await expect(dialog).not.toContainText('Private database failure')
+
+        await expect(page.getByRole('heading', {
+          name: 'Alpine weekend',
+          exact: true
+        })).toBeVisible()
+
+        expect(state.deleteRequests).toBe(1)
+
+        const failure: unknown = await page.evaluate(() => {
+          const recordedFailure: unknown = Reflect.get(globalThis, 'deleteFailure')
+
+          return recordedFailure
+        })
+
+        expect(failure).toMatchObject({
+          name: 'FetchError',
+          stack: expect.stringContaining('FetchError')
+        })
+
+        expect(failure).toMatchObject(scenario.expectedFailure)
+        await confirm.focus()
+        await confirm.press('Enter')
+        await expect(page).toHaveURL(/\/packing-lists$/u)
+        await expect(page.getByRole('heading', { name: 'No packing lists yet.' })).toBeVisible()
+        expect(state.deleteRequests).toBe(2)
+      } finally {
+        gate.resolve()
+      }
+    })
+  }
+
+  test('should finish list deletion when the list is already missing and the overview refresh fails', async ({ context, page }) => {
+    const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
+
+    state.deleteReplies.push({ status: 404 })
+    await mockAuth(context)
+    await mockPackingListRoutes(context, page, state)
+    await openPackingLists(page)
+    await page.getByRole('link', { name: /Alpine weekend/iu }).click()
+
+    state.getStatus = 500
+
+    await page.getByRole('button', {
+      name: 'Delete',
+      exact: true
+    }).click()
+
+    await page.getByRole('button', {
+      name: 'Delete list',
+      exact: true
+    }).click()
+
+    await expect(page).toHaveURL(/\/packing-lists$/u)
+    await expect(page.getByRole('heading', { name: 'No packing lists yet.' })).toBeVisible()
+    await expect(page.getByText('Could not delete the list. Try again.')).toHaveCount(0)
+    expect(state.deleteRequests).toBe(1)
+  })
+
+  test('should abort an obsolete overview request after list deletion and remove the cached card immediately', async ({ context, page }) => {
+    const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
+    const staleGate = createDeferred()
+    const refreshGate = createDeferred()
+    const sidebar = page.getByTestId('shell-sidebar')
+
+    await mockAuth(context)
+    await mockPackingListRoutes(context, page, state)
+    await openPackingLists(page)
+    await expect(page.getByRole('link', { name: /Alpine weekend/iu })).toBeVisible()
+
+    try {
+      state.getGates.push(staleGate.promise, refreshGate.promise, refreshGate.promise)
+
+      await sidebar.getByRole('link', {
+        name: 'Home',
+        exact: true
+      }).click()
+
+      await sidebar.getByRole('link', {
+        name: 'Packing lists',
+        exact: true
+      }).click()
+
+      await expect.poll(() => state.getRequests).toBe(2)
+      await page.getByRole('link', { name: /Alpine weekend/iu }).click()
+
+      const failedRequestPromise = page.waitForEvent('requestfailed', isPackingListCollectionGetRequest)
+
+      await page.getByRole('button', {
+        name: 'Delete',
+        exact: true
+      }).click()
+
+      await page.getByRole('button', {
+        name: 'Delete list',
+        exact: true
+      }).click()
+
+      const failedRequest = await failedRequestPromise
+
+      expect(failedRequest.failure()?.errorText).toMatch(/ERR_ABORTED/u)
+      await expect(page).toHaveURL(/\/packing-lists$/u)
+      await expect(page.getByRole('link', { name: /Alpine weekend/iu })).toHaveCount(0)
+      await expect(page.getByRole('heading', { name: 'No packing lists yet.' })).toBeVisible()
+      staleGate.resolve()
+      refreshGate.resolve()
+      await expect.poll(() => state.getRequests).toBeGreaterThanOrEqual(3)
+      await expect(page.getByRole('link', { name: /Alpine weekend/iu })).toHaveCount(0)
+    } finally {
+      staleGate.resolve()
+      refreshGate.resolve()
+    }
+  })
+
+  test('should keep list deletion locked after leaving and reopening its page', async ({ context, page }) => {
+    const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
+    const gate = createDeferred()
+
+    state.detail = createPackingListDetail('Alpine weekend', createPackingListEntries())
+
+    state.deleteReplies.push({ gate: gate.promise })
+    syncPackingListSummary(state)
+    await mockAuth(context)
+    await mockPackingListRoutes(context, page, state)
+    await openPackingLists(page)
+    await page.getByRole('link', { name: /Alpine weekend/iu }).click()
+
+    try {
+      await page.getByRole('button', {
+        name: 'Delete',
+        exact: true
+      }).click()
+
+      await page.getByRole('button', {
+        name: 'Delete list',
+        exact: true
+      }).click()
+
+      await expect.poll(() => state.deleteRequests).toBe(1)
+      await page.goBack()
+      await expect(page.getByRole('link', { name: /Alpine weekend/iu })).toBeVisible()
+      await page.getByRole('link', { name: /Alpine weekend/iu }).click()
+
+      await expect(page.getByRole('button', {
+        name: 'Delete',
+        exact: true
+      })).toBeDisabled()
+
+      await expect(page.getByRole('button', {
+        name: 'Delete',
+        exact: true
+      })).toHaveAttribute('aria-busy', 'true')
+
+      await expect(page.getByRole('button', {
+        name: 'Rename',
+        exact: true
+      })).toBeDisabled()
+
+      const checklist = page.locator('[inert]').filter({ has: page.locator('input[type="checkbox"]') })
+
+      await expect(checklist).toHaveCount(1)
+      await expect(checklist).toHaveAttribute('aria-busy', 'true')
+
+      const checkbox = checklist.locator('input[type="checkbox"]').first()
+      const checkboxBox = await getElementBox(checkbox)
+
+      await page.mouse.click(checkboxBox.x + checkboxBox.width / 2, checkboxBox.y + checkboxBox.height / 2)
+      await expect(checkbox).not.toBeChecked()
+      gate.resolve()
+      await expect(page.getByRole('heading', { name: 'Packing list not found.' })).toBeVisible()
+      await expect(page).toHaveURL(new RegExp(`/packing-lists/${packingListId}$`, 'u'))
+      expect(state.deleteRequests).toBe(1)
+      expect(state.entryPatchRequests).toHaveLength(0)
+      expect(state.entryCreateBodies).toHaveLength(0)
+      expect(state.entryDeleteRequests).toBe(0)
+    } finally {
+      gate.resolve()
+    }
+  })
+
+  test('should disable list deletion until a pending packed change finishes', async ({ context, page }) => {
+    const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
+    const [customEntry, inventoryEntry] = createPackingListEntries()
+    const gate = createDeferred()
+
+    state.detail = createPackingListDetail('Alpine weekend', [customEntry, inventoryEntry])
+
+    state.entryPatchReplies.set(customEntry.id, [{ gate: gate.promise }])
+    syncPackingListSummary(state)
+    await mockAuth(context)
+    await mockPackingListRoutes(context, page, state)
+    await openPackingLists(page)
+    await page.getByRole('link', { name: /Alpine weekend/iu }).click()
+
+    try {
+      await page.getByRole('checkbox', { name: 'Rain jacket' }).click()
+      await expect.poll(() => state.entryPatchRequests.length).toBe(1)
+
+      await expect(page.getByRole('button', {
+        name: 'Delete',
+        exact: true
+      })).toBeDisabled()
+
+      await page.goBack()
+      await page.getByRole('link', { name: /Alpine weekend/iu }).click()
+
+      await expect(page.getByRole('button', {
+        name: 'Delete',
+        exact: true
+      })).toBeDisabled()
+
+      gate.resolve()
+
+      await expect(page.getByRole('button', {
+        name: 'Delete',
+        exact: true
+      })).toBeEnabled()
+
+      expect(state.deleteRequests).toBe(0)
+    } finally {
+      gate.resolve()
+    }
+  })
+
+  test('should disable list deletion while adding and removing an entry', async ({ context, page }) => {
+    const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
+    const createGate = createDeferred()
+    const removeGate = createDeferred()
+    const item = createAvailableGearItem(pocketRocketInventoryId, 'PocketRocket Deluxe')
+    const availableGearKey = createAvailableGearKey('', 1)
+
+    state.entryCreateGate = createGate.promise
+    state.entryDeleteGate = removeGate.promise
+
+    state.availableGearResponses.set(availableGearKey, [{
+      items: [item],
+      nextPage: null
+    }])
+
+    state.entryCreateResponses.push(createInventoryEntryMutation(
+      pocketRocketInventoryId,
+      'PocketRocket Deluxe',
+      '0195f6e8-8f44-74f6-bc9a-5c8f7df477e2'
+    ))
+
+    await mockAuth(context)
+    await mockPackingListRoutes(context, page, state)
+    await openPackingLists(page)
+    await page.getByRole('link', { name: /Alpine weekend/iu }).click()
+
+    try {
+      await page.getByRole('button', { name: /PocketRocket Deluxe/iu }).click()
+      await expect.poll(() => state.entryCreateBodies.length).toBe(1)
+
+      await expect(page.getByRole('button', {
+        name: 'Delete',
+        exact: true
+      })).toBeDisabled()
+
+      createGate.resolve()
+
+      await expect(page.getByRole('button', {
+        name: 'Delete',
+        exact: true
+      })).toBeEnabled()
+
+      await page.getByRole('button', {
+        name: 'Remove PocketRocket Deluxe',
+        exact: true
+      }).click()
+
+      await expect.poll(() => state.entryDeleteRequests).toBe(1)
+
+      await expect(page.getByRole('button', {
+        name: 'Delete',
+        exact: true
+      })).toBeDisabled()
+
+      removeGate.resolve()
+
+      await expect(page.getByRole('button', {
+        name: 'Delete',
+        exact: true
+      })).toBeEnabled()
+
+      expect(state.deleteRequests).toBe(0)
+    } finally {
+      createGate.resolve()
+      removeGate.resolve()
+    }
+  })
+
+  for (const status of [204, 500]) {
+    test(`should ignore list deletion with status ${status} after a session reset`, async ({ context, page }) => {
+      const state = createPackingListRouteState([createPackingListSummary('Old session trail')])
+      const nextState = createPackingListRouteState([createPackingListSummary('New session trail')])
+      const gate = createDeferred()
+
+      state.deleteReplies.push({
+        gate: gate.promise,
+        status
+      })
+
+      await mockAuth(context)
+      await mockAccountUser(context, guestUser)
+      await mockLogout(context)
+      await mockPackingListRoutes(context, page, state)
+      await openPackingLists(page)
+      await page.getByRole('link', { name: /Old session trail/iu }).click()
+
+      const deletionCompletion = await observeListDeletionCompletion(page)
+
+      try {
+        await page.getByRole('button', {
+          name: 'Delete',
+          exact: true
+        }).click()
+
+        await page.getByRole('button', {
+          name: 'Delete list',
+          exact: true
+        }).click()
+
+        await expect.poll(() => state.deleteRequests).toBe(1)
+        await page.goBack()
+        await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Profile' }).click()
+        await page.getByRole('button', { name: 'Log out' }).click()
+        await expect(page).toHaveURL(/\/login$/u)
+        await mockPackingListRoutes(context, page, nextState)
+        await page.getByRole('button', { name: 'Guest' }).click()
+        await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Packing lists' }).click()
+        await page.getByRole('link', { name: /New session trail/iu }).click()
+
+        await expect(page.getByRole('button', {
+          name: 'Delete',
+          exact: true
+        })).toBeEnabled()
+
+        const oldDeletionResponse = page.waitForResponse(isPackingListDeleteResponse)
+
+        gate.resolve()
+
+        await oldDeletionResponse
+        await deletionCompletion.promise
+
+        await expect(page.getByRole('heading', {
+          name: 'New session trail',
+          exact: true
+        })).toBeVisible()
+
+        await expect(page.getByRole('button', {
+          name: 'Delete',
+          exact: true
+        })).toBeEnabled()
+
+        await expect(page).toHaveURL(new RegExp(`/packing-lists/${packingListId}$`, 'u'))
+        expect(nextState.deleteRequests).toBe(0)
+      } finally {
+        gate.resolve()
+      }
+    })
+  }
+
+  test('should clear remembered list deletions when the session changes', async ({ context, page }) => {
+    const state = createPackingListRouteState([createPackingListSummary('Old session trail')])
+    const nextState = createPackingListRouteState([createPackingListSummary('New session trail')])
+
+    await mockAuth(context)
+    await mockAccountUser(context, guestUser)
+    await mockLogout(context)
+    await mockPackingListRoutes(context, page, state)
+    await openPackingLists(page)
+    await page.getByRole('link', { name: /Old session trail/iu }).click()
+
+    await page.getByRole('button', {
+      name: 'Delete',
+      exact: true
+    }).click()
+
+    await page.getByRole('button', {
+      name: 'Delete list',
+      exact: true
+    }).click()
+
+    await expect(page).toHaveURL(/\/packing-lists$/u)
+    await expect(page.getByRole('heading', { name: 'No packing lists yet.' })).toBeVisible()
+    await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Profile' }).click()
+    await page.getByRole('button', { name: 'Log out' }).click()
+    await expect(page).toHaveURL(/\/login$/u)
+    await mockPackingListRoutes(context, page, nextState)
+    await page.getByRole('button', { name: 'Guest' }).click()
+    await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Packing lists' }).click()
+    await page.getByRole('link', { name: /New session trail/iu }).click()
+
+    await expect(page.getByRole('heading', {
+      name: 'New session trail',
+      exact: true
+    })).toBeVisible()
+
+    await expect(page.getByRole('button', {
+      name: 'Delete',
+      exact: true
+    })).toBeEnabled()
+  })
+
+  test('should keep list deletion readable and usable with a long name on mobile', async ({ context, page }) => {
+    const longName = 'A'.repeat(128)
+    const state = createPackingListRouteState([createPackingListSummary(longName)])
+    const dialog = page.getByRole('dialog', { name: 'Delete packing list' })
+    const gate = createDeferred()
+
+    const confirm = dialog.getByRole('button', {
+      name: 'Delete list',
+      exact: true
+    })
+
+    const cancel = dialog.getByRole('button', { name: 'Cancel' })
+
+    state.deleteReplies.push({ gate: gate.promise })
+
+    await page.setViewportSize({
+      width: 320,
+      height: 740
+    })
+
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await mockAuth(context)
+    await mockPackingListRoutes(context, page, state)
+    await page.goto(`/login?redirectTo=/packing-lists/${packingListId}`)
+    await waitForInitialEmailSignInTurnstile(page)
+    await page.getByRole('button', { name: /Continue as guest/iu }).click()
+
+    const opener = page.getByRole('button', {
+      name: 'Delete',
+      exact: true
+    })
+
+    const openerBox = await getElementBox(opener)
+
+    expect(openerBox.x + openerBox.width).toBeLessThanOrEqual(320)
+    await opener.focus()
+    await opener.press('Enter')
+    await expect(cancel).toBeFocused()
+    await expect(dialog).toContainText(longName)
+
+    const description = dialog.getByText(`Delete “${longName}” and all its list items?`, { exact: false })
+
+    const textGeometry = await description.evaluate((element) => {
+      const range = globalThis.document.createRange()
+
+      range.selectNodeContents(element)
+
+      const bounds = element.getBoundingClientRect()
+
+      const lines = Array.from(range.getClientRects(), (rect) => {
+        return {
+          bottom: rect.bottom,
+          left: rect.left,
+          right: rect.right,
+          top: rect.top
+        }
+      })
+
+      return {
+        bounds: {
+          bottom: bounds.bottom,
+          left: bounds.left,
+          right: bounds.right,
+          top: bounds.top
+        },
+
+        lines
+      }
+    })
+
+    expect(textGeometry.lines.length).toBeGreaterThan(1)
+
+    for (const line of textGeometry.lines) {
+      expect(line.left).toBeGreaterThanOrEqual(textGeometry.bounds.left)
+      expect(line.right).toBeLessThanOrEqual(textGeometry.bounds.right)
+      expect(line.top).toBeGreaterThanOrEqual(textGeometry.bounds.top)
+      expect(line.bottom).toBeLessThanOrEqual(textGeometry.bounds.bottom)
+      expect(line.left).toBeGreaterThanOrEqual(0)
+      expect(line.right).toBeLessThanOrEqual(320)
+      expect(line.top).toBeGreaterThanOrEqual(0)
+      expect(line.bottom).toBeLessThanOrEqual(740)
+    }
+
+    const controlBoxes = []
+
+    for (const control of [dialog, confirm, cancel]) {
+      controlBoxes.push(getElementBox(control))
+    }
+
+    const boxes = await Promise.all(controlBoxes)
+
+    for (const box of boxes) {
+      expect(box.x).toBeGreaterThanOrEqual(0)
+      expect(box.x + box.width).toBeLessThanOrEqual(320)
+    }
+
+    try {
+      const confirmBox = await getElementBox(confirm)
+
+      await page.keyboard.press('Tab')
+      await expect(confirm).toBeFocused()
+      await page.keyboard.press('Enter')
+      await expect(confirm).toBeDisabled()
+      await expect(confirm).toHaveAccessibleName('Delete list')
+
+      const pendingBox = await getElementBox(confirm)
+
+      expect(pendingBox).toStrictEqual(confirmBox)
+      gate.resolve()
+      await expect(page).toHaveURL(/\/packing-lists$/u)
+      await expect(page.getByRole('heading', { name: 'No packing lists yet.' })).toBeVisible()
+
+      await expect(page.getByRole('heading', {
+        name: 'Packing lists',
+        exact: true
+      })).toBeFocused()
+    } finally {
+      gate.resolve()
+    }
+  })
+
   test('should rename a list and preserve its entries through navigation and reload', async ({ context, page }) => {
     const entries = createPackingListEntries()
     const summary = createPackingListSummary('Alpine weekend')
@@ -1091,6 +1931,11 @@ test.describe('Packing list shell', () => {
 
         await expect(page.getByRole('button', {
           name: 'Rename',
+          exact: true
+        })).toBeDisabled()
+
+        await expect(page.getByRole('button', {
+          name: 'Delete',
           exact: true
         })).toBeDisabled()
       })
