@@ -1,16 +1,19 @@
 <template>
   <PageContent :class="$style.component" :page-title="pageTitle">
-    <template v-if="canRenamePackingList" #actions>
-      <PerdButton
-        variant="secondary"
-        size="small"
-        icon="hugeicons:pencil-edit-02"
-        aria-haspopup="dialog"
-        :disabled="isRenaming"
-        @click="openRenameDialog"
-      >
-        Rename
-      </PerdButton>
+    <template v-if="hasPackingListData" #actions>
+      <PackingListRenameAction
+        :available="canManagePackingList"
+        :packing-list-id="packingListId"
+        :name="packingListView.name"
+        @renamed="handleRenamed"
+      />
+
+      <PackingListDeleteAction
+        :available="canManagePackingList"
+        :packing-list-id="packingListId"
+        :name="packingListView.name"
+        @deleted="handleDeleted"
+      />
     </template>
 
     <div :class="$style.body">
@@ -18,6 +21,16 @@
         v-if="isPackingListLoading"
         title="Loading packing list"
       />
+
+      <PagePlaceholder v-else-if="isPackingListNotFound" emoji="🎒" title="Packing list not found.">
+        This packing list is no longer available.
+
+        <template #actions>
+          <PerdButton variant="secondary" :to="appRoutes.packingLists">
+            Back to packing lists
+          </PerdButton>
+        </template>
+      </PagePlaceholder>
 
       <PagePlaceholder v-else-if="hasPackingListError" emoji="🎒" title="Packing list unavailable.">
         Try again.
@@ -29,7 +42,7 @@
         </template>
       </PagePlaceholder>
 
-      <div v-else :class="$style.content">
+      <div v-else :class="$style.content" :inert="isDeleting" :aria-busy="isDeleting">
         <p
           :class="[$style.progress, { isEmpty: isPackingListEmpty }]"
           role="status"
@@ -66,39 +79,12 @@
         </p>
       </div>
     </div>
-
-    <ConfirmationDialog
-      v-model="isRenameDialogVisible"
-      header-text="Rename packing list"
-      confirm-button-text="Save name"
-      :close-on-confirm="false"
-      :confirm-disabled="isRenameDisabled"
-      :confirm-loading="isRenaming"
-      :error="renameErrorMessage"
-      @confirm="handleRename"
-    >
-      <form novalidate @submit.prevent="handleRename">
-        <TextInput
-          ref="renameInput"
-          v-model="editedName"
-          name="packing-list-name"
-          label="List name"
-          :disabled="isRenaming"
-          :error="nameErrorMessage"
-          required
-        />
-      </form>
-    </ConfirmationDialog>
-
-    <p :class="$style.announcement" aria-live="polite" aria-atomic="true">{{ renameAnnouncement }}</p>
   </PageContent>
 </template>
 
 <script lang="ts" setup>
-  import { computed, nextTick, onBeforeUnmount, reactive, ref, useTemplateRef } from 'vue'
-  import * as v from 'valibot'
-  import { definePageMeta, useFetch, useRoute } from '#imports'
-  import { limits } from '#shared/constants'
+  import { computed, nextTick, reactive, ref, useTemplateRef } from 'vue'
+  import { definePageMeta, navigateTo, useFetch, useRoute } from '#imports'
 
   import type {
     PackingListDetail,
@@ -107,14 +93,15 @@
     PackingListInventoryEntry
   } from '~/types/packing'
 
-  import { formatPackingProgress } from '~/utils/packing'
+  import { formatPackingProgress, latestPackingListUpdatedAt } from '~/utils/packing'
+  import { appRoutes } from '~/utils/navigation'
   import { usePackingListsStore } from '~/stores/packing-lists'
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PerdButton from '~/components/PerdButton.vue'
-  import TextInput from '~/components/TextInput.vue'
-  import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue'
   import PageContent from '~/components/layout/PageContent.vue'
+  import PackingListDeleteAction from '~/components/packing-lists/PackingListDeleteAction.vue'
+  import PackingListRenameAction from '~/components/packing-lists/PackingListRenameAction.vue'
   import PackingListEntryComposer from '~/components/packing-lists/PackingListEntryComposer.vue'
   import PackingListEntryCard from '~/components/packing-lists/PackingListEntryCard.vue'
 
@@ -128,21 +115,6 @@
   const entryRemoveErrorMessage = ref<string | null>(null)
   const lastPackingEntryId = ref<string | null>(null)
   const packErrorEntryIds = reactive(new Set<string>())
-  const renameInput = useTemplateRef('renameInput')
-  const editedName = ref('')
-  const isRenameDialogVisible = ref(false)
-  const nameErrorMessage = ref<string>()
-  const renameErrorMessage = ref<string | null>(null)
-  const renameAnnouncement = ref('')
-  let isPageActive = true
-  const nameLengthMessage = `Use ${limits.maxPackingListNameLength} characters or fewer.`
-
-  const nameSchema = v.pipe(
-    v.string(),
-    v.trim(),
-    v.nonEmpty('Enter a list name.'),
-    v.maxLength(limits.maxPackingListNameLength, nameLengthMessage)
-  )
 
   const packingListId = Array.isArray(route.params.id)
     ? route.params.id[0] ?? ''
@@ -173,28 +145,36 @@
 
   const packingListView = computed(() => packingListsStore.getPackingListDetailView(packingListResponse.value))
   const hasPackingListError = computed(() => packingListError.value !== undefined)
+
+  const isPackingListNotFound = computed(() => packingListError.value?.statusCode === 404
+    || packingListsStore.isPackingListDeleted(packingListId))
+
   const hasEntryRemoveError = computed(() => entryRemoveErrorMessage.value !== null)
   const isPackingListLoading = computed(() => packingListStatus.value === 'pending')
   const isComposerInitiallyOpen = packingListView.value.entries.length === 0
-  const pageTitle = computed(() => packingListView.value.name === '' ? 'Packing list' : packingListView.value.name)
+
+  const pageTitle = computed(() => isPackingListNotFound.value || packingListView.value.name === ''
+    ? 'Packing list'
+    : packingListView.value.name)
+
   const entryCount = computed(() => packingListView.value.entries.length)
   const packedCount = computed(() => packingListView.value.entries.filter((entry) => entry.isPacked).length)
   const isPackingListEmpty = computed(() => entryCount.value === 0)
   const packingProgressText = computed(() => formatPackingProgress(packedCount.value, entryCount.value))
-  const isRenaming = computed(() => packingListsStore.isPackingListRenaming(packingListId))
-  const canRenamePackingList = computed(() => !hasPackingListError.value && !isPackingListLoading.value && packingListView.value.id !== '')
-  const isRenameDisabled = computed(() => isRenaming.value || editedName.value.trim() === packingListView.value.name)
+  const isDeleting = computed(() => packingListsStore.isPackingListDeleting(packingListId))
+
+  // Keep actions mounted until they report deletion, even after the list becomes unavailable.
+  const hasPackingListData = computed(() => packingListResponse.value.id !== '')
+
+  const canManagePackingList = computed(() => !hasPackingListError.value
+    && !isPackingListNotFound.value
+    && !isPackingListLoading.value
+    && hasPackingListData.value)
 
   function isRemovingAnotherEntry(entryId: string) {
     const removingEntryId = packingListsStore.getRemovingPackingListEntryId(packingListId)
 
     return removingEntryId !== null && removingEntryId !== entryId
-  }
-
-  function latestUpdatedAt(current: string, incoming: Date | string) {
-    const next = String(incoming)
-
-    return current === '' || Date.parse(next) > Date.parse(current) ? next : current
   }
 
   function createCustomEntryView(entry: PackingListEntry): PackingListEntryView {
@@ -243,71 +223,23 @@
 
   const entryViews = computed(() => packingListView.value.entries.map(createPackingListEntryView))
 
-  onBeforeUnmount(() => {
-    isPageActive = false
-  })
-
-  async function openRenameDialog() {
-    editedName.value = packingListView.value.name
-    nameErrorMessage.value = undefined
-    renameErrorMessage.value = null
-    renameAnnouncement.value = ''
-    isRenameDialogVisible.value = true
-
+  async function handleDeleted() {
+    await navigateTo(appRoutes.packingLists, { replace: true })
     await nextTick()
-    renameInput.value?.focus()
+
+    const heading = globalThis.document.querySelector('h1')
+
+    heading?.setAttribute('tabindex', '-1')
+    heading?.focus()
   }
 
-  async function handleRename() {
-    if (isRenameDisabled.value) {
-      return
-    }
+  function handleRenamed(name: string, savedUpdatedAt: string) {
+    const updatedAt = latestPackingListUpdatedAt(packingListResponse.value.updatedAt, savedUpdatedAt)
 
-    const result = v.safeParse(nameSchema, editedName.value)
-
-    nameErrorMessage.value = undefined
-    renameErrorMessage.value = null
-
-    if (!result.success) {
-      nameErrorMessage.value = result.issues[0].message
-
-      await nextTick()
-      renameInput.value?.focus()
-
-      return
-    }
-
-    try {
-      const saved = await packingListsStore.renamePackingList(packingListId, result.output)
-
-      if (!isPageActive) {
-        return
-      }
-
-      const updatedAt = latestUpdatedAt(packingListResponse.value.updatedAt, saved.updatedAt)
-
-      packingListResponse.value = {
-        ...packingListResponse.value,
-        name: saved.name,
-        updatedAt
-      }
-
-      isRenameDialogVisible.value = false
-      renameAnnouncement.value = 'Packing list renamed.'
-    } catch (error) {
-      console.error('Failed to rename packing list:', error)
-
-      if (!isPageActive) {
-        return
-      }
-
-      renameErrorMessage.value = 'Could not save the name. Try again.'
-
-      await nextTick()
-
-      if (isPageActive) {
-        renameInput.value?.focus()
-      }
+    packingListResponse.value = {
+      ...packingListResponse.value,
+      name,
+      updatedAt
     }
   }
 
@@ -330,7 +262,7 @@
 
       id: packingListResponse.value.id,
       name: packingListResponse.value.name,
-      updatedAt: latestUpdatedAt(packingListResponse.value.updatedAt, packingListUpdatedAt)
+      updatedAt: latestPackingListUpdatedAt(packingListResponse.value.updatedAt, packingListUpdatedAt)
     }
   }
 
@@ -374,7 +306,7 @@
       packingListResponse.value = {
         ...packingListResponse.value,
         entries: confirmedEntries,
-        updatedAt: latestUpdatedAt(packingListResponse.value.updatedAt, response.packingListUpdatedAt)
+        updatedAt: latestPackingListUpdatedAt(packingListResponse.value.updatedAt, response.packingListUpdatedAt)
       }
     } catch {
       const restoredEntries = packingListResponse.value.entries.map((entry) => entry.id === entryId ? {
@@ -418,7 +350,7 @@
         entries: packingListResponse.value.entries.filter((entry) => entry.id !== response.deletedEntryId),
         id: packingListResponse.value.id,
         name: packingListResponse.value.name,
-        updatedAt: latestUpdatedAt(packingListResponse.value.updatedAt, response.packingListUpdatedAt)
+        updatedAt: latestPackingListUpdatedAt(packingListResponse.value.updatedAt, response.packingListUpdatedAt)
       }
 
       packErrorEntryIds.delete(response.deletedEntryId)
@@ -472,14 +404,5 @@
   .errorMessage {
     color: var(--color-danger-primary);
     font-size: var(--font-size-14);
-  }
-
-  .announcement {
-    position: absolute;
-    overflow: hidden;
-    inline-size: 1px;
-    block-size: 1px;
-    clip-path: inset(50%);
-    white-space: nowrap;
   }
 </style>
