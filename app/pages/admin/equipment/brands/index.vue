@@ -84,6 +84,7 @@
             :maxlength="limits.maxBrandNameLength"
             :disabled="isSaving"
             autocomplete="off"
+            @input="resetFormErrors"
           >
           <p v-if="nameInvalid" :id="formErrorId" :class="$style.error" role="alert">{{ formError }}</p>
         </div>
@@ -281,6 +282,8 @@
 
   function markSlugManuallyEdited() {
     slugManuallyEdited.value = true
+
+    resetFormErrors()
   }
 
   function closeBrandForm() {
