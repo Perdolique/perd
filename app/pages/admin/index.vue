@@ -9,6 +9,13 @@
       />
 
       <ActionPanel
+        icon="hugeicons:folder-01"
+        subtitle="Add, rename, and remove categories used by the gear catalog."
+        title="Manage categories"
+        :to="appRoutes.adminEquipmentCategories"
+      />
+
+      <ActionPanel
         icon="hugeicons:task-edit-01"
         subtitle="Check and correct pending gear before a publish decision."
         title="Review gear submissions"

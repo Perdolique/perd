@@ -218,19 +218,30 @@ describe('post /api/equipment/categories', () => {
     expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
-  it('should return 500 when category slug already exists', async () => {
-    const { dbWrite } = createDb()
+  it('should return 409 when category slug already exists', async () => {
+    const duplicateError = new Error('duplicate slug')
 
-    dbWrite.transaction.mockRejectedValue(new Error('duplicate slug'))
+    const databaseError = Object.assign(duplicateError, {
+      code: '23505',
+      constraint: 'equipment_categories_slug_key'
+    })
+
+    const queryError = new Error('query failed', { cause: databaseError })
+    const { dbWrite, insertContributionValuesMock } = createDb()
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(vi.fn<typeof console.error>())
+
+    dbWrite.transaction.mockRejectedValue(queryError)
     createWebSocketClientMock.mockReturnValue(dbWrite)
 
     const event = createTestEvent({})
 
     await expect(createCategoryHandler(event)).rejects.toMatchObject({
-      message: 'Failed to create category',
-      statusCode: 500
+      statusMessage: 'Category slug already exists',
+      statusCode: 409
     })
 
+    expect(errorLog).toHaveBeenCalledWith('Failed to create category', { error: queryError })
+    expect(insertContributionValuesMock).not.toHaveBeenCalled()
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
@@ -288,5 +299,49 @@ describe('post /api/equipment/categories', () => {
     })
 
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
+  })
+
+  it('should not expose an unrelated database constraint', async () => {
+    const privateError = new Error('private database detail')
+
+    const databaseError = Object.assign(privateError, {
+      code: '23505',
+      constraint: 'contributions_other_key'
+    })
+
+    const { dbWrite } = createDb({ insertError: databaseError })
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(vi.fn<typeof console.error>())
+
+    createWebSocketClientMock.mockReturnValue(dbWrite)
+
+    const event = createTestEvent({})
+
+    await expect(createCategoryHandler(event)).rejects.toMatchObject({
+      statusCode: 500,
+      statusMessage: 'Failed to create category'
+    })
+
+    expect(errorLog).toHaveBeenCalledWith('Failed to create category', { error: databaseError })
+  })
+
+  it('should retain a committed creation when closing the client fails', async () => {
+    const createdCategory = {
+      id: 5,
+      name: 'Sleeping Bags',
+      slug: 'sleeping-bags'
+    }
+
+    const closeError = new Error('close failed')
+    const { dbWrite } = createDb({ createdCategory })
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(vi.fn<typeof console.error>())
+
+    dbWrite.$client.end.mockRejectedValue(closeError)
+    createWebSocketClientMock.mockReturnValue(dbWrite)
+
+    const event = createTestEvent({})
+
+    await expect(createCategoryHandler(event)).resolves.toStrictEqual(createdCategory)
+    expect(setResponseStatusMock).toHaveBeenCalledWith(event, 201)
+    expect(errorLog).toHaveBeenCalledWith('Failed to close category write database client', { error: closeError })
   })
 })

@@ -241,6 +241,15 @@ describe('patch /api/equipment/categories/[id]', () => {
     vi.restoreAllMocks()
   })
 
+  it.each([401, 403])('should reject unauthorized writes with %s before opening a database client', async (status) => {
+    validateAdminUserMock.mockRejectedValue(h3.createError({ status }))
+
+    const event = createTestEvent({})
+
+    await expect(updateCategoryHandler(event)).rejects.toMatchObject({ statusCode: status })
+    expect(createWebSocketClientMock).not.toHaveBeenCalled()
+  })
+
   it('should update a category and log a contribution', async () => {
     const updatedCategory = {
       id: 5,
@@ -338,19 +347,30 @@ describe('patch /api/equipment/categories/[id]', () => {
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
-  it('should return 500 when category slug already exists', async () => {
-    const { dbWrite } = createPatchDb({})
+  it('should return 409 when category slug already exists', async () => {
+    const duplicateError = new Error('duplicate slug')
 
-    dbWrite.transaction.mockRejectedValue(new Error('duplicate slug'))
+    const databaseError = Object.assign(duplicateError, {
+      code: '23505',
+      constraint: 'equipment_categories_slug_key'
+    })
+
+    const queryError = new Error('query failed', { cause: databaseError })
+    const { dbWrite, insertContributionValuesMock } = createPatchDb({})
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(vi.fn<typeof console.error>())
+
+    dbWrite.transaction.mockRejectedValue(queryError)
     createWebSocketClientMock.mockReturnValue(dbWrite)
 
     const event = createTestEvent({})
 
     await expect(updateCategoryHandler(event)).rejects.toMatchObject({
-      message: 'Failed to update category',
-      statusCode: 500
+      statusMessage: 'Category slug already exists',
+      statusCode: 409
     })
 
+    expect(errorLog).toHaveBeenCalledWith('Failed to update category', { error: queryError })
+    expect(insertContributionValuesMock).not.toHaveBeenCalled()
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
 
@@ -393,6 +413,26 @@ describe('patch /api/equipment/categories/[id]', () => {
 
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
+
+  it('should retain a committed update when closing the client fails', async () => {
+    const updatedCategory = {
+      id: 5,
+      name: 'Sleeping Bags',
+      slug: 'sleeping-bags'
+    }
+
+    const { dbWrite } = createPatchDb({ updatedCategory })
+    const closeError = new Error('close failed')
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(vi.fn<typeof console.error>())
+
+    dbWrite.$client.end.mockRejectedValue(closeError)
+    createWebSocketClientMock.mockReturnValue(dbWrite)
+
+    const event = createTestEvent({})
+
+    await expect(updateCategoryHandler(event)).resolves.toStrictEqual(updatedCategory)
+    expect(errorLog).toHaveBeenCalledWith('Failed to close category write database client', { error: closeError })
+  })
 })
 
 describe('delete /api/equipment/categories/[id]', () => {
@@ -407,6 +447,15 @@ describe('delete /api/equipment/categories/[id]', () => {
 
   afterEach(() => {
     vi.restoreAllMocks()
+  })
+
+  it.each([401, 403])('should reject unauthorized writes with %s before opening a database client', async (status) => {
+    validateAdminUserMock.mockRejectedValue(h3.createError({ status }))
+
+    const event = createTestEvent({})
+
+    await expect(deleteCategoryHandler(event)).rejects.toMatchObject({ statusCode: status })
+    expect(createWebSocketClientMock).not.toHaveBeenCalled()
   })
 
   it('should delete a category and log a contribution', async () => {
@@ -526,5 +575,55 @@ describe('delete /api/equipment/categories/[id]', () => {
     })
 
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
+  })
+
+  it('should return 409 when equipment uses the category even if closing the client also fails', async () => {
+    const referenceError = new Error('category is referenced')
+
+    const databaseError = Object.assign(referenceError, {
+      code: '23503',
+      constraint: 'equipment_items_categoryId_equipment_categories_id_fkey'
+    })
+
+    const queryError = new Error('query failed', { cause: databaseError })
+    const closeError = new Error('close failed')
+    const { dbWrite, insertContributionValuesMock } = createDeleteDb({ deleteError: queryError })
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(vi.fn<typeof console.error>())
+
+    dbWrite.$client.end.mockRejectedValue(closeError)
+    createWebSocketClientMock.mockReturnValue(dbWrite)
+
+    const event = createTestEvent({})
+
+    await expect(deleteCategoryHandler(event)).rejects.toMatchObject({
+      statusCode: 409,
+      statusMessage: 'Category is used by equipment'
+    })
+
+    expect(insertContributionValuesMock).not.toHaveBeenCalled()
+    expect(setResponseStatusMock).not.toHaveBeenCalled()
+    expect(errorLog).toHaveBeenCalledWith('Failed to delete category', { error: queryError })
+    expect(errorLog).toHaveBeenCalledWith('Failed to close category write database client', { error: closeError })
+  })
+
+  it('should retain a committed deletion when closing the client fails', async () => {
+    const deletedCategory = {
+      id: 5,
+      name: 'Sleeping Bags',
+      slug: 'sleeping-bags'
+    }
+
+    const { dbWrite } = createDeleteDb({ deletedCategory })
+    const closeError = new Error('close failed')
+    const errorLog = vi.spyOn(console, 'error').mockImplementation(vi.fn<typeof console.error>())
+
+    dbWrite.$client.end.mockRejectedValue(closeError)
+    createWebSocketClientMock.mockReturnValue(dbWrite)
+
+    const event = createTestEvent({})
+
+    await deleteCategoryHandler(event)
+    expect(setResponseStatusMock).toHaveBeenCalledWith(event, 204)
+    expect(errorLog).toHaveBeenCalledWith('Failed to close category write database client', { error: closeError })
   })
 })
