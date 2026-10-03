@@ -1,11 +1,12 @@
-import { createError, defineEventHandler, isError, readValidatedBody, setResponseStatus } from 'h3'
+import { createError, defineEventHandler, readValidatedBody, setResponseStatus } from 'h3'
 import { contributions, equipmentCategories } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
-import { categoryBaseSelection } from '#server/utils/equipment/base-records'
+import { categoryBaseSelection, type CategoryBaseRecord } from '#server/utils/equipment/base-records'
+import { logCategoryWriteError, throwCategoryWriteError } from '#server/utils/equipment/category-write-errors'
 import { validateCategoryMutationBody } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event): Promise<CategoryBaseRecord> => {
   const userId = await validateAdminUser(event)
   const { name, slug } = await readValidatedBody(event, validateCategoryMutationBody)
   const dbWebsocket = createWebSocketClientFromEvent(event)
@@ -47,15 +48,12 @@ export default defineEventHandler(async (event) => {
 
     return createdCategory
   } catch (error) {
-    if (isError(error)) {
-      throw error
-    }
-
-    throw createError({
-      status: 500,
-      message: 'Failed to create category'
-    })
+    throwCategoryWriteError(error, 'create')
   } finally {
-    await dbWebsocket.$client.end()
+    try {
+      await dbWebsocket.$client.end()
+    } catch (error) {
+      logCategoryWriteError('Failed to close category write database client', error)
+    }
   }
 })

@@ -6,7 +6,9 @@ interface CategoryListItem {
   slug: string;
 }
 
-export default defineEventHandler(async (event) : Promise<CategoryListItem[]> =>
+type CategoriesListResponse = CategoryListItem[]
+
+export default defineEventHandler(async (event) : Promise<CategoriesListResponse> =>
   event.context.dbHttp.query.equipmentCategories.findMany({
     columns: {
       id: true,
@@ -15,3 +17,5 @@ export default defineEventHandler(async (event) : Promise<CategoryListItem[]> =>
     }
   })
 )
+
+export type { CategoriesListResponse }

@@ -1,5 +1,5 @@
 <template>
-  <PageContent page-title="Manage brands">
+  <PageContent page-title="Manage categories">
     <template #actions>
       <PerdLink :to="appRoutes.admin">Back to Admin</PerdLink>
     </template>
@@ -7,7 +7,7 @@
     <main :class="$style.component">
       <div :class="$style.toolbar">
         <label :class="$style.searchField">
-          <span>Search brands</span>
+          <span>Search categories</span>
           <input
             ref="searchInput"
             v-model="search"
@@ -18,42 +18,42 @@
           >
         </label>
 
-        <PerdButton ref="createButton" :disabled="isLoading" @click="openCreate">Add brand</PerdButton>
+        <PerdButton ref="createButton" :disabled="isCreateDisabled" @click="openCreate">Add category</PerdButton>
       </div>
 
       <p :class="$style.announcement" role="status" aria-live="polite" aria-atomic="true">
         {{ announcement }}
       </p>
 
-      <PageLoadingState v-if="isLoading" title="Loading brands" />
+      <PageLoadingState v-if="isLoading" title="Loading categories" />
 
-      <PagePlaceholder v-else-if="hasLoadError" emoji="🧰" title="Brands unavailable.">
-        The brand list could not be loaded.
+      <PagePlaceholder v-else-if="hasLoadError" emoji="🧰" title="Categories unavailable.">
+        The category list could not be loaded.
         <template #actions>
           <PerdButton variant="secondary" @click="retryLoad">Retry</PerdButton>
         </template>
       </PagePlaceholder>
 
-      <PagePlaceholder v-else-if="isEmpty" emoji="🏷️" title="No brands yet.">
-        Add the first brand to make it available in gear submissions.
+      <PagePlaceholder v-else-if="isEmpty" emoji="🏷️" title="No categories yet.">
+        Add the first category to make it available in gear submissions.
       </PagePlaceholder>
 
-      <PagePlaceholder v-else-if="hasNoMatches" emoji="🔎" title="No matching brands.">
+      <PagePlaceholder v-else-if="hasNoMatches" emoji="🔎" title="No matching categories.">
         Try a different name.
       </PagePlaceholder>
 
       <ul v-else :class="$style.list">
-        <li v-for="brand in visibleBrands" :key="brand.id" :class="$style.row">
-          <div :class="$style.brand">
-            <strong :class="$style.name">{{ brand.name }}</strong>
-            <span :class="$style.slug">{{ brand.slug }}</span>
+        <li v-for="category in visibleCategories" :key="category.id" :class="$style.row">
+          <div :class="$style.category">
+            <strong :class="$style.name">{{ category.name }}</strong>
+            <span :class="$style.slug">{{ category.slug }}</span>
           </div>
 
           <div :class="$style.rowActions">
-            <PerdButton size="small" variant="secondary" :aria-label="brand.editLabel" @click="openEdit(brand)">
+            <PerdButton size="small" variant="secondary" :aria-label="category.editLabel" @click="openEdit(category)">
               Edit
             </PerdButton>
-            <PerdButton size="small" variant="danger" :aria-label="brand.deleteLabel" @click="openDelete(brand)">
+            <PerdButton size="small" variant="danger" :aria-label="category.deleteLabel" @click="openDelete(category)">
               Delete
             </PerdButton>
           </div>
@@ -67,7 +67,7 @@
       :aria-labelledby="formHeadingId"
       :close-disabled="isSaving"
     >
-      <form :class="$style.dialogContent" @submit.prevent="saveBrand">
+      <form :class="$style.dialogContent" @submit.prevent="saveCategory">
         <h2 :id="formHeadingId">{{ formHeading }}</h2>
 
         <div :class="$style.field">
@@ -81,7 +81,7 @@
             :aria-describedby="nameDescription"
             name="name"
             required
-            :maxlength="limits.maxBrandNameLength"
+            :maxlength="limits.maxEquipmentCategoryNameLength"
             :disabled="isSaving"
             autocomplete="off"
             @input="resetFormErrors('name')"
@@ -100,7 +100,7 @@
             name="slug"
             required
             pattern="[a-z0-9]+(-[a-z0-9]+)*"
-            :maxlength="limits.maxBrandSlugLength"
+            :maxlength="limits.maxEquipmentCategorySlugLength"
             :disabled="isSaving"
             autocomplete="off"
             :aria-describedby="slugDescription"
@@ -113,7 +113,7 @@
         <p v-if="hasGeneralFormError" ref="formAlert" :class="$style.error" role="alert" tabindex="-1">{{ formError }}</p>
 
         <div :class="$style.dialogActions">
-          <PerdButton variant="secondary" :disabled="isSaving" @click="closeBrandForm">
+          <PerdButton variant="secondary" :disabled="isSaving" @click="closeCategoryForm">
             Cancel
           </PerdButton>
           <PerdButton type="submit" :loading="isSaving">{{ saveLabel }}</PerdButton>
@@ -123,15 +123,15 @@
 
     <ConfirmationDialog
       v-model="isDeleteOpen"
-      header-text="Delete brand?"
-      confirm-button-text="Delete brand"
+      header-text="Delete category?"
+      confirm-button-text="Delete category"
       confirm-variant="danger"
       :confirm-loading="isDeleting"
       :close-on-confirm="false"
       :error="deleteError"
-      @confirm="deleteBrand"
+      @confirm="deleteCategory"
     >
-      Delete {{ deleteTarget?.name }}? This is only possible if no gear uses this brand.
+      Delete {{ deleteTarget?.name }}? Its properties and their options will also be deleted. This is only possible if no gear uses this category, including pending and rejected submissions.
     </ConfirmationDialog>
   </PageContent>
 </template>
@@ -140,7 +140,7 @@
   import { computed, nextTick, ref, useId, useTemplateRef, watch } from 'vue'
   import { definePageMeta, useFetch, useHead, useRequestFetch } from '#imports'
   import { limits } from '#shared/constants'
-  import type { BrandsListResponse } from '#server/api/equipment/brands/index.get'
+  import type { CategoriesListResponse } from '#server/api/equipment/categories/index.get'
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PerdButton from '~/components/PerdButton.vue'
@@ -151,14 +151,14 @@
   import { getFetchErrorResponse } from '~/utils/fetch-error'
   import { appRoutes } from '~/utils/navigation'
 
-  type Brand = BrandsListResponse[number]
+  type Category = CategoriesListResponse[number]
 
   definePageMeta({
     layout: 'page',
     middleware: 'admin'
   })
 
-  useHead({ title: 'Manage brands' })
+  useHead({ title: 'Manage categories' })
 
   const requestFetch = useRequestFetch()
   const formHeadingId = useId()
@@ -174,7 +174,7 @@
   const formAlert = useTemplateRef('formAlert')
   const search = ref('')
   const announcement = ref('')
-  const rows = ref<Brand[]>([])
+  const rows = ref<Category[]>([])
   const isFormOpen = ref(false)
   const editingId = ref<number | null>(null)
   const formName = ref('')
@@ -184,16 +184,17 @@
   const formError = ref<string | null>(null)
   const formErrorField = ref<'name' | 'slug' | null>(null)
   const isDeleteOpen = ref(false)
-  const deleteTarget = ref<Brand | null>(null)
+  const deleteTarget = ref<Category | null>(null)
   const isDeleting = ref(false)
   const deleteError = ref<string | null>(null)
 
-  const { data, error: loadError, refresh, status } = await useFetch('/api/equipment/brands', {
+  const { data, error: loadError, refresh, status } = await useFetch('/api/equipment/categories', {
     lazy: true
   })
 
   const isLoading = computed(() => status.value === 'pending')
   const hasLoadError = computed(() => Boolean(loadError.value))
+  const isCreateDisabled = computed(() => isLoading.value || hasLoadError.value)
   const isEmpty = computed(() => rows.value.length === 0)
 
   const normalizedSearch = computed(() => {
@@ -202,37 +203,53 @@
     return trimmedSearch.toLocaleLowerCase()
   })
 
-  const visibleBrands = computed(() => {
-    const matchingBrands = rows.value.filter((brand) => {
-      const normalizedName = brand.name.toLocaleLowerCase()
+  const visibleCategories = computed(() => {
+    const matchingCategories = rows.value.filter((category) => {
+      const normalizedName = category.name.toLocaleLowerCase()
 
       return normalizedName.includes(normalizedSearch.value)
     })
 
-    const sortedBrands = matchingBrands.toSorted((left, right) => left.name.localeCompare(right.name))
+    const sortedCategories = matchingCategories.toSorted((left, right) => left.name.localeCompare(right.name))
 
-    return sortedBrands.map((brand) => {
-      const editLabel = `Edit ${brand.name}`
-      const deleteLabel = `Delete ${brand.name}`
+    return sortedCategories.map((category) => {
+      const editLabel = `Edit ${category.name}`
+      const deleteLabel = `Delete ${category.name}`
 
       return {
-        id: brand.id,
-        name: brand.name,
-        slug: brand.slug,
+        id: category.id,
+        name: category.name,
+        slug: category.slug,
         editLabel,
         deleteLabel
       }
     })
   })
 
-  const hasNoMatches = computed(() => visibleBrands.value.length === 0)
-  const formHeading = computed(() => editingId.value === null ? 'Add brand' : 'Edit brand')
-  const saveLabel = computed(() => editingId.value === null ? 'Create brand' : 'Save brand')
+  const hasNoMatches = computed(() => visibleCategories.value.length === 0)
+  const formHeading = computed(() => editingId.value === null ? 'Add category' : 'Edit category')
+  const saveLabel = computed(() => editingId.value === null ? 'Create category' : 'Save category')
   const nameInvalid = computed(() => formErrorField.value === 'name' || undefined)
   const slugInvalid = computed(() => formErrorField.value === 'slug' || undefined)
   const nameDescription = computed(() => nameInvalid.value ? formErrorId : undefined)
   const slugDescription = computed(() => slugInvalid.value ? slugErrorDescription : slugHintId)
   const hasGeneralFormError = computed(() => formError.value !== null && formErrorField.value === null)
+
+  const listStateAnnouncement = computed(() => {
+    if (isLoading.value) {
+      return 'Loading categories.'
+    }
+
+    if (hasLoadError.value) {
+      return 'The category list could not be loaded.'
+    }
+
+    if (isEmpty.value) {
+      return 'No categories yet.'
+    }
+
+    return hasNoMatches.value ? 'No matching categories.' : ''
+  })
 
   function suggestSlug(name: string): string {
     const expansions = new Map([
@@ -258,7 +275,7 @@
     const lowercase = withoutMarks.toLowerCase()
     const separated = lowercase.replaceAll(/[^a-z0-9]+/gu, '-')
     const trimmed = separated.replaceAll(/^-|-$/gu, '')
-    const truncated = trimmed.slice(0, limits.maxBrandSlugLength)
+    const truncated = trimmed.slice(0, limits.maxEquipmentCategorySlugLength)
 
     return truncated.replaceAll(/-$/gu, '')
   }
@@ -272,9 +289,9 @@
     formErrorField.value = null
   }
 
-  watch(data, (brands) => {
-    if (brands !== null && brands !== undefined) {
-      rows.value = brands
+  watch(data, (categories) => {
+    if (categories !== null && categories !== undefined) {
+      rows.value = categories
     }
   }, { immediate: true })
 
@@ -290,13 +307,18 @@
     }
   })
 
+  // List requests and searches announce state changes; writes keep their own result message.
+  watch([status, normalizedSearch], () => {
+    announcement.value = listStateAnnouncement.value
+  })
+
   function markSlugManuallyEdited() {
     slugManuallyEdited.value = true
 
     resetFormErrors('slug')
   }
 
-  function closeBrandForm() {
+  function closeCategoryForm() {
     isFormOpen.value = false
   }
 
@@ -311,10 +333,10 @@
     isFormOpen.value = true
   }
 
-  function openEdit(brand: Brand) {
-    editingId.value = brand.id
-    formName.value = brand.name
-    formSlug.value = brand.slug
+  function openEdit(category: Category) {
+    editingId.value = category.id
+    formName.value = category.name
+    formSlug.value = category.slug
     slugManuallyEdited.value = true
 
     resetFormErrors()
@@ -322,8 +344,8 @@
     isFormOpen.value = true
   }
 
-  function openDelete(brand: Brand) {
-    deleteTarget.value = brand
+  function openDelete(category: Category) {
+    deleteTarget.value = category
     deleteError.value = null
     isDeleteOpen.value = true
   }
@@ -350,7 +372,7 @@
     globalThis.requestAnimationFrame(() => searchInput.value?.focus())
   }
 
-  async function saveBrand() {
+  async function saveCategory() {
     if (isSaving.value) {
       return
     }
@@ -358,22 +380,12 @@
     const name = formName.value.trim()
     const slug = formSlug.value.trim()
     const id = editingId.value
-    const isSlugValid = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(slug)
 
     resetFormErrors()
 
     if (name === '') {
       formError.value = 'Enter a name.'
       formErrorField.value = 'name'
-
-      await focusFormError()
-
-      return
-    }
-
-    if (!isSlugValid) {
-      formError.value = 'Enter a valid slug.'
-      formErrorField.value = 'slug'
 
       await focusFormError()
 
@@ -388,20 +400,20 @@
         slug
       }
 
-      const path = id === null ? '/api/equipment/brands' : `/api/equipment/brands/${id}` as const
+      const path = id === null ? '/api/equipment/categories' : `/api/equipment/categories/${id}` as const
       const method = id === null ? 'POST' : 'PATCH'
 
-      const brand = await requestFetch(path, {
+      const category = await requestFetch(path, {
         method,
         body
       })
 
       const nextRows = id === null
-        ? [...rows.value, brand]
-        : rows.value.map((row) => row.id === brand.id ? brand : row)
+        ? [...rows.value, category]
+        : rows.value.map((row) => row.id === category.id ? category : row)
 
-      const resultAnnouncement = id === null ? `${brand.name} created.` : `${brand.name} updated.`
-      const normalizedName = brand.name.toLocaleLowerCase()
+      const resultAnnouncement = id === null ? `${category.name} created.` : `${category.name} updated.`
+      const normalizedName = category.name.toLocaleLowerCase()
       const matchesSearch = normalizedName.includes(normalizedSearch.value)
 
       rows.value = nextRows
@@ -420,15 +432,13 @@
       if (response.status === 409 && response.statusMessage) {
         formError.value = response.statusMessage
 
-        if (response.statusMessage === 'Brand name already exists') {
-          formErrorField.value = 'name'
-        } else if (response.statusMessage === 'Brand slug already exists') {
+        if (response.statusMessage === 'Category slug already exists') {
           formErrorField.value = 'slug'
         }
       } else if (response.status === 404) {
-        formError.value = 'This brand no longer exists. Reload the list.'
+        formError.value = 'This category no longer exists. Reload the list.'
       } else {
-        formError.value = 'Could not save the brand. Try again.'
+        formError.value = 'Could not save the category. Try again.'
       }
     } finally {
       isSaving.value = false
@@ -439,7 +449,7 @@
     }
   }
 
-  async function deleteBrand() {
+  async function deleteCategory() {
     const target = deleteTarget.value
 
     if (target === null || isDeleting.value) {
@@ -450,11 +460,11 @@
     deleteError.value = null
 
     try {
-      const path = `/api/equipment/brands/${target.id}` as const
+      const path = `/api/equipment/categories/${target.id}` as const
 
       await requestFetch(path, { method: 'DELETE' })
 
-      const remainingRows = rows.value.filter((brand) => brand.id !== target.id)
+      const remainingRows = rows.value.filter((category) => category.id !== target.id)
       const resultAnnouncement = `${target.name} deleted.`
 
       rows.value = remainingRows
@@ -466,11 +476,11 @@
       const response = getFetchErrorResponse(error)
 
       if (response.status === 409) {
-        deleteError.value = 'This brand is used by gear and cannot be deleted.'
+        deleteError.value = 'This category is used by gear and cannot be deleted.'
       } else if (response.status === 404) {
-        deleteError.value = 'This brand no longer exists. Reload the list.'
+        deleteError.value = 'This category no longer exists. Reload the list.'
       } else {
-        deleteError.value = 'Could not delete the brand. Try again.'
+        deleteError.value = 'Could not delete the category. Try again.'
       }
     } finally {
       isDeleting.value = false
@@ -550,10 +560,9 @@
     background: var(--color-surface-secondary);
   }
 
-  .brand {
+  .category {
     display: grid;
     gap: var(--spacing-4);
-    min-inline-size: 0;
   }
 
   .name,

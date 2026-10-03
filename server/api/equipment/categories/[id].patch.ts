@@ -1,12 +1,13 @@
 import { eq } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody } from 'h3'
+import { createError, defineEventHandler, getValidatedRouterParams, readValidatedBody } from 'h3'
 import { contributions, equipmentCategories } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
-import { categoryBaseSelection } from '#server/utils/equipment/base-records'
+import { categoryBaseSelection, type CategoryBaseRecord } from '#server/utils/equipment/base-records'
+import { logCategoryWriteError, throwCategoryWriteError } from '#server/utils/equipment/category-write-errors'
 import { validateCategoryIdParams, validateCategoryMutationBody } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event): Promise<CategoryBaseRecord> => {
   const userId = await validateAdminUser(event)
   const { id: categoryId } = await getValidatedRouterParams(event, validateCategoryIdParams)
   const { name, slug } = await readValidatedBody(event, validateCategoryMutationBody)
@@ -45,15 +46,12 @@ export default defineEventHandler(async (event) => {
       return updatedCategory
     })
   } catch (error) {
-    if (isError(error)) {
-      throw error
-    }
-
-    throw createError({
-      status: 500,
-      message: 'Failed to update category'
-    })
+    throwCategoryWriteError(error, 'update')
   } finally {
-    await dbWebsocket.$client.end()
+    try {
+      await dbWebsocket.$client.end()
+    } catch (error) {
+      logCategoryWriteError('Failed to close category write database client', error)
+    }
   }
 })

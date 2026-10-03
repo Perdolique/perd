@@ -1,12 +1,13 @@
 import { eq } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedRouterParams, isError, setResponseStatus } from 'h3'
+import { createError, defineEventHandler, getValidatedRouterParams, setResponseStatus } from 'h3'
 import { contributions, equipmentCategories } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
 import { categoryBaseSelection } from '#server/utils/equipment/base-records'
+import { logCategoryWriteError, throwCategoryWriteError } from '#server/utils/equipment/category-write-errors'
 import { validateCategoryIdParams } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event): Promise<void> => {
   const userId = await validateAdminUser(event)
   const { id: categoryId } = await getValidatedRouterParams(event, validateCategoryIdParams)
   const dbWebsocket = createWebSocketClientFromEvent(event)
@@ -38,16 +39,13 @@ export default defineEventHandler(async (event) => {
         })
     })
   } catch (error) {
-    if (isError(error)) {
-      throw error
-    }
-
-    throw createError({
-      status: 500,
-      message: 'Failed to delete category'
-    })
+    throwCategoryWriteError(error, 'delete')
   } finally {
-    await dbWebsocket.$client.end()
+    try {
+      await dbWebsocket.$client.end()
+    } catch (error) {
+      logCategoryWriteError('Failed to close category write database client', error)
+    }
   }
 
   setResponseStatus(event, 204)
