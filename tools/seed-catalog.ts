@@ -123,6 +123,8 @@ async function resetAndSeedCatalog(db: Database) {
 
       equipmentCategories: {
         columns: {
+          propertiesRevision: funcs.default({ defaultValue: 0 }),
+
           name: funcs.valuesFromArray({
             isUnique: true,
             values: categoryDefinitions.map((category) => category.name)

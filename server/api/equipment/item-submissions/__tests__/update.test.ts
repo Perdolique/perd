@@ -69,6 +69,7 @@ function expectIdPredicate(
 
 function createUpdateDb(options: UpdateDbOptions = {}) {
   const defaultItem = {
+    categoryId: 2,
     createdAt: new Date('2026-08-01T12:00:00Z'),
     createdBy: 'author-1',
     sourceUrl: options.sourceUrl === undefined ? 'https://example.com/product' : options.sourceUrl,
@@ -88,10 +89,13 @@ function createUpdateDb(options: UpdateDbOptions = {}) {
     return { limit: itemLockLimitMock }
   })
 
-  const propertyLockForMock = vi.fn(() => [{ id: 3 }, { id: 4 }])
+  const propertyLockForMock = vi.fn(() => [{
+    id: 2,
+    propertiesRevision: 0
+  }])
 
   const propertyLockWhereMock = vi.fn(() => {
-    return { for: propertyLockForMock }
+    return { orderBy: vi.fn(() => { return { for: propertyLockForMock } }) }
   })
 
   const selectMock = vi.fn((selection: Record<string, unknown>) => {
@@ -162,6 +166,8 @@ function createUpdateDb(options: UpdateDbOptions = {}) {
     update: updateMock,
 
     query: {
+      equipmentItems: { findFirst: vi.fn(() => item === undefined ? undefined : { categoryId: 2 }) },
+
       brands: {
         findFirst: vi.fn(() => {
           return {
@@ -246,6 +252,8 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
     readValidatedBodyMock.mockResolvedValue({
       brandId: 1,
       categoryId: 2,
+      expectedPropertiesRevision: 0,
+      expectedOriginalPropertiesRevision: 0,
       expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
       name: 'PocketRocket Deluxe',
 
@@ -276,12 +284,12 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
     }))
 
     expect(db.itemLockForMock).toHaveBeenCalledWith('update')
-    expect(db.propertyLockForMock).toHaveBeenCalledWith('key share')
+    expect(db.propertyLockForMock).toHaveBeenCalledWith('share')
 
     const itemLockOrder = Math.max(...db.itemLockForMock.mock.invocationCallOrder)
     const propertyLockOrder = Math.min(...db.propertyLockForMock.mock.invocationCallOrder)
 
-    expect(itemLockOrder).toBeLessThan(propertyLockOrder)
+    expect(propertyLockOrder).toBeLessThan(itemLockOrder)
 
     expect(db.updateSetMock).toHaveBeenCalledWith({
       brandId: 1,
@@ -344,6 +352,8 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
       brandId: 1,
       categoryId: 2,
       decision: 'publish',
+      expectedPropertiesRevision: 0,
+      expectedOriginalPropertiesRevision: 0,
       expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
       name: 'PocketRocket Deluxe',
 
@@ -362,6 +372,8 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
       brandId: 1,
       categoryId: 2,
       decision: 'reject',
+      expectedPropertiesRevision: 0,
+      expectedOriginalPropertiesRevision: 0,
       expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
       name: 'PocketRocket Deluxe',
 
@@ -440,6 +452,8 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
       brandId: 1,
       categoryId: 2,
       decision,
+      expectedPropertiesRevision: 0,
+      expectedOriginalPropertiesRevision: 0,
       expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
       name: 'Updated item',
       properties: [],
@@ -465,6 +479,8 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
     readValidatedBodyMock.mockResolvedValue({
       brandId: 1,
       categoryId: 2,
+      expectedPropertiesRevision: 0,
+      expectedOriginalPropertiesRevision: 0,
       expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
       name: 'PocketRocket Deluxe',
       properties: []
@@ -489,6 +505,7 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
 
   it('should return 409 for a non-pending submission before replacement', async () => {
     const db = createUpdateDb({ item: {
+      categoryId: 2,
       id: 'item-1',
       status: 'approved'
     } })
@@ -502,7 +519,8 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
   it('should return 409 for a stale revision before replacement', async () => {
     const db = createUpdateDb({
       item: {
-        createdAt: new Date('2026-08-01T12:00:00Z'),
+        categoryId: 2,
+    createdAt: new Date('2026-08-01T12:00:00Z'),
         createdBy: 'author-1',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
         status: 'pending',
@@ -512,7 +530,7 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
 
     createWebSocketClientMock.mockReturnValue(db.dbWrite)
     await expect(updateHandler(createTestEvent({}))).rejects.toMatchObject({ statusCode: 409 })
-    expect(db.propertyLockForMock).not.toHaveBeenCalled()
+    expect(db.propertyLockForMock).toHaveBeenCalledWith('share')
     expect(db.updateWhereMock).not.toHaveBeenCalled()
     expect(db.deleteWhereMock).not.toHaveBeenCalled()
   })

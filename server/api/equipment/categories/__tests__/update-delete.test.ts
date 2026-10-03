@@ -1,7 +1,7 @@
 import * as h3 from 'h3'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import deleteCategoryHandler from '#server/api/equipment/categories/[id].delete'
-import updateCategoryHandler from '#server/api/equipment/categories/[id].patch'
+import deleteCategoryHandler from '#server/api/equipment/categories/[categoryId]/index.delete'
+import updateCategoryHandler from '#server/api/equipment/categories/[categoryId]/index.patch'
 import type { CategoryBaseRecord } from '#server/utils/equipment/base-records'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
@@ -222,7 +222,7 @@ function createDeleteDb({
   }
 }
 
-describe('patch /api/equipment/categories/[id]', () => {
+describe('patch /api/equipment/categories/[categoryId]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     validateAdminUserMock.mockResolvedValue('user-1')
@@ -233,7 +233,7 @@ describe('patch /api/equipment/categories/[id]', () => {
     })
 
     getValidatedRouterParamsMock.mockResolvedValue({
-      id: 5
+      categoryId: 5
     })
   })
 
@@ -442,13 +442,13 @@ describe('patch /api/equipment/categories/[id]', () => {
   })
 })
 
-describe('delete /api/equipment/categories/[id]', () => {
+describe('delete /api/equipment/categories/[categoryId]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     validateAdminUserMock.mockResolvedValue('user-1')
 
     getValidatedRouterParamsMock.mockResolvedValue({
-      id: 5
+      categoryId: 5
     })
   })
 

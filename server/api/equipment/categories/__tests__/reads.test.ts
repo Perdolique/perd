@@ -44,6 +44,7 @@ interface CategoryDetail {
   id: number;
   name: string;
   properties: CategoryDetailProperty[];
+  propertiesRevision: number;
   slug: string;
 }
 
@@ -112,6 +113,7 @@ describe('get /api/equipment/categories/by-slug/[slug]', () => {
       id: 1,
       name: 'Sleeping Bags',
       slug: 'sleeping-bags',
+      propertiesRevision: 0,
 
       properties: [{
         allowsNegativeValues: false,
@@ -153,6 +155,7 @@ describe('get /api/equipment/categories/by-slug/[slug]', () => {
       id: 1,
       name: 'Sleeping Bags',
       slug: 'sleeping-bags',
+      propertiesRevision: 0,
 
       properties: [{
         allowsNegativeValues: false,
@@ -201,7 +204,9 @@ describe('get /api/equipment/categories/by-slug/[slug]', () => {
           id: true,
           name: true,
           slug: true
-        }
+        },
+
+        orderBy: { id: 'asc' }
       }
     })
   })

@@ -1,8 +1,15 @@
-import { and, eq, inArray } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody } from 'h3'
-import { categoryProperties, contributions, equipmentItems, itemPropertyValues } from '#server/database/schema'
+import { contributions, equipmentItems, itemPropertyValues } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
+
+import {
+  checkPropertiesRevision,
+  lockPropertiesCategories,
+  propertiesConflict
+} from '#server/utils/equipment/category-properties'
+
 import { normalizeItemSubmissionProperties } from '#server/utils/equipment/item-submission-properties'
 import { validateItemSubmissionParams, validateItemSubmissionUpdateBody } from '#server/utils/validation/schemas'
 import type { ItemSubmissionDetailResponse, ItemSubmissionPropertyValue } from './[id].get'
@@ -40,8 +47,34 @@ export default defineEventHandler(async (event): Promise<ItemSubmissionDetailRes
 
   try {
     return await dbWebsocket.transaction(async (transaction) => {
+      const original = await transaction.query.equipmentItems.findFirst({
+        columns: {
+          categoryId: true
+        },
+
+        where: {
+          id
+        }
+      })
+
+      if (original === undefined) {
+        throw createError({ status: 404 })
+      }
+
+      const lockedCategories = await lockPropertiesCategories(transaction, [original.categoryId, body.categoryId])
+      const originalCategory = lockedCategories.find((category) => category.id === original.categoryId)
+      const selectedCategory = lockedCategories.find((category) => category.id === body.categoryId)
+
+      if (originalCategory === undefined || selectedCategory === undefined) {
+        throw createError({ status: 404 })
+      }
+
+      checkPropertiesRevision(originalCategory.propertiesRevision, body.expectedOriginalPropertiesRevision)
+      checkPropertiesRevision(selectedCategory.propertiesRevision, body.expectedPropertiesRevision)
+
       const [item] = await transaction
         .select({
+          categoryId: equipmentItems.categoryId,
           createdAt: equipmentItems.createdAt,
           createdBy: equipmentItems.createdBy,
           id: equipmentItems.id,
@@ -58,6 +91,10 @@ export default defineEventHandler(async (event): Promise<ItemSubmissionDetailRes
         throw createError({ status: 404 })
       }
 
+      if (item.categoryId !== original.categoryId) {
+        throw propertiesConflict('submission_category_conflict', 'The submission category changed. Reload before continuing.')
+      }
+
       if (item.status !== 'pending') {
         throw createError({
           status: 409,
@@ -72,21 +109,6 @@ export default defineEventHandler(async (event): Promise<ItemSubmissionDetailRes
           status: 409,
           message: 'Equipment item submission changed since it was loaded'
         })
-      }
-
-      const submittedPropertyIds = body.properties.map((property) => property.propertyId)
-
-      if (submittedPropertyIds.length > 0) {
-        await transaction
-          .select({ id: categoryProperties.id })
-          .from(categoryProperties)
-          .where(
-            and(
-              eq(categoryProperties.categoryId, body.categoryId),
-              inArray(categoryProperties.id, submittedPropertyIds)
-            )
-          )
-          .for('key share')
       }
 
       const brandPromise = transaction.query.brands.findFirst({
@@ -245,6 +267,7 @@ export default defineEventHandler(async (event): Promise<ItemSubmissionDetailRes
         id,
         name: body.name,
         properties: normalizedProperties.map((property) => mapNormalizedProperty(property)),
+        propertiesRevision: selectedCategory.propertiesRevision,
         rejectionReason,
         sourceUrl: item.sourceUrl,
         status,
@@ -265,6 +288,10 @@ export default defineEventHandler(async (event): Promise<ItemSubmissionDetailRes
       message: 'Failed to update equipment item submission'
     })
   } finally {
-    await dbWebsocket.$client.end()
+    try {
+      await dbWebsocket.$client.end()
+    } catch (error) {
+      console.error('Failed to close item review database client', error)
+    }
   }
 })
