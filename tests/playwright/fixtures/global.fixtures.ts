@@ -7,6 +7,11 @@ interface BrowserRuntimeIssue {
   type: 'console' | 'pageerror';
 }
 
+interface ConsoleErrorExpectation {
+  pattern: RegExp;
+  resolve: (message: ConsoleMessage) => void;
+}
+
 interface TurnstileFixture {
   complete: (page: Page) => Promise<void>;
   expire: (page: Page) => Promise<void>;
@@ -22,6 +27,8 @@ interface TurnstileFixture {
 interface TestFixtures {
   appOrigin: string;
   conditionalPasskeys: boolean;
+  consoleErrorExpectations: ConsoleErrorExpectation[];
+  expectConsoleError: (pattern: RegExp) => Promise<ConsoleMessage>;
   turnstile: TurnstileFixture;
 }
 
@@ -249,6 +256,35 @@ const test = base.extend<TestFixtures>({
   appOrigin: [defaultAppOrigin, { option: true }],
   conditionalPasskeys: [false, { option: true }],
 
+  consoleErrorExpectations: async ({ appOrigin: _appOrigin }, use) => {
+    const expectations: ConsoleErrorExpectation[] = []
+
+    await use(expectations)
+
+    if (expectations.length > 0) {
+      const missingPatterns = expectations.map(expectation => expectation.pattern.toString())
+      const missingReport = missingPatterns.join('\n')
+
+      throw new Error(`Expected console errors were not logged:\n${missingReport}`)
+    }
+  },
+
+  expectConsoleError: async ({ consoleErrorExpectations }, use) => {
+    async function expectConsoleError(pattern: RegExp) {
+      // oxlint-disable-next-line promise/avoid-new -- A browser console event resolves this one-shot expectation.
+      const promise = new Promise<ConsoleMessage>((resolve) => {
+        consoleErrorExpectations.push({
+          pattern,
+          resolve
+        })
+      })
+
+      return promise
+    }
+
+    await use(expectConsoleError)
+  },
+
   context: async ({ context, conditionalPasskeys, appOrigin }, use) => {
     const unmockedApiRequests = new Set<string>()
 
@@ -304,12 +340,30 @@ const test = base.extend<TestFixtures>({
     }
   },
 
-  page: async ({ page, appOrigin }, use) => {
+  page: async ({ page, appOrigin, consoleErrorExpectations }, use) => {
     const runtimeIssues: BrowserRuntimeIssue[] = []
 
     page.on('console', (message) => {
       if (!isUnexpectedConsoleMessage(message, appOrigin)) {
         return
+      }
+
+      if (message.type() === 'error') {
+        const messageText = message.text()
+
+        const expectedIndex = consoleErrorExpectations.findIndex((expectation) => {
+          expectation.pattern.lastIndex = 0
+
+          return expectation.pattern.test(messageText)
+        })
+
+        if (expectedIndex !== -1) {
+          const [expectation] = consoleErrorExpectations.splice(expectedIndex, 1)
+
+          expectation.resolve(message)
+
+          return
+        }
       }
 
       runtimeIssues.push({

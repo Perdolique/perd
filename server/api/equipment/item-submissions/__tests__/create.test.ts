@@ -1,6 +1,6 @@
 import * as h3 from 'h3'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { categoryProperties, contributions, equipmentItems, itemPropertyValues } from '#server/database/schema'
+import { equipmentCategories, contributions, equipmentItems, itemPropertyValues } from '#server/database/schema'
 import createItemSubmissionHandler from '#server/api/equipment/item-submissions/index.post'
 import type { RegisteredUserAccess } from '#server/utils/user'
 import { createTestEvent } from '~~/test-utils/create-test-event'
@@ -117,10 +117,14 @@ function createDb(options: CreateDbOptions = {}) {
   })
 
   const insertMock = vi.fn()
-  const propertyLockForMock = vi.fn(() => [])
+
+  const propertyLockForMock = vi.fn(() => category === undefined ? [] : [{
+    id: 2,
+    propertiesRevision: 0
+  }])
 
   const propertyLockWhereMock = vi.fn(() => {
-    return { for: propertyLockForMock }
+    return { orderBy: vi.fn(() => { return { for: propertyLockForMock } }) }
   })
 
   const propertyLockFromMock = vi.fn(() => {
@@ -202,6 +206,7 @@ describe('post /api/equipment/item-submissions', () => {
     getItemSubmissionRateLimiterBindingMock.mockReturnValue({ limit: itemSubmissionLimitMock })
 
     readValidatedBodyMock.mockResolvedValue({
+      expectedPropertiesRevision: 0,
       brandId: 1,
       categoryId: 2,
       name: 'PocketRocket Deluxe',
@@ -343,6 +348,7 @@ describe('post /api/equipment/item-submissions', () => {
 
   it('should insert normalized non-empty properties in the same transaction', async () => {
     readValidatedBodyMock.mockResolvedValue({
+      expectedPropertiesRevision: 0,
       brandId: 1,
       categoryId: 2,
       name: 'PocketRocket Deluxe',
@@ -370,11 +376,12 @@ describe('post /api/equipment/item-submissions', () => {
     await createItemSubmissionHandler(createTestEvent({}))
 
     expect(selectMock).toHaveBeenCalledWith({
-      id: categoryProperties.id
+      id: equipmentCategories.id,
+      propertiesRevision: equipmentCategories.propertiesRevision
     })
 
-    expect(propertyLockFromMock).toHaveBeenCalledWith(categoryProperties)
-    expect(propertyLockForMock).toHaveBeenCalledWith('key share')
+    expect(propertyLockFromMock).toHaveBeenCalledWith(equipmentCategories)
+    expect(propertyLockForMock).toHaveBeenCalledWith('share')
 
     const propertyLockCallOrder = Math.min(...propertyLockForMock.mock.invocationCallOrder)
 
@@ -401,6 +408,7 @@ describe('post /api/equipment/item-submissions', () => {
 
   it('should reject a negative property value before inserting the item', async () => {
     readValidatedBodyMock.mockResolvedValue({
+      expectedPropertiesRevision: 0,
       brandId: 1,
       categoryId: 2,
       name: 'PocketRocket Deluxe',

@@ -32,6 +32,7 @@
     "test:e2e": "playwright test --project=chromium",
     "test:e2e:all": "playwright test",
     "test:e2e:ci": "CI=true playwright test",
+    "test:integration": "node --env-file=.env.example ./node_modules/vitest/vitest.mjs run --config tests/integration/vitest.config.ts",
     "test:typecheck": "nuxi typecheck",
     "test:unit": "vitest",
     "test:unit:ci": "vitest run",

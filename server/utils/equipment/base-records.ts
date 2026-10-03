@@ -1,9 +1,9 @@
 import {
   brands,
-  categoryProperties,
+  type categoryProperties,
   equipmentCategories,
   equipmentGroups,
-  propertyEnumOptions
+  type propertyEnumOptions
 } from '#server/database/schema'
 
 const groupBaseSelection = {
@@ -29,31 +29,13 @@ const brandBaseSelection = {
 }
 
 type BrandBaseRecord = Pick<typeof brands.$inferSelect, 'id' | 'name' | 'slug'>
-
-const categoryPropertyBaseSelection = {
-  id: categoryProperties.id,
-  name: categoryProperties.name,
-  slug: categoryProperties.slug,
-  dataType: categoryProperties.dataType,
-  unit: categoryProperties.unit
-}
-
 type CategoryPropertyBaseRecord = Pick<typeof categoryProperties.$inferSelect, 'id' | 'name' | 'slug' | 'dataType' | 'unit'>
-
-const propertyEnumOptionBaseSelection = {
-  id: propertyEnumOptions.id,
-  name: propertyEnumOptions.name,
-  slug: propertyEnumOptions.slug
-}
-
 type PropertyEnumOptionBaseRecord = Pick<typeof propertyEnumOptions.$inferSelect, 'id' | 'name' | 'slug'>
 
 export {
   brandBaseSelection,
   categoryBaseSelection,
-  categoryPropertyBaseSelection,
-  groupBaseSelection,
-  propertyEnumOptionBaseSelection
+  groupBaseSelection
 }
 
 export type {

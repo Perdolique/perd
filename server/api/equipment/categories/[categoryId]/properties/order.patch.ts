@@ -1,23 +1,22 @@
-import { defineEventHandler, getValidatedQuery, getValidatedRouterParams } from 'h3'
+import { defineEventHandler, getValidatedRouterParams, readValidatedBody } from 'h3'
 import { validateAdminUser } from '#server/utils/admin'
 import { mutateCategoryProperties } from '#server/utils/equipment/category-property-mutations'
 import type { AdminCategoryPropertiesSnapshot } from '#server/utils/equipment/category-properties'
 import { withPropertiesTransaction } from '#server/utils/equipment/properties-request'
-import { validatePropertyEnumOptionParams, validatePropertiesRevisionQuery } from '#server/utils/validation/schemas'
+import { validateCategoryScopedParams, validateCategoryPropertiesOrderBody } from '#server/utils/validation/schemas'
 
 export default defineEventHandler(async (event): Promise<AdminCategoryPropertiesSnapshot> => {
   const userId = await validateAdminUser(event)
-  const params = await getValidatedRouterParams(event, validatePropertyEnumOptionParams)
-  const query = await getValidatedQuery(event, validatePropertiesRevisionQuery)
+  const params = await getValidatedRouterParams(event, validateCategoryScopedParams)
+  const body = await readValidatedBody(event, validateCategoryPropertiesOrderBody)
 
   const snapshot = await withPropertiesTransaction(event, async (transaction) => mutateCategoryProperties(transaction, {
     categoryId: params.categoryId,
-    expectedPropertiesRevision: query.expectedPropertiesRevision,
+    expectedPropertiesRevision: body.expectedPropertiesRevision,
     userId
   }, {
-    action: 'delete_option',
-    propertyId: params.propertyId,
-    optionId: params.optionId
+    action: 'order',
+    propertyIds: body.propertyIds
   }))
 
   return snapshot

@@ -31,9 +31,27 @@ jobs:
           install-dependencies: true
       - run: pnpm run format:check
 
+  integration:
+    name: Category integration
+    needs: format
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: Perdolique/automations/.github/actions/setup-pnpm@v3
+        with:
+          install-dependencies: true
+      - name: Start local database and Neon proxy
+        run: docker compose up --detach --wait
+      - name: Build test Worker
+        run: pnpm run build:e2e
+      - name: Test category writes in PostgreSQL and the Worker
+        run: pnpm run test:integration tests/integration/category-properties.test.ts tests/integration/category-properties-worker.test.ts
+      - name: Remove local database and Neon proxy
+        if: always()
+        run: docker compose down --volumes
+
   migration:
     name: Database migration
-    needs: format
+    needs: integration
     runs-on: ubuntu-24.04
     environment: ${{ github.event_name == 'pull_request' && 'staging' || 'production' }}
     steps:

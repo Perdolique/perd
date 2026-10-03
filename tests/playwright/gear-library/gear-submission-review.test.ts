@@ -35,6 +35,7 @@ const categories = [{
 }]
 
 const stovesCategory = {
+  propertiesRevision: 0,
   id: 2,
   name: 'Stoves',
   slug: 'stoves',
@@ -50,6 +51,7 @@ const stovesCategory = {
 }
 
 const sleepingPadsCategory = {
+  propertiesRevision: 0,
   id: 1,
   name: 'Sleeping Pads',
   slug: 'sleeping-pads',
@@ -86,6 +88,7 @@ const listItem = {
 }
 
 const detail = {
+  propertiesRevision: 0,
   ...listItem,
 
   properties: [{
@@ -147,7 +150,7 @@ function isStovesCategoryDetailRequest(request: Request) {
   return request.url().endsWith('/api/equipment/categories/by-slug/stoves')
 }
 
-function createGatedInitialCategoryResponder(gate: Promise<void>) {
+function createGatedInitialCategoryResponder(gate: Promise<void>, nextCategory: typeof sleepingPadsCategory) {
   return async (route: Route) => {
     const request = route.request()
     const { pathname } = new globalThis.URL(request.url())
@@ -158,7 +161,7 @@ function createGatedInitialCategoryResponder(gate: Promise<void>) {
       return
     }
 
-    await route.fulfill({ json: sleepingPadsCategory })
+    await route.fulfill({ json: nextCategory })
   }
 }
 
@@ -393,6 +396,96 @@ test.describe('Admin gear submission review', () => {
     })
   })
 
+  test('preserves stored characteristics when the category list recovers and saves the full draft', async ({ context, page }) => {
+    let failCategories = true
+    const patchRequests: Request[] = []
+
+    await test.step('open the review while the category list is unavailable', async () => {
+      await mockReferences(context)
+
+      await context.route((url) => url.pathname === '/api/equipment/categories', async (route) => {
+        if (failCategories) {
+          await route.fulfill({
+            status: 503,
+
+            json: {
+              statusCode: 503,
+              statusMessage: 'Category list unavailable'
+            }
+          })
+
+          return
+        }
+
+        await route.fulfill({ json: categories })
+      })
+
+      await context.route((url) => url.pathname === detailPath, async (route) => {
+        const request = route.request()
+
+        if (request.method() === 'PATCH') {
+          patchRequests.push(request)
+
+          await route.fulfill({ json: {
+            ...detail,
+            name: 'Draft made while categories load',
+            updatedAt: '2026-08-01T12:31:00.000Z'
+          } })
+
+          return
+        }
+
+        await route.fulfill({ json: detail })
+      })
+
+      await authenticate({
+        context,
+        page,
+        isAdmin: true,
+        target: `/admin/equipment/submissions/${submissionId}`
+      })
+
+      await expect(page.getByText('Could not load brands and categories.')).toBeVisible()
+      await page.getByLabel('Item name').fill('Draft made while categories load')
+      await expect(page.getByRole('button', { name: 'Save changes' })).toBeDisabled()
+    })
+
+    await test.step('retry the category list without clearing stored values or current edits', async () => {
+      failCategories = false
+
+      await page.getByRole('button', {
+        name: 'Retry',
+        exact: true
+      }).click()
+
+      await expect(page.getByText('Could not load brands and categories.')).toHaveCount(0)
+      await expect(page.getByLabel('Weight')).toHaveValue('83.5')
+      await expect(page.getByLabel('Item name')).toHaveValue('Draft made while categories load')
+      await expect(getSelect(page, 'Category')).toHaveAttribute('data-value', 'stoves')
+    })
+
+    await test.step('save the recovered characteristics with the edited item name', async () => {
+      await page.getByRole('button', { name: 'Save changes' }).click()
+      await expect.poll(() => patchRequests.length).toBe(1)
+
+      expect(patchRequests[0]?.postDataJSON()).toStrictEqual({
+        brandId: 10,
+        categoryId: 2,
+        expectedPropertiesRevision: 0,
+        expectedOriginalPropertiesRevision: 0,
+        expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
+        name: 'Draft made while categories load',
+
+        properties: [{
+          propertyId: 21,
+          value: '83.5'
+        }]
+      })
+
+      await expect(page.getByRole('status')).toHaveText('Changes saved.')
+    })
+  })
+
   test('should prefill, save an exact full replacement, and adopt the response baseline', async ({
     context,
     page
@@ -450,6 +543,8 @@ test.describe('Admin gear submission review', () => {
     expect(patchRequest.postDataJSON()).toStrictEqual({
       brandId: 10,
       categoryId: 2,
+      expectedPropertiesRevision: 0,
+      expectedOriginalPropertiesRevision: 0,
       expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
       name: 'PocketRocket Deluxe 2',
 
@@ -627,6 +722,8 @@ test.describe('Admin gear submission review', () => {
       brandId: 10,
       categoryId: 2,
       decision: 'publish',
+      expectedPropertiesRevision: 0,
+      expectedOriginalPropertiesRevision: 0,
       expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
       name: 'Published corrected name',
 
@@ -731,6 +828,8 @@ test.describe('Admin gear submission review', () => {
       brandId: 10,
       categoryId: 2,
       decision: 'reject',
+      expectedPropertiesRevision: 0,
+      expectedOriginalPropertiesRevision: 0,
       expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
       name: 'Rejected corrected name',
 
@@ -755,6 +854,16 @@ test.describe('Admin gear submission review', () => {
     const initialCategoryGate = createDeferred()
     const patchRequests: Request[] = []
 
+    const originalSubmission = {
+      ...detail,
+      propertiesRevision: 7
+    }
+
+    const nextCategory = {
+      ...sleepingPadsCategory,
+      propertiesRevision: 3
+    }
+
     await context.route((url) => url.pathname === '/api/equipment/brands', async (route) => {
       await route.fulfill({ json: brands })
     })
@@ -765,7 +874,7 @@ test.describe('Admin gear submission review', () => {
 
     await context.route(
       (url) => url.pathname.includes('/categories/by-slug/'),
-      createGatedInitialCategoryResponder(initialCategoryGate.promise)
+      createGatedInitialCategoryResponder(initialCategoryGate.promise, nextCategory)
     )
 
     await context.route((url) => url.pathname === detailPath, async (route) => {
@@ -782,6 +891,7 @@ test.describe('Admin gear submission review', () => {
             },
 
             properties: [],
+            propertiesRevision: 3,
             updatedAt: '2026-08-01T12:31:00.000Z'
           }
         })
@@ -789,7 +899,7 @@ test.describe('Admin gear submission review', () => {
         return
       }
 
-      await route.fulfill({ json: detail })
+      await route.fulfill({ json: originalSubmission })
     })
 
     await authenticate({
@@ -822,6 +932,8 @@ test.describe('Admin gear submission review', () => {
     expect(patchRequests[0]?.postDataJSON()).toStrictEqual({
       brandId: 10,
       categoryId: 1,
+      expectedPropertiesRevision: 3,
+      expectedOriginalPropertiesRevision: 7,
       expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
       name: 'PocketRocket Deluxe',
       properties: []
@@ -906,16 +1018,180 @@ test.describe('Admin gear submission review', () => {
       await expect(page.getByLabel('Item name')).toHaveValue('Changed name')
     })
 
-    await test.step('focus the terminal conflict after a stale save', async () => {
+    await test.step('preserve and focus the draft conflict after a stale save', async () => {
       await page.getByRole('button', { name: 'Save changes' }).click()
 
       const conflict = page.getByRole('alert').filter({
-        hasText: 'This submission changed while you were reviewing it.'
+        hasText: 'Characteristics changed since this form was loaded.'
       })
 
       await expect(conflict).toBeVisible()
       await expect(conflict).toBeFocused()
-      await expect(page.getByRole('button', { name: 'Save changes' })).toHaveCount(0)
+      await expect(page.getByRole('button', { name: 'Save changes' })).toBeDisabled()
+      await expect(page.getByLabel('Item name')).toHaveValue('Changed name')
     })
   })
+
+  test('blocks mismatched snapshots, preserves a failed reload draft, and adopts a confirmed reload', async ({ context, page }) => {
+    let current = detail
+    let failReload = false
+    const writes: Request[] = []
+    const itemName = page.getByLabel('Item name')
+    const weight = page.getByLabel('Weight')
+    const conflict = page.getByRole('alert').filter({ hasText: 'Characteristics changed since this form was loaded.' })
+
+    const reloadButton = page.getByRole('button', {
+      name: 'Reload characteristics',
+      exact: true
+    })
+
+    const dialog = page.getByRole('dialog', { name: 'Reload characteristics' })
+
+    await test.step('block decisions made from mismatched snapshots', async () => {
+      await mockReferences(context)
+
+      await context.route((url) => url.pathname.includes('/categories/by-slug/'), async (route) => {
+        await route.fulfill({ json: {
+          ...stovesCategory,
+          propertiesRevision: 1
+        } })
+      })
+
+      await context.route((url) => url.pathname === detailPath, async (route) => {
+        const request = route.request()
+
+        if (request.method() === 'PATCH') {
+          writes.push(request)
+        } else if (failReload) {
+          await route.fulfill({
+            status: 503,
+
+            json: {
+              statusCode: 503,
+              statusMessage: 'Submission temporarily unavailable'
+            }
+          })
+
+          return
+        }
+
+        await route.fulfill({ json: current })
+      })
+
+      await authenticate({
+        context,
+        page,
+        isAdmin: true,
+        target: `/admin/equipment/submissions/${submissionId}`
+      })
+
+      await expect(weight).toHaveValue('83.5')
+      await itemName.fill('My draft')
+      await weight.fill('91.2')
+      await expect(conflict).toBeVisible()
+
+      await expect(page.getByRole('button', {
+        name: 'Save changes',
+        exact: true
+      })).toBeDisabled()
+
+      await expect(page.getByRole('button', {
+        name: 'Publish',
+        exact: true
+      })).toBeDisabled()
+
+      await expect(page.getByRole('button', {
+        name: 'Reject',
+        exact: true
+      })).toBeDisabled()
+
+      expect(writes).toHaveLength(0)
+    })
+
+    await test.step('keep the draft after cancelling the reload confirmation', async () => {
+      await reloadButton.click()
+
+      await dialog.getByRole('button', {
+        name: 'Cancel',
+        exact: true
+      }).click()
+
+      await expect(itemName).toHaveValue('My draft')
+      await expect(weight).toHaveValue('91.2')
+    })
+
+    await test.step('keep the editor and draft after a confirmed reload fails', async () => {
+      failReload = true
+
+      await reloadButton.click()
+
+      await dialog.getByRole('button', {
+        name: 'Reload',
+        exact: true
+      }).click()
+
+      await expect(page.getByText('Could not reload the submission. Your draft is still here. Try again.')).toBeVisible()
+      await expect(itemName).toHaveValue('My draft')
+      await expect(itemName).toBeEnabled()
+      await expect(weight).toHaveValue('91.2')
+      await expect(conflict).toBeVisible()
+      await expect(reloadButton).toBeEnabled()
+      await expect(page.getByText('Gear submission unavailable.')).toHaveCount(0)
+      expect(writes).toHaveLength(0)
+    })
+
+    await test.step('replace the draft only after a successful confirmed reload and restore focus', async () => {
+      failReload = false
+      current = {
+        ...detail,
+        name: 'Fresh submission',
+        propertiesRevision: 1,
+        updatedAt: '2026-08-01T12:31:00.000Z'
+      }
+
+      await reloadButton.click()
+
+      await dialog.getByRole('button', {
+        name: 'Reload',
+        exact: true
+      }).click()
+
+      await expect(itemName).toHaveValue('Fresh submission')
+      await expect(itemName).toBeFocused()
+      await expect(weight).toHaveValue('83.5')
+      await expect(conflict).toHaveCount(0)
+      await expect(page.getByText('Could not reload the submission. Your draft is still here. Try again.')).toHaveCount(0)
+
+      await expect(page.getByRole('button', {
+        name: 'Publish',
+        exact: true
+      })).toBeEnabled()
+    })
+
+    await test.step('save against the accepted revision and update time', async () => {
+      await itemName.fill('Corrected fresh submission')
+
+      await page.getByRole('button', {
+        name: 'Save changes',
+        exact: true
+      }).click()
+
+      await expect.poll(() => writes.length).toBe(1)
+
+      expect(writes[0]?.postDataJSON()).toStrictEqual({
+        brandId: 10,
+        categoryId: 2,
+        expectedPropertiesRevision: 1,
+        expectedOriginalPropertiesRevision: 1,
+        expectedUpdatedAt: '2026-08-01T12:31:00.000Z',
+        name: 'Corrected fresh submission',
+
+        properties: [{
+          propertyId: 21,
+          value: '83.5'
+        }]
+      })
+    })
+  })
+
 })

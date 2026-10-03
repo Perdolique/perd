@@ -178,7 +178,8 @@ describe('admin equipment submission reads', () => {
 
         category: {
           id: 2,
-          name: 'Stoves'
+          name: 'Stoves',
+          propertiesRevision: 7
         },
 
         createdAt: new Date('2026-08-01T12:00:00Z'),
@@ -232,6 +233,12 @@ describe('admin equipment submission reads', () => {
     expect(detailQueryConfig?.columns.updatedAt).toBe(true)
     expect(detailQueryConfig?.columns.sourceUrl).toBe(true)
     expect(result.sourceUrl).toBe(sourceUrl)
+    expect(result.propertiesRevision).toBe(7)
+
+    expect(result.category).toStrictEqual({
+      id: 2,
+      name: 'Stoves'
+    })
 
     expect(result.properties).toStrictEqual([
       {

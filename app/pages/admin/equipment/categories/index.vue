@@ -49,14 +49,7 @@
             <span :class="$style.slug">{{ category.slug }}</span>
           </div>
 
-          <div :class="$style.rowActions">
-            <PerdButton size="small" variant="secondary" :aria-label="category.editLabel" @click="openEdit(category)">
-              Edit
-            </PerdButton>
-            <PerdButton size="small" variant="danger" :aria-label="category.deleteLabel" @click="openDelete(category)">
-              Delete
-            </PerdButton>
-          </div>
+          <CategoryActions :category-name="category.name" :properties-path="category.propertiesPath" @edit="openEdit(category)" @delete="openDelete(category)" />
         </li>
       </ul>
     </main>
@@ -148,6 +141,7 @@
   import PageContent from '~/components/layout/PageContent.vue'
   import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue'
   import ModalDialog from '~/components/dialogs/ModalDialog.vue'
+  import CategoryActions from '~/components/equipment/categories/CategoryActions.vue'
   import { getFetchErrorResponse } from '~/utils/fetch-error'
   import { appRoutes } from '~/utils/navigation'
 
@@ -213,15 +207,11 @@
     const sortedCategories = matchingCategories.toSorted((left, right) => left.name.localeCompare(right.name))
 
     return sortedCategories.map((category) => {
-      const editLabel = `Edit ${category.name}`
-      const deleteLabel = `Delete ${category.name}`
-
       return {
+        propertiesPath: `${appRoutes.adminEquipmentCategories}/${category.id}/properties`,
         id: category.id,
         name: category.name,
-        slug: category.slug,
-        editLabel,
-        deleteLabel
+        slug: category.slug
       }
     })
   })
@@ -550,7 +540,6 @@
 
   .row {
     display: flex;
-    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
     gap: var(--spacing-16);
@@ -563,6 +552,7 @@
   .category {
     display: grid;
     gap: var(--spacing-4);
+    min-inline-size: 0;
   }
 
   .name,
@@ -573,12 +563,6 @@
   .slug {
     color: var(--color-text-secondary);
     font-size: var(--font-size-14);
-  }
-
-  .rowActions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--spacing-8);
   }
 
   .dialog {

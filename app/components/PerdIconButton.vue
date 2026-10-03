@@ -102,6 +102,6 @@
 
   .icon {
     flex-shrink: 0;
-    font-size: 1rem;
+    font-size: var(--icon-button-icon-size, 1rem);
   }
 </style>

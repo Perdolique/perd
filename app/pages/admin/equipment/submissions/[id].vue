@@ -16,31 +16,11 @@
       It may have already left the pending review queue.
 
       <template #actions>
-        <PerdButton variant="secondary" @click="retryInitialLoad">
+        <PerdButton variant="secondary" @click="refreshSubmission()">
           Retry
         </PerdButton>
       </template>
     </PagePlaceholder>
-
-    <div
-      v-else-if="isConflict"
-      ref="conflictStatus"
-      role="alert"
-      tabindex="-1"
-    >
-      <PagePlaceholder
-        emoji="🚦"
-        title="This submission changed while you were reviewing it."
-      >
-        Reload the submission queue before making more changes.
-
-        <template #actions>
-          <PerdLink :to="appRoutes.adminEquipmentSubmissions">
-            Return to submissions
-          </PerdLink>
-        </template>
-      </PagePlaceholder>
-    </div>
 
     <div
       v-else-if="decisionStatus"
@@ -104,8 +84,12 @@
       </p>
 
       <EquipmentItemEditor
+        :key="editorKey"
+        :autofocus="shouldAutofocusEditor"
+        :properties-conflict="isConflict"
+        @reload="reloadAfterConfirmation"
         :initial-value="editorValue"
-        :is-submitting="isSubmitting"
+        :is-submitting="isEditorBusy"
         mode="review"
         :mutation-message="mutationMessage"
         @publish="publishSubmission"
@@ -117,7 +101,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, nextTick, ref, useTemplateRef } from 'vue'
+  import { computed, nextTick, ref, shallowRef, useTemplateRef, watch } from 'vue'
   import { definePageMeta, useFetch, useRequestFetch, useRoute } from '#imports'
   import EquipmentItemEditor, { type EquipmentItemEditorValue } from '~/components/equipment/EquipmentItemEditor.vue'
   import PageLoadingState from '~/components/PageLoadingState.vue'
@@ -125,6 +109,7 @@
   import PerdButton from '~/components/PerdButton.vue'
   import PerdLink from '~/components/PerdLink.vue'
   import PageContent from '~/components/layout/PageContent.vue'
+  import { logUnexpectedCategoryPropertiesError } from '~/utils/category-properties-error'
   import { appRoutes } from '~/utils/navigation'
 
   definePageMeta({
@@ -134,7 +119,6 @@
 
   const route = useRoute()
   const requestFetch = useRequestFetch()
-  const conflictStatus = useTemplateRef('conflictStatus')
   const decisionStatusElement = useTemplateRef('decisionStatusElement')
   const saveStatus = useTemplateRef('saveStatus')
   const routeId = route.params.id
@@ -142,19 +126,24 @@
   const detailPath = `/api/equipment/item-submissions/${submissionId}` as const
   const isSubmitting = ref(false)
   const isConflict = ref(false)
+  const editorKey = ref(0)
+  const shouldAutofocusEditor = computed(() => editorKey.value > 0)
+  const isReloadingSubmission = ref(false)
+  const isEditorBusy = computed(() => isSubmitting.value || isReloadingSubmission.value)
   const mutationMessage = ref<string | null>(null)
   const statusMessage = ref<string | null>(null)
   const hasStatusMessage = computed(() => statusMessage.value !== null)
 
   const {
-    data: submission,
+    data: submissionResponse,
     error: submissionError,
     refresh: refreshSubmission,
     status: submissionStatus
   } = await useFetch(detailPath)
 
-  const isInitialLoading = computed(() => submissionStatus.value === 'pending')
-  const hasInitialError = computed(() => submissionError.value !== undefined)
+  const submission = shallowRef(submissionResponse.value)
+  const isInitialLoading = computed(() => submissionStatus.value === 'pending' && submission.value === undefined)
+  const hasInitialError = computed(() => submissionError.value !== undefined && submission.value === undefined)
   const sourceUrl = computed(() => submission.value?.sourceUrl ?? '')
   const hasSourceUrl = computed(() => sourceUrl.value !== '')
 
@@ -191,7 +180,8 @@
       brandId: value.brand.id,
       categoryId: value.category.id,
       name: value.name,
-      properties: value.properties
+      properties: value.properties,
+      expectedOriginalPropertiesRevision: value.propertiesRevision
     }
   })
 
@@ -212,7 +202,7 @@
   const submittedDate = computed(() => new Date(submission.value?.createdAt ?? 0))
   const submittedDateTime = computed(() => submittedDate.value.toISOString())
 
-  const submittedDateLabel = computed(() => new Intl.DateTimeFormat('en', {
+  const submittedDateFormatter = new Intl.DateTimeFormat('en', {
     day: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
@@ -220,7 +210,15 @@
     timeZone: 'UTC',
     timeZoneName: 'short',
     year: 'numeric'
-  }).format(submittedDate.value))
+  })
+
+  const submittedDateLabel = computed(() => submittedDateFormatter.format(submittedDate.value))
+
+  watch(submissionResponse, (value) => {
+    if (value !== undefined) {
+      submission.value = value
+    }
+  })
 
   function getStatusCode(error: unknown) {
     if (typeof error !== 'object' || error === null) {
@@ -232,8 +230,26 @@
     return typeof statusCode === 'number' ? statusCode : null
   }
 
-  async function retryInitialLoad() {
+  async function reloadAfterConfirmation() {
+    if (isReloadingSubmission.value) {
+      return
+    }
+
+    isReloadingSubmission.value = true
+
     await refreshSubmission()
+
+    if (submissionError.value === undefined) {
+      isConflict.value = false
+      mutationMessage.value = null
+      editorKey.value += 1
+    } else {
+      logUnexpectedCategoryPropertiesError('Could not reload the gear submission.', submissionError.value)
+
+      mutationMessage.value = 'Could not reload the submission. Your draft is still here. Try again.'
+    }
+
+    isReloadingSubmission.value = false
   }
 
   async function mutateSubmission(
@@ -252,12 +268,17 @@
     isSubmitting.value = true
 
     try {
+      const updatedAt = new Date(currentSubmission.updatedAt)
+      const expectedUpdatedAt = updatedAt.toISOString()
+
       const response = await requestFetch(detailPath, {
         body: {
           brandId: body.brandId,
           categoryId: body.categoryId,
           decision,
-          expectedUpdatedAt: new Date(currentSubmission.updatedAt).toISOString(),
+          expectedPropertiesRevision: body.expectedPropertiesRevision,
+          expectedOriginalPropertiesRevision: body.expectedOriginalPropertiesRevision,
+          expectedUpdatedAt,
           name: body.name,
           properties: body.properties,
           rejectionReason
@@ -266,7 +287,7 @@
         method: 'PATCH'
       })
 
-      submission.value = response
+      submissionResponse.value = response
 
       if (decision === undefined) {
         statusMessage.value = 'Changes saved.'
@@ -280,11 +301,10 @@
       await nextTick()
       decisionStatusElement.value?.focus()
     } catch (error) {
-      if (getStatusCode(error) === 409) {
-        isConflict.value = true
+      const statusCode = getStatusCode(error)
 
-        await nextTick()
-        conflictStatus.value?.focus()
+      if (statusCode === 409) {
+        isConflict.value = true
 
         return
       }

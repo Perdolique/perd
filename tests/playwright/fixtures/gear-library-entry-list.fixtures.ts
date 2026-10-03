@@ -296,6 +296,7 @@ const filterLimitBrandsResponse: GearLibraryEntityDetail[] = Array.from(
 const stovesCategoryResponse: CategoryDetailResponse = {
   id: 2,
   name: 'Stoves',
+  propertiesRevision: 0,
   slug: 'stoves',
 
   properties: [{
@@ -336,6 +337,7 @@ const stovesCategoryResponse: CategoryDetailResponse = {
 const sleepingPadsCategoryResponse: CategoryDetailResponse = {
   id: 1,
   name: 'Sleeping Pads',
+  propertiesRevision: 0,
   slug: 'sleeping-pads',
 
   properties: [{
@@ -351,6 +353,7 @@ const sleepingPadsCategoryResponse: CategoryDetailResponse = {
 const filterLimitCategoryResponse: CategoryDetailResponse = {
   id: 2,
   name: 'Stoves',
+  propertiesRevision: 0,
   slug: 'stoves',
 
   properties: [{
