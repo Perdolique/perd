@@ -5,11 +5,11 @@ import { validateAdminUser } from '#server/utils/admin'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
 import { categoryBaseSelection } from '#server/utils/equipment/base-records'
 import { logCategoryWriteError, throwCategoryWriteError } from '#server/utils/equipment/category-write-errors'
-import { validateCategoryIdParams } from '#server/utils/validation/schemas'
+import { validateCategoryScopedParams } from '#server/utils/validation/schemas'
 
 export default defineEventHandler(async (event): Promise<void> => {
   const userId = await validateAdminUser(event)
-  const { id: categoryId } = await getValidatedRouterParams(event, validateCategoryIdParams)
+  const { categoryId } = await getValidatedRouterParams(event, validateCategoryScopedParams)
   const dbWebsocket = createWebSocketClientFromEvent(event)
 
   try {

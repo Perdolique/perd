@@ -23,26 +23,6 @@
     </PagePlaceholder>
 
     <div
-      v-else-if="isConflict"
-      ref="conflictStatus"
-      role="alert"
-      tabindex="-1"
-    >
-      <PagePlaceholder
-        emoji="🚦"
-        title="This submission changed while you were reviewing it."
-      >
-        Reload the submission queue before making more changes.
-
-        <template #actions>
-          <PerdLink :to="appRoutes.adminEquipmentSubmissions">
-            Return to submissions
-          </PerdLink>
-        </template>
-      </PagePlaceholder>
-    </div>
-
-    <div
       v-else-if="decisionStatus"
       ref="decisionStatusElement"
       role="status"
@@ -104,8 +84,11 @@
       </p>
 
       <EquipmentItemEditor
+        :key="editorKey"
+        :properties-conflict="isConflict"
+        @reload="reloadAfterConfirmation"
         :initial-value="editorValue"
-        :is-submitting="isSubmitting"
+        :is-submitting="isEditorBusy"
         mode="review"
         :mutation-message="mutationMessage"
         @publish="publishSubmission"
@@ -134,7 +117,6 @@
 
   const route = useRoute()
   const requestFetch = useRequestFetch()
-  const conflictStatus = useTemplateRef('conflictStatus')
   const decisionStatusElement = useTemplateRef('decisionStatusElement')
   const saveStatus = useTemplateRef('saveStatus')
   const routeId = route.params.id
@@ -142,6 +124,9 @@
   const detailPath = `/api/equipment/item-submissions/${submissionId}` as const
   const isSubmitting = ref(false)
   const isConflict = ref(false)
+  const editorKey = ref(0)
+  const isReloadingSubmission = ref(false)
+  const isEditorBusy = computed(() => isSubmitting.value || isReloadingSubmission.value)
   const mutationMessage = ref<string | null>(null)
   const statusMessage = ref<string | null>(null)
   const hasStatusMessage = computed(() => statusMessage.value !== null)
@@ -153,8 +138,8 @@
     status: submissionStatus
   } = await useFetch(detailPath)
 
-  const isInitialLoading = computed(() => submissionStatus.value === 'pending')
-  const hasInitialError = computed(() => submissionError.value !== undefined)
+  const isInitialLoading = computed(() => submissionStatus.value === 'pending' && submission.value === undefined)
+  const hasInitialError = computed(() => submissionError.value !== undefined && submission.value === undefined)
   const sourceUrl = computed(() => submission.value?.sourceUrl ?? '')
   const hasSourceUrl = computed(() => sourceUrl.value !== '')
 
@@ -191,7 +176,8 @@
       brandId: value.brand.id,
       categoryId: value.category.id,
       name: value.name,
-      properties: value.properties
+      properties: value.properties,
+      expectedOriginalPropertiesRevision: value.propertiesRevision
     }
   })
 
@@ -232,6 +218,26 @@
     return typeof statusCode === 'number' ? statusCode : null
   }
 
+  async function reloadAfterConfirmation() {
+    if (isReloadingSubmission.value) {
+      return
+    }
+
+    isReloadingSubmission.value = true
+
+    await refreshSubmission()
+
+    if (submissionError.value === undefined) {
+      isConflict.value = false
+      mutationMessage.value = null
+      editorKey.value += 1
+    } else {
+      mutationMessage.value = 'Could not reload the submission. Your draft is still here. Try again.'
+    }
+
+    isReloadingSubmission.value = false
+  }
+
   async function retryInitialLoad() {
     await refreshSubmission()
   }
@@ -257,6 +263,8 @@
           brandId: body.brandId,
           categoryId: body.categoryId,
           decision,
+          expectedPropertiesRevision: body.expectedPropertiesRevision,
+          expectedOriginalPropertiesRevision: body.expectedOriginalPropertiesRevision,
           expectedUpdatedAt: new Date(currentSubmission.updatedAt).toISOString(),
           name: body.name,
           properties: body.properties,
@@ -284,7 +292,6 @@
         isConflict.value = true
 
         await nextTick()
-        conflictStatus.value?.focus()
 
         return
       }

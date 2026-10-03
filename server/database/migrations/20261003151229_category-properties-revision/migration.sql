@@ -1,0 +1,1 @@
+ALTER TABLE "equipment_categories" ADD COLUMN "propertiesRevision" integer DEFAULT 0 NOT NULL;

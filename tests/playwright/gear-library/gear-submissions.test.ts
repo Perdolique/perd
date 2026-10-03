@@ -34,6 +34,7 @@ const categories = [{
 }]
 
 const stovesCategory = {
+  propertiesRevision: 0,
   id: 2,
   name: 'Stoves',
   slug: 'stoves',
@@ -84,6 +85,7 @@ const stovesCategory = {
 } as const
 
 const sleepingPadsCategory = {
+  propertiesRevision: 0,
   id: 1,
   name: 'Sleeping Pads',
   slug: 'sleeping-pads',
@@ -104,6 +106,7 @@ interface SubmissionReferenceMockOptions {
 }
 
 const sleepingBagsCategory = {
+  propertiesRevision: 0,
   id: 3,
   name: 'Sleeping Bags',
   slug: 'sleeping-bags',
@@ -514,6 +517,7 @@ test.describe('Gear submissions', () => {
     expect(requests[0]?.postDataJSON()).toStrictEqual({
       brandId: 10,
       categoryId: 2,
+      expectedPropertiesRevision: 0,
       name: 'PocketRocket Deluxe',
       sourceUrl,
 
@@ -756,6 +760,7 @@ test.describe('Gear submissions', () => {
     expect(requestBody).toStrictEqual({
       brandId: 10,
       categoryId: 2,
+      expectedPropertiesRevision: 0,
       name: 'PocketRocket Deluxe',
       sourceUrl,
 
@@ -892,6 +897,7 @@ test.describe('Gear submissions', () => {
     expect(secondRequestBody).toStrictEqual({
       brandId: 10,
       categoryId: 2,
+      expectedPropertiesRevision: 0,
       name: 'PocketRocket 2',
       sourceUrl,
       properties: []
@@ -969,4 +975,98 @@ test.describe('Gear submissions', () => {
     await expect(page.getByLabel('R-value')).toBeVisible()
     await expect(page.getByLabel('Weight')).toHaveCount(0)
   })
+
+  test('keeps a stale draft blocked until an explicit reload clears only characteristics', async ({ context, page }) => {
+    const requests: Request[] = []
+    let revision = 0
+
+    await mockSubmissionApi(context, {
+      categoryDetail: async (route) => {
+        await route.fulfill({ json: {
+          ...stovesCategory,
+          propertiesRevision: revision
+        } })
+      },
+
+      submit: async (route) => {
+        requests.push(route.request())
+
+        await route.fulfill({
+          status: 409,
+
+          json: {
+            statusCode: 409,
+            data: { code: 'properties_revision_conflict' }
+          }
+        })
+      }
+    })
+
+    await openRegisteredSubmissionPage(context, page)
+    await fillBaseFields(page)
+    await page.getByLabel('Weight').fill('83.5')
+
+    revision = 1
+
+    await page.getByRole('button', {
+      name: 'Submit for review',
+      exact: true
+    }).click()
+
+    const conflict = page.getByRole('alert').filter({ hasText: 'Characteristics changed since this form was loaded.' })
+
+    await expect(conflict).toBeVisible()
+    await expect(page.getByLabel('Weight')).toHaveValue('83.5')
+
+    await expect(page.getByRole('button', {
+      name: 'Submit for review',
+      exact: true
+    })).toBeDisabled()
+
+    expect(requests[0]?.postDataJSON()).toMatchObject({ expectedPropertiesRevision: 0 })
+
+    await page.getByRole('button', {
+      name: 'Reload characteristics',
+      exact: true
+    }).click()
+
+    const dialog = page.getByRole('dialog', { name: 'Reload characteristics' })
+
+    await dialog.getByRole('button', {
+      name: 'Cancel',
+      exact: true
+    }).click()
+
+    await expect(page.getByLabel('Weight')).toHaveValue('83.5')
+
+    await page.getByRole('button', {
+      name: 'Reload characteristics',
+      exact: true
+    }).click()
+
+    await dialog.getByRole('button', {
+      name: 'Reload',
+      exact: true
+    }).click()
+
+    await expect(conflict).toHaveCount(0)
+    await expect(page.getByLabel('Weight')).toHaveValue('')
+    await expect(page.getByLabel('Item name')).toHaveValue('PocketRocket Deluxe')
+    await expect(page.getByLabel('Source URL')).toHaveValue(sourceUrl)
+    await expect(getSelect(page, 'Brand')).toHaveAttribute('data-value', '10')
+    await expect(getSelect(page, 'Category')).toHaveAttribute('data-value', 'stoves')
+
+    await page.getByRole('button', {
+      name: 'Submit for review',
+      exact: true
+    }).click()
+
+    await expect.poll(() => requests.length).toBe(2)
+
+    expect(requests[1]?.postDataJSON()).toMatchObject({
+      expectedPropertiesRevision: 1,
+      properties: []
+    })
+  })
+
 })

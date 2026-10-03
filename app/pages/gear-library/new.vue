@@ -49,6 +49,8 @@
         :is-submitting="isSubmitting"
         mode="create"
         :mutation-message="mutationMessage"
+        :properties-conflict="propertiesConflict"
+        @reload="clearPropertiesConflict"
         @create="handleSubmit"
       />
     </div>
@@ -96,6 +98,7 @@
     : 'Connect Twitch in Account to continue.'
 
   const confirmationStatus = useTemplateRef('confirmationStatus')
+  const propertiesConflict = ref(false)
   const isSubmitting = ref(false)
   const isSubmitted = ref(false)
   const editorKey = ref(0)
@@ -104,7 +107,14 @@
   const isGuest = computed(() => user.value.isGuest)
   const showFormBackLink = computed(() => isGuest.value || isSubmitted.value === false)
 
+  function clearPropertiesConflict() {
+    propertiesConflict.value = false
+    mutationMessage.value = null
+  }
+
   function startAnotherSubmission() {
+    clearPropertiesConflict()
+
     mutationMessage.value = null
     shouldAutofocusEditor.value = true
     editorKey.value += 1
@@ -127,6 +137,13 @@
       confirmationStatus.value?.focus()
     } catch (error) {
       const { status } = getFetchErrorResponse(error)
+
+      if (status === 409) {
+        propertiesConflict.value = true
+        mutationMessage.value = null
+
+        return
+      }
 
       mutationMessage.value = status === 429
         ? 'Too many item submission attempts. Try again in a minute.'

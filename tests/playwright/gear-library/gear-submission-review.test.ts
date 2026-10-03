@@ -35,6 +35,7 @@ const categories = [{
 }]
 
 const stovesCategory = {
+  propertiesRevision: 0,
   id: 2,
   name: 'Stoves',
   slug: 'stoves',
@@ -50,6 +51,7 @@ const stovesCategory = {
 }
 
 const sleepingPadsCategory = {
+  propertiesRevision: 0,
   id: 1,
   name: 'Sleeping Pads',
   slug: 'sleeping-pads',
@@ -86,6 +88,7 @@ const listItem = {
 }
 
 const detail = {
+  propertiesRevision: 0,
   ...listItem,
 
   properties: [{
@@ -450,6 +453,8 @@ test.describe('Admin gear submission review', () => {
     expect(patchRequest.postDataJSON()).toStrictEqual({
       brandId: 10,
       categoryId: 2,
+      expectedPropertiesRevision: 0,
+      expectedOriginalPropertiesRevision: 0,
       expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
       name: 'PocketRocket Deluxe 2',
 
@@ -627,6 +632,8 @@ test.describe('Admin gear submission review', () => {
       brandId: 10,
       categoryId: 2,
       decision: 'publish',
+      expectedPropertiesRevision: 0,
+      expectedOriginalPropertiesRevision: 0,
       expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
       name: 'Published corrected name',
 
@@ -731,6 +738,8 @@ test.describe('Admin gear submission review', () => {
       brandId: 10,
       categoryId: 2,
       decision: 'reject',
+      expectedPropertiesRevision: 0,
+      expectedOriginalPropertiesRevision: 0,
       expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
       name: 'Rejected corrected name',
 
@@ -822,6 +831,8 @@ test.describe('Admin gear submission review', () => {
     expect(patchRequests[0]?.postDataJSON()).toStrictEqual({
       brandId: 10,
       categoryId: 1,
+      expectedPropertiesRevision: 0,
+      expectedOriginalPropertiesRevision: 0,
       expectedUpdatedAt: '2026-08-01T12:30:00.000Z',
       name: 'PocketRocket Deluxe',
       properties: []
@@ -906,16 +917,121 @@ test.describe('Admin gear submission review', () => {
       await expect(page.getByLabel('Item name')).toHaveValue('Changed name')
     })
 
-    await test.step('focus the terminal conflict after a stale save', async () => {
+    await test.step('preserve and focus the draft conflict after a stale save', async () => {
       await page.getByRole('button', { name: 'Save changes' }).click()
 
       const conflict = page.getByRole('alert').filter({
-        hasText: 'This submission changed while you were reviewing it.'
+        hasText: 'Characteristics changed since this form was loaded.'
       })
 
       await expect(conflict).toBeVisible()
       await expect(conflict).toBeFocused()
-      await expect(page.getByRole('button', { name: 'Save changes' })).toHaveCount(0)
+      await expect(page.getByRole('button', { name: 'Save changes' })).toBeDisabled()
+      await expect(page.getByLabel('Item name')).toHaveValue('Changed name')
     })
   })
+
+  test('blocks mismatched definition and submission snapshots before sending and reloads the whole review after confirmation', async ({ context, page }) => {
+    let current = { ...detail }
+    const writes: Request[] = []
+
+    await mockReferences(context)
+
+    await context.route((url) => url.pathname.includes('/categories/by-slug/'), async (route) => {
+      await route.fulfill({ json: {
+        ...stovesCategory,
+        propertiesRevision: 1
+      } })
+    })
+
+    await context.route((url) => url.pathname === detailPath, async (route) => {
+      if (route.request().method() === 'PATCH') { writes.push(route.request()) }
+
+      await route.fulfill({ json: current })
+    })
+
+    await authenticate({
+      context,
+      page,
+      isAdmin: true,
+      target: `/admin/equipment/submissions/${submissionId}`
+    })
+
+    await expect(page.getByLabel('Weight')).toHaveValue('83.5')
+    await page.getByLabel('Item name').fill('My draft')
+
+    const conflict = page.getByRole('alert').filter({ hasText: 'Characteristics changed since this form was loaded.' })
+
+    await expect(conflict).toBeVisible()
+
+    await expect(page.getByRole('button', {
+      name: 'Save changes',
+      exact: true
+    })).toBeDisabled()
+
+    await expect(page.getByRole('button', {
+      name: 'Publish',
+      exact: true
+    })).toBeDisabled()
+
+    await expect(page.getByRole('button', {
+      name: 'Reject',
+      exact: true
+    })).toBeDisabled()
+
+    expect(writes).toHaveLength(0)
+
+    await page.getByRole('button', {
+      name: 'Reload characteristics',
+      exact: true
+    }).click()
+
+    const dialog = page.getByRole('dialog', { name: 'Reload characteristics' })
+
+    await dialog.getByRole('button', {
+      name: 'Cancel',
+      exact: true
+    }).click()
+
+    await expect(page.getByLabel('Item name')).toHaveValue('My draft')
+
+    current = {
+      ...detail,
+      name: 'Fresh submission',
+      propertiesRevision: 1
+    }
+
+    await page.getByRole('button', {
+      name: 'Reload characteristics',
+      exact: true
+    }).click()
+
+    await dialog.getByRole('button', {
+      name: 'Reload',
+      exact: true
+    }).click()
+
+    await expect(page.getByLabel('Item name')).toHaveValue('Fresh submission')
+    await expect(conflict).toHaveCount(0)
+
+    await expect(page.getByRole('button', {
+      name: 'Publish',
+      exact: true
+    })).toBeEnabled()
+
+    await page.getByLabel('Item name').fill('Corrected fresh submission')
+
+    await page.getByRole('button', {
+      name: 'Save changes',
+      exact: true
+    }).click()
+
+    await expect.poll(() => writes.length).toBe(1)
+
+    expect(writes[0]?.postDataJSON()).toMatchObject({
+      expectedPropertiesRevision: 1,
+      expectedOriginalPropertiesRevision: 1
+    })
+  })
+
 })
