@@ -240,7 +240,9 @@ describe('post /api/equipment/categories', () => {
       statusCode: 409
     })
 
-    expect(errorLog).toHaveBeenCalledWith('Failed to create category', { error: queryError })
+    const queryErrorDetails: unknown = expect.stringContaining(queryError.message)
+
+    expect(errorLog).toHaveBeenCalledWith('Failed to create category', queryError, { details: queryErrorDetails })
     expect(insertContributionValuesMock).not.toHaveBeenCalled()
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
@@ -321,7 +323,9 @@ describe('post /api/equipment/categories', () => {
       statusMessage: 'Failed to create category'
     })
 
-    expect(errorLog).toHaveBeenCalledWith('Failed to create category', { error: databaseError })
+    const databaseErrorDetails: unknown = expect.stringContaining(databaseError.message)
+
+    expect(errorLog).toHaveBeenCalledWith('Failed to create category', databaseError, { details: databaseErrorDetails })
   })
 
   it('should retain a committed creation when closing the client fails', async () => {
@@ -342,6 +346,9 @@ describe('post /api/equipment/categories', () => {
 
     await expect(createCategoryHandler(event)).resolves.toStrictEqual(createdCategory)
     expect(setResponseStatusMock).toHaveBeenCalledWith(event, 201)
-    expect(errorLog).toHaveBeenCalledWith('Failed to close category write database client', { error: closeError })
+
+    const closeErrorDetails: unknown = expect.stringContaining(closeError.message)
+
+    expect(errorLog).toHaveBeenCalledWith('Failed to close category write database client', closeError, { details: closeErrorDetails })
   })
 })

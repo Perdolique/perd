@@ -1,3 +1,4 @@
+import { inspect } from 'node:util'
 import { createError, isError } from 'h3'
 
 type CategoryWriteAction = 'create' | 'update' | 'delete'
@@ -31,19 +32,26 @@ function getDatabaseError(error: unknown): DatabaseConstraintError | null {
   return null
 }
 
+/** Keeps native error fields and nested causes in the serialized Worker log. */
+function logCategoryWriteError(message: string, error: unknown) {
+  const details = inspect(error, { depth: null })
+
+  console.error(message, error, { details })
+}
+
 /** Maps known category constraints to public errors and keeps other failures private. */
 function throwCategoryWriteError(error: unknown, action: CategoryWriteAction): never {
   const failureMessage = `Failed to ${action} category`
 
   if (isError(error)) {
     if (error.statusCode >= 500) {
-      console.error(failureMessage, { error })
+      logCategoryWriteError(failureMessage, error)
     }
 
     throw error
   }
 
-  console.error(failureMessage, { error })
+  logCategoryWriteError(failureMessage, error)
 
   const databaseError = getDatabaseError(error)
 
@@ -70,4 +78,4 @@ function throwCategoryWriteError(error: unknown, action: CategoryWriteAction): n
   })
 }
 
-export { throwCategoryWriteError }
+export { logCategoryWriteError, throwCategoryWriteError }

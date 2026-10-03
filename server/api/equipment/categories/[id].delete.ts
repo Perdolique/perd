@@ -4,7 +4,7 @@ import { contributions, equipmentCategories } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
 import { categoryBaseSelection } from '#server/utils/equipment/base-records'
-import { throwCategoryWriteError } from '#server/utils/equipment/category-write-errors'
+import { logCategoryWriteError, throwCategoryWriteError } from '#server/utils/equipment/category-write-errors'
 import { validateCategoryIdParams } from '#server/utils/validation/schemas'
 
 export default defineEventHandler(async (event): Promise<void> => {
@@ -44,7 +44,7 @@ export default defineEventHandler(async (event): Promise<void> => {
     try {
       await dbWebsocket.$client.end()
     } catch (error) {
-      console.error('Failed to close category write database client', { error })
+      logCategoryWriteError('Failed to close category write database client', error)
     }
   }
 

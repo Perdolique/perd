@@ -259,6 +259,28 @@ async function mockRecoveringCategories(context: BrowserContext, firstLoad: Prom
   return () => creates
 }
 
+async function mockCategoryConflict(context: BrowserContext) {
+  await context.route('**/api/equipment/categories{,/*}', async (route) => {
+    const request = route.request()
+    const method = request.method()
+
+    if (method !== 'POST' && method !== 'PATCH') {
+      await route.fallback()
+
+      return
+    }
+
+    await route.fulfill({
+      status: 409,
+
+      json: {
+        statusCode: 409,
+        statusMessage: 'Category slug already exists'
+      }
+    })
+  })
+}
+
 async function mockRetryDelete(context: BrowserContext) {
   const itemPath = `${apiPath}/10`
   let attempts = 0
@@ -423,7 +445,9 @@ test.describe('Admin category management', () => {
 
       expect(updatedCategory?.slug).toBe('tentes-ete-plus')
       await page.getByRole('searchbox', { name: 'Search categories' }).fill('missing')
-      await expect(page.getByText('No matching categories.')).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'No matching categories.' })).toBeVisible()
+      await expect(page.getByRole('status')).toHaveText('No matching categories.')
+      await expect(page.getByRole('searchbox', { name: 'Search categories' })).toBeFocused()
       await page.getByRole('searchbox', { name: 'Search categories' }).fill('ÉTÉ')
       await expect(page.getByRole('button', { name: 'Edit Tents' })).toHaveCount(0)
     })
@@ -470,7 +494,8 @@ test.describe('Admin category management', () => {
       const renameDialog = await fillCategoryDialog(page, 'Shelters')
 
       await renameDialog.getByRole('button', { name: 'Save category' }).click()
-      await expect(page.getByText('No matching categories.')).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'No matching categories.' })).toBeVisible()
+      await expect(page.getByRole('status')).toHaveText('Shelters updated.')
       await expect(page.getByRole('searchbox', { name: 'Search categories' })).toBeFocused()
     })
 
@@ -506,21 +531,25 @@ test.describe('Admin category management', () => {
       const search = page.getByRole('searchbox', { name: 'Search categories' })
 
       await page.getByRole('link', { name: 'Manage categories' }).click()
-      await expect(page.getByText('Loading categories')).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Loading categories' })).toBeVisible()
+      await expect(page.getByRole('status')).toHaveText('Loading categories.')
       await expect(addCategory).toBeDisabled()
       firstLoad.resolve()
       await expect(page.getByText('Categories unavailable.')).toBeVisible()
+      await expect(page.getByRole('status')).toHaveText('The category list could not be loaded.')
       await expect(addCategory).toBeDisabled()
 
       const retry = page.getByRole('button', { name: 'Retry' })
 
       await retry.focus()
       await page.keyboard.press('Enter')
-      await expect(page.getByText('Loading categories')).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Loading categories' })).toBeVisible()
+      await expect(page.getByRole('status')).toHaveText('Loading categories.')
       await expect(addCategory).toBeDisabled()
       await expect(search).toBeFocused()
       retryLoad.resolve()
-      await expect(page.getByText('No categories yet.')).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'No categories yet.' })).toBeVisible()
+      await expect(page.getByRole('status')).toHaveText('No categories yet.')
       await expect(search).toBeFocused()
       await expect(addCategory).toBeEnabled()
     })
@@ -557,6 +586,15 @@ test.describe('Admin category management', () => {
       await expect(slugInput).toHaveAccessibleDescription(/Category slug already exists/u)
       await expect(slugInput).toBeEnabled()
       await expect(slugInput).toBeFocused()
+      await nameInput.fill('Ångström Updated')
+      await expect(slugInput).toHaveValue('custom-slug')
+      await expect(dialog.getByRole('alert')).toHaveText('Category slug already exists')
+      await expect(slugInput).toHaveAttribute('aria-invalid', 'true')
+      await expect(slugInput).toHaveAccessibleDescription(/Category slug already exists/u)
+      await slugInput.fill('corrected-slug')
+      await expect(slugInput).not.toHaveAttribute('aria-invalid', 'true')
+      await expect(slugInput).not.toHaveAccessibleDescription(/Category slug already exists/u)
+      await expect(dialog.getByRole('alert')).toHaveCount(0)
     })
 
     await test.step('retain invalid input, then recover from a failed save', async () => {
@@ -571,9 +609,13 @@ test.describe('Admin category management', () => {
       await expect(nameInput).toHaveAccessibleDescription('Enter a name.')
       await expect(nameInput).toBeFocused()
       await nameInput.fill('Ångström Plus')
-      await slugInput.fill('Bad Slug')
       await expect(nameInput).not.toHaveAttribute('aria-invalid', 'true')
       await expect(dialog.getByRole('alert')).toHaveCount(0)
+      await slugInput.fill('')
+      await dialog.getByRole('button', { name: 'Create category' }).click()
+      await expect(slugInput).toBeFocused()
+      expect(getCreates()).toBe(1)
+      await slugInput.fill('Bad Slug')
       await dialog.getByRole('button', { name: 'Create category' }).click()
       await expect(slugInput).toBeFocused()
       await expect(slugInput).toHaveValue('Bad Slug')
@@ -585,11 +627,160 @@ test.describe('Admin category management', () => {
       await expect(dialog.getByRole('alert')).toBeFocused()
       await expect(slugInput).toHaveValue('corrected-slug')
       await expect(nameInput).toHaveValue('Ångström Plus')
+      await nameInput.fill('Ångström Restored')
+      await expect(dialog.getByRole('alert')).toHaveCount(0)
+      await nameInput.fill('Ångström Plus')
       await dialog.getByRole('button', { name: 'Create category' }).click()
       await expect(page.getByRole('button', { name: 'Edit Ångström Plus' })).toBeVisible()
       await expect(page.getByRole('button', { name: 'Add category' })).toBeFocused()
       expect(getCreates()).toBe(3)
     })
+  })
+
+  test('keeps a slug conflict until its value changes', async ({ context, page }) => {
+    await mockCategoryStore(context, [{
+      id: 10,
+      name: 'Tents',
+      slug: 'tents'
+    }])
+
+    await mockCategoryConflict(context)
+
+    await signIn({
+      context,
+      page,
+      isAdmin: true
+    })
+
+    await page.getByRole('button', { name: 'Add category' }).click()
+
+    const createDialog = await fillCategoryDialog(page, 'Tents')
+    const createName = createDialog.getByRole('textbox', { name: 'Name' })
+    const createSlug = createDialog.getByRole('textbox', { name: 'Slug' })
+
+    await createDialog.getByRole('button', { name: 'Create category' }).click()
+    await expect(createSlug).toHaveAttribute('aria-invalid', 'true')
+    await createName.fill('Tents!')
+    await expect(createSlug).toHaveValue('tents')
+    await expect(createDialog.getByRole('alert')).toHaveText('Category slug already exists')
+    await expect(createSlug).toHaveAttribute('aria-invalid', 'true')
+    await expect(createSlug).toHaveAccessibleDescription(/Category slug already exists/u)
+    await createName.fill('Shelters')
+    await expect(createSlug).toHaveValue('shelters')
+    await expect(createSlug).not.toHaveAttribute('aria-invalid', 'true')
+    await expect(createSlug).not.toHaveAccessibleDescription(/Category slug already exists/u)
+    await expect(createDialog.getByRole('alert')).toHaveCount(0)
+    await createDialog.getByRole('button', { name: 'Cancel' }).click()
+    await page.getByRole('button', { name: 'Edit Tents' }).click()
+
+    const editDialog = page.getByRole('dialog', { name: 'Edit category' })
+    const editSlug = editDialog.getByRole('textbox', { name: 'Slug' })
+
+    await editDialog.getByRole('button', { name: 'Save category' }).click()
+    await expect(editSlug).toHaveAttribute('aria-invalid', 'true')
+    await editDialog.getByRole('textbox', { name: 'Name' }).fill('Shelters')
+    await expect(editSlug).toHaveValue('tents')
+    await expect(editDialog.getByRole('alert')).toHaveText('Category slug already exists')
+    await expect(editSlug).toHaveAttribute('aria-invalid', 'true')
+    await expect(editSlug).toHaveAccessibleDescription(/Category slug already exists/u)
+    await editSlug.fill('shelters')
+    await expect(editSlug).not.toHaveAttribute('aria-invalid', 'true')
+    await expect(editDialog.getByRole('alert')).toHaveCount(0)
+  })
+
+  test('announces a failed retry while search keeps focus', async ({ context, page }) => {
+    const retryLoad = createDeferred()
+
+    await context.route((url) => url.pathname === apiPath, async (route) => {
+      await route.fulfill({
+        status: 500,
+        json: { statusCode: 500 }
+      })
+    })
+
+    await signIn({
+      context,
+      page,
+      isAdmin: true
+    })
+
+    await expect(page.getByRole('heading', { name: 'Categories unavailable.' })).toBeVisible()
+
+    await context.route((url) => url.pathname === apiPath, async (route) => {
+      await retryLoad.promise
+
+      await route.fulfill({
+        status: 500,
+        json: { statusCode: 500 }
+      })
+    })
+
+    const search = page.getByRole('searchbox', { name: 'Search categories' })
+
+    await page.getByRole('button', { name: 'Retry' }).focus()
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('status')).toHaveText('Loading categories.')
+    await expect(search).toBeFocused()
+    retryLoad.resolve()
+    await expect(page.getByRole('status')).toHaveText('The category list could not be loaded.')
+    await expect(search).toBeFocused()
+  })
+
+  test('wraps long category text and keeps actions inside a narrow screen', async ({ context, page }) => {
+    const name = 'ДлинноеНазваниеКатегории'.repeat(2)
+    const slugPrefix = 'long-category-slug-'.repeat(3)
+    const slug = `${slugPrefix}end`
+    const editLabel = `Edit ${name}`
+    const deleteLabel = `Delete ${name}`
+
+    await mockCategoryStore(context, [{
+      id: 10,
+      name,
+      slug
+    }])
+
+    await page.setViewportSize({
+      width: 320,
+      height: 720
+    })
+
+    await signIn({
+      context,
+      page,
+      isAdmin: true
+    })
+
+    const row = page.getByRole('listitem').filter({ hasText: name })
+
+    const geometry = await row.evaluate((element) => {
+      const { documentElement } = globalThis.document
+      const children = element.querySelectorAll('strong, span, button')
+
+      const rectangles = [...children].map((child) => {
+        const rectangle = child.getBoundingClientRect()
+
+        return {
+          left: rectangle.left,
+          right: rectangle.right
+        }
+      })
+
+      return {
+        rectangles,
+        documentWidth: documentElement.scrollWidth,
+        viewportWidth: documentElement.clientWidth
+      }
+    })
+
+    expect(geometry.documentWidth).toBeLessThanOrEqual(geometry.viewportWidth)
+
+    for (const rectangle of geometry.rectangles) {
+      expect(rectangle.left).toBeGreaterThanOrEqual(0)
+      expect(rectangle.right).toBeLessThanOrEqual(geometry.viewportWidth)
+    }
+
+    await expect(row.getByRole('button', { name: editLabel })).toBeInViewport()
+    await expect(row.getByRole('button', { name: deleteLabel })).toBeInViewport()
   })
 
   test('keeps a failed delete open and allows a retry', async ({ context, page }) => {
@@ -617,7 +808,8 @@ test.describe('Admin category management', () => {
     await expect(dialog.getByRole('alert')).toContainText('used by gear')
     await dialog.getByRole('button', { name: 'Delete category' }).click()
     await expect(page.getByRole('button', { name: 'Delete Tents' })).toHaveCount(0)
-    await expect(page.getByText('No categories yet.')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'No categories yet.' })).toBeVisible()
+    await expect(page.getByRole('status')).toHaveText('Tents deleted.')
 
     const attempts = getAttempts()
 

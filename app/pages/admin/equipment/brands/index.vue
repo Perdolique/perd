@@ -84,7 +84,7 @@
             :maxlength="limits.maxBrandNameLength"
             :disabled="isSaving"
             autocomplete="off"
-            @input="resetFormErrors"
+            @input="resetFormErrors('name')"
           >
           <p v-if="nameInvalid" :id="formErrorId" :class="$style.error" role="alert">{{ formError }}</p>
         </div>
@@ -263,6 +263,15 @@
     return truncated.replaceAll(/-$/gu, '')
   }
 
+  function resetFormErrors(field?: 'name' | 'slug') {
+    if (field !== undefined && formErrorField.value !== null && formErrorField.value !== field) {
+      return
+    }
+
+    formError.value = null
+    formErrorField.value = null
+  }
+
   watch(data, (brands) => {
     if (brands !== null && brands !== undefined) {
       rows.value = brands
@@ -271,19 +280,20 @@
 
   watch(formName, (name) => {
     if (editingId.value === null && !slugManuallyEdited.value) {
-      formSlug.value = suggestSlug(name)
+      const suggestedSlug = suggestSlug(name)
+
+      if (suggestedSlug !== formSlug.value) {
+        formSlug.value = suggestedSlug
+
+        resetFormErrors('slug')
+      }
     }
   })
-
-  function resetFormErrors() {
-    formError.value = null
-    formErrorField.value = null
-  }
 
   function markSlugManuallyEdited() {
     slugManuallyEdited.value = true
 
-    resetFormErrors()
+    resetFormErrors('slug')
   }
 
   function closeBrandForm() {

@@ -84,7 +84,7 @@
             :maxlength="limits.maxEquipmentCategoryNameLength"
             :disabled="isSaving"
             autocomplete="off"
-            @input="resetFormErrors"
+            @input="resetFormErrors('name')"
           >
           <p v-if="nameInvalid" :id="formErrorId" :class="$style.error" role="alert">{{ formError }}</p>
         </div>
@@ -235,6 +235,22 @@
   const slugDescription = computed(() => slugInvalid.value ? slugErrorDescription : slugHintId)
   const hasGeneralFormError = computed(() => formError.value !== null && formErrorField.value === null)
 
+  const listStateAnnouncement = computed(() => {
+    if (isLoading.value) {
+      return 'Loading categories.'
+    }
+
+    if (hasLoadError.value) {
+      return 'The category list could not be loaded.'
+    }
+
+    if (isEmpty.value) {
+      return 'No categories yet.'
+    }
+
+    return hasNoMatches.value ? 'No matching categories.' : ''
+  })
+
   function suggestSlug(name: string): string {
     const expansions = new Map([
       ['æ', 'ae'],
@@ -264,6 +280,15 @@
     return truncated.replaceAll(/-$/gu, '')
   }
 
+  function resetFormErrors(field?: 'name' | 'slug') {
+    if (field !== undefined && formErrorField.value !== null && formErrorField.value !== field) {
+      return
+    }
+
+    formError.value = null
+    formErrorField.value = null
+  }
+
   watch(data, (categories) => {
     if (categories !== null && categories !== undefined) {
       rows.value = categories
@@ -272,19 +297,25 @@
 
   watch(formName, (name) => {
     if (editingId.value === null && !slugManuallyEdited.value) {
-      formSlug.value = suggestSlug(name)
+      const suggestedSlug = suggestSlug(name)
+
+      if (suggestedSlug !== formSlug.value) {
+        formSlug.value = suggestedSlug
+
+        resetFormErrors('slug')
+      }
     }
   })
 
-  function resetFormErrors() {
-    formError.value = null
-    formErrorField.value = null
-  }
+  // List requests and searches announce state changes; writes keep their own result message.
+  watch([status, normalizedSearch], () => {
+    announcement.value = listStateAnnouncement.value
+  })
 
   function markSlugManuallyEdited() {
     slugManuallyEdited.value = true
 
-    resetFormErrors()
+    resetFormErrors('slug')
   }
 
   function closeCategoryForm() {
@@ -349,22 +380,12 @@
     const name = formName.value.trim()
     const slug = formSlug.value.trim()
     const id = editingId.value
-    const isSlugValid = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u.test(slug)
 
     resetFormErrors()
 
     if (name === '') {
       formError.value = 'Enter a name.'
       formErrorField.value = 'name'
-
-      await focusFormError()
-
-      return
-    }
-
-    if (!isSlugValid) {
-      formError.value = 'Enter a valid slug.'
-      formErrorField.value = 'slug'
 
       await focusFormError()
 
@@ -542,7 +563,6 @@
   .category {
     display: grid;
     gap: var(--spacing-4);
-    min-inline-size: 0;
   }
 
   .name,

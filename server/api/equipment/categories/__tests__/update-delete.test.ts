@@ -242,7 +242,9 @@ describe('patch /api/equipment/categories/[id]', () => {
   })
 
   it.each([401, 403])('should reject unauthorized writes with %s before opening a database client', async (status) => {
-    validateAdminUserMock.mockRejectedValue(h3.createError({ status }))
+    const authorizationError = h3.createError({ status })
+
+    validateAdminUserMock.mockRejectedValue(authorizationError)
 
     const event = createTestEvent({})
 
@@ -369,7 +371,9 @@ describe('patch /api/equipment/categories/[id]', () => {
       statusCode: 409
     })
 
-    expect(errorLog).toHaveBeenCalledWith('Failed to update category', { error: queryError })
+    const queryErrorDetails: unknown = expect.stringContaining(queryError.message)
+
+    expect(errorLog).toHaveBeenCalledWith('Failed to update category', queryError, { details: queryErrorDetails })
     expect(insertContributionValuesMock).not.toHaveBeenCalled()
     expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
   })
@@ -431,7 +435,10 @@ describe('patch /api/equipment/categories/[id]', () => {
     const event = createTestEvent({})
 
     await expect(updateCategoryHandler(event)).resolves.toStrictEqual(updatedCategory)
-    expect(errorLog).toHaveBeenCalledWith('Failed to close category write database client', { error: closeError })
+
+    const closeErrorDetails: unknown = expect.stringContaining(closeError.message)
+
+    expect(errorLog).toHaveBeenCalledWith('Failed to close category write database client', closeError, { details: closeErrorDetails })
   })
 })
 
@@ -450,7 +457,9 @@ describe('delete /api/equipment/categories/[id]', () => {
   })
 
   it.each([401, 403])('should reject unauthorized writes with %s before opening a database client', async (status) => {
-    validateAdminUserMock.mockRejectedValue(h3.createError({ status }))
+    const authorizationError = h3.createError({ status })
+
+    validateAdminUserMock.mockRejectedValue(authorizationError)
 
     const event = createTestEvent({})
 
@@ -602,8 +611,14 @@ describe('delete /api/equipment/categories/[id]', () => {
 
     expect(insertContributionValuesMock).not.toHaveBeenCalled()
     expect(setResponseStatusMock).not.toHaveBeenCalled()
-    expect(errorLog).toHaveBeenCalledWith('Failed to delete category', { error: queryError })
-    expect(errorLog).toHaveBeenCalledWith('Failed to close category write database client', { error: closeError })
+
+    const queryErrorDetails: unknown = expect.stringContaining(queryError.message)
+
+    expect(errorLog).toHaveBeenCalledWith('Failed to delete category', queryError, { details: queryErrorDetails })
+
+    const closeErrorDetails: unknown = expect.stringContaining(closeError.message)
+
+    expect(errorLog).toHaveBeenCalledWith('Failed to close category write database client', closeError, { details: closeErrorDetails })
   })
 
   it('should retain a committed deletion when closing the client fails', async () => {
@@ -624,6 +639,9 @@ describe('delete /api/equipment/categories/[id]', () => {
 
     await deleteCategoryHandler(event)
     expect(setResponseStatusMock).toHaveBeenCalledWith(event, 204)
-    expect(errorLog).toHaveBeenCalledWith('Failed to close category write database client', { error: closeError })
+
+    const closeErrorDetails: unknown = expect.stringContaining(closeError.message)
+
+    expect(errorLog).toHaveBeenCalledWith('Failed to close category write database client', closeError, { details: closeErrorDetails })
   })
 })
