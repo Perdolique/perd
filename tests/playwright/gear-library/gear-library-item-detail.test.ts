@@ -174,7 +174,7 @@ async function signInGuest(context: BrowserContext, page: Page, redirectTo: stri
 
 test.describe('Gear library item detail', () => {
   test('shows the selected layout and returns to the same catalog selection', async ({ context, page }) => {
-    const submitPhotoLink = page.getByRole('link', {
+    const submitPhotoLink = page.getByRole('menuitem', {
       name: 'Submit photo',
       includeHidden: true
     })
@@ -230,7 +230,12 @@ test.describe('Gear library item detail', () => {
 
     await test.step('Open photo submission and return with catalog state', async () => {
       await expect(submitPhotoLink).toBeHidden()
-      await page.getByText('More', { exact: true }).click()
+
+      await page.getByRole('button', {
+        name: 'More',
+        exact: true
+      }).click()
+
       await expect(submitPhotoLink).toBeVisible()
 
       const submitPhotoHref = await submitPhotoLink.getAttribute('href')
@@ -265,10 +270,14 @@ test.describe('Gear library item detail', () => {
         name: itemSummary.name
       })).toBeVisible()
 
-      await page.getByText('More', { exact: true }).click()
+      await page.getByRole('button', {
+        name: 'More',
+        exact: true
+      }).click()
+
       await page.keyboard.press('Escape')
       await expect(submitPhotoLink).toBeHidden()
-      await expect(page.getByRole('link', { name: 'Manage images' })).toHaveCount(0)
+      await expect(page.getByRole('menuitem', { name: 'Manage images' })).toHaveCount(0)
     })
 
     await test.step('Keep actions and content usable on narrow and wide screens', async () => {
@@ -510,7 +519,7 @@ test.describe('Gear library item detail', () => {
     await expect(page).toHaveTitle('Item unavailable. | Perd')
     await expect(page.getByRole('status')).toHaveText('Item unavailable. This item is not available in the gear library.')
     await expect(page.getByRole('button', { name: 'Retry' })).toHaveCount(0)
-    await expect(page.getByRole('link', { name: 'Submit photo' })).toHaveCount(0)
+    await expect(page.getByRole('menuitem', { name: 'Submit photo' })).toHaveCount(0)
     await expect(page.getByRole('link', { name: 'Back to gear library' })).toBeVisible()
   })
 
@@ -535,7 +544,7 @@ test.describe('Gear library item detail', () => {
 
     await signInGuest(context, page, itemPath)
     await expect(page.getByRole('heading', { name: 'Could not load item.' })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Submit photo' })).toHaveCount(0)
+    await expect(page.getByRole('menuitem', { name: 'Submit photo' })).toHaveCount(0)
 
     const requestsBeforeRetry = itemRequests
 
@@ -695,9 +704,13 @@ test.describe('Gear library item detail', () => {
     })
 
     await expect(page).toHaveURL(/\/gear-library\/0195f6e8-8f44-74f6-bc9a-5c8f7df477d7$/u)
-    await page.getByText('More', { exact: true }).click()
 
-    await expect(page.getByRole('link', { name: 'Manage images' })).toHaveAttribute(
+    await page.getByRole('button', {
+      name: 'More',
+      exact: true
+    }).click()
+
+    await expect(page.getByRole('menuitem', { name: 'Manage images' })).toHaveAttribute(
       'href',
       '/admin/equipment/items/0195f6e8-8f44-74f6-bc9a-5c8f7df477d7/images'
     )

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeItemSubmissionProperties } from '../item-submission-properties'
+import { normalizeEquipmentItemProperties } from '../item-properties'
 
 const definitions = [{
   allowsNegativeValues: false,
@@ -27,9 +27,9 @@ const definitions = [{
   id: 4
 }]
 
-describe('item submission properties', () => {
+describe('equipment item properties', () => {
   it('should map every supported value to the correct EAV column', () => {
-    const result = normalizeItemSubmissionProperties(2, definitions, [{
+    const result = normalizeEquipmentItemProperties(2, definitions, [{
       propertyId: 1,
       value: '  Three season  '
     }, {
@@ -154,7 +154,7 @@ describe('item submission properties', () => {
       name: 'unknown enum option'
     }
   ])('should reject $name', ({ definitions: propertyDefinitions, inputs }) => {
-    expect(() => normalizeItemSubmissionProperties(2, propertyDefinitions, inputs)).toThrow(
+    expect(() => normalizeEquipmentItemProperties(2, propertyDefinitions, inputs)).toThrow(
       expect.objectContaining({ statusCode: 400 })
     )
   })
@@ -168,7 +168,7 @@ describe('item submission properties', () => {
       id: 5
     }]
 
-    const result = normalizeItemSubmissionProperties(2, temperatureDefinition, [{
+    const result = normalizeEquipmentItemProperties(2, temperatureDefinition, [{
       propertyId: 5,
       value: '-10.5'
     }])
@@ -190,7 +190,7 @@ describe('item submission properties', () => {
       id: 1
     }]
 
-    expect(() => normalizeItemSubmissionProperties(2, unsupportedDefinitions, [{
+    expect(() => normalizeEquipmentItemProperties(2, unsupportedDefinitions, [{
       propertyId: 1,
       value: '12'
     }])).toThrow(expect.objectContaining({ statusCode: 500 }))

@@ -1283,11 +1283,8 @@ describe('properties revision migration', () => {
 
       requireRow(option)
 
-      const [item] = await database.insert(equipmentItems).values({
-        categoryId: category.id,
-        brandId: brand.id,
-        name: 'Legacy'
-      }).returning()
+      const legacyItems = await database.execute<{ id: string; }>(sql`insert into equipment_items ("categoryId", "brandId", name) values (${category.id}, ${brand.id}, 'Legacy') returning id`)
+      const [item] = legacyItems.rows
 
       requireRow(item)
 

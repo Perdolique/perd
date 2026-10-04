@@ -43,8 +43,8 @@ jobs:
         run: docker compose up --detach --wait
       - name: Build test Worker
         run: pnpm run build:e2e
-      - name: Test category writes in PostgreSQL and the Worker
-        run: pnpm run test:integration tests/integration/category-properties.test.ts tests/integration/category-properties-worker.test.ts
+      - name: Test catalog writes in PostgreSQL and the Worker
+        run: pnpm run test:integration tests/integration/category-properties.test.ts tests/integration/category-properties-worker.test.ts tests/integration/equipment-item-edit.test.ts tests/integration/equipment-item-edit-worker.test.ts
       - name: Remove local database and Neon proxy
         if: always()
         run: docker compose down --volumes

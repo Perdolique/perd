@@ -219,8 +219,12 @@ test.describe('Photo submissions', () => {
         return location === itemLocation
       })
 
-      await page.getByText('More', { exact: true }).click()
-      await page.getByRole('link', { name: 'Submit photo' }).click()
+      await page.getByRole('button', {
+        name: 'More',
+        exact: true
+      }).click()
+
+      await page.getByRole('menuitem', { name: 'Submit photo' }).click()
 
       await expect(page).toHaveURL((url) => {
         const location = `${url.pathname}${url.search}`
@@ -432,8 +436,13 @@ test.describe('Photo submissions', () => {
     })
 
     await authenticateRegisteredUser(context, page, itemPath)
-    await page.getByText('More', { exact: true }).click()
-    await page.getByRole('link', { name: 'Submit photo' }).click()
+
+    await page.getByRole('button', {
+      name: 'More',
+      exact: true
+    }).click()
+
+    await page.getByRole('menuitem', { name: 'Submit photo' }).click()
 
     await expect.poll(async () => turnstile.getRenderOptions(page)).toContainEqual({
       action: 'photo_submission',

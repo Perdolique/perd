@@ -362,6 +362,11 @@ const equipmentItems = pgTable('equipment_items', {
     .notNull()
     .default('approved'),
 
+  revision:
+    integer()
+    .notNull()
+    .default(0),
+
   rejectionReason:
     varchar({ length: limits.maxEquipmentItemRejectionReasonLength }),
 
