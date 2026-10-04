@@ -287,6 +287,10 @@ test.describe('Equipment image management', () => {
       })
     })
 
+    await context.route(`/api/equipment/items/${itemId}/gallery`, async (route) => {
+      await route.fulfill({ json: images })
+    })
+
     const adminPath = `/admin/equipment/items/${itemId}/images`
 
     await authenticateAdmin(context, page, adminPath)

@@ -464,6 +464,82 @@ test.describe('Admin photo submission review', () => {
     await expect(page.getByRole('status')).toContainText('Published')
   })
 
+  test('should allow rejection while the preview is loading or failed', async ({ context, page }) => {
+    const previewGate = createDeferred()
+    const patchRequests: Request[] = []
+    const rejectionReason = 'The photo preview is unavailable'
+
+    await context.route((url) => url.pathname === detailPath, async (route) => {
+      const request = route.request()
+
+      if (request.method() === 'PATCH') {
+        patchRequests.push(request)
+
+        await route.fulfill({
+          json: {
+            publishedImage: null,
+            rejectionReason,
+            status: 'rejected'
+          }
+        })
+
+        return
+      }
+
+      await route.fulfill({ json: detail })
+    })
+
+    await context.route((url) => url.pathname === previewPath, async (route) => {
+      await previewGate.promise
+
+      await route.fulfill({ status: 502 })
+    })
+
+    await authenticate({
+      context,
+      isAdmin: true,
+      page,
+      target: `/admin/equipment/photo-submissions/${submissionId}`
+    })
+
+    const publishButton = page.getByRole('button', {
+      name: 'Publish',
+      exact: true
+    })
+
+    const rejectButton = page.getByRole('button', {
+      name: 'Reject',
+      exact: true
+    })
+
+    await expect(page.getByText('Loading private photo preview…')).toBeVisible()
+    await expect(publishButton).toBeDisabled()
+    await expect(rejectButton).toBeEnabled()
+    previewGate.resolve()
+    await expect(page.getByText('Could not load the private photo preview.')).toBeVisible()
+    await expect(publishButton).toBeDisabled()
+    await expect(rejectButton).toBeEnabled()
+    await rejectButton.click()
+
+    const dialog = page.getByRole('dialog', { name: 'Reject photo submission' })
+
+    await dialog.getByLabel('Reason').fill(rejectionReason)
+
+    await dialog.getByRole('button', {
+      name: 'Reject',
+      exact: true
+    }).click()
+
+    await expect(page.getByRole('status')).toContainText('Rejected')
+    await expect(page.getByRole('status')).toBeFocused()
+    expect(patchRequests).toHaveLength(1)
+
+    expect(patchRequests[0]?.postDataJSON()).toStrictEqual({
+      decision: 'reject',
+      rejectionReason
+    })
+  })
+
   test('should force the first image primary and preserve a rejection reason across retry', async ({
     context,
     page

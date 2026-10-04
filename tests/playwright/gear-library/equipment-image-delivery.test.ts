@@ -20,6 +20,7 @@ import {
 const accountHash = 'mCIRaHLLCfuPRvd-hC9t5g'
 const catalogImageId = 'catalog-image'
 const detailImageId = 'detail-image'
+const alternateDetailImageId = 'alternate-detail-image'
 const compareImageId = 'compare-image'
 const failedImageId = 'failed-image'
 const placeholderPath = '/equipment-item-placeholder.webp'
@@ -130,6 +131,20 @@ test.describe('Direct equipment image delivery', () => {
     })
 
     await mockCatalogApi(context, {
+      itemGalleries: () => {
+        return {
+          json: [{
+            cloudflareImageId: detailImageId,
+            displayOrder: 0,
+            id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1'
+          }, {
+            cloudflareImageId: alternateDetailImageId,
+            displayOrder: 1,
+            id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e2'
+          }]
+        }
+      },
+
       itemDetails: () => {
         return {
           json: {
@@ -223,6 +238,25 @@ test.describe('Direct equipment image delivery', () => {
       '(max-width: 1023px) 100vw, 440px'
     )
 
+    const alternateThumbnailButton = page.getByRole('button', { name: 'View photo 2 of 2' })
+    const alternateThumbnail = alternateThumbnailButton.locator('img')
+    const thumbnailUrl = createFlexibleImageUrl(alternateDetailImageId, 'w=64,h=64,fit=cover')
+    const retinaThumbnailUrl = createFlexibleImageUrl(alternateDetailImageId, 'w=128,h=128,fit=cover')
+
+    await alternateThumbnail.scrollIntoViewIfNeeded()
+    await expect(alternateThumbnail).toHaveJSProperty('currentSrc', thumbnailUrl)
+    await expect(alternateThumbnail).toHaveAttribute('srcset', `${thumbnailUrl} 1x, ${retinaThumbnailUrl} 2x`)
+    await expect(alternateThumbnail).toHaveAttribute('width', '64')
+    await expect(alternateThumbnail).toHaveAttribute('height', '64')
+    await expect(alternateThumbnail).toHaveAttribute('loading', 'lazy')
+
+    const alternateLargeImagePattern = /\/alternate-detail-image\/.*fit=scale-down/u
+    const alternateLargeRequests = imageRequests.filter(url => alternateLargeImagePattern.test(url))
+
+    expect(alternateLargeRequests).toHaveLength(0)
+    await alternateThumbnailButton.click()
+    await expect(detailImage).toHaveAttribute('src', /\/alternate-detail-image\/.*fit=scale-down/u)
+    await expect.poll(() => imageRequests.some(url => alternateLargeImagePattern.test(url))).toBe(true)
     await openComparisonPage(page, comparedItemIds)
 
     const firstComparisonHeader = page.getByRole('columnheader').nth(1)

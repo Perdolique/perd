@@ -35,6 +35,10 @@ const item = {
 } as const
 
 async function mockItem(context: BrowserContext) {
+  await context.route((url) => url.pathname === `/api/equipment/items/${itemId}/gallery`, async (route) => {
+    await route.fulfill({ json: [] })
+  })
+
   await context.route((url) => url.pathname === `/api/equipment/items/${itemId}`, async (route) => {
     await route.fulfill({ json: item })
   })
