@@ -113,7 +113,7 @@
   .input {
     grid-column: 1 / -1;
     inline-size: 100%;
-    min-block-size: var(--layout-button-height-medium);
+    min-block-size: var(--field-control-height, var(--layout-button-height-medium));
     padding-inline: var(--spacing-12);
     border: 1px solid var(--color-border-strong);
     border-radius: var(--layout-button-radius-small);
@@ -150,7 +150,7 @@
   }
 
   .hint {
-    color: var(--color-text-muted);
+    color: var(--field-hint-color, var(--color-text-muted));
     font-size: var(--font-size-14);
   }
 

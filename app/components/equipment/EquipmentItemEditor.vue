@@ -1,6 +1,10 @@
 <template>
   <div :class="$style.component">
     <form :class="$style.form" @submit.prevent="handleSubmit">
+      <div v-if="hasPropertiesConflict" ref="propertiesConflictAlert" tabindex="-1" :class="$style.alert" role="alert">
+        <span>Characteristics changed since this form was loaded. Your draft is still here. Reload before saving or making a decision.</span>
+        <PerdButton variant="secondary" :disabled="isSubmitting" @click="openPropertiesReload">Reload characteristics</PerdButton>
+      </div>
       <div v-if="hasMandatoryReferenceError" :class="$style.alert" role="alert">
         <span>Could not load brands and categories.</span>
 
@@ -84,7 +88,7 @@
             size="small"
             variant="secondary"
             :loading="isCategoryDetailLoading"
-            @click="retryCategoryDetail"
+            @click="refreshCategoryDetail()"
           >
             Retry
           </PerdButton>
@@ -168,6 +172,18 @@
     </form>
 
     <ConfirmationDialog
+      v-model="showPropertiesReloadConfirmation"
+      header-text="Reload characteristics"
+      confirm-button-text="Reload"
+      :confirm-loading="isReloadingProperties"
+      :close-on-confirm="false"
+      :error="propertiesReloadError"
+      @confirm="confirmPropertiesReload"
+    >
+      {{ propertiesReloadMessage }}
+    </ConfirmationDialog>
+
+    <ConfirmationDialog
       v-model="showCategoryChangeConfirmation"
       header-text="Change category"
       confirm-button-text="Change category"
@@ -218,6 +234,8 @@
     categoryId: number;
     name: string;
     properties: EquipmentItemEditorProperty[];
+    expectedPropertiesRevision?: number;
+    expectedOriginalPropertiesRevision?: number;
   }
 
   interface EquipmentItemSubmissionValue extends EquipmentItemEditorValue {
@@ -229,7 +247,7 @@
 
 <script lang="ts" setup>
   /* oxlint-disable max-lines -- The shared editor owns its reference requests, dynamic fields, validation, and category-change confirmation. */
-  import { computed, onMounted, ref, useId, useTemplateRef, watch } from 'vue'
+  import { computed, nextTick, onMounted, ref, useId, useTemplateRef, watch } from 'vue'
   import { useAsyncData, useFetch, useRequestFetch } from '#imports'
   import { limits } from '#shared/constants'
   import { isFiniteDecimalNumber, normalizeDecimalNumber } from '#shared/utils/decimal-number'
@@ -239,21 +257,6 @@
   import PerdButton from '~/components/PerdButton.vue'
   import PerdSelect, { type PerdSelectOption } from '~/components/perd-select/PerdSelect.vue'
   import TextInput from '~/components/TextInput.vue'
-
-  interface Props {
-    autofocus?: boolean;
-    initialValue: EquipmentItemEditorValue;
-    isSubmitting: boolean;
-    mode: 'create' | 'review';
-    mutationMessage?: string | null;
-  }
-
-  interface Emits {
-    create: [value: EquipmentItemSubmissionValue];
-    publish: [value: EquipmentItemEditorValue];
-    reject: [value: EquipmentItemEditorValue, rejectionReason: string];
-    submit: [value: EquipmentItemEditorValue];
-  }
 
   interface PropertyFieldView {
     enumOptions: PerdSelectOption[];
@@ -275,11 +278,29 @@
     properties: EquipmentItemEditorProperty[];
   }
 
-  const { autofocus, initialValue, isSubmitting, mode, mutationMessage } = defineProps<Props>()
+  interface Props {
+    autofocus?: boolean;
+    initialValue: EquipmentItemEditorValue;
+    isSubmitting: boolean;
+    mode: 'create' | 'review';
+    mutationMessage?: string | null;
+    propertiesConflict?: boolean;
+  }
+
+  interface Emits {
+    reload: [];
+    create: [value: EquipmentItemSubmissionValue];
+    publish: [value: EquipmentItemEditorValue];
+    reject: [value: EquipmentItemEditorValue, rejectionReason: string];
+    submit: [value: EquipmentItemEditorValue];
+  }
+
+  const { autofocus, initialValue, isSubmitting, mode, mutationMessage, propertiesConflict } = defineProps<Props>()
   const emit = defineEmits<Emits>()
   const requestFetch = useRequestFetch()
   const knownPropertiesTitleId = useId()
   const itemNameInput = useTemplateRef('itemNameInput')
+  const propertiesConflictAlert = useTemplateRef('propertiesConflictAlert')
   const maxItemNameLength = limits.maxEquipmentItemNameLength
   const maxRejectionReasonLength = limits.maxEquipmentItemRejectionReasonLength
   const maxSourceUrlLength = limits.maxEquipmentItemSubmissionSourceUrlLength
@@ -294,19 +315,28 @@
   const showRejectConfirmation = ref(false)
   const rejectionReason = ref('')
   const propertyValues = ref<Record<number, unknown>>({})
+  const pinnedCategoryDetail = ref<CategoryDetailResponse | null>(null)
+  const loadedPropertiesRevision = ref<number>()
+  const showPropertiesReloadConfirmation = ref(false)
+  const isReloadingProperties = ref(false)
+  const propertiesReloadError = ref<string | null>(null)
 
-  function focusNameInput() {
-    itemNameInput.value?.focus()
-  }
+  const propertiesReloadMessage = computed(() => mode === 'review'
+    ? 'Reload the whole submission? This discards your current edits.'
+    : 'Reload characteristics? This clears their values. Item name, brand, category, and source URL stay.')
+
+  const brandsRequestKey = `equipment-item-editor-brands-${mode}`
+  const categoriesRequestKey = `equipment-item-editor-categories-${mode}`
+  const categoryDetailRequestKey = `equipment-item-editor-category-detail-${mode}`
 
   const brandsRequestPromise = useFetch('/api/equipment/brands', {
     default: () => [],
-    key: `equipment-item-editor-brands-${mode}`
+    key: brandsRequestKey
   })
 
   const categoriesRequestPromise = useFetch('/api/equipment/categories', {
     default: () => [],
-    key: `equipment-item-editor-categories-${mode}`
+    key: categoriesRequestKey
   })
 
   const [brandsRequest, categoriesRequest] = await Promise.all([
@@ -338,7 +368,7 @@
   selectedCategorySlug.value = initialCategory?.slug ?? ''
 
   const categoryDetailRequest = await useAsyncData(
-    `equipment-item-editor-category-detail-${mode}`,
+    categoryDetailRequestKey,
     async (_nuxtApp, { signal }): Promise<CategoryDetailResponse | null> => {
       const categorySlug = selectedCategorySlug.value
 
@@ -502,7 +532,7 @@
   function createSubmissionProperties(): SubmissionPropertiesResult {
     const errors: Partial<Record<number, string>> = {}
     const properties: EquipmentItemEditorProperty[] = []
-    const definitions = categoryDetail.value?.properties ?? []
+    const definitions = pinnedCategoryDetail.value?.properties ?? []
     let hasValidationError = false
 
     for (const property of definitions) {
@@ -550,7 +580,7 @@
   const submissionProperties = computed(createSubmissionProperties)
 
   const propertyFields = computed<PropertyFieldView[]>(() => {
-    const properties = categoryDetail.value?.properties ?? []
+    const properties = pinnedCategoryDetail.value?.properties ?? []
 
     return properties.map((property) => {
       const propertyEnumOptions = property.enumOptions ?? []
@@ -619,7 +649,9 @@
       brandId: brand.id,
       categoryId: category.id,
       name: trimmedItemName.value,
-      properties: result.properties
+      properties: result.properties,
+      expectedPropertiesRevision: loadedPropertiesRevision.value,
+      expectedOriginalPropertiesRevision: initialValue.expectedOriginalPropertiesRevision
     }
   })
 
@@ -637,7 +669,14 @@
   const isDirty = computed(() => {
     const { value } = currentValue
 
-    return value !== null && serializeValue(value) !== serializeValue(initialValue)
+    if (value === null) {
+      return false
+    }
+
+    const serializedValue = serializeValue(value)
+    const serializedInitialValue = serializeValue(initialValue)
+
+    return serializedValue !== serializedInitialValue
   })
 
   const isReviewDetailUnavailable = computed(() => (
@@ -645,11 +684,34 @@
     && (categoryDetail.value === null || hasCategoryDetailError.value || isCategoryDetailLoading.value)
   ))
 
+  const hasPropertiesConflict = computed(() => {
+    if (propertiesConflict) {
+      return true
+    }
+
+    const detail = categoryDetail.value
+
+    if (detail === null) {
+      return false
+    }
+
+    const changedLoadedDefinitions = loadedPropertiesRevision.value !== undefined
+      && detail.propertiesRevision !== loadedPropertiesRevision.value
+
+    const mismatchedReviewSnapshot = mode === 'review'
+      && detail.id === initialValue.categoryId
+      && detail.propertiesRevision !== initialValue.expectedOriginalPropertiesRevision
+
+    return changedLoadedDefinitions || mismatchedReviewSnapshot
+  })
+
   const isSubmitDisabled = computed(() => (
     currentValue.value === null
     || hasInvalidSourceUrl.value
     || isMandatoryReferenceReady.value === false
     || isReviewDetailUnavailable.value
+    || hasPropertiesConflict.value
+    || isReloadingProperties.value
     || isSubmitting
     || (mode === 'review' && isDirty.value === false)
   ))
@@ -658,6 +720,8 @@
     currentValue.value === null
     || isMandatoryReferenceReady.value === false
     || isReviewDetailUnavailable.value
+    || hasPropertiesConflict.value
+    || isReloadingProperties.value
     || isSubmitting
   ))
 
@@ -666,6 +730,10 @@
   const isRejectConfirmDisabled = computed(() => (
     isSubmitting || trimmedRejectionReason.value === ''
   ))
+
+  function focusNameInput() {
+    itemNameInput.value?.focus()
+  }
 
   function markSourceUrlTouched() {
     sourceUrlTouched.value = true
@@ -680,9 +748,13 @@
   }
 
   function hasEnteredProperties() {
-    const hasLoadedPropertyValues = Object.values(propertyValues.value).some(
-      (value) => getPropertyFieldValue(value) !== ''
-    )
+    const values = Object.values(propertyValues.value)
+
+    const hasLoadedPropertyValues = values.some((value) => {
+      const fieldValue = getPropertyFieldValue(value)
+
+      return fieldValue !== ''
+    })
 
     const hasUnavailableInitialProperties = mode === 'review'
       && selectedCategory.value?.id === initialValue.categoryId
@@ -704,6 +776,8 @@
       return
     }
 
+    clearPropertyState()
+
     selectedCategorySlug.value = value
   }
 
@@ -715,14 +789,13 @@
   }
 
   async function retryMandatoryReferences() {
-    await Promise.all([
-      refreshBrands(),
-      refreshCategories()
-    ])
-  }
+    const brandsRefreshPromise = refreshBrands()
+    const categoriesRefreshPromise = refreshCategories()
 
-  async function retryCategoryDetail() {
-    await refreshCategoryDetail()
+    await Promise.all([
+      brandsRefreshPromise,
+      categoriesRefreshPromise
+    ])
   }
 
   function handleSubmit() {
@@ -738,6 +811,7 @@
         categoryId: value.categoryId,
         name: value.name,
         properties: value.properties,
+        expectedPropertiesRevision: value.expectedPropertiesRevision,
         sourceUrl: trimmedSourceUrl.value
       })
 
@@ -791,18 +865,64 @@
 
     selectedCategorySlug.value = category?.slug ?? ''
 
-    if (categoryDetail.value?.id === value.categoryId) {
-      propertyValues.value = Object.fromEntries(
-        value.properties.map((property) => [property.propertyId, property.value])
-      )
-    }
+    const properties = value.properties.map((property) => [property.propertyId, property.value])
+
+    propertyValues.value = Object.fromEntries(properties)
   }
 
-  watch(
-    () => initialValue,
-    (value) => reset(value),
-    { immediate: true }
-  )
+  function openPropertiesReload() {
+    propertiesReloadError.value = null
+    showPropertiesReloadConfirmation.value = true
+  }
+
+  async function confirmPropertiesReload() {
+    if (isReloadingProperties.value) {
+      return
+    }
+
+    if (mode === 'review') {
+      emit('reload')
+
+      showPropertiesReloadConfirmation.value = false
+
+      return
+    }
+
+    isReloadingProperties.value = true
+
+    await refreshCategoryDetail()
+
+    const detail = categoryDetail.value
+
+    if (categoryDetailError.value !== undefined || detail === null) {
+      propertiesReloadError.value = 'Could not reload characteristics. Your draft is still here. Try again.'
+      isReloadingProperties.value = false
+
+      return
+    }
+
+    clearPropertyState()
+
+    pinnedCategoryDetail.value = detail
+    loadedPropertiesRevision.value = detail.propertiesRevision
+
+    emit('reload')
+
+    showPropertiesReloadConfirmation.value = false
+    isReloadingProperties.value = false
+
+    await nextTick()
+    focusNameInput()
+  }
+
+  watch(hasPropertiesConflict, async (conflicted) => {
+    if (conflicted) {
+      await nextTick()
+      propertiesConflictAlert.value?.focus()
+    }
+  })
+
+  watch(() => initialValue, reset, { immediate: true })
 
   watch(categoriesResponse, () => {
     const category = categoriesResponse.value.find((entry) => entry.id === initialValue.categoryId)
@@ -813,18 +933,17 @@
   }, { immediate: true })
 
   watch(selectedCategorySlug, async () => {
-    clearPropertyState()
-
+    pinnedCategoryDetail.value = null
+    loadedPropertiesRevision.value = undefined
     categoryDetail.value = null
 
     await refreshCategoryDetail()
   })
 
   watch(categoryDetail, (value) => {
-    if (value?.id === initialValue.categoryId) {
-      propertyValues.value = Object.fromEntries(
-        initialValue.properties.map((property) => [property.propertyId, property.value])
-      )
+    if (value !== null && pinnedCategoryDetail.value === null) {
+      pinnedCategoryDetail.value = value
+      loadedPropertiesRevision.value = value.propertiesRevision
     }
   }, { immediate: true })
 

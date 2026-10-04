@@ -7,7 +7,6 @@ import {
   validateBrandMutationBody,
   validateBrandsListQuery,
   validateCategoryDetailParams,
-  validateCategoryIdParams,
   validateCategoryMutationBody,
   validateCategoryPropertyMutationBody,
   validateCategoryPropertyParams,
@@ -34,7 +33,7 @@ import {
   validatePhotoSubmissionIdempotencyKey,
   validatePhotoSubmissionListQuery,
   validatePhotoSubmissionParams,
-  validatePropertyEnumOptionMutationBody,
+  validatePropertyEnumOptionRevisionMutationBody,
   validatePropertyEnumOptionParams,
   validateRedirectTargetQuery,
   validateTwitchOAuthBody,
@@ -449,21 +448,7 @@ describe('validation schemas', () => {
     })).toThrow(/./u)
   })
 
-  it('should convert numeric category id params to number', () => {
-    const result = validateCategoryIdParams({
-      id: '5'
-    })
-
-    expect(result).toStrictEqual({
-      id: 5
-    })
-  })
-
-  it.each([{}, { id: '' }, { id: '0' }, { id: '01' }, { id: 'sleeping-bags' }])('should reject invalid category id params: %j', (params) => {
-    expect(() => validateCategoryIdParams(params)).toThrow(/./u)
-  })
-
-  it('should convert nested category id params to number', () => {
+  it('should convert category id params to number', () => {
     const result = validateCategoryScopedParams({
       categoryId: '5'
     })
@@ -473,7 +458,7 @@ describe('validation schemas', () => {
     })
   })
 
-  it.each([{}, { categoryId: '' }, { categoryId: '0' }, { categoryId: '01' }, { categoryId: 'sleeping-bags' }])('should reject invalid nested category id params: %j', (params) => {
+  it.each([{}, { categoryId: '' }, { categoryId: '0' }, { categoryId: '01' }, { categoryId: 'sleeping-bags' }])('should reject invalid category id params: %j', (params) => {
     expect(() => validateCategoryScopedParams(params)).toThrow(/./u)
   })
 
@@ -609,6 +594,7 @@ describe('validation schemas', () => {
 
   it('should trim and validate number category property bodies', () => {
     const result = validateCategoryPropertyMutationBody({
+      expectedPropertiesRevision: 0,
       dataType: 'number',
       name: '  Weight  ',
       slug: '  weight  ',
@@ -616,6 +602,8 @@ describe('validation schemas', () => {
     })
 
     expect(result).toStrictEqual({
+      expectedPropertiesRevision: 0,
+      allowsNegativeValues: false,
       dataType: 'number',
       name: 'Weight',
       slug: 'weight',
@@ -625,6 +613,7 @@ describe('validation schemas', () => {
 
   it('should trim and validate enum category property bodies with options', () => {
     const result = validateCategoryPropertyMutationBody({
+      expectedPropertiesRevision: 0,
       dataType: 'enum',
 
       enumOptions: [{
@@ -640,6 +629,8 @@ describe('validation schemas', () => {
     })
 
     expect(result).toStrictEqual({
+      expectedPropertiesRevision: 0,
+      allowsNegativeValues: false,
       dataType: 'enum',
 
       enumOptions: [{
@@ -657,6 +648,7 @@ describe('validation schemas', () => {
 
   it('should accept category property body at max field lengths', () => {
     const result = validateCategoryPropertyMutationBody({
+      expectedPropertiesRevision: 0,
       dataType: 'number',
       name: maxCategoryPropertyName,
       slug: maxCategoryPropertySlug,
@@ -664,6 +656,8 @@ describe('validation schemas', () => {
     })
 
     expect(result).toStrictEqual({
+      expectedPropertiesRevision: 0,
+      allowsNegativeValues: false,
       dataType: 'number',
       name: maxCategoryPropertyName,
       slug: maxCategoryPropertySlug,
@@ -685,7 +679,10 @@ describe('validation schemas', () => {
     slug: 'weight',
     unit: tooLongCategoryPropertyUnit
   }])('should reject oversized category property body fields: %j', (body) => {
-    expect(() => validateCategoryPropertyMutationBody(body)).toThrow(/./u)
+    expect(() => validateCategoryPropertyMutationBody({
+      ...body,
+      expectedPropertiesRevision: 0
+    })).toThrow(/./u)
   })
 
   it.each([{
@@ -721,28 +718,35 @@ describe('validation schemas', () => {
     name: 'Fill Type',
     slug: 'fill-type'
   }])('should reject invalid category property body combinations: %j', (body) => {
-    expect(() => validateCategoryPropertyMutationBody(body)).toThrow(/./u)
+    expect(() => validateCategoryPropertyMutationBody({
+      ...body,
+      expectedPropertiesRevision: 0
+    })).toThrow(/./u)
   })
 
   it('should trim property enum option mutation body fields', () => {
-    const result = validatePropertyEnumOptionMutationBody({
+    const result = validatePropertyEnumOptionRevisionMutationBody({
+      expectedPropertiesRevision: 0,
       name: '  Down  ',
       slug: '  down  '
     })
 
     expect(result).toStrictEqual({
+      expectedPropertiesRevision: 0,
       name: 'Down',
       slug: 'down'
     })
   })
 
   it('should accept property enum option mutation body at max field lengths', () => {
-    const result = validatePropertyEnumOptionMutationBody({
+    const result = validatePropertyEnumOptionRevisionMutationBody({
+      expectedPropertiesRevision: 0,
       name: maxPropertyEnumOptionName,
       slug: maxPropertyEnumOptionSlug
     })
 
     expect(result).toStrictEqual({
+      expectedPropertiesRevision: 0,
       name: maxPropertyEnumOptionName,
       slug: maxPropertyEnumOptionSlug
     })
@@ -761,7 +765,10 @@ describe('validation schemas', () => {
     name: 'Down',
     slug: tooLongPropertyEnumOptionSlug
   }])('should reject invalid property enum option mutation body: %j', (body) => {
-    expect(() => validatePropertyEnumOptionMutationBody(body)).toThrow(/./u)
+    expect(() => validatePropertyEnumOptionRevisionMutationBody({
+      ...body,
+      expectedPropertiesRevision: 0
+    })).toThrow(/./u)
   })
 
   it('should normalize items list query', () => {
@@ -1245,6 +1252,7 @@ describe('validation schemas', () => {
     const result = validateItemSubmissionCreateBody({
       brandId: 1,
       categoryId: 2,
+      expectedPropertiesRevision: 0,
       name: 'PocketRocket Deluxe',
       sourceUrl: 'https://example.com/product',
 
@@ -1301,10 +1309,16 @@ describe('validation schemas', () => {
       name: 'I'.repeat(limits.maxEquipmentItemNameLength + 1),
       sourceUrl: 'https://example.com/product',
       properties: []
-    },
-    {
+    }
+  ])('should reject invalid item submission body: %j', (body) => {
+    expect(() => validateItemSubmissionCreateBody(body)).toThrow(/./u)
+  })
+
+  it('should reject numeric item submission property values with a valid revision', () => {
+    expect(() => validateItemSubmissionCreateBody({
       brandId: 1,
       categoryId: 2,
+      expectedPropertiesRevision: 0,
       name: 'Item',
       sourceUrl: 'https://example.com/product',
 
@@ -1312,10 +1326,14 @@ describe('validation schemas', () => {
         propertyId: 1,
         value: 12
       }]
-    },
-    {
+    })).toThrow('Invalid type: Expected (boolean | string) but received 12')
+  })
+
+  it('should reject duplicate item submission property IDs with a valid revision', () => {
+    expect(() => validateItemSubmissionCreateBody({
       brandId: 1,
       categoryId: 2,
+      expectedPropertiesRevision: 0,
       name: 'Item',
       sourceUrl: 'https://example.com/product',
 
@@ -1326,9 +1344,7 @@ describe('validation schemas', () => {
         propertyId: 1,
         value: 'two'
       }]
-    }
-  ])('should reject invalid item submission body: %j', (body) => {
-    expect(() => validateItemSubmissionCreateBody(body)).toThrow(/./u)
+    })).toThrow('properties must contain unique propertyId values')
   })
 
   it.each([
@@ -1418,12 +1434,16 @@ describe('validation schemas', () => {
     expect(validateItemSubmissionUpdateBody({
       brandId: 1,
       categoryId: 2,
+      expectedPropertiesRevision: 0,
+      expectedOriginalPropertiesRevision: 0,
       expectedUpdatedAt: '2026-08-01T12:00:00.000Z',
       name: '  PocketRocket Deluxe  ',
       properties: []
     })).toStrictEqual({
       brandId: 1,
       categoryId: 2,
+      expectedPropertiesRevision: 0,
+      expectedOriginalPropertiesRevision: 0,
       expectedUpdatedAt: '2026-08-01T12:00:00.000Z',
       name: 'PocketRocket Deluxe',
       properties: []
@@ -1432,6 +1452,8 @@ describe('validation schemas', () => {
     expect(() => validateItemSubmissionUpdateBody({
       brandId: 1,
       categoryId: 2,
+      expectedPropertiesRevision: 0,
+      expectedOriginalPropertiesRevision: 0,
       expectedUpdatedAt: '2026-08-01T12:00:00.000Z',
       name: 'PocketRocket Deluxe'
     })).toThrow(/./u)
@@ -1439,6 +1461,8 @@ describe('validation schemas', () => {
     expect(() => validateItemSubmissionUpdateBody({
       brandId: 1,
       categoryId: 2,
+      expectedPropertiesRevision: 0,
+      expectedOriginalPropertiesRevision: 0,
       expectedUpdatedAt: 'not-a-timestamp',
       name: 'PocketRocket Deluxe',
       properties: []
@@ -1449,6 +1473,8 @@ describe('validation schemas', () => {
     const body = {
       brandId: 1,
       categoryId: 2,
+      expectedPropertiesRevision: 0,
+      expectedOriginalPropertiesRevision: 0,
       expectedUpdatedAt: '2026-08-01T12:00:00.000Z',
       name: 'PocketRocket Deluxe',
       properties: []
@@ -1495,6 +1521,8 @@ describe('validation schemas', () => {
     expect(() => validateItemSubmissionUpdateBody({
       brandId: 1,
       categoryId: 2,
+      expectedPropertiesRevision: 0,
+      expectedOriginalPropertiesRevision: 0,
       expectedUpdatedAt: '2026-08-01T12:00:00.000Z',
       name: 'PocketRocket Deluxe',
       properties: [],

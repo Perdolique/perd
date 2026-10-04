@@ -284,6 +284,11 @@ const equipmentCategories = pgTable('equipment_categories', {
     .notNull()
     .unique(),
 
+  propertiesRevision:
+    integer()
+    .notNull()
+    .default(0),
+
   createdAt:
     timestamp({
       withTimezone: true

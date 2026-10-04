@@ -315,7 +315,7 @@
     align-items: center;
     inline-size: 100%;
     min-inline-size: 0;
-    min-block-size: var(--layout-button-height-medium);
+    min-block-size: var(--field-control-height, var(--layout-button-height-medium));
     padding: 0 0 0 var(--spacing-12);
     border: 1px solid var(--color-border-strong);
     border-radius: var(--layout-button-radius-small);

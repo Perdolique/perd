@@ -22,6 +22,7 @@ interface CategoryDetailResponse {
   id: number;
   name: string;
   properties: CategoryDetailProperty[];
+  propertiesRevision: number;
   slug: string;
 }
 
@@ -32,6 +33,7 @@ export default defineEventHandler(async (event) : Promise<CategoryDetailResponse
     columns: {
       id: true,
       name: true,
+      propertiesRevision: true,
       slug: true
     },
 
@@ -61,6 +63,10 @@ export default defineEventHandler(async (event) : Promise<CategoryDetailResponse
               id: true,
               name: true,
               slug: true
+            },
+
+            orderBy: {
+              id: 'asc'
             }
           }
         }
@@ -98,7 +104,8 @@ export default defineEventHandler(async (event) : Promise<CategoryDetailResponse
     id: category.id,
     name: category.name,
     slug: category.slug,
-    properties
+    properties,
+    propertiesRevision: category.propertiesRevision
   }
 })
 

@@ -1,4 +1,4 @@
-import type { BrowserContext, Page, Request, Route } from '@playwright/test'
+import type { BrowserContext, Locator, Page, Request, Route } from '@playwright/test'
 import * as v from 'valibot'
 import type { CategoriesListResponse } from '../../../server/api/equipment/categories/index.get.ts'
 import { expect, test } from '../fixtures/global.fixtures.ts'
@@ -52,6 +52,26 @@ async function signIn({ context, isAdmin, page, target = path }: SignInOptions) 
       userId: adminId
     }
   })
+}
+
+async function selectCategoryAction(page: Page, name: string, action: 'Edit' | 'Delete') {
+  await page.getByRole('button', {
+    name: `Actions for ${name}`,
+    exact: true
+  }).click()
+
+  await page.getByRole('menu', { name: `${name} actions` }).getByRole('menuitem', {
+    name: action,
+    exact: true
+  }).click()
+}
+
+function requireBounds(value: Awaited<ReturnType<Locator['boundingBox']>>) {
+  if (value === null) {
+    throw new Error('Expected a visible category action menu')
+  }
+
+  return value
 }
 
 async function mockCategoryStore(context: BrowserContext, initial: Category[] = []) {
@@ -354,6 +374,120 @@ async function mockPendingCategoryCreate(context: BrowserContext, release: Promi
 }
 
 test.describe('Admin category management', () => {
+  test('opens one category menu at a time and supports keyboard actions, dismissal, and focus restoration', async ({ context, page }) => {
+    await mockCategoryStore(context, [{
+      id: 10,
+      name: 'Tents',
+      slug: 'tents'
+    }, {
+      id: 11,
+      name: 'Shelters',
+      slug: 'shelters'
+    }])
+
+    await signIn({
+      context,
+      page,
+      isAdmin: true
+    })
+
+    const trigger = page.getByRole('button', {
+      name: 'Actions for Tents',
+      exact: true
+    })
+
+    const menu = page.getByRole('menu', { name: 'Tents actions' })
+
+    await expect(menu).not.toBeVisible()
+    await trigger.focus()
+    await page.keyboard.press('Enter')
+    await expect(trigger).toHaveAttribute('aria-expanded', 'true')
+
+    const triggerRectangle = await trigger.boundingBox()
+    const menuRectangle = await menu.boundingBox()
+    const triggerGeometry = requireBounds(triggerRectangle)
+    const menuGeometry = requireBounds(menuRectangle)
+    const rightDifference = Math.abs(menuGeometry.x + menuGeometry.width - triggerGeometry.x - triggerGeometry.width)
+    const topDifference = Math.abs(menuGeometry.y - triggerGeometry.y - triggerGeometry.height - 8)
+
+    expect(rightDifference).toBeLessThan(1)
+    expect(topDifference).toBeLessThan(1)
+
+    await expect(menu.getByRole('menuitem', {
+      name: 'Characteristics',
+      exact: true
+    })).toBeFocused()
+
+    await page.keyboard.press('ArrowDown')
+
+    await expect(menu.getByRole('menuitem', {
+      name: 'Edit',
+      exact: true
+    })).toBeFocused()
+
+    await page.keyboard.press('End')
+
+    await expect(menu.getByRole('menuitem', {
+      name: 'Delete',
+      exact: true
+    })).toBeFocused()
+
+    await page.keyboard.press('ArrowDown')
+
+    await expect(menu.getByRole('menuitem', {
+      name: 'Characteristics',
+      exact: true
+    })).toBeFocused()
+
+    await page.keyboard.press('Escape')
+    await expect(menu).not.toBeVisible()
+    await expect(trigger).toBeFocused()
+    await page.keyboard.press('ArrowUp')
+
+    await expect(menu.getByRole('menuitem', {
+      name: 'Delete',
+      exact: true
+    })).toBeFocused()
+
+    await page.keyboard.press('Home')
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('Enter')
+
+    const dialog = page.getByRole('dialog', { name: 'Edit category' })
+
+    await expect(dialog).toBeVisible()
+    await expect(menu).not.toBeVisible()
+
+    await dialog.getByRole('button', {
+      name: 'Cancel',
+      exact: true
+    }).click()
+
+    await expect(trigger).toBeFocused()
+    await trigger.click()
+
+    await page.getByRole('button', {
+      name: 'Actions for Shelters',
+      exact: true
+    }).click()
+
+    await expect(menu).not.toBeVisible()
+    await expect(page.getByRole('menu', { name: 'Shelters actions' })).toBeVisible()
+    await page.getByRole('searchbox', { name: 'Search categories' }).click()
+    await expect(page.getByRole('menu', { name: 'Shelters actions' })).not.toBeVisible()
+    await expect(page.getByRole('searchbox', { name: 'Search categories' })).toBeFocused()
+
+    await page.getByRole('button', {
+      name: 'Actions for Shelters',
+      exact: true
+    }).focus()
+
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('Tab')
+    await expect(page.getByRole('menu', { name: 'Shelters actions' })).not.toBeVisible()
+    await expect(trigger).toBeFocused()
+  })
+
   test('guards the page before category data loads', async ({ context, page }) => {
     let categoryRequests = 0
 
@@ -428,18 +562,18 @@ test.describe('Admin category management', () => {
         isAdmin: true
       })
 
-      await expect(page.getByRole('button', { name: 'Edit Tentes été' })).toBeVisible()
+      await expect(page.getByRole('button', { name: 'Actions for Tentes été' })).toBeVisible()
     })
 
     await test.step('edit the same category and search the updated list', async () => {
-      await page.getByRole('button', { name: 'Edit Tentes été' }).click()
+      await selectCategoryAction(page, 'Tentes été', 'Edit')
 
       const editDialog = await fillCategoryDialog(page, 'Tentes été Plus')
 
       await expect(editDialog.getByRole('textbox', { name: 'Slug' })).toHaveValue('tentes-ete')
       await editDialog.getByRole('textbox', { name: 'Slug' }).fill('tentes-ete-plus')
       await editDialog.getByRole('button', { name: 'Save category' }).click()
-      await expect(page.getByRole('button', { name: 'Edit Tentes été Plus' })).toBeVisible()
+      await expect(page.getByRole('button', { name: 'Actions for Tentes été Plus' })).toBeVisible()
 
       const updatedCategory = categories.find((category) => category.id === 20)
 
@@ -449,7 +583,7 @@ test.describe('Admin category management', () => {
       await expect(page.getByRole('status')).toHaveText('No matching categories.')
       await expect(page.getByRole('searchbox', { name: 'Search categories' })).toBeFocused()
       await page.getByRole('searchbox', { name: 'Search categories' }).fill('ÉTÉ')
-      await expect(page.getByRole('button', { name: 'Edit Tents' })).toHaveCount(0)
+      await expect(page.getByRole('button', { name: 'Actions for Tents' })).toHaveCount(0)
     })
 
     await test.step('reload the edited category and use it in catalog and submission selectors', async () => {
@@ -462,7 +596,7 @@ test.describe('Admin category management', () => {
         isAdmin: true
       })
 
-      await expect(page.getByRole('button', { name: 'Edit Tentes été Plus' })).toBeVisible()
+      await expect(page.getByRole('button', { name: 'Actions for Tentes été Plus' })).toBeVisible()
       await expect(page.getByText('tentes-ete-plus', { exact: true })).toBeVisible()
 
       await page.getByRole('navigation', { name: 'Workspace navigation' })
@@ -489,7 +623,7 @@ test.describe('Admin category management', () => {
 
       await page.getByRole('link', { name: 'Manage categories' }).click()
       await page.getByRole('searchbox', { name: 'Search categories' }).fill('ÉTÉ')
-      await page.getByRole('button', { name: 'Edit Tentes été Plus' }).click()
+      await selectCategoryAction(page, 'Tentes été Plus', 'Edit')
 
       const renameDialog = await fillCategoryDialog(page, 'Shelters')
 
@@ -501,9 +635,9 @@ test.describe('Admin category management', () => {
 
     await test.step('delete the category by its stable id and restore search focus', async () => {
       await page.getByRole('searchbox', { name: 'Search categories' }).fill('')
-      await page.getByRole('button', { name: 'Delete Shelters' }).click()
+      await selectCategoryAction(page, 'Shelters', 'Delete')
       await page.getByRole('dialog', { name: 'Delete category?' }).getByRole('button', { name: 'Delete category' }).click()
-      await expect(page.getByRole('button', { name: 'Delete Shelters' })).toHaveCount(0)
+      await expect(page.getByRole('button', { name: 'Actions for Shelters' })).toHaveCount(0)
       await expect(page.getByRole('searchbox', { name: 'Search categories' })).toBeFocused()
 
       expect(categories).toEqual([{
@@ -631,7 +765,7 @@ test.describe('Admin category management', () => {
       await expect(dialog.getByRole('alert')).toHaveCount(0)
       await nameInput.fill('Ångström Plus')
       await dialog.getByRole('button', { name: 'Create category' }).click()
-      await expect(page.getByRole('button', { name: 'Edit Ångström Plus' })).toBeVisible()
+      await expect(page.getByRole('button', { name: 'Actions for Ångström Plus' })).toBeVisible()
       await expect(page.getByRole('button', { name: 'Add category' })).toBeFocused()
       expect(getCreates()).toBe(3)
     })
@@ -671,7 +805,7 @@ test.describe('Admin category management', () => {
     await expect(createSlug).not.toHaveAccessibleDescription(/Category slug already exists/u)
     await expect(createDialog.getByRole('alert')).toHaveCount(0)
     await createDialog.getByRole('button', { name: 'Cancel' }).click()
-    await page.getByRole('button', { name: 'Edit Tents' }).click()
+    await selectCategoryAction(page, 'Tents', 'Edit')
 
     const editDialog = page.getByRole('dialog', { name: 'Edit category' })
     const editSlug = editDialog.getByRole('textbox', { name: 'Slug' })
@@ -730,8 +864,7 @@ test.describe('Admin category management', () => {
     const name = 'ДлинноеНазваниеКатегории'.repeat(2)
     const slugPrefix = 'long-category-slug-'.repeat(3)
     const slug = `${slugPrefix}end`
-    const editLabel = `Edit ${name}`
-    const deleteLabel = `Delete ${name}`
+    const actionLabel = `Actions for ${name}`
 
     await mockCategoryStore(context, [{
       id: 10,
@@ -779,8 +912,42 @@ test.describe('Admin category management', () => {
       expect(rectangle.right).toBeLessThanOrEqual(geometry.viewportWidth)
     }
 
-    await expect(row.getByRole('button', { name: editLabel })).toBeInViewport()
-    await expect(row.getByRole('button', { name: deleteLabel })).toBeInViewport()
+    const trigger = row.getByRole('button', { name: actionLabel })
+
+    await expect(trigger).toBeInViewport()
+
+    const rowRectangle = await row.boundingBox()
+    const triggerRectangle = await trigger.boundingBox()
+    const rowBounds = requireBounds(rowRectangle)
+    const triggerBounds = requireBounds(triggerRectangle)
+    const rowCenter = rowBounds.y + rowBounds.height / 2
+    const triggerCenter = triggerBounds.y + triggerBounds.height / 2
+    const centerDifference = Math.abs(rowCenter - triggerCenter)
+
+    expect(centerDifference).toBeLessThan(1)
+    await trigger.click()
+
+    const menu = page.getByRole('menu', { name: `${name} actions` })
+    const menuBounds = await menu.boundingBox()
+    const menuGeometry = requireBounds(menuBounds)
+
+    expect(menuGeometry.x).toBeGreaterThanOrEqual(0)
+    expect(menuGeometry.x + menuGeometry.width).toBeLessThanOrEqual(320)
+
+    await expect(menu.getByRole('menuitem', {
+      name: 'Characteristics',
+      exact: true
+    })).toBeInViewport()
+
+    await expect(menu.getByRole('menuitem', {
+      name: 'Edit',
+      exact: true
+    })).toBeInViewport()
+
+    await expect(menu.getByRole('menuitem', {
+      name: 'Delete',
+      exact: true
+    })).toBeInViewport()
   })
 
   test('keeps a failed delete open and allows a retry', async ({ context, page }) => {
@@ -798,7 +965,7 @@ test.describe('Admin category management', () => {
       isAdmin: true
     })
 
-    await page.getByRole('button', { name: 'Delete Tents' }).click()
+    await selectCategoryAction(page, 'Tents', 'Delete')
 
     const dialog = page.getByRole('dialog', { name: 'Delete category?' })
 
@@ -807,7 +974,7 @@ test.describe('Admin category management', () => {
     await dialog.getByRole('button', { name: 'Delete category' }).click()
     await expect(dialog.getByRole('alert')).toContainText('used by gear')
     await dialog.getByRole('button', { name: 'Delete category' }).click()
-    await expect(page.getByRole('button', { name: 'Delete Tents' })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Actions for Tents' })).toHaveCount(0)
     await expect(page.getByRole('heading', { name: 'No categories yet.' })).toBeVisible()
     await expect(page.getByRole('status')).toHaveText('Tents deleted.')
 
@@ -893,7 +1060,7 @@ test.describe('Admin category management', () => {
 
       await expect.poll(getCreates).toBe(1)
       pending.resolve()
-      await expect(page.getByRole('button', { name: 'Edit Tents' })).toBeVisible()
+      await expect(page.getByRole('button', { name: 'Actions for Tents' })).toBeVisible()
     })
   })
 })

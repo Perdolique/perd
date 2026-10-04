@@ -1,5 +1,3 @@
-import { and, eq, inArray } from 'drizzle-orm'
-
 import {
   createError,
   defineEventHandler,
@@ -10,9 +8,10 @@ import {
   type H3Event
 } from 'h3'
 
-import { categoryProperties, contributions, equipmentItems, itemPropertyValues } from '#server/database/schema'
+import { contributions, equipmentItems, itemPropertyValues } from '#server/database/schema'
 import { getItemSubmissionRateLimiterBinding } from '#server/utils/cloudflare'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { checkPropertiesRevision, lockPropertiesCategories } from '#server/utils/equipment/category-properties'
 import { normalizeItemSubmissionProperties } from '#server/utils/equipment/item-submission-properties'
 import { validateRegisteredUserAccess } from '#server/utils/user'
 import { validateItemSubmissionCreateBody } from '#server/utils/validation/schemas'
@@ -81,21 +80,10 @@ export default defineEventHandler(async (event): Promise<ItemSubmissionCreateRes
 
   try {
     const createdSubmission = await dbWebsocket.transaction(async (transaction) => {
-      const submittedPropertyIds = body.properties.map((property) => property.propertyId)
+      const [lockedCategory] = await lockPropertiesCategories(transaction, [body.categoryId])
 
-      if (submittedPropertyIds.length > 0) {
-        await transaction
-          .select({
-            id: categoryProperties.id
-          })
-          .from(categoryProperties)
-          .where(
-            and(
-              eq(categoryProperties.categoryId, body.categoryId),
-              inArray(categoryProperties.id, submittedPropertyIds)
-            )
-          )
-          .for('key share')
+      if (body.expectedPropertiesRevision !== undefined && lockedCategory !== undefined) {
+        checkPropertiesRevision(lockedCategory.propertiesRevision, body.expectedPropertiesRevision)
       }
 
       const brandPromise = transaction.query.brands.findFirst({
@@ -231,7 +219,11 @@ export default defineEventHandler(async (event): Promise<ItemSubmissionCreateRes
       message: 'Failed to submit equipment item'
     })
   } finally {
-    await dbWebsocket.$client.end()
+    try {
+      await dbWebsocket.$client.end()
+    } catch (error) {
+      console.error('Failed to close item submission database client', error)
+    }
   }
 })
 

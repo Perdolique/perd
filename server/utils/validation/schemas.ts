@@ -117,10 +117,6 @@ const categoryMutationSchema = v.object({
   )
 })
 
-const categoryIdParamsSchema = v.object({
-  id: positiveIntegerIdParamSchema
-})
-
 const categoryScopedParamsSchema = v.object({
   categoryId: positiveIntegerIdParamSchema
 })
@@ -155,49 +151,84 @@ const propertyEnumOptionMutationSchema = v.object({
   )
 })
 
-const categoryPropertyMutationSchema = v.pipe(
+const propertiesRevisionSchema = v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(2_147_483_647))
+
+// Nitro's Cloudflare adapter drops DELETE bodies, so deletion preconditions use the URL query.
+const propertiesRevisionQuerySchema = v.object({
+  expectedPropertiesRevision: v.pipe(v.string(), v.digits(), v.toNumber(), propertiesRevisionSchema)
+})
+
+const categoryPropertyDeleteQuerySchema = v.object({
+  ...propertiesRevisionQuerySchema.entries,
+  expectedAffectedItemCount: v.pipe(v.string(), v.digits(), v.toNumber(), v.integer(), v.minValue(0))
+})
+
+const categoryPropertiesOrderSchema = v.pipe(
   v.object({
-    name: v.pipe(
-      trimmedNonEmptyStringSchema,
-      v.maxLength(limits.maxCategoryPropertyNameLength)
-    ),
-
-    slug: v.pipe(
-      referenceDataSlugSchema,
-      v.maxLength(limits.maxCategoryPropertySlugLength)
-    ),
-
-    dataType: categoryPropertyDataTypeSchema,
-
-    unit: v.optional(
-      v.pipe(
-        trimmedNonEmptyStringSchema,
-        v.maxLength(limits.maxCategoryPropertyUnitLength)
-      )
-    ),
-
-    enumOptions: v.optional(
-      v.array(propertyEnumOptionMutationSchema)
-    )
+    expectedPropertiesRevision: propertiesRevisionSchema,
+    propertyIds: v.array(v.pipe(v.number(), v.integer(), v.minValue(1)))
   }),
-  v.check((input) => {
-    if (input.dataType === 'enum') {
-      return input.enumOptions !== undefined && input.enumOptions.length > 0
-    }
+  v.forward(v.check((input) => {
+    const uniqueIds = new Set(input.propertyIds)
 
-    return input.enumOptions === undefined
-  }, 'enumOptions must be provided for enum properties and omitted otherwise'),
-  v.check((input) => input.unit === undefined || input.dataType === 'number', 'unit can only be provided for number properties'),
-  v.check((input) => {
-    if (input.enumOptions === undefined) {
-      return true
-    }
-
-    const optionSlugs = input.enumOptions.map((option) => option.slug)
-
-    return new Set(optionSlugs).size === optionSlugs.length
-  }, 'enumOptions must contain unique slugs')
+    return uniqueIds.size === input.propertyIds.length
+  }, 'Include each characteristic once.'), ['propertyIds'])
 )
+
+const propertyEnumOptionRevisionMutationSchema = v.object({
+  ...propertyEnumOptionMutationSchema.entries,
+  expectedPropertiesRevision: propertiesRevisionSchema
+})
+
+const categoryPropertyUpdateSchema = v.pipe(
+  v.object({
+    expectedPropertiesRevision: propertiesRevisionSchema,
+    name: v.pipe(trimmedNonEmptyStringSchema, v.maxLength(limits.maxCategoryPropertyNameLength)),
+    slug: v.pipe(referenceDataSlugSchema, v.maxLength(limits.maxCategoryPropertySlugLength)),
+    dataType: categoryPropertyDataTypeSchema,
+    allowsNegativeValues: v.optional(v.boolean(), false),
+    unit: v.optional(v.nullable(v.pipe(trimmedNonEmptyStringSchema, v.maxLength(limits.maxCategoryPropertyUnitLength)))),
+    enumOptions: v.optional(v.pipe(v.array(propertyEnumOptionMutationSchema), v.minLength(1)))
+  }),
+  v.forward(v.check((input) => input.enumOptions === undefined || input.dataType === 'enum',
+    'Options are only allowed for enum characteristics.'), ['enumOptions']),
+  v.forward(v.check((input) => (input.unit === null || input.unit === undefined) || input.dataType === 'number',
+    'Units are only allowed for number characteristics.'), ['unit']),
+  v.forward(v.check((input) => !input.allowsNegativeValues || input.dataType === 'number',
+    'Negative values are only allowed for number characteristics.'), ['allowsNegativeValues']),
+  v.forward(v.check((input) => {
+    const slugs = input.enumOptions?.map((option) => option.slug) ?? []
+    const uniqueSlugs = new Set(slugs)
+
+    return uniqueSlugs.size === slugs.length
+  }, 'Options must have unique slugs.'), ['enumOptions'])
+)
+
+const categoryPropertyMutationSchema = v.pipe(
+  categoryPropertyUpdateSchema,
+  v.forward(v.check((input) => input.dataType !== 'enum' || input.enumOptions !== undefined,
+    'Add at least one option.'), ['enumOptions'])
+)
+
+function validateCategoryPropertyUpdateBody(body: unknown) {
+  return v.parse(categoryPropertyUpdateSchema, body)
+}
+
+function validateCategoryPropertyDeleteQuery(query: unknown) {
+  return v.parse(categoryPropertyDeleteQuerySchema, query)
+}
+
+function validateCategoryPropertiesOrderBody(body: unknown) {
+  return v.parse(categoryPropertiesOrderSchema, body)
+}
+
+function validatePropertiesRevisionQuery(query: unknown) {
+  return v.parse(propertiesRevisionQuerySchema, query)
+}
+
+function validatePropertyEnumOptionRevisionMutationBody(body: unknown) {
+  return v.parse(propertyEnumOptionRevisionMutationSchema, body)
+}
 
 const categoryDetailParamsSchema = v.object({
   slug: referenceDataSlugSchema
@@ -245,6 +276,7 @@ const itemSubmissionCreateBodySchema = v.pipe(
       v.maxLength(limits.maxEquipmentItemNameLength)
     ),
 
+    expectedPropertiesRevision: v.optional(propertiesRevisionSchema),
     properties: v.optional(v.array(itemSubmissionPropertySchema), []),
 
     sourceUrl: v.pipe(
@@ -258,7 +290,9 @@ const itemSubmissionCreateBodySchema = v.pipe(
     const propertyIds = input.properties.map((property) => property.propertyId)
 
     return new Set(propertyIds).size === propertyIds.length
-  }, 'properties must contain unique propertyId values')
+  }, 'properties must contain unique propertyId values'),
+  v.check((input) => input.properties.length === 0 || input.expectedPropertiesRevision !== undefined,
+    'A properties revision is required when submitting characteristics.')
 )
 
 const itemSubmissionListQuerySchema = v.object({
@@ -297,6 +331,9 @@ const itemSubmissionUpdateBodySchema = v.pipe(
       v.integer(),
       v.minValue(1)
     ),
+
+    expectedPropertiesRevision: propertiesRevisionSchema,
+    expectedOriginalPropertiesRevision: propertiesRevisionSchema,
 
     expectedUpdatedAt: v.pipe(
       v.string(),
@@ -859,10 +896,6 @@ function validateCategoryPropertyParams(params: unknown) {
   return v.parse(categoryPropertyParamsSchema, params)
 }
 
-function validateCategoryIdParams(params: unknown) {
-  return v.parse(categoryIdParamsSchema, params)
-}
-
 function validateCategoryScopedParams(params: unknown) {
   return v.parse(categoryScopedParamsSchema, params)
 }
@@ -965,10 +998,6 @@ function validatePackingListEntryUpdateBody(body: unknown) {
 
 function validatePackingListAvailableGearQuery(query: unknown) {
   return v.parse(packingListAvailableGearQuerySchema, query)
-}
-
-function validatePropertyEnumOptionMutationBody(body: unknown) {
-  return v.parse(propertyEnumOptionMutationSchema, body)
 }
 
 function validatePropertyEnumOptionParams(params: unknown) {
@@ -1134,6 +1163,16 @@ function validatePasskeyAuthentication(value: unknown) {
 }
 
 export {
+  categoryPropertyUpdateSchema,
+  categoryPropertyDeleteQuerySchema,
+  categoryPropertiesOrderSchema,
+  propertiesRevisionQuerySchema,
+  propertyEnumOptionRevisionMutationSchema,
+  validateCategoryPropertyUpdateBody,
+  validateCategoryPropertyDeleteQuery,
+  validateCategoryPropertiesOrderBody,
+  validatePropertiesRevisionQuery,
+  validatePropertyEnumOptionRevisionMutationBody,
   validatePasskeyAuthentication,
   validatePasskeyRegistration,
   validatePasskeyName,
@@ -1150,7 +1189,6 @@ export {
   brandsListQuerySchema,
   canonicalUuidV7Schema,
   categoryDetailParamsSchema,
-  categoryIdParamsSchema,
   categoryMutationSchema,
   categoryScopedParamsSchema,
   categoryPropertyDataTypeSchema,
@@ -1197,7 +1235,6 @@ export {
   validateBrandMutationBody,
   validateBrandsListQuery,
   validateCategoryDetailParams,
-  validateCategoryIdParams,
   validateCategoryMutationBody,
   validateCategoryPropertyMutationBody,
   validateCategoryPropertyParams,
@@ -1227,7 +1264,6 @@ export {
   validatePackingListEntryUpdateBody,
   validatePackingListIdParams,
   validatePackingListMutationBody,
-  validatePropertyEnumOptionMutationBody,
   validatePropertyEnumOptionParams,
   validateRedirectTargetQuery,
   validateTwitchOAuthBody,

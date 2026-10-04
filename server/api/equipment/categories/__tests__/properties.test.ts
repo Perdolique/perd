@@ -1,738 +1,217 @@
 import * as h3 from 'h3'
 import { DrizzleQueryError } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import deleteCategoryPropertyHandler from '#server/api/equipment/categories/[categoryId]/properties/[propertyId]/index.delete'
-import createCategoryPropertyHandler from '#server/api/equipment/categories/[categoryId]/properties/index.post'
-import { categoryPropertyDisplayOrderConstraintName } from '#server/database/schema'
-import type { CategoryPropertyBaseRecord, PropertyEnumOptionBaseRecord } from '#server/utils/equipment/base-records'
+import readHandler from '#server/api/equipment/categories/[categoryId]/properties/index.get'
+import createHandler from '#server/api/equipment/categories/[categoryId]/properties/index.post'
+import updateHandler from '#server/api/equipment/categories/[categoryId]/properties/[propertyId]/index.patch'
+import deleteHandler from '#server/api/equipment/categories/[categoryId]/properties/[propertyId]/index.delete'
+import orderHandler from '#server/api/equipment/categories/[categoryId]/properties/order.patch'
+import createOptionHandler from '#server/api/equipment/categories/[categoryId]/properties/[propertyId]/enum-options/index.post'
+import updateOptionHandler from '#server/api/equipment/categories/[categoryId]/properties/[propertyId]/enum-options/[optionId]/index.patch'
+import deleteOptionHandler from '#server/api/equipment/categories/[categoryId]/properties/[propertyId]/enum-options/[optionId]/index.delete'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
-interface MockPropertyTransaction {
-  delete: ReturnType<typeof vi.fn>;
-  insert: ReturnType<typeof vi.fn>;
-  select: ReturnType<typeof vi.fn>;
-}
-
-interface MockWriteDbClient {
-  end: ReturnType<typeof vi.fn>;
-}
-
-interface MockWriteDb {
-  $client: MockWriteDbClient;
-  transaction: ReturnType<typeof vi.fn>;
-}
-
-interface SelectOperation {
-  error?: Error;
-  rows: unknown;
-  terminal?: 'for' | 'limit' | 'where';
-}
-
-interface InsertOperation {
-  error?: Error;
-  result?: unknown;
-  type: 'returning' | 'values';
-}
-
-const {
-  createWebSocketClientMock,
-  getValidatedRouterParamsMock,
-  readValidatedBodyMock,
-  setResponseStatusMock,
-  validateAdminUserMock
-} = vi.hoisted(() => {
+const mocks = vi.hoisted(() => {
   return {
-    createWebSocketClientMock: vi.fn<(config: unknown) => MockWriteDb>(() => {
-      throw new Error('createWebSocketClient mock is not configured')
-    }),
-
-    getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
-    readValidatedBodyMock: vi.fn<typeof h3.readValidatedBody>(),
-    setResponseStatusMock: vi.fn<typeof h3.setResponseStatus>(),
-    validateAdminUserMock: vi.fn()
+    admin: vi.fn(),
+    params: vi.fn(),
+    body: vi.fn(),
+    query: vi.fn(),
+    mutation: vi.fn(),
+    snapshot: vi.fn(),
+    database: vi.fn(),
+    end: vi.fn()
   }
 })
 
-// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial h3 mock.
+vi.mock(import('#server/utils/admin'), () => { return { validateAdminUser: mocks.admin } })
+vi.mock(import('#server/utils/config'), () => { return { createWebSocketClientFromEvent: mocks.database } })
+vi.mock(import('#server/utils/equipment/category-property-mutations'), () => { return { mutateCategoryProperties: mocks.mutation } })
+vi.mock(import('#server/utils/equipment/category-properties'), () => { return { readCategoryPropertiesSnapshot: mocks.snapshot } })
+
 vi.mock(import('h3'), async () => {
   const actual = await vi.importActual<typeof h3>('h3')
 
   return {
     ...actual,
-
-    async getValidatedRouterParams(...args: Parameters<typeof h3.getValidatedRouterParams>) {
-      return getValidatedRouterParamsMock(...args)
-    },
-
-    async readValidatedBody(...args: Parameters<typeof h3.readValidatedBody>) {
-      return readValidatedBodyMock(...args)
-    },
-
-    setResponseStatus(...args: Parameters<typeof h3.setResponseStatus>) {
-      setResponseStatusMock(...args)
-    }
+    getValidatedRouterParams: mocks.params,
+    getValidatedQuery: mocks.query,
+    readValidatedBody: mocks.body
   }
 })
 
-vi.mock(import('#server/utils/admin'), () => {
-  return {
-    validateAdminUser: validateAdminUserMock
-  }
-})
+const snapshot = {
+  category: {
+    id: 2,
+    name: 'Bags',
+    slug: 'bags',
+    propertiesRevision: 1
+  },
 
-// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial config mock.
-vi.mock(import('#server/utils/config'), () => {
-  return {
-    createWebSocketClientFromEvent: createWebSocketClientMock
-  }
-})
-
-function createSelectMock(operations: SelectOperation[]) {
-  const forMocks: ReturnType<typeof vi.fn>[] = []
-  const limitMocks: ReturnType<typeof vi.fn>[] = []
-
-  const whereMock = vi.fn(() => {
-    const operation = operations.shift()
-
-    if (operation === undefined) {
-      throw new Error('No select operation configured')
-    }
-
-    if (operation.terminal === 'where') {
-      if (operation.error !== undefined) {
-        throw operation.error
-      }
-
-      return operation.rows
-    }
-
-    const limitMock = vi.fn(() => {
-      if (operation.error !== undefined) {
-        throw operation.error
-      }
-
-      if (operation.terminal === 'for') {
-        const forMock = vi.fn(() => operation.rows)
-
-        forMocks.push(forMock)
-
-        return {
-          for: forMock
-        }
-      }
-
-      return operation.rows
-    })
-
-    limitMocks.push(limitMock)
-
-    return {
-      limit: limitMock
-    }
-  })
-
-  const fromMock = vi.fn(() => {
-    return {
-      where: whereMock
-    }
-  })
-
-  const selectMock = vi.fn(() => {
-    return {
-      from: fromMock
-    }
-  })
-
-  return {
-    forMocks,
-    selectMock
-  }
+  properties: []
 }
 
-function createInsertMock(operations: InsertOperation[]) {
-  const valuesMocks: ReturnType<typeof vi.fn>[] = []
+const routes = [readHandler, createHandler, updateHandler, deleteHandler, orderHandler, createOptionHandler, updateOptionHandler, deleteOptionHandler]
 
-  const insertMock = vi.fn(() => {
-    const operation = operations.shift()
-
-    if (operation === undefined) {
-      throw new Error('No insert operation configured')
-    }
-
-    const valuesMock = vi.fn(() => {
-      if (operation.error !== undefined) {
-        throw operation.error
-      }
-
-      if (operation.type === 'returning') {
-        return {
-          returning: vi.fn(() => operation.result)
-        }
-      }
-
-      return null
-    })
-
-    valuesMocks.push(valuesMock)
-
-    return {
-      values: valuesMock
-    }
-  })
-
-  return {
-    insertMock,
-    valuesMocks
-  }
-}
-
-function createDeleteMock({
-  deletedRows,
-  error
-}: {
-  deletedRows: CategoryPropertyBaseRecord[];
-  error?: Error;
-}) {
-  const returningMock = vi.fn(() => {
-    if (error !== undefined) {
-      throw error
-    }
-
-    return deletedRows
-  })
-
-  const whereMock = vi.fn(() => {
-    return {
-      returning: returningMock
-    }
-  })
-
-  const deleteMock = vi.fn(() => {
-    return {
-      where: whereMock
-    }
-  })
-
-  return {
-    deleteMock
-  }
-}
-
-function createDb(transaction: MockPropertyTransaction) {
-  const transactionMock = vi.fn(
-    async (executeTransaction: (db: MockPropertyTransaction) => Promise<unknown>) => executeTransaction(transaction)
-  )
-
-  const endMock = vi.fn(async () => {
-    await Promise.resolve()
-  })
-
-  const dbWrite: MockWriteDb = {
-    $client: {
-      end: endMock
-    },
-
-    transaction: transactionMock
-  }
-
-  return dbWrite
-}
-
-describe('category property handlers', () => {
+describe('admin characteristics HTTP boundary', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    validateAdminUserMock.mockResolvedValue('user-1')
-  })
+    vi.resetAllMocks()
+    mocks.admin.mockResolvedValue('admin-1')
 
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
-
-  describe('post /api/equipment/categories/[categoryId]/properties', () => {
-    beforeEach(() => {
-      getValidatedRouterParamsMock.mockResolvedValue({
-        categoryId: 5
-      })
+    mocks.params.mockResolvedValue({
+      categoryId: 2,
+      propertyId: 3,
+      optionId: 4
     })
 
-    it('should create an enum property with inline enum options and log a contribution', async () => {
-      const createdProperty: CategoryPropertyBaseRecord = {
-        dataType: 'enum',
-        id: 11,
-        name: 'Fill Type',
-        slug: 'fill-type',
-        unit: null
-      }
+    mocks.body.mockResolvedValue({
+      expectedPropertiesRevision: 0,
+      expectedAffectedItemCount: 7,
+      name: 'Down',
+      slug: 'down'
+    })
 
-      const createdEnumOptions: PropertyEnumOptionBaseRecord[] = [{
-        id: 21,
+    mocks.mutation.mockResolvedValue(snapshot)
+    mocks.snapshot.mockResolvedValue(snapshot)
+
+    mocks.query.mockResolvedValue({
+      expectedPropertiesRevision: 0,
+      expectedAffectedItemCount: 7
+    })
+
+    mocks.database.mockReturnValue({
+      $client: { end: mocks.end },
+      async transaction(operation: (transaction: unknown) => Promise<unknown>) { return operation('transaction') }
+    })
+  })
+
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it.each(routes)('rejects a non-admin before reading inputs or opening a database client', async (handler) => {
+    mocks.admin.mockRejectedValue(h3.createError({ status: 403 }))
+    await expect(handler(createTestEvent({}))).rejects.toMatchObject({ statusCode: 403 })
+    expect(mocks.params).not.toHaveBeenCalled()
+    expect(mocks.body).not.toHaveBeenCalled()
+    expect(mocks.query).not.toHaveBeenCalled()
+    expect(mocks.database).not.toHaveBeenCalled()
+  })
+
+  it('passes the full ownership chain and expected version to enum editing', async () => {
+    const result = await updateOptionHandler(createTestEvent({}))
+
+    expect(result).toStrictEqual(snapshot)
+
+    expect(mocks.mutation).toHaveBeenCalledWith('transaction', {
+      categoryId: 2,
+      expectedPropertiesRevision: 0,
+      userId: 'admin-1'
+    }, {
+      action: 'update_option',
+      propertyId: 3,
+      optionId: 4,
+
+      settings: {
         name: 'Down',
         slug: 'down'
-      }, {
-        id: 22,
-        name: 'Synthetic',
-        slug: 'synthetic'
-      }]
-
-      readValidatedBodyMock.mockResolvedValue({
-        dataType: 'enum',
-        enumOptions: createdEnumOptions,
-        name: 'Fill Type',
-        slug: 'fill-type'
-      })
-
-      const { insertMock, valuesMocks } = createInsertMock([{
-        result: [createdProperty],
-        type: 'returning'
-      }, {
-        result: createdEnumOptions,
-        type: 'returning'
-      }, {
-        type: 'values'
-      }])
-
-      const { forMocks, selectMock } = createSelectMock([{
-        rows: [{
-          id: 5
-        }],
-
-        terminal: 'for'
-      }, {
-        rows: []
-      }, {
-        rows: [{
-          displayOrder: 3
-        }],
-
-        terminal: 'where'
-      }])
-
-      const dbWrite = createDb({
-        delete: vi.fn(),
-        insert: insertMock,
-        select: selectMock
-      })
-
-      createWebSocketClientMock.mockReturnValue(dbWrite)
-
-      const event = createTestEvent({})
-      const result = await createCategoryPropertyHandler(event)
-
-      expect(result).toStrictEqual({
-        ...createdProperty,
-        enumOptions: createdEnumOptions
-      })
-
-      expect(setResponseStatusMock).toHaveBeenCalledWith(event, 201)
-      expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
-
-      expect(valuesMocks[0]).toHaveBeenCalledWith({
-        categoryId: 5,
-        dataType: 'enum',
-        displayOrder: 4,
-        name: 'Fill Type',
-        slug: 'fill-type',
-        unit: undefined
-      })
-
-      expect(forMocks[0]).toHaveBeenCalledWith('update')
-
-      expect(valuesMocks[1]).toHaveBeenCalledWith([{
-        name: 'Down',
-        propertyId: 11,
-        slug: 'down'
-      }, {
-        name: 'Synthetic',
-        propertyId: 11,
-        slug: 'synthetic'
-      }])
-
-      expect(valuesMocks[2]).toHaveBeenCalledWith({
-        action: 'create_category_property',
-
-        metadata: {
-          categoryId: 5,
-          dataType: 'enum',
-          name: 'Fill Type',
-          slug: 'fill-type',
-          unit: null
-        },
-
-        targetId: '11',
-        userId: 'user-1'
-      })
-    })
-
-    it('should create a non-enum property without enum options', async () => {
-      const createdProperty: CategoryPropertyBaseRecord = {
-        dataType: 'number',
-        id: 15,
-        name: 'Weight',
-        slug: 'weight',
-        unit: 'g'
       }
-
-      readValidatedBodyMock.mockResolvedValue({
-        dataType: 'number',
-        name: 'Weight',
-        slug: 'weight',
-        unit: 'g'
-      })
-
-      const { insertMock, valuesMocks } = createInsertMock([{
-        result: [createdProperty],
-        type: 'returning'
-      }, {
-        type: 'values'
-      }])
-
-      const { selectMock } = createSelectMock([{
-        rows: [{
-          id: 5
-        }],
-
-        terminal: 'for'
-      }, {
-        rows: []
-      }, {
-        rows: [{
-          displayOrder: null
-        }],
-
-        terminal: 'where'
-      }])
-
-      const dbWrite = createDb({
-        delete: vi.fn(),
-        insert: insertMock,
-        select: selectMock
-      })
-
-      createWebSocketClientMock.mockReturnValue(dbWrite)
-
-      const event = createTestEvent({})
-      const result = await createCategoryPropertyHandler(event)
-
-      expect(result).toStrictEqual({
-        ...createdProperty,
-        enumOptions: undefined
-      })
-
-      expect(valuesMocks).toHaveLength(2)
-
-      expect(valuesMocks[0]).toHaveBeenCalledWith({
-        categoryId: 5,
-        dataType: 'number',
-        displayOrder: 0,
-        name: 'Weight',
-        slug: 'weight',
-        unit: 'g'
-      })
     })
 
-    it('should return 404 when category does not exist', async () => {
-      readValidatedBodyMock.mockResolvedValue({
-        dataType: 'number',
-        name: 'Weight',
-        slug: 'weight',
-        unit: 'g'
-      })
+    expect(mocks.end).toHaveBeenCalledTimes(1)
+  })
 
-      const { insertMock } = createInsertMock([])
+  it('passes the confirmed deletion count and returns a snapshot with status 200', async () => {
+    const event = createTestEvent({})
 
-      const { selectMock } = createSelectMock([{
-        rows: [],
-        terminal: 'for'
-      }])
+    await expect(deleteHandler(event)).resolves.toStrictEqual(snapshot)
 
-      const dbWrite = createDb({
-        delete: vi.fn(),
-        insert: insertMock,
-        select: selectMock
-      })
-
-      createWebSocketClientMock.mockReturnValue(dbWrite)
-
-      const event = createTestEvent({})
-
-      await expect(createCategoryPropertyHandler(event)).rejects.toMatchObject({
-        statusCode: 404
-      })
-
-      expect(insertMock).not.toHaveBeenCalled()
+    expect(mocks.mutation).toHaveBeenCalledWith('transaction', {
+      categoryId: 2,
+      expectedPropertiesRevision: 0,
+      userId: 'admin-1'
+    }, {
+      action: 'delete',
+      propertyId: 3,
+      expectedAffectedItemCount: 7
     })
 
-    it('should return 409 when category property slug already exists', async () => {
-      readValidatedBodyMock.mockResolvedValue({
-        dataType: 'number',
-        name: 'Weight',
-        slug: 'weight',
-        unit: 'g'
-      })
+    expect(event.node.res.statusCode).toBe(200)
+    expect(mocks.body).not.toHaveBeenCalled()
+  })
 
-      const { insertMock } = createInsertMock([])
+  it('returns 201 for creation and a read-only repeatable-read snapshot for GET', async () => {
+    const event = createTestEvent({})
 
-      const { selectMock } = createSelectMock([{
-        rows: [{
-          id: 5
-        }],
+    await createHandler(event)
+    expect(event.node.res.statusCode).toBe(201)
 
-        terminal: 'for'
-      }, {
-        rows: [{
-          id: 12
-        }]
-      }])
+    const transaction = vi.fn(async (operation: (value: unknown) => Promise<unknown>, _configuration: unknown) => operation('read-transaction'))
 
-      const dbWrite = createDb({
-        delete: vi.fn(),
-        insert: insertMock,
-        select: selectMock
-      })
-
-      createWebSocketClientMock.mockReturnValue(dbWrite)
-
-      const event = createTestEvent({})
-
-      await expect(createCategoryPropertyHandler(event)).rejects.toMatchObject({
-        message: 'Category property slug already exists',
-        statusCode: 409
-      })
-
-      expect(insertMock).not.toHaveBeenCalled()
+    mocks.database.mockReturnValue({
+      $client: { end: mocks.end },
+      transaction
     })
 
-    it('should return 400 when body validation fails', async () => {
-      const bodyError = h3.createError({ status: 400 })
-      const event = createTestEvent({})
+    await expect(readHandler(createTestEvent({}))).resolves.toStrictEqual(snapshot)
 
-      readValidatedBodyMock.mockRejectedValue(bodyError)
-
-      await expect(createCategoryPropertyHandler(event)).rejects.toMatchObject({
-        statusCode: 400
-      })
-
-      expect(createWebSocketClientMock).not.toHaveBeenCalled()
-    })
-
-    it('should return 500 when property creation fails unexpectedly', async () => {
-      readValidatedBodyMock.mockResolvedValue({
-        dataType: 'number',
-        name: 'Weight',
-        slug: 'weight',
-        unit: 'g'
-      })
-
-      const { insertMock } = createInsertMock([{
-        error: new Error('insert failed'),
-        type: 'returning'
-      }])
-
-      const { selectMock } = createSelectMock([{
-        rows: [{
-          id: 5
-        }],
-
-        terminal: 'for'
-      }, {
-        rows: []
-      }, {
-        rows: [{
-          displayOrder: 0
-        }],
-
-        terminal: 'where'
-      }])
-
-      const dbWrite = createDb({
-        delete: vi.fn(),
-        insert: insertMock,
-        select: selectMock
-      })
-
-      createWebSocketClientMock.mockReturnValue(dbWrite)
-
-      const event = createTestEvent({})
-
-      await expect(createCategoryPropertyHandler(event)).rejects.toMatchObject({
-        message: 'Failed to create category property',
-        statusCode: 500
-      })
-
-      expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
-    })
-
-    it('should return 409 when concurrent property creation conflicts on display order', async () => {
-      readValidatedBodyMock.mockResolvedValue({
-        dataType: 'number',
-        name: 'Weight',
-        slug: 'weight',
-        unit: 'g'
-      })
-
-      const postgresError = Object.assign(new Error('duplicate display order'), {
-        code: '23505',
-        constraint: categoryPropertyDisplayOrderConstraintName
-      })
-
-      const displayOrderConflict = new DrizzleQueryError('insert category property', [], postgresError)
-
-      const { insertMock } = createInsertMock([{
-        error: displayOrderConflict,
-        type: 'returning'
-      }])
-
-      const { selectMock } = createSelectMock([{
-        rows: [{
-          id: 5
-        }],
-
-        terminal: 'for'
-      }, {
-        rows: []
-      }, {
-        rows: [{
-          displayOrder: 0
-        }],
-
-        terminal: 'where'
-      }])
-
-      const dbWrite = createDb({
-        delete: vi.fn(),
-        insert: insertMock,
-        select: selectMock
-      })
-
-      createWebSocketClientMock.mockReturnValue(dbWrite)
-
-      const event = createTestEvent({})
-
-      await expect(createCategoryPropertyHandler(event)).rejects.toMatchObject({
-        message: 'Category property display order conflict',
-        statusCode: 409
-      })
-
-      expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
+    expect(transaction).toHaveBeenCalledWith(expect.any(Function), {
+      isolationLevel: 'repeatable read',
+      accessMode: 'read only'
     })
   })
 
-  describe('delete /api/equipment/categories/[categoryId]/properties/[propertyId]', () => {
-    beforeEach(() => {
-      getValidatedRouterParamsMock.mockResolvedValue({
-        categoryId: 5,
-        propertyId: 11
-      })
+  it('keeps nested database and cleanup diagnostics in serialized logs while returning a safe error', async () => {
+    const cause = new Error('raw database failure')
+
+    Object.assign(cause, {
+      code: 'XX001',
+      constraint: 'characteristics_test_constraint'
     })
 
-    it('should delete a category property and log a contribution', async () => {
-      const deletedProperty: CategoryPropertyBaseRecord = {
-        dataType: 'enum',
-        id: 11,
-        name: 'Fill Type',
-        slug: 'fill-type',
-        unit: null
-      }
+    const failure = new DrizzleQueryError('select category properties', [], cause)
+    const cleanupCause = new Error('raw cleanup cause')
+    const cleanup = new Error('cleanup failed', { cause: cleanupCause })
+    const logger = vi.spyOn(console, 'error').mockImplementation((...messages) => { void messages })
 
-      const { insertMock, valuesMocks } = createInsertMock([{
-        type: 'values'
-      }])
+    mocks.mutation.mockRejectedValue(failure)
+    mocks.end.mockRejectedValue(cleanup)
 
-      const { deleteMock } = createDeleteMock({
-        deletedRows: [deletedProperty]
-      })
-
-      const dbWrite = createDb({
-        delete: deleteMock,
-        insert: insertMock,
-        select: vi.fn()
-      })
-
-      createWebSocketClientMock.mockReturnValue(dbWrite)
-
-      const event = createTestEvent({})
-
-      await deleteCategoryPropertyHandler(event)
-      expect(setResponseStatusMock).toHaveBeenCalledWith(event, 204)
-      expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
-
-      expect(valuesMocks[0]).toHaveBeenCalledWith({
-        action: 'delete_category_property',
-
-        metadata: {
-          categoryId: 5,
-          dataType: 'enum',
-          name: 'Fill Type',
-          slug: 'fill-type',
-          unit: null
-        },
-
-        targetId: '11',
-        userId: 'user-1'
-      })
+    await expect(createHandler(createTestEvent({}))).rejects.toMatchObject({
+      statusCode: 500,
+      message: 'Could not load or save characteristics. Try again.'
     })
 
-    it('should return 400 when route params validation fails', async () => {
-      const routeError = h3.createError({ status: 400 })
-      const event = createTestEvent({})
+    for (const detail of [cause.message, 'XX001', 'characteristics_test_constraint']) {
+      const expectedDetails: unknown = expect.stringContaining(detail)
 
-      getValidatedRouterParamsMock.mockRejectedValue(routeError)
+      expect(logger).toHaveBeenCalledWith('Failed to manage category characteristics', failure, { details: expectedDetails })
+    }
 
-      await expect(deleteCategoryPropertyHandler(event)).rejects.toMatchObject({
-        statusCode: 400
-      })
+    const cleanupDetails: unknown = expect.stringContaining(cleanupCause.message)
 
-      expect(createWebSocketClientMock).not.toHaveBeenCalled()
+    expect(logger).toHaveBeenCalledWith('Failed to close characteristics database client', cleanup, { details: cleanupDetails })
+  })
+
+  it('does not replace a committed response with a cleanup error', async () => {
+    vi.spyOn(console, 'error').mockImplementation((...messages) => { void messages })
+    mocks.end.mockRejectedValue(new Error('cleanup failed'))
+    await expect(createHandler(createTestEvent({}))).resolves.toStrictEqual(snapshot)
+  })
+
+  it('logs client initialization failures and returns a safe error without trying to close a missing client', async () => {
+    const cause = new Error('nested configuration cause')
+    const failure = new Error('raw configuration failure', { cause })
+    const logger = vi.spyOn(console, 'error').mockImplementation((...messages) => { void messages })
+
+    mocks.database.mockImplementation(() => { throw failure })
+
+    await expect(readHandler(createTestEvent({}))).rejects.toMatchObject({
+      statusCode: 500,
+      message: 'Could not load or save characteristics. Try again.'
     })
 
-    it('should return 404 when category property does not exist', async () => {
-      const { insertMock } = createInsertMock([])
+    const failureDetails: unknown = expect.stringContaining(cause.message)
 
-      const { deleteMock } = createDeleteMock({
-        deletedRows: []
-      })
-
-      const dbWrite = createDb({
-        delete: deleteMock,
-        insert: insertMock,
-        select: vi.fn()
-      })
-
-      createWebSocketClientMock.mockReturnValue(dbWrite)
-
-      const event = createTestEvent({})
-
-      await expect(deleteCategoryPropertyHandler(event)).rejects.toMatchObject({
-        statusCode: 404
-      })
-
-      expect(insertMock).not.toHaveBeenCalled()
-    })
-
-    it('should return 500 when property deletion fails unexpectedly', async () => {
-      const { insertMock } = createInsertMock([])
-
-      const { deleteMock } = createDeleteMock({
-        deletedRows: [],
-        error: new Error('delete failed')
-      })
-
-      const dbWrite = createDb({
-        delete: deleteMock,
-        insert: insertMock,
-        select: vi.fn()
-      })
-
-      createWebSocketClientMock.mockReturnValue(dbWrite)
-
-      const event = createTestEvent({})
-
-      await expect(deleteCategoryPropertyHandler(event)).rejects.toMatchObject({
-        message: 'Failed to delete category property',
-        statusCode: 500
-      })
-
-      expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
-    })
+    expect(logger).toHaveBeenCalledWith('Failed to manage category characteristics', failure, { details: failureDetails })
+    expect(mocks.end).not.toHaveBeenCalled()
   })
 })
