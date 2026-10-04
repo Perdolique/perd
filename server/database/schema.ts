@@ -667,7 +667,7 @@ const itemPropertyValues = pgTable('item_property_values', {
 /**
  * User's saved gear rows.
  *
- * Tracks which equipment reference items a user saved to My gear.
+ * Stores saved catalog items and private custom gear owned by a user.
  */
 const userEquipment = pgTable('user_equipment', {
   id:
@@ -684,9 +684,11 @@ const userEquipment = pgTable('user_equipment', {
       onUpdate: 'cascade'
     }),
 
+  customName:
+    varchar({ length: limits.maxUserEquipmentCustomNameLength }),
+
   itemId:
     uuid()
-    .notNull()
     .references(() => equipmentItems.id, {
       onDelete: 'cascade',
       onUpdate: 'cascade'
@@ -699,6 +701,7 @@ const userEquipment = pgTable('user_equipment', {
     .notNull()
     .defaultNow()
 }, (table) => [
+  check('user_equipment_source_check', sql`(${table.itemId} IS NOT NULL) <> (${table.customName} IS NOT NULL)`),
   unique().on(table.userId, table.itemId)
 ])
 

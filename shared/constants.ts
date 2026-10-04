@@ -24,6 +24,7 @@ const limits = {
   maxOAuthProviderTypeLength: 32,
   maxPropertyEnumOptionNameLength: 64,
   maxPropertyEnumOptionSlugLength: 128,
+  maxUserEquipmentCustomNameLength: 128,
   maxUserNameLength: 32
 } as const
 

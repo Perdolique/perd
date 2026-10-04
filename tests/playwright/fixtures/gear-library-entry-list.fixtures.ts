@@ -659,6 +659,7 @@ async function mockCatalogApi(context: BrowserContext, config: CatalogMockConfig
       status: 201,
 
       json: {
+        source: 'catalog',
         createdAt: '2026-07-23T00:00:00.000Z',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477ab',
         item: createItemDetailResponse(stoveItem)

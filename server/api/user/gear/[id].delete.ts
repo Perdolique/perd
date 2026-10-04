@@ -3,22 +3,9 @@ import { createError, defineEventHandler, getValidatedRouterParams, setResponseS
 import { userEquipment } from '#server/database/schema'
 import { validateSessionUser } from '#server/utils/session'
 import { validateUserEquipmentIdParams } from '#server/utils/validation/schemas'
+import { throwMyGearError } from '#server/utils/my-gear-errors'
 
-interface PostgresError {
-  code?: string;
-}
-
-function isForeignKeyViolation(error: unknown): error is PostgresError {
-  if (typeof error !== 'object' || error === null) {
-    return false
-  }
-
-  const postgresError = error as PostgresError
-
-  return postgresError.code === '23503'
-}
-
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event) : Promise<void> => {
   const userId = await validateSessionUser(event)
   const { id } = await getValidatedRouterParams(event, validateUserEquipmentIdParams)
 
@@ -41,13 +28,6 @@ export default defineEventHandler(async (event) => {
 
     setResponseStatus(event, 204)
   } catch (error) {
-    if (isForeignKeyViolation(error)) {
-      throw createError({
-        status: 409,
-        message: 'My gear item is still used in a list'
-      })
-    }
-
-    throw error
+    throwMyGearError(error, 'delete')
   }
 })

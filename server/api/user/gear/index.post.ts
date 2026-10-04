@@ -1,7 +1,9 @@
-import { createError, defineEventHandler, isError, readValidatedBody, setResponseStatus } from 'h3'
+import { createError, defineEventHandler, readValidatedBody, setResponseStatus } from 'h3'
 import { userEquipment } from '#server/database/schema'
 import { validateSessionUser } from '#server/utils/session'
 import { validateUserEquipmentCreateBody } from '#server/utils/validation/schemas'
+import type { MyGearRecord } from './index.get'
+import { throwMyGearError } from '#server/utils/my-gear-errors'
 
 interface MyGearItemBrand {
   name: string;
@@ -11,19 +13,6 @@ interface MyGearItemBrand {
 interface MyGearItemCategory {
   name: string;
   slug: string;
-}
-
-interface CreatedMyGearItem {
-  brand: MyGearItemBrand;
-  category: MyGearItemCategory;
-  id: string;
-  name: string;
-}
-
-interface CreatedMyGearRecord {
-  createdAt: Date | string;
-  id: string;
-  item: CreatedMyGearItem;
 }
 
 interface MyGearQueryItem {
@@ -39,56 +28,76 @@ interface MyGearQueryRow {
   item: MyGearQueryItem | null;
 }
 
-interface PostgresErrorWithCode {
-  code: unknown;
-}
-
-function hasPostgresErrorCode(error: unknown): error is PostgresErrorWithCode {
-  return error !== null && typeof error === 'object' && 'code' in error
-}
-
-function isUniqueViolation(error: unknown): boolean {
-  return hasPostgresErrorCode(error) && error.code === '23505'
-}
-
-export default defineEventHandler(async (event) : Promise<CreatedMyGearRecord> => {
+export default defineEventHandler(async (event) : Promise<MyGearRecord> => {
   const userId = await validateSessionUser(event)
-  const { itemId } = await readValidatedBody(event, validateUserEquipmentCreateBody)
-
-  const approvedItem = await event.context.dbHttp.query.equipmentItems.findFirst({
-    columns: {
-      id: true
-    },
-
-    where: {
-      id: itemId,
-      status: 'approved'
-    }
-  })
-
-  if (approvedItem === undefined) {
-    throw createError({ status: 404 })
-  }
-
-  const existingMyGearRow = await event.context.dbHttp.query.userEquipment.findFirst({
-    columns: {
-      id: true
-    },
-
-    where: {
-      itemId,
-      userId
-    }
-  })
-
-  if (existingMyGearRow !== undefined) {
-    throw createError({
-      status: 409,
-      message: 'Item is already in my gear'
-    })
-  }
+  const body = await readValidatedBody(event, validateUserEquipmentCreateBody)
 
   try {
+    if ('customName' in body) {
+      const [created] = await event.context.dbHttp
+        .insert(userEquipment)
+        .values({
+          customName: body.customName,
+          userId
+        })
+        .returning({
+          id: userEquipment.id,
+          customName: userEquipment.customName,
+          createdAt: userEquipment.createdAt
+        })
+
+      if (created?.customName === undefined || created.customName === null) {
+        throw createError({
+          status: 500,
+          message: 'Failed to create my gear row'
+        })
+      }
+
+      setResponseStatus(event, 201)
+
+      return {
+        createdAt: created.createdAt,
+        customName: created.customName,
+        id: created.id,
+        source: 'custom'
+      }
+    }
+
+    const { itemId } = body
+
+    const approvedItem = await event.context.dbHttp.query.equipmentItems.findFirst({
+      columns: {
+        id: true
+      },
+
+      where: {
+        id: itemId,
+        status: 'approved'
+      }
+    })
+
+    if (approvedItem === undefined) {
+      throw createError({ status: 404 })
+    }
+
+    const existingMyGearRow = await event.context.dbHttp.query.userEquipment.findFirst({
+      columns: {
+        id: true
+      },
+
+      where: {
+        itemId,
+        userId
+      }
+    })
+
+    if (existingMyGearRow !== undefined) {
+      throw createError({
+        status: 409,
+        message: 'Item is already in my gear'
+      })
+    }
+
     const [createdMyGearRow] = await event.context.dbHttp
       .insert(userEquipment)
       .values({
@@ -165,6 +174,7 @@ export default defineEventHandler(async (event) : Promise<CreatedMyGearRecord> =
     setResponseStatus(event, 201)
 
     return {
+      source: 'catalog',
       createdAt: myGearRow.createdAt,
       id: myGearRow.id,
 
@@ -184,20 +194,6 @@ export default defineEventHandler(async (event) : Promise<CreatedMyGearRecord> =
       }
     }
   } catch (error) {
-    if (isError(error)) {
-      throw error
-    }
-
-    if (isUniqueViolation(error)) {
-      throw createError({
-        status: 409,
-        message: 'Item is already in my gear'
-      })
-    }
-
-    throw createError({
-      status: 500,
-      message: 'Failed to create my gear row'
-    })
+    throwMyGearError(error, 'create')
   }
 })

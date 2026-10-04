@@ -7,6 +7,7 @@
       :title="label"
       :class="$style.trigger"
       :disabled="triggerDisabled"
+      :loading="loading"
       aria-haspopup="menu"
       :aria-expanded="isOpen"
       :aria-controls="menuId"
@@ -69,13 +70,14 @@
     menuLabel: string;
     items: ActionMenuItem[];
     disabled?: boolean;
+    loading?: boolean;
   }
 
   interface Emits {
     action: [id: string];
   }
 
-  const { disabled } = defineProps<Props>()
+  const { disabled, loading } = defineProps<Props>()
   const emit = defineEmits<Emits>()
   const menuId = useId()
   const isMounted = useMounted()
@@ -84,7 +86,7 @@
   const isOpen = ref(false)
   const menuLeft = ref(0)
   const menuTop = ref(0)
-  const triggerDisabled = computed(() => disabled || !isMounted.value)
+  const triggerDisabled = computed(() => disabled || loading || !isMounted.value)
 
   const menuPosition = computed(() => {
     return {
@@ -139,18 +141,23 @@
     }
   }
 
-  function close() {
-    if (!menu.value?.matches(':popover-open')) {
-      return
-    }
-
-    menu.value?.hidePopover()
-
+  function focus() {
     const button: unknown = trigger.value?.$el
 
     if (button instanceof globalThis.HTMLElement) {
       button.focus({ preventScroll: true })
     }
+  }
+
+  defineExpose({ focus })
+
+  function close() {
+    if (!menu.value?.matches(':popover-open')) {
+      return
+    }
+
+    menu.value.hidePopover()
+    focus()
   }
 
   function handleScroll(event: Event) {

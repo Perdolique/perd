@@ -18,6 +18,7 @@ import {
 
 function createMyGearRow(item = stoveItem) {
   return {
+    source: 'catalog',
     createdAt: '2026-07-23T00:00:00.000Z',
     id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477ab',
 
@@ -305,6 +306,7 @@ test.describe('Gear library item actions', () => {
     page
   }) => {
     const myGearRow = createMyGearRow()
+    const removalGate = createDeferred()
 
     const savedStoveItem = {
       ...stoveItem,
@@ -329,13 +331,31 @@ test.describe('Gear library item actions', () => {
     })
 
     await context.route((url) => url.pathname === `/api/user/gear/${myGearRow.id}`, async (route) => {
+      await removalGate.promise
+
       await route.fulfill({ status: 204 })
     })
 
     await openGearLibrary(page)
     await expect(page.getByText('In My gear', { exact: true })).toBeVisible()
     await page.getByRole('link', { name: 'My gear' }).click()
-    await page.getByRole('button', { name: 'Remove' }).click()
+    await page.getByRole('button', { name: `Actions for ${stoveItem.name}` }).click()
+    await expect(page.getByRole('menuitem')).toHaveCount(1)
+
+    try {
+      await page.getByRole('menuitem', {
+        name: 'Remove',
+        exact: true
+      }).click()
+
+      const trigger = page.getByRole('button', { name: `Actions for ${stoveItem.name}` })
+
+      await expect(trigger).toBeDisabled()
+      await expect(trigger).toHaveAttribute('aria-busy', 'true')
+    } finally {
+      removalGate.resolve()
+    }
+
     await expect(page.getByText('No saved gear yet.')).toBeVisible()
     await page.getByRole('link', { name: 'Find gear' }).click()
 
