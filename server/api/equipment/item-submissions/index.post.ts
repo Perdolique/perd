@@ -12,7 +12,7 @@ import { contributions, equipmentItems, itemPropertyValues } from '#server/datab
 import { getItemSubmissionRateLimiterBinding } from '#server/utils/cloudflare'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
 import { checkPropertiesRevision, lockPropertiesCategories } from '#server/utils/equipment/category-properties'
-import { normalizeItemSubmissionProperties } from '#server/utils/equipment/item-submission-properties'
+import { normalizeEquipmentItemProperties } from '#server/utils/equipment/item-properties'
 import { validateRegisteredUserAccess } from '#server/utils/user'
 import { validateItemSubmissionCreateBody } from '#server/utils/validation/schemas'
 
@@ -136,7 +136,7 @@ export default defineEventHandler(async (event): Promise<ItemSubmissionCreateRes
         throw createError({ status: 404 })
       }
 
-      const normalizedProperties = normalizeItemSubmissionProperties(
+      const normalizedProperties = normalizeEquipmentItemProperties(
         body.categoryId,
         category.properties,
         body.properties

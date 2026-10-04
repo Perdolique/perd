@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody } from 'h3'
 import { contributions, equipmentItems, itemPropertyValues } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
@@ -10,7 +10,7 @@ import {
   propertiesConflict
 } from '#server/utils/equipment/category-properties'
 
-import { normalizeItemSubmissionProperties } from '#server/utils/equipment/item-submission-properties'
+import { normalizeEquipmentItemProperties } from '#server/utils/equipment/item-properties'
 import { validateItemSubmissionParams, validateItemSubmissionUpdateBody } from '#server/utils/validation/schemas'
 import type { ItemSubmissionDetailResponse, ItemSubmissionPropertyValue } from './[id].get'
 
@@ -175,7 +175,7 @@ export default defineEventHandler(async (event): Promise<ItemSubmissionDetailRes
         throw createError({ status: 404 })
       }
 
-      const normalizedProperties = normalizeItemSubmissionProperties(
+      const normalizedProperties = normalizeEquipmentItemProperties(
         body.categoryId,
         category.properties,
         body.properties
@@ -208,6 +208,7 @@ export default defineEventHandler(async (event): Promise<ItemSubmissionDetailRes
           categoryId: body.categoryId,
           name: body.name,
           rejectionReason,
+          revision: sql`${equipmentItems.revision} + 1`,
           status
         })
         .where(eq(equipmentItems.id, id))

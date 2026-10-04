@@ -368,6 +368,28 @@ const itemSubmissionUpdateBodySchema = v.pipe(
   }, 'rejectionReason is required only when rejecting a submission')
 )
 
+const equipmentItemUpdateBodySchema = v.pipe(
+  v.strictObject({
+    brandId: v.pipe(v.number(), v.integer(), v.minValue(1)),
+    categoryId: v.pipe(v.number(), v.integer(), v.minValue(1)),
+    name: v.pipe(trimmedNonEmptyStringSchema, v.maxLength(limits.maxEquipmentItemNameLength)),
+    properties: v.array(itemSubmissionPropertySchema),
+    expectedItemRevision: propertiesRevisionSchema,
+    expectedOriginalPropertiesRevision: propertiesRevisionSchema,
+    expectedPropertiesRevision: propertiesRevisionSchema,
+    categoryChangeConfirmed: v.optional(v.boolean(), false)
+  }),
+  v.check((input) => {
+    const propertyIds = input.properties.map((property) => property.propertyId)
+
+    return new Set(propertyIds).size === propertyIds.length
+  }, 'properties must contain unique propertyId values')
+)
+
+function validateEquipmentItemUpdateBody(body: unknown) {
+  return v.parse(equipmentItemUpdateBodySchema, body)
+}
+
 const itemImageParamsSchema = v.object({
   id: canonicalUuidV7Schema,
   'image-id': canonicalUuidV7Schema
@@ -1163,6 +1185,7 @@ function validatePasskeyAuthentication(value: unknown) {
 }
 
 export {
+  validateEquipmentItemUpdateBody,
   categoryPropertyUpdateSchema,
   categoryPropertyDeleteQuerySchema,
   categoryPropertiesOrderSchema,

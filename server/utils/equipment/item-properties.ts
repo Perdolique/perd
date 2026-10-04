@@ -1,24 +1,24 @@
 import { createError } from 'h3'
 import { isFiniteDecimalNumber, normalizeDecimalNumber } from '#shared/utils/decimal-number'
 
-interface ItemSubmissionPropertyInput {
+interface EquipmentItemPropertyInput {
   propertyId: number;
   value: boolean | string;
 }
 
-interface ItemSubmissionEnumOptionDefinition {
+interface EquipmentItemEnumOptionDefinition {
   slug: string;
 }
 
-interface ItemSubmissionPropertyDefinition {
+interface EquipmentItemPropertyDefinition {
   allowsNegativeValues: boolean;
   categoryId: number;
   dataType: string;
-  enumOptions: ItemSubmissionEnumOptionDefinition[];
+  enumOptions: EquipmentItemEnumOptionDefinition[];
   id: number;
 }
 
-interface ItemSubmissionPropertyValue {
+interface EquipmentItemPropertyValue {
   propertyId: number;
   valueBoolean: boolean | null;
   valueNumber: string | null;
@@ -78,7 +78,7 @@ function normalizeBooleanValue(value: boolean | string) {
 
 function normalizeEnumValue(
   value: boolean | string,
-  options: ItemSubmissionEnumOptionDefinition[]
+  options: EquipmentItemEnumOptionDefinition[]
 ) {
   if (typeof value !== 'string') {
     throw createInvalidPropertyError('Enum property value must be a string')
@@ -95,11 +95,11 @@ function normalizeEnumValue(
 }
 
 /** Validates submitted category properties and maps them to the EAV value columns. */
-function normalizeItemSubmissionProperties(
+function normalizeEquipmentItemProperties(
   categoryId: number,
-  definitions: ItemSubmissionPropertyDefinition[],
-  inputs: ItemSubmissionPropertyInput[]
-): ItemSubmissionPropertyValue[] {
+  definitions: EquipmentItemPropertyDefinition[],
+  inputs: EquipmentItemPropertyInput[]
+): EquipmentItemPropertyValue[] {
   const definitionsById = new Map(definitions.map((definition) => [definition.id, definition]))
 
   return inputs.map((input) => {
@@ -109,7 +109,7 @@ function normalizeItemSubmissionProperties(
       throw createInvalidPropertyError('Property does not belong to the selected category')
     }
 
-    const valueColumns: ItemSubmissionPropertyValue = {
+    const valueColumns: EquipmentItemPropertyValue = {
       propertyId: input.propertyId,
       valueBoolean: null,
       valueNumber: null,
@@ -147,10 +147,10 @@ function normalizeItemSubmissionProperties(
   })
 }
 
-export { normalizeItemSubmissionProperties }
+export { normalizeEquipmentItemProperties }
 
 export type {
-  ItemSubmissionPropertyDefinition,
-  ItemSubmissionPropertyInput,
-  ItemSubmissionPropertyValue
+  EquipmentItemPropertyDefinition,
+  EquipmentItemPropertyInput,
+  EquipmentItemPropertyValue
 }

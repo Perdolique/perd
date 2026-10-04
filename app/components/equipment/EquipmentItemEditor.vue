@@ -2,8 +2,8 @@
   <div :class="$style.component">
     <form :class="$style.form" @submit.prevent="handleSubmit">
       <div v-if="hasPropertiesConflict" ref="propertiesConflictAlert" tabindex="-1" :class="$style.alert" role="alert">
-        <span>Characteristics changed since this form was loaded. Your draft is still here. Reload before saving or making a decision.</span>
-        <PerdButton variant="secondary" :disabled="isSubmitting" @click="openPropertiesReload">Reload characteristics</PerdButton>
+        <span>{{ propertiesConflictMessage }}</span>
+        <PerdButton variant="secondary" :disabled="isSubmitting" @click="openPropertiesReload">{{ reloadLabel }}</PerdButton>
       </div>
       <div v-if="hasMandatoryReferenceError" :class="$style.alert" role="alert">
         <span>Could not load brands and categories.</span>
@@ -150,6 +150,8 @@
           {{ submitLabel }}
         </PerdButton>
 
+        <PerdButton v-if="isEditMode" variant="secondary" :disabled="isSubmitting" @click="emit('cancel')">Cancel</PerdButton>
+
         <template v-if="isReviewMode">
           <PerdButton
             type="button"
@@ -173,7 +175,7 @@
 
     <ConfirmationDialog
       v-model="showPropertiesReloadConfirmation"
-      header-text="Reload characteristics"
+      :header-text="reloadLabel"
       confirm-button-text="Reload"
       :confirm-loading="isReloadingProperties"
       :close-on-confirm="false"
@@ -182,6 +184,15 @@
     >
       {{ propertiesReloadMessage }}
     </ConfirmationDialog>
+
+    <EquipmentPropertyMappingDialog
+      v-if="mappingSource"
+      v-model="showCategoryMapping"
+      :source-category="mappingSource"
+      :target-slug="pendingCategorySlug"
+      :values="propertyValues"
+      @apply="applyCategoryMapping"
+    />
 
     <ConfirmationDialog
       v-model="showCategoryChangeConfirmation"
@@ -236,6 +247,7 @@
     properties: EquipmentItemEditorProperty[];
     expectedPropertiesRevision?: number;
     expectedOriginalPropertiesRevision?: number;
+    categoryChangeConfirmed?: boolean;
   }
 
   interface EquipmentItemSubmissionValue extends EquipmentItemEditorValue {
@@ -252,6 +264,7 @@
   import { limits } from '#shared/constants'
   import { isFiniteDecimalNumber, normalizeDecimalNumber } from '#shared/utils/decimal-number'
   import type { CategoryDetailResponse } from '#server/api/equipment/categories/by-slug/[slug].get'
+  import EquipmentPropertyMappingDialog from '~/components/equipment/EquipmentPropertyMappingDialog.vue'
   import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue'
   import NumberInput from '~/components/NumberInput.vue'
   import PerdButton from '~/components/PerdButton.vue'
@@ -282,20 +295,24 @@
     autofocus?: boolean;
     initialValue: EquipmentItemEditorValue;
     isSubmitting: boolean;
-    mode: 'create' | 'review';
+    mode: 'create' | 'review' | 'edit';
+    initialCategory?: CategoryDetailResponse;
+    conflictMessage?: string;
     mutationMessage?: string | null;
     propertiesConflict?: boolean;
   }
 
   interface Emits {
     reload: [];
+    cancel: [];
+    dirty: [value: boolean];
     create: [value: EquipmentItemSubmissionValue];
     publish: [value: EquipmentItemEditorValue];
     reject: [value: EquipmentItemEditorValue, rejectionReason: string];
     submit: [value: EquipmentItemEditorValue];
   }
 
-  const { autofocus, initialValue, isSubmitting, mode, mutationMessage, propertiesConflict } = defineProps<Props>()
+  const { autofocus, initialValue, isSubmitting, mode, mutationMessage, propertiesConflict, initialCategory, conflictMessage } = defineProps<Props>()
   const emit = defineEmits<Emits>()
   const requestFetch = useRequestFetch()
   const knownPropertiesTitleId = useId()
@@ -311,19 +328,28 @@
   const selectedCategorySlug = ref('')
   const pendingCategorySlug = ref('')
   const showCategoryChangeConfirmation = ref(false)
+  const showCategoryMapping = ref(false)
+  let mappedCategory: CategoryDetailResponse | null = null
   const showPublishConfirmation = ref(false)
   const showRejectConfirmation = ref(false)
   const rejectionReason = ref('')
   const propertyValues = ref<Record<number, unknown>>({})
-  const pinnedCategoryDetail = ref<CategoryDetailResponse | null>(null)
-  const loadedPropertiesRevision = ref<number>()
+  const pinnedCategoryDetail = ref<CategoryDetailResponse | null>(initialCategory ?? null)
+  const mappingSource = computed(() => showCategoryMapping.value ? pinnedCategoryDetail.value : null)
+  const loadedPropertiesRevision = ref<number | undefined>(initialCategory?.propertiesRevision)
   const showPropertiesReloadConfirmation = ref(false)
   const isReloadingProperties = ref(false)
   const propertiesReloadError = ref<string | null>(null)
+  const reloadLabel = computed(() => mode === 'edit' ? 'Reload item' : 'Reload characteristics')
+  const propertiesConflictMessage = computed(() => conflictMessage ?? (mode === 'edit' ? 'Characteristics changed since this form was loaded. Your draft is still here. Reload before saving.' : 'Characteristics changed since this form was loaded. Your draft is still here. Reload before saving or making a decision.'))
 
-  const propertiesReloadMessage = computed(() => mode === 'review'
-    ? 'Reload the whole submission? This discards your current edits.'
-    : 'Reload characteristics? This clears their values. Item name, brand, category, and source URL stay.')
+  const propertiesReloadMessage = computed(() => {
+    if (mode === 'edit') { return 'Reload the whole item? This discards your current edits.' }
+
+    if (mode === 'review') { return 'Reload the whole submission? This discards your current edits.' }
+
+    return 'Reload characteristics? This clears their values. Item name, brand, category, and source URL stay.'
+  })
 
   const brandsRequestKey = `equipment-item-editor-brands-${mode}`
   const categoriesRequestKey = `equipment-item-editor-categories-${mode}`
@@ -361,11 +387,11 @@
   itemName.value = initialValue.name
   selectedBrandId.value = initialValue.brandId === 0 ? '' : `${initialValue.brandId}`
 
-  const initialCategory = categoriesResponse.value.find(
+  const initialCategoryOption = categoriesResponse.value.find(
     (category) => category.id === initialValue.categoryId
   )
 
-  selectedCategorySlug.value = initialCategory?.slug ?? ''
+  selectedCategorySlug.value = initialCategoryOption?.slug ?? ''
 
   const categoryDetailRequest = await useAsyncData(
     categoryDetailRequestKey,
@@ -386,7 +412,8 @@
       return response
     },
     {
-      default: () => null,
+      default: () => initialCategory ?? null,
+      immediate: mode !== 'edit',
       lazy: true
     }
   )
@@ -397,6 +424,10 @@
     refresh: refreshCategoryDetail,
     status: categoryDetailStatus
   } = categoryDetailRequest
+
+  if (mode === 'edit' && initialCategory !== undefined) {
+    categoryDetail.value = initialCategory
+  }
 
   const booleanOptions = [
     {
@@ -454,7 +485,7 @@
   ))
 
   const isMandatorySelectDisabled = computed(() => (
-    isSubmitting || isMandatoryReferenceReady.value === false
+    isSubmitting || isMandatoryReferenceReady.value === false || showCategoryMapping.value || (mode === 'edit' && pinnedCategoryDetail.value === null)
   ))
 
   const mandatoryAriaBusy = computed(() => isMandatoryReferenceLoading.value || undefined)
@@ -466,12 +497,17 @@
 
   const hasCategoryDetailError = computed(() => categoryDetailError.value !== undefined)
 
-  const categoryDetailErrorMessage = computed(() => mode === 'review'
-    ? 'Could not load characteristics. Retry before saving the full submission.'
-    : 'Could not load characteristics. You can still submit the basic item.')
+  const categoryDetailErrorMessage = computed(() => {
+    if (mode === 'edit') { return 'Could not load characteristics. Retry before saving the item.' }
+
+    if (mode === 'review') { return 'Could not load characteristics. Retry before saving the full submission.' }
+
+    return 'Could not load characteristics. You can still submit the basic item.'
+  })
 
   const hasMutationMessage = computed(() => mutationMessage !== undefined && mutationMessage !== null)
   const isReviewMode = computed(() => mode === 'review')
+  const isEditMode = computed(() => mode === 'edit')
   const isCreateMode = computed(() => mode === 'create')
   const trimmedSourceUrl = computed(() => sourceUrl.value.trim())
 
@@ -500,7 +536,7 @@
     isCreateMode.value && sourceUrlValidationMessage.value !== undefined
   ))
 
-  const submitLabel = computed(() => mode === 'review' ? 'Save changes' : 'Submit for review')
+  const submitLabel = computed(() => mode === 'create' ? 'Submit for review' : 'Save changes')
   const trimmedItemName = computed(() => itemName.value.trim())
 
   const selectedBrand = computed(() => {
@@ -559,9 +595,11 @@
       hasValidationError ||= hasError
 
       if (hasValue && hasError === false) {
+        const textValue = isNumberProperty ? normalizeDecimalNumber(trimmedValue) : trimmedValue
+
         const value = property.dataType === 'boolean'
           ? trimmedValue === 'true'
-          : trimmedValue
+          : textValue
 
         properties.push({
           propertyId: property.id,
@@ -651,7 +689,8 @@
       name: trimmedItemName.value,
       properties: result.properties,
       expectedPropertiesRevision: loadedPropertiesRevision.value,
-      expectedOriginalPropertiesRevision: initialValue.expectedOriginalPropertiesRevision
+      expectedOriginalPropertiesRevision: initialValue.expectedOriginalPropertiesRevision,
+      categoryChangeConfirmed: mode === 'edit' && category.id !== initialValue.categoryId
     }
   })
 
@@ -666,7 +705,40 @@
     })
   }
 
+  function draftProperties(values: Record<number, unknown>) {
+    const entries = Object.entries(values)
+
+    const propertyPairs = entries.map(([id, value]) => {
+      const propertyId = Number(id)
+      const fieldValue = getPropertyFieldValue(value)
+
+      return [propertyId, fieldValue] as const
+    })
+
+    const populatedProperties = propertyPairs.filter(([, value]) => value !== '')
+
+    return populatedProperties.toSorted(([left], [right]) => left - right)
+  }
+
   const isDirty = computed(() => {
+    if (mode === 'edit') {
+      const initialPropertyPairs = initialValue.properties.map((property) => [property.propertyId, property.value])
+      const initialProperties = Object.fromEntries(initialPropertyPairs)
+      const currentProperties = draftProperties(propertyValues.value)
+      const savedProperties = draftProperties(initialProperties)
+
+      const hasMainFieldChanges = itemName.value !== initialValue.name
+        || selectedBrandId.value !== `${initialValue.brandId}`
+        || (selectedCategory.value?.id ?? initialValue.categoryId) !== initialValue.categoryId
+
+      if (hasMainFieldChanges) { return true }
+
+      const serializedProperties = JSON.stringify(currentProperties)
+      const serializedSavedProperties = JSON.stringify(savedProperties)
+
+      return serializedProperties !== serializedSavedProperties
+    }
+
     const { value } = currentValue
 
     if (value === null) {
@@ -680,7 +752,7 @@
   })
 
   const isReviewDetailUnavailable = computed(() => (
-    mode === 'review'
+    mode !== 'create'
     && (categoryDetail.value === null || hasCategoryDetailError.value || isCategoryDetailLoading.value)
   ))
 
@@ -698,7 +770,7 @@
     const changedLoadedDefinitions = loadedPropertiesRevision.value !== undefined
       && detail.propertiesRevision !== loadedPropertiesRevision.value
 
-    const mismatchedReviewSnapshot = mode === 'review'
+    const mismatchedReviewSnapshot = mode !== 'create'
       && detail.id === initialValue.categoryId
       && detail.propertiesRevision !== initialValue.expectedOriginalPropertiesRevision
 
@@ -713,7 +785,8 @@
     || hasPropertiesConflict.value
     || isReloadingProperties.value
     || isSubmitting
-    || (mode === 'review' && isDirty.value === false)
+    || showCategoryMapping.value
+    || (mode !== 'create' && isDirty.value === false)
   ))
 
   const isDecisionDisabled = computed(() => (
@@ -769,6 +842,15 @@
       return
     }
 
+    if (mode === 'edit') {
+      if (value === '' || pinnedCategoryDetail.value === null) { return }
+
+      pendingCategorySlug.value = value
+      showCategoryMapping.value = true
+
+      return
+    }
+
     if (hasEnteredProperties()) {
       pendingCategorySlug.value = value
       showCategoryChangeConfirmation.value = true
@@ -779,6 +861,13 @@
     clearPropertyState()
 
     selectedCategorySlug.value = value
+  }
+
+  function applyCategoryMapping(category: CategoryDetailResponse, values: Record<number, boolean | string>) {
+    mappedCategory = category
+    propertyValues.value = values
+    selectedCategorySlug.value = category.slug
+    showCategoryMapping.value = false
   }
 
   function confirmCategoryChange() {
@@ -880,7 +969,7 @@
       return
     }
 
-    if (mode === 'review') {
+    if (mode !== 'create') {
       emit('reload')
 
       showPropertiesReloadConfirmation.value = false
@@ -932,7 +1021,22 @@
     }
   }, { immediate: true })
 
+  watch(isDirty, (value) => emit('dirty', value), { immediate: true })
+
   watch(selectedCategorySlug, async () => {
+    if (mode === 'edit') {
+      const snapshot = mappedCategory ?? initialCategory
+
+      if (snapshot !== undefined && snapshot.slug === selectedCategorySlug.value) {
+        pinnedCategoryDetail.value = snapshot
+        categoryDetail.value = snapshot
+        loadedPropertiesRevision.value = snapshot.propertiesRevision
+        mappedCategory = null
+
+        return
+      }
+    }
+
     pinnedCategoryDetail.value = null
     loadedPropertiesRevision.value = undefined
     categoryDetail.value = null
@@ -964,6 +1068,10 @@
   .propertyFields {
     display: grid;
     gap: var(--spacing-16);
+  }
+
+  .propertyFields {
+    overflow-wrap: anywhere;
   }
 
   .form {

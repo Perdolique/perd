@@ -5,6 +5,8 @@
       Back to gear library
     </PerdLink>
 
+    <p v-if="showSavedNotice" role="status">Changes saved.</p>
+
     <h1 v-if="showFallbackTitle">
       Gear item
     </h1>
@@ -76,32 +78,12 @@
             {{ comparisonActionLabel }}
           </PerdButton>
 
-          <details
-            ref="moreActions"
+          <PerdActionMenu
             :class="$style.moreActions"
-            @keydown.esc.prevent.stop="handleMoreEscape"
-          >
-            <summary :class="$style.moreTrigger">
-              <Icon name="hugeicons:more-horizontal" aria-hidden="true" />
-              More
-            </summary>
-
-            <div :class="$style.moreMenu">
-              <PerdLink :class="$style.moreLink" :to="photoSubmissionLocation">
-                <Icon name="hugeicons:camera-01" aria-hidden="true" />
-                Submit photo
-              </PerdLink>
-
-              <PerdLink
-                v-if="user.isAdmin"
-                :class="$style.moreLink"
-                :to="imagesManagementPath"
-              >
-                <Icon name="hugeicons:image-02" aria-hidden="true" />
-                Manage images
-              </PerdLink>
-            </div>
-          </details>
+            label="More"
+            menu-label="Item actions"
+            :items="itemActions"
+          />
 
           <p v-if="isComparisonLimitReached" :class="$style.comparisonHint">
             You can compare up to 4 items. Remove one to add this item.
@@ -180,6 +162,7 @@
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PerdButton from '~/components/PerdButton.vue'
+  import PerdActionMenu, { type ActionMenuItem } from '~/components/PerdActionMenu.vue'
   import PerdHeading from '~/components/PerdHeading.vue'
   import PerdLink from '~/components/PerdLink.vue'
 
@@ -195,7 +178,6 @@
   const { user } = useUserStore()
   const gearLibraryStore = useGearLibraryStore()
   const myGear = useGearLibraryMyGear()
-  const moreActions = useTemplateRef('moreActions')
   const itemHeading = useTemplateRef('itemHeading')
   const specificationsHeadingId = useId()
   const isRetryingItem = ref(false)
@@ -204,6 +186,7 @@
     ? route.params.id[0] ?? ''
     : route.params.id ?? ''
 
+  const showSavedNotice = ref(gearLibraryStore.takeItemEditNotice(itemId))
   const photoSubmissionPath = createGearLibraryPhotoSubmissionPath(itemId)
   const imagesManagementPath = `/admin/equipment/items/${itemId}/images`
 
@@ -213,17 +196,50 @@
     refresh: refreshItem,
     status: itemStatus
   } = useFetch(`/api/equipment/items/${itemId}`, {
+    key: `equipment-item:${itemId}`,
     lazy: true
   })
 
   const catalogRouteState = computed(() => getGearLibraryRouteState(route.query))
   const catalogQuery = computed(() => buildGearLibraryRouteQuery(catalogRouteState.value))
 
+  const itemEditLocation = computed(() => {
+    return {
+      path: `/admin/equipment/items/${itemId}/edit`,
+      query: catalogQuery.value
+    }
+  })
+
   const photoSubmissionLocation = computed(() => {
     return {
       path: photoSubmissionPath,
       query: catalogQuery.value
     }
+  })
+
+  const itemActions = computed<ActionMenuItem[]>(() => {
+    const items: ActionMenuItem[] = [{
+      id: 'submit-photo',
+      label: 'Submit photo',
+      icon: 'hugeicons:camera-01',
+      to: photoSubmissionLocation.value
+    }]
+
+    if (user.value.isAdmin) {
+      items.push({
+        id: 'edit',
+        label: 'Edit item',
+        icon: 'hugeicons:pencil-edit-02',
+        to: itemEditLocation.value
+      }, {
+        id: 'images',
+        label: 'Manage images',
+        icon: 'hugeicons:image-02',
+        to: imagesManagementPath
+      })
+    }
+
+    return items
   })
 
   const backToCatalogLocation = computed(() => {
@@ -404,17 +420,6 @@
     }
   }
 
-  function handleMoreEscape() {
-    const details = moreActions.value
-
-    if (details === null) {
-      return
-    }
-
-    details.open = false
-
-    details.querySelector('summary')?.focus()
-  }
 </script>
 
 <style module>
@@ -499,61 +504,6 @@
 
   .moreActions {
     grid-column: 2;
-    position: relative;
-  }
-
-  .moreTrigger {
-    min-block-size: var(--layout-button-height-medium);
-    min-inline-size: 7rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--spacing-8);
-    padding-inline: var(--spacing-20);
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--layout-button-radius);
-    background-color: var(--color-background-elevated);
-    color: var(--color-text-primary);
-    font-weight: var(--font-weight-semibold);
-    cursor: pointer;
-
-    &:hover,
-    .moreActions[open] & {
-      background-color: var(--color-accent-subtle-hover);
-    }
-  }
-
-  .moreMenu {
-    position: absolute;
-    z-index: 2;
-    inset-block-start: calc(100% + var(--spacing-8));
-    inset-inline-end: 0;
-    inline-size: max-content;
-    min-inline-size: 100%;
-    max-inline-size: min(18rem, calc(100vw - 2rem));
-    display: grid;
-    gap: var(--spacing-4);
-    padding: var(--spacing-8);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--border-radius-14);
-    background-color: var(--color-background-elevated);
-    box-shadow: var(--shadow-medium);
-  }
-
-  .moreLink {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-12);
-    min-block-size: var(--layout-touch-target);
-    padding-inline: var(--spacing-12);
-    border-radius: var(--border-radius-10);
-    color: var(--color-text-primary);
-    white-space: nowrap;
-
-    &:hover,
-    &:focus-visible {
-      background-color: var(--color-accent-subtle);
-    }
   }
 
   .comparisonHint {

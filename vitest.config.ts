@@ -9,6 +9,7 @@ export default defineConfig({
       '@@': import.meta.dirname,
       '~': fileURLToPath(new URL('app', import.meta.url)),
       '~~': import.meta.dirname,
+      '#imports': 'nuxt/app',
       '#server': fileURLToPath(new URL('server', import.meta.url)),
       '#shared': fileURLToPath(new URL('shared', import.meta.url))
     }

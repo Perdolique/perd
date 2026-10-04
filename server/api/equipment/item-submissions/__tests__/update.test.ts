@@ -1,5 +1,5 @@
 import * as h3 from 'h3'
-import type { SQL } from 'drizzle-orm'
+import { SQL } from 'drizzle-orm'
 import { PgDialect } from 'drizzle-orm/pg-core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { contributions, equipmentItems, itemPropertyValues } from '#server/database/schema'
@@ -291,11 +291,14 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
 
     expect(propertyLockOrder).toBeLessThan(itemLockOrder)
 
+    const expectedRevisionIncrement: unknown = expect.any(SQL)
+
     expect(db.updateSetMock).toHaveBeenCalledWith({
       brandId: 1,
       categoryId: 2,
       name: 'PocketRocket Deluxe',
       rejectionReason: null,
+      revision: expectedRevisionIncrement,
       status: 'pending'
     })
 
@@ -396,8 +399,10 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
       readValidatedBodyMock.mockResolvedValue(body)
 
       const result = await updateHandler(createTestEvent({}))
+      const expectedRevisionIncrement: unknown = expect.any(SQL)
 
       expect(db.updateSetMock).toHaveBeenCalledWith({
+        revision: expectedRevisionIncrement,
         brandId: 1,
         categoryId: 2,
         name: 'PocketRocket Deluxe',

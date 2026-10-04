@@ -413,6 +413,36 @@ test.describe('Admin category management', () => {
     expect(rightDifference).toBeLessThan(1)
     expect(topDifference).toBeLessThan(1)
 
+    const deleteAction = menu.getByRole('menuitem', {
+      name: 'Delete',
+      exact: true
+    })
+
+    const dangerTextColor = await page.evaluate(() => {
+      const probe = globalThis.document.createElement('span')
+
+      probe.style.color = 'var(--color-danger-primary)'
+
+      globalThis.document.body.append(probe)
+
+      const { color } = globalThis.getComputedStyle(probe)
+
+      probe.remove()
+
+      return color
+    })
+
+    await expect(deleteAction).toHaveCSS('color', dangerTextColor)
+    await expect(deleteAction).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+    await expect(deleteAction).toHaveCSS('border-top-color', 'rgba(0, 0, 0, 0)')
+    await expect(deleteAction).toHaveCSS('box-shadow', 'none')
+    await deleteAction.hover()
+    await expect(deleteAction).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+    await page.screenshot({ path: test.info().outputPath('category-menu-hover.png') })
+    await trigger.hover()
+    await expect(deleteAction).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+    await expect(deleteAction).toHaveCSS('color', dangerTextColor)
+
     await expect(menu.getByRole('menuitem', {
       name: 'Characteristics',
       exact: true

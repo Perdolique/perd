@@ -35,7 +35,7 @@
           variant="ghost"
           role="menuitem"
           tabindex="-1"
-          :class="[$style.item, { danger: item.danger }]"
+          :class="[$style.item, { isDanger: item.danger }]"
           @click.capture="select(item, $event)"
         >{{ item.label }}</PerdButton>
       </template>
@@ -44,11 +44,13 @@
 </template>
 
 <script lang="ts">
+  import type { RouteLocationRaw } from 'vue-router'
+
   export interface ActionMenuItem {
     id: string;
     label: string;
     icon: string;
-    to?: string;
+    to?: RouteLocationRaw;
     disabled?: boolean;
     hint?: string;
     danger?: boolean;
@@ -292,10 +294,10 @@
   }
 
   .item {
-    &:global(.danger) {
+    &:global(.isDanger) {
       --button-background-hover: var(--color-danger-subtle);
       --button-background-active: var(--color-danger-subtle-hover);
-      --button-text-color: color-mix(in oklab, var(--color-danger-primary) 75%, var(--color-text-primary));
+      --button-text-color: var(--color-danger-primary);
     }
   }
 </style>

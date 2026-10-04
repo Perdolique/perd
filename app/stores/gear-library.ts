@@ -19,6 +19,7 @@ const gearLibraryItemsAsyncDataKey = 'gear-library-items'
 
 /** Owns shared catalog cache and user-specific membership state for this app session. */
 const useGearLibraryStore = defineStore('gear-library', () => {
+  const editedItemNotice = ref<string | null>(null)
   const brands = ref<GearLibraryEntityDetail[]>()
   const categories = ref<GearLibraryEntityDetail[]>()
   const categoryDetails = ref<CategoryDetailResponse[]>([])
@@ -83,14 +84,35 @@ const useGearLibraryStore = defineStore('gear-library', () => {
     membershipOverrides.value[itemId] = false
   }
 
+  function markItemEdited(itemId: string) {
+    itemsSnapshot.value = undefined
+    editedItemNotice.value = itemId
+
+    clearNuxtData(gearLibraryItemsAsyncDataKey)
+    clearNuxtData(`equipment-item:${itemId}`)
+    clearNuxtData('gear-library-comparison')
+    clearNuxtData('gear-library-comparison-items')
+  }
+
+  function takeItemEditNotice(itemId: string) {
+    if (editedItemNotice.value !== itemId) { return false }
+
+    editedItemNotice.value = null
+
+    return true
+  }
+
   function resetPersonalizedState() {
     itemsSnapshot.value = undefined
     membershipOverrides.value = {}
+    editedItemNotice.value = null
 
     clearNuxtData(gearLibraryItemsAsyncDataKey)
   }
 
   return {
+    markItemEdited,
+    takeItemEditNotice,
     brands,
     categories,
     categoryDetails,

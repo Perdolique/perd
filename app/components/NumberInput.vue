@@ -4,6 +4,7 @@
       {{ label }}
     </label>
 
+    <!-- Decimal drafts must stay strings, including invalid input and large values. -->
     <input
       :id="inputId"
       v-model="value"
@@ -12,9 +13,8 @@
       :name="name"
       :aria-describedby="describedBy"
       :aria-invalid="ariaInvalid"
-      type="number"
+      type="text"
       inputmode="decimal"
-      step="any"
     >
 
     <span v-if="hasUnit" :id="unitId" :class="$style.hint">
