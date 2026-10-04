@@ -31,6 +31,7 @@ interface CatalogMockConfig {
   categories?: CatalogResponder;
   categoryDetail?: CatalogResponder;
   itemDetails?: CatalogResponder;
+  itemGalleries?: CatalogResponder;
   items?: CatalogResponder;
 }
 
@@ -39,6 +40,7 @@ interface CatalogRequestTracker {
   categories: ParsedUrl[];
   categoryDetails: ParsedUrl[];
   itemDetails: ParsedUrl[];
+  itemGalleries: ParsedUrl[];
   items: ParsedUrl[];
   myGear: Request[];
 }
@@ -637,6 +639,7 @@ async function mockCatalogApi(context: BrowserContext, config: CatalogMockConfig
     categories: [],
     categoryDetails: [],
     itemDetails: [],
+    itemGalleries: [],
     items: [],
     myGear: []
   }
@@ -753,6 +756,22 @@ async function mockCatalogApi(context: BrowserContext, config: CatalogMockConfig
     await fulfillMockResponse(route, response)
   })
 
+  await context.route((url) => /^\/api\/equipment\/items\/[^/]+\/gallery$/u.test(url.pathname), async (route) => {
+    const requestUrl = new globalThis.URL(route.request().url())
+
+    tracker.itemGalleries.push(requestUrl)
+
+    const request = {
+      count: tracker.itemGalleries.length,
+      url: requestUrl
+    }
+
+    const fallback = { json: [] }
+    const response = await resolveMockResponse(config.itemGalleries, request, fallback)
+
+    await fulfillMockResponse(route, response)
+  })
+
   return tracker
 }
 
@@ -774,6 +793,16 @@ async function mockItemDetailApi(context: BrowserContext, item: GearLibraryListI
 
   await context.route((url) => url.pathname === `/api/equipment/items/${item.id}`, async (route) => {
     await route.fulfill({ json: itemDetailResponse })
+  })
+
+  const images = item.cloudflareImageId === null ? [] : [{
+    cloudflareImageId: item.cloudflareImageId,
+    displayOrder: 0,
+    id: item.id
+  }]
+
+  await context.route((url) => url.pathname === `/api/equipment/items/${item.id}/gallery`, async (route) => {
+    await route.fulfill({ json: images })
   })
 }
 

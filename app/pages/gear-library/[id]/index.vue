@@ -101,19 +101,13 @@
       </div>
 
       <div :class="$style.detailBody">
-        <div :class="$style.imageFrame">
-          <EquipmentItemImage
-            :class="$style.image"
-            :alt="itemResponse.name"
-            :cloudflare-image-id="itemResponse.cloudflareImageId"
-            fit="inside"
-            :height="660"
-            loading="eager"
-            preload
-            sizes="sm:100vw lg:440px"
-            :width="880"
-          />
-        </div>
+        <EquipmentItemGallery
+          :key="itemResponse.id"
+          :class="$style.gallery"
+          :item-id="itemResponse.id"
+          :item-name="itemResponse.name"
+          :primary-image-id="itemResponse.cloudflareImageId"
+        />
 
         <section :class="$style.specifications" :aria-labelledby="specificationsHeadingId">
           <PerdHeading :id="specificationsHeadingId" :level="2">
@@ -157,7 +151,7 @@
   } from '~/utils/gear-library'
 
   import { appRoutes, createGearLibraryPhotoSubmissionPath } from '~/utils/navigation'
-  import EquipmentItemImage from '~/components/equipment/EquipmentItemImage.vue'
+  import EquipmentItemGallery from '~/components/equipment/EquipmentItemGallery.vue'
   import GearLibraryMyGearAction from '~/components/gear-library/GearLibraryMyGearAction.vue'
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
@@ -532,18 +526,8 @@
     }
   }
 
-  .imageFrame {
+  .gallery {
     grid-area: image;
-    overflow: hidden;
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--border-radius-16);
-    background-color: var(--color-surface-secondary);
-  }
-
-  .image {
-    inline-size: 100%;
-    block-size: clamp(14rem, 30cqi, 19rem);
-    object-fit: contain;
   }
 
   .specifications {

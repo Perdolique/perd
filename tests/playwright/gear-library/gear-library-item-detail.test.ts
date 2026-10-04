@@ -173,7 +173,17 @@ async function signInGuest(context: BrowserContext, page: Page, redirectTo: stri
 }
 
 test.describe('Gear library item detail', () => {
+  test.beforeEach(async ({ context }) => {
+    await context.route('**/api/equipment/items/*/gallery', async (route) => {
+      await route.fulfill({ json: [] })
+    })
+  })
+
   test('shows the selected layout and returns to the same catalog selection', async ({ context, page }) => {
+    const galleryName = `Photos of ${itemSummary.name}`
+    const gallery = page.getByRole('region', { name: galleryName })
+    const detailImage = gallery.locator('img')
+
     const submitPhotoLink = page.getByRole('menuitem', {
       name: 'Submit photo',
       includeHidden: true
@@ -210,7 +220,7 @@ test.describe('Gear library item detail', () => {
 
       await expect(page.getByText('MSR')).toBeVisible()
       await expect(page.getByText('Stoves')).toBeVisible()
-      await expect(page.getByRole('img', { name: itemSummary.name })).toBeVisible()
+      await expect(detailImage).toBeVisible()
 
       await expect(page.getByRole('heading', {
         level: 2,
@@ -307,8 +317,7 @@ test.describe('Gear library item detail', () => {
 
       const desktopAddBox = await getElementBox(addButton)
       const desktopCompareBox = await getElementBox(compareButton)
-      const desktopImage = page.getByRole('img', { name: itemSummary.name })
-      const desktopImageBox = await getElementBox(desktopImage)
+      const desktopImageBox = await getElementBox(detailImage)
 
       const specificationsHeading = page.getByRole('heading', {
         level: 2,

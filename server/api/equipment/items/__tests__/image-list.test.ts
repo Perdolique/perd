@@ -1,4 +1,4 @@
-import type * as h3 from 'h3'
+import * as h3 from 'h3'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import imageListHandler from '#server/api/equipment/items/[id]/images/index.get'
 import { createTestEvent } from '~~/test-utils/create-test-event'
@@ -74,5 +74,21 @@ describe('get /api/equipment/items/[id]/images', () => {
         displayOrder: 'asc'
       }
     }))
+  })
+
+  it('keeps the management read unavailable to non-administrators', async () => {
+    const findManyMock = vi.fn()
+
+    const event = createTestEvent({
+      query: {
+        equipmentItemImages: {
+          findMany: findManyMock
+        }
+      }
+    })
+
+    validateAdminUserMock.mockRejectedValueOnce(h3.createError({ status: 403 }))
+    await expect(imageListHandler(event)).rejects.toMatchObject({ statusCode: 403 })
+    expect(findManyMock).not.toHaveBeenCalled()
   })
 })

@@ -2,7 +2,7 @@
   <NuxtImg
     v-if="usesCloudflareProvider"
     v-bind="$attrs"
-    :alt="alt"
+    :alt="imageAlt"
     :fit="fit"
     :height="height"
     :loading="loading"
@@ -12,17 +12,19 @@
     :src="cloudflareImageSource"
     :width="width"
     @error="handleError"
+    @load="handleLoad"
   />
 
   <img
     v-else
     v-bind="$attrs"
-    :alt="alt"
+    :alt="imageAlt"
     :height="height"
     :loading="loading"
     :src="standardImageSource"
     :width="width"
     @error="handleError"
+    @load="handleLoad"
   >
 </template>
 
@@ -40,16 +42,23 @@
     width: number;
   }
 
-  const placeholderSource = '/equipment-item-placeholder.webp'
+  interface Emits {
+    error: [error: Event | string];
+    load: [event: Event];
+  }
 
   defineOptions({ inheritAttrs: false })
 
-  const { cloudflareImageId } = defineProps<Props>()
+  const { alt, cloudflareImageId } = defineProps<Props>()
+  const emit = defineEmits<Emits>()
+  const placeholderSource = '/equipment-item-placeholder.webp'
   const hasLoadError = ref(false)
 
   const hasCloudflareImage = computed(
     () => cloudflareImageId !== null && hasLoadError.value === false
   )
+
+  const imageAlt = computed(() => hasCloudflareImage.value ? alt : '')
 
   const usesCloudflareProvider = computed(
     () => import.meta.dev === false && hasCloudflareImage.value
@@ -77,7 +86,19 @@
     hasLoadError.value = false
   })
 
-  function handleError(): void {
+  function handleError(error: Event | string): void {
+    if (!hasCloudflareImage.value) {
+      return
+    }
+
     hasLoadError.value = true
+
+    emit('error', error)
+  }
+
+  function handleLoad(event: Event): void {
+    if (hasCloudflareImage.value) {
+      emit('load', event)
+    }
   }
 </script>
