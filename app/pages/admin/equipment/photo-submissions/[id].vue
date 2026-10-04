@@ -143,13 +143,13 @@
         </p>
 
         <div :class="$style.buttons">
-          <PerdButton :disabled="isDecisionDisabled" @click="openPublishConfirmation">
+          <PerdButton :disabled="isPublishDisabled" @click="openPublishConfirmation">
             Publish
           </PerdButton>
 
           <PerdButton
             variant="danger"
-            :disabled="isDecisionDisabled"
+            :disabled="isSubmitting"
             @click="openRejectConfirmation"
           >
             Reject
@@ -259,7 +259,7 @@
   const hasPreviewError = computed(() => previewStatus.value === 'error')
   const isPreviewReady = computed(() => previewStatus.value === 'ready')
   const isPreviewHidden = computed(() => isPreviewReady.value === false)
-  const isDecisionDisabled = computed(() => isPreviewReady.value === false || isSubmitting.value)
+  const isPublishDisabled = computed(() => isPreviewReady.value === false || isSubmitting.value)
   const trimmedRejectionReason = computed(() => rejectionReason.value.trim())
   const isRejectConfirmDisabled = computed(() => isSubmitting.value || trimmedRejectionReason.value === '')
   const itemPath = computed(() => createGearLibraryItemPath(submission.value?.item.id ?? ''))
@@ -363,14 +363,14 @@
   }
 
   function openPublishConfirmation() {
-    if (isDecisionDisabled.value === false) {
+    if (isPublishDisabled.value === false) {
       mutationError.value = null
       showPublishConfirmation.value = true
     }
   }
 
   function openRejectConfirmation() {
-    if (isDecisionDisabled.value === false) {
+    if (isSubmitting.value === false) {
       mutationError.value = null
       showRejectConfirmation.value = true
     }
