@@ -1,5 +1,6 @@
 import * as h3 from 'h3'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import renameMyGearHandler from '#server/api/user/gear/[id].patch'
 import deleteMyGearHandler from '#server/api/user/gear/[id].delete'
 import listMyGearHandler from '#server/api/user/gear/index.get'
 import createMyGearHandler from '#server/api/user/gear/index.post'
@@ -96,6 +97,8 @@ function createCreateDb({
   };
   createdRow?: {
     id: string;
+    customName?: string;
+    createdAt?: string;
   };
   duplicateRow?: {
     id: string;
@@ -199,6 +202,7 @@ describe('user gear handlers', () => {
   describe('get /api/user/gear', () => {
     it('should return complete current user gear rows', async () => {
       const dbHttp = createListDb([{
+        customName: null,
         createdAt: '2026-04-03T09:00:00.000Z',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d3',
 
@@ -217,6 +221,7 @@ describe('user gear handlers', () => {
           }
         }
       }, {
+        customName: null,
         createdAt: '2026-04-03T09:00:00.000Z',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d2',
 
@@ -235,6 +240,7 @@ describe('user gear handlers', () => {
           }
         }
       }, {
+        customName: null,
         createdAt: '2026-04-01T09:00:00.000Z',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d1',
 
@@ -253,10 +259,12 @@ describe('user gear handlers', () => {
           }
         }
       }, {
+        customName: null,
         createdAt: '2026-04-01T09:00:00.000Z',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d4',
         item: null
       }, {
+        customName: null,
         createdAt: '2026-04-01T09:00:00.000Z',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d5',
 
@@ -276,6 +284,7 @@ describe('user gear handlers', () => {
       const result = await listMyGearHandler(event)
 
       expect(result).toStrictEqual([{
+        source: 'catalog',
         createdAt: '2026-04-03T09:00:00.000Z',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d3',
 
@@ -294,6 +303,7 @@ describe('user gear handlers', () => {
           }
         }
       }, {
+        source: 'catalog',
         createdAt: '2026-04-03T09:00:00.000Z',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d2',
 
@@ -312,6 +322,7 @@ describe('user gear handlers', () => {
           }
         }
       }, {
+        source: 'catalog',
         createdAt: '2026-04-01T09:00:00.000Z',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d1',
 
@@ -392,6 +403,7 @@ describe('user gear handlers', () => {
   describe('post /api/user/gear', () => {
     it('should create a my gear row for an approved item', async () => {
       const createdMyGearRow = {
+        source: 'catalog',
         createdAt: '2026-04-03T09:00:00.000Z',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
 
@@ -463,14 +475,20 @@ describe('user gear handlers', () => {
     })
 
     it('should return 409 when the insert hits a duplicate constraint', async () => {
+      const insertError = new Error('duplicate key value violates unique constraint')
+
+      Object.assign(insertError, { code: '23505' })
+
+      const log = vi.spyOn(console, 'error').mockImplementation(() => {
+        // Expected conflict logging.
+      })
+
       const { dbHttp } = createCreateDb({
         approvedItem: {
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
         },
 
-        insertError: Object.assign(new Error('duplicate key value violates unique constraint'), {
-          code: '23505'
-        })
+        insertError
       })
 
       const event = createTestEvent(dbHttp)
@@ -479,6 +497,11 @@ describe('user gear handlers', () => {
         message: 'Item is already in my gear',
         statusCode: 409
       })
+
+      expect(log).toHaveBeenCalledTimes(1)
+      expect(log.mock.calls[0]?.[0]).toBe('Failed to create my gear row')
+      expect(log.mock.calls[0]?.[1]).toBe(insertError)
+      expect(log.mock.calls[0]?.[2]).toHaveProperty('details', expect.stringContaining('23505'))
     })
 
     it('should return 500 when a duplicate-looking insert error has no PostgreSQL code', async () => {
@@ -508,6 +531,120 @@ describe('user gear handlers', () => {
       await expect(createMyGearHandler(event)).rejects.toMatchObject({
         statusCode: 400
       })
+    })
+  })
+
+  describe('custom gear contracts', () => {
+    it('returns custom gear without a fake catalog item', async () => {
+      const row = {
+        id: 'custom-id',
+        createdAt: '2026-10-04T10:00:00.000Z',
+        customName: 'DIY Stove',
+        item: null
+      }
+
+      const dbHttp = createListDb([row])
+      const event = createTestEvent(dbHttp)
+      const result = await listMyGearHandler(event)
+
+      expect(result).toStrictEqual([{
+        id: row.id,
+        createdAt: row.createdAt,
+        customName: 'DIY Stove',
+        source: 'custom'
+      }])
+    })
+
+    it('creates custom gear without querying the catalog or deduplicating names', async () => {
+      const createdRow = {
+        id: 'custom-id',
+        createdAt: '2026-10-04T10:00:00.000Z',
+        customName: 'DIY Stove'
+      }
+
+      const { dbHttp, insertValuesMock } = createCreateDb({ createdRow })
+      const event = createTestEvent(dbHttp)
+
+      readValidatedBodyMock.mockResolvedValue({ customName: 'DIY Stove' })
+
+      const result = await createMyGearHandler(event)
+
+      expect(result).toStrictEqual({
+        ...createdRow,
+        source: 'custom'
+      })
+
+      expect(insertValuesMock).toHaveBeenCalledWith({
+        customName: 'DIY Stove',
+        userId: 'user-1'
+      })
+
+      expect(dbHttp.query.equipmentItems.findFirst).not.toHaveBeenCalled()
+      expect(dbHttp.query.userEquipment.findFirst).not.toHaveBeenCalled()
+      expect(setResponseStatusMock).toHaveBeenCalledWith(event, 201)
+    })
+
+    it.each(['23503', '23001'])('maps wrapped constraint %s to a removal conflict', async (code) => {
+      const cause = new Error('Referenced gear')
+
+      Object.assign(cause, { code })
+
+      const deleteError = new Error('Query failed', { cause })
+
+      const log = vi.spyOn(console, 'error').mockImplementation(() => {
+        // Expected conflict logging.
+      })
+
+      const { dbHttp } = createDeleteDb({ deleteError })
+      const event = createTestEvent(dbHttp)
+
+      await expect(deleteMyGearHandler(event)).rejects.toMatchObject({
+        statusCode: 409,
+        message: 'My gear item is still used in a list'
+      })
+
+      expect(log).toHaveBeenCalledTimes(1)
+      expect(log.mock.calls[0]?.[0]).toBe('Failed to delete my gear row')
+      expect(log.mock.calls[0]?.[1]).toBe(deleteError)
+      expect(log.mock.calls[0]?.[2]).toHaveProperty('details', expect.stringContaining(code))
+    })
+
+    it.each(['create', 'rename', 'delete', 'load'] as const)('keeps unexpected %s errors in logs, not public responses', async (action) => {
+      const cause = new Error('Raw database failure')
+      const failure = new Error('Private SQL connection details', { cause })
+      const expectedMessage = `Failed to ${action} my gear row`
+
+      const log = vi.spyOn(console, 'error').mockImplementation(() => {
+        // Expected failure logging.
+      })
+
+      const fail = vi.fn(() => { throw failure })
+
+      const event = createTestEvent({
+        insert: fail,
+        update: fail,
+        delete: fail,
+        query: { userEquipment: { findMany: fail } }
+      })
+
+      const handlers = {
+        create: createMyGearHandler,
+        rename: renameMyGearHandler,
+        delete: deleteMyGearHandler,
+        load: listMyGearHandler
+      }
+
+      readValidatedBodyMock.mockResolvedValue({ customName: 'DIY Stove' })
+
+      await expect(handlers[action](event)).rejects.toMatchObject({
+        statusCode: 500,
+        message: expectedMessage
+      })
+
+      expect(log).toHaveBeenCalledTimes(1)
+      expect(log.mock.calls[0]?.[0]).toBe(expectedMessage)
+      expect(log.mock.calls[0]?.[1]).toBe(failure)
+      expect(log.mock.calls[0]?.[2]).toHaveProperty('details', expect.stringContaining('Raw database failure'))
     })
   })
 

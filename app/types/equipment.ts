@@ -78,20 +78,27 @@ interface MyGearItem {
   name: string;
 }
 
-interface MyGearRecord {
+interface MyGearRecordBase {
   createdAt: string;
   id: string;
+}
+
+interface CatalogMyGearRecord extends MyGearRecordBase {
+  source: 'catalog';
   item: MyGearItem;
 }
 
-interface MyGearRecordView {
-  createdAt: string;
+interface CustomMyGearRecord extends MyGearRecordBase {
+  source: 'custom';
+  customName: string;
+}
+
+type MyGearRecord = CatalogMyGearRecord | CustomMyGearRecord
+
+type MyGearRecordView = MyGearRecord & {
   formattedCreatedAt: string;
-  gearLibraryPath: string;
-  id: string;
   isRemoveDisabled: boolean;
   isRemoving: boolean;
-  item: MyGearItem;
 }
 
 export type {

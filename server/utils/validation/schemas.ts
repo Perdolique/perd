@@ -493,8 +493,18 @@ const userEquipmentIdParamsSchema = v.object({
   id: canonicalUuidV7Schema
 })
 
-const userEquipmentCreateBodySchema = v.object({
-  itemId: canonicalUuidV7Schema
+const userEquipmentCustomNameSchema = v.pipe(
+  trimmedNonEmptyStringSchema,
+  v.maxLength(limits.maxUserEquipmentCustomNameLength)
+)
+
+const userEquipmentCreateBodySchema = v.union([
+  v.strictObject({ itemId: canonicalUuidV7Schema }),
+  v.strictObject({ customName: userEquipmentCustomNameSchema })
+])
+
+const userEquipmentRenameBodySchema = v.strictObject({
+  customName: userEquipmentCustomNameSchema
 })
 
 const packingListIdParamsSchema = v.object({
@@ -994,6 +1004,10 @@ function validateUserEquipmentIdParams(params: unknown) {
   return v.parse(userEquipmentIdParamsSchema, params)
 }
 
+function validateUserEquipmentRenameBody(body: unknown) {
+  return v.parse(userEquipmentRenameBodySchema, body)
+}
+
 function validateUserEquipmentCreateBody(body: unknown) {
   return v.parse(userEquipmentCreateBodySchema, body)
 }
@@ -1291,6 +1305,7 @@ export {
   validateRedirectTargetQuery,
   validateTwitchOAuthBody,
   validateTwitchOAuthQuery,
+  validateUserEquipmentRenameBody,
   validateUserEquipmentCreateBody,
   validateUserEquipmentIdParams
 }

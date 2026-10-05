@@ -33,6 +33,7 @@
         </PerdButton>
 
         <PerdButton
+          ref="confirmButton"
           :variant="confirmVariant"
           :class="$style.confirmButton"
           :loading="confirmLoading"
@@ -47,7 +48,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, useId } from 'vue'
+  import { computed, useId, useTemplateRef } from 'vue'
   import PerdButton from '~/components/PerdButton.vue'
   import PerdHeading from '~/components/PerdHeading.vue'
   import ModalDialog from './ModalDialog.vue'
@@ -72,6 +73,7 @@
   const {
     cancelButtonText = 'Cancel',
     closeOnConfirm = true,
+    confirmDisabled,
     confirmLoading,
     confirmVariant = 'primary',
     error = null
@@ -79,7 +81,16 @@
 
   const emit = defineEmits<Emits>()
   const headingId = useId()
+  const confirmButton = useTemplateRef('confirmButton')
   const hasError = computed(() => error !== null)
+
+  function focusConfirm() {
+    if (isOpened.value && !confirmLoading && !confirmDisabled) {
+      confirmButton.value?.focus()
+    }
+  }
+
+  defineExpose({ focusConfirm })
 
   function close() {
     if (confirmLoading) {

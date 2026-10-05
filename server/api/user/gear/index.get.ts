@@ -1,4 +1,5 @@
 import { defineEventHandler } from 'h3'
+import { throwMyGearError } from '#server/utils/my-gear-errors'
 import { validateSessionUser } from '#server/utils/session'
 
 interface MyGearItemBrand {
@@ -25,13 +26,24 @@ interface MyGearQueryItem {
   name: string;
 }
 
-interface MyGearRecord {
+interface CatalogMyGearRecord {
+  source: 'catalog';
   createdAt: Date | string;
   id: string;
   item: MyGearItem;
 }
 
+interface CustomMyGearRecord {
+  createdAt: Date | string;
+  customName: string;
+  id: string;
+  source: 'custom';
+}
+
+type MyGearRecord = CatalogMyGearRecord | CustomMyGearRecord
+
 interface MyGearQueryRow {
+  customName: string | null;
   createdAt: Date | string;
   id: string;
   item: MyGearQueryItem | null;
@@ -40,73 +52,89 @@ interface MyGearQueryRow {
 export default defineEventHandler(async (event) : Promise<MyGearRecord[]> => {
   const userId = await validateSessionUser(event)
 
-  const myGearRows: MyGearQueryRow[] = await event.context.dbHttp.query.userEquipment.findMany({
-    columns: {
-      createdAt: true,
-      id: true
-    },
+  try {
+    const myGearRows: MyGearQueryRow[] = await event.context.dbHttp.query.userEquipment.findMany({
+      columns: {
+        customName: true,
+        createdAt: true,
+        id: true
+      },
 
-    where: {
-      userId
-    },
+      where: {
+        userId
+      },
 
-    orderBy: {
-      createdAt: 'desc',
-      id: 'desc'
-    },
+      orderBy: {
+        createdAt: 'desc',
+        id: 'desc'
+      },
 
-    with: {
-      item: {
-        columns: {
-          id: true,
-          name: true
-        },
-
-        with: {
-          brand: {
-            columns: {
-              name: true,
-              slug: true
-            }
-          },
-
-          category: {
-            columns: {
-              name: true,
-              slug: true
-            }
-          }
-        }
-      }
-    }
-  })
-
-  const completeMyGearRows = myGearRows.filter(
-    (row): row is MyGearRecord => row.item !== null && row.item.brand !== null && row.item.category !== null
-  )
-
-  return completeMyGearRows
-    .map((row) => {
-      return {
-        createdAt: row.createdAt,
-        id: row.id,
-
+      with: {
         item: {
-          id: row.item.id,
-          name: row.item.name,
-
-          brand: {
-            name: row.item.brand.name,
-            slug: row.item.brand.slug
+          columns: {
+            id: true,
+            name: true
           },
 
-          category: {
-            name: row.item.category.name,
-            slug: row.item.category.slug
+          with: {
+            brand: {
+              columns: {
+                name: true,
+                slug: true
+              }
+            },
+
+            category: {
+              columns: {
+                name: true,
+                slug: true
+              }
+            }
           }
         }
       }
     })
+
+    const records: MyGearRecord[] = []
+
+    for (const row of myGearRows) {
+      const { item } = row
+
+      if (row.customName !== null && item === null) {
+        records.push({
+          createdAt: row.createdAt,
+          customName: row.customName,
+          id: row.id,
+          source: 'custom'
+        })
+      } else if (item?.brand && item.category) {
+        records.push({
+          createdAt: row.createdAt,
+          id: row.id,
+          source: 'catalog',
+
+          item: {
+            id: item.id,
+            name: item.name,
+
+            brand: {
+              name: item.brand.name,
+              slug: item.brand.slug
+            },
+
+            category: {
+              name: item.category.name,
+              slug: item.category.slug
+            }
+          }
+        })
+      }
+    }
+
+    return records
+  } catch (error) {
+    throwMyGearError(error, 'load')
+  }
 })
 
-export type { MyGearRecord }
+export type { MyGearRecord, CustomMyGearRecord }

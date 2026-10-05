@@ -1,5 +1,5 @@
 <template>
-  <PerdCard :class="$style.component">
+  <PerdCard :class="$style.component" :data-gear-id="myGearRow.id">
     <div :class="$style.header">
       <div :class="$style.info">
         <div :class="$style.titleRow">
@@ -8,50 +8,55 @@
           </span>
 
           <div :class="$style.titleBlock">
-            <div :class="$style.brand">
-              {{ myGearRow.item.brand.name }}
-            </div>
+            <template v-if="catalogItem">
+              <div :class="$style.brand">
+                {{ catalogItem.brand.name }}
+              </div>
 
-            <PerdLink :to="myGearRow.gearLibraryPath">
-              {{ myGearRow.item.name }}
-            </PerdLink>
+              <PerdLink :to="gearLibraryPath">
+                {{ catalogItem.name }}
+              </PerdLink>
+            </template>
+            <span v-else :class="$style.customName">{{ name }}</span>
           </div>
         </div>
 
         <div :class="$style.tags">
-          <PerdPill>
-            {{ myGearRow.item.brand.name }}
-          </PerdPill>
+          <template v-if="catalogItem">
+            <PerdPill>
+              {{ catalogItem.brand.name }}
+            </PerdPill>
 
-          <PerdPill>
-            {{ myGearRow.item.category.name }}
-          </PerdPill>
+            <PerdPill>
+              {{ catalogItem.category.name }}
+            </PerdPill>
+          </template>
+          <PerdPill v-else>Custom</PerdPill>
+
+          <span :class="$style.meta">
+            Added <time :datetime="myGearRow.createdAt">{{ myGearRow.formattedCreatedAt }}</time>
+          </span>
         </div>
       </div>
 
-      <div :class="$style.actions">
-        <div :class="$style.meta">
-          Added <time :datetime="myGearRow.createdAt">{{ myGearRow.formattedCreatedAt }}</time>
-        </div>
-
-        <PerdButton
-          size="small"
-          variant="danger"
-          icon="hugeicons:delete-02"
-          :loading="myGearRow.isRemoving"
-          :disabled="myGearRow.isRemoveDisabled"
-          @click="emitRemove"
-        >
-          Remove
-        </PerdButton>
-      </div>
+      <PerdActionMenu
+        ref="actionMenu"
+        :label="actionsLabel"
+        :menu-label="menuLabel"
+        :items="actions"
+        :disabled="myGearRow.isRemoveDisabled"
+        :loading="myGearRow.isRemoving"
+        @action="handleAction"
+      />
     </div>
   </PerdCard>
 </template>
 
 <script lang="ts" setup>
+  import { computed, useTemplateRef } from 'vue'
+  import { createGearLibraryItemPath } from '~/utils/navigation'
   import type { MyGearRecordView } from '~/types/equipment'
-  import PerdButton from '~/components/PerdButton.vue'
+  import PerdActionMenu, { type ActionMenuItem } from '~/components/PerdActionMenu.vue'
   import PerdCard from '~/components/PerdCard.vue'
   import PerdLink from '~/components/PerdLink.vue'
   import PerdPill from '~/components/PerdPill.vue'
@@ -60,20 +65,66 @@
     myGearRow: MyGearRecordView;
   }
 
-  type Emits = (event: 'remove', myGearId: string) => void
+  type Emits = (event: 'remove' | 'rename', myGearId: string) => void
 
   const { myGearRow } = defineProps<Props>()
   const emit = defineEmits<Emits>()
+  const actionMenu = useTemplateRef('actionMenu')
+  const id = computed(() => myGearRow.id)
+  const catalogItem = computed(() => myGearRow.source === 'catalog' ? myGearRow.item : null)
+  const name = computed(() => myGearRow.source === 'custom' ? myGearRow.customName : myGearRow.item.name)
+  const actionsLabel = computed(() => `Actions for ${name.value}`)
+  const menuLabel = computed(() => `${name.value} actions`)
 
-  function emitRemove() {
-    emit('remove', myGearRow.id)
+  const actions = computed<ActionMenuItem[]>(() => {
+    const items: ActionMenuItem[] = []
+
+    if (myGearRow.source === 'custom') {
+      items.push({
+        id: 'rename',
+        label: 'Rename',
+        icon: 'hugeicons:pencil-edit-02'
+      })
+    }
+
+    items.push({
+      id: 'remove',
+      label: 'Remove',
+      icon: 'hugeicons:delete-02',
+      danger: true,
+      separator: myGearRow.source === 'custom'
+    })
+
+    return items
+  })
+
+  const gearLibraryPath = computed(() => myGearRow.source === 'catalog'
+    ? createGearLibraryItemPath(myGearRow.item.id)
+    : '')
+
+  function focus() {
+    actionMenu.value?.focus()
+  }
+
+  defineExpose({
+    focus,
+    id
+  })
+
+  function handleAction(action: string) {
+    if (myGearRow.isRemoveDisabled || myGearRow.isRemoving) {
+      return
+    }
+
+    if (action === 'rename' || action === 'remove') {
+      emit(action, myGearRow.id)
+    }
   }
 </script>
 
 <style module>
   .component {
     display: grid;
-    container-type: inline-size;
     background:
       linear-gradient(
         145deg,
@@ -84,12 +135,9 @@
 
   .header {
     display: grid;
-    gap: var(--spacing-16);
-
-    @container (inline-size >= 40rem) {
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: start;
-    }
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: var(--spacing-12);
   }
 
   .info {
@@ -108,6 +156,10 @@
     min-inline-size: 0;
     display: grid;
     gap: 0.12rem;
+  }
+
+  .customName {
+    overflow-wrap: anywhere;
   }
 
   .brand {
@@ -132,19 +184,8 @@
   .tags {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--spacing-8);
-  }
-
-  .actions {
-    display: grid;
-    gap: var(--spacing-12);
-    align-items: start;
-    justify-items: start;
-
-    @container (inline-size >= 40rem) {
-      justify-items: end;
-      text-align: right;
-    }
+    align-items: center;
+    gap: var(--spacing-8) var(--spacing-12);
   }
 
   .meta {
