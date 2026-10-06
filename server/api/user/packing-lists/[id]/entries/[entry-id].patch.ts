@@ -12,90 +12,16 @@ import {
 
 import { createWebSocketClientFromEvent } from '#server/utils/config'
 import { validateSessionUser } from '#server/utils/session'
+
+import {
+  createPackingListEntry,
+  createPackingListInventory,
+  type PackingListEntryInventory,
+  type PackingListEntryMutationResponse,
+  type PackingListInventoryRow
+} from '#server/utils/packing-list-entry'
+
 import { validatePackingListEntryParams, validatePackingListEntryUpdateBody } from '#server/utils/validation/schemas'
-
-interface PackingListEntryInventory {
-  brand: string;
-  category: string;
-  inventoryId: string;
-  itemName: string;
-}
-
-interface PackingListEntryBase {
-  createdAt: Date | string;
-  customName: string | null;
-  id: string;
-  isPacked: boolean;
-  updatedAt: Date | string;
-}
-
-interface PackingListCustomEntry extends PackingListEntryBase {
-  source: 'custom';
-}
-
-interface PackingListInventoryEntry extends PackingListEntryBase {
-  inventory: PackingListEntryInventory;
-  source: 'inventory';
-}
-
-type PackingListEntry = PackingListCustomEntry | PackingListInventoryEntry
-
-interface PackingListEntryInventoryRow {
-  brand: string;
-  category: string;
-  inventoryId: string;
-  itemName: string;
-}
-
-interface PackingListEntryMutationResponse {
-  entry: PackingListEntry;
-  packingListUpdatedAt: Date | string;
-}
-
-function createCustomEntryResponse(entry: {
-  createdAt: Date | string;
-  customName: string | null;
-  id: string;
-  isPacked: boolean;
-  updatedAt: Date | string;
-}) : PackingListEntry {
-  return {
-    createdAt: entry.createdAt,
-    customName: entry.customName,
-    id: entry.id,
-    isPacked: entry.isPacked,
-    source: 'custom',
-    updatedAt: entry.updatedAt
-  }
-}
-
-function createInventoryEntryResponse(
-  entry: {
-    createdAt: Date | string;
-    customName: string | null;
-    id: string;
-    isPacked: boolean;
-    updatedAt: Date | string;
-  },
-  inventory: PackingListEntryInventoryRow
-) : PackingListEntry {
-  return {
-    createdAt: entry.createdAt,
-    customName: entry.customName,
-    id: entry.id,
-
-    inventory: {
-      brand: inventory.brand,
-      category: inventory.category,
-      inventoryId: inventory.inventoryId,
-      itemName: inventory.itemName
-    },
-
-    isPacked: entry.isPacked,
-    source: 'inventory',
-    updatedAt: entry.updatedAt
-  }
-}
 
 export default defineEventHandler(async (event) : Promise<PackingListEntryMutationResponse> => {
   const userId = await validateSessionUser(event)
@@ -146,20 +72,21 @@ export default defineEventHandler(async (event) : Promise<PackingListEntryMutati
         throw createError({ status: 404 })
       }
 
-      let inventoryRow: PackingListEntryInventoryRow | null = null
+      let inventory: PackingListEntryInventory | null = null
 
       if (updatedEntry.userEquipmentId !== null) {
-        const [ownedInventoryRow] = await transaction
+        const [ownedInventoryRow]: PackingListInventoryRow[] = await transaction
           .select({
             brand: brands.name,
             category: equipmentCategories.name,
+            customName: userEquipment.customName,
             inventoryId: userEquipment.id,
             itemName: equipmentItems.name
           })
           .from(userEquipment)
-          .innerJoin(equipmentItems, eq(userEquipment.itemId, equipmentItems.id))
-          .innerJoin(brands, eq(equipmentItems.brandId, brands.id))
-          .innerJoin(equipmentCategories, eq(equipmentItems.categoryId, equipmentCategories.id))
+          .leftJoin(equipmentItems, eq(userEquipment.itemId, equipmentItems.id))
+          .leftJoin(brands, eq(equipmentItems.brandId, brands.id))
+          .leftJoin(equipmentCategories, eq(equipmentItems.categoryId, equipmentCategories.id))
           .where(
             and(
               eq(userEquipment.id, updatedEntry.userEquipmentId),
@@ -172,12 +99,10 @@ export default defineEventHandler(async (event) : Promise<PackingListEntryMutati
           throw createError({ status: 404 })
         }
 
-        inventoryRow = ownedInventoryRow
+        inventory = createPackingListInventory(ownedInventoryRow)
       }
 
-      const entryResponse = inventoryRow === null
-        ? createCustomEntryResponse(updatedEntry)
-        : createInventoryEntryResponse(updatedEntry, inventoryRow)
+      const entryResponse = createPackingListEntry(updatedEntry, inventory)
 
       const [updatedList] = await transaction
         .update(packingLists)

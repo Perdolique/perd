@@ -20,104 +20,16 @@ import {
 
 import { createWebSocketClientFromEvent } from '#server/utils/config'
 import { validateSessionUser } from '#server/utils/session'
+
+import {
+  createPackingListEntry,
+  createPackingListInventory,
+  type PackingListEntryInventory,
+  type PackingListEntryMutationResponse,
+  type PackingListInventoryRow
+} from '#server/utils/packing-list-entry'
+
 import { validatePackingListEntryCreateBody, validatePackingListIdParams } from '#server/utils/validation/schemas'
-
-interface PackingListEntryInventory {
-  brand: string;
-  category: string;
-  inventoryId: string;
-  itemName: string;
-}
-
-interface PackingListEntryBase {
-  createdAt: Date | string;
-  customName: string | null;
-  id: string;
-  isPacked: boolean;
-  updatedAt: Date | string;
-}
-
-interface PackingListCustomEntry extends PackingListEntryBase {
-  source: 'custom';
-}
-
-interface PackingListInventoryEntry extends PackingListEntryBase {
-  inventory: PackingListEntryInventory;
-  source: 'inventory';
-}
-
-type PackingListEntry = PackingListCustomEntry | PackingListInventoryEntry
-
-interface PackingListEntryInventoryRow {
-  brand: string;
-  category: string;
-  inventoryId: string;
-  itemName: string;
-}
-
-interface PackingListEntryMutationResponse {
-  entry: PackingListEntry;
-  packingListUpdatedAt: Date | string;
-}
-
-interface PostgresError {
-  code?: string;
-}
-
-function createCustomEntryResponse(entry: {
-  createdAt: Date | string;
-  customName: string | null;
-  id: string;
-  isPacked: boolean;
-  updatedAt: Date | string;
-}) : PackingListEntry {
-  return {
-    createdAt: entry.createdAt,
-    customName: entry.customName,
-    id: entry.id,
-    isPacked: entry.isPacked,
-    source: 'custom',
-    updatedAt: entry.updatedAt
-  }
-}
-
-function createInventoryEntryResponse(
-  entry: {
-    createdAt: Date | string;
-    customName: string | null;
-    id: string;
-    isPacked: boolean;
-    updatedAt: Date | string;
-  },
-  inventory: PackingListEntryInventoryRow
-) : PackingListEntry {
-  return {
-    createdAt: entry.createdAt,
-    customName: entry.customName,
-    id: entry.id,
-
-    inventory: {
-      brand: inventory.brand,
-      category: inventory.category,
-      inventoryId: inventory.inventoryId,
-      itemName: inventory.itemName
-    },
-
-    isPacked: entry.isPacked,
-    source: 'inventory',
-    updatedAt: entry.updatedAt
-  }
-}
-
-function isUniqueViolation(error: unknown): error is PostgresError {
-  if (typeof error !== 'object' || error === null) {
-    return false
-  }
-
-  const postgresError = error as PostgresError
-
-  return postgresError.code === '23505'
-}
 
 export default defineEventHandler(async (event) : Promise<PackingListEntryMutationResponse> => {
   const userId = await validateSessionUser(event)
@@ -144,20 +56,21 @@ export default defineEventHandler(async (event) : Promise<PackingListEntryMutati
         throw createError({ status: 404 })
       }
 
-      let inventoryRow: PackingListEntryInventoryRow | null = null
+      let inventory: PackingListEntryInventory | null = null
 
       if (inventoryId !== undefined) {
-        const [ownedInventoryRow] = await transaction
+        const [ownedInventoryRow]: PackingListInventoryRow[] = await transaction
           .select({
             brand: brands.name,
             category: equipmentCategories.name,
+            customName: userEquipment.customName,
             inventoryId: userEquipment.id,
             itemName: equipmentItems.name
           })
           .from(userEquipment)
-          .innerJoin(equipmentItems, eq(userEquipment.itemId, equipmentItems.id))
-          .innerJoin(brands, eq(equipmentItems.brandId, brands.id))
-          .innerJoin(equipmentCategories, eq(equipmentItems.categoryId, equipmentCategories.id))
+          .leftJoin(equipmentItems, eq(userEquipment.itemId, equipmentItems.id))
+          .leftJoin(brands, eq(equipmentItems.brandId, brands.id))
+          .leftJoin(equipmentCategories, eq(equipmentItems.categoryId, equipmentCategories.id))
           .where(
             and(
               eq(userEquipment.id, inventoryId),
@@ -170,7 +83,7 @@ export default defineEventHandler(async (event) : Promise<PackingListEntryMutati
           throw createError({ status: 404 })
         }
 
-        inventoryRow = ownedInventoryRow
+        inventory = createPackingListInventory(ownedInventoryRow)
       }
 
       const [createdEntry] = await transaction
@@ -195,9 +108,7 @@ export default defineEventHandler(async (event) : Promise<PackingListEntryMutati
         })
       }
 
-      const entryResponse = inventoryRow === null
-        ? createCustomEntryResponse(createdEntry)
-        : createInventoryEntryResponse(createdEntry, inventoryRow)
+      const entryResponse = createPackingListEntry(createdEntry, inventory)
 
       const [updatedList] = await transaction
         .update(packingLists)
@@ -231,16 +142,32 @@ export default defineEventHandler(async (event) : Promise<PackingListEntryMutati
 
     return response
   } catch (error) {
-    if (isError(error)) {
+    const isExpectedClientError = isError(error) && error.statusCode < 500
+
+    if (isExpectedClientError) {
       throw error
     }
 
-    if (isUniqueViolation(error)) {
-      throw createError({
-        status: 409,
-        message: 'My gear item is already in this list'
-      })
+    let current = error
+
+    for (let depth = 0; depth < 4 && current !== null && typeof current === 'object'; depth += 1) {
+      const code: unknown = Reflect.get(current, 'code')
+
+      if (code === '23505') {
+        throw createError({
+          status: 409,
+          message: 'My gear item is already in this list'
+        })
+      }
+
+      if (code === '23503') {
+        throw createError({ status: 404 })
+      }
+
+      current = Reflect.get(current, 'cause')
     }
+
+    console.error('Failed to create packing list entry', error)
 
     throw createError({
       status: 500,

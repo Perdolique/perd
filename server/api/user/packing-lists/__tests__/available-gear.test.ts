@@ -41,6 +41,7 @@ vi.mock(import('#server/utils/session'), () => {
 })
 
 interface AvailableGearRow {
+  customName: string | null;
   brand: string;
   category: string;
   inventoryId: string;
@@ -77,7 +78,7 @@ function createAvailableGearDb({
     }
   })
 
-  const orderByMock = vi.fn(() => {
+  const orderByMock = vi.fn((..._order: SQL[]) => {
     return {
       limit: limitMock
     }
@@ -89,36 +90,12 @@ function createAvailableGearDb({
     }
   })
 
-  const leftJoinMock = vi.fn(() => {
-    return {
-      where: whereMock
-    }
-  })
+  const chain = {
+    leftJoin: vi.fn(() => chain),
+    where: whereMock
+  }
 
-  const categoryJoinMock = vi.fn(() => {
-    return {
-      leftJoin: leftJoinMock
-    }
-  })
-
-  const brandJoinMock = vi.fn(() => {
-    return {
-      innerJoin: categoryJoinMock
-    }
-  })
-
-  const itemJoinMock = vi.fn(() => {
-    return {
-      innerJoin: brandJoinMock
-    }
-  })
-
-  const fromMock = vi.fn(() => {
-    return {
-      innerJoin: itemJoinMock
-    }
-  })
-
+  const fromMock = vi.fn(() => chain)
   const findFirstMock = vi.fn((_config: PackingListFindFirstConfig) => ownedList)
 
   return {
@@ -147,6 +124,7 @@ function createAvailableGearDb({
 function createAvailableGearRows(count: number): AvailableGearRow[] {
   return Array.from({ length: count }, (_unusedValue, itemIndex) => {
     return {
+      customName: null,
       brand: 'MSR',
       category: 'Stoves',
       inventoryId: `inventory-${itemIndex + 1}`,
@@ -179,9 +157,20 @@ describe('get /api/user/packing-lists/[id]/available-gear', () => {
     const { dbHttp, findFirstMock, limitMock, offsetMock, orderByMock, whereMock } = createAvailableGearDb({ rows })
     const event = createTestEvent(dbHttp)
     const result = await listAvailableGearHandler(event)
+    const pageRows = rows.slice(0, 10)
+
+    const expectedItems = pageRows.map(({ brand, category, inventoryId, itemName }) => {
+      return {
+        brand,
+        category,
+        inventoryId,
+        itemName,
+        source: 'catalog'
+      }
+    })
 
     expect(result).toStrictEqual({
-      items: rows.slice(0, 10),
+      items: expectedItems,
       nextPage: 2
     })
 
@@ -215,8 +204,18 @@ describe('get /api/user/packing-lists/[id]/available-gear', () => {
 
     const result = await listAvailableGearHandler(event)
 
+    const expectedItems = rows.map(({ brand, category, inventoryId, itemName }) => {
+      return {
+        brand,
+        category,
+        inventoryId,
+        itemName,
+        source: 'catalog'
+      }
+    })
+
     expect(result).toStrictEqual({
-      items: rows,
+      items: expectedItems,
       nextPage: null
     })
 
@@ -232,6 +231,16 @@ describe('get /api/user/packing-lists/[id]/available-gear', () => {
     const escapedContainsPattern = String.raw`%MSR\\\%\_%`
 
     expect(whereQuery.params).toContain(escapedContainsPattern)
+    expect(whereQuery.sql).toContain('coalesce("user_equipment"."customName", "equipment_items"."name")')
+    expect(whereQuery.sql).toContain('"user_equipment"."userId" =')
+    expect(whereQuery.sql).toContain('"packing_list_entries"."id" is null')
+
+    const orderExpressions = orderByMock.mock.calls.flat()
+    const orderQueries = orderExpressions.map(expression => dialect.sqlToQuery(expression))
+
+    expect(orderQueries[0]?.sql).toContain('lower(coalesce(')
+    expect(orderQueries[1]?.sql).toContain('coalesce(')
+    expect(orderQueries[2]?.sql).toContain('"user_equipment"."id" asc')
   })
 
   it('should return 404 when the packing list is missing or unowned', async () => {

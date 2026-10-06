@@ -202,17 +202,17 @@ export function usePackingListEntryComposer(options: ComposerOptions) {
 
   }
 
-  async function createInventoryEntry(item: PackingListAvailableGearItem) {
+  async function createInventoryEntry(inventoryId: string) {
     if (isResultActionDisabled.value) {
       return false
     }
 
     mutationErrorMessage.value = null
-    creatingInventoryId.value = item.inventoryId
+    creatingInventoryId.value = inventoryId
 
     try {
       const response = await packingListsStore.createPackingListEntry(options.packingListId, {
-        inventoryId: item.inventoryId
+        inventoryId
       })
 
       await applySuccessfulCreation(response.entry, response.packingListUpdatedAt)

@@ -2,17 +2,17 @@ import { and, asc, eq, ilike, isNull, or, sql, type SQL } from 'drizzle-orm'
 import { createError, defineEventHandler, getValidatedQuery, getValidatedRouterParams } from 'h3'
 import { brands, equipmentCategories, equipmentItems, packingListEntries, userEquipment } from '#server/database/schema'
 import { validateSessionUser } from '#server/utils/session'
+
+import {
+  createPackingListInventory,
+  type PackingListEntryInventory,
+  type PackingListInventoryRow
+} from '#server/utils/packing-list-entry'
+
 import { validatePackingListAvailableGearQuery, validatePackingListIdParams } from '#server/utils/validation/schemas'
 
-interface AvailableGearItem {
-  brand: string;
-  category: string;
-  inventoryId: string;
-  itemName: string;
-}
-
 interface AvailableGearResponse {
-  items: AvailableGearItem[];
+  items: PackingListEntryInventory[];
   nextPage: number | null;
 }
 
@@ -36,11 +36,12 @@ export default defineEventHandler(async (event) : Promise<AvailableGearResponse>
     isNull(packingListEntries.id)
   ]
 
+  const itemName = sql<string>`coalesce(${userEquipment.customName}, ${equipmentItems.name})`
   const orderBy: SQL[] = []
 
   if (search === '') {
     orderBy.push(
-      asc(equipmentItems.name),
+      asc(itemName),
       asc(userEquipment.id)
     )
   } else {
@@ -49,7 +50,7 @@ export default defineEventHandler(async (event) : Promise<AvailableGearResponse>
     const prefixPattern = `${escapedSearch}%`
 
     const searchCondition = or(
-      ilike(equipmentItems.name, containsPattern),
+      ilike(itemName, containsPattern),
       ilike(brands.name, containsPattern),
       ilike(equipmentCategories.name, containsPattern)
     )
@@ -59,8 +60,8 @@ export default defineEventHandler(async (event) : Promise<AvailableGearResponse>
     }
 
     const matchPriority = sql<number>`case
-      when lower(${equipmentItems.name}) = lower(${search}) then 0
-      when ${equipmentItems.name} ilike ${prefixPattern} then 1
+      when lower(${itemName}) = lower(${search}) then 0
+      when ${itemName} ilike ${prefixPattern} then 1
       when ${brands.name} ilike ${prefixPattern} then 2
       when ${equipmentCategories.name} ilike ${prefixPattern} then 3
       else 4
@@ -68,7 +69,7 @@ export default defineEventHandler(async (event) : Promise<AvailableGearResponse>
 
     orderBy.push(
       matchPriority,
-      asc(equipmentItems.name),
+      asc(itemName),
       asc(userEquipment.id)
     )
   }
@@ -84,17 +85,18 @@ export default defineEventHandler(async (event) : Promise<AvailableGearResponse>
     }
   })
 
-  const availableGearPromise = dbHttp
+  const availableGearPromise: PromiseLike<PackingListInventoryRow[]> = dbHttp
     .select({
       brand: brands.name,
       category: equipmentCategories.name,
+      customName: userEquipment.customName,
       inventoryId: userEquipment.id,
       itemName: equipmentItems.name
     })
     .from(userEquipment)
-    .innerJoin(equipmentItems, eq(userEquipment.itemId, equipmentItems.id))
-    .innerJoin(brands, eq(equipmentItems.brandId, brands.id))
-    .innerJoin(equipmentCategories, eq(equipmentItems.categoryId, equipmentCategories.id))
+    .leftJoin(equipmentItems, eq(userEquipment.itemId, equipmentItems.id))
+    .leftJoin(brands, eq(equipmentItems.brandId, brands.id))
+    .leftJoin(equipmentCategories, eq(equipmentItems.categoryId, equipmentCategories.id))
     .leftJoin(
       packingListEntries,
       and(
@@ -125,9 +127,10 @@ export default defineEventHandler(async (event) : Promise<AvailableGearResponse>
     : availableGearRows
 
   const nextPage = hasNextPage ? page + 1 : null
+  const availableItems = items.map(row => createPackingListInventory(row))
 
   return {
-    items,
+    items: availableItems,
     nextPage
   }
 })

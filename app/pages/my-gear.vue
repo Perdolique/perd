@@ -246,6 +246,20 @@
     }
   }
 
+  function getRemovalErrorMessage(error: unknown, source: MyGearRecordView['source']) {
+    const status = typeof error === 'object' && error !== null
+      ? Reflect.get(error, 'statusCode') ?? Reflect.get(error, 'status')
+      : undefined
+
+    if (status === 409) {
+      return 'This gear is used in a packing list. Remove it from all lists first.'
+    }
+
+    const message = source === 'custom' ? 'Could not remove your gear. Try again.' : 'Could not remove item.'
+
+    return message
+  }
+
   async function handleRemove(id: string) {
     if (isBusy.value) {
       return
@@ -304,10 +318,12 @@
 
       }
 
+      const message = getRemovalErrorMessage(error, row.source)
+
       if (row.source === 'custom') {
-        removeDialogError.value = 'Could not remove your gear. It may still be used in a list. Try again.'
+        removeDialogError.value = message
       } else {
-        removeErrorMessage.value = 'Could not remove item.'
+        removeErrorMessage.value = message
       }
     } finally {
       removingMyGearId.value = null

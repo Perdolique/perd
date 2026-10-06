@@ -10,6 +10,42 @@ import listPackingListsHandler from '#server/api/user/packing-lists/index.get'
 import createPackingListHandler from '#server/api/user/packing-lists/index.post'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
+const savedGearCases = [{
+  source: 'catalog',
+
+  row: {
+    customName: null,
+    brand: 'MSR',
+    category: 'Stoves',
+    inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
+    itemName: 'PocketRocket Deluxe'
+  },
+
+  inventory: {
+    source: 'catalog',
+    brand: 'MSR',
+    category: 'Stoves',
+    inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
+    itemName: 'PocketRocket Deluxe'
+  }
+}, {
+  source: 'custom',
+
+  row: {
+    customName: 'My DIY Stove',
+    brand: null,
+    category: null,
+    inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
+    itemName: null
+  },
+
+  inventory: {
+    source: 'custom',
+    inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
+    itemName: 'My DIY Stove'
+  }
+}] as const
+
 const {
   createWebSocketClientMock,
   getValidatedRouterParamsMock,
@@ -224,7 +260,7 @@ function createSelectMock(operations: SelectOperation[]) {
   })
 
   const chain = {
-    innerJoin: vi.fn(() => chain),
+    leftJoin: vi.fn(() => chain),
     where: whereMock
   }
 
@@ -588,6 +624,7 @@ describe('user packing list handlers', () => {
           updatedAt: '2026-04-03T09:02:00.000Z',
 
           userEquipment: {
+            customName: null,
             id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
 
             item: {
@@ -601,6 +638,18 @@ describe('user packing list handlers', () => {
 
               name: 'PocketRocket Deluxe'
             }
+          }
+        }, {
+          createdAt: '2026-04-03T09:03:00.000Z',
+          customName: null,
+          id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e3',
+          isPacked: false,
+          updatedAt: '2026-04-03T09:03:00.000Z',
+
+          userEquipment: {
+            customName: 'Renamed private stove',
+            id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477da',
+            item: null
           }
         }],
 
@@ -625,6 +674,7 @@ describe('user packing list handlers', () => {
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e2',
 
           inventory: {
+            source: 'catalog',
             brand: 'MSR',
             category: 'Stoves',
             inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
@@ -634,6 +684,19 @@ describe('user packing list handlers', () => {
           isPacked: true,
           source: 'inventory',
           updatedAt: '2026-04-03T09:02:00.000Z'
+        }, {
+          createdAt: '2026-04-03T09:03:00.000Z',
+          customName: null,
+          id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e3',
+          isPacked: false,
+          updatedAt: '2026-04-03T09:03:00.000Z',
+          source: 'inventory',
+
+          inventory: {
+            source: 'custom',
+            inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477da',
+            itemName: 'Renamed private stove'
+          }
         }],
 
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
@@ -675,6 +738,7 @@ describe('user packing list handlers', () => {
             with: {
               userEquipment: {
                 columns: {
+                  customName: true,
                   id: true
                 },
 
@@ -938,7 +1002,7 @@ describe('user packing list handlers', () => {
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
 
-    it('should create a my gear entry and touch the parent packing list', async () => {
+    it.each(savedGearCases)('should create a my gear entry and touch the parent packing list ($source)', async ({ row, inventory }) => {
       const createdEntry = {
         createdAt: '2026-04-03T09:01:00.000Z',
         customName: null,
@@ -956,12 +1020,7 @@ describe('user packing list handlers', () => {
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
         }]
       }, {
-        rows: [{
-          brand: 'MSR',
-          category: 'Stoves',
-          inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
-          itemName: 'PocketRocket Deluxe'
-        }]
+        rows: [row]
       }])
 
       const { insertMock, valuesMock } = createInsertMock({
@@ -988,14 +1047,7 @@ describe('user packing list handlers', () => {
       expect(result).toStrictEqual({
         entry: {
           ...createdEntry,
-
-          inventory: {
-            brand: 'MSR',
-            category: 'Stoves',
-            inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
-            itemName: 'PocketRocket Deluxe'
-          },
-
+          inventory,
           source: 'inventory'
         },
 
@@ -1050,7 +1102,13 @@ describe('user packing list handlers', () => {
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
 
-    it('should return 409 when the my gear item is already in the list', async () => {
+    it.each([{
+      code: '23505',
+      status: 409
+    }, {
+      code: '23503',
+      status: 404
+    }])('should return $status for a wrapped insert conflict ($code)', async ({ code, status }) => {
       readValidatedBodyMock.mockResolvedValue({
         inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9'
       })
@@ -1061,6 +1119,7 @@ describe('user packing list handlers', () => {
         }]
       }, {
         rows: [{
+          customName: null,
           brand: 'MSR',
           category: 'Stoves',
           inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
@@ -1068,11 +1127,12 @@ describe('user packing list handlers', () => {
         }]
       }])
 
-      const { insertMock } = createInsertMock({
-        error: Object.assign(new Error('duplicate key value violates unique constraint'), {
-          code: '23505'
-        }),
+      const constraintError = new Error('Database constraint')
+      const constraintCause = Object.assign(constraintError, { code })
+      const queryError = new Error('Failed query with private SQL details', { cause: constraintCause })
 
+      const { insertMock } = createInsertMock({
+        error: queryError,
         rows: []
       })
 
@@ -1089,10 +1149,50 @@ describe('user packing list handlers', () => {
       const event = createTestEvent({})
 
       await expect(createPackingListEntryHandler(event)).rejects.toMatchObject({
-        message: 'My gear item is already in this list',
-        statusCode: 409
+        statusCode: status
       })
 
+      expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
+    })
+
+    it('should hide an unexpected insert failure and preserve its raw telemetry', async () => {
+      const connectionError = new Error('Private connection detail')
+      const technicalError = new Error('Private database failure', { cause: connectionError })
+
+      const errorLog = vi.spyOn(console, 'error').mockImplementation(() => {
+        // Capture the expected failure for the telemetry assertion below.
+      })
+
+      readValidatedBodyMock.mockResolvedValue({ customName: 'Tent' })
+
+      const { selectMock } = createSelectMock([{
+        rows: [{ id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7' }]
+      }])
+
+      const { insertMock } = createInsertMock({
+        error: technicalError,
+        rows: []
+      })
+
+      const { updateMock } = createUpdateMock([])
+
+      const dbWrite = createEntryMutationDb({
+        insert: insertMock,
+        select: selectMock,
+        update: updateMock
+      })
+
+      const event = createTestEvent({})
+
+      createWebSocketClientMock.mockReturnValue(dbWrite)
+
+      await expect(createPackingListEntryHandler(event)).rejects.toMatchObject({
+        statusCode: 500,
+        message: 'Failed to create packing list entry'
+      })
+
+      expect(errorLog).toHaveBeenCalledWith('Failed to create packing list entry', technicalError)
+      expect(updateMock).not.toHaveBeenCalled()
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
 
@@ -1208,7 +1308,7 @@ describe('user packing list handlers', () => {
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
 
-    it('should toggle an inventory entry and keep its inventory metadata', async () => {
+    it.each(savedGearCases)('should toggle an inventory entry and keep its inventory metadata ($source)', async ({ row, inventory }) => {
       const updatedEntry = {
         createdAt: '2026-04-03T09:01:00.000Z',
         customName: null,
@@ -1232,12 +1332,7 @@ describe('user packing list handlers', () => {
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
         }]
       }, {
-        rows: [{
-          brand: 'MSR',
-          category: 'Stoves',
-          inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
-          itemName: 'PocketRocket Deluxe'
-        }]
+        rows: [row]
       }])
 
       const { setMocks, updateMock } = createUpdateMock([{
@@ -1263,14 +1358,7 @@ describe('user packing list handlers', () => {
           createdAt: '2026-04-03T09:01:00.000Z',
           customName: null,
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e2',
-
-          inventory: {
-            brand: 'MSR',
-            category: 'Stoves',
-            inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
-            itemName: 'PocketRocket Deluxe'
-          },
-
+          inventory,
           isPacked: true,
           source: 'inventory',
           updatedAt: '2026-04-03T09:03:00.000Z'
