@@ -199,6 +199,10 @@
     const isPacking = packingListsStore.isPackingListEntryUpdating(packingListId, entry.id)
     const isRemoving = packingListsStore.isPackingListEntryRemoving(packingListId, entry.id)
 
+    const subtitle = entry.inventory.source === 'catalog'
+      ? `${entry.inventory.brand} / ${entry.inventory.category}`
+      : 'Custom gear · My gear'
+
     return {
       hasPackError: packErrorEntryIds.has(entry.id),
       id: entry.id,
@@ -208,7 +212,7 @@
       isPacking,
       isRemoveDisabled: isRemovingAnotherEntry(entry.id) || isPacking,
       isRemoving,
-      subtitle: `${entry.inventory.brand} / ${entry.inventory.category}`,
+      subtitle,
       title: entry.inventory.itemName
     }
   }

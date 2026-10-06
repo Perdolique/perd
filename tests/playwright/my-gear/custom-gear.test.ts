@@ -432,7 +432,7 @@ test.describe('private custom gear', () => {
 
       await failureLog
 
-      await expect(dialog.getByRole('alert')).toContainText('Could not remove your gear.')
+      await expect(dialog.getByRole('alert')).toContainText('This gear is used in a packing list. Remove it from all lists first.')
       await expect(dialog).toContainText(name)
       await expect(confirmButton).toBeFocused()
       expect(state.rows).toHaveLength(1)
@@ -480,10 +480,44 @@ test.describe('private custom gear', () => {
 
     await failureLog
 
-    await expect(page.getByRole('status')).toContainText('Could not remove item.')
+    await expect(page.getByRole('status')).toContainText('This gear is used in a packing list. Remove it from all lists first.')
     await expect(trigger).toBeFocused()
     await expect(card).toBeVisible()
     expect(state.removals).toBe(1)
+
+    state.removeStatus = 500
+
+    const retryFailureLog = expectConsoleError(/Failed to remove gear/u)
+
+    await page.keyboard.press('ArrowDown')
+
+    await expect(card.getByRole('menuitem', {
+      name: 'Remove',
+      exact: true
+    })).toBeFocused()
+
+    await page.keyboard.press('Enter')
+
+    await retryFailureLog
+
+    await expect(page.getByRole('status')).toContainText('Could not remove item.')
+    await expect(trigger).toBeFocused()
+    await expect(card).toBeVisible()
+    expect(state.removals).toBe(2)
+
+    state.removeStatus = 204
+
+    await page.keyboard.press('ArrowDown')
+
+    await expect(card.getByRole('menuitem', {
+      name: 'Remove',
+      exact: true
+    })).toBeFocused()
+
+    await page.keyboard.press('Enter')
+    await expect(card).not.toBeVisible()
+    await expect(page.getByRole('status')).not.toBeVisible()
+    expect(state.removals).toBe(3)
   })
 
 })

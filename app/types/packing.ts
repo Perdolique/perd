@@ -1,3 +1,5 @@
+import type { PackingListEntryInventory } from '#server/utils/packing-list-entry'
+
 interface PackingListSummary {
   createdAt: string;
   entryCount: number;
@@ -7,19 +9,7 @@ interface PackingListSummary {
   updatedAt: string;
 }
 
-interface PackingListEntryInventory {
-  brand: string;
-  category: string;
-  inventoryId: string;
-  itemName: string;
-}
-
-interface PackingListAvailableGearItem {
-  brand: string;
-  category: string;
-  inventoryId: string;
-  itemName: string;
-}
+type PackingListAvailableGearItem = PackingListEntryInventory
 
 type PackingListEntryCreateBody = {
   customName: string;
@@ -84,10 +74,11 @@ export type {
   PackingListEntry,
   PackingListEntryCreateBody,
   PackingListCustomEntry,
-  PackingListEntryInventory,
   PackingListEntryUpdateOptions,
   PackingListInventoryEntry,
   PackingListEntryView,
   PackingListSummary,
   PackingListView
 }
+
+export type { PackingListEntryInventory } from '#server/utils/packing-list-entry'

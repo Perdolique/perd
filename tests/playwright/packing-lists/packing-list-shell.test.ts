@@ -20,6 +20,7 @@ interface PackingListSummaryOptions {
 }
 
 interface PackingListEntryInventory {
+  source: 'catalog';
   brand: string;
   category: string;
   inventoryId: string;
@@ -54,6 +55,7 @@ interface PackingListDetail {
 }
 
 interface AvailableGearItem {
+  source: 'catalog';
   brand: string;
   category: string;
   inventoryId: string;
@@ -179,6 +181,7 @@ function createPackingListEntries(): [PackingListCustomEntry, PackingListInvento
     id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e2',
 
     inventory: {
+      source: 'catalog',
       brand: 'MSR',
       category: 'Stoves',
       inventoryId: pocketRocketInventoryId,
@@ -193,6 +196,7 @@ function createPackingListEntries(): [PackingListCustomEntry, PackingListInvento
 
 function createAvailableGearItem(inventoryId: string, itemName: string): AvailableGearItem {
   return {
+    source: 'catalog',
     brand: 'MSR',
     category: 'Stoves',
     inventoryId,
@@ -212,6 +216,7 @@ function createInventoryEntryMutation(
       id: entryId,
 
       inventory: {
+        source: 'catalog',
         brand: 'MSR',
         category: 'Stoves',
         inventoryId,
@@ -2699,6 +2704,7 @@ test.describe('Packing list shell', () => {
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e2',
 
       inventory: {
+        source: 'catalog',
         brand: 'MSR',
         category: 'Stoves',
         inventoryId: pocketRocketInventoryId,

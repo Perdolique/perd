@@ -65,6 +65,74 @@ const customRecordSchema = v.strictObject({
   customName: v.string()
 })
 
+const inventorySchema = v.variant('source', [
+  v.strictObject({
+    source: v.literal('catalog'),
+    brand: v.string(),
+    category: v.string(),
+    inventoryId: v.string(),
+    itemName: v.string()
+  }),
+  v.strictObject({
+    source: v.literal('custom'),
+    inventoryId: v.string(),
+    itemName: v.string()
+  })
+])
+
+const entryFields = {
+  id: v.string(),
+  createdAt: v.string(),
+  updatedAt: v.string(),
+  customName: v.nullable(v.string()),
+  isPacked: v.boolean()
+}
+
+const entrySchema = v.variant('source', [
+  v.strictObject({
+    ...entryFields,
+    source: v.literal('custom')
+  }),
+  v.strictObject({
+    ...entryFields,
+    source: v.literal('inventory'),
+    inventory: inventorySchema
+  })
+])
+
+const entryMutationSchema = v.strictObject({
+  entry: entrySchema,
+  packingListUpdatedAt: v.string()
+})
+
+const detailSchema = v.object({
+  entries: v.array(entrySchema),
+  updatedAt: v.string()
+})
+
+const availableSchema = v.strictObject({
+  items: v.array(inventorySchema),
+  nextPage: v.nullable(v.number())
+})
+
+async function readEntry(response: Awaited<ReturnType<TestHarness['fetch']>>) {
+  const raw: unknown = await response.json()
+  const result = v.parse(entryMutationSchema, raw)
+
+  return result.entry
+}
+
+async function readDetail(worker: TestHarness, id: string, headers: Record<string, string>) {
+  const path = `${origin}/api/user/packing-lists/${id}`
+  const response = await worker.fetch(path, { headers })
+  const raw: unknown = await response.json()
+  const detail = v.parse(detailSchema, raw)
+
+  expect(response.status).toBe(200)
+
+  return detail
+}
+
 async function fixture() {
   const { database } = required(isolated)
   const [owner] = await database.insert(users).values({}).returning()
@@ -76,6 +144,7 @@ async function fixture() {
 
   return {
     user,
+    other: stranger,
 
     headers: {
       cookie,
@@ -256,7 +325,7 @@ describe('private custom gear in PostgreSQL and the built Worker', () => {
     expect(afterRemoveJson).toStrictEqual([duplicate])
   })
 
-  it('keeps catalog contracts and blocks private gear from packing-list APIs', async () => {
+  it('reuses private gear across lists with live names, independent packed state, and protected removal', async () => {
     const data = await fixture()
     const worker = required(harness)
     const { database } = required(isolated)
@@ -335,17 +404,25 @@ describe('private custom gear in PostgreSQL and the built Worker', () => {
 
     const customJson: unknown = await customResponse.json()
     const custom = v.parse(customRecordSchema, customJson)
-    const available = await worker.fetch(`${origin}/api/user/packing-lists/${list.id}/available-gear`, { headers: data.headers })
+    const listPath = `${origin}/api/user/packing-lists/${list.id}`
+    const availablePath = `${listPath}/available-gear`
+    const entriesPath = `${listPath}/entries`
+    const available = await worker.fetch(availablePath, { headers: data.headers })
     const availableJson: unknown = await available.json()
 
     expect(available.status).toBe(200)
 
     expect(availableJson).toStrictEqual({
       items: [{
+        source: 'catalog',
         brand: brand.name,
         category: category.name,
         inventoryId: saved.id,
         itemName: item.name
+      }, {
+        source: 'custom',
+        inventoryId: custom.id,
+        itemName: 'Forbidden'
       }],
 
       nextPage: null
@@ -353,37 +430,423 @@ describe('private custom gear in PostgreSQL and the built Worker', () => {
 
     const privateEntryBody = JSON.stringify({ inventoryId: custom.id })
 
-    const privateEntry = await worker.fetch(`${origin}/api/user/packing-lists/${list.id}/entries`, {
+    const privateEntry = await worker.fetch(entriesPath, {
       method: 'POST',
       headers: data.headers,
       body: privateEntryBody
     })
 
-    expect(privateEntry.status).toBe(404)
+    expect(privateEntry.status).toBe(201)
+
+    const firstEntry = await readEntry(privateEntry)
+
+    expect(firstEntry).toMatchObject({
+      customName: null,
+      isPacked: false,
+      source: 'inventory',
+
+      inventory: {
+        source: 'custom',
+        inventoryId: custom.id,
+        itemName: 'Forbidden'
+      }
+    })
+
+    const duplicateEntry = await worker.fetch(entriesPath, {
+      method: 'POST',
+      headers: data.headers,
+      body: privateEntryBody
+    })
+
+    expect(duplicateEntry.status).toBe(409)
+
+    const [secondListRow] = await database.insert(packingLists).values({
+      userId: data.user.id,
+      name: 'Second trip'
+    }).returning()
+
+    const [otherListRow] = await database.insert(packingLists).values({
+      userId: data.other.id,
+      name: 'Other trip'
+    }).returning()
+
+    const secondList = required(secondListRow)
+    const otherList = required(otherListRow)
+    const secondEntriesPath = `${origin}/api/user/packing-lists/${secondList.id}/entries`
+    const otherEntriesPath = `${origin}/api/user/packing-lists/${otherList.id}/entries`
+    const otherAvailablePath = `${origin}/api/user/packing-lists/${otherList.id}/available-gear`
+
+    const secondResponse = await worker.fetch(secondEntriesPath, {
+      method: 'POST',
+      headers: data.headers,
+      body: privateEntryBody
+    })
+
+    expect(secondResponse.status).toBe(201)
+
+    const secondEntry = await readEntry(secondResponse)
+
+    expect(secondEntry.id).not.toBe(firstEntry.id)
+
+    const foreignEntry = await worker.fetch(otherEntriesPath, {
+      method: 'POST',
+      headers: data.otherHeaders,
+      body: privateEntryBody
+    })
+
+    expect(foreignEntry.status).toBe(404)
+
+    const otherAvailable = await worker.fetch(otherAvailablePath, { headers: data.otherHeaders })
+    const otherAvailableJson: unknown = await otherAvailable.json()
+
+    expect(otherAvailableJson).toStrictEqual({
+      items: [],
+      nextPage: null
+    })
+
+    const usedAvailable = await worker.fetch(availablePath, { headers: data.headers })
+    const usedAvailableJson: unknown = await usedAvailable.json()
+    const usedAvailableBody = v.parse(availableSchema, usedAvailableJson)
+    const usedAvailableIds = usedAvailableBody.items.map(row => row.inventoryId)
+
+    expect(usedAvailableIds).toStrictEqual([saved.id])
+
+    const firstPath = `${entriesPath}/${firstEntry.id}`
+    const packedBody = JSON.stringify({ isPacked: true })
+
+    const packedResponse = await worker.fetch(firstPath, {
+      method: 'PATCH',
+      headers: data.headers,
+      body: packedBody
+    })
+
+    expect(packedResponse.status).toBe(200)
+
+    const packedEntry = await readEntry(packedResponse)
+
+    expect(packedEntry.isPacked).toBe(true)
+
+    expect(packedEntry).toMatchObject({ inventory: {
+      source: 'custom',
+      inventoryId: custom.id
+    } })
+
+    const gearPath = `${origin}/api/user/gear/${custom.id}`
+    const updatedNameBody = JSON.stringify({ customName: 'Updated private stove' })
+
+    const renamed = await worker.fetch(gearPath, {
+      method: 'PATCH',
+      headers: data.headers,
+      body: updatedNameBody
+    })
+
+    expect(renamed.status).toBe(200)
+
+    const firstDetail = await readDetail(worker, list.id, data.headers)
+    const secondDetail = await readDetail(worker, secondList.id, data.headers)
+
+    expect(firstDetail.entries).toMatchObject([{
+      isPacked: true,
+      inventory: { itemName: 'Updated private stove' }
+    }])
+
+    expect(secondDetail.entries).toMatchObject([{
+      isPacked: false,
+      inventory: { itemName: 'Updated private stove' }
+    }])
+
+    const unpackedBody = JSON.stringify({ isPacked: false })
+
+    const foreignPatch = await worker.fetch(firstPath, {
+      method: 'PATCH',
+      headers: data.otherHeaders,
+      body: unpackedBody
+    })
+
+    const foreignDelete = await worker.fetch(firstPath, {
+      method: 'DELETE',
+      headers: data.otherHeaders
+    })
+
+    expect(foreignPatch.status).toBe(404)
+    expect(foreignDelete.status).toBe(404)
+
+    const usedCustom = await worker.fetch(gearPath, {
+      method: 'DELETE',
+      headers: data.headers
+    })
+
+    expect(usedCustom.status).toBe(409)
+
+    const removedFirst = await worker.fetch(firstPath, {
+      method: 'DELETE',
+      headers: data.headers
+    })
+
+    const stillUsed = await worker.fetch(gearPath, {
+      method: 'DELETE',
+      headers: data.headers
+    })
+
+    const secondAfterRemove = await readDetail(worker, secondList.id, data.headers)
+
+    expect(removedFirst.status).toBe(200)
+    expect(stillUsed.status).toBe(409)
+
+    expect(secondAfterRemove.entries).toMatchObject([{
+      id: secondEntry.id,
+      isPacked: false
+    }])
+
+    const secondEntryPath = `${secondEntriesPath}/${secondEntry.id}`
+
+    const removedSecond = await worker.fetch(secondEntryPath, {
+      method: 'DELETE',
+      headers: data.headers
+    })
+
+    const removedGear = await worker.fetch(gearPath, {
+      method: 'DELETE',
+      headers: data.headers
+    })
+
+    expect(removedSecond.status).toBe(200)
+    expect(removedGear.status).toBe(204)
 
     await database.insert(packingListEntries).values({
       packingListId: list.id,
       userEquipmentId: saved.id
     })
 
-    // Direct storage references must keep blocking removal, regardless of source.
-    await database.insert(packingListEntries).values({
-      packingListId: list.id,
-      userEquipmentId: custom.id
-    })
+    const catalogGearPath = `${origin}/api/user/gear/${saved.id}`
 
-    const usedCatalog = await worker.fetch(`${origin}/api/user/gear/${saved.id}`, {
-      method: 'DELETE',
-      headers: data.headers
-    })
-
-    const usedCustom = await worker.fetch(`${origin}/api/user/gear/${custom.id}`, {
+    const usedCatalog = await worker.fetch(catalogGearPath, {
       method: 'DELETE',
       headers: data.headers
     })
 
     expect(usedCatalog.status).toBe(409)
-    expect(usedCustom.status).toBe(409)
+  })
+
+  it('searches and paginates mixed saved sources without leaking owners or interpreting wildcards', async () => {
+    const data = await fixture()
+    const worker = required(harness)
+    const { database } = required(isolated)
+
+    const [listRow] = await database.insert(packingLists).values({
+      userId: data.user.id,
+      name: 'Search trip'
+    }).returning()
+
+    const list = required(listRow)
+
+    const [brandRow] = await database.insert(brands).values({
+      name: 'Search brand',
+      slug: data.user.id
+    }).returning()
+
+    const [categoryRow] = await database.insert(equipmentCategories).values({
+      name: 'Search category',
+      slug: data.user.id
+    }).returning()
+
+    const brand = required(brandRow)
+    const category = required(categoryRow)
+
+    const [itemRow] = await database.insert(equipmentItems).values({
+      name: 'Alpha gear',
+      brandId: brand.id,
+      categoryId: category.id
+    }).returning()
+
+    const item = required(itemRow)
+
+    const [catalogRow] = await database.insert(userEquipment).values({
+      userId: data.user.id,
+      itemId: item.id
+    }).returning()
+
+    const catalog = required(catalogRow)
+
+    const privateValues = Array.from({ length: 11 }, () => {
+      return {
+        userId: data.user.id,
+        customName: 'Same private gear'
+      }
+    })
+
+    const privateRows = await database.insert(userEquipment).values(privateValues).returning()
+
+    const [literalRow] = await database.insert(userEquipment).values({
+      userId: data.user.id,
+      customName: String.raw`100%_\ gear`
+    }).returning()
+
+    const literal = required(literalRow)
+
+    await database.insert(userEquipment).values({
+      userId: data.other.id,
+      customName: 'Same private gear'
+    })
+
+    const path = `${origin}/api/user/packing-lists/${list.id}/available-gear`
+    const firstResponse = await worker.fetch(path, { headers: data.headers })
+    const firstRaw: unknown = await firstResponse.json()
+    const first = v.parse(availableSchema, firstRaw)
+    const secondPagePath = `${path}?page=2`
+    const secondResponse = await worker.fetch(secondPagePath, { headers: data.headers })
+    const secondRaw: unknown = await secondResponse.json()
+    const second = v.parse(availableSchema, secondRaw)
+    const all = [...first.items, ...second.items]
+    const privateIds = privateRows.map(row => row.id)
+    const expectedPrivateIds = privateIds.toSorted()
+    const allIds = all.map(row => row.inventoryId)
+
+    expect(first.items).toHaveLength(10)
+    expect(first.nextPage).toBe(2)
+    expect(second.nextPage).toBeNull()
+    expect(allIds).toStrictEqual([literal.id, catalog.id, ...expectedPrivateIds])
+
+    const searchPath = `${path}?search=sAmE%20pRiVaTe`
+    const searched = await worker.fetch(searchPath, { headers: data.headers })
+    const searchRaw: unknown = await searched.json()
+    const search = v.parse(availableSchema, searchRaw)
+    const searchIds = search.items.map(row => row.inventoryId)
+    const expectedSearchIds = expectedPrivateIds.slice(0, 10)
+
+    expect(searchIds).toStrictEqual(expectedSearchIds)
+
+    const escaped = encodeURIComponent('%_\\')
+    const literalPath = `${path}?search=${escaped}`
+    const literalResponse = await worker.fetch(literalPath, { headers: data.headers })
+    const literalRaw: unknown = await literalResponse.json()
+    const literalResult = v.parse(availableSchema, literalRaw)
+    const literalIds = literalResult.items.map(row => row.inventoryId)
+
+    expect(literalIds).toStrictEqual([literal.id])
+
+    for (const term of ['Search brand', 'Search category']) {
+      const encodedSearch = encodeURIComponent(term)
+      const catalogSearchPath = `${path}?search=${encodedSearch}`
+
+      // oxlint-disable-next-line no-await-in-loop -- Each search owns an independent response assertion.
+      const response = await worker.fetch(catalogSearchPath, { headers: data.headers })
+
+      // oxlint-disable-next-line no-await-in-loop -- Parse the response before checking its catalog match.
+      const raw: unknown = await response.json()
+      const result = v.parse(availableSchema, raw)
+      const matchingIds = result.items.map(row => row.inventoryId)
+
+      expect(matchingIds).toStrictEqual([catalog.id])
+    }
+  })
+
+  it('ranks a private name prefix before a catalog brand prefix', async () => {
+    const data = await fixture()
+    const worker = required(harness)
+    const { database } = required(isolated)
+
+    const [listRow] = await database.insert(packingLists).values({
+      userId: data.user.id,
+      name: 'Relevance trip'
+    }).returning()
+
+    const [brandRow] = await database.insert(brands).values({
+      name: 'Stove brand',
+      slug: data.user.id
+    }).returning()
+
+    const [categoryRow] = await database.insert(equipmentCategories).values({
+      name: 'Cooking',
+      slug: data.user.id
+    }).returning()
+
+    const list = required(listRow)
+    const brand = required(brandRow)
+    const category = required(categoryRow)
+
+    const [itemRow] = await database.insert(equipmentItems).values({
+      name: 'Alpha',
+      brandId: brand.id,
+      categoryId: category.id
+    }).returning()
+
+    const item = required(itemRow)
+
+    const [catalogRow, privateRow] = await database.insert(userEquipment).values([{
+      userId: data.user.id,
+      itemId: item.id
+    }, {
+      userId: data.user.id,
+      customName: 'Stove DIY'
+    }]).returning()
+
+    const catalog = required(catalogRow)
+    const privateGear = required(privateRow)
+    const path = `${origin}/api/user/packing-lists/${list.id}/available-gear?search=Stove`
+    const response = await worker.fetch(path, { headers: data.headers })
+    const raw: unknown = await response.json()
+    const result = v.parse(availableSchema, raw)
+    const matchingIds = result.items.map(row => row.inventoryId)
+
+    expect(response.status).toBe(200)
+    expect(matchingIds).toStrictEqual([privateGear.id, catalog.id])
+    expect(result.nextPage).toBeNull()
+  })
+
+  it('keeps add/delete races atomic for private saved gear', async () => {
+    const data = await fixture()
+    const worker = required(harness)
+    const { database } = required(isolated)
+    const initialUpdatedAt = new Date('2020-01-01T00:00:00Z')
+
+    const [listRow] = await database.insert(packingLists).values({
+      userId: data.user.id,
+      name: 'Race trip',
+      updatedAt: initialUpdatedAt
+    }).returning()
+
+    const [gearRow] = await database.insert(userEquipment).values({
+      userId: data.user.id,
+      customName: 'Race gear'
+    }).returning()
+
+    const list = required(listRow)
+    const gear = required(gearRow)
+    const entriesPath = `${origin}/api/user/packing-lists/${list.id}/entries`
+    const gearPath = `${origin}/api/user/gear/${gear.id}`
+    const createBody = JSON.stringify({ inventoryId: gear.id })
+
+    const addPromise = worker.fetch(entriesPath, {
+      method: 'POST',
+      headers: data.headers,
+      body: createBody
+    })
+
+    const deletePromise = worker.fetch(gearPath, {
+      method: 'DELETE',
+      headers: data.headers
+    })
+
+    const [added, deleted] = await Promise.all([addPromise, deletePromise])
+    const remainingGear = await database.query.userEquipment.findFirst({ where: { id: gear.id } })
+    const entries = await database.query.packingListEntries.findMany({ where: { packingListId: list.id } })
+
+    expect([[201, 409], [404, 204]]).toContainEqual([added.status, deleted.status])
+
+    const expectedEntryCount = Number(added.status === 201)
+
+    expect(entries).toHaveLength(expectedEntryCount)
+    expect(remainingGear !== undefined).toBe(added.status === 201)
+
+    const unchanged = await database.query.packingLists.findFirst({ where: { id: list.id } })
+    const actual = required(unchanged)
+    const actualTimestamp = actual.updatedAt.getTime()
+    const initialTimestamp = list.updatedAt.getTime()
+    const isListTouched = actualTimestamp > initialTimestamp
+
+    expect(isListTouched).toBe(added.status === 201)
+
   })
 
   it('rejects source-less and mixed-source rows in PostgreSQL', async () => {

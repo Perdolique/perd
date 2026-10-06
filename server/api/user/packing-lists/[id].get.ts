@@ -2,31 +2,11 @@ import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
 import { validatePackingListIdParams } from '#server/utils/validation/schemas'
 import { validateSessionUser } from '#server/utils/session'
 
-interface PackingListEntryInventory {
-  brand: string;
-  category: string;
-  inventoryId: string;
-  itemName: string;
-}
-
-interface PackingListEntryBase {
-  createdAt: Date | string;
-  customName: string | null;
-  id: string;
-  isPacked: boolean;
-  updatedAt: Date | string;
-}
-
-interface PackingListCustomEntry extends PackingListEntryBase {
-  source: 'custom';
-}
-
-interface PackingListInventoryEntry extends PackingListEntryBase {
-  inventory: PackingListEntryInventory;
-  source: 'inventory';
-}
-
-type PackingListEntry = PackingListCustomEntry | PackingListInventoryEntry
+import {
+  createPackingListEntry,
+  createPackingListInventory,
+  type PackingListEntry
+} from '#server/utils/packing-list-entry'
 
 interface PackingListEntryItemBrand {
   name: string;
@@ -43,6 +23,7 @@ interface PackingListEntryItem {
 }
 
 interface PackingListEntryUserEquipment {
+  customName: string | null;
   id: string;
   item: PackingListEntryItem | null;
 }
@@ -72,60 +53,18 @@ interface PackingListQueryDetail {
   updatedAt: Date | string;
 }
 
-function createPackingListEntry(entry: PackingListEntryRow): PackingListEntry {
-  if (entry.userEquipment === null) {
-    return {
-      createdAt: entry.createdAt,
-      customName: entry.customName,
-      id: entry.id,
-      isPacked: entry.isPacked,
-      source: 'custom',
-      updatedAt: entry.updatedAt
-    }
-  }
+function createEntryResponse(entry: PackingListEntryRow): PackingListEntry {
+  const gear = entry.userEquipment
 
-  const inventoryItem = entry.userEquipment.item
+  const inventory = gear === null ? null : createPackingListInventory({
+    brand: gear.item?.brand?.name ?? null,
+    category: gear.item?.category?.name ?? null,
+    customName: gear.customName,
+    inventoryId: gear.id,
+    itemName: gear.item?.name ?? null
+  })
 
-  if (inventoryItem === null) {
-    return {
-      createdAt: entry.createdAt,
-      customName: entry.customName,
-      id: entry.id,
-      isPacked: entry.isPacked,
-      source: 'custom',
-      updatedAt: entry.updatedAt
-    }
-  }
-
-  const { brand, category, name } = inventoryItem
-
-  if (brand === null || category === null) {
-    return {
-      createdAt: entry.createdAt,
-      customName: entry.customName,
-      id: entry.id,
-      isPacked: entry.isPacked,
-      source: 'custom',
-      updatedAt: entry.updatedAt
-    }
-  }
-
-  return {
-    createdAt: entry.createdAt,
-    customName: entry.customName,
-    id: entry.id,
-
-    inventory: {
-      brand: brand.name,
-      category: category.name,
-      inventoryId: entry.userEquipment.id,
-      itemName: name
-    },
-
-    isPacked: entry.isPacked,
-    source: 'inventory',
-    updatedAt: entry.updatedAt
-  }
+  return createPackingListEntry(entry, inventory)
 }
 
 export default defineEventHandler(async (event) : Promise<PackingListDetail> => {
@@ -163,6 +102,7 @@ export default defineEventHandler(async (event) : Promise<PackingListDetail> => 
         with: {
           userEquipment: {
             columns: {
+              customName: true,
               id: true
             },
 
@@ -197,9 +137,11 @@ export default defineEventHandler(async (event) : Promise<PackingListDetail> => 
     throw createError({ status: 404 })
   }
 
+  const entries = packingList.entries.map(createEntryResponse)
+
   return {
     createdAt: packingList.createdAt,
-    entries: packingList.entries.map(createPackingListEntry),
+    entries,
     id: packingList.id,
     name: packingList.name,
     updatedAt: packingList.updatedAt

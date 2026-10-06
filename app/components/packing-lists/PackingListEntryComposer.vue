@@ -131,7 +131,7 @@
 <script lang="ts" setup>
   import { computed, nextTick, onMounted, useId, useTemplateRef } from 'vue'
   import { limits } from '#shared/constants'
-  import type { PackingListAvailableGearItem, PackingListEntry } from '~/types/packing'
+  import type { PackingListEntry } from '~/types/packing'
   import { usePackingListEntryComposer } from '~/composables/use-packing-list-entry-composer'
   import FidgetSpinner from '~/components/FidgetSpinner.vue'
   import PerdButton from '~/components/PerdButton.vue'
@@ -141,7 +141,9 @@
     packingListId: string;
   }
 
-  interface AvailableGearItemView extends PackingListAvailableGearItem {
+  interface AvailableGearItemView {
+    inventoryId: string;
+    itemName: string;
     isLoading: boolean;
     meta: string;
   }
@@ -205,13 +207,14 @@
   const summaryChevron = computed(() => isOpen.value ? 'hugeicons:arrow-up-01' : 'hugeicons:arrow-down-01')
 
   const availableGearItemViews = computed<AvailableGearItemView[]>(() => availableGearItems.value.map((item) => {
+    const meta = item.source === 'catalog' ? `${item.brand} · ${item.category}` : 'Custom gear · My gear'
+    const isLoading = creatingInventoryId.value === item.inventoryId
+
     return {
-      brand: item.brand,
-      category: item.category,
       inventoryId: item.inventoryId,
-      isLoading: creatingInventoryId.value === item.inventoryId,
+      isLoading,
       itemName: item.itemName,
-      meta: `${item.brand} · ${item.category}`
+      meta
     }
   }))
 
@@ -276,8 +279,8 @@
     await loadMore()
   }
 
-  async function handleCreateInventoryEntry(item: PackingListAvailableGearItem) {
-    const wasCreated = await createInventoryEntry(item)
+  async function handleCreateInventoryEntry(item: AvailableGearItemView) {
+    const wasCreated = await createInventoryEntry(item.inventoryId)
 
     if (wasCreated) {
       await focusSearchInput()
