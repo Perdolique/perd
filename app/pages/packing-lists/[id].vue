@@ -1,18 +1,14 @@
 <template>
   <PageContent :class="$style.component" :page-title="pageTitle">
     <template v-if="hasPackingListData" #actions>
-      <PackingListRenameAction
+      <PackingListActions
         :available="canManagePackingList"
         :packing-list-id="packingListId"
         :name="packingListView.name"
+        :refresh-original="handleCopyRefresh"
         @renamed="handleRenamed"
-      />
-
-      <PackingListDeleteAction
-        :available="canManagePackingList"
-        :packing-list-id="packingListId"
-        :name="packingListView.name"
         @deleted="handleDeleted"
+        @copied="handleCopied"
       />
     </template>
 
@@ -42,7 +38,7 @@
         </template>
       </PagePlaceholder>
 
-      <div v-else :class="$style.content" :inert="isDeleting" :aria-busy="isDeleting">
+      <div v-else :class="$style.content" :inert="isContentLocked" :aria-busy="isContentLocked">
         <p
           :class="[$style.progress, { isEmpty: isPackingListEmpty }]"
           role="status"
@@ -83,8 +79,8 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, nextTick, reactive, ref, useTemplateRef } from 'vue'
-  import { definePageMeta, navigateTo, useFetch, useRoute } from '#imports'
+  import { computed, nextTick, onBeforeUnmount, reactive, ref, useTemplateRef } from 'vue'
+  import { definePageMeta, navigateTo, useFetch, useNuxtApp, useRequestFetch, useRoute, useRouter } from '#imports'
 
   import type {
     PackingListDetail,
@@ -100,8 +96,7 @@
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PerdButton from '~/components/PerdButton.vue'
   import PageContent from '~/components/layout/PageContent.vue'
-  import PackingListDeleteAction from '~/components/packing-lists/PackingListDeleteAction.vue'
-  import PackingListRenameAction from '~/components/packing-lists/PackingListRenameAction.vue'
+  import PackingListActions from '~/components/packing-lists/PackingListActions.vue'
   import PackingListEntryComposer from '~/components/packing-lists/PackingListEntryComposer.vue'
   import PackingListEntryCard from '~/components/packing-lists/PackingListEntryCard.vue'
 
@@ -110,11 +105,15 @@
   })
 
   const route = useRoute()
+  const nuxtApp = useNuxtApp()
+  const router = useRouter()
   const packingListsStore = usePackingListsStore()
+  const requestFetch = useRequestFetch()
   const entryComposerRef = useTemplateRef('entryComposer')
   const entryRemoveErrorMessage = ref<string | null>(null)
   const lastPackingEntryId = ref<string | null>(null)
   const packErrorEntryIds = reactive(new Set<string>())
+  let copyRefreshController: AbortController | null = null
 
   const packingListId = Array.isArray(route.params.id)
     ? route.params.id[0] ?? ''
@@ -161,7 +160,9 @@
   const packedCount = computed(() => packingListView.value.entries.filter((entry) => entry.isPacked).length)
   const isPackingListEmpty = computed(() => entryCount.value === 0)
   const packingProgressText = computed(() => formatPackingProgress(packedCount.value, entryCount.value))
-  const isDeleting = computed(() => packingListsStore.isPackingListDeleting(packingListId))
+
+  const isContentLocked = computed(() => packingListsStore.isPackingListDeleting(packingListId)
+    || packingListsStore.isPackingListCopying(packingListId))
 
   // Keep actions mounted until they report deletion, even after the list becomes unavailable.
   const hasPackingListData = computed(() => packingListResponse.value.id !== '')
@@ -227,6 +228,35 @@
 
   const entryViews = computed(() => packingListView.value.entries.map(createPackingListEntryView))
 
+  onBeforeUnmount(() => {
+    copyRefreshController?.abort()
+  })
+
+  async function handleCopied(id: string) {
+    const path = `${appRoutes.packingLists}/${id}`
+
+    const removeHook = nuxtApp.hook('page:finish', () => {
+      removeHook()
+
+      if (router.currentRoute.value.path !== path) {
+        return
+      }
+
+      const heading = globalThis.document.querySelector('h1')
+
+      heading?.setAttribute('tabindex', '-1')
+      heading?.focus()
+    })
+
+    try {
+      await navigateTo(path)
+    } catch (error) {
+      removeHook()
+
+      throw error
+    }
+  }
+
   async function handleDeleted() {
     await navigateTo(appRoutes.packingLists, { replace: true })
     await nextTick()
@@ -255,6 +285,34 @@
     }
   }
 
+  async function handleCopyRefresh(signal: AbortSignal) {
+    copyRefreshController?.abort()
+
+    const controller = new globalThis.AbortController()
+    const refreshSignal = globalThis.AbortSignal.any([signal, controller.signal])
+    const path = `/api/user/packing-lists/${packingListId}` as const
+
+    copyRefreshController = controller
+
+    try {
+      const response = await requestFetch(path, {
+        retry: 0,
+        signal: refreshSignal
+      })
+
+      if (!refreshSignal.aborted && copyRefreshController === controller) {
+        packingListResponse.value = response
+        packingListError.value = undefined
+
+        packingListsStore.initializePackingListSummary(response)
+      }
+    } finally {
+      if (copyRefreshController === controller) {
+        copyRefreshController = null
+      }
+    }
+  }
+
   function handleEntryCreated(entry: PackingListEntry, packingListUpdatedAt: string) {
     packingListResponse.value = {
       createdAt: packingListResponse.value.createdAt,
@@ -271,7 +329,7 @@
   }
 
   async function handlePackChange(entryId: string, isPacked: boolean) {
-    if (packingListsStore.isPackingListEntryOperationPending(packingListId, entryId)) {
+    if (isContentLocked.value || packingListsStore.isPackingListEntryOperationPending(packingListId, entryId)) {
       return
     }
 
@@ -330,7 +388,7 @@
   async function handleRemoveEntry(entryId: string) {
     const removingEntryId = packingListsStore.getRemovingPackingListEntryId(packingListId)
 
-    if (removingEntryId !== null || packingListsStore.isPackingListEntryOperationPending(packingListId, entryId)) {
+    if (isContentLocked.value || removingEntryId !== null || packingListsStore.isPackingListEntryOperationPending(packingListId, entryId)) {
       return
     }
 

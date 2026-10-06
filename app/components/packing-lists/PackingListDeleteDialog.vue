@@ -1,17 +1,4 @@
 <template>
-  <PerdButton
-    v-if="available"
-    variant="danger"
-    size="small"
-    icon="hugeicons:delete-02"
-    aria-haspopup="dialog"
-    :disabled="isDisabled"
-    :loading="isDeleting"
-    @click="openDialog"
-  >
-    Delete
-  </PerdButton>
-
   <ConfirmationDialog
     v-model="isDialogVisible"
     header-text="Delete packing list"
@@ -29,9 +16,8 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, onBeforeUnmount, ref } from 'vue'
+  import { computed, onBeforeUnmount, ref, watch } from 'vue'
   import { usePackingListsStore } from '~/stores/packing-lists'
-  import PerdButton from '~/components/PerdButton.vue'
   import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue'
 
   interface Props {
@@ -44,8 +30,8 @@
 
   const { available, packingListId } = defineProps<Props>()
   const emit = defineEmits<Emits>()
+  const isDialogVisible = defineModel<boolean>({ required: true })
   const packingListsStore = usePackingListsStore()
-  const isDialogVisible = ref(false)
   const errorMessage = ref<string | null>(null)
   const isDeleting = computed(() => packingListsStore.isPackingListDeleting(packingListId))
 
@@ -58,10 +44,11 @@
     isActive = false
   })
 
-  function openDialog() {
-    errorMessage.value = null
-    isDialogVisible.value = true
-  }
+  watch(isDialogVisible, (isVisible) => {
+    if (isVisible) {
+      errorMessage.value = null
+    }
+  })
 
   async function handleDelete() {
     if (isDisabled.value) {

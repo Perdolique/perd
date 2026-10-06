@@ -4,6 +4,7 @@
     :class="$style.dialog"
     :aria-labelledby="headingId"
     :close-disabled="confirmLoading"
+    :close-on-backdrop="closeOnBackdrop"
   >
     <div :class="$style.content">
       <PerdHeading
@@ -55,6 +56,7 @@
 
   interface Props {
     cancelButtonText?: string;
+    closeOnBackdrop?: boolean;
     closeOnConfirm?: boolean;
     confirmDisabled?: boolean;
     confirmLoading?: boolean;
@@ -72,6 +74,7 @@
 
   const {
     cancelButtonText = 'Cancel',
+    closeOnBackdrop = true,
     closeOnConfirm = true,
     confirmDisabled,
     confirmLoading,

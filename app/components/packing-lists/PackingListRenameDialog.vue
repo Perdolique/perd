@@ -1,17 +1,5 @@
 <template>
   <div :class="$style.component">
-    <PerdButton
-      v-if="available"
-      variant="secondary"
-      size="small"
-      icon="hugeicons:pencil-edit-02"
-      aria-haspopup="dialog"
-      :disabled="isActionDisabled"
-      @click="openDialog"
-    >
-      Rename
-    </PerdButton>
-
     <ConfirmationDialog
       v-model="isDialogVisible"
       header-text="Rename packing list"
@@ -22,7 +10,7 @@
       :error="errorMessage"
       @confirm="handleRename"
     >
-      <form novalidate @submit.prevent="handleRename">
+      <form v-if="isDialogVisible" novalidate @submit.prevent="handleRename">
         <TextInput
           ref="nameInput"
           v-model="editedName"
@@ -40,11 +28,10 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, nextTick, onBeforeUnmount, ref, useTemplateRef } from 'vue'
+  import { computed, nextTick, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
   import * as v from 'valibot'
   import { limits } from '#shared/constants'
   import { usePackingListsStore } from '~/stores/packing-lists'
-  import PerdButton from '~/components/PerdButton.vue'
   import TextInput from '~/components/TextInput.vue'
   import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue'
 
@@ -60,10 +47,10 @@
 
   const { available, name, packingListId } = defineProps<Props>()
   const emit = defineEmits<Emits>()
+  const isDialogVisible = defineModel<boolean>({ required: true })
   const packingListsStore = usePackingListsStore()
   const nameInput = useTemplateRef('nameInput')
   const editedName = ref('')
-  const isDialogVisible = ref(false)
   const nameErrorMessage = ref<string>()
   const errorMessage = ref<string | null>(null)
   const announcement = ref('')
@@ -79,23 +66,28 @@
 
   const isRenaming = computed(() => packingListsStore.isPackingListRenaming(packingListId))
   const isDeleting = computed(() => packingListsStore.isPackingListDeleting(packingListId))
-  const isActionDisabled = computed(() => !available || isRenaming.value || isDeleting.value)
+  const isActionDisabled = computed(() => !available || isRenaming.value || isDeleting.value || packingListsStore.isPackingListCopying(packingListId))
   const isConfirmDisabled = computed(() => isActionDisabled.value || editedName.value.trim() === name)
 
   onBeforeUnmount(() => {
     isActive = false
   })
 
-  async function openDialog() {
+  async function initializeDialog() {
     editedName.value = name
     nameErrorMessage.value = undefined
     errorMessage.value = null
     announcement.value = ''
-    isDialogVisible.value = true
 
     await nextTick()
     nameInput.value?.focus()
   }
+
+  watch(isDialogVisible, (isVisible) => {
+    if (isVisible) {
+      void initializeDialog()
+    }
+  })
 
   async function handleRename() {
     if (isConfirmDisabled.value) {
