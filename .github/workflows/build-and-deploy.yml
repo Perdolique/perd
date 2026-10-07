@@ -43,8 +43,8 @@ jobs:
         run: docker compose up --detach --wait
       - name: Build test Worker
         run: pnpm run build:e2e
-      - name: Test catalog and private gear in PostgreSQL and the Worker
-        run: pnpm run test:integration tests/integration/category-properties.test.ts tests/integration/category-properties-worker.test.ts tests/integration/equipment-item-edit.test.ts tests/integration/equipment-item-edit-worker.test.ts tests/integration/custom-gear-worker.test.ts
+      - name: Test catalog, private gear, and packing lists in PostgreSQL and the Worker
+        run: pnpm run test:integration tests/integration/category-properties.test.ts tests/integration/category-properties-worker.test.ts tests/integration/equipment-item-edit.test.ts tests/integration/equipment-item-edit-worker.test.ts tests/integration/custom-gear-worker.test.ts tests/integration/packing-list-copy.test.ts
       - name: Remove local database and Neon proxy
         if: always()
         run: docker compose down --volumes

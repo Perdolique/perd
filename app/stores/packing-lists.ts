@@ -69,6 +69,7 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
   const serverRows = ref<PackingListSummary[]>([])
   const summaryStates = reactive(new Map<string, PackingListSummaryState>())
   const entryOperations = reactive(new Map<string, PackingListEntryOperation>())
+  const copyingListIds = reactive(new Set<string>())
   const renamingListIds = reactive(new Set<string>())
   const deletingListIds = reactive(new Set<string>())
   const deletedListIds = reactive(new Set<string>())
@@ -81,8 +82,10 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
   let nextEntryOperationId = 0
   const rows = computed(() => serverRows.value.map((row) => summaryStates.get(row.id)?.summary ?? row))
   const hasUnavailableError = computed(() => errorMessage.value !== null && hasLoaded.value === false)
+  const hasRefreshError = computed(() => errorMessage.value !== null && hasLoaded.value)
   const isEmpty = computed(() => rows.value.length === 0)
   const isInitialLoading = computed(() => loading.value && hasLoaded.value === false)
+  const isRefreshing = computed(() => loading.value && hasLoaded.value)
 
   function abortActiveFetch() {
     activeFetchController?.abort()
@@ -239,6 +242,10 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     }
   }
 
+  function isPackingListCopying(packingListId: string) {
+    return copyingListIds.has(packingListId)
+  }
+
   function isPackingListRenaming(packingListId: string) {
     return renamingListIds.has(packingListId)
   }
@@ -254,12 +261,12 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
   function isPackingListMutationPending(packingListId: string) {
     const pendingOperations = summaryStates.get(packingListId)?.pendingOperations ?? 0
 
-    return pendingOperations > 0 || deletingListIds.has(packingListId)
+    return pendingOperations > 0 || deletingListIds.has(packingListId) || copyingListIds.has(packingListId)
   }
 
   function assertPackingListWritable(packingListId: string) {
-    if (deletingListIds.has(packingListId) || deletedListIds.has(packingListId)) {
-      throw new Error('Packing list is being deleted or is no longer available')
+    if (deletingListIds.has(packingListId) || deletedListIds.has(packingListId) || copyingListIds.has(packingListId)) {
+      throw new Error('Packing list is being copied, deleted, or is no longer available')
     }
   }
 
@@ -396,6 +403,7 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
 
     activeFetchController = fetchController
     loading.value = true
+    errorMessage.value = null
 
     try {
       const fetchedRows = await requestFetch('/api/user/packing-lists', {
@@ -414,16 +422,18 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
       serverRows.value = normalizedRows
       hasLoaded.value = true
       errorMessage.value = null
-    } catch {
+    } catch (error) {
       const isFetchAborted = fetchController.signal.aborted
 
       if (isFetchAborted || fetchGeneration !== generation) {
         return
       }
 
-      if (hasLoaded.value === false) {
-        errorMessage.value = 'Could not load packing lists.'
-      }
+      globalThis.console.error('Failed to load packing lists:', error)
+
+      errorMessage.value = hasLoaded.value
+        ? 'Could not refresh packing lists. The lists below may be out of date.'
+        : 'Could not load packing lists.'
     } finally {
       const isCurrentFetch = activeFetchController === fetchController
 
@@ -448,6 +458,65 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     await fetchPackingLists()
 
     return createdList
+  }
+
+  async function copyPackingList(packingListId: string, name: string) {
+    assertPackingListWritable(packingListId)
+
+    if (isPackingListMutationPending(packingListId) || renamingListIds.has(packingListId)) {
+      throw new Error('Packing list changes are still pending')
+    }
+
+    const operationGeneration = generation
+    const copyPath = `/api/user/packing-lists/${packingListId}/copy` as const
+
+    copyingListIds.add(packingListId)
+
+    try {
+      const response = await requestFetch(copyPath, {
+        method: 'POST',
+        body: { name },
+        retry: 0
+      })
+
+      if (operationGeneration !== generation) {
+        return null
+      }
+
+      const summary = normalizePackingListSummary(response)
+
+      if (!deletedListIds.has(summary.id)) {
+        const existingRows = serverRows.value.filter(row => row.id !== summary.id)
+
+        serverRows.value = [summary, ...existingRows]
+
+        if (!summaryStates.has(summary.id)) {
+          summaryStates.set(summary.id, {
+            pendingOperations: 0,
+            summary,
+            version: 1
+          })
+        }
+      }
+
+      hasLoaded.value = true
+      errorMessage.value = null
+
+      // Refresh failures must not undo a confirmed copy or delay opening it.
+      void fetchPackingLists()
+
+      return response
+    } catch (error) {
+      if (operationGeneration !== generation) {
+        return null
+      }
+
+      throw error
+    } finally {
+      if (operationGeneration === generation) {
+        copyingListIds.delete(packingListId)
+      }
+    }
   }
 
   async function renamePackingList(packingListId: string, name: string) {
@@ -743,6 +812,7 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
 
     summaryStates.clear()
     entryOperations.clear()
+    copyingListIds.clear()
     renamingListIds.clear()
     deletingListIds.clear()
     deletedListIds.clear()
@@ -755,6 +825,7 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
 
   return {
     clearPackingLists,
+    copyPackingList,
     createPackingList,
     createPackingListEntry,
     deletePackingList,
@@ -764,10 +835,13 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     getPackingListDetailView,
     getRemovingPackingListEntryId,
     hasLoaded,
+    hasRefreshError,
     hasUnavailableError,
     initializePackingListSummary,
     isEmpty,
     isInitialLoading,
+    isRefreshing,
+    isPackingListCopying,
     isPackingListDeleted,
     isPackingListDeleting,
     isPackingListEntryOperationPending,

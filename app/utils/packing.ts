@@ -1,3 +1,4 @@
+import { limits } from '#shared/constants'
 import type { PackingListEntry, PackingListSummary } from '~/types/packing'
 
 interface PackingListSummaryInput {
@@ -44,7 +45,27 @@ function countPackedEntries(entries: PackingListEntry[]) {
   return entries.filter((entry) => entry.isPacked).length
 }
 
+/** Keeps the copy suffix within the existing UTF-16 name limit without splitting code points. */
+function packingListCopyName(name: string) {
+  const suffix = ' — copy'
+  const availableLength = limits.maxPackingListNameLength - suffix.length
+  let original = ''
+
+  for (const character of name) {
+    if (original.length + character.length > availableLength) {
+      break
+    }
+
+    original += character
+  }
+
+  const copyName = `${original}${suffix}`
+
+  return copyName
+}
+
 export {
+  packingListCopyName,
   countPackedEntries,
   formatPackingProgress,
   latestPackingListUpdatedAt,

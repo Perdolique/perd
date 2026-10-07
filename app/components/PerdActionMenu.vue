@@ -1,6 +1,26 @@
 <template>
   <div :class="$style.component">
+    <PerdButton
+      v-if="triggerText"
+      ref="trigger"
+      variant="secondary"
+      size="small"
+      icon-right="hugeicons:arrow-down-01"
+      :aria-label="label"
+      :title="label"
+      :disabled="triggerDisabled"
+      :loading="loading"
+      aria-haspopup="menu"
+      :aria-expanded="isOpen"
+      :aria-controls="menuId"
+      :popovertarget="menuId"
+      @click.prevent="toggleMenu"
+      @keydown="handleTriggerKeydown"
+    >
+      {{ triggerText }}
+    </PerdButton>
     <PerdIconButton
+      v-else
       ref="trigger"
       icon="hugeicons:more-horizontal"
       :label="label"
@@ -68,6 +88,7 @@
   interface Props {
     label: string;
     menuLabel: string;
+    triggerText?: string;
     items: ActionMenuItem[];
     disabled?: boolean;
     loading?: boolean;

@@ -16,12 +16,14 @@
 
   interface Props {
     closeDisabled?: boolean;
+    closeOnBackdrop?: boolean;
     desktopPresentation?: 'centered' | 'side-sheet';
     mobilePresentation?: 'bottom-sheet' | 'centered';
   }
 
   const {
     closeDisabled,
+    closeOnBackdrop = true,
     desktopPresentation = 'centered',
     mobilePresentation = 'centered'
   } = defineProps<Props>()
@@ -32,7 +34,14 @@
     required: true
   })
 
-  const closedBy = computed(() => closeDisabled ? 'none' : 'any')
+  const closedBy = computed(() => {
+    if (closeDisabled) {
+      return 'none'
+    }
+
+    return closeOnBackdrop ? 'any' : 'closerequest'
+  })
+
   const isBottomSheet = computed(() => mobilePresentation === 'bottom-sheet')
   const isSideSheet = computed(() => desktopPresentation === 'side-sheet')
   let interactionTarget: HTMLElement | null = null
@@ -75,7 +84,7 @@
     const supportsClosedBy = 'closedBy' in dialog.constructor.prototype
     const isDialogTarget = event.target === dialog
 
-    if (closeDisabled || supportsClosedBy || !isDialogTarget) {
+    if (closeDisabled || !closeOnBackdrop || supportsClosedBy || !isDialogTarget) {
       return
     }
 

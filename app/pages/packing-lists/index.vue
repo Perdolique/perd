@@ -13,6 +13,13 @@
     </template>
 
     <div :class="$style.component">
+      <p v-if="isRefreshing" role="status">Refreshing packing lists…</p>
+
+      <div v-if="hasRefreshError" :class="$style.refreshError">
+        <p role="alert">{{ errorMessage }}</p>
+        <PerdButton variant="secondary" size="small" @click="handleRetry">Retry</PerdButton>
+      </div>
+
       <PageLoadingState
         v-if="isInitialLoading"
         title="Loading packing lists"
@@ -71,9 +78,12 @@
   const packingListsStore = usePackingListsStore()
 
   const {
+    errorMessage,
+    hasRefreshError,
     hasUnavailableError,
     isEmpty,
     isInitialLoading,
+    isRefreshing,
     rows: packingLists
   } = storeToRefs(packingListsStore)
 
@@ -147,5 +157,11 @@
   .list {
     display: grid;
     gap: var(--spacing-16);
+  }
+
+  .refreshError {
+    display: grid;
+    gap: var(--spacing-12);
+    justify-items: start;
   }
 </style>

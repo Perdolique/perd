@@ -885,6 +885,35 @@ async function observeListDeletionCompletion(page: Page) {
   return completion
 }
 
+function listActionsTrigger(page: Page) {
+  return page.getByRole('button', { name: /^Actions for /u })
+}
+
+async function openListAction(page: Page, name: 'Rename' | 'Delete') {
+  await listActionsTrigger(page).click()
+
+  await page.getByRole('menuitem', {
+    name,
+    exact: true
+  }).click()
+}
+
+async function expectListSnapshotActions(page: Page, disabled: boolean) {
+  const trigger = listActionsTrigger(page)
+
+  await trigger.click()
+
+  for (const name of ['Copy list', 'Delete']) {
+    // oxlint-disable-next-line no-await-in-loop -- Assert both snapshot actions in the same open menu.
+    await expect(page.getByRole('menuitem', {
+      name,
+      exact: true
+    })).toHaveAttribute('aria-disabled', String(disabled))
+  }
+
+  await page.keyboard.press('Escape')
+}
+
 test.describe('Packing list shell', () => {
   for (const dismissal of [{
     name: 'Cancel',
@@ -899,11 +928,7 @@ test.describe('Packing list shell', () => {
     test(`should cancel list deletion by ${dismissal.name} and restore focus`, async ({ context, page }) => {
       const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
       const dialog = page.getByRole('dialog', { name: 'Delete packing list' })
-
-      const opener = page.getByRole('button', {
-        name: 'Delete',
-        exact: true
-      })
+      const opener = page.getByRole('button', { name: /^Actions for /u })
 
       await mockAuth(context)
       await mockPackingListRoutes(context, page, state)
@@ -911,6 +936,12 @@ test.describe('Packing list shell', () => {
       await page.getByRole('link', { name: /Alpine weekend/iu }).click()
       await opener.focus()
       await opener.press('Enter')
+
+      await page.getByRole('menuitem', {
+        name: 'Delete',
+        exact: true
+      }).click()
+
       await expect(dialog).toContainText('Delete “Alpine weekend” and all its list items?')
       await expect(dialog).toContainText('Items in My gear and the gear library will stay. This cannot be undone.')
       await expect(dialog.getByRole('button', { name: 'Cancel' })).toBeFocused()
@@ -945,11 +976,7 @@ test.describe('Packing list shell', () => {
       await mockPackingListRoutes(context, page, state)
       await openPackingLists(page)
       await page.getByRole('link', { name: /Alpine weekend/iu }).click()
-
-      await page.getByRole('button', {
-        name: 'Delete',
-        exact: true
-      }).click()
+      await openListAction(page, 'Delete')
 
       await page.getByRole('button', {
         name: 'Delete list',
@@ -973,16 +1000,7 @@ test.describe('Packing list shell', () => {
       await waitForInitialEmailSignInTurnstile(page)
       await page.getByRole('button', { name: /Continue as guest/iu }).click()
       await expect(page.getByRole('heading', { name: 'Packing list not found.' })).toBeVisible()
-
-      await expect(page.getByRole('button', {
-        name: 'Delete',
-        exact: true
-      })).toHaveCount(0)
-
-      await expect(page.getByRole('button', {
-        name: 'Rename',
-        exact: true
-      })).toHaveCount(0)
+      await expect(page.getByRole('button', { name: /^Actions for /u })).toHaveCount(0)
 
       await expect(page.getByRole('button', {
         name: 'Retry',
@@ -1033,11 +1051,7 @@ test.describe('Packing list shell', () => {
       await openPackingLists(page)
       await page.getByRole('link', { name: /Alpine weekend/iu }).click()
       await captureDeleteFailure(page)
-
-      await page.getByRole('button', {
-        name: 'Delete',
-        exact: true
-      }).click()
+      await openListAction(page, 'Delete')
 
       try {
         await confirm.focus()
@@ -1086,8 +1100,9 @@ test.describe('Packing list shell', () => {
     })
   }
 
-  test('should finish list deletion when the list is already missing and the overview refresh fails', async ({ context, page }) => {
+  test('should finish list deletion when the list is already missing and the overview refresh fails', async ({ context, page, expectConsoleError }) => {
     const state = createPackingListRouteState([createPackingListSummary('Alpine weekend')])
+    const stale = createDeferred()
 
     state.deleteReplies.push({ status: 404 })
     await mockAuth(context)
@@ -1097,20 +1112,33 @@ test.describe('Packing list shell', () => {
 
     state.getStatus = 500
 
-    await page.getByRole('button', {
-      name: 'Delete',
-      exact: true
-    }).click()
+    state.getGates.push(stale.promise)
 
-    await page.getByRole('button', {
-      name: 'Delete list',
-      exact: true
-    }).click()
+    const refreshFailure = expectConsoleError(/Failed to load packing lists:/u)
+    const cancelled = page.waitForEvent('requestfailed', isPackingListCollectionGetRequest)
 
-    await expect(page).toHaveURL(/\/packing-lists$/u)
-    await expect(page.getByRole('heading', { name: 'No packing lists yet.' })).toBeVisible()
-    await expect(page.getByText('Could not delete the list. Try again.')).toHaveCount(0)
-    expect(state.deleteRequests).toBe(1)
+    await openListAction(page, 'Delete')
+
+    try {
+      await page.getByRole('button', {
+        name: 'Delete list',
+        exact: true
+      }).click()
+
+      const request = await cancelled
+
+      expect(request.failure()?.errorText).toMatch(/ERR_ABORTED/u)
+
+      await refreshFailure
+
+      await expect(page).toHaveURL(/\/packing-lists$/u)
+      await expect(page.getByRole('heading', { name: 'No packing lists yet.' })).toBeVisible()
+      await expect(page.getByRole('alert')).toContainText('may be out of date')
+      await expect(page.getByText('Could not delete the list. Try again.')).toHaveCount(0)
+      expect(state.deleteRequests).toBe(1)
+    } finally {
+      stale.resolve()
+    }
   })
 
   test('should abort an obsolete overview request after list deletion and remove the cached card immediately', async ({ context, page }) => {
@@ -1142,10 +1170,7 @@ test.describe('Packing list shell', () => {
 
       const failedRequestPromise = page.waitForEvent('requestfailed', isPackingListCollectionGetRequest)
 
-      await page.getByRole('button', {
-        name: 'Delete',
-        exact: true
-      }).click()
+      await openListAction(page, 'Delete')
 
       await page.getByRole('button', {
         name: 'Delete list',
@@ -1182,10 +1207,7 @@ test.describe('Packing list shell', () => {
     await page.getByRole('link', { name: /Alpine weekend/iu }).click()
 
     try {
-      await page.getByRole('button', {
-        name: 'Delete',
-        exact: true
-      }).click()
+      await openListAction(page, 'Delete')
 
       await page.getByRole('button', {
         name: 'Delete list',
@@ -1196,26 +1218,13 @@ test.describe('Packing list shell', () => {
       await page.goBack()
       await expect(page.getByRole('link', { name: /Alpine weekend/iu })).toBeVisible()
       await page.getByRole('link', { name: /Alpine weekend/iu }).click()
-
-      await expect(page.getByRole('button', {
-        name: 'Delete',
-        exact: true
-      })).toBeDisabled()
-
-      await expect(page.getByRole('button', {
-        name: 'Delete',
-        exact: true
-      })).toHaveAttribute('aria-busy', 'true')
-
-      await expect(page.getByRole('button', {
-        name: 'Rename',
-        exact: true
-      })).toBeDisabled()
+      await expect(page.getByRole('button', { name: /^Actions for /u })).toBeDisabled()
 
       const checklist = page.locator('[inert]').filter({ has: page.locator('input[type="checkbox"]') })
 
       await expect(checklist).toHaveCount(1)
       await expect(checklist).toHaveAttribute('aria-busy', 'true')
+      await expect(page.getByRole('button', { name: /^Actions for /u })).toHaveAttribute('aria-busy', 'true')
 
       const checkbox = checklist.locator('input[type="checkbox"]').first()
       const checkboxBox = await getElementBox(checkbox)
@@ -1251,27 +1260,12 @@ test.describe('Packing list shell', () => {
     try {
       await page.getByRole('checkbox', { name: 'Rain jacket' }).click()
       await expect.poll(() => state.entryPatchRequests.length).toBe(1)
-
-      await expect(page.getByRole('button', {
-        name: 'Delete',
-        exact: true
-      })).toBeDisabled()
-
+      await expectListSnapshotActions(page, true)
       await page.goBack()
       await page.getByRole('link', { name: /Alpine weekend/iu }).click()
-
-      await expect(page.getByRole('button', {
-        name: 'Delete',
-        exact: true
-      })).toBeDisabled()
-
+      await expectListSnapshotActions(page, true)
       gate.resolve()
-
-      await expect(page.getByRole('button', {
-        name: 'Delete',
-        exact: true
-      })).toBeEnabled()
-
+      await expectListSnapshotActions(page, false)
       expect(state.deleteRequests).toBe(0)
     } finally {
       gate.resolve()
@@ -1307,18 +1301,9 @@ test.describe('Packing list shell', () => {
     try {
       await page.getByRole('button', { name: /PocketRocket Deluxe/iu }).click()
       await expect.poll(() => state.entryCreateBodies.length).toBe(1)
-
-      await expect(page.getByRole('button', {
-        name: 'Delete',
-        exact: true
-      })).toBeDisabled()
-
+      await expectListSnapshotActions(page, true)
       createGate.resolve()
-
-      await expect(page.getByRole('button', {
-        name: 'Delete',
-        exact: true
-      })).toBeEnabled()
+      await expectListSnapshotActions(page, false)
 
       await page.getByRole('button', {
         name: 'Remove PocketRocket Deluxe',
@@ -1326,19 +1311,9 @@ test.describe('Packing list shell', () => {
       }).click()
 
       await expect.poll(() => state.entryDeleteRequests).toBe(1)
-
-      await expect(page.getByRole('button', {
-        name: 'Delete',
-        exact: true
-      })).toBeDisabled()
-
+      await expectListSnapshotActions(page, true)
       removeGate.resolve()
-
-      await expect(page.getByRole('button', {
-        name: 'Delete',
-        exact: true
-      })).toBeEnabled()
-
+      await expectListSnapshotActions(page, false)
       expect(state.deleteRequests).toBe(0)
     } finally {
       createGate.resolve()
@@ -1367,10 +1342,7 @@ test.describe('Packing list shell', () => {
       const deletionCompletion = await observeListDeletionCompletion(page)
 
       try {
-        await page.getByRole('button', {
-          name: 'Delete',
-          exact: true
-        }).click()
+        await openListAction(page, 'Delete')
 
         await page.getByRole('button', {
           name: 'Delete list',
@@ -1386,11 +1358,7 @@ test.describe('Packing list shell', () => {
         await page.getByRole('button', { name: 'Guest' }).click()
         await page.getByTestId('shell-sidebar').getByRole('link', { name: 'Packing lists' }).click()
         await page.getByRole('link', { name: /New session trail/iu }).click()
-
-        await expect(page.getByRole('button', {
-          name: 'Delete',
-          exact: true
-        })).toBeEnabled()
+        await expect(page.getByRole('button', { name: /^Actions for /u })).toBeEnabled()
 
         const oldDeletionResponse = page.waitForResponse(isPackingListDeleteResponse)
 
@@ -1404,11 +1372,7 @@ test.describe('Packing list shell', () => {
           exact: true
         })).toBeVisible()
 
-        await expect(page.getByRole('button', {
-          name: 'Delete',
-          exact: true
-        })).toBeEnabled()
-
+        await expect(page.getByRole('button', { name: /^Actions for /u })).toBeEnabled()
         await expect(page).toHaveURL(new RegExp(`/packing-lists/${packingListId}$`, 'u'))
         expect(nextState.deleteRequests).toBe(0)
       } finally {
@@ -1427,11 +1391,7 @@ test.describe('Packing list shell', () => {
     await mockPackingListRoutes(context, page, state)
     await openPackingLists(page)
     await page.getByRole('link', { name: /Old session trail/iu }).click()
-
-    await page.getByRole('button', {
-      name: 'Delete',
-      exact: true
-    }).click()
+    await openListAction(page, 'Delete')
 
     await page.getByRole('button', {
       name: 'Delete list',
@@ -1453,10 +1413,7 @@ test.describe('Packing list shell', () => {
       exact: true
     })).toBeVisible()
 
-    await expect(page.getByRole('button', {
-      name: 'Delete',
-      exact: true
-    })).toBeEnabled()
+    await expect(page.getByRole('button', { name: /^Actions for /u })).toBeEnabled()
   })
 
   test('should keep list deletion readable and usable with a long name on mobile', async ({ context, page }) => {
@@ -1486,16 +1443,18 @@ test.describe('Packing list shell', () => {
     await waitForInitialEmailSignInTurnstile(page)
     await page.getByRole('button', { name: /Continue as guest/iu }).click()
 
-    const opener = page.getByRole('button', {
-      name: 'Delete',
-      exact: true
-    })
-
+    const opener = page.getByRole('button', { name: /^Actions for /u })
     const openerBox = await getElementBox(opener)
 
     expect(openerBox.x + openerBox.width).toBeLessThanOrEqual(320)
     await opener.focus()
     await opener.press('Enter')
+
+    await page.getByRole('menuitem', {
+      name: 'Delete',
+      exact: true
+    }).click()
+
     await expect(cancel).toBeFocused()
     await expect(dialog).toContainText(longName)
 
@@ -1597,11 +1556,7 @@ test.describe('Packing list shell', () => {
       await mockPackingListRoutes(context, page, state)
       await openPackingLists(page)
       await page.getByRole('link', { name: /Alpine weekend/iu }).click()
-
-      await page.getByRole('button', {
-        name: 'Rename',
-        exact: true
-      }).click()
+      await openListAction(page, 'Rename')
     })
 
     await test.step('Save a trimmed name without replacing either entry', async () => {
@@ -1674,15 +1629,17 @@ test.describe('Packing list shell', () => {
       await openPackingLists(page)
       await page.getByRole('link', { name: /Alpine weekend/iu }).click()
 
-      const opener = page.getByRole('button', {
-        name: 'Rename',
-        exact: true
-      })
-
+      const opener = page.getByRole('button', { name: /^Actions for /u })
       const dialog = page.getByRole('dialog', { name: 'Rename packing list' })
 
       await opener.focus()
       await opener.press('Enter')
+
+      await page.getByRole('menuitem', {
+        name: 'Rename',
+        exact: true
+      }).click()
+
       await expect(dialog.getByLabel('List name')).toHaveValue('Alpine weekend')
       await dialog.getByLabel('List name').fill('Discard this draft')
       await dismissal.dismiss(page)
@@ -1695,7 +1652,7 @@ test.describe('Packing list shell', () => {
         exact: true
       })).toBeVisible()
 
-      await opener.click()
+      await openListAction(page, 'Rename')
       await expect(dialog.getByLabel('List name')).toHaveValue('Alpine weekend')
       expect(state.renameBodies).toStrictEqual([])
     })
@@ -1711,11 +1668,7 @@ test.describe('Packing list shell', () => {
     await mockPackingListRoutes(context, page, state)
     await openPackingLists(page)
     await page.getByRole('link', { name: /Alpine weekend/iu }).click()
-
-    await page.getByRole('button', {
-      name: 'Rename',
-      exact: true
-    }).click()
+    await openListAction(page, 'Rename')
 
     const dialog = page.getByRole('dialog', { name: 'Rename packing list' })
     const input = dialog.getByLabel('List name')
@@ -1764,12 +1717,7 @@ test.describe('Packing list shell', () => {
 
       await page.emulateMedia({ reducedMotion: 'reduce' })
       await captureRenameFailure(page)
-
-      await page.getByRole('button', {
-        name: 'Rename',
-        exact: true
-      }).click()
-
+      await openListAction(page, 'Rename')
       await input.fill('Storm kit')
     })
 
@@ -1862,12 +1810,7 @@ test.describe('Packing list shell', () => {
         await page.getByRole('link', { name: /Alpine weekend/iu }).click()
         await page.getByRole('checkbox', { name: 'Rain jacket' }).click()
         await expect.poll(() => state.entryPatchRequests.length).toBe(1)
-
-        await page.getByRole('button', {
-          name: 'Rename',
-          exact: true
-        }).click()
-
+        await openListAction(page, 'Rename')
         await page.getByLabel('List name').fill('Storm kit')
         await page.getByRole('button', { name: 'Save name' }).click()
         await expect(page.getByRole('dialog', { name: 'Rename packing list' })).toHaveCount(0)
@@ -1917,12 +1860,7 @@ test.describe('Packing list shell', () => {
       await mockPackingListRoutes(context, page, state)
       await openPackingLists(page)
       await page.getByRole('link', { name: /Alpine weekend/iu }).click()
-
-      await page.getByRole('button', {
-        name: 'Rename',
-        exact: true
-      }).click()
-
+      await openListAction(page, 'Rename')
       await page.getByLabel('List name').fill('Storm kit')
     })
 
@@ -1933,16 +1871,7 @@ test.describe('Packing list shell', () => {
         await page.goBack()
         await expect(page).toHaveURL(/\/packing-lists$/u)
         await page.getByRole('link', { name: /Alpine weekend/iu }).click()
-
-        await expect(page.getByRole('button', {
-          name: 'Rename',
-          exact: true
-        })).toBeDisabled()
-
-        await expect(page.getByRole('button', {
-          name: 'Delete',
-          exact: true
-        })).toBeDisabled()
+        await expect(page.getByRole('button', { name: /^Actions for /u })).toBeDisabled()
       })
 
       await test.step('Apply the single save and unlock the reopened page', async () => {
@@ -1954,11 +1883,7 @@ test.describe('Packing list shell', () => {
           exact: true
         })).toBeVisible()
 
-        await expect(page.getByRole('button', {
-          name: 'Rename',
-          exact: true
-        })).toBeEnabled()
-
+        await expect(page.getByRole('button', { name: /^Actions for /u })).toBeEnabled()
         expect(state.renameBodies).toStrictEqual([{ name: 'Storm kit' }])
       })
     } finally {
@@ -1994,12 +1919,7 @@ test.describe('Packing list shell', () => {
       await page.goto(loginPath)
       await waitForInitialEmailSignInTurnstile(page)
       await page.getByRole('button', { name: /Continue as guest/iu }).click()
-
-      await page.getByRole('button', {
-        name: 'Rename',
-        exact: true
-      }).click()
-
+      await openListAction(page, 'Rename')
       await input.fill(longName)
       await expect(input).toHaveValue(longName)
 
@@ -2074,10 +1994,7 @@ test.describe('Packing list shell', () => {
           exact: true
         })
 
-        const renameButton = page.getByRole('button', {
-          name: 'Rename',
-          exact: true
-        })
+        const renameButton = page.getByRole('button', { name: /^Actions for /u })
 
         await expect(heading).toBeVisible()
 
