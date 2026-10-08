@@ -29,6 +29,21 @@ describe(getValidatedRouteParams, () => {
     })
   })
 
+  it.each(['%', '%E0%A4'])('rejects malformed encoded params %s with a safe 400 and the raw cause', async (slug) => {
+    const event = createTestEvent({})
+
+    event.context.params = { slug }
+
+    const result = getValidatedRouteParams(event, params => v.parse(slugSchema, params))
+    const decodeErrorMatcher: unknown = expect.any(URIError)
+
+    await expect(result).rejects.toMatchObject({
+      status: 400,
+      statusText: 'Validation Error',
+      cause: decodeErrorMatcher
+    })
+  })
+
   it('preserves a deliberate HTTP error from the validator', async () => {
     const event = createTestEvent({})
 

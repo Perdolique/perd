@@ -82,10 +82,12 @@ vi.mock(import('#server/utils/config'), () => {
   return { createRuntimeWebSocketClient() {
     const { databaseUrl } = resources()
 
-    return createWebSocketClient({
+    const client = createWebSocketClient({
       databaseUrl,
       isLocalDatabase: true
     })
+
+    return client
   } }
 })
 

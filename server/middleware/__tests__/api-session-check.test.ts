@@ -33,8 +33,10 @@ function createMiddlewareEvent({
   request.url = path
 
   const response = new ServerResponse(request)
+  const h3Event = createEvent(request, response)
+  const event = toTestRequestEvent(h3Event)
 
-  return toTestRequestEvent(createEvent(request, response))
+  return event
 }
 
 describe('api session check middleware', () => {

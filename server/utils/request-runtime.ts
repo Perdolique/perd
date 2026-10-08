@@ -12,15 +12,21 @@ const sessionEvents = new WeakMap<RequestEvent, SessionEvent>()
 /** Reads headers without starting Nitro 2's buffered Node body reader. */
 function getRequestMetadataHeader(event: RequestEvent, name: string): string | undefined {
   if (event instanceof H3Event) {
-    return getH3RequestHeader(event, name)
+    const requestHeader = getH3RequestHeader(event, name)
+
+    return requestHeader
   }
 
-  return getRequestHeader(event, name)
+  const requestHeader = getRequestHeader(event, name)
+
+  return requestHeader
 }
 
 /** Reads metadata without starting Nitro 2's buffered Node body reader. */
 function getRequestMethod(event: RequestEvent): string {
-  return event instanceof H3Event ? event.method : event.req.method
+  const requestMethod = event instanceof H3Event ? event.method : event.req.method
+
+  return requestMethod
 }
 
 /** Gives cookie-only session helpers a stable event without starting the Node body reader. */
@@ -52,7 +58,9 @@ function getSessionEvent(event: RequestEvent): SessionEvent {
 /** Keeps bounded reads incremental on Nitro 2, whose portable Node request buffers the body. */
 function getRequestBodyStream(event: RequestEvent): ReadableStream<unknown> | undefined {
   if (event instanceof H3Event) {
-    return getRequestWebStream(event)
+    const bodyStream = getRequestWebStream(event)
+
+    return bodyStream
   }
 
   return event.req.body ?? undefined
@@ -61,10 +69,14 @@ function getRequestBodyStream(event: RequestEvent): ReadableStream<unknown> | un
 /** Reads the development connection address when Nitro 2 does not expose it on the Web Request. */
 function getDevelopmentClientIP(event: RequestEvent): string | undefined {
   if (event instanceof H3Event) {
-    return getH3RequestIP(event, { xForwardedFor: true })
+    const clientIp = getH3RequestIP(event, { xForwardedFor: true })
+
+    return clientIp
   }
 
-  return getRequestIP(event, { xForwardedFor: true })
+  const clientIp = getRequestIP(event, { xForwardedFor: true })
+
+  return clientIp
 }
 
 /** Uses Nitro's request lifetime API, which the portable Nuxt event does not expose yet. */

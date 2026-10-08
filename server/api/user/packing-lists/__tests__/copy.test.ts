@@ -38,7 +38,13 @@ const copyId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8'
 const now = new Date('2026-10-06T12:00:00Z')
 
 async function request(body?: unknown, id = originalId) {
-  const router = createRouter().post('/lists/:id/copy',  async event => handler(toTestRequestEvent(event)))
+  const router = createRouter().post('/lists/:id/copy', async (event) => {
+    const requestEvent = toTestRequestEvent(event)
+    const result = handler(requestEvent)
+
+    return result
+  })
+
   const app = createApp().use(router)
   const fetch = toWebHandler(app)
   const requestBody = JSON.stringify(body ?? { name: 'Copy' })

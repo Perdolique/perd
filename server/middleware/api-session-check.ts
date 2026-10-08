@@ -90,7 +90,10 @@ export default defineEventHandler(async (event): Promise<string | void> => {
 
         loginPath.searchParams.set('redirectTo', `${url.pathname}${url.search}`)
 
-        return sendRedirect(event, `${loginPath.pathname}${loginPath.search}`)
+        const loginRedirectUrl = `${loginPath.pathname}${loginPath.search}`
+        const redirectResponse = sendRedirect(event, loginRedirectUrl)
+
+        return redirectResponse
       }
 
       throw createError({ status: 401 })

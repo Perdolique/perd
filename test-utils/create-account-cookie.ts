@@ -2,9 +2,12 @@ import { updateSession } from 'nuxt/server'
 
 /** Seals a native Nuxt session for built Worker tests. */
 async function createAccountCookie(userId: string, password: string, sessionVersion = 0): Promise<string> {
+  const request = new globalThis.Request('https://metsik.app')
+  const headers = new globalThis.Headers()
+
   const event = {
-    req: new globalThis.Request('https://metsik.app'),
-    res: { headers: new globalThis.Headers() }
+    req: request,
+    res: { headers }
   }
 
   await updateSession(event, {
@@ -21,7 +24,9 @@ async function createAccountCookie(userId: string, password: string, sessionVers
     throw new Error('Expected a native Nuxt session cookie')
   }
 
-  return cookie.split(';')[0] ?? ''
+  const [cookieValue] = cookie.split(';')
+
+  return cookieValue ?? ''
 }
 
 export { createAccountCookie }

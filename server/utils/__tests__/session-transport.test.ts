@@ -39,9 +39,14 @@ describe('native sessions on the Nitro request transport', () => {
       sessionVersion: 3
     }
 
-    expect(getRequestMethod(event)).toBe('POST')
+    const method = getRequestMethod(event)
+
+    expect(method).toBe('POST')
     validateEmailAuthenticationRequest(event, 'https://perd.example')
-    expect(getTrustedClientIp(event, false)).toBe('203.0.113.20')
+
+    const clientIp = getTrustedClientIp(event, false)
+
+    expect(clientIp).toBe('203.0.113.20')
     await updateAppSession(event, data)
 
     const session = await getAppSession(event)

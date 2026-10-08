@@ -18,7 +18,9 @@ import { isEmailRegistrationEnabled } from '#shared/utils/email-registration'
 
 function createRequestEvent(bindings: Record<string, unknown>) {
   const request = new IncomingMessage(new Socket())
-  const event = toTestRequestEvent(createEvent(request, new ServerResponse(request)))
+  const response = new ServerResponse(request)
+  const h3Event = createEvent(request, response)
+  const event = toTestRequestEvent(h3Event)
 
   Reflect.set(event.context, 'cloudflare', { env: bindings })
 

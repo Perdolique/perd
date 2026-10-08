@@ -686,7 +686,10 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
 
     rateLimitMock.mockResolvedValue({ success: false })
     await expect(createPhotoSubmissionHandler(event)).rejects.toMatchObject({ statusCode: 429 })
-    expect(event.res.headers.get('retry-after')).toBe('60')
+
+    const retryAfter = event.res.headers.get('retry-after')
+
+    expect(retryAfter).toBe('60')
     expect(readLimitedMultipartFormDataMock).not.toHaveBeenCalled()
     expect(uploadHostedEquipmentImageMock).not.toHaveBeenCalled()
   })
@@ -697,7 +700,10 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
 
     turnstileRateLimitMock.mockResolvedValue({ success: false })
     await expect(createPhotoSubmissionHandler(event)).rejects.toMatchObject({ statusCode: 429 })
-    expect(event.res.headers.get('retry-after')).toBe('60')
+
+    const retryAfter = event.res.headers.get('retry-after')
+
+    expect(retryAfter).toBe('60')
     expect(verifyTurnstileMock).not.toHaveBeenCalled()
     expect(readDb.submissionFindFirstMock).not.toHaveBeenCalled()
     expect(rateLimitMock).not.toHaveBeenCalled()

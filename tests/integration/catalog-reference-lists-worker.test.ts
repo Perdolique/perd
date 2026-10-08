@@ -42,14 +42,19 @@ describe('portable catalog reference lists in the Worker', () => {
 
       if (headers.get('upgrade') === 'websocket') {
         const request = new globalThis.Request(input, init)
+        const requestHeaders = Object.fromEntries(headers)
 
-        return miniflareFetch(request.url, {
+        const response = miniflareFetch(request.url, {
           method: request.method,
-          headers: Object.fromEntries(headers)
+          headers: requestHeaders
         })
+
+        return response
       }
 
-      return originalFetch(input, init)
+      const response = originalFetch(input, init)
+
+      return response
     })
 
     isolated = await createIsolatedPostgreSQL('nuxt_server_lists', { httpAccess: true })
@@ -113,8 +118,9 @@ describe('portable catalog reference lists in the Worker', () => {
   it.each(['categories', 'groups'] as const)('returns only the public %s fields with a native Nuxt session', async (kind) => {
     const worker = required(harness)
     const referenceLists = required(fixtures)
+    const url = `${origin}/api/equipment/${kind}`
 
-    const response = await worker.fetch(`${origin}/api/equipment/${kind}`, {
+    const response = await worker.fetch(url, {
       headers: { cookie: referenceLists.cookie }
     })
 
@@ -129,25 +135,36 @@ describe('portable catalog reference lists in the Worker', () => {
     const worker = required(harness)
     const { userId } = required(fixtures)
     const cookie = await createAccountCookie(userId, sessionSecret, 99)
-    const response = await worker.fetch(`${origin}/api/user`, { headers: { cookie } })
+    const url = `${origin}/api/user`
+    const response = await worker.fetch(url, { headers: { cookie } })
 
     expect(response.status).toBe(401)
-    expect(response.headers.get('set-cookie')).toContain('perdSession=;')
-    expect(response.headers.get('set-cookie')).toContain('Max-Age=0')
+
+    const setCookie = response.headers.get('set-cookie')
+
+    expect(setCookie).toContain('perdSession=;')
+    expect(setCookie).toContain('Max-Age=0')
   })
 
   it('expires a native session when the user logs out', async () => {
     const worker = required(harness)
     const { cookie } = required(fixtures)
+    const url = `${origin}/api/auth/logout`
 
-    const response = await worker.fetch(`${origin}/api/auth/logout`, {
+    const response = await worker.fetch(url, {
       method: 'POST',
       headers: { cookie }
     })
 
     expect(response.status).toBe(204)
-    await expect(response.text()).resolves.toBe('')
-    expect(response.headers.get('set-cookie')).toContain('perdSession=;')
-    expect(response.headers.get('set-cookie')).toContain('Max-Age=0')
+
+    const body = response.text()
+
+    await expect(body).resolves.toBe('')
+
+    const setCookie = response.headers.get('set-cookie')
+
+    expect(setCookie).toContain('perdSession=;')
+    expect(setCookie).toContain('Max-Age=0')
   })
 })

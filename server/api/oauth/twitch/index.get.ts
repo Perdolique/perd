@@ -93,7 +93,9 @@ export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferIn
       return { authorizationUrl: twitchAuthUrl }
     }
 
-    return sendRedirect(event, twitchAuthUrl)
+    const redirectResponse = sendRedirect(event, twitchAuthUrl)
+
+    return redirectResponse
   } catch (error) {
     throw getTwitchOAuthError(error, sensitiveValues)
   }

@@ -66,7 +66,11 @@ function eventWithBody(body = '{}') {
   // oxlint-disable-next-line unicorn/prefer-single-call -- Readable.push ends the stream with null.
   request.push(null)
 
-  return toTestRequestEvent(createEvent(request, new ServerResponse(request)))
+  const response = new ServerResponse(request)
+  const h3Event = createEvent(request, response)
+  const event = toTestRequestEvent(h3Event)
+
+  return event
 }
 
 describe('passkey request protection', () => {

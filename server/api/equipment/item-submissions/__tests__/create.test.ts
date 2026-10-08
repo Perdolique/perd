@@ -460,9 +460,9 @@ describe('post /api/equipment/item-submissions', () => {
     undefined,
     'not a URL'
   ])('should reject source URL %j through body validation before rate limiting or writes', async (sourceUrl) => {
-    const actualH3 = await vi.importActual<typeof nuxtServer>('nuxt/server')
+    const actualNuxtServer = await vi.importActual<typeof nuxtServer>('nuxt/server')
 
-    readValidatedBodyMock.mockImplementationOnce(actualH3.readValidatedBody)
+    readValidatedBodyMock.mockImplementationOnce(actualNuxtServer.readValidatedBody)
 
     const event = createTestEvent({})
 
@@ -511,7 +511,9 @@ describe('post /api/equipment/item-submissions', () => {
       statusMessage: 'Too many item submission attempts'
     })
 
-    expect(event.res.headers.get('Retry-After')).toBe('60')
+    const retryAfter = event.res.headers.get('Retry-After')
+
+    expect(retryAfter).toBe('60')
 
     expect(consoleWarnMock).toHaveBeenCalledWith({
       event: 'rate_limit_rejected',

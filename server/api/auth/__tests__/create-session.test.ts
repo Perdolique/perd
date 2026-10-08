@@ -348,7 +348,9 @@ describe('post /api/auth/create-session', () => {
       statusCode: 429
     })
 
-    expect(event.res.headers.get('Retry-After')).toBe('60')
+    const retryAfter = event.res.headers.get('Retry-After')
+
+    expect(retryAfter).toBe('60')
     expect(getSessionUserMock).not.toHaveBeenCalled()
     expect(insertMock).not.toHaveBeenCalled()
     expect(useAppSessionMock).not.toHaveBeenCalled()

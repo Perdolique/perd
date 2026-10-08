@@ -69,7 +69,9 @@ function validatePasskeyRequest(event: RequestEvent, config: PasskeyConfig): voi
     })
   }
 
-  if (getRequestMethod(event) !== 'DELETE') {
+  const requestMethod = getRequestMethod(event)
+
+  if (requestMethod !== 'DELETE') {
     const contentType = getRequestMetadataHeader(event, 'content-type')?.split(';')[0]?.trim().toLowerCase()
 
     if (contentType !== 'application/json') {

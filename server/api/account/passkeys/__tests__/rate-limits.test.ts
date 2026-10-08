@@ -75,7 +75,9 @@ function createPasskeyEvent(clientIp: string, body = '{}') {
   // oxlint-disable-next-line unicorn/prefer-single-call -- Readable.push ends the stream with null.
   request.push(null)
 
-  const event = toTestRequestEvent(createEvent(request, new ServerResponse(request)))
+  const response = new ServerResponse(request)
+  const h3Event = createEvent(request, response)
+  const event = toTestRequestEvent(h3Event)
 
   Object.assign(event.context, {
     cloudflare: {

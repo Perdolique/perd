@@ -294,10 +294,14 @@ async function fixture() {
 vi.mock(import('#server/utils/config'), () => {
   return {
     createRuntimeWebSocketClient() {
-      return createWebSocketClient({
-        databaseUrl: resources().databaseUrl,
+      const { databaseUrl } = resources()
+
+      const client = createWebSocketClient({
+        databaseUrl,
         isLocalDatabase: true
       })
+
+      return client
     }
   }
 })

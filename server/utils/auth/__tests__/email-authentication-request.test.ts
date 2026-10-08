@@ -20,7 +20,9 @@ function createRequestEvent(chunks: readonly Uint8Array[], contentLength?: strin
 
   request.push(null)
 
-  const event = toTestRequestEvent(createEvent(request, new ServerResponse(request)))
+  const response = new ServerResponse(request)
+  const h3Event = createEvent(request, response)
+  const event = toTestRequestEvent(h3Event)
 
   Object.defineProperty(event, 'req', {
     get() {

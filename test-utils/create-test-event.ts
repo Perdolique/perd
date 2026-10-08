@@ -33,6 +33,8 @@ function toTestRequestEvent(event: H3Event): RequestEvent & { node: H3Event['nod
     }
   }
 
+  const responseHeaders = new ResponseHeaders()
+
   const portableEvent = {
     h3: event,
 
@@ -47,8 +49,9 @@ function toTestRequestEvent(event: H3Event): RequestEvent & { node: H3Event['nod
       request ??= toWebRequest(event)
 
       const headers = new globalThis.Headers()
+      const nodeHeaderEntries = Object.entries(event.node.req.headers)
 
-      for (const [name, value] of Object.entries(event.node.req.headers)) {
+      for (const [name, value] of nodeHeaderEntries) {
         if (Array.isArray(value)) {
           for (const item of value) {
             headers.append(name, item)
@@ -58,7 +61,9 @@ function toTestRequestEvent(event: H3Event): RequestEvent & { node: H3Event['nod
         }
       }
 
-      for (const name of request.headers.keys()) {
+      const requestHeaderNames = request.headers.keys()
+
+      for (const name of requestHeaderNames) {
         request.headers.delete(name)
       }
 
@@ -72,11 +77,13 @@ function toTestRequestEvent(event: H3Event): RequestEvent & { node: H3Event['nod
     },
 
     get url() {
-      return getRequestURL(event)
+      const url = getRequestURL(event)
+
+      return url
     },
 
     res: {
-      headers: new ResponseHeaders(),
+      headers: responseHeaders,
 
       get status() {
         return event.node.res.statusCode
@@ -109,7 +116,9 @@ function createTestEvent(dbHttp: unknown) {
 
   Object.assign(event.context, { dbHttp })
 
-  return toTestRequestEvent(event)
+  const portableEvent = toTestRequestEvent(event)
+
+  return portableEvent
 }
 
 export {
