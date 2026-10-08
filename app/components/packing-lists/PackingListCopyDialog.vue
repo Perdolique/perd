@@ -79,7 +79,6 @@
 
   const isConfirmDisabled = computed(() => !available
     || store.isPackingListMutationPending(packingListId)
-    || store.isPackingListRenaming(packingListId)
     || hasUnknownOutcome.value
     || hasExpiredSession.value
     || hasMissingOriginal.value

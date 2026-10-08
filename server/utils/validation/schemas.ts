@@ -535,6 +535,13 @@ const packingListEntryParamsSchema = v.pipe(
   })
 )
 
+const packingListClearPackedBodySchema = v.object({
+  expectedUpdatedAt: v.pipe(
+    v.string(),
+    v.isoTimestamp()
+  )
+})
+
 const packingListMutationBodySchema = v.object({
   name: v.pipe(
     trimmedNonEmptyStringSchema,
@@ -1020,6 +1027,10 @@ function validatePackingListEntryParams(params: unknown) {
   return v.parse(packingListEntryParamsSchema, params)
 }
 
+function validatePackingListClearPackedBody(body: unknown) {
+  return v.parse(packingListClearPackedBodySchema, body)
+}
+
 function validatePackingListMutationBody(body: unknown) {
   return v.parse(packingListMutationBodySchema, body)
 }
@@ -1265,6 +1276,7 @@ export {
   nonEmptyStringSchema,
   pageQuerySchema,
   packingListAvailableGearQuerySchema,
+  packingListClearPackedBodySchema,
   packingListEntryCreateBodySchema,
   packingListEntryParamsSchema,
   packingListEntryUpdateBodySchema,
@@ -1308,6 +1320,7 @@ export {
   validateEquipmentComparisonQuery,
   validateItemsListQuery,
   validatePackingListAvailableGearQuery,
+  validatePackingListClearPackedBody,
   validatePackingListEntryCreateBody,
   validatePackingListEntryParams,
   validatePackingListEntryUpdateBody,

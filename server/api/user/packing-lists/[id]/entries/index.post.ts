@@ -1,5 +1,5 @@
 import type { InferInput } from 'valibot'
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { createError, defineEventHandler, isNuxtError, readValidatedBody, setResponseStatus } from 'nuxt/server'
 import { getValidatedRouteParams } from '#server/utils/request'
 import type { ApiRequestEvent } from '#shared/types/api-request'
@@ -14,6 +14,13 @@ import {
 } from '#server/database/schema'
 
 import { createRuntimeWebSocketClient } from '#server/utils/config'
+
+import {
+  closePackingListWriteClient,
+  lockPackingList,
+  nextPackingListUpdatedAt
+} from '#server/utils/packing-list-write'
+
 import { validateSessionUser } from '#server/utils/session'
 
 import {
@@ -38,23 +45,8 @@ export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInp
 
   try {
     const response = await dbWebsocket.transaction(async (transaction) => {
-      const [ownedList] = await transaction
-        .select({
-          id: packingLists.id
-        })
-        .from(packingLists)
-        .where(
-          and(
-            eq(packingLists.id, id),
-            eq(packingLists.userId, userId)
-          )
-        )
-        .limit(1)
-
-      if (ownedList === undefined) {
-        throw createError({ status: 404 })
-      }
-
+      const ownedList = await lockPackingList(transaction, id, userId)
+      const updatedAt = nextPackingListUpdatedAt(ownedList.updatedAt)
       let inventory: PackingListEntryInventory | null = null
 
       if (inventoryId !== undefined) {
@@ -88,6 +80,8 @@ export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInp
       const [createdEntry] = await transaction
         .insert(packingListEntries)
         .values({
+          createdAt: updatedAt,
+          updatedAt,
           customName,
           packingListId: id,
           userEquipmentId: inventoryId
@@ -112,7 +106,7 @@ export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInp
       const [updatedList] = await transaction
         .update(packingLists)
         .set({
-          updatedAt: sql`now()`
+          updatedAt
         })
         .where(
           and(
@@ -135,7 +129,7 @@ export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInp
         entry: entryResponse,
         packingListUpdatedAt: updatedList.updatedAt
       }
-    })
+    }, { isolationLevel: 'read committed' })
 
     setResponseStatus(event, 201)
 
@@ -173,6 +167,6 @@ export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInp
       message: 'Failed to create packing list entry'
     })
   } finally {
-    await dbWebsocket.$client.end()
+    await closePackingListWriteClient(dbWebsocket)
   }
 })

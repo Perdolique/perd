@@ -307,6 +307,17 @@
 
     &:global(.ghost) {
       --button-border-color-hover: transparent;
+
+      &[aria-disabled='true'] {
+        &,
+        &:hover,
+        &:focus-visible,
+        &:active {
+          background-color: transparent;
+          border-color: transparent;
+          box-shadow: none;
+        }
+      }
     }
 
     &[aria-disabled='true']:focus-visible {

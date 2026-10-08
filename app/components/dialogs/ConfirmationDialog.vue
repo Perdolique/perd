@@ -25,6 +25,7 @@
 
       <div :class="$style.buttons">
         <PerdButton
+          ref="cancelButton"
           variant="secondary"
           :class="$style.cancelButton"
           :disabled="confirmLoading"
@@ -85,6 +86,7 @@
   const emit = defineEmits<Emits>()
   const headingId = useId()
   const confirmButton = useTemplateRef('confirmButton')
+  const cancelButton = useTemplateRef('cancelButton')
   const hasError = computed(() => error !== null)
 
   function focusConfirm() {
@@ -93,7 +95,16 @@
     }
   }
 
-  defineExpose({ focusConfirm })
+  function focusCancel() {
+    if (isOpened.value && !confirmLoading) {
+      cancelButton.value?.focus()
+    }
+  }
+
+  defineExpose({
+    focusConfirm,
+    focusCancel
+  })
 
   function close() {
     if (confirmLoading) {
