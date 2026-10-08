@@ -1,5 +1,11 @@
 # Technical debt
 
+## Nuxt DevTools 4 opt-in
+
+Nuxt 4.6 bundles Nuxt DevTools 3. The `@nuxt/devtools` override in `pnpm-workspace.yaml` uses the exact root dependency version so Nuxt and its modules use DevTools 4 together. The existing `devtools.enabled` setting stays enabled. Browser authorization stays enabled too.
+
+Remove the override when the installed Nuxt version bundles DevTools 4. Start the dev server and verify the Nuxt group opens in the Vite DevTools panel.
+
 ## Nuxt 4.6 compatibility workarounds
 
 ### Portable request type inference

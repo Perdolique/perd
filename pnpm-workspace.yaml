@@ -3,22 +3,20 @@ allowBuilds:
   esbuild: false
   sharp: false
   workerd: false
+overrides:
+  '@nuxt/devtools': 4.0.0-beta.4
 minimumReleaseAgeExcludePrune: true
 minimumReleaseAgeExclude:
   - '@clack/core@1.5.1'
   - '@clack/prompts@1.8.1'
   - '@nuxt/icon@2.5.1'
-  - '@nuxt/devtools@3.4.2'
   - '@playwright/test@1.64.0'
   - '@tybys/wasm-util@0.10.4'
-  - ansis@4.4.0
   - oxlint-tsgolint@7.0.2003
   - tsx@4.23.15
   - valibot@1.5.0
   - vue-router@5.4.0
-  - vue-tsc@3.3.11
   - '@nuxt/devtools-kit@3.4.2'
-  - '@nuxt/devtools-wizard@3.4.2'
   - '@oxlint-tsgolint/darwin-arm64@7.0.2003'
   - '@oxlint-tsgolint/darwin-x64@7.0.2003'
   - '@oxlint-tsgolint/linux-arm64@7.0.2003'
