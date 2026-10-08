@@ -1,5 +1,6 @@
+import type { InferInput } from 'valibot'
 import { eq, sql } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody } from 'h3'
+import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody, type H3Event } from 'h3'
 import { contributions, equipmentItems, itemPropertyValues } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
@@ -11,7 +12,13 @@ import {
 } from '#server/utils/equipment/category-properties'
 
 import { normalizeEquipmentItemProperties } from '#server/utils/equipment/item-properties'
-import { validateItemSubmissionParams, validateItemSubmissionUpdateBody } from '#server/utils/validation/schemas'
+
+import {
+  validateItemSubmissionParams,
+  validateItemSubmissionUpdateBody,
+  type itemSubmissionUpdateBodySchema
+} from '#server/utils/validation/schemas'
+
 import type { ItemSubmissionDetailResponse, ItemSubmissionPropertyValue } from './[id].get'
 
 function mapNormalizedProperty(value: {
@@ -39,7 +46,7 @@ function mapNormalizedProperty(value: {
   }
 }
 
-export default defineEventHandler(async (event): Promise<ItemSubmissionDetailResponse> => {
+export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof itemSubmissionUpdateBodySchema>; }>): Promise<ItemSubmissionDetailResponse> => {
   const userId = await validateAdminUser(event)
   const { id } = await getValidatedRouterParams(event, validateItemSubmissionParams)
   const body = await readValidatedBody(event, validateItemSubmissionUpdateBody)

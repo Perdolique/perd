@@ -124,6 +124,8 @@ export default defineNuxtConfig({
   },
 
   experimental: {
+    early404: true,
+    inlineErrorRendering: false,
     viewTransition: true,
     strictRouteTypes: true
   },

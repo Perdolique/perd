@@ -1,12 +1,19 @@
+import type { InferInput } from 'valibot'
 import { and, eq, isNull } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedRouterParams, readValidatedBody } from 'h3'
+import { createError, defineEventHandler, getValidatedRouterParams, readValidatedBody, type H3Event } from 'h3'
 import { userEquipment } from '#server/database/schema'
 import { validateSessionUser } from '#server/utils/session'
-import { validateUserEquipmentIdParams, validateUserEquipmentRenameBody } from '#server/utils/validation/schemas'
+
+import {
+  validateUserEquipmentIdParams,
+  validateUserEquipmentRenameBody,
+  type userEquipmentRenameBodySchema
+} from '#server/utils/validation/schemas'
+
 import { throwMyGearError } from '#server/utils/my-gear-errors'
 import type { CustomMyGearRecord } from './index.get'
 
-export default defineEventHandler(async (event) : Promise<CustomMyGearRecord> => {
+export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof userEquipmentRenameBodySchema>; }>) : Promise<CustomMyGearRecord> => {
   const userId = await validateSessionUser(event)
   const { id } = await getValidatedRouterParams(event, validateUserEquipmentIdParams)
   const { customName } = await readValidatedBody(event, validateUserEquipmentRenameBody)

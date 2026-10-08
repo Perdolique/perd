@@ -1,4 +1,5 @@
-import { defineEventHandler } from 'h3'
+import type { InferInput } from 'valibot'
+import { defineEventHandler, type H3Event } from 'h3'
 import type { PasskeySummary } from '#shared/types/passkey'
 import { readLimitedValidatedJsonBody } from '#server/utils/auth/email-authentication-request'
 import { consumePasskeyChallenge } from '#server/utils/auth/passkey-challenges'
@@ -13,9 +14,9 @@ import {
 } from '#server/utils/auth/passkey-request'
 
 import { addPasskeySensitiveValues, verifyPasskeyRegistration } from '#server/utils/auth/passkey-verification'
-import { validatePasskeyRegistration } from '#server/utils/validation/schemas'
+import { validatePasskeyRegistration, type passkeyRegistrationSchema } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event): Promise<PasskeySummary> => handlePasskeyRequest(event, 'registration', async (sensitiveValues) => {
+export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof passkeyRegistrationSchema>; }>): Promise<PasskeySummary> => handlePasskeyRequest(event, 'registration', async (sensitiveValues) => {
     const config = getPasskeyConfig(event)
 
     validatePasskeyRequest(event, config)

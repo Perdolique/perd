@@ -1199,6 +1199,18 @@ function validatePasskeyAuthentication(value: unknown) {
 }
 
 export {
+  emailRegistrationSchema,
+  emailSignInSchema,
+  emailVerificationSchema,
+  equipmentItemUpdateBodySchema,
+  passkeyAuthenticationSchema,
+  passkeyNameSchema,
+  passkeyRegistrationSchema,
+  passwordRecoveryRequestSchema,
+  passwordRecoveryResetSchema,
+  twitchOAuthBodySchema,
+  twitchOAuthQuerySchema,
+  userEquipmentRenameBodySchema,
   validateEquipmentItemUpdateBody,
   categoryPropertyUpdateSchema,
   categoryPropertyDeleteQuerySchema,

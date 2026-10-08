@@ -32,8 +32,8 @@
       >
         Refresh original list
       </PerdButton>
-      <NuxtLink v-if="showOverviewLink" :to="appRoutes.packingLists">Packing lists</NuxtLink>
-      <NuxtLink v-if="hasExpiredSession" to="/login">Sign in</NuxtLink>
+      <NuxtLink v-if="showOverviewLink" :to="appLocations.packingLists">Packing lists</NuxtLink>
+      <NuxtLink v-if="hasExpiredSession" :to="appLocations.login">Sign in</NuxtLink>
     </div>
   </ConfirmationDialog>
 </template>
@@ -45,7 +45,7 @@
   import { limits } from '#shared/constants'
   import { usePackingListsStore } from '~/stores/packing-lists'
   import { packingListCopyName } from '~/utils/packing'
-  import { appRoutes } from '~/utils/navigation'
+  import { appLocations } from '~/utils/navigation'
   import PerdButton from '~/components/PerdButton.vue'
   import TextInput from '~/components/TextInput.vue'
   import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue'

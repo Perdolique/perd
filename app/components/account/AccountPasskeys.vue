@@ -82,6 +82,7 @@
   import { useRequestFetch } from '#imports'
   import type { PasskeySummary } from '#shared/types/passkey'
   import { passkeyMessages } from '#shared/utils/passkey'
+  import { getPasskeyRegistrationCredential } from '~/utils/passkey-credential'
   import { getPasskeyErrorMessage, getPasskeyRequestStatus, isPasskeyCancellation } from '~/utils/passkey'
   import PerdButton from '~/components/PerdButton.vue'
   import PerdCard from '~/components/PerdCard.vue'
@@ -280,11 +281,8 @@
         throw new Error('Passkey registration returned no credential')
       }
 
-      const credentialJSON = credential.toJSON()
-
-      if (!('attestationObject' in credentialJSON.response)) {
-        throw new Error('Passkey registration returned an invalid credential')
-      }
+      const browserCredential = credential.toJSON()
+      const credentialJSON = getPasskeyRegistrationCredential(browserCredential)
 
       if (currentAttempt !== attempt || disposed) {
         return

@@ -37,7 +37,7 @@
         icon="hugeicons:mail-01"
         title="Add email"
         subtitle="Keep access to your account with a verified email and password."
-        to="/register?redirectTo=/account"
+        :to="{ name: appLocations.register.name, query: { redirectTo: '/account' } }"
       />
 
       <AccountPasskeys />
@@ -46,7 +46,7 @@
         icon="hugeicons:task-daily-01"
         subtitle="Track pending, published, and rejected catalog contributions."
         title="My contributions"
-        :to="appRoutes.accountSubmissions"
+        :to="appLocations.accountSubmissions"
       />
 
       <ActionPanel
@@ -54,7 +54,7 @@
         icon="hugeicons:settings-02"
         subtitle="Review pending catalog contributions."
         title="Admin"
-        :to="appRoutes.admin"
+        :to="appLocations.admin"
       />
 
       <DangerActionCard
@@ -103,7 +103,7 @@
   import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue'
   import DangerActionCard from '~/components/DangerActionCard.vue'
   import PageContent from '~/components/layout/PageContent.vue'
-  import { appRoutes } from '~/utils/navigation'
+  import { appLocations } from '~/utils/navigation'
 
   definePageMeta({
     layout: 'page'
@@ -114,6 +114,7 @@
   const packingListsStore = usePackingListsStore()
   const requestFetch = useRequestFetch()
   const route = useRoute()
+  const runtimeConfig = useRuntimeConfig()
   const showDeleteModal = ref(false)
   const showDisconnectTwitchModal = ref(false)
   const isDeleting = ref(false)
@@ -127,7 +128,7 @@
   const twitchDisconnectSuccess = ref(false)
   const twitchLinkBanner = useTemplateRef<HTMLElement>('twitchLinkBanner')
   const signInMethodsCard = useTemplateRef('signInMethodsCard')
-  const registrationEnabled = isEmailRegistrationEnabled(useRuntimeConfig().public.emailRegistrationEnabled)
+  const registrationEnabled = isEmailRegistrationEnabled(runtimeConfig.public.emailRegistrationEnabled)
   const canAddEmail = computed(() => registrationEnabled && user.value.email === null)
   const role = computed(() => user.value.isAdmin ? 'Admin' : 'User')
   const isAdmin = computed(() => user.value.isAdmin)
@@ -291,7 +292,7 @@
     gearLibraryStore.resetPersonalizedState()
 
     await navigateTo({
-      path: '/login'
+      name: appLocations.login.name
     })
   }
 
@@ -312,7 +313,7 @@
       gearLibraryStore.resetPersonalizedState()
 
       await navigateTo({
-        path: '/login'
+        name: appLocations.login.name
       })
     } catch (error) {
       console.error('Failed to delete account:', error)

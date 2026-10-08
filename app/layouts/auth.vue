@@ -74,7 +74,8 @@
     }]
   })
 
-  const { buildCommitSha } = useRuntimeConfig().public
+  const runtimeConfig = useRuntimeConfig()
+  const { buildCommitSha } = runtimeConfig.public
   const buildCommitShortSha = buildCommitSha.slice(0, 7)
   const buildCommitUrl = `https://github.com/Perdolique/perd/commit/${buildCommitSha}`
 </script>

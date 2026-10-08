@@ -98,7 +98,7 @@
   const formAlert = useTemplateRef('formAlert')
   const name = ref('')
   const slug = ref('')
-  const dataType = ref('number')
+  const dataType = ref<AdminCategoryProperty['dataType']>('number')
   const unit = ref('')
   const allowsNegativeValues = ref(false)
   const manualSlug = ref(false)

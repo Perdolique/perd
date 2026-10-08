@@ -1,12 +1,18 @@
+import type { InferInput } from 'valibot'
 import { eq } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody } from 'h3'
+import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody, type H3Event } from 'h3'
 import { contributions, equipmentGroups } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
 import { groupBaseSelection } from '#server/utils/equipment/base-records'
-import { validateGroupIdParams, validateGroupMutationBody } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event) => {
+import {
+  validateGroupIdParams,
+  validateGroupMutationBody,
+  type groupMutationSchema
+} from '#server/utils/validation/schemas'
+
+export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof groupMutationSchema>; }>) => {
   const userId = await validateAdminUser(event)
   const { id: groupId } = await getValidatedRouterParams(event, validateGroupIdParams)
   const { name, slug } = await readValidatedBody(event, validateGroupMutationBody)

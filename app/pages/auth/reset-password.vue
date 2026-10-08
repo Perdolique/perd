@@ -79,6 +79,7 @@
 </template>
 
 <script lang="ts" setup>
+  import { appLocations } from '~/utils/navigation'
   import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue'
   import { definePageMeta, useHead, useRequestFetch, useRoute, useRouter, useRuntimeConfig } from '#imports'
   import { isEmailAuthenticationPasswordValid } from '#shared/utils/email-authentication'
@@ -135,14 +136,14 @@
 
   const recoveryTarget = computed(() => {
     return {
-      path: '/forgot-password',
+      name: appLocations.forgotPassword.name,
       query: { redirectTo: redirectTo.value }
     }
   })
 
   const signInTarget = computed(() => {
     return {
-      path: '/login',
+      name: appLocations.login.name,
       query: { redirectTo: redirectTo.value }
     }
   })

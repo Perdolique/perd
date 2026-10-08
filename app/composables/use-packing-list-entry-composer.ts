@@ -111,7 +111,7 @@ export function usePackingListEntryComposer(options: ComposerOptions) {
     try {
       const response = await requestFetch(`/api/user/packing-lists/${options.packingListId}/available-gear`, {
         query: {
-          page,
+          page: String(page),
           search: querySearch
         },
 

@@ -1,4 +1,5 @@
 import { defineNuxtRouteMiddleware, navigateTo } from '#imports'
+import { appLocations } from '~/utils/navigation'
 
 import {
   buildGearLibraryRouteQuery,
@@ -27,7 +28,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   return navigateTo({
     hash: to.hash,
-    path: to.path,
+    name: appLocations.gearLibrary.name,
     query
   }, {
     replace: true

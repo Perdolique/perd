@@ -17,12 +17,13 @@
     </form>
     <p v-else :class="$style.notice" role="status">Open the full verification link from your email to continue.</p>
     <p :class="$style.navigation">
-      <PerdLink to="/register">Request another email</PerdLink>
+      <PerdLink :to="appLocations.register">Request another email</PerdLink>
     </p>
   </AuthFormPanel>
 </template>
 
 <script lang="ts" setup>
+  import { appLocations } from '~/utils/navigation'
   import { computed, onMounted, ref, useTemplateRef } from 'vue'
 
   import {

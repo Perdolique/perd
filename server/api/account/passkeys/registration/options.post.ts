@@ -1,4 +1,5 @@
-import { defineEventHandler } from 'h3'
+import type { InferInput } from 'valibot'
+import { defineEventHandler, type H3Event } from 'h3'
 import { generateRegistrationOptions } from '@simplewebauthn/server'
 import { isoBase64URL } from '@simplewebauthn/server/helpers'
 import type { PasskeyRegistrationOptions } from '#shared/types/passkey'
@@ -15,9 +16,9 @@ import {
 } from '#server/utils/auth/passkey-request'
 
 import { passkeyAlgorithms } from '#server/utils/auth/passkey-verification'
-import { validatePasskeyName } from '#server/utils/validation/schemas'
+import { validatePasskeyName, type passkeyNameSchema } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event): Promise<PasskeyRegistrationOptions> => {
+export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof passkeyNameSchema>; }>): Promise<PasskeyRegistrationOptions> => {
   const createdAt = new Date()
 
   return handlePasskeyRequest(event, 'registration', async (sensitiveValues) => {

@@ -85,7 +85,7 @@
   import { definePageMeta, navigateTo, useAsyncData, useRequestFetch, useRoute } from '#imports'
   import type { ComparisonResponse } from '#server/api/equipment/comparisons.get'
   import { createGearLibraryComparisonRows, validateGearLibraryComparisonQuery } from '~/utils/gear-library-comparison'
-  import { appRoutes, createGearLibraryItemPath } from '~/utils/navigation'
+  import { appLocations, appRoutes, createGearLibraryItemLocation } from '~/utils/navigation'
 
   import GearLibraryComparisonTable, {
     type GearLibraryComparisonTableItem
@@ -232,7 +232,13 @@
     selectedIds: string[]
   ): GearLibraryComparisonTableItem {
     const itemId = item.id
-    const detailPath = createGearLibraryItemPath(itemId)
+
+    const detailQuery = {
+      category: categorySlug,
+      compare: selectedIds
+    }
+
+    const detailLocation = createGearLibraryItemLocation(itemId, detailQuery)
 
     return {
       brand: {
@@ -240,16 +246,7 @@
       },
 
       cloudflareImageId: item.cloudflareImageId,
-
-      detailLocation: {
-        path: detailPath,
-
-        query: {
-          category: categorySlug,
-          compare: selectedIds
-        }
-      },
-
+      detailLocation,
       id: itemId,
       name: item.name
     }
@@ -308,7 +305,7 @@
     }
 
     return {
-      path: appRoutes.gearLibrary,
+      name: appLocations.gearLibrary.name,
 
       query: {
         category: response.category.slug,
@@ -368,7 +365,7 @@
 
     if (remainingItemIds.length < 2) {
       const catalogLocation = {
-        path: appRoutes.gearLibrary,
+        name: appLocations.gearLibrary.name,
 
         query: {
           category: response.category.slug,
@@ -389,7 +386,7 @@
     pendingRemovalFocusItemId.value = focusTargetId
 
     const comparisonLocation = {
-      path: route.path,
+      name: appLocations.gearLibraryCompare.name,
 
       query: {
         item: remainingItemIds

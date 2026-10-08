@@ -1,7 +1,7 @@
 <template>
   <PageContent page-title="Review gear submissions">
     <template #actions>
-      <PerdLink :to="appRoutes.admin">
+      <PerdLink :to="appLocations.admin">
         Back to Admin
       </PerdLink>
     </template>
@@ -31,7 +31,7 @@
         <NuxtLink
           v-for="item in itemViews"
           :key="item.id"
-          :to="item.path"
+          :to="item.location"
           :class="$style.card"
         >
           <span :class="$style.name">{{ item.name }}</span>
@@ -76,7 +76,7 @@
   import PerdButton from '~/components/PerdButton.vue'
   import PerdLink from '~/components/PerdLink.vue'
   import PageContent from '~/components/layout/PageContent.vue'
-  import { appRoutes, createAdminEquipmentSubmissionPath } from '~/utils/navigation'
+  import { appLocations, createAdminEquipmentSubmissionLocation } from '~/utils/navigation'
 
   definePageMeta({
     layout: 'page',
@@ -99,8 +99,8 @@
     status: initialStatus
   } = await useFetch('/api/equipment/item-submissions', {
     query: {
-      limit: pageSize,
-      page: 1
+      limit: String(pageSize),
+      page: '1'
     }
   })
 
@@ -140,7 +140,7 @@
       formattedDate: dateFormatter.format(date),
       id: item.id,
       name: item.name,
-      path: createAdminEquipmentSubmissionPath(item.id)
+      location: createAdminEquipmentSubmissionLocation(item.id)
     }
   }))
 
@@ -161,8 +161,8 @@
     try {
       const response = await requestFetch('/api/equipment/item-submissions', {
         query: {
-          limit: pageSize,
-          page: nextPage
+          limit: String(pageSize),
+          page: String(nextPage)
         }
       })
 

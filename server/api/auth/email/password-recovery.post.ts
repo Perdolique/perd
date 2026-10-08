@@ -1,4 +1,5 @@
-import { defineEventHandler, setResponseStatus } from 'h3'
+import type { InferInput } from 'valibot'
+import { defineEventHandler, setResponseStatus, type H3Event } from 'h3'
 import { passwordRecoveryRequestTurnstileAction } from '#shared/utils/turnstile'
 import { getEmailAuthenticationConfig, getRuntimeDatabaseConfig } from '#server/utils/config'
 import { getEmailBinding, getPasswordRecoveryRateLimiterBinding, getTrustedClientIp } from '#server/utils/cloudflare'
@@ -12,7 +13,7 @@ import {
 import { createVerificationToken, hashToken } from '#server/utils/auth/password'
 import { runPasswordRecoveryIssuance } from '#server/utils/auth/password-recovery'
 import { verifyTurnstile } from '#server/utils/turnstile'
-import { validatePasswordRecoveryRequest } from '#server/utils/validation/schemas'
+import { validatePasswordRecoveryRequest, type passwordRecoveryRequestSchema } from '#server/utils/validation/schemas'
 
 interface PasswordRecoveryResponse {
   accepted: true;
@@ -20,7 +21,7 @@ interface PasswordRecoveryResponse {
 
 const maximumPasswordRecoveryBodyByteLength = 4096
 
-export default defineEventHandler(async (event): Promise<PasswordRecoveryResponse> => {
+export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof passwordRecoveryRequestSchema>; }>): Promise<PasswordRecoveryResponse> => {
   const config = getEmailAuthenticationConfig(event)
 
   validateEmailAuthenticationRequest(event, config.origin)

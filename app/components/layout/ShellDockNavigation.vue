@@ -5,7 +5,7 @@
     aria-label="Primary navigation"
   >
     <NuxtLink
-      :to="appRoutes.home"
+      :to="appLocations.home"
       exact-active-class="active"
       :class="$style.dockItem"
     >
@@ -16,7 +16,7 @@
     </NuxtLink>
 
     <NuxtLink
-      :to="appRoutes.packingLists"
+      :to="appLocations.packingLists"
       active-class="active"
       :class="$style.dockItem"
       :aria-label="navigationLabels.packingLists"
@@ -28,7 +28,7 @@
     </NuxtLink>
 
     <NuxtLink
-      :to="appRoutes.myGear"
+      :to="appLocations.myGear"
       active-class="active"
       :class="$style.dockItem"
     >
@@ -39,7 +39,7 @@
     </NuxtLink>
 
     <NuxtLink
-      :to="appRoutes.account"
+      :to="appLocations.account"
       active-class="active"
       :class="$style.dockItem"
     >
@@ -52,7 +52,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { appRoutes, navigationIcons, navigationLabels } from '~/utils/navigation'
+  import { appLocations, navigationIcons, navigationLabels } from '~/utils/navigation'
 </script>
 
 <style module>

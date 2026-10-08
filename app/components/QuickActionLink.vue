@@ -12,10 +12,12 @@
 </template>
 
 <script lang="ts" setup>
+  import type { RouteLocationRaw } from 'vue-router'
+
   interface Props {
     icon: string;
     label: string;
-    to: string;
+    to: RouteLocationRaw;
   }
 
   defineProps<Props>()

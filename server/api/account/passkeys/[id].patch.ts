@@ -1,4 +1,5 @@
-import { defineEventHandler, getValidatedRouterParams } from 'h3'
+import type { InferInput } from 'valibot'
+import { defineEventHandler, getValidatedRouterParams, type H3Event } from 'h3'
 import type { PasskeySummary } from '#shared/types/passkey'
 import { readLimitedValidatedJsonBody } from '#server/utils/auth/email-authentication-request'
 import { changePasskey, withPasskeyDatabase } from '#server/utils/auth/passkey-persistence'
@@ -10,9 +11,9 @@ import {
   validatePasskeyRequest
 } from '#server/utils/auth/passkey-request'
 
-import { validatePasskeyIdParams, validatePasskeyName } from '#server/utils/validation/schemas'
+import { validatePasskeyIdParams, validatePasskeyName, type passkeyNameSchema } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event): Promise<PasskeySummary> => handlePasskeyRequest(event, 'management', async (sensitiveValues) => {
+export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof passkeyNameSchema>; }>): Promise<PasskeySummary> => handlePasskeyRequest(event, 'management', async (sensitiveValues) => {
     const config = getPasskeyConfig(event)
 
     validatePasskeyRequest(event, config)

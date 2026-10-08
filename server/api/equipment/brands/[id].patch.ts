@@ -1,13 +1,19 @@
+import type { InferInput } from 'valibot'
 import { eq } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedRouterParams, readValidatedBody } from 'h3'
+import { createError, defineEventHandler, getValidatedRouterParams, readValidatedBody, type H3Event } from 'h3'
 import { brands, contributions } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
 import { brandBaseSelection, type BrandBaseRecord } from '#server/utils/equipment/base-records'
 import { throwBrandWriteError } from '#server/utils/equipment/brand-write-errors'
-import { validateBrandIdParams, validateBrandMutationBody } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event): Promise<BrandBaseRecord> => {
+import {
+  validateBrandIdParams,
+  validateBrandMutationBody,
+  type brandMutationSchema
+} from '#server/utils/validation/schemas'
+
+export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof brandMutationSchema>; }>): Promise<BrandBaseRecord> => {
   const userId = await validateAdminUser(event)
   const { id: brandId } = await getValidatedRouterParams(event, validateBrandIdParams)
   const { name, slug } = await readValidatedBody(event, validateBrandMutationBody)

@@ -1,6 +1,6 @@
 <template>
   <NuxtLink
-    to="/"
+    :to="appLocations.home"
     :class="$style.component"
     aria-label="Perd"
   >
@@ -10,6 +10,10 @@
     </span>
   </NuxtLink>
 </template>
+
+<script setup lang="ts">
+  import { appLocations } from '~/utils/navigation'
+</script>
 
 <style module>
   .component {

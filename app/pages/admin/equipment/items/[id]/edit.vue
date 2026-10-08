@@ -49,7 +49,7 @@
   } from '~/utils/category-properties-error'
 
   import { getFetchErrorResponse } from '~/utils/fetch-error'
-  import { createGearLibraryItemPath } from '~/utils/navigation'
+  import { createGearLibraryItemLocation } from '~/utils/navigation'
 
   definePageMeta({
     layout: 'page',
@@ -87,12 +87,8 @@
   const itemLocation = computed(() => {
     const state = getGearLibraryRouteState(route.query)
     const query = buildGearLibraryRouteQuery(state)
-    const path = createGearLibraryItemPath(itemId)
 
-    return {
-      path,
-      query
-    }
+    return createGearLibraryItemLocation(itemId, query)
   })
 
   const editorValue = computed<EquipmentItemEditorValue | null>(() => {
@@ -139,7 +135,7 @@
   async function save(value: EquipmentItemEditorValue) {
     const item = snapshot.value
 
-    if (isBusy.value || hasConflict.value || !item) { return }
+    if (isBusy.value || hasConflict.value || !item || value.expectedPropertiesRevision === undefined) { return }
 
     isSaving.value = true
     mutationMessage.value = null

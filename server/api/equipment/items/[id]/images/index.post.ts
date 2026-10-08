@@ -1,3 +1,4 @@
+import type { InferInput } from 'valibot'
 import { eq, max } from 'drizzle-orm'
 
 import {
@@ -7,7 +8,8 @@ import {
   getValidatedQuery,
   getValidatedRouterParams,
   isError,
-  setResponseStatus
+  setResponseStatus,
+  type H3Event
 } from 'h3'
 
 import { contributions, equipmentItemImages, equipmentItems } from '#server/database/schema'
@@ -22,7 +24,11 @@ import {
   validateEquipmentItemImageRequest
 } from '#server/utils/equipment/item-images'
 
-import { validateItemDetailParams, validateItemImageUploadQuery } from '#server/utils/validation/schemas'
+import {
+  validateItemDetailParams,
+  validateItemImageUploadQuery,
+  type itemImageUploadQuerySchema
+} from '#server/utils/validation/schemas'
 
 interface EquipmentItemImageResponse {
   cloudflareImageId: string;
@@ -30,7 +36,7 @@ interface EquipmentItemImageResponse {
   id: string;
 }
 
-export default defineEventHandler(async (event) : Promise<EquipmentItemImageResponse> => {
+export default defineEventHandler(async (event: H3Event<{ query: InferInput<typeof itemImageUploadQuerySchema>; }>) : Promise<EquipmentItemImageResponse> => {
   const userId = await validateAdminUser(event)
   const { id: itemId } = await getValidatedRouterParams(event, validateItemDetailParams)
   const { filename } = await getValidatedQuery(event, validateItemImageUploadQuery)

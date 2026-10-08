@@ -1,7 +1,8 @@
 import { defineNuxtRouteMiddleware, shouldSkipAuth, useUserStore } from '#imports'
+import { useIsErrorRendering } from '~/composables/use-error-rendering'
 
 export default defineNuxtRouteMiddleware(async (to) => {
-  if (shouldSkipAuth(to)) {
+  if (shouldSkipAuth(to) || useIsErrorRendering(to.path)) {
     return
   }
 

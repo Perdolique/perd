@@ -1,6 +1,7 @@
+import type { InferInput } from 'valibot'
 import { createError, defineEventHandler, getValidatedQuery, sendRedirect, setResponseHeader, type H3Event } from 'h3'
 import { getTwitchRedirectUri, getRuntimeTwitchConfig } from '#server/utils/oauth/twitch'
-import { validateTwitchOAuthQuery } from '#server/utils/validation/schemas'
+import { validateTwitchOAuthQuery, type twitchOAuthQuerySchema } from '#server/utils/validation/schemas'
 import { createVerificationToken, hashToken } from '#server/utils/auth/password'
 import { getTwitchOAuthContext, getTwitchOAuthError } from '#server/utils/oauth/twitch-state'
 import { issueTwitchOAuthState } from '#server/utils/oauth/twitch-state-persistence'
@@ -26,7 +27,7 @@ async function enforceTwitchOAuthRateLimit(event: H3Event, clientIp: string): Pr
 }
 
 // oxlint-disable-next-line typescript/no-invalid-void-type -- Redirect mode sends the response directly.
-export default defineEventHandler(async (event): Promise<TwitchOAuthAuthorizationResponse | void> => {
+export default defineEventHandler(async (event: H3Event<{ query: InferInput<typeof twitchOAuthQuerySchema>; }>): Promise<TwitchOAuthAuthorizationResponse | void> => {
   setResponseHeader(event, 'Cache-Control', 'no-store')
 
   const sensitiveValues: string[] = []

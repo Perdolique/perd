@@ -1,6 +1,11 @@
-import { defineEventHandler, getValidatedQuery } from 'h3'
+import type { InferInput } from 'valibot'
+import { defineEventHandler, getValidatedQuery, type H3Event } from 'h3'
 import { validateAdminUser } from '#server/utils/admin'
-import { validatePhotoSubmissionAdminListQuery } from '#server/utils/validation/schemas'
+
+import {
+  validatePhotoSubmissionAdminListQuery,
+  type photoSubmissionAdminListQuerySchema
+} from '#server/utils/validation/schemas'
 
 interface PhotoSubmissionReferenceSummary {
   id: number;
@@ -52,7 +57,7 @@ interface PhotoSubmissionListQueryRow {
   item: PhotoSubmissionListQueryItem | null;
 }
 
-export default defineEventHandler(async (event): Promise<PhotoSubmissionListResponse> => {
+export default defineEventHandler(async (event: H3Event<{ query: InferInput<typeof photoSubmissionAdminListQuerySchema>; }>): Promise<PhotoSubmissionListResponse> => {
   await validateAdminUser(event)
 
   const {

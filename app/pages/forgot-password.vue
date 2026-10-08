@@ -53,6 +53,7 @@
 </template>
 
 <script lang="ts" setup>
+  import { appLocations } from '~/utils/navigation'
   import { computed, nextTick, ref, useTemplateRef } from 'vue'
   import { definePageMeta, useRequestFetch, useRoute, useRuntimeConfig } from '#imports'
   import { passwordRecoveryRequestTurnstileAction, turnstileResponseFieldName } from '#shared/utils/turnstile'
@@ -85,7 +86,7 @@
 
   const signInTarget = computed(() => {
     return {
-      path: '/login',
+      name: appLocations.login.name,
       query: { redirectTo: redirectTo.value }
     }
   })

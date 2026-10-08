@@ -1,7 +1,7 @@
 <template>
   <PageContent page-title="Review photo submissions">
     <template #actions>
-      <PerdLink :to="appRoutes.admin">
+      <PerdLink :to="appLocations.admin">
         Back to Admin
       </PerdLink>
     </template>
@@ -31,7 +31,7 @@
         <NuxtLink
           v-for="submission in submissionViews"
           :key="submission.id"
-          :to="submission.path"
+          :to="submission.location"
           :class="$style.card"
         >
           <span :class="$style.name">{{ submission.itemName }}</span>
@@ -84,7 +84,7 @@
   import PerdButton from '~/components/PerdButton.vue'
   import PerdLink from '~/components/PerdLink.vue'
   import PageContent from '~/components/layout/PageContent.vue'
-  import { appRoutes, createAdminEquipmentPhotoSubmissionPath } from '~/utils/navigation'
+  import { appLocations, createAdminEquipmentPhotoSubmissionLocation } from '~/utils/navigation'
 
   definePageMeta({
     layout: 'page',
@@ -109,7 +109,7 @@
     lazy: true,
 
     query: {
-      limit: pageSize
+      limit: String(pageSize)
     }
   })
 
@@ -155,7 +155,7 @@
       formattedDate: dateFormatter.format(date),
       id: submission.id,
       itemName: submission.item.name,
-      path: createAdminEquipmentPhotoSubmissionPath(submission.id)
+      location: createAdminEquipmentPhotoSubmissionLocation(submission.id)
     }
   }))
 
@@ -178,7 +178,7 @@
         query: {
           afterCreatedAt: cursor.createdAt,
           afterId: cursor.id,
-          limit: pageSize
+          limit: String(pageSize)
         }
       })
 

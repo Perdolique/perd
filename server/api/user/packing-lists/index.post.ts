@@ -1,7 +1,8 @@
-import { createError, defineEventHandler, readValidatedBody, setResponseStatus } from 'h3'
+import type { InferInput } from 'valibot'
+import { createError, defineEventHandler, readValidatedBody, setResponseStatus, type H3Event } from 'h3'
 import { packingLists } from '#server/database/schema'
 import { validateSessionUser } from '#server/utils/session'
-import { validatePackingListMutationBody } from '#server/utils/validation/schemas'
+import { validatePackingListMutationBody, type packingListMutationBodySchema } from '#server/utils/validation/schemas'
 
 interface PackingListSummary {
   createdAt: Date | string;
@@ -10,7 +11,7 @@ interface PackingListSummary {
   updatedAt: Date | string;
 }
 
-export default defineEventHandler(async (event) : Promise<PackingListSummary> => {
+export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof packingListMutationBodySchema>; }>) : Promise<PackingListSummary> => {
   const userId = await validateSessionUser(event)
   const { name } = await readValidatedBody(event, validatePackingListMutationBody)
 

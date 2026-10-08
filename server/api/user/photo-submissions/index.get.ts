@@ -1,6 +1,7 @@
-import { defineEventHandler, getValidatedQuery } from 'h3'
+import type { InferInput } from 'valibot'
+import { defineEventHandler, getValidatedQuery, type H3Event } from 'h3'
 import { validateRegisteredUser } from '#server/utils/user'
-import { validatePhotoSubmissionListQuery } from '#server/utils/validation/schemas'
+import { validatePhotoSubmissionListQuery, type photoSubmissionListQuerySchema } from '#server/utils/validation/schemas'
 
 const photoSubmissionPageSize = 20
 
@@ -54,7 +55,7 @@ function mapStatus(status: string): UserPhotoSubmission['status'] {
   throw new Error(`Unexpected photo submission status: ${status}`)
 }
 
-export default defineEventHandler(async (event): Promise<UserPhotoSubmissionsResponse> => {
+export default defineEventHandler(async (event: H3Event<{ query: InferInput<typeof photoSubmissionListQuerySchema>; }>): Promise<UserPhotoSubmissionsResponse> => {
   const userId = await validateRegisteredUser(event)
   const { page } = await getValidatedQuery(event, validatePhotoSubmissionListQuery)
   const offset = (page - 1) * photoSubmissionPageSize

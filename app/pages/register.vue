@@ -34,7 +34,7 @@
 
     <p :class="$style.navigation">
       <span v-if="backPrompt">{{ backPrompt }}</span>
-      <PerdLink :to="backPath">{{ backLabel }}</PerdLink>
+      <PerdLink :to="backLocation">{{ backLabel }}</PerdLink>
     </p>
     <TurnstileWidget
       ref="turnstileWidget"
@@ -48,6 +48,7 @@
 </template>
 
 <script lang="ts" setup>
+  import { appLocations } from '~/utils/navigation'
   import { FetchError } from 'ofetch'
   import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue'
 
@@ -108,7 +109,7 @@
     : 'Confirm your email to finish creating your account.')
 
   const submitLabel = computed(() => isSent.value ? 'Send another email' : 'Send verification email')
-  const backPath = computed(() => isUpgrade.value ? '/account' : '/login')
+  const backLocation = computed(() => isUpgrade.value ? appLocations.account : appLocations.login)
   const backPrompt = computed(() => isUpgrade.value ? undefined : 'Already have an account?')
   const backLabel = computed(() => isUpgrade.value ? 'Back to Account' : 'Sign in')
 
@@ -134,7 +135,7 @@
     isAccountReady.value = true
 
     if (user.value.email !== null) {
-      await navigateTo('/account', { replace: true })
+      await navigateTo(appLocations.account, { replace: true })
     }
   })
 

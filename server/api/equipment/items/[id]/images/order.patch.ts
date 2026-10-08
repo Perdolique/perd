@@ -1,15 +1,21 @@
+import type { InferInput } from 'valibot'
 import { eq, sql } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody } from 'h3'
+import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody, type H3Event } from 'h3'
 import { contributions, equipmentItemImages, equipmentItems } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
-import { validateItemDetailParams, validateItemImageOrderBody } from '#server/utils/validation/schemas'
+
+import {
+  validateItemDetailParams,
+  validateItemImageOrderBody,
+  type itemImageOrderBodySchema
+} from '#server/utils/validation/schemas'
 
 interface EquipmentItemImageOrderResponse {
   imageIds: string[];
 }
 
-export default defineEventHandler(async (event) : Promise<EquipmentItemImageOrderResponse> => {
+export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof itemImageOrderBodySchema>; }>) : Promise<EquipmentItemImageOrderResponse> => {
   const userId = await validateAdminUser(event)
   const { id: itemId } = await getValidatedRouterParams(event, validateItemDetailParams)
   const { imageIds } = await readValidatedBody(event, validateItemImageOrderBody)

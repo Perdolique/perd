@@ -1,18 +1,26 @@
+import type { InferInput } from 'valibot'
+
 import {
   createError,
   defineEventHandler,
   getValidatedRouterParams,
   isError,
   readValidatedBody,
-  setResponseStatus
+  setResponseStatus,
+  type H3Event
 } from 'h3'
 
 import { createWebSocketClientFromEvent } from '#server/utils/config'
 import { copyPackingList, type PackingListCopySummary } from '#server/utils/packing-list-copy'
 import { validateSessionUser } from '#server/utils/session'
-import { validatePackingListIdParams, validatePackingListMutationBody } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event): Promise<PackingListCopySummary> => {
+import {
+  validatePackingListIdParams,
+  validatePackingListMutationBody,
+  type packingListMutationBodySchema
+} from '#server/utils/validation/schemas'
+
+export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof packingListMutationBodySchema>; }>): Promise<PackingListCopySummary> => {
   const userId = await validateSessionUser(event)
   const { id } = await getValidatedRouterParams(event, validatePackingListIdParams)
   const { name } = await readValidatedBody(event, validatePackingListMutationBody)

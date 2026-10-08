@@ -1,11 +1,12 @@
-import { createError, defineEventHandler, isError, readValidatedBody, setResponseStatus } from 'h3'
+import type { InferInput } from 'valibot'
+import { createError, defineEventHandler, isError, readValidatedBody, setResponseStatus, type H3Event } from 'h3'
 import { contributions, equipmentGroups } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
 import { groupBaseSelection } from '#server/utils/equipment/base-records'
-import { validateGroupMutationBody } from '#server/utils/validation/schemas'
+import { validateGroupMutationBody, type groupMutationSchema } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof groupMutationSchema>; }>) => {
   const userId = await validateAdminUser(event)
   const { name, slug } = await readValidatedBody(event, validateGroupMutationBody)
   const dbWebsocket = createWebSocketClientFromEvent(event)

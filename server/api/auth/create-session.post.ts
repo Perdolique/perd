@@ -6,6 +6,10 @@ import { useAppSession } from '#server/utils/session'
 import { verifyTurnstile } from '#server/utils/turnstile'
 import { getSessionUser } from '#server/utils/user'
 
+interface GuestSessionRequestBody {
+  [turnstileResponseFieldName]: string;
+}
+
 interface GuestSessionResponse {
   readonly isGuest: boolean;
   readonly userId: string;
@@ -105,7 +109,7 @@ async function createOrReuseGuestUser(
   }
 }
 
-export default defineEventHandler(async (event) : Promise<GuestSessionResponse> => {
+export default defineEventHandler(async (event: H3Event<{ body: GuestSessionRequestBody; }>) : Promise<GuestSessionResponse> => {
   const body: unknown = await readBody(event)
   const turnstileToken = getTurnstileToken(body)
   const clientIp = getTrustedClientIp(event, import.meta.dev)

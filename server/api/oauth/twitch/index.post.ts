@@ -1,4 +1,5 @@
-import { defineEventHandler, createError, readValidatedBody, setResponseHeader } from 'h3'
+import type { InferInput } from 'valibot'
+import { defineEventHandler, createError, readValidatedBody, setResponseHeader, type H3Event } from 'h3'
 import { getUserByOAuthAccount } from '#server/utils/user'
 import { createOAuthUser, linkOAuthAccount } from '#server/utils/oauth/account'
 import { updateAppSession } from '#server/utils/session'
@@ -6,7 +7,7 @@ import { getTwitchOAuthToken, getTwitchUserInfo, getRuntimeTwitchConfig } from '
 import { getTwitchOAuthContext, getTwitchOAuthError } from '#server/utils/oauth/twitch-state'
 import { consumeTwitchOAuthState } from '#server/utils/oauth/twitch-state-persistence'
 import { hashToken } from '#server/utils/auth/password'
-import { validateTwitchOAuthBody } from '#server/utils/validation/schemas'
+import { validateTwitchOAuthBody, type twitchOAuthBodySchema } from '#server/utils/validation/schemas'
 import { twitchOAuthMessages } from '#shared/utils/twitch-oauth'
 
 interface TwitchOAuthResponse {
@@ -18,7 +19,7 @@ interface TwitchOAuthResponse {
   redirectTo: string;
 }
 
-export default defineEventHandler(async (event): Promise<TwitchOAuthResponse> => {
+export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof twitchOAuthBodySchema>; }>): Promise<TwitchOAuthResponse> => {
   setResponseHeader(event, 'Cache-Control', 'no-store')
 
   const sensitiveValues: string[] = []

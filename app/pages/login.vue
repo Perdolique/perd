@@ -115,6 +115,7 @@
 </template>
 
 <script lang="ts" setup>
+  import { appLocations } from '~/utils/navigation'
   import { computed, nextTick, ref, useTemplateRef } from 'vue'
 
   import {
@@ -225,7 +226,7 @@
     const redirectTo = getRedirectNavigationTarget(route.query.redirectTo).path
 
     return {
-      path: '/register',
+      name: appLocations.register.name,
       query: { redirectTo }
     }
   })
@@ -234,7 +235,7 @@
     const redirectTo = getRedirectNavigationTarget(route.query.redirectTo).path
 
     return {
-      path: '/forgot-password',
+      name: appLocations.forgotPassword.name,
       query: { redirectTo }
     }
   })

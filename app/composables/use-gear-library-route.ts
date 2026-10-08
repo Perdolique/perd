@@ -1,3 +1,4 @@
+import { appLocations } from '~/utils/navigation'
 import { computed, ref, shallowRef, watch } from 'vue'
 import { watchDebounced } from '@vueuse/core'
 import { navigateTo, useRoute } from '#imports'
@@ -26,6 +27,17 @@ interface GearLibraryRouteStateChanges {
   number?: string[];
   q?: string;
   sort?: GearLibrarySort;
+}
+
+async function writeRouteState(nextState: GearLibraryRouteState, replace: boolean) {
+  const query = buildGearLibraryRouteQuery(nextState)
+
+  const destination = {
+    name: appLocations.gearLibrary.name,
+    query
+  }
+
+  await navigateTo(destination, { replace })
 }
 
 /** Owns catalog URL writes and the stable first-page API query. */
@@ -74,17 +86,6 @@ function useGearLibraryRoute() {
       direction: hasCategoryChange ? 'asc' : changes.direction ?? currentState.direction,
       compare: hasCategoryChange ? [] : changes.compare ?? currentState.compare
     }
-  }
-
-  async function writeRouteState(nextState: GearLibraryRouteState, replace: boolean) {
-    const query = buildGearLibraryRouteQuery(nextState)
-
-    const destination = {
-      path: route.path,
-      query
-    }
-
-    await navigateTo(destination, { replace })
   }
 
   async function handleSearchChange(value: string) {

@@ -1,7 +1,7 @@
 <template>
   <PageContent page-title="Review gear submission">
     <template #actions>
-      <PerdLink :to="appRoutes.adminEquipmentSubmissions">
+      <PerdLink :to="appLocations.adminEquipmentSubmissions">
         Back to submissions
       </PerdLink>
     </template>
@@ -35,7 +35,7 @@
         {{ decisionStatus.message }}
 
         <template #actions>
-          <PerdLink :to="appRoutes.adminEquipmentSubmissions">
+          <PerdLink :to="appLocations.adminEquipmentSubmissions">
             Back to submissions
           </PerdLink>
         </template>
@@ -110,7 +110,7 @@
   import PerdLink from '~/components/PerdLink.vue'
   import PageContent from '~/components/layout/PageContent.vue'
   import { logUnexpectedCategoryPropertiesError } from '~/utils/category-properties-error'
-  import { appRoutes } from '~/utils/navigation'
+  import { appLocations } from '~/utils/navigation'
 
   definePageMeta({
     layout: 'page',
@@ -258,7 +258,9 @@
   ) {
     const currentSubmission = submission.value
 
-    if (currentSubmission === undefined) {
+    if (currentSubmission === undefined
+      || body.expectedPropertiesRevision === undefined
+      || body.expectedOriginalPropertiesRevision === undefined) {
       return
     }
 

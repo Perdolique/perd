@@ -1,3 +1,4 @@
+import type { InferInput } from 'valibot'
 import { eq } from 'drizzle-orm'
 import { createError, defineEventHandler, type H3Event } from 'h3'
 import { emailSignInTurnstileAction } from '#shared/utils/turnstile'
@@ -16,7 +17,7 @@ import { hashToken, verifyPassword } from '#server/utils/auth/password'
 import { updateAppSession } from '#server/utils/session'
 import { verifyTurnstile } from '#server/utils/turnstile'
 import { getSessionUser } from '#server/utils/user'
-import { validateEmailSignIn } from '#server/utils/validation/schemas'
+import { validateEmailSignIn, type emailSignInSchema } from '#server/utils/validation/schemas'
 
 interface EmailSignInResponse {
   readonly email: string;
@@ -69,7 +70,7 @@ async function findEmailCredential(
   }
 }
 
-export default defineEventHandler(async (event): Promise<EmailSignInResponse> => {
+export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof emailSignInSchema>; }>): Promise<EmailSignInResponse> => {
   const expectedOrigin = getEmailAuthenticationOrigin(event)
 
   validateEmailAuthenticationRequest(event, expectedOrigin)

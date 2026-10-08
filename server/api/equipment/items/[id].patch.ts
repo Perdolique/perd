@@ -1,5 +1,6 @@
+import type { InferInput } from 'valibot'
 import { eq } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody } from 'h3'
+import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody, type H3Event } from 'h3'
 import { contributions, equipmentItems, itemPropertyValues } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
@@ -20,7 +21,12 @@ import {
 } from '#server/utils/equipment/item-edit-snapshot'
 
 import { normalizeEquipmentItemProperties } from '#server/utils/equipment/item-properties'
-import { validateEquipmentItemUpdateBody, validateItemDetailParams } from '#server/utils/validation/schemas'
+
+import {
+  validateEquipmentItemUpdateBody,
+  validateItemDetailParams,
+  type equipmentItemUpdateBodySchema
+} from '#server/utils/validation/schemas'
 
 async function lockItemCategories(transaction: PropertiesTransaction, categoryIds: number[]) {
   try {
@@ -34,7 +40,7 @@ async function lockItemCategories(transaction: PropertiesTransaction, categoryId
   }
 }
 
-export default defineEventHandler(async (event): Promise<EquipmentItemEditResponse> => {
+export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof equipmentItemUpdateBodySchema>; }>): Promise<EquipmentItemEditResponse> => {
   const userId = await validateAdminUser(event)
   const { id } = await getValidatedRouterParams(event, validateItemDetailParams)
   const body = await readValidatedBody(event, validateEquipmentItemUpdateBody)

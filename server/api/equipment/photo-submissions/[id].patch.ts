@@ -1,4 +1,5 @@
-import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody } from 'h3'
+import type { InferInput } from 'valibot'
+import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody, type H3Event } from 'h3'
 import { validateAdminUser } from '#server/utils/admin'
 import { getCloudflareImagesBinding } from '#server/utils/cloudflare'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
@@ -17,7 +18,11 @@ import {
   type PhotoSubmissionReviewDatabase
 } from '#server/utils/equipment/photo-submission-review'
 
-import { validatePhotoSubmissionDecisionBody, validatePhotoSubmissionParams } from '#server/utils/validation/schemas'
+import {
+  validatePhotoSubmissionDecisionBody,
+  validatePhotoSubmissionParams,
+  type photoSubmissionDecisionBodySchema
+} from '#server/utils/validation/schemas'
 
 async function closePhotoSubmissionReviewDatabase(
   database: PhotoSubmissionReviewDatabase | null,
@@ -53,7 +58,7 @@ function throwPhotoSubmissionReviewError(error: unknown, submissionId: string): 
   })
 }
 
-export default defineEventHandler(async (event): Promise<PhotoSubmissionDecisionResponse> => {
+export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof photoSubmissionDecisionBodySchema>; }>): Promise<PhotoSubmissionDecisionResponse> => {
   const userId = await validateAdminUser(event)
   const { id } = await getValidatedRouterParams(event, validatePhotoSubmissionParams)
   const body = await readValidatedBody(event, validatePhotoSubmissionDecisionBody)

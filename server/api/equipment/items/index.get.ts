@@ -1,5 +1,6 @@
+import type { InferInput } from 'valibot'
 import { and, count, eq, sql } from 'drizzle-orm'
-import { defineEventHandler, getValidatedQuery } from 'h3'
+import { defineEventHandler, getValidatedQuery, type H3Event } from 'h3'
 import { brands, equipmentCategories, equipmentItems, userEquipment } from '#server/database/schema'
 
 import {
@@ -10,7 +11,7 @@ import {
 
 import { enrichCatalogItemRows, type CatalogListItem } from '#server/utils/equipment/catalog-list-enrichment'
 import { validateSessionUser } from '#server/utils/session'
-import { validateItemsListQuery } from '#server/utils/validation/schemas'
+import { validateItemsListQuery, type itemsListQuerySchema } from '#server/utils/validation/schemas'
 
 interface ReturnData {
   items: CatalogListItem[];
@@ -19,7 +20,7 @@ interface ReturnData {
   total: number;
 }
 
-export default defineEventHandler(async (event) : Promise<ReturnData> => {
+export default defineEventHandler(async (event: H3Event<{ query: InferInput<typeof itemsListQuerySchema>; }>) : Promise<ReturnData> => {
   const { dbHttp } = event.context
   const validatedQuery = await getValidatedQuery(event, validateItemsListQuery)
   const userId = await validateSessionUser(event)

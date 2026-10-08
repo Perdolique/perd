@@ -1,5 +1,6 @@
+import type { InferInput } from 'valibot'
 import { and, eq, sql } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody } from 'h3'
+import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody, type H3Event } from 'h3'
 
 import {
   brands,
@@ -21,9 +22,13 @@ import {
   type PackingListInventoryRow
 } from '#server/utils/packing-list-entry'
 
-import { validatePackingListEntryParams, validatePackingListEntryUpdateBody } from '#server/utils/validation/schemas'
+import {
+  validatePackingListEntryParams,
+  validatePackingListEntryUpdateBody,
+  type packingListEntryUpdateBodySchema
+} from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event) : Promise<PackingListEntryMutationResponse> => {
+export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof packingListEntryUpdateBodySchema>; }>) : Promise<PackingListEntryMutationResponse> => {
   const userId = await validateSessionUser(event)
   const { entryId, id } = await getValidatedRouterParams(event, validatePackingListEntryParams)
   const { isPacked } = await readValidatedBody(event, validatePackingListEntryUpdateBody)

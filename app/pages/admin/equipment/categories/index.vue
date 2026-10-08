@@ -1,7 +1,7 @@
 <template>
   <PageContent page-title="Manage categories">
     <template #actions>
-      <PerdLink :to="appRoutes.admin">Back to Admin</PerdLink>
+      <PerdLink :to="appLocations.admin">Back to Admin</PerdLink>
     </template>
 
     <main :class="$style.component">
@@ -49,7 +49,7 @@
             <span :class="$style.slug">{{ category.slug }}</span>
           </div>
 
-          <CategoryActions :category-name="category.name" :properties-path="category.propertiesPath" @edit="openEdit(category)" @delete="openDelete(category)" />
+          <CategoryActions :category-name="category.name" :properties-location="category.propertiesLocation" @edit="openEdit(category)" @delete="openDelete(category)" />
         </li>
       </ul>
     </main>
@@ -143,7 +143,7 @@
   import ModalDialog from '~/components/dialogs/ModalDialog.vue'
   import CategoryActions from '~/components/equipment/categories/CategoryActions.vue'
   import { getFetchErrorResponse } from '~/utils/fetch-error'
-  import { appRoutes } from '~/utils/navigation'
+  import { appLocations, createAdminCategoryPropertiesLocation } from '~/utils/navigation'
 
   type Category = CategoriesListResponse[number]
 
@@ -208,7 +208,7 @@
 
     return sortedCategories.map((category) => {
       return {
-        propertiesPath: `${appRoutes.adminEquipmentCategories}/${category.id}/properties`,
+        propertiesLocation: createAdminCategoryPropertiesLocation(category.id),
         id: category.id,
         name: category.name,
         slug: category.slug

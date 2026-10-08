@@ -1,3 +1,5 @@
+import type { InferInput } from 'valibot'
+
 import {
   createError,
   defineEventHandler,
@@ -14,7 +16,7 @@ import { createWebSocketClientFromEvent } from '#server/utils/config'
 import { checkPropertiesRevision, lockPropertiesCategories } from '#server/utils/equipment/category-properties'
 import { normalizeEquipmentItemProperties } from '#server/utils/equipment/item-properties'
 import { validateRegisteredUserAccess } from '#server/utils/user'
-import { validateItemSubmissionCreateBody } from '#server/utils/validation/schemas'
+import { validateItemSubmissionCreateBody, type itemSubmissionCreateBodySchema } from '#server/utils/validation/schemas'
 
 interface ItemSubmissionCreateResponse {
   id: string;
@@ -68,7 +70,7 @@ async function enforceItemSubmissionRateLimit(event: H3Event, userId: string): P
   }
 }
 
-export default defineEventHandler(async (event): Promise<ItemSubmissionCreateResponse> => {
+export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof itemSubmissionCreateBodySchema>; }>): Promise<ItemSubmissionCreateResponse> => {
   const { isAdmin, userId } = await validateRegisteredUserAccess(event)
   const body = await readValidatedBody(event, validateItemSubmissionCreateBody)
 

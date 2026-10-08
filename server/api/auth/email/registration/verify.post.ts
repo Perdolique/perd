@@ -1,5 +1,6 @@
-import { defineEventHandler, readValidatedBody } from 'h3'
-import { validateEmailVerification } from '#server/utils/validation/schemas'
+import type { InferInput } from 'valibot'
+import { defineEventHandler, readValidatedBody, type H3Event } from 'h3'
+import { validateEmailVerification, type emailVerificationSchema } from '#server/utils/validation/schemas'
 import { getTrustedClientIp } from '#server/utils/cloudflare'
 import { updateAppSession } from '#server/utils/session'
 import { getEmailRegistrationConfig } from '#server/utils/config'
@@ -25,7 +26,7 @@ interface EmailVerificationResponse {
   redirectTo: string;
 }
 
-export default defineEventHandler(async (event): Promise<EmailVerificationResponse> => {
+export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof emailVerificationSchema>; }>): Promise<EmailVerificationResponse> => {
   const config = getEmailRegistrationConfig(event)
 
   validateEmailAuthenticationRequest(event, config.origin)

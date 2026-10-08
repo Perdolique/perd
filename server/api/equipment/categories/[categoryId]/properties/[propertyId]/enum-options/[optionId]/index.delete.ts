@@ -1,11 +1,17 @@
-import { defineEventHandler, getValidatedQuery, getValidatedRouterParams } from 'h3'
+import type { InferInput } from 'valibot'
+import { defineEventHandler, getValidatedQuery, getValidatedRouterParams, type H3Event } from 'h3'
 import { validateAdminUser } from '#server/utils/admin'
 import { mutateCategoryProperties } from '#server/utils/equipment/category-property-mutations'
 import type { AdminCategoryPropertiesSnapshot } from '#server/utils/equipment/category-properties'
 import { withPropertiesTransaction } from '#server/utils/equipment/properties-request'
-import { validatePropertyEnumOptionParams, validatePropertiesRevisionQuery } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event): Promise<AdminCategoryPropertiesSnapshot> => {
+import {
+  validatePropertyEnumOptionParams,
+  validatePropertiesRevisionQuery,
+  type propertiesRevisionQuerySchema
+} from '#server/utils/validation/schemas'
+
+export default defineEventHandler(async (event: H3Event<{ query: InferInput<typeof propertiesRevisionQuerySchema>; }>): Promise<AdminCategoryPropertiesSnapshot> => {
   const userId = await validateAdminUser(event)
   const params = await getValidatedRouterParams(event, validatePropertyEnumOptionParams)
   const query = await getValidatedQuery(event, validatePropertiesRevisionQuery)

@@ -1,8 +1,9 @@
+import type { InferInput } from 'valibot'
 import { count, eq } from 'drizzle-orm'
-import { defineEventHandler, getValidatedQuery } from 'h3'
+import { defineEventHandler, getValidatedQuery, type H3Event } from 'h3'
 import { equipmentItems } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
-import { validateItemSubmissionListQuery } from '#server/utils/validation/schemas'
+import { validateItemSubmissionListQuery, type itemSubmissionListQuerySchema } from '#server/utils/validation/schemas'
 
 interface ItemSubmissionReferenceSummary {
   id: number;
@@ -39,7 +40,7 @@ interface ItemSubmissionQueryRow {
   name: string;
 }
 
-export default defineEventHandler(async (event): Promise<ItemSubmissionListResponse> => {
+export default defineEventHandler(async (event: H3Event<{ query: InferInput<typeof itemSubmissionListQuerySchema>; }>): Promise<ItemSubmissionListResponse> => {
   await validateAdminUser(event)
 
   const { limit, page } = await getValidatedQuery(event, validateItemSubmissionListQuery)

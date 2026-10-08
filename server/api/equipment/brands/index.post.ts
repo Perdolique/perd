@@ -1,12 +1,13 @@
-import { createError, defineEventHandler, readValidatedBody, setResponseStatus } from 'h3'
+import { createError, defineEventHandler, readValidatedBody, setResponseStatus, type H3Event } from 'h3'
+import type { InferInput } from 'valibot'
 import { brands, contributions } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
 import { createWebSocketClientFromEvent } from '#server/utils/config'
 import { brandBaseSelection, type BrandBaseRecord } from '#server/utils/equipment/base-records'
 import { throwBrandWriteError } from '#server/utils/equipment/brand-write-errors'
-import { validateBrandMutationBody } from '#server/utils/validation/schemas'
+import { validateBrandMutationBody, type brandMutationSchema } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event): Promise<BrandBaseRecord> => {
+export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof brandMutationSchema>; }>): Promise<BrandBaseRecord> => {
   const userId = await validateAdminUser(event)
   const { name, slug } = await readValidatedBody(event, validateBrandMutationBody)
   const dbWebsocket = createWebSocketClientFromEvent(event)

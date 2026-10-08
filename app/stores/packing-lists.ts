@@ -679,7 +679,9 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     const operation = beginSummaryOperation(packingListId)
 
     try {
-      const response = await requestFetch(`/api/user/packing-lists/${packingListId}/entries`, {
+      const entryPath = `/api/user/packing-lists/${packingListId}/entries` as const
+
+      const response = await requestFetch(entryPath, {
         method: 'POST',
         body
       })

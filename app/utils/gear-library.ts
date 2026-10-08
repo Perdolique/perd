@@ -31,8 +31,8 @@ interface GearLibraryItemsApiQuery {
   booleanFilter: string[];
   sort: GearLibrarySort;
   direction: GearLibraryDirection;
-  limit: number;
-  page: number;
+  limit: string;
+  page: string;
 }
 
 interface GearLibraryDetailComparison {
@@ -202,9 +202,9 @@ function getGearLibraryItemsApiQuery(
     categorySlug: routeState.category,
     direction: routeState.direction,
     enumFilter: routeState.enum,
-    limit: gearLibraryPageSize,
+    limit: String(gearLibraryPageSize),
     numberFilter: routeState.number,
-    page,
+    page: String(page),
     search: routeState.q,
     sort: routeState.sort
   }

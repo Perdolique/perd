@@ -1,6 +1,6 @@
 <template>
   <ActionPanel
-    :to="packingListPath"
+    :to="packingListLocation"
     icon="hugeicons:check-list"
     :title="packingList.name"
   >
@@ -27,7 +27,7 @@
 <script lang="ts" setup>
   import { computed } from 'vue'
   import type { PackingListView } from '~/types/packing'
-  import { createPackingListPath } from '~/utils/navigation'
+  import { createPackingListLocation } from '~/utils/navigation'
   import { formatPackingProgress } from '~/utils/packing'
   import ActionPanel from '~/components/ActionPanel.vue'
 
@@ -36,7 +36,7 @@
   }
 
   const { packingList } = defineProps<Props>()
-  const packingListPath = computed(() => createPackingListPath(packingList.id))
+  const packingListLocation = computed(() => createPackingListLocation(packingList.id))
 
   const packingProgressText = computed(() => formatPackingProgress(
     packingList.packedCount,

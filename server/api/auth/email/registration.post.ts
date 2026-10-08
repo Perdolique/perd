@@ -1,6 +1,7 @@
-import { defineEventHandler, createError, readValidatedBody, setResponseStatus } from 'h3'
+import type { InferInput } from 'valibot'
+import { defineEventHandler, createError, readValidatedBody, setResponseStatus, type H3Event } from 'h3'
 import { emailRegistrationTurnstileAction } from '#shared/utils/turnstile'
-import { validateEmailRegistration } from '#server/utils/validation/schemas'
+import { validateEmailRegistration, type emailRegistrationSchema } from '#server/utils/validation/schemas'
 import { getTrustedClientIp } from '#server/utils/cloudflare'
 import { verifyTurnstile } from '#server/utils/turnstile'
 import { getEmailRegistrationConfig } from '#server/utils/config'
@@ -20,7 +21,7 @@ interface EmailRegistrationResponse {
   accepted: true;
 }
 
-export default defineEventHandler(async (event): Promise<EmailRegistrationResponse> => {
+export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof emailRegistrationSchema>; }>): Promise<EmailRegistrationResponse> => {
   const config = getEmailRegistrationConfig(event)
 
   validateEmailAuthenticationRequest(event, config.origin)

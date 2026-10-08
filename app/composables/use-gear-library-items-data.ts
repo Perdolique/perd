@@ -118,7 +118,7 @@ function useGearLibraryItemsData(options: UseGearLibraryItemsDataOptions) {
     const baseQuery = options.itemsApiQuery.value
 
     return {
-      page,
+      page: String(page),
       booleanFilter: baseQuery.booleanFilter,
       brandSlug: baseQuery.brandSlug,
       categorySlug: baseQuery.categorySlug,

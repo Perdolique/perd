@@ -1,4 +1,4 @@
-import { defineEventHandler } from 'h3'
+import { defineEventHandler, type H3Event } from 'h3'
 import { generateAuthenticationOptions } from '@simplewebauthn/server'
 import type { PasskeyAuthenticationOptions } from '#shared/types/passkey'
 import { readLimitedValidatedJsonBody } from '#server/utils/auth/email-authentication-request'
@@ -14,7 +14,7 @@ import {
 
 import { validatePasskeyOptions } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event): Promise<PasskeyAuthenticationOptions> => {
+export default defineEventHandler(async (event: H3Event<{ body: Record<string, never>; }>): Promise<PasskeyAuthenticationOptions> => {
   const createdAt = new Date()
 
   return handlePasskeyRequest(event, 'authentication', async (sensitiveValues) => {

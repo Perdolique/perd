@@ -2,7 +2,7 @@
   <PageContent :page-title="navigationLabels.gearLibrary">
     <template #actions>
       <PerdButton
-        :to="appRoutes.gearLibraryNew"
+        :to="appLocations.gearLibraryNew"
         size="small"
         icon="hugeicons:add-01"
       >
@@ -271,7 +271,7 @@
   import { useGearLibraryBrowsingRestoration } from '~/composables/use-gear-library-browsing-restoration'
   import { createGearLibraryAppliedFilterChips } from '~/utils/gear-library-filters'
   import { buildGearLibraryRouteQuery } from '~/utils/gear-library'
-  import { appRoutes, createGearLibraryItemPath, navigationLabels } from '~/utils/navigation'
+  import { appLocations, createGearLibraryItemLocation, navigationLabels } from '~/utils/navigation'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PageSummaryHeader from '~/components/PageSummaryHeader.vue'
   import PerdButton from '~/components/PerdButton.vue'
@@ -539,13 +539,7 @@
     })
 
     return lastSuccessfulItemsResponse.value.items.map((item) => {
-      const detailPath = createGearLibraryItemPath(item.id)
-
-      const detailLocation = {
-        path: detailPath,
-        query: detailQuery
-      }
-
+      const detailLocation = createGearLibraryItemLocation(item.id, detailQuery)
       const isInMyGear = gearLibraryStore.resolveIsInMyGear(item)
 
       return {
@@ -646,7 +640,7 @@
     }
 
     await navigateTo({
-      path: '/gear-library/compare',
+      name: appLocations.gearLibraryCompare.name,
       query: comparisonQuery
     })
   }
