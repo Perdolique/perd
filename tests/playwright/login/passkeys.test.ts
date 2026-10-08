@@ -38,7 +38,13 @@ const switchActions = {
   },
 
   async guest(page: Page) { await page.getByRole('button', { name: 'Continue as guest' }).click() },
-  async twitch(page: Page) { await page.getByRole('button', { name: /Twitch/u }).click() },
+
+  async twitch(page: Page) {
+    // A mocked 204 keeps the page open, so activate the button without waiting for navigation.
+    await page.getByRole('button', { name: /Twitch/u }).focus()
+    await page.keyboard.press('Enter')
+  },
+
   async explicit(page: Page) { await page.getByRole('button', { name: 'Sign in with a passkey' }).click() },
   async navigation(page: Page) { await page.getByRole('link', { name: 'Forgot password?' }).click() }
 }

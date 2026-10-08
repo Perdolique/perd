@@ -1,16 +1,8 @@
 import type { InferInput } from 'valibot'
-
-import {
-  createError,
-  defineEventHandler,
-  getValidatedRouterParams,
-  isError,
-  readValidatedBody,
-  setResponseStatus,
-  type H3Event
-} from 'h3'
-
-import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { createError, defineEventHandler, isNuxtError, readValidatedBody, setResponseStatus } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
+import type { ApiRequestEvent } from '#shared/types/api-request'
+import { createRuntimeWebSocketClient } from '#server/utils/config'
 import { copyPackingList, type PackingListCopySummary } from '#server/utils/packing-list-copy'
 import { validateSessionUser } from '#server/utils/session'
 
@@ -20,14 +12,14 @@ import {
   type packingListMutationBodySchema
 } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof packingListMutationBodySchema>; }>): Promise<PackingListCopySummary> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof packingListMutationBodySchema>; }>): Promise<PackingListCopySummary> => {
   const userId = await validateSessionUser(event)
-  const { id } = await getValidatedRouterParams(event, validatePackingListIdParams)
+  const { id } = await getValidatedRouteParams(event, validatePackingListIdParams)
   const { name } = await readValidatedBody(event, validatePackingListMutationBody)
-  let database: ReturnType<typeof createWebSocketClientFromEvent> | null = null
+  let database: ReturnType<typeof createRuntimeWebSocketClient> | null = null
 
   try {
-    database = createWebSocketClientFromEvent(event)
+    database = createRuntimeWebSocketClient()
 
     const copy = await copyPackingList(database, {
       userId,
@@ -39,7 +31,7 @@ export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeo
 
     return copy
   } catch (error) {
-    if (isError(error) && error.statusCode < 500) {
+    if (isNuxtError(error) && error.status < 500) {
       throw error
     }
 

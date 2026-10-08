@@ -1,6 +1,7 @@
 import type { InferInput } from 'valibot'
 import { and, count, eq, sql } from 'drizzle-orm'
-import { defineEventHandler, getValidatedQuery, type H3Event } from 'h3'
+import { defineEventHandler, getValidatedQuery } from 'nuxt/server'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { brands, equipmentCategories, equipmentItems, userEquipment } from '#server/database/schema'
 
 import {
@@ -20,7 +21,7 @@ interface ReturnData {
   total: number;
 }
 
-export default defineEventHandler(async (event: H3Event<{ query: InferInput<typeof itemsListQuerySchema>; }>) : Promise<ReturnData> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof itemsListQuerySchema>; }>) : Promise<ReturnData> => {
   const { dbHttp } = event.context
   const validatedQuery = await getValidatedQuery(event, validateItemsListQuery)
   const userId = await validateSessionUser(event)

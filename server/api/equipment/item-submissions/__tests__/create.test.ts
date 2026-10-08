@@ -1,4 +1,4 @@
-import * as h3 from 'h3'
+import * as nuxtServer from 'nuxt/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { equipmentCategories, contributions, equipmentItems, itemPropertyValues } from '#server/database/schema'
 import createItemSubmissionHandler from '#server/api/equipment/item-submissions/index.post'
@@ -10,7 +10,6 @@ const {
   getItemSubmissionRateLimiterBindingMock,
   itemSubmissionLimitMock,
   readValidatedBodyMock,
-  setResponseHeaderMock,
   setResponseStatusMock,
   validateRegisteredUserAccessMock
 } = vi.hoisted(() => {
@@ -18,32 +17,26 @@ const {
     createWebSocketClientMock: vi.fn(),
     getItemSubmissionRateLimiterBindingMock: vi.fn(),
     itemSubmissionLimitMock: vi.fn<Env['ITEM_SUBMISSION_RATE_LIMITER']['limit']>(),
-    readValidatedBodyMock: vi.fn<typeof h3.readValidatedBody>(),
-    setResponseHeaderMock: vi.fn<typeof h3.setResponseHeader>(),
-    setResponseStatusMock: vi.fn<typeof h3.setResponseStatus>(),
+    readValidatedBodyMock: vi.fn<typeof nuxtServer.readValidatedBody>(),
+    setResponseStatusMock: vi.fn<typeof nuxtServer.setResponseStatus>(),
 
     validateRegisteredUserAccessMock: vi.fn<
-      (event: h3.H3Event) => Promise<RegisteredUserAccess>
+      (event: nuxtServer.RequestEvent) => Promise<RegisteredUserAccess>
     >()
   }
 })
 
-// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial h3 mock.
-vi.mock(import('h3'), async () => {
-  const actual = await vi.importActual<typeof h3>('h3')
+vi.mock(import('nuxt/server'), async () => {
+  const actual = await vi.importActual<typeof nuxtServer>('nuxt/server')
 
   return {
     ...actual,
 
-    async readValidatedBody(...args: Parameters<typeof h3.readValidatedBody>) {
+    async readValidatedBody(...args: Parameters<typeof nuxtServer.readValidatedBody>) {
       return readValidatedBodyMock(...args)
     },
 
-    setResponseHeader(...args: Parameters<typeof h3.setResponseHeader>) {
-      setResponseHeaderMock(...args)
-    },
-
-    setResponseStatus(...args: Parameters<typeof h3.setResponseStatus>) {
+    setResponseStatus(...args: Parameters<typeof nuxtServer.setResponseStatus>) {
       setResponseStatusMock(...args)
     }
   }
@@ -63,7 +56,7 @@ vi.mock(import('#server/utils/cloudflare'), () => {
 
 vi.mock(import('#server/utils/config'), () => {
   return {
-    createWebSocketClientFromEvent: createWebSocketClientMock
+    createRuntimeWebSocketClient: createWebSocketClientMock
   }
 })
 
@@ -434,7 +427,7 @@ describe('post /api/equipment/item-submissions', () => {
   })
 
   it('should require a session before opening the write client', async () => {
-    const authError = h3.createError({ status: 401 })
+    const authError = nuxtServer.createError({ status: 401 })
 
     validateRegisteredUserAccessMock.mockRejectedValue(authError)
 
@@ -449,7 +442,7 @@ describe('post /api/equipment/item-submissions', () => {
   })
 
   it('should reject a Guest before validating the body or opening the write client', async () => {
-    const guestError = h3.createError({ status: 403 })
+    const guestError = nuxtServer.createError({ status: 403 })
 
     validateRegisteredUserAccessMock.mockRejectedValue(guestError)
 
@@ -467,7 +460,7 @@ describe('post /api/equipment/item-submissions', () => {
     undefined,
     'not a URL'
   ])('should reject source URL %j through body validation before rate limiting or writes', async (sourceUrl) => {
-    const actualH3 = await vi.importActual<typeof h3>('h3')
+    const actualH3 = await vi.importActual<typeof nuxtServer>('nuxt/server')
 
     readValidatedBodyMock.mockImplementationOnce(actualH3.readValidatedBody)
 
@@ -493,7 +486,7 @@ describe('post /api/equipment/item-submissions', () => {
   })
 
   it('should validate the body before opening the write client', async () => {
-    const bodyError = h3.createError({ status: 400 })
+    const bodyError = nuxtServer.createError({ status: 400 })
 
     readValidatedBodyMock.mockRejectedValue(bodyError)
 
@@ -518,7 +511,7 @@ describe('post /api/equipment/item-submissions', () => {
       statusMessage: 'Too many item submission attempts'
     })
 
-    expect(setResponseHeaderMock).toHaveBeenCalledWith(event, 'Retry-After', 60)
+    expect(event.res.headers.get('Retry-After')).toBe('60')
 
     expect(consoleWarnMock).toHaveBeenCalledWith({
       event: 'rate_limit_rejected',
@@ -532,7 +525,7 @@ describe('post /api/equipment/item-submissions', () => {
   })
 
   it('should fail closed when the limiter binding is unavailable', async () => {
-    const bindingError = h3.createError({
+    const bindingError = nuxtServer.createError({
       status: 503,
       statusMessage: 'Item submission rate limiter unavailable'
     })

@@ -1,7 +1,8 @@
 import { and, eq, sql } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedRouterParams, isError } from 'h3'
+import { createError, defineEventHandler, isNuxtError } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
 import { packingListEntries, packingLists } from '#server/database/schema'
-import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { createRuntimeWebSocketClient } from '#server/utils/config'
 import { validateSessionUser } from '#server/utils/session'
 import { validatePackingListEntryParams } from '#server/utils/validation/schemas'
 
@@ -12,8 +13,8 @@ interface DeletePackingListEntryResponse {
 
 export default defineEventHandler(async (event) : Promise<DeletePackingListEntryResponse> => {
   const userId = await validateSessionUser(event)
-  const { entryId, id } = await getValidatedRouterParams(event, validatePackingListEntryParams)
-  const dbWebsocket = createWebSocketClientFromEvent(event)
+  const { entryId, id } = await getValidatedRouteParams(event, validatePackingListEntryParams)
+  const dbWebsocket = createRuntimeWebSocketClient()
 
   try {
     return await dbWebsocket.transaction(async (transaction) => {
@@ -78,7 +79,7 @@ export default defineEventHandler(async (event) : Promise<DeletePackingListEntry
       }
     })
   } catch (error) {
-    if (isError(error)) {
+    if (isNuxtError(error)) {
       throw error
     }
 

@@ -1,6 +1,8 @@
+import { toTestRequestEvent } from '~~/test-utils/create-test-event'
 import { IncomingMessage, ServerResponse } from 'node:http'
 import { Socket } from 'node:net'
-import { createError, createEvent } from 'h3'
+import { createEvent } from 'h3'
+import { createError } from 'nuxt/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import apiSessionCheckHandler from '#server/middleware/api-session-check'
 
@@ -32,7 +34,7 @@ function createMiddlewareEvent({
 
   const response = new ServerResponse(request)
 
-  return createEvent(request, response)
+  return toTestRequestEvent(createEvent(request, response))
 }
 
 describe('api session check middleware', () => {

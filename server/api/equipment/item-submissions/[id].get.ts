@@ -1,4 +1,5 @@
-import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
+import { createError, defineEventHandler } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
 import { validateAdminUser } from '#server/utils/admin'
 import { validateItemSubmissionParams } from '#server/utils/validation/schemas'
 import type { ItemSubmissionListItem } from './index.get'
@@ -45,7 +46,7 @@ function mapPropertyValue(value: {
 export default defineEventHandler(async (event): Promise<ItemSubmissionDetailResponse> => {
   await validateAdminUser(event)
 
-  const { id } = await getValidatedRouterParams(event, validateItemSubmissionParams)
+  const { id } = await getValidatedRouteParams(event, validateItemSubmissionParams)
 
   const item = await event.context.dbHttp.query.equipmentItems.findFirst({
     columns: {

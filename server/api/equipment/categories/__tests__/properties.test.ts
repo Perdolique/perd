@@ -1,4 +1,5 @@
-import * as h3 from 'h3'
+
+import * as nuxtServer from 'nuxt/server'
 import { DrizzleQueryError } from 'drizzle-orm'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import readHandler from '#server/api/equipment/categories/[categoryId]/properties/index.get'
@@ -24,17 +25,20 @@ const mocks = vi.hoisted(() => {
   }
 })
 
+vi.mock(import('#server/utils/request'), () => {
+  return { getValidatedRouteParams: mocks.params }
+})
+
 vi.mock(import('#server/utils/admin'), () => { return { validateAdminUser: mocks.admin } })
-vi.mock(import('#server/utils/config'), () => { return { createWebSocketClientFromEvent: mocks.database } })
+vi.mock(import('#server/utils/config'), () => { return { createRuntimeWebSocketClient: mocks.database } })
 vi.mock(import('#server/utils/equipment/category-property-mutations'), () => { return { mutateCategoryProperties: mocks.mutation } })
 vi.mock(import('#server/utils/equipment/category-properties'), () => { return { readCategoryPropertiesSnapshot: mocks.snapshot } })
 
-vi.mock(import('h3'), async () => {
-  const actual = await vi.importActual<typeof h3>('h3')
+vi.mock(import('nuxt/server'), async () => {
+  const actual = await vi.importActual<typeof nuxtServer>('nuxt/server')
 
   return {
     ...actual,
-    getValidatedRouterParams: mocks.params,
     getValidatedQuery: mocks.query,
     readValidatedBody: mocks.body
   }
@@ -88,7 +92,7 @@ describe('admin characteristics HTTP boundary', () => {
   afterEach(() => { vi.restoreAllMocks() })
 
   it.each(routes)('rejects a non-admin before reading inputs or opening a database client', async (handler) => {
-    mocks.admin.mockRejectedValue(h3.createError({ status: 403 }))
+    mocks.admin.mockRejectedValue(nuxtServer.createError({ status: 403 }))
     await expect(handler(createTestEvent({}))).rejects.toMatchObject({ statusCode: 403 })
     expect(mocks.params).not.toHaveBeenCalled()
     expect(mocks.body).not.toHaveBeenCalled()

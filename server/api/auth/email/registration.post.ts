@@ -1,5 +1,6 @@
 import type { InferInput } from 'valibot'
-import { defineEventHandler, createError, readValidatedBody, setResponseStatus, type H3Event } from 'h3'
+import { defineEventHandler, createError, readValidatedBody, setResponseStatus } from 'nuxt/server'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { emailRegistrationTurnstileAction } from '#shared/utils/turnstile'
 import { validateEmailRegistration, type emailRegistrationSchema } from '#server/utils/validation/schemas'
 import { getTrustedClientIp } from '#server/utils/cloudflare'
@@ -21,15 +22,15 @@ interface EmailRegistrationResponse {
   accepted: true;
 }
 
-export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof emailRegistrationSchema>; }>): Promise<EmailRegistrationResponse> => {
-  const config = getEmailRegistrationConfig(event)
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof emailRegistrationSchema>; }>): Promise<EmailRegistrationResponse> => {
+  const config = getEmailRegistrationConfig()
 
   validateEmailAuthenticationRequest(event, config.origin)
 
   const body = await readValidatedBody(event, validateEmailRegistration)
   const clientIp = getTrustedClientIp(event, import.meta.dev === true)
 
-  await verifyTurnstile(event, body['cf-turnstile-response'], {
+  await verifyTurnstile(body['cf-turnstile-response'], {
     remoteIp: clientIp,
     expectedAction: emailRegistrationTurnstileAction
   })
@@ -57,7 +58,7 @@ export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeo
   if (config.stagingRecipient !== null && body.email !== config.stagingRecipient) {
     throw createError({
       status: 400,
-      statusMessage: 'Use the configured staging email address'
+      statusText: 'Use the configured staging email address'
     })
   }
 
@@ -68,7 +69,7 @@ export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeo
   const tokenHash = hashToken(token)
   const sensitiveValues = [body.password, body.email, passwordHash, token, tokenHash]
 
-  await withRegistrationDatabase(event, sensitiveValues, async (database) => {
+  await withRegistrationDatabase(sensitiveValues, async (database) => {
     const actor = await getRegistrationActor(event)
 
     await issueEmailRegistration(database, {

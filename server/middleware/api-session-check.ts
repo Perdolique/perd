@@ -1,16 +1,14 @@
+import { getRequestMetadataHeader } from '#server/utils/request-runtime'
 import { isSamePath } from 'ufo'
 
 import {
   createError,
   defineEventHandler,
-  getHeader,
   getRequestURL,
-  isError,
+  isNuxtError,
   sendRedirect,
-  setResponseHeader,
-  type EventHandlerRequest,
-  type H3Event
-} from 'h3'
+  type RequestEvent
+} from 'nuxt/server'
 
 import { passwordRecoveryApiPaths } from '#shared/utils/email-authentication'
 import { validateSessionUser } from '#server/utils/session'
@@ -50,10 +48,10 @@ function isPublicApiPath(pathname: string) {
  * accepts HTML, we still treat it as a document request. Everything else stays
  * on the API path and receives a plain `401`.
  */
-function isBrowserNavigationRequest(event: H3Event<EventHandlerRequest>) {
-  const acceptHeader = getHeader(event, 'accept')
-  const secFetchDestHeader = getHeader(event, 'sec-fetch-dest')
-  const secFetchModeHeader = getHeader(event, 'sec-fetch-mode')
+function isBrowserNavigationRequest(event: RequestEvent) {
+  const acceptHeader = getRequestMetadataHeader(event, 'accept')
+  const secFetchDestHeader = getRequestMetadataHeader(event, 'sec-fetch-dest')
+  const secFetchModeHeader = getRequestMetadataHeader(event, 'sec-fetch-mode')
   const acceptsHtml = acceptHeader?.includes('text/html') === true
 
   if (secFetchDestHeader === 'document') {
@@ -67,11 +65,12 @@ function isBrowserNavigationRequest(event: H3Event<EventHandlerRequest>) {
   return secFetchModeHeader === undefined && acceptsHtml
 }
 
-export default defineEventHandler(async (event) => {
+// oxlint-disable-next-line typescript/no-invalid-void-type -- Middleware returns a redirect body or continues to the next handler.
+export default defineEventHandler(async (event): Promise<string | void> => {
   const url = getRequestURL(event)
 
   if (/^\/api\/(?:account|auth)\/passkeys(?:\/|$)/u.test(url.pathname)) {
-    setResponseHeader(event, 'Cache-Control', 'no-store')
+    event.res.headers.set('Cache-Control', 'no-store')
   }
 
   const isApiPath = url.pathname.startsWith(apiBase)
@@ -80,7 +79,7 @@ export default defineEventHandler(async (event) => {
     try {
       await validateSessionUser(event)
     } catch (error) {
-      if (!isError(error) || error.statusCode !== 401) {
+      if (!isNuxtError(error) || error.status !== 401) {
         throw error
       }
 
@@ -90,9 +89,8 @@ export default defineEventHandler(async (event) => {
         const loginPath = new URL('/login', url.origin)
 
         loginPath.searchParams.set('redirectTo', `${url.pathname}${url.search}`)
-        await sendRedirect(event, `${loginPath.pathname}${loginPath.search}`)
 
-        return
+        return sendRedirect(event, `${loginPath.pathname}${loginPath.search}`)
       }
 
       throw createError({ status: 401 })

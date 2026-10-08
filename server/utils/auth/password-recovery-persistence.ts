@@ -1,5 +1,5 @@
 import { and, eq, lte, sql } from 'drizzle-orm'
-import { createError } from 'h3'
+import { createError } from 'nuxt/server'
 import { emailCredentials, passwordResetTokens, users } from '#server/database/schema'
 import type { createWebSocketClient } from '#server/utils/database'
 
@@ -22,7 +22,7 @@ interface PasswordRecoveryCompletion {
 function invalidPasswordRecovery() {
   return createError({
     status: 400,
-    statusMessage: 'The password reset link is invalid or expired'
+    statusText: 'The password reset link is invalid or expired'
   })
 }
 

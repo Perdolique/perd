@@ -1,5 +1,7 @@
+import { scheduleBackgroundTask } from '#server/utils/request-runtime'
 import type { InferInput } from 'valibot'
-import { defineEventHandler, setResponseStatus, type H3Event } from 'h3'
+import { defineEventHandler, setResponseStatus } from 'nuxt/server'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { passwordRecoveryRequestTurnstileAction } from '#shared/utils/turnstile'
 import { getEmailAuthenticationConfig, getRuntimeDatabaseConfig } from '#server/utils/config'
 import { getEmailBinding, getPasswordRecoveryRateLimiterBinding, getTrustedClientIp } from '#server/utils/cloudflare'
@@ -21,8 +23,8 @@ interface PasswordRecoveryResponse {
 
 const maximumPasswordRecoveryBodyByteLength = 4096
 
-export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof passwordRecoveryRequestSchema>; }>): Promise<PasswordRecoveryResponse> => {
-  const config = getEmailAuthenticationConfig(event)
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof passwordRecoveryRequestSchema>; }>): Promise<PasswordRecoveryResponse> => {
+  const config = getEmailAuthenticationConfig()
 
   validateEmailAuthenticationRequest(event, config.origin)
 
@@ -34,7 +36,7 @@ export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeo
 
   const clientIp = getTrustedClientIp(event, import.meta.dev === true)
 
-  await verifyTurnstile(event, body['cf-turnstile-response'], {
+  await verifyTurnstile(body['cf-turnstile-response'], {
     remoteIp: clientIp,
     expectedAction: passwordRecoveryRequestTurnstileAction
   })
@@ -50,11 +52,11 @@ export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeo
   })
 
   const binding = getEmailBinding(event)
-  const databaseConfig = getRuntimeDatabaseConfig(event)
+  const databaseConfig = getRuntimeDatabaseConfig()
   const token = createVerificationToken()
   const tokenHash = hashToken(token)
 
-  event.waitUntil(runPasswordRecoveryIssuance({
+  scheduleBackgroundTask(event, runPasswordRecoveryIssuance({
     binding,
     config,
     databaseConfig,

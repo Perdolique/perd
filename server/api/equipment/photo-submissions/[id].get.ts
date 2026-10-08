@@ -1,4 +1,5 @@
-import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
+import { createError, defineEventHandler } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
 import { validateAdminUser } from '#server/utils/admin'
 import { validatePhotoSubmissionParams } from '#server/utils/validation/schemas'
 import type { PhotoSubmissionAuthorSummary, PhotoSubmissionItemSummary } from './index.get'
@@ -52,7 +53,7 @@ function mapSourceType(sourceType: string): PhotoSubmissionDetailResponse['sourc
 export default defineEventHandler(async (event): Promise<PhotoSubmissionDetailResponse> => {
   await validateAdminUser(event)
 
-  const { id } = await getValidatedRouterParams(event, validatePhotoSubmissionParams)
+  const { id } = await getValidatedRouteParams(event, validatePhotoSubmissionParams)
 
   const submission: PhotoSubmissionDetailQueryRow | undefined
     = await event.context.dbHttp.query.equipmentItemPhotoSubmissions.findFirst({

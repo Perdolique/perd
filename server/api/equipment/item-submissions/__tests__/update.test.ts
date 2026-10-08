@@ -1,4 +1,5 @@
-import * as h3 from 'h3'
+import type { getValidatedRouteParams } from '#server/utils/request'
+import * as nuxtServer from 'nuxt/server'
 import { SQL } from 'drizzle-orm'
 import { PgDialect } from 'drizzle-orm/pg-core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -8,30 +9,32 @@ import { createTestEvent } from '~~/test-utils/create-test-event'
 
 const {
   createWebSocketClientMock,
-  getValidatedRouterParamsMock,
+  getValidatedRouteParamsMock,
   readValidatedBodyMock,
   validateAdminUserMock
 } = vi.hoisted(() => {
   return {
     createWebSocketClientMock: vi.fn(),
-    getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
-    readValidatedBodyMock: vi.fn<typeof h3.readValidatedBody>(),
+    getValidatedRouteParamsMock: vi.fn<typeof getValidatedRouteParams>(),
+    readValidatedBodyMock: vi.fn<typeof nuxtServer.readValidatedBody>(),
     validateAdminUserMock: vi.fn<(event: unknown) => Promise<string>>()
   }
 })
 
-// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial h3 mock.
-vi.mock(import('h3'), async () => {
-  const actual = await vi.importActual<typeof h3>('h3')
+// @ts-expect-error -- The test mock specializes the validator's generic result.
+vi.mock(import('#server/utils/request'), () => {
+  return {
+    getValidatedRouteParams: getValidatedRouteParamsMock
+  }
+})
+
+vi.mock(import('nuxt/server'), async () => {
+  const actual = await vi.importActual<typeof nuxtServer>('nuxt/server')
 
   return {
     ...actual,
 
-    async getValidatedRouterParams(...args: Parameters<typeof h3.getValidatedRouterParams>) {
-      return getValidatedRouterParamsMock(...args)
-    },
-
-    async readValidatedBody(...args: Parameters<typeof h3.readValidatedBody>) {
+    async readValidatedBody(...args: Parameters<typeof nuxtServer.readValidatedBody>) {
       return readValidatedBodyMock(...args)
     }
   }
@@ -42,7 +45,7 @@ vi.mock(import('#server/utils/admin'), () => {
 })
 
 vi.mock(import('#server/utils/config'), () => {
-  return { createWebSocketClientFromEvent: createWebSocketClientMock }
+  return { createRuntimeWebSocketClient: createWebSocketClientMock }
 })
 
 interface UpdateDbOptions {
@@ -245,7 +248,7 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
     vi.clearAllMocks()
     validateAdminUserMock.mockResolvedValue('admin-1')
 
-    getValidatedRouterParamsMock.mockResolvedValue({
+    getValidatedRouteParamsMock.mockResolvedValue({
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
     })
 
@@ -565,7 +568,7 @@ describe('patch /api/equipment/item-submissions/[id]', () => {
   })
 
   it('should validate admin access before body parsing and database creation', async () => {
-    const authError = h3.createError({ status: 403 })
+    const authError = nuxtServer.createError({ status: 403 })
 
     validateAdminUserMock.mockRejectedValue(authError)
     await expect(updateHandler(createTestEvent({}))).rejects.toBe(authError)

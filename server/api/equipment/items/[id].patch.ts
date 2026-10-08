@@ -1,9 +1,11 @@
 import type { InferInput } from 'valibot'
 import { eq } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody, type H3Event } from 'h3'
+import { createError, defineEventHandler, isNuxtError, readValidatedBody } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { contributions, equipmentItems, itemPropertyValues } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
-import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { createRuntimeWebSocketClient } from '#server/utils/config'
 
 import {
   checkPropertiesRevision,
@@ -32,7 +34,7 @@ async function lockItemCategories(transaction: PropertiesTransaction, categoryId
   try {
     return await lockPropertiesCategories(transaction, categoryIds)
   } catch (error) {
-    if (isError(error) && error.statusCode === 404) {
+    if (isNuxtError(error) && error.status === 404) {
       throw propertiesConflict('item_reference_conflict', 'The selected category is unavailable. Reload before saving.')
     }
 
@@ -40,14 +42,14 @@ async function lockItemCategories(transaction: PropertiesTransaction, categoryId
   }
 }
 
-export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof equipmentItemUpdateBodySchema>; }>): Promise<EquipmentItemEditResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof equipmentItemUpdateBodySchema>; }>): Promise<EquipmentItemEditResponse> => {
   const userId = await validateAdminUser(event)
-  const { id } = await getValidatedRouterParams(event, validateItemDetailParams)
+  const { id } = await getValidatedRouteParams(event, validateItemDetailParams)
   const body = await readValidatedBody(event, validateEquipmentItemUpdateBody)
-  let database: ReturnType<typeof createWebSocketClientFromEvent> | null = null
+  let database: ReturnType<typeof createRuntimeWebSocketClient> | null = null
 
   try {
-    database = createWebSocketClientFromEvent(event)
+    database = createRuntimeWebSocketClient()
 
     return await database.transaction(async (transaction) => {
       const original = await transaction.query.equipmentItems.findFirst({
@@ -202,7 +204,7 @@ export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeo
       return after
     })
   } catch (error) {
-    if (isError(error) && error.statusCode < 500) { throw error }
+    if (isNuxtError(error) && error.status < 500) { throw error }
 
     logCategoryWriteError('Failed to edit published equipment item', error)
 

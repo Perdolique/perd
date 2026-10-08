@@ -1,16 +1,17 @@
 import { eq } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedRouterParams, setResponseStatus } from 'h3'
+import { createError, defineEventHandler, setResponseStatus } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
 import { contributions, equipmentCategories } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
-import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { createRuntimeWebSocketClient } from '#server/utils/config'
 import { categoryBaseSelection } from '#server/utils/equipment/base-records'
 import { logCategoryWriteError, throwCategoryWriteError } from '#server/utils/equipment/category-write-errors'
 import { validateCategoryScopedParams } from '#server/utils/validation/schemas'
 
 export default defineEventHandler(async (event): Promise<void> => {
   const userId = await validateAdminUser(event)
-  const { categoryId } = await getValidatedRouterParams(event, validateCategoryScopedParams)
-  const dbWebsocket = createWebSocketClientFromEvent(event)
+  const { categoryId } = await getValidatedRouteParams(event, validateCategoryScopedParams)
+  const dbWebsocket = createRuntimeWebSocketClient()
 
   try {
     await dbWebsocket.transaction(async (transaction) => {

@@ -1,5 +1,5 @@
-import { createError, getRequestHeader, isError, setResponseHeader, type H3Event } from 'h3'
-import { useRuntimeConfig } from 'nitropack/runtime'
+import { getRequestMetadataHeader, getRequestMethod } from '#server/utils/request-runtime'
+import { createError, isNuxtError, useRuntimeConfig, type RequestEvent } from 'nuxt/server'
 import { passkeyMessages } from '#shared/utils/passkey'
 import { getTrustedClientIp } from '#server/utils/cloudflare'
 import { getSessionUser } from '#server/utils/user'
@@ -48,40 +48,40 @@ function validatePasskeyOrigin(origin: unknown): PasskeyConfig {
 
   throw createError({
     status: 503,
-    statusMessage: passkeyMessages.unavailable
+    statusText: passkeyMessages.unavailable
   })
 }
 
-function getPasskeyConfig(event: H3Event): PasskeyConfig {
-  const config = useRuntimeConfig(event)
+function getPasskeyConfig(): PasskeyConfig {
+  const config = useRuntimeConfig()
 
   return validatePasskeyOrigin(config.passkeys.origin)
 }
 
-function validatePasskeyRequest(event: H3Event, config: PasskeyConfig): void {
-  const origin = getRequestHeader(event, 'origin')
-  const fetchSite = getRequestHeader(event, 'sec-fetch-site')
+function validatePasskeyRequest(event: RequestEvent, config: PasskeyConfig): void {
+  const origin = getRequestMetadataHeader(event, 'origin')
+  const fetchSite = getRequestMetadataHeader(event, 'sec-fetch-site')
 
   if (origin !== config.origin || fetchSite === 'cross-site') {
     throw createError({
       status: 403,
-      statusMessage: 'Request origin is not allowed'
+      statusText: 'Request origin is not allowed'
     })
   }
 
-  if (event.method !== 'DELETE') {
-    const contentType = getRequestHeader(event, 'content-type')?.split(';')[0]?.trim().toLowerCase()
+  if (getRequestMethod(event) !== 'DELETE') {
+    const contentType = getRequestMetadataHeader(event, 'content-type')?.split(';')[0]?.trim().toLowerCase()
 
     if (contentType !== 'application/json') {
       throw createError({
         status: 415,
-        statusMessage: 'JSON is required'
+        statusText: 'JSON is required'
       })
     }
   }
 }
 
-async function enforcePasskeyRateLimit(event: H3Event, key: string): Promise<void> {
+async function enforcePasskeyRateLimit(event: RequestEvent, key: string): Promise<void> {
   await enforceEmailAuthenticationRateLimit(event, {
     getBinding() {
       const binding = event.context.cloudflare?.env.PASSKEY_RATE_LIMITER
@@ -100,13 +100,13 @@ async function enforcePasskeyRateLimit(event: H3Event, key: string): Promise<voi
   })
 }
 
-async function getPasskeyActor(event: H3Event, operation: PasskeyOperation) {
+async function getPasskeyActor(event: RequestEvent, operation: PasskeyOperation) {
   const user = await getSessionUser(event)
 
   if (operation === 'authentication' && user.userId !== null) {
     throw createError({
       status: 409,
-      statusMessage: passkeyMessages.alreadySignedIn
+      statusText: passkeyMessages.alreadySignedIn
     })
   }
 
@@ -117,13 +117,13 @@ async function getPasskeyActor(event: H3Event, operation: PasskeyOperation) {
   if (operation === 'registration' && user.email === null && !user.isTwitchLinked) {
     throw createError({
       status: 403,
-      statusMessage: passkeyMessages.durableAccountRequired
+      statusText: passkeyMessages.durableAccountRequired
     })
   }
 
   const session = await useAppSession(event)
 
-  if (session.id === undefined || session.id === '') {
+  if (session.id === '') {
     throw new PasskeyVerificationError('Application session is missing')
   }
 
@@ -139,7 +139,7 @@ async function getPasskeyActor(event: H3Event, operation: PasskeyOperation) {
   }
 }
 
-async function limitPasskeyAuthentication(event: H3Event, phase: 'options' | 'verify'): Promise<void> {
+async function limitPasskeyAuthentication(event: RequestEvent, phase: 'options' | 'verify'): Promise<void> {
   const ip = getTrustedClientIp(event, import.meta.dev === true)
 
   await enforcePasskeyRateLimit(event, `authentication:${phase}:ip:${ip}`)
@@ -147,11 +147,11 @@ async function limitPasskeyAuthentication(event: H3Event, phase: 'options' | 've
 
 /** Owns safe HTTP errors; callers add credential material before invoking verifiers or persistence. */
 async function handlePasskeyRequest<Result>(
-  event: H3Event,
+  event: RequestEvent,
   operation: PasskeyOperation,
   action: (sensitiveValues: string[]) => Promise<Result>
 ): Promise<Result> {
-  setResponseHeader(event, 'Cache-Control', 'no-store')
+  event.res.headers.set('Cache-Control', 'no-store')
 
   const sensitiveValues: string[] = []
 
@@ -165,27 +165,27 @@ async function handlePasskeyRequest<Result>(
       error: details
     })
 
-    if (error instanceof PasskeyVerificationError || (isError(error) && error.statusCode === 400)) {
+    if (error instanceof PasskeyVerificationError || (isNuxtError(error) && error.status === 400)) {
       throw createError({
         status: operation === 'authentication' ? 401 : 400,
-        statusMessage: passkeyMessages.invalid
+        statusText: passkeyMessages.invalid
       })
     }
 
-    if (isError(error)) {
-      const status = error.statusCode
+    if (isNuxtError(error)) {
+      const { status } = error
 
       if ([401, 403, 404, 409, 413, 415, 429].includes(status)) {
         throw createError({
           status,
-          statusMessage: error.statusMessage
+          statusText: error.statusText
         })
       }
     }
 
     throw createError({
       status: 503,
-      statusMessage: passkeyMessages.unavailable
+      statusText: passkeyMessages.unavailable
     })
   }
 }

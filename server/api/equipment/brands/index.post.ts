@@ -1,16 +1,17 @@
-import { createError, defineEventHandler, readValidatedBody, setResponseStatus, type H3Event } from 'h3'
+import { createError, defineEventHandler, readValidatedBody, setResponseStatus } from 'nuxt/server'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import type { InferInput } from 'valibot'
 import { brands, contributions } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
-import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { createRuntimeWebSocketClient } from '#server/utils/config'
 import { brandBaseSelection, type BrandBaseRecord } from '#server/utils/equipment/base-records'
 import { throwBrandWriteError } from '#server/utils/equipment/brand-write-errors'
 import { validateBrandMutationBody, type brandMutationSchema } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof brandMutationSchema>; }>): Promise<BrandBaseRecord> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof brandMutationSchema>; }>): Promise<BrandBaseRecord> => {
   const userId = await validateAdminUser(event)
   const { name, slug } = await readValidatedBody(event, validateBrandMutationBody)
-  const dbWebsocket = createWebSocketClientFromEvent(event)
+  const dbWebsocket = createRuntimeWebSocketClient()
 
   try {
     const createdBrand = await dbWebsocket.transaction(async (transaction) => {

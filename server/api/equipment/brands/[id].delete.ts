@@ -1,16 +1,17 @@
 import { eq } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedRouterParams, setResponseStatus } from 'h3'
+import { createError, defineEventHandler, setResponseStatus } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
 import { brands, contributions } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
-import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { createRuntimeWebSocketClient } from '#server/utils/config'
 import { brandBaseSelection } from '#server/utils/equipment/base-records'
 import { throwBrandWriteError } from '#server/utils/equipment/brand-write-errors'
 import { validateBrandIdParams } from '#server/utils/validation/schemas'
 
 export default defineEventHandler(async (event): Promise<void> => {
   const userId = await validateAdminUser(event)
-  const { id: brandId } = await getValidatedRouterParams(event, validateBrandIdParams)
-  const dbWebsocket = createWebSocketClientFromEvent(event)
+  const { id: brandId } = await getValidatedRouteParams(event, validateBrandIdParams)
+  const dbWebsocket = createRuntimeWebSocketClient()
 
   try {
     await dbWebsocket.transaction(async (transaction) => {

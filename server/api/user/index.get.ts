@@ -1,4 +1,4 @@
-import { defineEventHandler } from 'h3'
+import { defineEventHandler } from 'nuxt/server'
 import { getSessionUser, type SessionUser } from '#server/utils/user'
 
 export default defineEventHandler(

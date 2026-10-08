@@ -1,4 +1,5 @@
-import * as h3 from 'h3'
+import type { getValidatedRouteParams } from '#server/utils/request'
+import * as nuxtServer from 'nuxt/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import renameMyGearHandler from '#server/api/user/gear/[id].patch'
 import deleteMyGearHandler from '#server/api/user/gear/[id].delete'
@@ -7,35 +8,37 @@ import createMyGearHandler from '#server/api/user/gear/index.post'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
 const {
-  getValidatedRouterParamsMock,
+  getValidatedRouteParamsMock,
   readValidatedBodyMock,
   setResponseStatusMock,
   validateSessionUserMock
 } = vi.hoisted(() => {
   return {
-    getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
-    readValidatedBodyMock: vi.fn<typeof h3.readValidatedBody>(),
-    setResponseStatusMock: vi.fn<typeof h3.setResponseStatus>(),
+    getValidatedRouteParamsMock: vi.fn<typeof getValidatedRouteParams>(),
+    readValidatedBodyMock: vi.fn<typeof nuxtServer.readValidatedBody>(),
+    setResponseStatusMock: vi.fn<typeof nuxtServer.setResponseStatus>(),
     validateSessionUserMock: vi.fn<(event: unknown) => Promise<string>>()
   }
 })
 
-// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial h3 mock.
-vi.mock(import('h3'), async () => {
-  const actual = await vi.importActual<typeof h3>('h3')
+// @ts-expect-error -- The test mock specializes the validator's generic result.
+vi.mock(import('#server/utils/request'), () => {
+  return {
+    getValidatedRouteParams: getValidatedRouteParamsMock
+  }
+})
+
+vi.mock(import('nuxt/server'), async () => {
+  const actual = await vi.importActual<typeof nuxtServer>('nuxt/server')
 
   return {
     ...actual,
 
-    async getValidatedRouterParams(...args: Parameters<typeof h3.getValidatedRouterParams>) {
-      return getValidatedRouterParamsMock(...args)
-    },
-
-    async readValidatedBody(...args: Parameters<typeof h3.readValidatedBody>) {
+    async readValidatedBody(...args: Parameters<typeof nuxtServer.readValidatedBody>) {
       return readValidatedBodyMock(...args)
     },
 
-    setResponseStatus(...args: Parameters<typeof h3.setResponseStatus>) {
+    setResponseStatus(...args: Parameters<typeof nuxtServer.setResponseStatus>) {
       setResponseStatusMock(...args)
     }
   }
@@ -186,7 +189,7 @@ describe('user gear handlers', () => {
     vi.clearAllMocks()
     validateSessionUserMock.mockResolvedValue('user-1')
 
-    getValidatedRouterParamsMock.mockResolvedValue({
+    getValidatedRouteParamsMock.mockResolvedValue({
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
     })
 
@@ -389,7 +392,7 @@ describe('user gear handlers', () => {
     })
 
     it('should return 401 when the user is unauthenticated', async () => {
-      const authError = h3.createError({ status: 401 })
+      const authError = nuxtServer.createError({ status: 401 })
       const event = createTestEvent(createListDb([]))
 
       validateSessionUserMock.mockRejectedValue(authError)
@@ -522,7 +525,7 @@ describe('user gear handlers', () => {
     })
 
     it('should return 400 when body validation fails', async () => {
-      const bodyError = h3.createError({ status: 400 })
+      const bodyError = nuxtServer.createError({ status: 400 })
       const { dbHttp } = createCreateDb()
       const event = createTestEvent(dbHttp)
 
@@ -688,11 +691,11 @@ describe('user gear handlers', () => {
     })
 
     it('should return 400 when route params validation fails', async () => {
-      const routeError = h3.createError({ status: 400 })
+      const routeError = nuxtServer.createError({ status: 400 })
       const { dbHttp } = createDeleteDb()
       const event = createTestEvent(dbHttp)
 
-      getValidatedRouterParamsMock.mockRejectedValue(routeError)
+      getValidatedRouteParamsMock.mockRejectedValue(routeError)
 
       await expect(deleteMyGearHandler(event)).rejects.toMatchObject({
         statusCode: 400

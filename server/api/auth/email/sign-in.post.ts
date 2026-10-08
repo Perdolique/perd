@@ -1,6 +1,7 @@
 import type { InferInput } from 'valibot'
 import { eq } from 'drizzle-orm'
-import { createError, defineEventHandler, type H3Event } from 'h3'
+import { createError, defineEventHandler, type RequestEvent } from 'nuxt/server'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { emailSignInTurnstileAction } from '#shared/utils/turnstile'
 import { emailCredentials, users } from '#server/database/schema'
 import { getEmailAuthenticationOrigin } from '#server/utils/config'
@@ -38,7 +39,7 @@ const dummyPasswordHash = 'scrypt$16384$8$5$000102030405060708090a0b0c0d0e0f$bc1
 const maximumSignInBodyByteLength = 4096
 
 async function findEmailCredential(
-  event: H3Event,
+  event: RequestEvent,
   email: string
 ): Promise<EmailCredentialResult | undefined> {
   try {
@@ -65,13 +66,13 @@ async function findEmailCredential(
     throw createError({
       cause: details,
       status: 503,
-      statusMessage: 'Email sign-in is temporarily unavailable'
+      statusText: 'Email sign-in is temporarily unavailable'
     })
   }
 }
 
-export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof emailSignInSchema>; }>): Promise<EmailSignInResponse> => {
-  const expectedOrigin = getEmailAuthenticationOrigin(event)
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof emailSignInSchema>; }>): Promise<EmailSignInResponse> => {
+  const expectedOrigin = getEmailAuthenticationOrigin()
 
   validateEmailAuthenticationRequest(event, expectedOrigin)
 
@@ -91,7 +92,7 @@ export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeo
     unavailableStatusMessage: 'Email sign-in is temporarily unavailable'
   })
 
-  await verifyTurnstile(event, body['cf-turnstile-response'], {
+  await verifyTurnstile(body['cf-turnstile-response'], {
     remoteIp: clientIp,
     expectedAction: emailSignInTurnstileAction
   })
@@ -111,7 +112,7 @@ export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeo
   if (sessionUser.userId !== null) {
     throw createError({
       status: 409,
-      statusMessage: 'A user is already signed in'
+      statusText: 'A user is already signed in'
     })
   }
 
@@ -122,7 +123,7 @@ export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeo
   if (credential === undefined || !passwordMatches) {
     throw createError({
       status: 401,
-      statusMessage: 'Email or password is incorrect'
+      statusText: 'Email or password is incorrect'
     })
   }
 

@@ -1,4 +1,5 @@
-import * as h3 from 'h3'
+import type { getValidatedRouteParams } from '#server/utils/request'
+import * as nuxtServer from 'nuxt/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import deletePackingListHandler from '#server/api/user/packing-lists/[id].delete'
 import deletePackingListEntryHandler from '#server/api/user/packing-lists/[id]/entries/[entry-id].delete'
@@ -48,7 +49,7 @@ const savedGearCases = [{
 
 const {
   createWebSocketClientMock,
-  getValidatedRouterParamsMock,
+  getValidatedRouteParamsMock,
   readValidatedBodyMock,
   setResponseStatusMock,
   validateSessionUserMock
@@ -58,29 +59,31 @@ const {
       throw new Error('createWebSocketClient mock is not configured')
     }),
 
-    getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
-    readValidatedBodyMock: vi.fn<typeof h3.readValidatedBody>(),
-    setResponseStatusMock: vi.fn<typeof h3.setResponseStatus>(),
+    getValidatedRouteParamsMock: vi.fn<typeof getValidatedRouteParams>(),
+    readValidatedBodyMock: vi.fn<typeof nuxtServer.readValidatedBody>(),
+    setResponseStatusMock: vi.fn<typeof nuxtServer.setResponseStatus>(),
     validateSessionUserMock: vi.fn<(event: unknown) => Promise<string>>()
   }
 })
 
-// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial h3 mock.
-vi.mock(import('h3'), async () => {
-  const actual = await vi.importActual<typeof h3>('h3')
+// @ts-expect-error -- The test mock specializes the validator's generic result.
+vi.mock(import('#server/utils/request'), () => {
+  return {
+    getValidatedRouteParams: getValidatedRouteParamsMock
+  }
+})
+
+vi.mock(import('nuxt/server'), async () => {
+  const actual = await vi.importActual<typeof nuxtServer>('nuxt/server')
 
   return {
     ...actual,
 
-    async getValidatedRouterParams(...args: Parameters<typeof h3.getValidatedRouterParams>) {
-      return getValidatedRouterParamsMock(...args)
-    },
-
-    async readValidatedBody(...args: Parameters<typeof h3.readValidatedBody>) {
+    async readValidatedBody(...args: Parameters<typeof nuxtServer.readValidatedBody>) {
       return readValidatedBodyMock(...args)
     },
 
-    setResponseStatus(...args: Parameters<typeof h3.setResponseStatus>) {
+    setResponseStatus(...args: Parameters<typeof nuxtServer.setResponseStatus>) {
       setResponseStatusMock(...args)
     }
   }
@@ -95,7 +98,7 @@ vi.mock(import('#server/utils/session'), () => {
 // @ts-expect-error -- Vitest's import-based module mock typing rejects this partial config mock.
 vi.mock(import('#server/utils/config'), () => {
   return {
-    createWebSocketClientFromEvent: createWebSocketClientMock
+    createRuntimeWebSocketClient: createWebSocketClientMock
   }
 })
 
@@ -463,7 +466,7 @@ describe('user packing list handlers', () => {
 
     validateSessionUserMock.mockResolvedValue('user-1')
 
-    getValidatedRouterParamsMock.mockResolvedValue({
+    getValidatedRouteParamsMock.mockResolvedValue({
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
     })
 
@@ -593,7 +596,7 @@ describe('user packing list handlers', () => {
     })
 
     it('should return 401 when the user is unauthenticated', async () => {
-      const authError = h3.createError({ status: 401 })
+      const authError = nuxtServer.createError({ status: 401 })
       const event = createTestEvent(createListDb([]))
 
       validateSessionUserMock.mockRejectedValue(authError)
@@ -785,7 +788,7 @@ describe('user packing list handlers', () => {
     })
 
     it('should return 401 when the user is unauthenticated', async () => {
-      const authError = h3.createError({ status: 401 })
+      const authError = nuxtServer.createError({ status: 401 })
       const dbHttp = createDetailDb()
       const event = createTestEvent(dbHttp)
 
@@ -820,7 +823,7 @@ describe('user packing list handlers', () => {
     })
 
     it('should return 400 when body validation fails', async () => {
-      const bodyError = h3.createError({ status: 400 })
+      const bodyError = nuxtServer.createError({ status: 400 })
       const { dbHttp } = createCreateDb()
       const event = createTestEvent(dbHttp)
 
@@ -832,7 +835,7 @@ describe('user packing list handlers', () => {
     })
 
     it('should return 401 when the user is unauthenticated', async () => {
-      const authError = h3.createError({ status: 401 })
+      const authError = nuxtServer.createError({ status: 401 })
       const { dbHttp } = createCreateDb()
       const event = createTestEvent(dbHttp)
 
@@ -880,11 +883,11 @@ describe('user packing list handlers', () => {
     })
 
     it('should return 400 when route params validation fails', async () => {
-      const routeError = h3.createError({ status: 400 })
+      const routeError = nuxtServer.createError({ status: 400 })
       const { dbHttp } = createUpdateDb()
       const event = createTestEvent(dbHttp)
 
-      getValidatedRouterParamsMock.mockRejectedValue(routeError)
+      getValidatedRouteParamsMock.mockRejectedValue(routeError)
 
       await expect(updatePackingListHandler(event)).rejects.toMatchObject({
         statusCode: 400
@@ -892,7 +895,7 @@ describe('user packing list handlers', () => {
     })
 
     it('should return 401 when the user is unauthenticated', async () => {
-      const authError = h3.createError({ status: 401 })
+      const authError = nuxtServer.createError({ status: 401 })
       const { dbHttp } = createUpdateDb()
       const event = createTestEvent(dbHttp)
 
@@ -927,7 +930,7 @@ describe('user packing list handlers', () => {
     })
 
     it('should return 401 when the user is unauthenticated', async () => {
-      const authError = h3.createError({ status: 401 })
+      const authError = nuxtServer.createError({ status: 401 })
       const { dbHttp } = createDeleteDb()
       const event = createTestEvent(dbHttp)
 
@@ -1230,7 +1233,7 @@ describe('user packing list handlers', () => {
     })
 
     it('should return 400 when create body validation fails before opening a write client', async () => {
-      const bodyError = h3.createError({ status: 400 })
+      const bodyError = nuxtServer.createError({ status: 400 })
       const event = createTestEvent({})
 
       readValidatedBodyMock.mockRejectedValue(bodyError)
@@ -1254,7 +1257,7 @@ describe('user packing list handlers', () => {
         userEquipmentId: null
       }
 
-      getValidatedRouterParamsMock.mockResolvedValue({
+      getValidatedRouteParamsMock.mockResolvedValue({
         entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
       })
@@ -1318,7 +1321,7 @@ describe('user packing list handlers', () => {
         userEquipmentId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9'
       }
 
-      getValidatedRouterParamsMock.mockResolvedValue({
+      getValidatedRouteParamsMock.mockResolvedValue({
         entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e2',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
       })
@@ -1375,7 +1378,7 @@ describe('user packing list handlers', () => {
     })
 
     it('should return 404 when the entry is missing from the owned packing list', async () => {
-      getValidatedRouterParamsMock.mockResolvedValue({
+      getValidatedRouteParamsMock.mockResolvedValue({
         entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
       })
@@ -1417,7 +1420,7 @@ describe('user packing list handlers', () => {
         // Expected failure diagnostics are asserted below.
       })
 
-      getValidatedRouterParamsMock.mockResolvedValue({
+      getValidatedRouteParamsMock.mockResolvedValue({
         entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
       })
@@ -1460,7 +1463,7 @@ describe('user packing list handlers', () => {
         // Expected failure diagnostics are asserted below.
       })
 
-      getValidatedRouterParamsMock.mockResolvedValue({
+      getValidatedRouteParamsMock.mockResolvedValue({
         entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
       })
@@ -1509,7 +1512,7 @@ describe('user packing list handlers', () => {
 
   describe('delete /api/user/packing-lists/[id]/entries/[entryId]', () => {
     it('should delete a custom entry and touch the parent packing list', async () => {
-      getValidatedRouterParamsMock.mockResolvedValue({
+      getValidatedRouteParamsMock.mockResolvedValue({
         entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
       })
@@ -1553,7 +1556,7 @@ describe('user packing list handlers', () => {
     })
 
     it('should return 404 when the parent packing list is missing or unowned', async () => {
-      getValidatedRouterParamsMock.mockResolvedValue({
+      getValidatedRouteParamsMock.mockResolvedValue({
         entryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
       })

@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, gte, ilike, lte, or, sql, type SQL } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
-import { createError } from 'h3'
+import { createError } from 'nuxt/server'
 import { brands, equipmentCategories, equipmentItems, itemPropertyValues } from '#server/database/schema'
 import type { createHttpClient } from '#server/utils/database'
 

@@ -1,4 +1,5 @@
-import { defineEventHandler, getValidatedRouterParams } from 'h3'
+import { defineEventHandler } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
 import { validateAdminUser } from '#server/utils/admin'
 
 import {
@@ -12,7 +13,7 @@ import { validateCategoryScopedParams } from '#server/utils/validation/schemas'
 export default defineEventHandler(async (event): Promise<AdminCategoryPropertiesSnapshot> => {
   await validateAdminUser(event)
 
-  const { categoryId } = await getValidatedRouterParams(event, validateCategoryScopedParams)
+  const { categoryId } = await getValidatedRouteParams(event, validateCategoryScopedParams)
 
-  return withPropertiesTransaction(event, async (transaction) => readCategoryPropertiesSnapshot(transaction, categoryId), true)
+  return withPropertiesTransaction(async (transaction) => readCategoryPropertiesSnapshot(transaction, categoryId), true)
 })

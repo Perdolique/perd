@@ -1,4 +1,5 @@
-import { createError, getRequestHeader, getRequestIP, type H3Event } from 'h3'
+import { getRequestMetadataHeader, getDevelopmentClientIP } from '#server/utils/request-runtime'
+import { createError, type RequestEvent } from 'nuxt/server'
 import * as v from 'valibot'
 
 const photoSubmissionEnvironmentSchema = v.picklist([
@@ -9,14 +10,14 @@ const photoSubmissionEnvironmentSchema = v.picklist([
 
 type PhotoSubmissionEnvironment = v.InferOutput<typeof photoSubmissionEnvironmentSchema>
 
-function getTrustedClientIp(event: H3Event, isDevelopment: boolean): string {
-  const cloudflareIp = getRequestHeader(event, 'cf-connecting-ip')?.trim()
+function getTrustedClientIp(event: RequestEvent, isDevelopment: boolean): string {
+  const cloudflareIp = getRequestMetadataHeader(event, 'cf-connecting-ip')?.trim()
 
   if (cloudflareIp !== undefined && cloudflareIp !== '') {
     return cloudflareIp
   }
 
-  const localIp = isDevelopment ? getRequestIP(event, { xForwardedFor: true })?.trim() : undefined
+  const localIp = isDevelopment ? getDevelopmentClientIP(event)?.trim() : undefined
 
   if (localIp !== undefined && localIp !== '') {
     return localIp
@@ -24,30 +25,30 @@ function getTrustedClientIp(event: H3Event, isDevelopment: boolean): string {
 
   throw createError({
     status: 503,
-    statusMessage: 'Client address unavailable'
+    statusText: 'Client address unavailable'
   })
 }
 
-function getCloudflareImagesBinding(event: H3Event) : Env['IMAGES'] {
+function getCloudflareImagesBinding(event: RequestEvent) : Env['IMAGES'] {
   const binding = event.context.cloudflare?.env.IMAGES
 
   if (binding === undefined) {
     throw createError({
       status: 503,
-      statusMessage: 'Images binding unavailable'
+      statusText: 'Images binding unavailable'
     })
   }
 
   return binding
 }
 
-function getPhotoSubmissionRateLimiterBinding(event: H3Event): Env['PHOTO_SUBMISSION_RATE_LIMITER'] {
+function getPhotoSubmissionRateLimiterBinding(event: RequestEvent): Env['PHOTO_SUBMISSION_RATE_LIMITER'] {
   const binding = event.context.cloudflare?.env.PHOTO_SUBMISSION_RATE_LIMITER
 
   if (binding === undefined) {
     throw createError({
       status: 503,
-      statusMessage: 'Photo submission rate limiter unavailable'
+      statusText: 'Photo submission rate limiter unavailable'
     })
   }
 
@@ -55,99 +56,99 @@ function getPhotoSubmissionRateLimiterBinding(event: H3Event): Env['PHOTO_SUBMIS
 }
 
 function getPhotoSubmissionTurnstileRateLimiterBinding(
-  event: H3Event
+  event: RequestEvent
 ): Env['PHOTO_SUBMISSION_TURNSTILE_RATE_LIMITER'] {
   const binding = event.context.cloudflare?.env.PHOTO_SUBMISSION_TURNSTILE_RATE_LIMITER
 
   if (binding === undefined) {
     throw createError({
       status: 503,
-      statusMessage: 'Photo submission security rate limiter unavailable'
+      statusText: 'Photo submission security rate limiter unavailable'
     })
   }
 
   return binding
 }
 
-function getItemSubmissionRateLimiterBinding(event: H3Event): Env['ITEM_SUBMISSION_RATE_LIMITER'] {
+function getItemSubmissionRateLimiterBinding(event: RequestEvent): Env['ITEM_SUBMISSION_RATE_LIMITER'] {
   const binding = event.context.cloudflare?.env.ITEM_SUBMISSION_RATE_LIMITER
 
   if (binding === undefined) {
     throw createError({
       status: 503,
-      statusMessage: 'Item submission rate limiter unavailable'
+      statusText: 'Item submission rate limiter unavailable'
     })
   }
 
   return binding
 }
 
-function getGuestSessionRateLimiterBinding(event: H3Event): Env['GUEST_SESSION_RATE_LIMITER'] {
+function getGuestSessionRateLimiterBinding(event: RequestEvent): Env['GUEST_SESSION_RATE_LIMITER'] {
   const binding = event.context.cloudflare?.env.GUEST_SESSION_RATE_LIMITER
 
   if (binding === undefined) {
     throw createError({
       status: 503,
-      statusMessage: 'Guest session rate limiter unavailable'
+      statusText: 'Guest session rate limiter unavailable'
     })
   }
 
   return binding
 }
 
-function getEmailSignInRateLimiterBinding(event: H3Event): Env['EMAIL_SIGN_IN_RATE_LIMITER'] {
+function getEmailSignInRateLimiterBinding(event: RequestEvent): Env['EMAIL_SIGN_IN_RATE_LIMITER'] {
   const binding = event.context.cloudflare?.env.EMAIL_SIGN_IN_RATE_LIMITER
 
   if (binding === undefined) {
     throw createError({
       status: 503,
-      statusMessage: 'Email sign-in rate limiter unavailable'
+      statusText: 'Email sign-in rate limiter unavailable'
     })
   }
 
   return binding
 }
 
-function getPasswordRecoveryRateLimiterBinding(event: H3Event): Env['PASSWORD_RECOVERY_RATE_LIMITER'] {
+function getPasswordRecoveryRateLimiterBinding(event: RequestEvent): Env['PASSWORD_RECOVERY_RATE_LIMITER'] {
   const binding = event.context.cloudflare?.env.PASSWORD_RECOVERY_RATE_LIMITER
 
   if (binding === undefined) {
     throw createError({
       status: 503,
-      statusMessage: 'Password recovery rate limiter unavailable'
+      statusText: 'Password recovery rate limiter unavailable'
     })
   }
 
   return binding
 }
 
-function getTwitchOAuthRateLimiterBinding(event: H3Event): Env['TWITCH_OAUTH_RATE_LIMITER'] {
+function getTwitchOAuthRateLimiterBinding(event: RequestEvent): Env['TWITCH_OAUTH_RATE_LIMITER'] {
   const binding = event.context.cloudflare?.env.TWITCH_OAUTH_RATE_LIMITER
 
   if (binding === undefined) {
     throw createError({
       status: 503,
-      statusMessage: 'Twitch OAuth rate limiter unavailable'
+      statusText: 'Twitch OAuth rate limiter unavailable'
     })
   }
 
   return binding
 }
 
-function getEmailBinding(event: H3Event): Env['EMAIL'] {
+function getEmailBinding(event: RequestEvent): Env['EMAIL'] {
   const binding = event.context.cloudflare?.env.EMAIL
 
   if (binding === undefined) {
     throw createError({
       status: 503,
-      statusMessage: 'Email delivery is temporarily unavailable'
+      statusText: 'Email delivery is temporarily unavailable'
     })
   }
 
   return binding
 }
 
-function getPhotoSubmissionEnvironment(event: H3Event): PhotoSubmissionEnvironment {
+function getPhotoSubmissionEnvironment(event: RequestEvent): PhotoSubmissionEnvironment {
   const environment = event.context.cloudflare?.env.PHOTO_SUBMISSION_ENVIRONMENT
 
   try {
@@ -156,7 +157,7 @@ function getPhotoSubmissionEnvironment(event: H3Event): PhotoSubmissionEnvironme
     throw createError({
       cause: error,
       status: 503,
-      statusMessage: 'Photo submission environment unavailable'
+      statusText: 'Photo submission environment unavailable'
     })
   }
 }

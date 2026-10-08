@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { createError } from 'h3'
+import { createError } from 'nuxt/server'
 import { getAuthErrorDetails } from './telemetry'
 
 async function requestPasswordRange(password: string, sha1: string): Promise<string[]> {
@@ -33,7 +33,7 @@ async function requestPasswordRange(password: string, sha1: string): Promise<str
 
     throw createError({
       status: 503,
-      statusMessage: 'Password checking is temporarily unavailable'
+      statusText: 'Password checking is temporarily unavailable'
     })
   }
 }
@@ -52,7 +52,7 @@ async function assertPasswordNotPwned(password: string): Promise<void> {
   if (isPwned) {
     throw createError({
       status: 400,
-      statusMessage: 'Choose a password that has not appeared in a data breach'
+      statusText: 'Choose a password that has not appeared in a data breach'
     })
   }
 }

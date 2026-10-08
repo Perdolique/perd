@@ -1,4 +1,4 @@
-import { createError } from 'h3'
+import { createError } from 'nuxt/server'
 import type { CategoryDetailResponse } from '#server/api/equipment/categories/by-slug/[slug].get'
 import type { PropertiesTransaction } from '#server/utils/equipment/category-properties'
 import type { EquipmentItemPropertyInput } from '#server/utils/equipment/item-properties'

@@ -2,6 +2,20 @@
 
 ## Nuxt 4.6 compatibility workarounds
 
+### Portable request type inference
+
+Nuxt 4.6's portable `defineEventHandler` returns `EventHandler<Result>` without the callback's body or query shape. Nitro 2's request type extractor only reads `H3Event<Request>`. `shared/types/api-request.d.ts` preserves the callback type and carries each validator's input on `ApiRequestEvent`. The public `server:routes` hook registers its request type extractors after the server builder has registered its own hooks. The extractors fall back to Nitro's public types for module-owned H3 routes.
+
+Remove the declaration bridge and route hook after Nuxt preserves portable body and query contracts itself. Run `vp run test:typecheck` with the existing API request type assertions before removing them. Keep request input types based on the existing validation schemas and keep handler response types explicit.
+
+### Nitro 2 request transport
+
+The Nitro 2 adapter can buffer a Node request before exposing its portable Web Stream. `server/utils/request-runtime.ts` uses the H3 transport stream for bounded JSON and multipart reads, so an oversized request is rejected before its whole body is read. It gives cookie-only session helpers a stable header-only event and reads request headers and the method without starting that buffer. It also reads the local connection address when the portable request has no client address, and schedules background work with Nitro's request lifetime API. Application handlers use `nuxt/server`; the passkey error handler still uses Nitro's H3 error interface.
+
+Remove these transport helpers when the installed server builder provides incremental Web Streams, the local client address, and a portable background-task API. Verify header reads do not start body consumption, body limits without Content-Length, request cancellation, password recovery background work, and image cleanup in the built Worker. Keep the standalone database CLI independent from the request runtime.
+
+The application now uses Nuxt's sealed sessions with the existing secret, cookie name, and cookie policy. H3 cookies cannot be read in the new format; this migration resets existing sessions. Session-version checks still revoke stale sessions after password recovery.
+
 ### Early 404 error responses
 
 Nuxt 4.6 enables `inlineErrorRendering` with compatibility version 5. Its renderer sends non-HTML early 404 errors through the Vue error page instead of returning JSON. Route middleware also runs while that error page renders, so authentication can replace a 404 with a login redirect. `experimental.inlineErrorRendering: false` keeps Nitro's HTML and JSON error response handling. The user, authentication, and admin middleware skip an active Nuxt error only during server rendering or hydration, so the error page can load and later navigation still requires authentication.

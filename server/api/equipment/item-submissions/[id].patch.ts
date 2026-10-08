@@ -1,9 +1,11 @@
 import type { InferInput } from 'valibot'
 import { eq, sql } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody, type H3Event } from 'h3'
+import { createError, defineEventHandler, isNuxtError, readValidatedBody } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { contributions, equipmentItems, itemPropertyValues } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
-import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { createRuntimeWebSocketClient } from '#server/utils/config'
 
 import {
   checkPropertiesRevision,
@@ -46,11 +48,11 @@ function mapNormalizedProperty(value: {
   }
 }
 
-export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof itemSubmissionUpdateBodySchema>; }>): Promise<ItemSubmissionDetailResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof itemSubmissionUpdateBodySchema>; }>): Promise<ItemSubmissionDetailResponse> => {
   const userId = await validateAdminUser(event)
-  const { id } = await getValidatedRouterParams(event, validateItemSubmissionParams)
+  const { id } = await getValidatedRouteParams(event, validateItemSubmissionParams)
   const body = await readValidatedBody(event, validateItemSubmissionUpdateBody)
-  const dbWebsocket = createWebSocketClientFromEvent(event)
+  const dbWebsocket = createRuntimeWebSocketClient()
 
   try {
     return await dbWebsocket.transaction(async (transaction) => {
@@ -283,7 +285,7 @@ export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeo
       }
     })
   } catch (error) {
-    const isExpectedClientError = isError(error) && error.statusCode < 500
+    const isExpectedClientError = isNuxtError(error) && error.status < 500
 
     if (isExpectedClientError) {
       throw error

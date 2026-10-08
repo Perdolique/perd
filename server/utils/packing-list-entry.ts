@@ -1,4 +1,4 @@
-import { createError } from 'h3'
+import { createError } from 'nuxt/server'
 
 interface PackingListInventoryBase {
   inventoryId: string;

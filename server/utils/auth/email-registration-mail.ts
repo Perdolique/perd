@@ -1,4 +1,4 @@
-import { createError, type H3Event } from 'h3'
+import { createError, type RequestEvent } from 'nuxt/server'
 import type { EmailRegistrationConfig } from './email-registration-config'
 
 function escapeHtml(value: string): string {
@@ -12,7 +12,7 @@ interface RegistrationEmail {
 }
 
 async function sendRegistrationEmail(
-  event: H3Event,
+  event: RequestEvent,
   config: EmailRegistrationConfig,
   message: RegistrationEmail
 ): Promise<void> {
@@ -22,7 +22,7 @@ async function sendRegistrationEmail(
   if (binding === undefined) {
     throw createError({
       status: 503,
-      statusMessage: 'Email delivery is temporarily unavailable'
+      statusText: 'Email delivery is temporarily unavailable'
     })
   }
 

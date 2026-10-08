@@ -1,3 +1,4 @@
+import { toTestRequestEvent } from '~~/test-utils/create-test-event'
 import { IncomingMessage, ServerResponse } from 'node:http'
 import { Socket } from 'node:net'
 import { createEvent } from 'h3'
@@ -13,8 +14,13 @@ const { useRuntimeConfigMock } = vi.hoisted(() => {
   return { useRuntimeConfigMock: vi.fn() }
 })
 
-vi.mock(import('nitropack/runtime'), () => {
-  return { useRuntimeConfig: useRuntimeConfigMock }
+vi.mock(import('nuxt/server'), async (importOriginal) => {
+  const actual = await importOriginal()
+
+  return {
+    ...actual,
+    useRuntimeConfig: useRuntimeConfigMock
+  }
 })
 
 vi.mock(import('#server/utils/user'), () => {
@@ -69,7 +75,7 @@ function createPasskeyEvent(clientIp: string, body = '{}') {
   // oxlint-disable-next-line unicorn/prefer-single-call -- Readable.push ends the stream with null.
   request.push(null)
 
-  const event = createEvent(request, new ServerResponse(request))
+  const event = toTestRequestEvent(createEvent(request, new ServerResponse(request)))
 
   Object.assign(event.context, {
     cloudflare: {

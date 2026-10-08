@@ -1,4 +1,4 @@
-import { createError } from 'h3'
+import { createError } from 'nuxt/server'
 import * as v from 'valibot'
 import { normalizeEmail } from '#shared/utils/email-authentication'
 
@@ -32,7 +32,7 @@ function validateEmailAuthenticationOrigin(emailRegistration: EmailRegistrationS
   } catch {
     throw createError({
       status: 503,
-      statusMessage: 'Email authentication is not configured'
+      statusText: 'Email authentication is not configured'
     })
   }
 }
@@ -56,7 +56,7 @@ function validateEmailAuthenticationConfig(emailRegistration: EmailRegistrationS
   } catch {
     throw createError({
       status: 503,
-      statusMessage: 'Email authentication is not configured'
+      statusText: 'Email authentication is not configured'
     })
   }
 }
@@ -67,7 +67,7 @@ function validateEmailRegistrationConfig(emailRegistration: EmailRegistrationSet
   } catch {
     throw createError({
       status: 503,
-      statusMessage: 'Email registration is not configured'
+      statusText: 'Email registration is not configured'
     })
   }
 }

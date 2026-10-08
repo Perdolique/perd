@@ -1,4 +1,5 @@
-import type * as h3 from 'h3'
+import type { getValidatedRouteParams } from '#server/utils/request'
+import type * as nuxtServer from 'nuxt/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type {
@@ -22,7 +23,7 @@ const {
   deleteUnattachedHostedEquipmentImageMock,
   getCloudflareImagesBindingMock,
   getValidatedQueryMock,
-  getValidatedRouterParamsMock,
+  getValidatedRouteParamsMock,
   insertContributionValuesMock,
   setResponseStatusMock,
   uploadHostedEquipmentImageMock,
@@ -34,32 +35,34 @@ const {
     createWebSocketClientMock: vi.fn(),
     deleteUnattachedHostedEquipmentImageMock: vi.fn<typeof deleteUnattachedHostedEquipmentImage>(),
     getCloudflareImagesBindingMock: vi.fn(),
-    getValidatedQueryMock: vi.fn<typeof h3.getValidatedQuery>(),
-    getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
+    getValidatedQueryMock: vi.fn<typeof nuxtServer.getValidatedQuery>(),
+    getValidatedRouteParamsMock: vi.fn<typeof getValidatedRouteParams>(),
     insertContributionValuesMock: vi.fn(),
-    setResponseStatusMock: vi.fn<typeof h3.setResponseStatus>(),
+    setResponseStatusMock: vi.fn<typeof nuxtServer.setResponseStatus>(),
     uploadHostedEquipmentImageMock: vi.fn<typeof uploadHostedEquipmentImage>(),
     validateAdminUserMock: vi.fn(),
     validateEquipmentItemImageRequestMock: vi.fn<() => string>()
   }
 })
 
-// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial h3 mock.
-vi.mock(import('h3'), async () => {
-  const actual = await vi.importActual<typeof h3>('h3')
+// @ts-expect-error -- The test mock specializes the validator's generic result.
+vi.mock(import('#server/utils/request'), () => {
+  return {
+    getValidatedRouteParams: getValidatedRouteParamsMock
+  }
+})
+
+vi.mock(import('nuxt/server'), async () => {
+  const actual = await vi.importActual<typeof nuxtServer>('nuxt/server')
 
   return {
     ...actual,
 
-    async getValidatedQuery(...args: Parameters<typeof h3.getValidatedQuery>) {
+    async getValidatedQuery(...args: Parameters<typeof nuxtServer.getValidatedQuery>) {
       return getValidatedQueryMock(...args)
     },
 
-    async getValidatedRouterParams(...args: Parameters<typeof h3.getValidatedRouterParams>) {
-      return getValidatedRouterParamsMock(...args)
-    },
-
-    setResponseStatus(...args: Parameters<typeof h3.setResponseStatus>) {
+    setResponseStatus(...args: Parameters<typeof nuxtServer.setResponseStatus>) {
       setResponseStatusMock(...args)
     }
   }
@@ -79,7 +82,7 @@ vi.mock(import('#server/utils/cloudflare'), () => {
 
 vi.mock(import('#server/utils/config'), () => {
   return {
-    createWebSocketClientFromEvent: createWebSocketClientMock
+    createRuntimeWebSocketClient: createWebSocketClientMock
   }
 })
 
@@ -194,7 +197,7 @@ describe('post /api/equipment/items/[id]/images', () => {
     createWebSocketClientMock.mockReturnValue(writeDb)
     getCloudflareImagesBindingMock.mockReturnValue({ binding: 'images' })
     getValidatedQueryMock.mockResolvedValue({ filename })
-    getValidatedRouterParamsMock.mockResolvedValue({ id: itemId })
+    getValidatedRouteParamsMock.mockResolvedValue({ id: itemId })
     uploadHostedEquipmentImageMock.mockResolvedValue(cloudflareImageId)
     validateAdminUserMock.mockResolvedValue(userId)
     validateEquipmentItemImageRequestMock.mockReturnValue('image/webp')

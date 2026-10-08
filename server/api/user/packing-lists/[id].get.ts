@@ -1,4 +1,5 @@
-import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
+import { createError, defineEventHandler } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
 import { validatePackingListIdParams } from '#server/utils/validation/schemas'
 import { validateSessionUser } from '#server/utils/session'
 
@@ -69,7 +70,7 @@ function createEntryResponse(entry: PackingListEntryRow): PackingListEntry {
 
 export default defineEventHandler(async (event) : Promise<PackingListDetail> => {
   const userId = await validateSessionUser(event)
-  const { id } = await getValidatedRouterParams(event, validatePackingListIdParams)
+  const { id } = await getValidatedRouteParams(event, validatePackingListIdParams)
 
   const packingList: PackingListQueryDetail | undefined = await event.context.dbHttp.query.packingLists.findFirst({
     columns: {

@@ -1,21 +1,11 @@
 import { passwordRecoveryApiPaths } from '#shared/utils/email-authentication'
 import { emailRegistrationApiPaths } from '#shared/utils/email-registration'
-import { defineEventHandler, getRequestURL } from 'h3'
+import { defineEventHandler, getRequestURL } from 'nuxt/server'
 import { createHttpClient } from '#server/utils/database'
 import { getRuntimeDatabaseConfig, requireEmailRegistrationEnabled } from '#server/utils/config'
 
-declare module 'h3' {
-  interface H3EventContext {
-    dbHttp: ReturnType<typeof createHttpClient>;
-  }
-}
-
-export default defineEventHandler((event) => {
-  // Database access belongs only to unhandled application API requests, not page or Nuxt Icon rendering.
-  if (event.handled) {
-    return
-  }
-
+export default defineEventHandler((event): void => {
+  // Database access belongs only to application API requests, not page or Nuxt Icon rendering.
   const { pathname } = getRequestURL(event)
   const isApiRequest = pathname === '/api' || pathname.startsWith('/api/')
   const isNuxtIconRequest = pathname.startsWith('/api/_nuxt_icon/')
@@ -27,7 +17,7 @@ export default defineEventHandler((event) => {
   const normalizedPath = pathname.replace(/\/$/u, '')
 
   if (emailRegistrationApiPaths.some(path => path === normalizedPath)) {
-    requireEmailRegistrationEnabled(event)
+    requireEmailRegistrationEnabled()
   }
 
   if (passwordRecoveryApiPaths.some(path => path === normalizedPath)) {
@@ -38,7 +28,7 @@ export default defineEventHandler((event) => {
     return
   }
 
-  const dbConfig = getRuntimeDatabaseConfig(event)
+  const dbConfig = getRuntimeDatabaseConfig()
 
   event.context.dbHttp = createHttpClient(dbConfig)
 })

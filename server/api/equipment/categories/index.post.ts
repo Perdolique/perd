@@ -1,16 +1,17 @@
 import type { InferInput } from 'valibot'
-import { createError, defineEventHandler, readValidatedBody, setResponseStatus, type H3Event } from 'h3'
+import { createError, defineEventHandler, readValidatedBody, setResponseStatus } from 'nuxt/server'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { contributions, equipmentCategories } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
-import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { createRuntimeWebSocketClient } from '#server/utils/config'
 import { categoryBaseSelection, type CategoryBaseRecord } from '#server/utils/equipment/base-records'
 import { logCategoryWriteError, throwCategoryWriteError } from '#server/utils/equipment/category-write-errors'
 import { validateCategoryMutationBody, type categoryMutationSchema } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof categoryMutationSchema>; }>): Promise<CategoryBaseRecord> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof categoryMutationSchema>; }>): Promise<CategoryBaseRecord> => {
   const userId = await validateAdminUser(event)
   const { name, slug } = await readValidatedBody(event, validateCategoryMutationBody)
-  const dbWebsocket = createWebSocketClientFromEvent(event)
+  const dbWebsocket = createRuntimeWebSocketClient()
 
   try {
     const createdCategory = await dbWebsocket.transaction(async (transaction) => {

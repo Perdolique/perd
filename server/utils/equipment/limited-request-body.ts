@@ -1,4 +1,5 @@
-import { createError, getRequestHeader, type H3Event } from 'h3'
+import { getRequestMetadataHeader } from '#server/utils/request-runtime'
+import { createError, type RequestEvent } from 'nuxt/server'
 
 interface LimitedRequestBody {
   close: () => Promise<void>;
@@ -13,12 +14,12 @@ function getBodyChunk(value: unknown): Uint8Array {
 
   throw createError({
     status: 400,
-    statusMessage: 'Request body must be binary'
+    statusText: 'Request body must be binary'
   })
 }
 
-function getContentLength(event: H3Event): number | undefined {
-  const contentLengthHeader = getRequestHeader(event, 'content-length')
+function getContentLength(event: RequestEvent): number | undefined {
+  const contentLengthHeader = getRequestMetadataHeader(event, 'content-length')
 
   if (contentLengthHeader === undefined) {
     return
@@ -29,7 +30,7 @@ function getContentLength(event: H3Event): number | undefined {
   if (hasValidContentLength === false) {
     throw createError({
       status: 400,
-      statusMessage: 'Invalid Content-Length'
+      statusText: 'Invalid Content-Length'
     })
   }
 
@@ -47,14 +48,14 @@ function validateDeclaredByteLength(
   if (declaredByteLength === 0) {
     throw createError({
       status: 400,
-      statusMessage: 'Request body is required'
+      statusText: 'Request body is required'
     })
   }
 
   if (declaredByteLength > maximumByteLength) {
     throw createError({
       status: 413,
-      statusMessage: 'Image body is too large'
+      statusText: 'Image body is too large'
     })
   }
 }
@@ -66,7 +67,7 @@ async function createLimitedRequestBody(
   if (sourceStream === undefined) {
     throw createError({
       status: 400,
-      statusMessage: 'Request body is required'
+      statusText: 'Request body is required'
     })
   }
 
@@ -134,7 +135,7 @@ async function createLimitedRequestBody(
 
     throw createError({
       status: 400,
-      statusMessage: 'Request body is required'
+      statusText: 'Request body is required'
     })
   }
 
@@ -145,7 +146,7 @@ async function createLimitedRequestBody(
 
     throw createError({
       status: 413,
-      statusMessage: 'Image body is too large'
+      statusText: 'Image body is too large'
     })
   }
 

@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { createError } from 'h3'
+import { createError } from 'nuxt/server'
 import type * as v from 'valibot'
 import { categoryProperties, contributions, equipmentCategories, propertyEnumOptions } from '#server/database/schema'
 

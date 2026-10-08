@@ -1,5 +1,6 @@
 import type { InferInput } from 'valibot'
-import { defineEventHandler, getValidatedQuery, type H3Event } from 'h3'
+import { defineEventHandler, getValidatedQuery } from 'nuxt/server'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { validateRegisteredUser } from '#server/utils/user'
 import { validatePhotoSubmissionListQuery, type photoSubmissionListQuerySchema } from '#server/utils/validation/schemas'
 
@@ -55,7 +56,7 @@ function mapStatus(status: string): UserPhotoSubmission['status'] {
   throw new Error(`Unexpected photo submission status: ${status}`)
 }
 
-export default defineEventHandler(async (event: H3Event<{ query: InferInput<typeof photoSubmissionListQuerySchema>; }>): Promise<UserPhotoSubmissionsResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof photoSubmissionListQuerySchema>; }>): Promise<UserPhotoSubmissionsResponse> => {
   const userId = await validateRegisteredUser(event)
   const { page } = await getValidatedQuery(event, validatePhotoSubmissionListQuery)
   const offset = (page - 1) * photoSubmissionPageSize

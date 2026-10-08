@@ -1,6 +1,8 @@
 import type { InferInput } from 'valibot'
 import { and, eq, sql } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody, type H3Event } from 'h3'
+import { createError, defineEventHandler, isNuxtError, readValidatedBody } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 
 import {
   brands,
@@ -11,7 +13,7 @@ import {
   userEquipment
 } from '#server/database/schema'
 
-import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { createRuntimeWebSocketClient } from '#server/utils/config'
 import { validateSessionUser } from '#server/utils/session'
 
 import {
@@ -28,11 +30,11 @@ import {
   type packingListEntryUpdateBodySchema
 } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof packingListEntryUpdateBodySchema>; }>) : Promise<PackingListEntryMutationResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof packingListEntryUpdateBodySchema>; }>) : Promise<PackingListEntryMutationResponse> => {
   const userId = await validateSessionUser(event)
-  const { entryId, id } = await getValidatedRouterParams(event, validatePackingListEntryParams)
+  const { entryId, id } = await getValidatedRouteParams(event, validatePackingListEntryParams)
   const { isPacked } = await readValidatedBody(event, validatePackingListEntryUpdateBody)
-  const dbWebsocket = createWebSocketClientFromEvent(event)
+  const dbWebsocket = createRuntimeWebSocketClient()
 
   try {
     return await dbWebsocket.transaction(async (transaction) => {
@@ -137,7 +139,7 @@ export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeo
       }
     })
   } catch (error) {
-    const isExpectedClientError = isError(error) && error.statusCode < 500
+    const isExpectedClientError = isNuxtError(error) && error.status < 500
 
     if (isExpectedClientError) {
       throw error

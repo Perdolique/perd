@@ -177,6 +177,14 @@ export default defineNuxtConfig({
     },
 
     'ready': async (nuxt) => {
+      nuxt.hook('server:routes', (_routes, context) => {
+        context.requestTypes = {
+          module: '#shared/types/api-request',
+          body: 'RequestBodyOf',
+          query: 'RequestQueryOf'
+        }
+      })
+
       if (!nuxt.options.dev) {
         return
       }

@@ -1,6 +1,7 @@
 import type { InferInput } from 'valibot'
 import { count, eq } from 'drizzle-orm'
-import { defineEventHandler, getValidatedQuery, type H3Event } from 'h3'
+import { defineEventHandler, getValidatedQuery } from 'nuxt/server'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { equipmentItems } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
 import { validateItemSubmissionListQuery, type itemSubmissionListQuerySchema } from '#server/utils/validation/schemas'
@@ -40,7 +41,7 @@ interface ItemSubmissionQueryRow {
   name: string;
 }
 
-export default defineEventHandler(async (event: H3Event<{ query: InferInput<typeof itemSubmissionListQuerySchema>; }>): Promise<ItemSubmissionListResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof itemSubmissionListQuerySchema>; }>): Promise<ItemSubmissionListResponse> => {
   await validateAdminUser(event)
 
   const { limit, page } = await getValidatedQuery(event, validateItemSubmissionListQuery)

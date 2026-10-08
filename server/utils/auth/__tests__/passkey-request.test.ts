@@ -1,6 +1,8 @@
+import { toTestRequestEvent } from '~~/test-utils/create-test-event'
 import { IncomingMessage, ServerResponse } from 'node:http'
 import { Socket } from 'node:net'
-import { createError, createEvent } from 'h3'
+import { createEvent } from 'h3'
+import { createError } from 'nuxt/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getSessionUser } from '#server/utils/user'
 import { useAppSession } from '#server/utils/session'
@@ -17,8 +19,13 @@ import {
 import { readLimitedValidatedJsonBody } from '../email-authentication-request'
 import { validatePasskeyName } from '#server/utils/validation/schemas'
 
-vi.mock(import('nitropack/runtime'), () => {
-  return { useRuntimeConfig: vi.fn() }
+vi.mock(import('nuxt/server'), async (importOriginal) => {
+  const actual = await importOriginal()
+
+  return {
+    ...actual,
+    useRuntimeConfig: vi.fn()
+  }
 })
 
 vi.mock(import('#server/utils/user'), () => {
@@ -59,7 +66,7 @@ function eventWithBody(body = '{}') {
   // oxlint-disable-next-line unicorn/prefer-single-call -- Readable.push ends the stream with null.
   request.push(null)
 
-  return createEvent(request, new ServerResponse(request))
+  return toTestRequestEvent(createEvent(request, new ServerResponse(request)))
 }
 
 describe('passkey request protection', () => {
@@ -144,7 +151,7 @@ describe('passkey request protection', () => {
     Object.assign(event.context, { cloudflare: { env: { PASSKEY_RATE_LIMITER: { limit } } } })
     await expect(enforcePasskeyRateLimit(event, 'registration:verify:user:owner')).rejects.toMatchObject({ statusCode: 429 })
     expect(limit).toHaveBeenCalledWith({ key: 'registration:verify:user:owner' })
-    expect(event.node.res.getHeader('Retry-After')).toBe(60)
+    expect(event.node.res.getHeader('Retry-After')).toBe('60')
   })
 
   it('returns one safe authentication error and marks errors as non-cacheable', async () => {

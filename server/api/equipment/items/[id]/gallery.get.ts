@@ -1,4 +1,5 @@
-import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
+import { createError, defineEventHandler } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
 import { validateSessionUser } from '#server/utils/session'
 import { validateItemDetailParams } from '#server/utils/validation/schemas'
 
@@ -15,7 +16,7 @@ interface EquipmentItemGalleryRow {
 export default defineEventHandler(async (event): Promise<EquipmentItemGalleryImage[]> => {
   await validateSessionUser(event)
 
-  const { id } = await getValidatedRouterParams(event, validateItemDetailParams)
+  const { id } = await getValidatedRouteParams(event, validateItemDetailParams)
 
   const item: EquipmentItemGalleryRow | undefined = await event.context.dbHttp.query.equipmentItems.findFirst({
     columns: {

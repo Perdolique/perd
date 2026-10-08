@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
 import { getRuntimeTurnstileConfig } from '#server/utils/config'
-import { createTestEvent } from '~~/test-utils/create-test-event'
 
 const { useRuntimeConfigMock } = vi.hoisted(() => {
   return {
@@ -8,16 +7,17 @@ const { useRuntimeConfigMock } = vi.hoisted(() => {
   }
 })
 
-vi.mock(import('nitropack/runtime'), () => {
+vi.mock(import('nuxt/server'), async (importOriginal) => {
+  const actual = await importOriginal()
+
   return {
+    ...actual,
     useRuntimeConfig: useRuntimeConfigMock
   }
 })
 
 describe(getRuntimeTurnstileConfig, () => {
   it('should read private Turnstile values from the runtime config', () => {
-    const event = createTestEvent({})
-
     useRuntimeConfigMock.mockReturnValue({
       public: {
         turnstileSiteKey: 'public-site-key'
@@ -29,9 +29,9 @@ describe(getRuntimeTurnstileConfig, () => {
       }
     })
 
-    const config = getRuntimeTurnstileConfig(event)
+    const config = getRuntimeTurnstileConfig()
 
-    expect(useRuntimeConfigMock).toHaveBeenCalledWith(event)
+    expect(useRuntimeConfigMock).toHaveBeenCalledWith()
     expect(config.secret).toBe('private-secret')
     expect(config.hostnames).toStrictEqual(new Set(['metsik.app']))
     expect(config.isTestMode).toBe(false)

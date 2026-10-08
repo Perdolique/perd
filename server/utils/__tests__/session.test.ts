@@ -10,11 +10,11 @@ const { clearSessionMock, updateSessionMock, useSessionMock } = vi.hoisted(() =>
   }
 })
 
-vi.mock(import('h3'), async (importOriginal) => {
-  const h3 = await importOriginal()
+vi.mock(import('nuxt/server'), async (importOriginal) => {
+  const actual = await importOriginal()
 
   return {
-    ...h3,
+    ...actual,
     clearSession: clearSessionMock,
     useSession: useSessionMock,
     updateSession: updateSessionMock
@@ -48,7 +48,7 @@ describe(updateAppSession, () => {
 
     await updateAppSession(event, sessionData)
 
-    expect(updateSessionMock).toHaveBeenCalledWith(event, {
+    expect(updateSessionMock).toHaveBeenCalledWith(expect.objectContaining({ res: event.res }), {
       password: 'a'.repeat(32),
       name: 'perdSession',
 
@@ -89,7 +89,7 @@ describe(updateAppSession, () => {
 
     expect(findFirst).not.toHaveBeenCalled()
 
-    expect(updateSessionMock).toHaveBeenCalledWith(event, expect.any(Object), {
+    expect(updateSessionMock).toHaveBeenCalledWith(expect.objectContaining({ res: event.res }), expect.any(Object), {
       sessionVersion: 4,
       userId: 'user-1'
     })

@@ -1,5 +1,5 @@
 import { and, asc, count, eq, inArray, sql } from 'drizzle-orm'
-import { createError } from 'h3'
+import { createError } from 'nuxt/server'
 
 import {
   categoryProperties,

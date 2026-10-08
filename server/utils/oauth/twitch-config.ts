@@ -1,5 +1,5 @@
 import * as v from 'valibot'
-import { createError } from 'h3'
+import { createError } from 'nuxt/server'
 import { nonEmptyStringSchema } from '#server/utils/validation/schemas'
 
 interface TwitchOAuthConfig {
@@ -20,8 +20,8 @@ function validateTwitchOAuthConfig(config: unknown): TwitchOAuthConfig {
   }
 
   throw createError({
-    statusCode: 500,
-    statusMessage: 'Twitch OAuth client credentials are not configured'
+    status: 500,
+    statusText: 'Twitch OAuth client credentials are not configured'
   })
 }
 

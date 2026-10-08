@@ -1,4 +1,5 @@
-import * as h3 from 'h3'
+import type { getValidatedRouteParams } from '#server/utils/request'
+import * as nuxtServer from 'nuxt/server'
 import type { SQL } from 'drizzle-orm'
 import { PgDialect } from 'drizzle-orm/pg-core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -8,29 +9,31 @@ import { createTestEvent } from '~~/test-utils/create-test-event'
 
 const {
   getValidatedQueryMock,
-  getValidatedRouterParamsMock,
+  getValidatedRouteParamsMock,
   validateAdminUserMock
 } = vi.hoisted(() => {
   return {
-    getValidatedQueryMock: vi.fn<typeof h3.getValidatedQuery>(),
-    getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
+    getValidatedQueryMock: vi.fn<typeof nuxtServer.getValidatedQuery>(),
+    getValidatedRouteParamsMock: vi.fn<typeof getValidatedRouteParams>(),
     validateAdminUserMock: vi.fn<(event: unknown) => Promise<string>>()
   }
 })
 
-// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial h3 mock.
-vi.mock(import('h3'), async () => {
-  const actual = await vi.importActual<typeof h3>('h3')
+// @ts-expect-error -- The test mock specializes the validator's generic result.
+vi.mock(import('#server/utils/request'), () => {
+  return {
+    getValidatedRouteParams: getValidatedRouteParamsMock
+  }
+})
+
+vi.mock(import('nuxt/server'), async () => {
+  const actual = await vi.importActual<typeof nuxtServer>('nuxt/server')
 
   return {
     ...actual,
 
-    async getValidatedQuery(...args: Parameters<typeof h3.getValidatedQuery>) {
+    async getValidatedQuery(...args: Parameters<typeof nuxtServer.getValidatedQuery>) {
       return getValidatedQueryMock(...args)
-    },
-
-    async getValidatedRouterParams(...args: Parameters<typeof h3.getValidatedRouterParams>) {
-      return getValidatedRouterParamsMock(...args)
     }
   }
 })
@@ -87,7 +90,7 @@ describe('admin equipment submission reads', () => {
       page: 2
     })
 
-    getValidatedRouterParamsMock.mockResolvedValue({
+    getValidatedRouteParamsMock.mockResolvedValue({
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
     })
   })
@@ -269,7 +272,7 @@ describe('admin equipment submission reads', () => {
   })
 
   it('should stop before database access when admin validation fails', async () => {
-    const authError = h3.createError({ status: 403 })
+    const authError = nuxtServer.createError({ status: 403 })
 
     validateAdminUserMock.mockRejectedValue(authError)
 

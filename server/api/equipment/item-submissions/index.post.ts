@@ -3,16 +3,16 @@ import type { InferInput } from 'valibot'
 import {
   createError,
   defineEventHandler,
-  isError,
+  isNuxtError,
   readValidatedBody,
-  setResponseHeader,
   setResponseStatus,
-  type H3Event
-} from 'h3'
+  type RequestEvent
+} from 'nuxt/server'
 
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { contributions, equipmentItems, itemPropertyValues } from '#server/database/schema'
 import { getItemSubmissionRateLimiterBinding } from '#server/utils/cloudflare'
-import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { createRuntimeWebSocketClient } from '#server/utils/config'
 import { checkPropertiesRevision, lockPropertiesCategories } from '#server/utils/equipment/category-properties'
 import { normalizeEquipmentItemProperties } from '#server/utils/equipment/item-properties'
 import { validateRegisteredUserAccess } from '#server/utils/user'
@@ -26,7 +26,7 @@ interface ItemSubmissionCreateResponse {
 const itemSubmissionOperation = 'submit_equipment_item'
 
 async function getItemSubmissionRateLimitOutcome(
-  event: H3Event,
+  event: RequestEvent,
   userId: string
 ): Promise<RateLimitOutcome> {
   try {
@@ -46,12 +46,12 @@ async function getItemSubmissionRateLimitOutcome(
     throw createError({
       cause: error,
       status: 503,
-      statusMessage: 'Item submission is temporarily unavailable'
+      statusText: 'Item submission is temporarily unavailable'
     })
   }
 }
 
-async function enforceItemSubmissionRateLimit(event: H3Event, userId: string): Promise<void> {
+async function enforceItemSubmissionRateLimit(event: RequestEvent, userId: string): Promise<void> {
   const outcome = await getItemSubmissionRateLimitOutcome(event, userId)
 
   if (outcome.success === false) {
@@ -61,16 +61,16 @@ async function enforceItemSubmissionRateLimit(event: H3Event, userId: string): P
       userId
     })
 
-    setResponseHeader(event, 'Retry-After', 60)
+    event.res.headers.set('Retry-After', '60')
 
     throw createError({
       status: 429,
-      statusMessage: 'Too many item submission attempts'
+      statusText: 'Too many item submission attempts'
     })
   }
 }
 
-export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof itemSubmissionCreateBodySchema>; }>): Promise<ItemSubmissionCreateResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof itemSubmissionCreateBodySchema>; }>): Promise<ItemSubmissionCreateResponse> => {
   const { isAdmin, userId } = await validateRegisteredUserAccess(event)
   const body = await readValidatedBody(event, validateItemSubmissionCreateBody)
 
@@ -78,7 +78,7 @@ export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeo
     await enforceItemSubmissionRateLimit(event, userId)
   }
 
-  const dbWebsocket = createWebSocketClientFromEvent(event)
+  const dbWebsocket = createRuntimeWebSocketClient()
 
   try {
     const createdSubmission = await dbWebsocket.transaction(async (transaction) => {
@@ -207,8 +207,8 @@ export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeo
 
     return createdSubmission
   } catch (error) {
-    const isExpectedClientError = isError(error)
-      && error.statusCode < 500
+    const isExpectedClientError = isNuxtError(error)
+      && error.status < 500
 
     if (isExpectedClientError) {
       throw error

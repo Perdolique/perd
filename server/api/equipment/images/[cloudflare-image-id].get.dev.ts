@@ -1,9 +1,10 @@
-import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
+import { createError, defineEventHandler } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
 import { getCloudflareImagesBinding } from '#server/utils/cloudflare'
 import { validateEquipmentImageDeliveryParams } from '#server/utils/validation/schemas'
 
 export default defineEventHandler(async (event): Promise<Response> => {
-  const params = await getValidatedRouterParams(
+  const params = await getValidatedRouteParams(
     event,
     validateEquipmentImageDeliveryParams
   )
@@ -67,7 +68,7 @@ export default defineEventHandler(async (event): Promise<Response> => {
 
     throw createError({
       status: 502,
-      statusMessage: 'Equipment image unavailable'
+      statusText: 'Equipment image unavailable'
     })
   }
 })

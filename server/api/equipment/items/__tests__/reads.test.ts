@@ -1,25 +1,21 @@
-import * as h3 from 'h3'
+import type { getValidatedRouteParams } from '#server/utils/request'
+import * as nuxtServer from 'nuxt/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import itemDetailHandler from '#server/api/equipment/items/[id].get'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
-const { getValidatedRouterParamsMock, validateSessionUserMock } = vi.hoisted(() => {
+const { getValidatedRouteParamsMock, validateSessionUserMock } = vi.hoisted(() => {
   return {
-    getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
+    getValidatedRouteParamsMock: vi.fn<typeof getValidatedRouteParams>(),
     validateSessionUserMock: vi.fn<(event: unknown) => Promise<string>>()
   }
 })
 
-// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial h3 mock.
-vi.mock(import('h3'), async () => {
-  const actual = await vi.importActual<typeof h3>('h3')
 
+// @ts-expect-error -- The test mock specializes the validator's generic result.
+vi.mock(import('#server/utils/request'), () => {
   return {
-    ...actual,
-
-    async getValidatedRouterParams(...args: Parameters<typeof h3.getValidatedRouterParams>) {
-      return getValidatedRouterParamsMock(...args)
-    }
+    getValidatedRouteParams: getValidatedRouteParamsMock
   }
 })
 
@@ -110,7 +106,7 @@ describe('get /api/equipment/items/[id]', () => {
     vi.clearAllMocks()
     validateSessionUserMock.mockResolvedValue('0195f6e8-8f44-74f6-bc9a-5c8f7df477aa')
 
-    getValidatedRouterParamsMock.mockResolvedValue({
+    getValidatedRouteParamsMock.mockResolvedValue({
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
     })
   })
@@ -317,11 +313,11 @@ describe('get /api/equipment/items/[id]', () => {
   })
 
   it('should return 400 when route params validation fails', async () => {
-    const routeError = h3.createError({ status: 400 })
+    const routeError = nuxtServer.createError({ status: 400 })
     const { dbHttp } = createDetailDb()
     const event = createTestEvent(dbHttp)
 
-    getValidatedRouterParamsMock.mockRejectedValue(routeError)
+    getValidatedRouteParamsMock.mockRejectedValue(routeError)
 
     await expect(itemDetailHandler(event)).rejects.toMatchObject({
       statusCode: 400

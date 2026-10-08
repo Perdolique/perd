@@ -1,18 +1,17 @@
-import { createError, isError, type H3Event } from 'h3'
-import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { createError, isNuxtError } from 'nuxt/server'
+import { createRuntimeWebSocketClient } from '#server/utils/config'
 import type { PropertiesTransaction } from '#server/utils/equipment/category-properties'
 import { logCategoryWriteError } from '#server/utils/equipment/category-write-errors'
 
 /** Owns transaction cleanup and safe errors for characteristic reads and writes. */
 async function withPropertiesTransaction<Result>(
-  event: H3Event,
   operation: (transaction: PropertiesTransaction) => Promise<Result>,
   readOnly = false
 ): Promise<Result> {
-  let database: ReturnType<typeof createWebSocketClientFromEvent> | null = null
+  let database: ReturnType<typeof createRuntimeWebSocketClient> | null = null
 
   try {
-    database = createWebSocketClientFromEvent(event)
+    database = createRuntimeWebSocketClient()
 
     const configuration = readOnly ? {
       isolationLevel: 'repeatable read' as const,
@@ -21,7 +20,7 @@ async function withPropertiesTransaction<Result>(
 
     return await database.transaction(operation, configuration)
   } catch (error) {
-    if (isError(error) && error.statusCode < 500) {
+    if (isNuxtError(error) && error.status < 500) {
       throw error
     }
 

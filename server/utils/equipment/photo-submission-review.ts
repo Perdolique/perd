@@ -1,5 +1,5 @@
 import { and, eq, gt, max, sql } from 'drizzle-orm'
-import { createError } from 'h3'
+import { createError } from 'nuxt/server'
 
 import {
   contributions,
@@ -8,7 +8,7 @@ import {
   equipmentItems
 } from '#server/database/schema'
 
-import type { createWebSocketClientFromEvent } from '#server/utils/config'
+import type { createRuntimeWebSocketClient } from '#server/utils/config'
 
 import {
   createItemNotPublishedError,
@@ -39,7 +39,7 @@ interface RejectedPhotoSubmissionResponse {
 
 type PhotoSubmissionDecisionResponse = ApprovedPhotoSubmissionResponse | RejectedPhotoSubmissionResponse
 type PhotoSubmissionDecision = ReturnType<typeof validatePhotoSubmissionDecisionBody>
-type PhotoSubmissionReviewDatabase = ReturnType<typeof createWebSocketClientFromEvent>
+type PhotoSubmissionReviewDatabase = ReturnType<typeof createRuntimeWebSocketClient>
 
 interface ExecutePhotoSubmissionDecisionOptions {
   body: PhotoSubmissionDecision;

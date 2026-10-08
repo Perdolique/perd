@@ -1,4 +1,5 @@
-import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
+import { createError, defineEventHandler } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
 import { validateAdminUser } from '#server/utils/admin'
 import { getCloudflareImagesBinding } from '#server/utils/cloudflare'
 import { validatePhotoSubmissionParams } from '#server/utils/validation/schemas'
@@ -6,7 +7,7 @@ import { validatePhotoSubmissionParams } from '#server/utils/validation/schemas'
 export default defineEventHandler(async (event): Promise<Response> => {
   await validateAdminUser(event)
 
-  const { id } = await getValidatedRouterParams(event, validatePhotoSubmissionParams)
+  const { id } = await getValidatedRouteParams(event, validatePhotoSubmissionParams)
 
   const submission = await event.context.dbHttp.query.equipmentItemPhotoSubmissions.findFirst({
     columns: {
@@ -66,7 +67,7 @@ export default defineEventHandler(async (event): Promise<Response> => {
 
     throw createError({
       status: 502,
-      statusMessage: 'Photo preview unavailable'
+      statusText: 'Photo preview unavailable'
     })
   }
 })

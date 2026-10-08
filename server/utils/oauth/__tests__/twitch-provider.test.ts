@@ -14,8 +14,13 @@ vi.mock(import('ofetch'), () => {
   return { $fetch: request }
 })
 
-vi.mock(import('nitropack/runtime'), () => {
-  return { useRuntimeConfig: vi.fn() }
+vi.mock(import('nuxt/server'), async (importOriginal) => {
+  const actual = await importOriginal()
+
+  return {
+    ...actual,
+    useRuntimeConfig: vi.fn()
+  }
 })
 
 const config = {

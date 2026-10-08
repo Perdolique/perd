@@ -1,4 +1,5 @@
-import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
+import { createError, defineEventHandler } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
 import { getPrimaryEquipmentImageIds } from '#server/utils/equipment/primary-images'
 
 import {
@@ -44,7 +45,7 @@ interface ItemDetailResponse {
 }
 
 export default defineEventHandler(async (event) : Promise<ItemDetailResponse> => {
-  const { id } = await getValidatedRouterParams(event, validateItemDetailParams)
+  const { id } = await getValidatedRouteParams(event, validateItemDetailParams)
   const userId = await validateSessionUser(event)
 
   const itemPromise = event.context.dbHttp.query.equipmentItems.findFirst({

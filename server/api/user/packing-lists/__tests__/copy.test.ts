@@ -1,4 +1,6 @@
-import { createApp, createError, createRouter, toWebHandler } from 'h3'
+import { toTestRequestEvent } from '~~/test-utils/create-test-event'
+import { createApp, createRouter, toWebHandler } from 'h3'
+import { createError } from 'nuxt/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import handler from '#server/api/user/packing-lists/[id]/copy.post'
 import type { copyPackingList } from '#server/utils/packing-list-copy'
@@ -27,7 +29,7 @@ vi.mock(import('#server/utils/packing-list-copy'), () => {
 
 // @ts-expect-error -- This handler needs only the client lifecycle, not the complete Drizzle surface.
 vi.mock(import('#server/utils/config'), () => {
-  return { createWebSocketClientFromEvent: clientMock }
+  return { createRuntimeWebSocketClient: clientMock }
 })
 
 const ownerId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
@@ -36,7 +38,7 @@ const copyId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8'
 const now = new Date('2026-10-06T12:00:00Z')
 
 async function request(body?: unknown, id = originalId) {
-  const router = createRouter().post('/lists/:id/copy', handler)
+  const router = createRouter().post('/lists/:id/copy',  async event => handler(toTestRequestEvent(event)))
   const app = createApp().use(router)
   const fetch = toWebHandler(app)
   const requestBody = JSON.stringify(body ?? { name: 'Copy' })

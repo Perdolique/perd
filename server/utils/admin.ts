@@ -1,7 +1,7 @@
-import { createError, type H3Event, type EventHandlerRequest } from 'h3'
+import { createError, type RequestEvent } from 'nuxt/server'
 import { useAppSession } from '#server/utils/session'
 
-async function validateAdminUser(event: H3Event<EventHandlerRequest>) {
+async function validateAdminUser(event: RequestEvent) {
   const session = await useAppSession(event)
   const { userId } = session.data
 

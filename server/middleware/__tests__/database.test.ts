@@ -1,6 +1,8 @@
+import { toTestRequestEvent } from '~~/test-utils/create-test-event'
 import { IncomingMessage, ServerResponse } from 'node:http'
 import { Socket } from 'node:net'
-import { createEvent, createError, sendRedirect } from 'h3'
+import { createEvent } from 'h3'
+import { createError } from 'nuxt/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { requireEmailRegistrationEnabled } from '#server/utils/config'
 import databaseHandler from '#server/middleware/database'
@@ -36,7 +38,7 @@ function createMiddlewareEvent(path: string) {
 
   const response = new ServerResponse(request)
 
-  return createEvent(request, response)
+  return toTestRequestEvent(createEvent(request, response))
 }
 
 describe('database middleware', () => {
@@ -56,16 +58,6 @@ describe('database middleware', () => {
     const event = createMiddlewareEvent('/api/_nuxt_icon/hugeicons.json?icons=tent')
 
     databaseHandler(event)
-    expect(getRuntimeDatabaseConfigMock).not.toHaveBeenCalled()
-    expect(createHttpClientMock).not.toHaveBeenCalled()
-  })
-
-  it('should skip database configuration after an earlier middleware handles the request', async () => {
-    const event = createMiddlewareEvent('/api/equipment/brands')
-
-    await sendRedirect(event, '/login?redirectTo=%2Fapi%2Fequipment%2Fbrands')
-    databaseHandler(event)
-    expect(event.handled).toBe(true)
     expect(getRuntimeDatabaseConfigMock).not.toHaveBeenCalled()
     expect(createHttpClientMock).not.toHaveBeenCalled()
   })
@@ -95,7 +87,7 @@ describe('database middleware', () => {
     getRuntimeDatabaseConfigMock.mockReturnValue(databaseConfig)
     createHttpClientMock.mockReturnValue(databaseClient)
     databaseHandler(event)
-    expect(getRuntimeDatabaseConfigMock).toHaveBeenCalledWith(event)
+    expect(getRuntimeDatabaseConfigMock).toHaveBeenCalledWith()
     expect(createHttpClientMock).toHaveBeenCalledWith(databaseConfig)
     expect(event.context.dbHttp).toBe(databaseClient)
   })

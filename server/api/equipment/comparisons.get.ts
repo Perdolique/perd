@@ -1,6 +1,7 @@
 import type { InferInput } from 'valibot'
 import { and, asc, eq, inArray } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedQuery, type H3Event } from 'h3'
+import { createError, defineEventHandler, getValidatedQuery } from 'nuxt/server'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 
 import {
   brands,
@@ -108,7 +109,7 @@ function groupEnumOptionNames(rows: PropertyEnumOptionRow[]) {
   return optionNamesByPropertyId
 }
 
-export default defineEventHandler(async (event: H3Event<{ query: InferInput<typeof equipmentComparisonQuerySchema>; }>) : Promise<ComparisonResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof equipmentComparisonQuerySchema>; }>) : Promise<ComparisonResponse> => {
   const { itemId: itemIds } = await getValidatedQuery(event, validateEquipmentComparisonQuery)
   const { dbHttp } = event.context
 

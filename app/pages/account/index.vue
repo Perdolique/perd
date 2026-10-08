@@ -234,7 +234,7 @@
         }
       })
 
-      if (response === undefined) {
+      if (typeof response !== 'object' || response === null) {
         throw new Error('Missing Twitch authorization response')
       }
 

@@ -1,8 +1,11 @@
+import { scheduleBackgroundTask } from '#server/utils/request-runtime'
 import type { InferInput } from 'valibot'
-import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody, type H3Event } from 'h3'
+import { createError, defineEventHandler, isNuxtError, readValidatedBody } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { validateAdminUser } from '#server/utils/admin'
 import { getCloudflareImagesBinding } from '#server/utils/cloudflare'
-import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { createRuntimeWebSocketClient } from '#server/utils/config'
 
 import {
   deletePublishedSubmissionSourceImage,
@@ -43,7 +46,7 @@ async function closePhotoSubmissionReviewDatabase(
 }
 
 function throwPhotoSubmissionReviewError(error: unknown, submissionId: string): never {
-  if (isError(error)) {
+  if (isNuxtError(error)) {
     throw error
   }
 
@@ -54,13 +57,13 @@ function throwPhotoSubmissionReviewError(error: unknown, submissionId: string): 
 
   throw createError({
     status: 500,
-    statusMessage: 'Failed to review photo submission'
+    statusText: 'Failed to review photo submission'
   })
 }
 
-export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof photoSubmissionDecisionBodySchema>; }>): Promise<PhotoSubmissionDecisionResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof photoSubmissionDecisionBodySchema>; }>): Promise<PhotoSubmissionDecisionResponse> => {
   const userId = await validateAdminUser(event)
-  const { id } = await getValidatedRouterParams(event, validatePhotoSubmissionParams)
+  const { id } = await getValidatedRouteParams(event, validatePhotoSubmissionParams)
   const body = await readValidatedBody(event, validatePhotoSubmissionDecisionBody)
   let database: PhotoSubmissionReviewDatabase | null = null
   let publication: PreparedPhotoPublication | null = null
@@ -72,7 +75,7 @@ export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeo
       publication = await preparePhotoPublication(event, imagesBinding, id)
     }
 
-    database = createWebSocketClientFromEvent(event)
+    database = createRuntimeWebSocketClient()
 
     const response = await executePhotoSubmissionDecision({
       body,
@@ -83,13 +86,13 @@ export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeo
     })
 
     if (publication !== null) {
-      event.waitUntil(deletePublishedSubmissionSourceImage(publication.sourceImage, id))
+      scheduleBackgroundTask(event, deletePublishedSubmissionSourceImage(publication.sourceImage, id))
     }
 
     return response
   } catch (error) {
     if (publication !== null) {
-      if (isError(error)) {
+      if (isNuxtError(error)) {
         await deleteUnattachedPublishedImage(publication.publicImage, error, id)
       } else {
         const reconciledResponse = await reconcilePublicationFailure({
@@ -100,7 +103,7 @@ export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeo
         })
 
         if (reconciledResponse !== null) {
-          event.waitUntil(deletePublishedSubmissionSourceImage(publication.sourceImage, id))
+          scheduleBackgroundTask(event, deletePublishedSubmissionSourceImage(publication.sourceImage, id))
 
           return reconciledResponse
         }

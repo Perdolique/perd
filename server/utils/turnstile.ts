@@ -1,4 +1,4 @@
-import { createError, type H3Event } from 'h3'
+import { createError } from 'nuxt/server'
 import * as v from 'valibot'
 import { getRuntimeTurnstileConfig } from '#server/utils/config'
 
@@ -48,7 +48,7 @@ function createTurnstileServiceError(cause?: unknown) {
   return createError({
     cause,
     status: 503,
-    statusMessage: 'Turnstile verification unavailable'
+    statusText: 'Turnstile verification unavailable'
   })
 }
 
@@ -56,7 +56,7 @@ function createTurnstileRejection(cause?: unknown) {
   return createError({
     cause,
     status: 403,
-    statusMessage: 'Turnstile verification failed'
+    statusText: 'Turnstile verification failed'
   })
 }
 
@@ -170,7 +170,6 @@ async function readSiteverifyResponse(
 }
 
 async function verifyTurnstile(
-  event: H3Event,
   token: unknown,
   { remoteIp, expectedAction }: { remoteIp: string; expectedAction: string; }
 ): Promise<void> {
@@ -186,7 +185,7 @@ async function verifyTurnstile(
     throw createTurnstileServiceError()
   }
 
-  const config = getRuntimeTurnstileConfig(event)
+  const config = getRuntimeTurnstileConfig()
 
   const body = new URLSearchParams({
     secret: config.secret,

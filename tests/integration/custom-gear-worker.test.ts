@@ -1,9 +1,7 @@
-import { IncomingMessage, ServerResponse } from 'node:http'
-import { Socket } from 'node:net'
+import { createAccountCookie } from '../../test-utils/create-account-cookie'
 import { readFile } from 'node:fs/promises'
 import { URL } from 'node:url'
 import { sql } from 'drizzle-orm'
-import { createEvent, updateSession } from 'h3'
 import * as v from 'valibot'
 import { createTestHarness, type TestHarness } from 'wrangler'
 import { fetch as miniflareFetch } from 'miniflare'
@@ -25,30 +23,6 @@ const origin = 'http://localhost:8888'
 const sessionSecret = 'custom-gear-worker-integration-session-secret-784'
 let isolated: Awaited<ReturnType<typeof createIsolatedPostgreSQL>> | null = null
 let harness: TestHarness | null = null
-
-async function accountCookie(userId: string) {
-  const socket = new Socket()
-  const request = new IncomingMessage(socket)
-  const response = new ServerResponse(request)
-  const event = createEvent(request, response)
-
-  await updateSession(event, {
-    name: 'perdSession',
-    password: sessionSecret
-  }, {
-    userId,
-    sessionVersion: 0
-  })
-
-  const cookies = response.getHeader('set-cookie')
-  const cookie = Array.isArray(cookies) ? cookies[0] : cookies
-
-  if (typeof cookie !== 'string') {
-    throw new TypeError('Expected an account session cookie')
-  }
-
-  return cookie.split(';')[0] ?? ''
-}
 
 function required<Value>(value: Value | null | undefined): Value {
   if (value === null || value === undefined) {
@@ -139,8 +113,8 @@ async function fixture() {
   const [other] = await database.insert(users).values({}).returning()
   const user = required(owner)
   const stranger = required(other)
-  const cookie = await accountCookie(user.id)
-  const otherCookie = await accountCookie(stranger.id)
+  const cookie = await createAccountCookie(user.id, sessionSecret)
+  const otherCookie = await createAccountCookie(stranger.id, sessionSecret)
 
   return {
     user,

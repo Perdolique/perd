@@ -1,3 +1,4 @@
+import { toTestRequestEvent } from '~~/test-utils/create-test-event'
 import { IncomingMessage, ServerResponse } from 'node:http'
 import { Socket } from 'node:net'
 import { createEvent } from 'h3'
@@ -19,7 +20,15 @@ function createRequestEvent(chunks: readonly Uint8Array[], contentLength?: strin
 
   request.push(null)
 
-  return createEvent(request, new ServerResponse(request))
+  const event = toTestRequestEvent(createEvent(request, new ServerResponse(request)))
+
+  Object.defineProperty(event, 'req', {
+    get() {
+      throw new Error('Bounded body reads must not start the buffered request reader')
+    }
+  })
+
+  return event
 }
 
 function encode(value: string): Uint8Array {

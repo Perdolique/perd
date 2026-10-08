@@ -1,21 +1,13 @@
+import { getRequestBodyStream } from '#server/utils/request-runtime'
 import type { InferInput } from 'valibot'
 import { eq, max } from 'drizzle-orm'
-
-import {
-  createError,
-  defineEventHandler,
-  getRequestWebStream,
-  getValidatedQuery,
-  getValidatedRouterParams,
-  isError,
-  setResponseStatus,
-  type H3Event
-} from 'h3'
-
+import { createError, defineEventHandler, getValidatedQuery, isNuxtError, setResponseStatus } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { contributions, equipmentItemImages, equipmentItems } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
 import { getCloudflareImagesBinding } from '#server/utils/cloudflare'
-import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { createRuntimeWebSocketClient } from '#server/utils/config'
 
 import {
   createEquipmentItemImageBody,
@@ -36,9 +28,9 @@ interface EquipmentItemImageResponse {
   id: string;
 }
 
-export default defineEventHandler(async (event: H3Event<{ query: InferInput<typeof itemImageUploadQuerySchema>; }>) : Promise<EquipmentItemImageResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof itemImageUploadQuerySchema>; }>) : Promise<EquipmentItemImageResponse> => {
   const userId = await validateAdminUser(event)
-  const { id: itemId } = await getValidatedRouterParams(event, validateItemDetailParams)
+  const { id: itemId } = await getValidatedRouteParams(event, validateItemDetailParams)
   const { filename } = await getValidatedQuery(event, validateItemImageUploadQuery)
   const mediaType = validateEquipmentItemImageRequest(event)
 
@@ -55,7 +47,7 @@ export default defineEventHandler(async (event: H3Event<{ query: InferInput<type
   if (item === undefined) {
     throw createError({
       status: 404,
-      statusMessage: 'Equipment item not found'
+      statusText: 'Equipment item not found'
     })
   }
 
@@ -63,7 +55,7 @@ export default defineEventHandler(async (event: H3Event<{ query: InferInput<type
 
   const imageBody = await createEquipmentItemImageBody({
     mediaType,
-    stream: getRequestWebStream(event)
+    stream: getRequestBodyStream(event)
   })
 
   const cloudflareImageId = await uploadHostedEquipmentImage({
@@ -79,10 +71,10 @@ export default defineEventHandler(async (event: H3Event<{ query: InferInput<type
     requireSignedURLs: false
   })
 
-  let dbWebsocket: ReturnType<typeof createWebSocketClientFromEvent> | null = null
+  let dbWebsocket: ReturnType<typeof createRuntimeWebSocketClient> | null = null
 
   try {
-    dbWebsocket = createWebSocketClientFromEvent(event)
+    dbWebsocket = createRuntimeWebSocketClient()
 
     const createdImage = await dbWebsocket.transaction(async (transaction) => {
       const [lockedItem] = await transaction
@@ -99,7 +91,7 @@ export default defineEventHandler(async (event: H3Event<{ query: InferInput<type
       if (lockedItem === undefined) {
         throw createError({
           status: 404,
-          statusMessage: 'Equipment item not found'
+          statusText: 'Equipment item not found'
         })
       }
 
@@ -133,7 +125,7 @@ export default defineEventHandler(async (event: H3Event<{ query: InferInput<type
       if (newImage === undefined) {
         throw createError({
           status: 500,
-          statusMessage: 'Failed to save equipment item image'
+          statusText: 'Failed to save equipment item image'
         })
       }
 
@@ -162,7 +154,7 @@ export default defineEventHandler(async (event: H3Event<{ query: InferInput<type
       cloudflareImageId
     })
 
-    if (isError(error)) {
+    if (isNuxtError(error)) {
       throw error
     }
 
@@ -174,7 +166,7 @@ export default defineEventHandler(async (event: H3Event<{ query: InferInput<type
 
     throw createError({
       status: 500,
-      statusMessage: 'Failed to save equipment item image'
+      statusText: 'Failed to save equipment item image'
     })
   } finally {
     await dbWebsocket?.$client.end()

@@ -1,4 +1,4 @@
-import { createError } from 'h3'
+import { createError } from 'nuxt/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import galleryHandler from '#server/api/equipment/items/[id]/gallery.get'
 import { createTestEvent } from '~~/test-utils/create-test-event'

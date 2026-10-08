@@ -1,5 +1,5 @@
-import type * as h3 from 'h3'
-import { createError } from 'h3'
+import type * as nuxtServer from 'nuxt/server'
+import { createError } from 'nuxt/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { turnstileResponseFieldName } from '#shared/utils/turnstile'
 import createGuestSessionHandler from '#server/api/auth/create-session.post'
@@ -11,7 +11,6 @@ const {
   getSessionUserMock,
   readBodyMock,
   sessionUpdateMock,
-  setResponseHeaderMock,
   setResponseStatusMock,
   useAppSessionMock,
   verifyTurnstileMock
@@ -21,20 +20,18 @@ const {
     getSessionUserMock: vi.fn(),
     readBodyMock: vi.fn(),
     sessionUpdateMock: vi.fn(),
-    setResponseHeaderMock: vi.fn<typeof h3.setResponseHeader>(),
-    setResponseStatusMock: vi.fn<typeof h3.setResponseStatus>(),
+    setResponseStatusMock: vi.fn<typeof nuxtServer.setResponseStatus>(),
     useAppSessionMock: vi.fn(),
     verifyTurnstileMock: vi.fn()
   }
 })
 
-vi.mock(import('h3'), async () => {
-  const actual = await vi.importActual<typeof h3>('h3')
+vi.mock(import('nuxt/server'), async () => {
+  const actual = await vi.importActual<typeof nuxtServer>('nuxt/server')
 
   return {
     ...actual,
     readBody: readBodyMock,
-    setResponseHeader: setResponseHeaderMock,
     setResponseStatus: setResponseStatusMock
   }
 })
@@ -174,7 +171,6 @@ describe('post /api/auth/create-session', () => {
     expect(readBodyMock).toHaveBeenCalledWith(event)
 
     expect(verifyTurnstileMock).toHaveBeenCalledWith(
-      event,
       turnstileToken,
       {
         remoteIp: clientIp,
@@ -252,12 +248,12 @@ describe('post /api/auth/create-session', () => {
     })
   })
 
-  it('should fail closed without inserting when the session identity is unavailable', async () => {
+  it('should fail closed without inserting when the session identity is empty', async () => {
     const { dbHttp, insertMock } = createInsertDb()
     const event = createGuestEvent(dbHttp)
 
     useAppSessionMock.mockResolvedValue({
-      id: undefined,
+      id: '',
       update: sessionUpdateMock
     })
 
@@ -352,7 +348,7 @@ describe('post /api/auth/create-session', () => {
       statusCode: 429
     })
 
-    expect(setResponseHeaderMock).toHaveBeenCalledWith(event, 'Retry-After', 60)
+    expect(event.res.headers.get('Retry-After')).toBe('60')
     expect(getSessionUserMock).not.toHaveBeenCalled()
     expect(insertMock).not.toHaveBeenCalled()
     expect(useAppSessionMock).not.toHaveBeenCalled()

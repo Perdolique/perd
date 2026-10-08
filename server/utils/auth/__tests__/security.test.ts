@@ -1,3 +1,4 @@
+import { toTestRequestEvent } from '~~/test-utils/create-test-event'
 import { IncomingMessage, ServerResponse } from 'node:http'
 import { Socket } from 'node:net'
 import { createEvent } from 'h3'
@@ -17,7 +18,7 @@ import { isEmailRegistrationEnabled } from '#shared/utils/email-registration'
 
 function createRequestEvent(bindings: Record<string, unknown>) {
   const request = new IncomingMessage(new Socket())
-  const event = createEvent(request, new ServerResponse(request))
+  const event = toTestRequestEvent(createEvent(request, new ServerResponse(request)))
 
   Reflect.set(event.context, 'cloudflare', { env: bindings })
 
@@ -113,7 +114,7 @@ describe('email authentication rate limiting', () => {
     })).rejects.toMatchObject({ statusCode: 429 })
 
     expect(limit.mock.calls).toStrictEqual([[{ key: 'ip:203.0.113.1' }], [{ key: 'subject:hash' }]])
-    expect(event.node.res.getHeader('Retry-After')).toBe(60)
+    expect(event.node.res.getHeader('Retry-After')).toBe('60')
   })
 
   it('should fail closed when a binding is unavailable while retaining safe diagnostics', async () => {

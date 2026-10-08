@@ -1,6 +1,8 @@
 import type { InferInput } from 'valibot'
 import { and, asc, eq, ilike, isNull, or, sql, type SQL } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedQuery, getValidatedRouterParams, type H3Event } from 'h3'
+import { createError, defineEventHandler, getValidatedQuery } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { brands, equipmentCategories, equipmentItems, packingListEntries, userEquipment } from '#server/database/schema'
 import { validateSessionUser } from '#server/utils/session'
 
@@ -30,9 +32,9 @@ function escapeLikePattern(value: string) {
     .replaceAll('_', String.raw`\_`)
 }
 
-export default defineEventHandler(async (event: H3Event<{ query: InferInput<typeof packingListAvailableGearQuerySchema>; }>) : Promise<AvailableGearResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof packingListAvailableGearQuerySchema>; }>) : Promise<AvailableGearResponse> => {
   const userId = await validateSessionUser(event)
-  const { id } = await getValidatedRouterParams(event, validatePackingListIdParams)
+  const { id } = await getValidatedRouteParams(event, validatePackingListIdParams)
   const { page, search } = await getValidatedQuery(event, validatePackingListAvailableGearQuery)
   const { dbHttp } = event.context
 

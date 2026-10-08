@@ -1,4 +1,4 @@
-import { createError, type H3Event } from 'h3'
+import { createError, type RequestEvent } from 'nuxt/server'
 import type { ApprovedPhotoSubmissionResponse } from '#server/utils/equipment/photo-submission-review'
 
 interface HostedPhotoSubmissionImage {
@@ -28,7 +28,7 @@ interface PublicationReconciliationResult {
 
 interface ReconcilePublicationFailureOptions {
   error: unknown;
-  event: H3Event;
+  event: RequestEvent;
   publication: PreparedPhotoPublication;
   submissionId: string;
 }
@@ -36,21 +36,21 @@ interface ReconcilePublicationFailureOptions {
 function createTerminalStatusError() {
   return createError({
     status: 409,
-    statusMessage: 'Photo submission is no longer pending'
+    statusText: 'Photo submission is no longer pending'
   })
 }
 
 function createItemNotPublishedError() {
   return createError({
     status: 409,
-    statusMessage: 'Equipment item is no longer published'
+    statusText: 'Equipment item is no longer published'
   })
 }
 
 function createRightsNotConfirmedError() {
   return createError({
     status: 409,
-    statusMessage: 'Photo rights are not confirmed'
+    statusText: 'Photo rights are not confirmed'
   })
 }
 
@@ -87,7 +87,7 @@ async function deleteUnattachedPublishedImage(
 }
 
 async function findPublicationCandidate(
-  event: H3Event,
+  event: RequestEvent,
   submissionId: string
 ): Promise<PhotoSubmissionPublicationCandidate> {
   const submission = await event.context.dbHttp.query.equipmentItemPhotoSubmissions.findFirst({
@@ -133,7 +133,7 @@ async function findPublicationCandidate(
 }
 
 async function preparePhotoPublication(
-  event: H3Event,
+  event: RequestEvent,
   imagesBinding: Env['IMAGES'],
   submissionId: string
 ): Promise<PreparedPhotoPublication> {
@@ -183,13 +183,13 @@ async function preparePhotoPublication(
 
     throw createError({
       status: 502,
-      statusMessage: 'Photo publication failed'
+      statusText: 'Photo publication failed'
     })
   }
 }
 
 async function findPublicationReconciliation(
-  event: H3Event,
+  event: RequestEvent,
   publicCloudflareImageId: string,
   submissionId: string
 ): Promise<PublicationReconciliationResult> {
@@ -265,7 +265,7 @@ async function findPublicationReconciliationSafely(
 
     throw createError({
       status: 500,
-      statusMessage: 'Failed to review photo submission'
+      statusText: 'Failed to review photo submission'
     })
   }
 }
@@ -295,7 +295,7 @@ async function reconcilePublicationFailure(
 
     throw createError({
       status: 500,
-      statusMessage: 'Failed to review photo submission'
+      statusText: 'Failed to review photo submission'
     })
   }
 

@@ -1,8 +1,8 @@
-import { createError, isError, type H3Event } from 'h3'
+import { createError, isNuxtError, type RequestEvent } from 'nuxt/server'
 import { and, eq, or } from 'drizzle-orm'
 import type { OAuthProvider } from '#shared/types/oauth'
 import { getAuthErrorDetails } from '#server/utils/auth/telemetry'
-import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { createRuntimeWebSocketClient } from '#server/utils/config'
 import { oauthAccounts, oauthProviders, users } from '#server/database/schema'
 import { twitchOAuthMessages } from '#shared/utils/twitch-oauth'
 
@@ -27,11 +27,10 @@ interface UnlinkOAuthAccountOptions {
 
 async function createOAuthUser(
   provider: OAuthProvider,
-  accountId: string,
-  event: H3Event
+  accountId: string
 ): Promise<OAuthUserResult> {
   try {
-    const dbWebsocket = createWebSocketClientFromEvent(event)
+    const dbWebsocket = createRuntimeWebSocketClient()
 
     const [transactionResult] = await Promise.allSettled([
       dbWebsocket.transaction(async (transaction) => {
@@ -110,7 +109,7 @@ async function createOAuthUser(
 
     console.error('OAuth account creation failed', { error: details })
 
-    if (isError(error)) {
+    if (isNuxtError(error)) {
       throw error
     }
 
@@ -122,11 +121,10 @@ async function createOAuthUser(
 }
 
 async function linkOAuthAccount(
-  event: H3Event,
   options: LinkOAuthAccountOptions
 ) {
   const { accountId, provider, sessionVersion, userId } = options
-  const dbWebsocket = createWebSocketClientFromEvent(event)
+  const dbWebsocket = createRuntimeWebSocketClient()
 
   const [transactionResult] = await Promise.allSettled([
     dbWebsocket.transaction(async (transaction) => {
@@ -143,7 +141,7 @@ async function linkOAuthAccount(
       if (lockedUser === undefined || lockedUser.sessionVersion !== sessionVersion) {
         throw createError({
           status: 400,
-          statusMessage: twitchOAuthMessages.invalid
+          statusText: twitchOAuthMessages.invalid
         })
       }
 
@@ -199,7 +197,7 @@ async function linkOAuthAccount(
         if (isAlreadyLinked === false) {
           throw createError({
             status: 409,
-            statusMessage: twitchOAuthMessages.linkConflict
+            statusText: twitchOAuthMessages.linkConflict
           })
         }
       }
@@ -229,7 +227,7 @@ async function linkOAuthAccount(
 }
 
 async function unlinkOAuthAccount(
-  event: H3Event,
+  event: RequestEvent,
   options: UnlinkOAuthAccountOptions
 ): Promise<void> {
   const { provider, userId } = options

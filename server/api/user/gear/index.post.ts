@@ -1,5 +1,6 @@
 import type { InferInput } from 'valibot'
-import { createError, defineEventHandler, readValidatedBody, setResponseStatus, type H3Event } from 'h3'
+import { createError, defineEventHandler, readValidatedBody, setResponseStatus } from 'nuxt/server'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { userEquipment } from '#server/database/schema'
 import { validateSessionUser } from '#server/utils/session'
 import { validateUserEquipmentCreateBody, type userEquipmentCreateBodySchema } from '#server/utils/validation/schemas'
@@ -29,7 +30,7 @@ interface MyGearQueryRow {
   item: MyGearQueryItem | null;
 }
 
-export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof userEquipmentCreateBodySchema>; }>) : Promise<MyGearRecord> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof userEquipmentCreateBodySchema>; }>) : Promise<MyGearRecord> => {
   const userId = await validateSessionUser(event)
   const body = await readValidatedBody(event, validateUserEquipmentCreateBody)
 

@@ -1,5 +1,6 @@
 import type { InferInput } from 'valibot'
-import { defineEventHandler, type H3Event } from 'h3'
+import { defineEventHandler } from 'nuxt/server'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { generateRegistrationOptions } from '@simplewebauthn/server'
 import { isoBase64URL } from '@simplewebauthn/server/helpers'
 import type { PasskeyRegistrationOptions } from '#shared/types/passkey'
@@ -18,11 +19,11 @@ import {
 import { passkeyAlgorithms } from '#server/utils/auth/passkey-verification'
 import { validatePasskeyName, type passkeyNameSchema } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeof passkeyNameSchema>; }>): Promise<PasskeyRegistrationOptions> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof passkeyNameSchema>; }>): Promise<PasskeyRegistrationOptions> => {
   const createdAt = new Date()
 
   return handlePasskeyRequest(event, 'registration', async (sensitiveValues) => {
-    const config = getPasskeyConfig(event)
+    const config = getPasskeyConfig()
 
     validatePasskeyRequest(event, config)
 
@@ -31,7 +32,7 @@ export default defineEventHandler(async (event: H3Event<{ body: InferInput<typeo
 
     await enforcePasskeyRateLimit(event, `registration:options:user:${actor.userId}`)
 
-    const enrollment = await withPasskeyDatabase(event, sensitiveValues, async database => preparePasskeyEnrollment(database, actor, sensitiveValues))
+    const enrollment = await withPasskeyDatabase(sensitiveValues, async database => preparePasskeyEnrollment(database, actor, sensitiveValues))
     const userID = isoBase64URL.toBuffer(enrollment.userHandle)
     const userName = enrollment.email ?? `Metsik ${enrollment.userHandle.slice(0, 8)}`
 

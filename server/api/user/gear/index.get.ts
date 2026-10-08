@@ -1,4 +1,4 @@
-import { defineEventHandler } from 'h3'
+import { defineEventHandler } from 'nuxt/server'
 import { throwMyGearError } from '#server/utils/my-gear-errors'
 import { validateSessionUser } from '#server/utils/session'
 

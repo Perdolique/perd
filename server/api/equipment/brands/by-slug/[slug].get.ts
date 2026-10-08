@@ -1,4 +1,5 @@
-import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
+import { createError, defineEventHandler } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
 import { validateBrandDetailParams } from '#server/utils/validation/schemas'
 
 interface BrandDetailResponse {
@@ -8,7 +9,7 @@ interface BrandDetailResponse {
 }
 
 export default defineEventHandler(async (event) : Promise<BrandDetailResponse> => {
-  const { slug } = await getValidatedRouterParams(event, validateBrandDetailParams)
+  const { slug } = await getValidatedRouteParams(event, validateBrandDetailParams)
 
   const brand = await event.context.dbHttp.query.brands.findFirst({
     columns: {

@@ -1,4 +1,5 @@
-import type * as h3 from 'h3'
+import type { getValidatedRouteParams } from '#server/utils/request'
+import type * as nuxtServer from 'nuxt/server'
 import type { SQL } from 'drizzle-orm'
 import { PgDialect } from 'drizzle-orm/pg-core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -18,31 +19,33 @@ const waitUntilMock = vi.fn<(promise: Promise<unknown>) => void>()
 const {
   createWebSocketClientMock,
   getCloudflareImagesBindingMock,
-  getValidatedRouterParamsMock,
+  getValidatedRouteParamsMock,
   readValidatedBodyMock,
   validateAdminUserMock
 } = vi.hoisted(() => {
   return {
     createWebSocketClientMock: vi.fn(),
     getCloudflareImagesBindingMock: vi.fn(),
-    getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
-    readValidatedBodyMock: vi.fn<typeof h3.readValidatedBody>(),
+    getValidatedRouteParamsMock: vi.fn<typeof getValidatedRouteParams>(),
+    readValidatedBodyMock: vi.fn<typeof nuxtServer.readValidatedBody>(),
     validateAdminUserMock: vi.fn<(event: unknown) => Promise<string>>()
   }
 })
 
-// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial h3 mock.
-vi.mock(import('h3'), async () => {
-  const actual = await vi.importActual<typeof h3>('h3')
+// @ts-expect-error -- The test mock specializes the validator's generic result.
+vi.mock(import('#server/utils/request'), () => {
+  return {
+    getValidatedRouteParams: getValidatedRouteParamsMock
+  }
+})
+
+vi.mock(import('nuxt/server'), async () => {
+  const actual = await vi.importActual<typeof nuxtServer>('nuxt/server')
 
   return {
     ...actual,
 
-    async getValidatedRouterParams(...args: Parameters<typeof h3.getValidatedRouterParams>) {
-      return getValidatedRouterParamsMock(...args)
-    },
-
-    async readValidatedBody(...args: Parameters<typeof h3.readValidatedBody>) {
+    async readValidatedBody(...args: Parameters<typeof nuxtServer.readValidatedBody>) {
       return readValidatedBodyMock(...args)
     }
   }
@@ -57,7 +60,7 @@ vi.mock(import('#server/utils/cloudflare'), () => {
 })
 
 vi.mock(import('#server/utils/config'), () => {
-  return { createWebSocketClientFromEvent: createWebSocketClientMock }
+  return { createRuntimeWebSocketClient: createWebSocketClientMock }
 })
 
 interface ReconciledImage {
@@ -337,7 +340,7 @@ describe('patch /api/equipment/photo-submissions/[id]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     validateAdminUserMock.mockResolvedValue(userId)
-    getValidatedRouterParamsMock.mockResolvedValue({ id: submissionId })
+    getValidatedRouteParamsMock.mockResolvedValue({ id: submissionId })
 
     sourceImageBytes = new ReadableStream<Uint8Array>()
 

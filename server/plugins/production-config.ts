@@ -6,13 +6,13 @@ export default defineNitroPlugin((nitroApp) => {
   const isProductionRuntime = import.meta.dev === false
   let isTwitchConfigValidated = false
 
-  nitroApp.hooks.hook('request', (event) => {
+  nitroApp.hooks.hook('request', () => {
     if (isProductionRuntime) {
       if (isTwitchConfigValidated) {
         return
       }
 
-      getRuntimeTwitchConfig(event)
+      getRuntimeTwitchConfig()
 
       isTwitchConfigValidated = true
     }

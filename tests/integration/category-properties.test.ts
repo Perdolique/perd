@@ -3,7 +3,7 @@
 import { readFile } from 'node:fs/promises'
 import { URL } from 'node:url'
 import { and, eq, sql } from 'drizzle-orm'
-import type * as h3 from 'h3'
+import type * as nuxtServer from 'nuxt/server'
 import * as v from 'valibot'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -38,7 +38,7 @@ import { createIsolatedPostgreSQL } from '../../test-utils/isolated-postgresql'
 
 vi.mock(import('#server/utils/admin'), () => {
   return {
-    async validateAdminUser(event: h3.H3Event) {
+    async validateAdminUser(event: nuxtServer.RequestEvent) {
       await Promise.resolve()
 
       const id: unknown = event.context.testUserId
@@ -50,7 +50,7 @@ vi.mock(import('#server/utils/admin'), () => {
 
 vi.mock(import('#server/utils/user'), () => {
   return {
-    async validateRegisteredUserAccess(event: h3.H3Event) {
+    async validateRegisteredUserAccess(event: nuxtServer.RequestEvent) {
       await Promise.resolve()
 
       const userId = v.parse(v.string(), event.context.testUserId)
@@ -64,44 +64,29 @@ vi.mock(import('#server/utils/user'), () => {
 })
 
 vi.mock(import('#server/utils/session'), () => {
-  return { async validateSessionUser(event: h3.H3Event) {
+  return { async validateSessionUser(event: nuxtServer.RequestEvent) {
     await Promise.resolve()
 
     return v.parse(v.string(), event.context.testUserId)
   } }
 })
 
-vi.mock(import('#server/utils/config'), () => {
-  return {
-    createWebSocketClientFromEvent(event: h3.H3Event) {
-      return createWebSocketClient({
-        databaseUrl: v.parse(v.string(), event.context.testDatabaseUrl),
-        isLocalDatabase: true
-      })
-    }
-  }
-})
 
-// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial h3 mock.
-vi.mock(import('h3'), async () => {
-  const actual = await vi.importActual<typeof h3>('h3')
+
+// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial Nuxt server mock.
+vi.mock(import('nuxt/server'), async () => {
+  const actual = await vi.importActual<typeof nuxtServer>('nuxt/server')
 
   return {
     ...actual,
 
-    async readValidatedBody(event: h3.H3Event, validate: (body: unknown) => unknown) {
+    async readValidatedBody(event: nuxtServer.RequestEvent, validate: (body: unknown) => unknown) {
       await Promise.resolve()
 
       return validate(event.context.testBody)
     },
 
-    async getValidatedRouterParams(event: h3.H3Event, validate: (params: unknown) => unknown) {
-      await Promise.resolve()
-
-      return validate(event.context.params)
-    },
-
-    async getValidatedQuery(event: h3.H3Event, validate: (query: unknown) => unknown) {
+    async getValidatedQuery(event: nuxtServer.RequestEvent, validate: (query: unknown) => unknown) {
       await Promise.resolve()
 
       return validate(event.context.testQuery)
@@ -306,11 +291,21 @@ async function fixture() {
   }
 }
 
+vi.mock(import('#server/utils/config'), () => {
+  return {
+    createRuntimeWebSocketClient() {
+      return createWebSocketClient({
+        databaseUrl: resources().databaseUrl,
+        isLocalDatabase: true
+      })
+    }
+  }
+})
+
 function submissionEvent(data: Awaited<ReturnType<typeof fixture>>, body: unknown, id?: string) {
   const event = createTestEvent({})
 
   event.context.testUserId = data.context.userId
-  event.context.testDatabaseUrl = resources().databaseUrl
   event.context.testBody = body
   event.context.params = id === undefined ? {} : { id }
 

@@ -1,4 +1,4 @@
-import { createError, defineEventHandler } from 'h3'
+import { createError, defineEventHandler } from 'nuxt/server'
 import type { PasskeyListResponse } from '#shared/types/passkey'
 import { getPasskeyActor, handlePasskeyRequest } from '#server/utils/auth/passkey-request'
 import { listPasskeys } from '#server/utils/auth/passkey-persistence'
