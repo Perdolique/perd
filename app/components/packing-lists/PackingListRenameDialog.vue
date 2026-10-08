@@ -66,7 +66,12 @@
 
   const isRenaming = computed(() => packingListsStore.isPackingListRenaming(packingListId))
   const isDeleting = computed(() => packingListsStore.isPackingListDeleting(packingListId))
-  const isActionDisabled = computed(() => !available || isRenaming.value || isDeleting.value || packingListsStore.isPackingListCopying(packingListId))
+
+  const isActionDisabled = computed(() => !available || isRenaming.value || isDeleting.value || packingListsStore.isPackingListCopying(packingListId)
+    || packingListsStore.isPackingListClearingPacked(packingListId)
+    || packingListsStore.isPackingListRefreshingPacked(packingListId)
+    || packingListsStore.isPackingListPackedUnconfirmed(packingListId))
+
   const isConfirmDisabled = computed(() => isActionDisabled.value || editedName.value.trim() === name)
 
   onBeforeUnmount(() => {

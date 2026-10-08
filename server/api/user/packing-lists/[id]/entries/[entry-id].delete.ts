@@ -1,8 +1,15 @@
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { createError, defineEventHandler, isNuxtError } from 'nuxt/server'
 import { getValidatedRouteParams } from '#server/utils/request'
 import { packingListEntries, packingLists } from '#server/database/schema'
 import { createRuntimeWebSocketClient } from '#server/utils/config'
+
+import {
+  closePackingListWriteClient,
+  lockPackingList,
+  nextPackingListUpdatedAt
+} from '#server/utils/packing-list-write'
+
 import { validateSessionUser } from '#server/utils/session'
 import { validatePackingListEntryParams } from '#server/utils/validation/schemas'
 
@@ -18,22 +25,8 @@ export default defineEventHandler(async (event) : Promise<DeletePackingListEntry
 
   try {
     return await dbWebsocket.transaction(async (transaction) => {
-      const [ownedList] = await transaction
-        .select({
-          id: packingLists.id
-        })
-        .from(packingLists)
-        .where(
-          and(
-            eq(packingLists.id, id),
-            eq(packingLists.userId, userId)
-          )
-        )
-        .limit(1)
-
-      if (ownedList === undefined) {
-        throw createError({ status: 404 })
-      }
+      const ownedList = await lockPackingList(transaction, id, userId)
+      const updatedAt = nextPackingListUpdatedAt(ownedList.updatedAt)
 
       const [deletedEntry] = await transaction
         .delete(packingListEntries)
@@ -54,7 +47,7 @@ export default defineEventHandler(async (event) : Promise<DeletePackingListEntry
       const [updatedList] = await transaction
         .update(packingLists)
         .set({
-          updatedAt: sql`now()`
+          updatedAt
         })
         .where(
           and(
@@ -77,17 +70,19 @@ export default defineEventHandler(async (event) : Promise<DeletePackingListEntry
         deletedEntryId: deletedEntry.id,
         packingListUpdatedAt: updatedList.updatedAt
       }
-    })
+    }, { isolationLevel: 'read committed' })
   } catch (error) {
-    if (isNuxtError(error)) {
+    if (isNuxtError(error) && error.status < 500) {
       throw error
     }
+
+    console.error('Failed to delete packing list entry', error)
 
     throw createError({
       status: 500,
       message: 'Failed to delete packing list entry'
     })
   } finally {
-    await dbWebsocket.$client.end()
+    await closePackingListWriteClient(dbWebsocket)
   }
 })
