@@ -2,10 +2,13 @@
   <PageContent :class="$style.component" :page-title="pageTitle">
     <template v-if="hasPackingListData" #actions>
       <PackingListActions
+        ref="packingListActions"
         :available="canManagePackingList"
         :packing-list-id="packingListId"
         :name="packingListView.name"
         :refresh-original="handleCopyRefresh"
+        @cleared="handlePackedDetail"
+        @refreshed="handlePackedDetail"
         @renamed="handleRenamed"
         @deleted="handleDeleted"
         @copied="handleCopied"
@@ -38,41 +41,49 @@
         </template>
       </PagePlaceholder>
 
-      <div v-else :class="$style.content" :inert="isContentLocked" :aria-busy="isContentLocked">
-        <p
-          :class="[$style.progress, { isEmpty: isPackingListEmpty }]"
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          {{ packingProgressText }}
-        </p>
+      <div v-else :class="$style.list">
+        <div v-if="isPackedUnconfirmed" :class="$style.recovery">
+          <p>Packed marks are unconfirmed. Refresh the list before making changes.</p>
+          <PerdButton variant="secondary" :loading="isRefreshingPacked" @click="handlePackedRefresh">
+            Refresh list
+          </PerdButton>
+        </div>
+        <div :class="$style.content" :inert="isContentLocked" :aria-busy="isContentBusy">
+          <p
+            :class="[$style.progress, { isEmpty: isPackingListEmpty }]"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {{ packingProgressText }}
+          </p>
 
-        <ul :class="$style.entryList">
-          <PackingListEntryCard
-            v-for="entry in entryViews"
-            :key="entry.id"
-            :entry="entry"
-            @pack-change="handlePackChange"
-            @remove="handleRemoveEntry"
-          />
+          <ul :class="$style.entryList">
+            <PackingListEntryCard
+              v-for="entry in entryViews"
+              :key="entry.id"
+              :entry="entry"
+              @pack-change="handlePackChange"
+              @remove="handleRemoveEntry"
+            />
 
-          <PackingListEntryComposer
-            ref="entryComposer"
-            :packing-list-id="packingListId"
-            :initially-open="isComposerInitiallyOpen"
-            @created="handleEntryCreated"
-          />
-        </ul>
+            <PackingListEntryComposer
+              ref="entryComposer"
+              :packing-list-id="packingListId"
+              :initially-open="isComposerInitiallyOpen"
+              @created="handleEntryCreated"
+            />
+          </ul>
 
-        <p
-          v-if="hasEntryRemoveError"
-          :class="$style.errorMessage"
-          role="status"
-          aria-live="polite"
-        >
-          {{ entryRemoveErrorMessage }}
-        </p>
+          <p
+            v-if="hasEntryRemoveError"
+            :class="$style.errorMessage"
+            role="status"
+            aria-live="polite"
+          >
+            {{ entryRemoveErrorMessage }}
+          </p>
+        </div>
       </div>
     </div>
   </PageContent>
@@ -110,6 +121,7 @@
   const packingListsStore = usePackingListsStore()
   const requestFetch = useRequestFetch()
   const entryComposerRef = useTemplateRef('entryComposer')
+  const packingListActions = useTemplateRef('packingListActions')
   const entryRemoveErrorMessage = ref<string | null>(null)
   const lastPackingEntryId = ref<string | null>(null)
   const packErrorEntryIds = reactive(new Set<string>())
@@ -137,6 +149,8 @@
 
   if (packingListError.value === undefined) {
     packingListsStore.initializePackingListSummary(packingListResponse.value)
+
+    packingListResponse.value = packingListsStore.getPackingListDetailView(packingListResponse.value)
   }
 
   const packingListView = computed(() => packingListsStore.getPackingListDetailView(packingListResponse.value))
@@ -156,10 +170,19 @@
   const entryCount = computed(() => packingListView.value.entries.length)
   const packedCount = computed(() => packingListView.value.entries.filter((entry) => entry.isPacked).length)
   const isPackingListEmpty = computed(() => entryCount.value === 0)
-  const packingProgressText = computed(() => formatPackingProgress(packedCount.value, entryCount.value))
+  const isPackedUnconfirmed = computed(() => packingListsStore.isPackingListPackedUnconfirmed(packingListId))
+  const isRefreshingPacked = computed(() => packingListsStore.isPackingListRefreshingPacked(packingListId))
 
-  const isContentLocked = computed(() => packingListsStore.isPackingListDeleting(packingListId)
-    || packingListsStore.isPackingListCopying(packingListId))
+  const packingProgressText = computed(() => isPackedUnconfirmed.value
+    ? 'Packing progress unconfirmed'
+    : formatPackingProgress(packedCount.value, entryCount.value))
+
+  const isContentBusy = computed(() => packingListsStore.isPackingListDeleting(packingListId)
+    || packingListsStore.isPackingListCopying(packingListId)
+    || packingListsStore.isPackingListClearingPacked(packingListId)
+    || isRefreshingPacked.value)
+
+  const isContentLocked = computed(() => isContentBusy.value || isPackedUnconfirmed.value)
 
   // Keep actions mounted until they report deletion, even after the list becomes unavailable.
   const hasPackingListData = computed(() => packingListResponse.value.id !== '')
@@ -265,11 +288,34 @@
     heading?.focus()
   }
 
+  function handlePackedDetail(list: PackingListDetail) {
+    packingListResponse.value = list
+
+    packErrorEntryIds.clear()
+
+    entryRemoveErrorMessage.value = null
+  }
+
+  async function handlePackedRefresh() {
+    try {
+      const response = await packingListsStore.refreshPackingListPacked(packingListId)
+
+      if (response !== null) {
+        handlePackedDetail(response)
+        await nextTick()
+        packingListActions.value?.focus()
+      }
+    } catch {
+      // The store keeps the recovery action available and logs the original error.
+    }
+  }
+
   function handleRenamed(name: string, savedUpdatedAt: string) {
-    const updatedAt = latestPackingListUpdatedAt(packingListResponse.value.updatedAt, savedUpdatedAt)
+    const currentList = packingListView.value
+    const updatedAt = latestPackingListUpdatedAt(currentList.updatedAt, savedUpdatedAt)
 
     packingListResponse.value = {
-      ...packingListResponse.value,
+      ...currentList,
       name,
       updatedAt
     }
@@ -312,17 +358,19 @@
   }
 
   function handleEntryCreated(entry: PackingListEntry, packingListUpdatedAt: string) {
+    const currentList = packingListView.value
+
     packingListResponse.value = {
-      createdAt: packingListResponse.value.createdAt,
+      createdAt: currentList.createdAt,
 
       entries: [
-        ...packingListResponse.value.entries,
+        ...currentList.entries,
         entry
       ],
 
-      id: packingListResponse.value.id,
-      name: packingListResponse.value.name,
-      updatedAt: latestPackingListUpdatedAt(packingListResponse.value.updatedAt, packingListUpdatedAt)
+      id: currentList.id,
+      name: currentList.name,
+      updatedAt: latestPackingListUpdatedAt(currentList.updatedAt, packingListUpdatedAt)
     }
   }
 
@@ -343,13 +391,15 @@
 
     packErrorEntryIds.delete(entryId)
 
-    const optimisticEntries = packingListResponse.value.entries.map((entry) => entry.id === entryId ? {
+    const currentList = packingListView.value
+
+    const optimisticEntries = currentList.entries.map((entry) => entry.id === entryId ? {
       ...entry,
       isPacked
     } : entry)
 
     packingListResponse.value = {
-      ...packingListResponse.value,
+      ...currentList,
       entries: optimisticEntries
     }
 
@@ -405,12 +455,14 @@
         currentEntry.isPacked
       )
 
+      const currentList = packingListView.value
+
       packingListResponse.value = {
-        createdAt: packingListResponse.value.createdAt,
-        entries: packingListResponse.value.entries.filter((entry) => entry.id !== response.deletedEntryId),
-        id: packingListResponse.value.id,
-        name: packingListResponse.value.name,
-        updatedAt: latestPackingListUpdatedAt(packingListResponse.value.updatedAt, response.packingListUpdatedAt)
+        createdAt: currentList.createdAt,
+        entries: currentList.entries.filter((entry) => entry.id !== response.deletedEntryId),
+        id: currentList.id,
+        name: currentList.name,
+        updatedAt: latestPackingListUpdatedAt(currentList.updatedAt, response.packingListUpdatedAt)
       }
 
       packErrorEntryIds.delete(response.deletedEntryId)
@@ -433,6 +485,8 @@
     container-type: inline-size;
   }
 
+  .list,
+  .recovery,
   .content {
     display: grid;
     gap: var(--spacing-24);

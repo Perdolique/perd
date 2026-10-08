@@ -28,6 +28,14 @@
       :packing-list-id="packingListId"
       @renamed="(savedName, updatedAt) => emit('renamed', savedName, updatedAt)"
     />
+    <PackingListClearPackedDialog
+      v-model="isClearPackedVisible"
+      :available="available"
+      :name="name"
+      :packing-list-id="packingListId"
+      @cleared="emit('cleared', $event)"
+      @refreshed="emit('refreshed', $event)"
+    />
     <PackingListDeleteDialog
       v-model="isDeleteVisible"
       :available="available"
@@ -40,10 +48,12 @@
 
 <script setup lang="ts">
   import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
+  import type { PackingListDetail } from '~/types/packing'
   import { usePackingListsStore } from '~/stores/packing-lists'
   import PerdActionMenu, { type ActionMenuItem } from '~/components/PerdActionMenu.vue'
   import PackingListCopyDialog from '~/components/packing-lists/PackingListCopyDialog.vue'
   import PackingListRenameDialog from '~/components/packing-lists/PackingListRenameDialog.vue'
+  import PackingListClearPackedDialog from '~/components/packing-lists/PackingListClearPackedDialog.vue'
   import PackingListDeleteDialog from '~/components/packing-lists/PackingListDeleteDialog.vue'
 
   interface Props {
@@ -54,6 +64,8 @@
   }
 
   interface Emits {
+    cleared: [list: PackingListDetail];
+    refreshed: [list: PackingListDetail];
     copied: [id: string];
     deleted: [];
     renamed: [name: string, updatedAt: string];
@@ -65,15 +77,27 @@
   const menu = useTemplateRef('menu')
   const isCopyVisible = ref(false)
   const isRenameVisible = ref(false)
+  const isClearPackedVisible = ref(false)
   const isDeleteVisible = ref(false)
   const actionLabel = computed(() => `Actions for ${name}`)
 
   const isBusy = computed(() => store.isPackingListCopying(packingListId)
     || store.isPackingListRenaming(packingListId)
-    || store.isPackingListDeleting(packingListId))
+    || store.isPackingListDeleting(packingListId)
+    || store.isPackingListClearingPacked(packingListId)
+    || store.isPackingListRefreshingPacked(packingListId))
 
   const items = computed<ActionMenuItem[]>(() => {
-    const isSnapshotDisabled = !available || store.isPackingListMutationPending(packingListId)
+    const isUnconfirmed = store.isPackingListPackedUnconfirmed(packingListId)
+    const isSnapshotDisabled = !available || store.isPackingListMutationPending(packingListId) || isUnconfirmed
+    const canClearPacked = store.canClearPackingListPacked(packingListId)
+    let clearHint = 'There are no packed marks to clear.'
+
+    if (isUnconfirmed) {
+      clearHint = 'Refresh the list to confirm its packed marks.'
+    } else if (store.isPackingListMutationPending(packingListId)) {
+      clearHint = 'Wait for list changes to finish saving.'
+    }
 
     return [{
       id: 'copy',
@@ -84,7 +108,13 @@
       id: 'rename',
       label: 'Rename',
       icon: 'hugeicons:pencil-edit-02',
-      disabled: !available
+      disabled: !available || isUnconfirmed
+    }, {
+      id: 'clear-packed',
+      label: 'Clear packed marks',
+      icon: 'hugeicons:refresh',
+      disabled: !available || !canClearPacked,
+      hint: canClearPacked ? undefined : clearHint
     }, {
       id: 'delete',
       label: 'Delete',
@@ -95,7 +125,7 @@
     }]
   })
 
-  watch([isCopyVisible, isRenameVisible, isDeleteVisible], async (visible, previous) => {
+  watch([isCopyVisible, isRenameVisible, isClearPackedVisible, isDeleteVisible], async (visible, previous) => {
     const wasVisible = previous.some(Boolean)
     const isVisible = visible.some(Boolean)
 
@@ -104,6 +134,12 @@
       menu.value?.focus()
     }
   })
+
+  function focus() {
+    menu.value?.focus()
+  }
+
+  defineExpose({ focus })
 
   function handleMenuToggle(event: Event) {
     const { target } = event
@@ -116,7 +152,7 @@
       return
     }
 
-    const isDialogVisible = isCopyVisible.value || isRenameVisible.value || isDeleteVisible.value
+    const isDialogVisible = isCopyVisible.value || isRenameVisible.value || isClearPackedVisible.value || isDeleteVisible.value
 
     if (!isDialogVisible) {
       menu.value?.focus()
@@ -124,11 +160,13 @@
   }
 
   function handleAction(id: string) {
-    if (!available || isBusy.value) {
+    if (!available || isBusy.value || store.isPackingListPackedUnconfirmed(packingListId)) {
       return
     }
 
-    if (id === 'rename') {
+    if (id === 'clear-packed' && store.canClearPackingListPacked(packingListId)) {
+      isClearPackedVisible.value = true
+    } else if (id === 'rename') {
       isRenameVisible.value = true
     } else if (!store.isPackingListMutationPending(packingListId)) {
       if (id === 'copy') {

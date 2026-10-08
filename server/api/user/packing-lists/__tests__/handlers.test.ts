@@ -258,7 +258,24 @@ function createSelectMock(operations: SelectOperation[]) {
     limitMocks.push(limitMock)
 
     return {
-      limit: limitMock
+      limit: limitMock,
+
+      for: vi.fn(() => {
+        const rows = limitMock()
+
+        return rows.map((row: unknown) => {
+          if (typeof row !== 'object' || row === null) {
+            throw new Error('Expected a list row')
+          }
+
+          const id: unknown = Reflect.get(row, 'id')
+
+          return {
+            id,
+            updatedAt: new Date('2026-04-03T09:00:00.000Z')
+          }
+        })
+      })
     }
   })
 
@@ -406,6 +423,7 @@ function createEntryMutationDb(transaction: {
 }
 
 function createUpdateDb(updatedRow?: unknown) {
+  const { selectMock } = createSelectMock([{ rows: updatedRow === undefined ? [] : [updatedRow] }])
   const updateReturningMock = vi.fn(() => updatedRow === undefined ? [] : [updatedRow])
 
   const updateWhereMock = vi.fn(() => {
@@ -419,6 +437,13 @@ function createUpdateDb(updatedRow?: unknown) {
       where: updateWhereMock
     }
   })
+
+  const dbWrite = createEntryMutationDb({
+    select: selectMock,
+    update: vi.fn(() => { return { set: updateSetMock } })
+  })
+
+  createWebSocketClientMock.mockReturnValue(dbWrite)
 
   return {
     dbHttp: {
@@ -867,7 +892,8 @@ describe('user packing list handlers', () => {
       expect(result).toStrictEqual(updatedRow)
 
       expect(updateSetMock).toHaveBeenCalledWith({
-        name: 'Storm kit'
+        name: 'Storm kit',
+        updatedAt: expect.any(Date) as unknown
       })
 
       expect(updateWhereMock).toHaveBeenCalledTimes(1)
@@ -995,6 +1021,8 @@ describe('user packing list handlers', () => {
       expect(setResponseStatusMock).toHaveBeenCalledWith(event, 201)
 
       expect(valuesMock).toHaveBeenCalledWith({
+        createdAt: expect.any(Date) as unknown,
+        updatedAt: expect.any(Date) as unknown,
         customName: 'Rain jacket',
         packingListId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
         userEquipmentId: undefined
@@ -1058,6 +1086,8 @@ describe('user packing list handlers', () => {
       })
 
       expect(valuesMock).toHaveBeenCalledWith({
+        createdAt: expect.any(Date) as unknown,
+        updatedAt: expect.any(Date) as unknown,
         customName: undefined,
         packingListId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
         userEquipmentId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9'
@@ -1304,6 +1334,7 @@ describe('user packing list handlers', () => {
       })
 
       expect(setMocks[0]).toHaveBeenCalledWith({
+        updatedAt: expect.any(Date) as unknown,
         isPacked: true
       })
 
@@ -1371,6 +1402,7 @@ describe('user packing list handlers', () => {
       })
 
       expect(setMocks[0]).toHaveBeenCalledWith({
+        updatedAt: expect.any(Date) as unknown,
         isPacked: true
       })
 

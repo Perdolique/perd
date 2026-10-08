@@ -38,10 +38,12 @@
   const { packingList } = defineProps<Props>()
   const packingListLocation = computed(() => createPackingListLocation(packingList.id))
 
-  const packingProgressText = computed(() => formatPackingProgress(
-    packingList.packedCount,
-    packingList.entryCount
-  ))
+  const packingProgressText = computed(() => packingList.isPackedUnconfirmed
+    ? 'Packing progress unconfirmed'
+    : formatPackingProgress(
+      packingList.packedCount,
+      packingList.entryCount
+    ))
 </script>
 
 <style module>
