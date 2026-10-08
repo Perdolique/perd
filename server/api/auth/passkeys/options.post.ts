@@ -1,4 +1,5 @@
-import { defineEventHandler } from 'h3'
+import { defineEventHandler } from 'nuxt/server'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { generateAuthenticationOptions } from '@simplewebauthn/server'
 import type { PasskeyAuthenticationOptions } from '#shared/types/passkey'
 import { readLimitedValidatedJsonBody } from '#server/utils/auth/email-authentication-request'
@@ -14,11 +15,11 @@ import {
 
 import { validatePasskeyOptions } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event): Promise<PasskeyAuthenticationOptions> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: Record<string, never>; }>): Promise<PasskeyAuthenticationOptions> => {
   const createdAt = new Date()
 
   return handlePasskeyRequest(event, 'authentication', async (sensitiveValues) => {
-    const config = getPasskeyConfig(event)
+    const config = getPasskeyConfig()
 
     validatePasskeyRequest(event, config)
     await limitPasskeyAuthentication(event, 'options')

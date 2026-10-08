@@ -56,6 +56,7 @@
   import { computed, nextTick, ref, useTemplateRef } from 'vue'
   import { definePageMeta, useRequestFetch, useRoute, useRuntimeConfig } from '#imports'
   import { passwordRecoveryRequestTurnstileAction, turnstileResponseFieldName } from '#shared/utils/turnstile'
+  import { appLocations } from '~/utils/navigation'
   import { getPasswordRecoveryRequestError } from '~/utils/password-recovery'
   import { getRedirectNavigationTarget } from '~/utils/router'
   import AuthFormPanel from '~/components/auth/AuthFormPanel.vue'
@@ -85,7 +86,7 @@
 
   const signInTarget = computed(() => {
     return {
-      path: '/login',
+      name: appLocations.login.name,
       query: { redirectTo: redirectTo.value }
     }
   })

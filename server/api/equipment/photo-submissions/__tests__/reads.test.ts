@@ -1,4 +1,5 @@
-import * as h3 from 'h3'
+import type { getValidatedRouteParams } from '#server/utils/request'
+import * as nuxtServer from 'nuxt/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import detailHandler from '#server/api/equipment/photo-submissions/[id].get'
 import previewHandler from '#server/api/equipment/photo-submissions/[id]/image.get'
@@ -11,30 +12,32 @@ const cursorSubmissionId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d6'
 const {
   getCloudflareImagesBindingMock,
   getValidatedQueryMock,
-  getValidatedRouterParamsMock,
+  getValidatedRouteParamsMock,
   validateAdminUserMock
 } = vi.hoisted(() => {
   return {
     getCloudflareImagesBindingMock: vi.fn(),
-    getValidatedQueryMock: vi.fn<typeof h3.getValidatedQuery>(),
-    getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
+    getValidatedQueryMock: vi.fn<typeof nuxtServer.getValidatedQuery>(),
+    getValidatedRouteParamsMock: vi.fn<typeof getValidatedRouteParams>(),
     validateAdminUserMock: vi.fn<(event: unknown) => Promise<string>>()
   }
 })
 
-// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial h3 mock.
-vi.mock(import('h3'), async () => {
-  const actual = await vi.importActual<typeof h3>('h3')
+// @ts-expect-error -- The test mock specializes the validator's generic result.
+vi.mock(import('#server/utils/request'), () => {
+  return {
+    getValidatedRouteParams: getValidatedRouteParamsMock
+  }
+})
+
+vi.mock(import('nuxt/server'), async () => {
+  const actual = await vi.importActual<typeof nuxtServer>('nuxt/server')
 
   return {
     ...actual,
 
-    async getValidatedQuery(...args: Parameters<typeof h3.getValidatedQuery>) {
+    async getValidatedQuery(...args: Parameters<typeof nuxtServer.getValidatedQuery>) {
       return getValidatedQueryMock(...args)
-    },
-
-    async getValidatedRouterParams(...args: Parameters<typeof h3.getValidatedRouterParams>) {
-      return getValidatedRouterParamsMock(...args)
     }
   }
 })
@@ -108,7 +111,7 @@ describe('admin equipment photo submission reads', () => {
       limit: 1
     })
 
-    getValidatedRouterParamsMock.mockResolvedValue({ id: submissionId })
+    getValidatedRouteParamsMock.mockResolvedValue({ id: submissionId })
   })
 
   afterEach(() => {
@@ -309,7 +312,7 @@ describe('admin equipment photo submission reads', () => {
   })
 
   it('should stop all reads before database access when admin validation fails', async () => {
-    const authError = h3.createError({ status: 403 })
+    const authError = nuxtServer.createError({ status: 403 })
     const findManyMock = vi.fn()
     const findFirstMock = vi.fn()
 

@@ -2,6 +2,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRequestFetch } from '#imports'
 import type { SessionUser } from '#server/utils/user'
 import { passkeyMessages } from '#shared/utils/passkey'
+import { getPasskeyAuthenticationCredential } from '~/utils/passkey-credential'
 import { getPasskeyErrorMessage, getPasskeyRequestStatus, isPasskeyCancellation } from '~/utils/passkey'
 
 interface PasskeySignInOptions {
@@ -137,11 +138,8 @@ function usePasskeySignIn(options: PasskeySignInOptions) {
         throw new Error('Passkey authentication returned no credential')
       }
 
-      const credentialJSON = credential.toJSON()
-
-      if (!('signature' in credentialJSON.response)) {
-        throw new Error('Passkey authentication returned an invalid credential')
-      }
+      const browserCredential = credential.toJSON()
+      const credentialJSON = getPasskeyAuthenticationCredential(browserCredential)
 
       if (!ownsAttempt(currentAttempt) || !options.canStart()) {
         return

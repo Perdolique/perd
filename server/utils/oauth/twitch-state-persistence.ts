@@ -1,5 +1,5 @@
 import { eq, inArray, isNull, lte, sql } from 'drizzle-orm'
-import { createError } from 'h3'
+import { createError } from 'nuxt/server'
 import { twitchOAuthStates } from '#server/database/schema'
 import type { createHttpClient, createWebSocketClient } from '#server/utils/database'
 import { sanitizeRedirectPath } from '#shared/utils/redirect'
@@ -98,7 +98,7 @@ async function consumeTwitchOAuthState(database: TwitchStateDatabase, options: T
   if (consumedAttempt === undefined) {
     throw createError({
       status: 400,
-      statusMessage: twitchOAuthMessages.invalid
+      statusText: twitchOAuthMessages.invalid
     })
   }
 

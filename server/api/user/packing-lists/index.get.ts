@@ -1,4 +1,4 @@
-import { defineEventHandler } from 'h3'
+import { defineEventHandler } from 'nuxt/server'
 import { validateSessionUser } from '#server/utils/session'
 
 interface PackingListSummary {

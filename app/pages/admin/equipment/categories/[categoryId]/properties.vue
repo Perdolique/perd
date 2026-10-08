@@ -1,6 +1,6 @@
 <template>
   <PageContent :page-title="pageTitle">
-    <template #actions><PerdLink :to="appRoutes.adminEquipmentCategories">Back to categories</PerdLink></template>
+    <template #actions><PerdLink :to="appLocations.adminEquipmentCategories">Back to categories</PerdLink></template>
     <main :class="$style.component">
       <div :class="$style.toolbar">
         <span :class="$style.count">{{ properties.length }} characteristics</span><div :class="$style.toolbarActions"><PerdButton ref="createButton" size="small" icon="hugeicons:add-01" :disabled="editsDisabled" @click="openCreate">Add characteristic</PerdButton><PerdButton size="small" variant="secondary" icon="hugeicons:sorting-05" :disabled="reorderDisabled" @click="openOrder">Reorder</PerdButton></div>
@@ -49,7 +49,7 @@
   import PerdButton from '~/components/PerdButton.vue'
   import PerdLink from '~/components/PerdLink.vue'
   import PageContent from '~/components/layout/PageContent.vue'
-  import { appRoutes } from '~/utils/navigation'
+  import { appLocations } from '~/utils/navigation'
   import { logUnexpectedCategoryPropertiesError } from '~/utils/category-properties-error'
   import { getFetchErrorResponse } from '~/utils/fetch-error'
 
@@ -58,7 +58,7 @@
     middleware: 'admin'
   })
 
-  const route = useRoute()
+  const route = useRoute('admin-equipment-categories-categoryId-properties')
   const categoryId = Number(route.params.categoryId)
   const path = `/api/equipment/categories/${categoryId}/properties` as const
   const requestFetch = useRequestFetch()
@@ -187,12 +187,15 @@
     deleteError.value = null
 
     try {
+      const expectedPropertiesRevision = String(deleteRevision.value)
+      const expectedAffectedItemCount = String(property.usedItemCount)
+
       const result = await requestFetch(`${path}/${property.id}`, {
         method: 'DELETE',
 
         query: {
-          expectedPropertiesRevision: deleteRevision.value,
-          expectedAffectedItemCount: property.usedItemCount
+          expectedPropertiesRevision,
+          expectedAffectedItemCount
         }
       })
 

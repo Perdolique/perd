@@ -13,7 +13,7 @@
                 {{ catalogItem.brand.name }}
               </div>
 
-              <PerdLink :to="gearLibraryPath">
+              <PerdLink :to="gearLibraryLocation">
                 {{ catalogItem.name }}
               </PerdLink>
             </template>
@@ -54,7 +54,7 @@
 
 <script lang="ts" setup>
   import { computed, useTemplateRef } from 'vue'
-  import { createGearLibraryItemPath } from '~/utils/navigation'
+  import { createGearLibraryItemLocation } from '~/utils/navigation'
   import type { MyGearRecordView } from '~/types/equipment'
   import PerdActionMenu, { type ActionMenuItem } from '~/components/PerdActionMenu.vue'
   import PerdCard from '~/components/PerdCard.vue'
@@ -98,8 +98,8 @@
     return items
   })
 
-  const gearLibraryPath = computed(() => myGearRow.source === 'catalog'
-    ? createGearLibraryItemPath(myGearRow.item.id)
+  const gearLibraryLocation = computed(() => myGearRow.source === 'catalog'
+    ? createGearLibraryItemLocation(myGearRow.item.id)
     : '')
 
   function focus() {

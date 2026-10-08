@@ -1,5 +1,6 @@
-import type * as h3 from 'h3'
-import { createError } from 'h3'
+import type { getValidatedRouteParams } from '#server/utils/request'
+import type * as nuxtServer from 'nuxt/server'
+import { createError } from 'nuxt/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type {
@@ -49,9 +50,8 @@ const {
   getPhotoSubmissionRateLimiterBindingMock,
   getPhotoSubmissionTurnstileRateLimiterBindingMock,
   getTrustedClientIpMock,
-  getValidatedRouterParamsMock,
+  getValidatedRouteParamsMock,
   readLimitedMultipartFormDataMock,
-  setResponseHeaderMock,
   setResponseStatusMock,
   uploadHostedEquipmentImageMock,
   validatePhotoSubmissionMultipartRequestMock,
@@ -67,10 +67,9 @@ const {
     getPhotoSubmissionRateLimiterBindingMock: vi.fn(),
     getPhotoSubmissionTurnstileRateLimiterBindingMock: vi.fn(),
     getTrustedClientIpMock: vi.fn(),
-    getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
+    getValidatedRouteParamsMock: vi.fn<typeof getValidatedRouteParams>(),
     readLimitedMultipartFormDataMock: vi.fn<typeof readLimitedMultipartFormData>(),
-    setResponseHeaderMock: vi.fn<typeof h3.setResponseHeader>(),
-    setResponseStatusMock: vi.fn<typeof h3.setResponseStatus>(),
+    setResponseStatusMock: vi.fn<typeof nuxtServer.setResponseStatus>(),
     uploadHostedEquipmentImageMock: vi.fn<typeof uploadHostedEquipmentImage>(),
     validatePhotoSubmissionMultipartRequestMock: vi.fn<typeof validatePhotoSubmissionMultipartRequest>(),
     validateRegisteredUserMock: vi.fn(),
@@ -78,22 +77,20 @@ const {
   }
 })
 
-// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial h3 mock.
-vi.mock(import('h3'), async () => {
-  const actual = await vi.importActual<typeof h3>('h3')
+// @ts-expect-error -- The test mock specializes the validator's generic result.
+vi.mock(import('#server/utils/request'), () => {
+  return {
+    getValidatedRouteParams: getValidatedRouteParamsMock
+  }
+})
+
+vi.mock(import('nuxt/server'), async () => {
+  const actual = await vi.importActual<typeof nuxtServer>('nuxt/server')
 
   return {
     ...actual,
 
-    async getValidatedRouterParams(...args: Parameters<typeof h3.getValidatedRouterParams>) {
-      return getValidatedRouterParamsMock(...args)
-    },
-
-    setResponseHeader(...args: Parameters<typeof h3.setResponseHeader>) {
-      setResponseHeaderMock(...args)
-    },
-
-    setResponseStatus(...args: Parameters<typeof h3.setResponseStatus>) {
+    setResponseStatus(...args: Parameters<typeof nuxtServer.setResponseStatus>) {
       setResponseStatusMock(...args)
     }
   }
@@ -111,7 +108,7 @@ vi.mock(import('#server/utils/cloudflare'), () => {
 
 vi.mock(import('#server/utils/config'), () => {
   return {
-    createWebSocketClientFromEvent: createWebSocketClientMock
+    createRuntimeWebSocketClient: createWebSocketClientMock
   }
 })
 
@@ -385,7 +382,7 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
     })
 
     getTrustedClientIpMock.mockReturnValue(clientIp)
-    getValidatedRouterParamsMock.mockResolvedValue({ id: itemId })
+    getValidatedRouteParamsMock.mockResolvedValue({ id: itemId })
     rateLimitMock.mockResolvedValue({ success: true })
     turnstileRateLimitMock.mockResolvedValue({ success: true })
     readLimitedMultipartFormDataMock.mockResolvedValue(createSubmissionFormData('manufacturer'))
@@ -417,7 +414,7 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
 
     const result = await createPhotoSubmissionHandler(event)
 
-    expect(verifyTurnstileMock).toHaveBeenCalledWith(event, turnstileToken, {
+    expect(verifyTurnstileMock).toHaveBeenCalledWith(turnstileToken, {
       expectedAction: photoSubmissionTurnstileAction,
       remoteIp: clientIp
     })
@@ -559,7 +556,7 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
       createPhotoSubmissionHandler(createPhotoSubmissionEvent(readDb.db, idempotencyKey, null))
     ).rejects.toBe(verificationError)
 
-    expect(verifyTurnstileMock).toHaveBeenCalledWith(expect.anything(), undefined, {
+    expect(verifyTurnstileMock).toHaveBeenCalledWith(undefined, {
       expectedAction: photoSubmissionTurnstileAction,
       remoteIp: clientIp
     })
@@ -689,7 +686,10 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
 
     rateLimitMock.mockResolvedValue({ success: false })
     await expect(createPhotoSubmissionHandler(event)).rejects.toMatchObject({ statusCode: 429 })
-    expect(setResponseHeaderMock).toHaveBeenCalledWith(event, 'retry-after', 60)
+
+    const retryAfter = event.res.headers.get('retry-after')
+
+    expect(retryAfter).toBe('60')
     expect(readLimitedMultipartFormDataMock).not.toHaveBeenCalled()
     expect(uploadHostedEquipmentImageMock).not.toHaveBeenCalled()
   })
@@ -700,7 +700,10 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
 
     turnstileRateLimitMock.mockResolvedValue({ success: false })
     await expect(createPhotoSubmissionHandler(event)).rejects.toMatchObject({ statusCode: 429 })
-    expect(setResponseHeaderMock).toHaveBeenCalledWith(event, 'retry-after', 60)
+
+    const retryAfter = event.res.headers.get('retry-after')
+
+    expect(retryAfter).toBe('60')
     expect(verifyTurnstileMock).not.toHaveBeenCalled()
     expect(readDb.submissionFindFirstMock).not.toHaveBeenCalled()
     expect(rateLimitMock).not.toHaveBeenCalled()
@@ -937,7 +940,7 @@ describe('post /api/equipment/items/[id]/photo-submissions', () => {
       createPhotoSubmissionHandler(createPhotoSubmissionEvent(createReadDb().db))
     ).rejects.toBe(authError)
 
-    expect(getValidatedRouterParamsMock).not.toHaveBeenCalled()
+    expect(getValidatedRouteParamsMock).not.toHaveBeenCalled()
     expect(getTrustedClientIpMock).not.toHaveBeenCalled()
     expect(rateLimitMock).not.toHaveBeenCalled()
     expect(turnstileRateLimitMock).not.toHaveBeenCalled()

@@ -1,9 +1,9 @@
 import { inspect } from 'node:util'
-import { createError, isError } from 'h3'
+import { createError, isNuxtError } from 'nuxt/server'
 
 /** Keeps database failures private while preserving their nested details in Worker logs. */
 function throwMyGearError(error: unknown, action: 'create' | 'rename' | 'delete' | 'load'): never {
-  if (isError(error) && error.statusCode < 500) {
+  if (isNuxtError(error) && error.status < 500) {
     throw error
   }
 

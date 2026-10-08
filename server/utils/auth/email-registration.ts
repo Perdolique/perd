@@ -1,12 +1,12 @@
-import { createError, isError, type H3Event } from 'h3'
-import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { createError, isNuxtError, type RequestEvent } from 'nuxt/server'
+import { createRuntimeWebSocketClient } from '#server/utils/config'
 import { useAppSession } from '#server/utils/session'
 import { getSessionUser } from '#server/utils/user'
 import { hashToken } from './password'
 import type { RegistrationActor, RegistrationDatabase } from './email-registration-persistence'
 import { getAuthErrorDetails } from './telemetry'
 
-async function getRegistrationActor(event: H3Event): Promise<RegistrationActor> {
+async function getRegistrationActor(event: RequestEvent): Promise<RegistrationActor> {
   const user = await getSessionUser(event)
 
   if (user.userId === null) {
@@ -18,10 +18,10 @@ async function getRegistrationActor(event: H3Event): Promise<RegistrationActor> 
 
   const session = await useAppSession(event)
 
-  if (session.id === undefined || session.id === '') {
+  if (session.id === '') {
     throw createError({
       status: 409,
-      statusMessage: 'The original account session is required'
+      statusText: 'The original account session is required'
     })
   }
 
@@ -35,11 +35,10 @@ async function getRegistrationActor(event: H3Event): Promise<RegistrationActor> 
 
 /** Own the transaction client's lifetime without turning a close error into a failed activation. */
 async function withRegistrationDatabase<Result>(
-  event: H3Event,
   sensitiveValues: readonly string[],
   action: (database: RegistrationDatabase) => Promise<Result>
 ): Promise<Result> {
-  const database = createWebSocketClientFromEvent(event)
+  const database = createRuntimeWebSocketClient()
 
   try {
     return await action(database)
@@ -48,16 +47,16 @@ async function withRegistrationDatabase<Result>(
 
     console.error('Email registration failed', { error: details })
 
-    if (isError(error) && error.statusCode >= 400 && error.statusCode < 500) {
+    if (isNuxtError(error) && error.status >= 400 && error.status < 500) {
       throw createError({
-        status: error.statusCode,
-        statusMessage: error.statusMessage
+        status: error.status,
+        statusText: error.statusText
       })
     }
 
     throw createError({
       status: 503,
-      statusMessage: 'Email registration is temporarily unavailable. Try again'
+      statusText: 'Email registration is temporarily unavailable. Try again'
     })
   } finally {
     try {

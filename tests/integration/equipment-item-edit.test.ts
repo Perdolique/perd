@@ -3,7 +3,7 @@
 import { readFile } from 'node:fs/promises'
 import { URL } from 'node:url'
 import { eq, sql } from 'drizzle-orm'
-import type * as h3 from 'h3'
+import type * as nuxtServer from 'nuxt/server'
 import * as v from 'valibot'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 
@@ -32,7 +32,7 @@ import { createTestEvent } from '../../test-utils/create-test-event'
 import { createIsolatedPostgreSQL } from '../../test-utils/isolated-postgresql'
 
 vi.mock(import('#server/utils/admin'), () => {
-  return { async validateAdminUser(event: h3.H3Event) {
+  return { async validateAdminUser(event: nuxtServer.RequestEvent) {
     await Promise.resolve()
 
     return v.parse(v.string(), event.context.testUserId)
@@ -40,44 +40,29 @@ vi.mock(import('#server/utils/admin'), () => {
 })
 
 vi.mock(import('#server/utils/session'), () => {
-  return { async validateSessionUser(event: h3.H3Event) {
+  return { async validateSessionUser(event: nuxtServer.RequestEvent) {
     await Promise.resolve()
 
     return v.parse(v.string(), event.context.testUserId)
   } }
 })
 
-vi.mock(import('#server/utils/config'), () => {
-  return { createWebSocketClientFromEvent(event: h3.H3Event) {
-    const databaseUrl = v.parse(v.string(), event.context.testDatabaseUrl)
 
-    return createWebSocketClient({
-      databaseUrl,
-      isLocalDatabase: true
-    })
-  } }
-})
 
-// @ts-expect-error -- Vitest rejects this partial h3 module mock.
-vi.mock(import('h3'), async () => {
-  const actual = await vi.importActual<typeof h3>('h3')
+// @ts-expect-error -- Vitest rejects this partial Nuxt server module mock.
+vi.mock(import('nuxt/server'), async () => {
+  const actual = await vi.importActual<typeof nuxtServer>('nuxt/server')
 
   return {
     ...actual,
 
-    async readValidatedBody(event: h3.H3Event, validate: (body: unknown) => unknown) {
+    async readValidatedBody(event: nuxtServer.RequestEvent, validate: (body: unknown) => unknown) {
       await Promise.resolve()
 
       return validate(event.context.testBody)
     },
 
-    async getValidatedRouterParams(event: h3.H3Event, validate: (params: unknown) => unknown) {
-      await Promise.resolve()
-
-      return validate(event.context.params)
-    },
-
-    async getValidatedQuery(event: h3.H3Event, validate: (query: unknown) => unknown) {
+    async getValidatedQuery(event: nuxtServer.RequestEvent, validate: (query: unknown) => unknown) {
       await Promise.resolve()
 
       return validate(event.context.testQuery ?? {})
@@ -92,6 +77,19 @@ function resources() {
 
   return isolated
 }
+
+vi.mock(import('#server/utils/config'), () => {
+  return { createRuntimeWebSocketClient() {
+    const { databaseUrl } = resources()
+
+    const client = createWebSocketClient({
+      databaseUrl,
+      isLocalDatabase: true
+    })
+
+    return client
+  } }
+})
 
 function required<Value>(value: Value | undefined): Value {
   if (value === undefined) { throw new Error('Expected a fixture row') }
@@ -210,7 +208,6 @@ function eventFor(data: Awaited<ReturnType<typeof fixture>>, body?: unknown, que
   const event = createTestEvent({})
 
   event.context.testUserId = data.user.id
-  event.context.testDatabaseUrl = resources().databaseUrl
   event.context.testBody = body
   event.context.testQuery = query
   event.context.params = { id: data.item.id }

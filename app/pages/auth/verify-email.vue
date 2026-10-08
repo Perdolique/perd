@@ -17,7 +17,7 @@
     </form>
     <p v-else :class="$style.notice" role="status">Open the full verification link from your email to continue.</p>
     <p :class="$style.navigation">
-      <PerdLink to="/register">Request another email</PerdLink>
+      <PerdLink :to="appLocations.register">Request another email</PerdLink>
     </p>
   </AuthFormPanel>
 </template>
@@ -37,6 +37,7 @@
 
   import { isEmailAuthenticationPasswordValid } from '#shared/utils/email-authentication'
   import { isEmailRegistrationEnabled } from '#shared/utils/email-registration'
+  import { appLocations } from '~/utils/navigation'
   import { getRedirectNavigationTarget } from '~/utils/router'
   import { getEmailRegistrationError } from '~/utils/email-registration'
   import AuthFormPanel from '~/components/auth/AuthFormPanel.vue'

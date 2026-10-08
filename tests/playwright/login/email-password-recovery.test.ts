@@ -1,4 +1,5 @@
 import type { Locator, Page, Route } from '@playwright/test'
+import type { SessionUser } from '#server/utils/user'
 import { expect, test } from '../fixtures/global.fixtures.ts'
 import { appBaseUrl } from '../constants.ts'
 
@@ -264,6 +265,18 @@ test.describe('Email password recovery', () => {
   test('clears a breached password, retries with a fresh token, and does not sign in automatically', async ({ page, turnstile }) => {
     const bodies: unknown[] = []
 
+    const signedOutUser: SessionUser = {
+      email: null,
+      userId: null,
+      isAdmin: false,
+      isGuest: false,
+      isTwitchLinked: false
+    }
+
+    await page.route('**/api/user', async (route) => {
+      await route.fulfill({ json: signedOutUser })
+    })
+
     await page.route('**/api/auth/email/password-recovery/reset', async (route) => {
       await fulfillBreachedThenSuccess(route, bodies)
     })
@@ -303,6 +316,15 @@ test.describe('Email password recovery', () => {
     await expectCompactLink(signInLink)
     await signInLink.click()
     await expect(page).toHaveURL(`${appBaseUrl}/login?redirectTo=/account`)
+
+    await expect(page.getByRole('button', {
+      name: 'Sign in',
+      exact: true
+    })).toBeVisible()
+
+    const userIdAfterNavigation = await getClientUserId(page)
+
+    expect(userIdAfterNavigation).toBeNull()
   })
 
   test('keeps fields for a temporary failure and uses a fresh token for retry', async ({ page }) => {

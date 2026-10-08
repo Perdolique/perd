@@ -1,4 +1,4 @@
-import type * as h3 from 'h3'
+import type { getValidatedRouteParams } from '#server/utils/request'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import imageHandler from '#server/api/equipment/images/[cloudflare-image-id].get.dev'
 import { validateEquipmentImageDeliveryParams } from '#server/utils/validation/schemas'
@@ -8,24 +8,19 @@ const cloudflareImageId = 'public-image'
 
 const {
   getCloudflareImagesBindingMock,
-  getValidatedRouterParamsMock
+  getValidatedRouteParamsMock
 } = vi.hoisted(() => {
   return {
     getCloudflareImagesBindingMock: vi.fn(),
-    getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>()
+    getValidatedRouteParamsMock: vi.fn<typeof getValidatedRouteParams>()
   }
 })
 
-// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial h3 mock.
-vi.mock(import('h3'), async () => {
-  const actual = await vi.importActual<typeof h3>('h3')
 
+// @ts-expect-error -- The test mock specializes the validator's generic result.
+vi.mock(import('#server/utils/request'), () => {
   return {
-    ...actual,
-
-    async getValidatedRouterParams(...args: Parameters<typeof h3.getValidatedRouterParams>) {
-      return getValidatedRouterParamsMock(...args)
-    }
+    getValidatedRouteParams: getValidatedRouteParamsMock
   }
 })
 
@@ -52,7 +47,7 @@ describe('local equipment image delivery', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
-    getValidatedRouterParamsMock.mockResolvedValue({
+    getValidatedRouteParamsMock.mockResolvedValue({
       'cloudflare-image-id': cloudflareImageId
     })
   })
@@ -91,7 +86,7 @@ describe('local equipment image delivery', () => {
     const { event, findFirstMock } = createImageEvent({ id: 'image-row' })
     const response = await imageHandler(event)
 
-    expect(getValidatedRouterParamsMock).toHaveBeenCalledWith(
+    expect(getValidatedRouteParamsMock).toHaveBeenCalledWith(
       event,
       validateEquipmentImageDeliveryParams
     )

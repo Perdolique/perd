@@ -1,12 +1,34 @@
 # Technical debt
 
-## Nuxt 4.5 compatibility workarounds
+## Nuxt 4.6 compatibility workarounds
 
-### Nitro auto-imports
+### Portable request type inference
 
-`experimental.nitroAutoImports` remains enabled because `@nuxt/icon` and other modules still rely on Nitro auto-imports. The underlying Nuxt migration is tracked in [nuxt/nuxt#34142](https://github.com/nuxt/nuxt/issues/34142).
+Nuxt 4.6's portable `defineEventHandler` returns `EventHandler<Result>` without the callback's body or query shape. Nitro 2's request type extractor only reads `H3Event<Request>`. `shared/types/api-request.d.ts` preserves the callback type and carries each validator's input on `ApiRequestEvent`. The public `server:routes` hook registers its request type extractors after the server builder has registered its own hooks. The extractors fall back to Nitro's public types for module-owned H3 routes.
 
-Remove the option after the installed modules stop relying on Nitro auto-imports, then run `vp run dev` and `vp run build` to verify server runtime imports.
+Remove the declaration bridge and route hook after Nuxt preserves portable body and query contracts itself. Run `vp run test:typecheck` with the existing API request type assertions before removing them. Keep request input types based on the existing validation schemas and keep handler response types explicit.
+
+### Nitro 2 request transport
+
+The Nitro 2 adapter can buffer a Node request before exposing its portable Web Stream. `server/utils/request-runtime.ts` uses the H3 transport stream for bounded JSON and multipart reads, so an oversized request is rejected before its whole body is read. It gives cookie-only session helpers a stable header-only event and reads request headers and the method without starting that buffer. It also reads the local connection address when the portable request has no client address, and schedules background work with Nitro's request lifetime API. Application handlers use `nuxt/server`; the passkey error handler still uses Nitro's H3 error interface.
+
+Remove these transport helpers when the installed server builder provides incremental Web Streams, the local client address, and a portable background-task API. Verify header reads do not start body consumption, body limits without Content-Length, request cancellation, password recovery background work, and image cleanup in the built Worker. Keep the standalone database CLI independent from the request runtime.
+
+The application now uses Nuxt's sealed sessions with the existing secret, cookie name, and cookie policy. H3 cookies cannot be read in the new format; this migration resets existing sessions. Session-version checks still revoke stale sessions after password recovery.
+
+### Early 404 error responses
+
+Nuxt 4.6 enables `inlineErrorRendering` with compatibility version 5. Its renderer sends non-HTML early 404 errors through the Vue error page instead of returning JSON. Route middleware also runs while that error page renders, so authentication can replace a 404 with a login redirect. `experimental.inlineErrorRendering: false` keeps Nitro's HTML and JSON error response handling. The user, authentication, and admin middleware skip an active Nuxt error only during server rendering or hydration, so the error page can load and later navigation still requires authentication.
+
+The default Nuxt error page also renders an empty server placeholder in this build and causes a hydration mismatch. `app/error.vue` renders the error markup directly, shows safe messages, and clears the error before returning home.
+
+Remove the `inlineErrorRendering` override after the installed Nuxt renderer returns JSON for non-HTML early 404 requests. Keep the error-aware middleware and run `vp run test:e2e tests/playwright/routing/early-404.test.ts` against the built Worker. Verify unknown pages return HTML or JSON 404, error-page recovery still requires authentication, and existing page and API authentication responses stay unchanged.
+
+### Nitro declaration resolution
+
+Nitro 2.13.4 re-exports extensionless paths from its declaration barrels. Nuxt 4.6 uses NodeNext resolution for its Node context, so the declarations fail to load and Nitro configuration types lose fields such as `errorHandler`, `moduleSideEffects`, and `cloudflare`. `typescript.nodeTsConfig` uses `module: 'preserve'` and `moduleResolution: 'bundler'` to resolve these declarations without a package patch.
+
+Remove the Node context override after the installed Nitro declarations use explicit extensions. Run `vp run test:typecheck` and focused lint for `nuxt.config.ts` before removing it.
 
 ### Nitro Cloudflare Node compatibility detection
 

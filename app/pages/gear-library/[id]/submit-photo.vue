@@ -1,7 +1,7 @@
 <template>
   <PageContent page-title="Submit a photo">
     <template #actions>
-      <PerdLink :to="backLinkPath">
+      <PerdLink :to="backLinkLocation">
         {{ backLinkLabel }}
       </PerdLink>
     </template>
@@ -14,7 +14,7 @@
           Add email
         </PerdLink>
 
-        <PerdLink :to="appRoutes.account">
+        <PerdLink :to="appLocations.account">
           Open Account
         </PerdLink>
       </template>
@@ -58,7 +58,7 @@
           Back to item
         </PerdLink>
 
-        <PerdLink :to="appRoutes.accountSubmissions">
+        <PerdLink :to="appLocations.accountSubmissions">
           View My contributions
         </PerdLink>
       </template>
@@ -250,14 +250,14 @@
   import TextInput from '~/components/TextInput.vue'
   import PageContent from '~/components/layout/PageContent.vue'
   import { buildGearLibraryRouteQuery, getGearLibraryRouteState } from '~/utils/gear-library'
-  import { appRoutes, createGearLibraryItemPath, createGearLibraryPhotoSubmissionPath } from '~/utils/navigation'
+  import { appLocations, createGearLibraryItemLocation, createGearLibraryPhotoSubmissionPath } from '~/utils/navigation'
 
   type PhotoSourceType = 'manufacturer' | 'own'
   type PhotoSubmissionStatus = PhotoSubmissionCreateResponse['status']
 
   definePageMeta({ layout: 'page' })
 
-  const route = useRoute()
+  const route = useRoute('gear-library-id-submit-photo')
   const runtimeConfig = useRuntimeConfig()
   const registrationEnabled = isEmailRegistrationEnabled(runtimeConfig.public.emailRegistrationEnabled)
 
@@ -265,11 +265,7 @@
     ? 'Add email access or connect Twitch in Account to continue.'
     : 'Connect Twitch in Account to continue.'
 
-  const itemId = Array.isArray(route.params.id)
-    ? route.params.id[0] ?? ''
-    : route.params.id ?? ''
-
-  const itemPath = createGearLibraryItemPath(itemId)
+  const itemId = route.params.id
 
   const catalogQuery = computed(() => {
     const routeState = getGearLibraryRouteState(route.query)
@@ -282,25 +278,19 @@
     const redirectTo = withQuery(path, catalogQuery.value)
 
     return {
-      path: '/register',
+      name: appLocations.register.name,
       query: { redirectTo }
     }
   })
 
   const catalogLocation = computed(() => {
     return {
-      path: appRoutes.gearLibrary,
+      name: appLocations.gearLibrary.name,
       query: catalogQuery.value
     }
   })
 
-  const itemLocation = computed(() => {
-    return {
-      path: itemPath,
-      query: catalogQuery.value
-    }
-  })
-
+  const itemLocation = computed(() => createGearLibraryItemLocation(itemId, catalogQuery.value))
   const requestFetch = useRequestFetch()
   const { turnstileSiteKey } = runtimeConfig.public
   const { user } = useUserStore()
@@ -454,7 +444,7 @@
     }
   )
 
-  const backLinkPath = computed(
+  const backLinkLocation = computed(
     () => hasLoadedItem.value ? itemLocation.value : catalogLocation.value
   )
 

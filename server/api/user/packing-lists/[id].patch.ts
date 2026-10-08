@@ -1,8 +1,16 @@
+import type { InferInput } from 'valibot'
 import { and, eq } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedRouterParams, readValidatedBody } from 'h3'
+import { createError, defineEventHandler, readValidatedBody } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { packingLists } from '#server/database/schema'
 import { validateSessionUser } from '#server/utils/session'
-import { validatePackingListIdParams, validatePackingListMutationBody } from '#server/utils/validation/schemas'
+
+import {
+  validatePackingListIdParams,
+  validatePackingListMutationBody,
+  type packingListMutationBodySchema
+} from '#server/utils/validation/schemas'
 
 interface PackingListSummary {
   createdAt: Date | string;
@@ -11,9 +19,9 @@ interface PackingListSummary {
   updatedAt: Date | string;
 }
 
-export default defineEventHandler(async (event) : Promise<PackingListSummary> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof packingListMutationBodySchema>; }>) : Promise<PackingListSummary> => {
   const userId = await validateSessionUser(event)
-  const { id } = await getValidatedRouterParams(event, validatePackingListIdParams)
+  const { id } = await getValidatedRouteParams(event, validatePackingListIdParams)
   const { name } = await readValidatedBody(event, validatePackingListMutationBody)
 
   const [updatedList] = await event.context.dbHttp

@@ -1,7 +1,7 @@
 <template>
   <PageContent page-title="My contributions">
     <template #actions>
-      <PerdLink :to="appRoutes.account">
+      <PerdLink :to="appLocations.account">
         Back to account
       </PerdLink>
     </template>
@@ -34,7 +34,7 @@
       Submit missing gear or a photo and its review status will appear here.
 
       <template #actions>
-        <PerdLink :to="appRoutes.gearLibraryNew">
+        <PerdLink :to="appLocations.gearLibraryNew">
           Submit gear
         </PerdLink>
       </template>
@@ -53,7 +53,7 @@
             <div :class="$style.header">
               <div :class="$style.titleGroup">
                 <h3 :class="$style.cardTitle">
-                  <PerdLink v-if="item.detailPath" :to="item.detailPath">
+                  <PerdLink v-if="item.detailLocation" :to="item.detailLocation">
                     {{ item.name }}
                   </PerdLink>
 
@@ -136,7 +136,7 @@
             <div :class="$style.header">
               <div :class="$style.titleGroup">
                 <h3 :class="$style.cardTitle">
-                  <PerdLink :to="photo.itemPath">
+                  <PerdLink :to="photo.itemLocation">
                     {{ photo.itemName }}
                   </PerdLink>
                 </h3>
@@ -222,6 +222,7 @@
 </template>
 
 <script lang="ts" setup>
+  import type { RouteLocationRaw } from 'vue-router'
   import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
   import { definePageMeta, useFetch, useRequestFetch, useUserStore } from '#imports'
   import { NuxtTime } from '#components'
@@ -235,7 +236,7 @@
   import PerdLink from '~/components/PerdLink.vue'
   import PerdPill, { type PerdPillTone } from '~/components/PerdPill.vue'
   import PageContent from '~/components/layout/PageContent.vue'
-  import { appRoutes, createGearLibraryItemPath } from '~/utils/navigation'
+  import { appLocations, createGearLibraryItemLocation } from '~/utils/navigation'
 
   interface SubmissionPropertyCard {
     displayValue: string;
@@ -247,7 +248,7 @@
     brandName: string;
     categoryName: string;
     createdAt: Date | string;
-    detailPath: string | null;
+    detailLocation: RouteLocationRaw | null;
     hasProperties: boolean;
     hasRejectionReason: boolean;
     id: string;
@@ -266,7 +267,7 @@
     hasSourceUrl: boolean;
     id: string;
     itemName: string;
-    itemPath: string;
+    itemLocation: RouteLocationRaw;
     rejectionReason: string | null;
     sourceLabel: string;
     sourceUrl: string;
@@ -318,7 +319,7 @@
     lazy: true,
 
     query: {
-      page: 1
+      page: '1'
     }
   })
 
@@ -409,7 +410,7 @@
   }
 
   const itemSubmissionCards = computed<SubmissionCard[]>(() => itemSubmissions.value.items.map((item) => {
-    const detailPath = item.status === 'approved' ? createGearLibraryItemPath(item.id) : null
+    const detailLocation = item.status === 'approved' ? createGearLibraryItemLocation(item.id) : null
     const statusPresentation = getStatusPresentation(item.status)
     const properties = item.properties.map(formatProperty)
 
@@ -417,7 +418,7 @@
       brandName: item.brand.name,
       categoryName: item.category.name,
       createdAt: item.createdAt,
-      detailPath,
+      detailLocation,
       hasProperties: properties.length > 0,
       hasRejectionReason: item.rejectionReason !== null,
       id: item.id,
@@ -445,7 +446,7 @@
         hasSourceUrl: photo.sourceUrl !== null,
         id: photo.id,
         itemName: photo.item.name,
-        itemPath: createGearLibraryItemPath(photo.item.id),
+        itemLocation: createGearLibraryItemLocation(photo.item.id),
         rejectionReason: photo.rejectionReason,
         sourceLabel: getPhotoSourceLabel(photo.sourceType),
         sourceUrl: photo.sourceUrl ?? '',
@@ -467,8 +468,10 @@
     hasPhotoLoadMoreError.value = false
 
     try {
+      const queryPage = String(page)
+
       const response = await requestFetch('/api/user/photo-submissions', {
-        query: { page },
+        query: { page: queryPage },
         retry: 0
       })
 

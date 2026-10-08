@@ -1,4 +1,4 @@
-import { createError } from 'h3'
+import { createError } from 'nuxt/server'
 
 const maximumPendingPhotoSubmissionCount = 3
 
@@ -19,7 +19,7 @@ interface PersistedPhotoSubmissionRow {
 function createPendingPhotoSubmissionLimitError() {
   return createError({
     status: 409,
-    statusMessage: 'Three photos are already awaiting review for this item'
+    statusText: 'Three photos are already awaiting review for this item'
   })
 }
 
@@ -53,7 +53,7 @@ function validatePhotoSubmissionIdempotencyItem(
   if (submission.itemId !== itemId) {
     throw createError({
       status: 409,
-      statusMessage: 'Idempotency key has already been used'
+      statusText: 'Idempotency key has already been used'
     })
   }
 }

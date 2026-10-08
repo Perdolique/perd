@@ -1,5 +1,5 @@
 import { inspect } from 'node:util'
-import { createError, isError } from 'h3'
+import { createError, isNuxtError } from 'nuxt/server'
 
 type CategoryWriteAction = 'create' | 'update' | 'delete'
 
@@ -43,8 +43,8 @@ function logCategoryWriteError(message: string, error: unknown) {
 function throwCategoryWriteError(error: unknown, action: CategoryWriteAction): never {
   const failureMessage = `Failed to ${action} category`
 
-  if (isError(error)) {
-    if (error.statusCode >= 500) {
+  if (isNuxtError(error)) {
+    if (error.status >= 500) {
       logCategoryWriteError(failureMessage, error)
     }
 
@@ -59,7 +59,7 @@ function throwCategoryWriteError(error: unknown, action: CategoryWriteAction): n
     && databaseError.constraint === 'equipment_categories_slug_key') {
     throw createError({
       status: 409,
-      statusMessage: 'Category slug already exists'
+      statusText: 'Category slug already exists'
     })
   }
 
@@ -68,13 +68,13 @@ function throwCategoryWriteError(error: unknown, action: CategoryWriteAction): n
     && databaseError.constraint === 'equipment_items_categoryId_equipment_categories_id_fkey') {
     throw createError({
       status: 409,
-      statusMessage: 'Category is used by equipment'
+      statusText: 'Category is used by equipment'
     })
   }
 
   throw createError({
     status: 500,
-    statusMessage: failureMessage
+    statusText: failureMessage
   })
 }
 

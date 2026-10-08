@@ -1,4 +1,4 @@
-import { createError } from 'h3'
+import { createError } from 'nuxt/server'
 
 type EquipmentPropertyDataType = 'boolean' | 'enum' | 'number' | 'text'
 type EquipmentPropertyValue = string | number | boolean | null

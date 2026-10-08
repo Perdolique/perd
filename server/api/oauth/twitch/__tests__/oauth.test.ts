@@ -1,10 +1,17 @@
-import { createError, getResponseHeader, type sendRedirect } from 'h3'
+import { getResponseHeader } from 'h3'
+import { createError, type sendRedirect } from 'nuxt/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import startTwitch from '#server/api/oauth/twitch/index.get'
 import completeTwitch from '#server/api/oauth/twitch/index.post'
 import { hashToken } from '#server/utils/auth/password'
 import { twitchOAuthMessages } from '#shared/utils/twitch-oauth'
 import { createTestEvent } from '~~/test-utils/create-test-event'
+
+function assertAuthorizationResponse(result: unknown): asserts result is { authorizationUrl: string; } {
+  if (typeof result !== 'object' || result === null || !('authorizationUrl' in result) || typeof result.authorizationUrl !== 'string') {
+    throw new TypeError('Expected a JSON authorization response')
+  }
+}
 
 const mocks = vi.hoisted(() => {
   return {
@@ -24,7 +31,7 @@ const mocks = vi.hoisted(() => {
   }
 })
 
-vi.mock(import('h3'), async (importOriginal) => {
+vi.mock(import('nuxt/server'), async (importOriginal) => {
   const actual = await importOriginal()
 
   return {
@@ -194,7 +201,7 @@ describe('twitch oauth', () => {
       expect(mocks.rateLimit).toHaveBeenCalledWith({ key: '203.0.113.20' })
       expect(mocks.rateLimit.mock.invocationCallOrder[0]).toBeLessThan(Number(mocks.user.mock.invocationCallOrder[0]))
       expect(mocks.issue.mock.invocationCallOrder[0]).toBeLessThan(Number(mocks.redirect.mock.invocationCallOrder[0]))
-      expect(getResponseHeader(event, 'Cache-Control')).toBe('no-store')
+      expect(getResponseHeader(event.h3, 'Cache-Control')).toBe('no-store')
       await startTwitch(createTestEvent({}))
 
       const secondUrl = new URL(String(mocks.redirect.mock.calls[1]?.[1]))
@@ -213,7 +220,7 @@ describe('twitch oauth', () => {
         statusMessage: twitchOAuthMessages.tooManyAttempts
       })
 
-      expect(getResponseHeader(event, 'Retry-After')).toBe(60)
+      expect(getResponseHeader(event.h3, 'Retry-After')).toBe('60')
       assertNoActorWork()
       expect(mocks.issue).not.toHaveBeenCalled()
       expect(mocks.redirect).not.toHaveBeenCalled()
@@ -277,7 +284,10 @@ describe('twitch oauth', () => {
       event.node.req.url = '/api/oauth/twitch?intent=link&redirectTo=/account&responseMode=json'
 
       const result = await startTwitch(event)
-      const authorizationUrl = new URL(String(result?.authorizationUrl))
+
+      assertAuthorizationResponse(result)
+
+      const authorizationUrl = new URL(result.authorizationUrl)
 
       expect(authorizationUrl.origin).toBe('https://id.twitch.tv')
       expect(authorizationUrl.searchParams.get('force_verify')).toBe('true')
@@ -436,7 +446,7 @@ describe('twitch oauth', () => {
 
       expect(mocks.updateSession).toHaveBeenCalledWith(event, { userId })
       expect(mocks.createUser).not.toHaveBeenCalled()
-      expect(getResponseHeader(event, 'Cache-Control')).toBe('no-store')
+      expect(getResponseHeader(event.h3, 'Cache-Control')).toBe('no-store')
     })
 
     it('still creates genuinely new Twitch users', async () => {
@@ -453,7 +463,7 @@ describe('twitch oauth', () => {
         redirectTo: '/my-gear'
       })
 
-      expect(mocks.createUser).toHaveBeenCalledWith('twitch', 'twitch-id', event)
+      expect(mocks.createUser).toHaveBeenCalledWith('twitch', 'twitch-id')
 
       expect(mocks.updateSession).toHaveBeenCalledWith(event, {
         userId,
@@ -558,7 +568,7 @@ describe('twitch oauth', () => {
 
       expect(mocks.consume).toHaveBeenCalledTimes(1)
 
-      expect(mocks.linkAccount).toHaveBeenCalledWith(event, {
+      expect(mocks.linkAccount).toHaveBeenCalledWith( {
         accountId: 'twitch-id',
         provider: 'twitch',
         sessionVersion: 7,

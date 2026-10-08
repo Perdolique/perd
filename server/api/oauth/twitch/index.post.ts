@@ -1,4 +1,6 @@
-import { defineEventHandler, createError, readValidatedBody, setResponseHeader } from 'h3'
+import type { InferInput } from 'valibot'
+import { defineEventHandler, createError, readValidatedBody } from 'nuxt/server'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { getUserByOAuthAccount } from '#server/utils/user'
 import { createOAuthUser, linkOAuthAccount } from '#server/utils/oauth/account'
 import { updateAppSession } from '#server/utils/session'
@@ -6,7 +8,7 @@ import { getTwitchOAuthToken, getTwitchUserInfo, getRuntimeTwitchConfig } from '
 import { getTwitchOAuthContext, getTwitchOAuthError } from '#server/utils/oauth/twitch-state'
 import { consumeTwitchOAuthState } from '#server/utils/oauth/twitch-state-persistence'
 import { hashToken } from '#server/utils/auth/password'
-import { validateTwitchOAuthBody } from '#server/utils/validation/schemas'
+import { validateTwitchOAuthBody, type twitchOAuthBodySchema } from '#server/utils/validation/schemas'
 import { twitchOAuthMessages } from '#shared/utils/twitch-oauth'
 
 interface TwitchOAuthResponse {
@@ -18,8 +20,8 @@ interface TwitchOAuthResponse {
   redirectTo: string;
 }
 
-export default defineEventHandler(async (event): Promise<TwitchOAuthResponse> => {
-  setResponseHeader(event, 'Cache-Control', 'no-store')
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof twitchOAuthBodySchema>; }>): Promise<TwitchOAuthResponse> => {
+  event.res.headers.set('Cache-Control', 'no-store')
 
   const sensitiveValues: string[] = []
 
@@ -46,14 +48,14 @@ export default defineEventHandler(async (event): Promise<TwitchOAuthResponse> =>
       if (body.error === 'access_denied') {
         throw createError({
           status: 400,
-          statusMessage: twitchOAuthMessages.cancelled
+          statusText: twitchOAuthMessages.cancelled
         })
       }
 
       throw new Error(`Twitch authorization failed: ${body.error}`)
     }
 
-    const twitchConfig = getRuntimeTwitchConfig(event)
+    const twitchConfig = getRuntimeTwitchConfig()
 
     sensitiveValues.push(twitchConfig.clientSecret)
 
@@ -71,11 +73,11 @@ export default defineEventHandler(async (event): Promise<TwitchOAuthResponse> =>
       if (typeof linkUserId !== 'string') {
         throw createError({
           status: 400,
-          statusMessage: twitchOAuthMessages.invalid
+          statusText: twitchOAuthMessages.invalid
         })
       }
 
-      const linkedUser = await linkOAuthAccount(event, {
+      const linkedUser = await linkOAuthAccount({
         accountId: twitchAccountId,
         provider: 'twitch',
         sessionVersion,
@@ -95,7 +97,7 @@ export default defineEventHandler(async (event): Promise<TwitchOAuthResponse> =>
     const foundUser = await getUserByOAuthAccount('twitch', twitchAccountId, event)
 
     if (foundUser.userId === null) {
-      const newUser = await createOAuthUser('twitch', twitchAccountId, event)
+      const newUser = await createOAuthUser('twitch', twitchAccountId)
 
       await updateAppSession(event, newUser)
 

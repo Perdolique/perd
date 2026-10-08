@@ -1,7 +1,9 @@
-import { createError, defineEventHandler, readValidatedBody, setResponseStatus } from 'h3'
+import type { InferInput } from 'valibot'
+import { createError, defineEventHandler, readValidatedBody, setResponseStatus } from 'nuxt/server'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { packingLists } from '#server/database/schema'
 import { validateSessionUser } from '#server/utils/session'
-import { validatePackingListMutationBody } from '#server/utils/validation/schemas'
+import { validatePackingListMutationBody, type packingListMutationBodySchema } from '#server/utils/validation/schemas'
 
 interface PackingListSummary {
   createdAt: Date | string;
@@ -10,7 +12,7 @@ interface PackingListSummary {
   updatedAt: Date | string;
 }
 
-export default defineEventHandler(async (event) : Promise<PackingListSummary> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof packingListMutationBodySchema>; }>) : Promise<PackingListSummary> => {
   const userId = await validateSessionUser(event)
   const { name } = await readValidatedBody(event, validatePackingListMutationBody)
 

@@ -1,7 +1,7 @@
 <template>
   <PageContent page-title="Submit missing gear">
     <template v-if="showFormBackLink" #actions>
-      <PerdLink :to="appRoutes.gearLibrary">
+      <PerdLink :to="appLocations.gearLibrary">
         Back to Gear library
       </PerdLink>
     </template>
@@ -14,7 +14,7 @@
           Add email
         </PerdLink>
 
-        <PerdLink :to="appRoutes.account">
+        <PerdLink :to="appLocations.account">
           Open Account
         </PerdLink>
       </template>
@@ -31,11 +31,11 @@
             Submit another item
           </PerdButton>
 
-          <PerdLink :to="appRoutes.gearLibrary">
+          <PerdLink :to="appLocations.gearLibrary">
             Back to Gear library
           </PerdLink>
 
-          <PerdLink :to="appRoutes.accountSubmissions">
+          <PerdLink :to="appLocations.accountSubmissions">
             View My contributions
           </PerdLink>
         </div>
@@ -72,7 +72,7 @@
   import PerdLink from '~/components/PerdLink.vue'
   import PageContent from '~/components/layout/PageContent.vue'
   import { getFetchErrorResponse } from '~/utils/fetch-error'
-  import { appRoutes } from '~/utils/navigation'
+  import { appLocations, appRoutes } from '~/utils/navigation'
 
   definePageMeta({ layout: 'page' })
 
@@ -89,7 +89,7 @@
   const registrationEnabled = isEmailRegistrationEnabled(runtimeConfig.public.emailRegistrationEnabled)
 
   const registrationLocation = {
-    path: '/register',
+    name: appLocations.register.name,
     query: { redirectTo: appRoutes.gearLibraryNew }
   }
 

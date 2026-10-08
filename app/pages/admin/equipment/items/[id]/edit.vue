@@ -49,18 +49,17 @@
   } from '~/utils/category-properties-error'
 
   import { getFetchErrorResponse } from '~/utils/fetch-error'
-  import { createGearLibraryItemPath } from '~/utils/navigation'
+  import { createGearLibraryItemLocation } from '~/utils/navigation'
 
   definePageMeta({
     layout: 'page',
     middleware: 'admin'
   })
 
-  const route = useRoute()
+  const route = useRoute('admin-equipment-items-id-edit')
   const requestFetch = useRequestFetch()
   const store = useGearLibraryStore()
-  const routeId = route.params.id
-  const itemId = Array.isArray(routeId) ? routeId[0] ?? '' : routeId ?? ''
+  const itemId = route.params.id
   const editPath = `/api/equipment/items/${itemId}/edit` as const
   const itemPath = `/api/equipment/items/${itemId}` as const
   const { data, error: loadError, status, refresh } = await useFetch(editPath)
@@ -88,12 +87,8 @@
   const itemLocation = computed(() => {
     const state = getGearLibraryRouteState(route.query)
     const query = buildGearLibraryRouteQuery(state)
-    const path = createGearLibraryItemPath(itemId)
 
-    return {
-      path,
-      query
-    }
+    return createGearLibraryItemLocation(itemId, query)
   })
 
   const editorValue = computed<EquipmentItemEditorValue | null>(() => {
@@ -140,7 +135,7 @@
   async function save(value: EquipmentItemEditorValue) {
     const item = snapshot.value
 
-    if (isBusy.value || hasConflict.value || !item) { return }
+    if (isBusy.value || hasConflict.value || !item || value.expectedPropertiesRevision === undefined) { return }
 
     isSaving.value = true
     mutationMessage.value = null

@@ -83,6 +83,7 @@
   import { definePageMeta, useHead, useRequestFetch, useRoute, useRouter, useRuntimeConfig } from '#imports'
   import { isEmailAuthenticationPasswordValid } from '#shared/utils/email-authentication'
   import { passwordRecoveryResetTurnstileAction, turnstileResponseFieldName } from '#shared/utils/turnstile'
+  import { appLocations } from '~/utils/navigation'
   import { getPasswordRecoveryResetError } from '~/utils/password-recovery'
   import { getRedirectNavigationTarget } from '~/utils/router'
   import AuthFormPanel from '~/components/auth/AuthFormPanel.vue'
@@ -135,14 +136,14 @@
 
   const recoveryTarget = computed(() => {
     return {
-      path: '/forgot-password',
+      name: appLocations.forgotPassword.name,
       query: { redirectTo: redirectTo.value }
     }
   })
 
   const signInTarget = computed(() => {
     return {
-      path: '/login',
+      name: appLocations.login.name,
       query: { redirectTo: redirectTo.value }
     }
   })

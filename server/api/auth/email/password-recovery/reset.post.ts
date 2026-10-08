@@ -1,4 +1,6 @@
-import { defineEventHandler } from 'h3'
+import type { InferInput } from 'valibot'
+import { defineEventHandler } from 'nuxt/server'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { passwordRecoveryResetTurnstileAction } from '#shared/utils/turnstile'
 import { getEmailAuthenticationConfig } from '#server/utils/config'
 import { getPasswordRecoveryRateLimiterBinding, getTrustedClientIp } from '#server/utils/cloudflare'
@@ -20,7 +22,7 @@ import {
 } from '#server/utils/auth/password-recovery-persistence'
 
 import { verifyTurnstile } from '#server/utils/turnstile'
-import { validatePasswordRecoveryReset } from '#server/utils/validation/schemas'
+import { validatePasswordRecoveryReset, type passwordRecoveryResetSchema } from '#server/utils/validation/schemas'
 
 interface PasswordRecoveryResetResponse {
   reset: true;
@@ -28,8 +30,8 @@ interface PasswordRecoveryResetResponse {
 
 const maximumPasswordRecoveryResetBodyByteLength = 4096
 
-export default defineEventHandler(async (event): Promise<PasswordRecoveryResetResponse> => {
-  const config = getEmailAuthenticationConfig(event)
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof passwordRecoveryResetSchema>; }>): Promise<PasswordRecoveryResetResponse> => {
+  const config = getEmailAuthenticationConfig()
 
   validateEmailAuthenticationRequest(event, config.origin)
 
@@ -41,7 +43,7 @@ export default defineEventHandler(async (event): Promise<PasswordRecoveryResetRe
 
   const clientIp = getTrustedClientIp(event, import.meta.dev === true)
 
-  await verifyTurnstile(event, body['cf-turnstile-response'], {
+  await verifyTurnstile(body['cf-turnstile-response'], {
     remoteIp: clientIp,
     expectedAction: passwordRecoveryResetTurnstileAction
   })
@@ -65,7 +67,7 @@ export default defineEventHandler(async (event): Promise<PasswordRecoveryResetRe
   const tokenHash = hashToken(body.token)
   const sensitiveValues = [body.password, body.token, tokenHash]
 
-  await withPasswordRecoveryDatabase(event, sensitiveValues, async (database) => {
+  await withPasswordRecoveryDatabase(sensitiveValues, async (database) => {
     const email = await findPasswordRecoveryEmail(database, tokenHash)
     const emailHash = hashToken(email)
 

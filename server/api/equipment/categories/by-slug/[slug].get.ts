@@ -1,4 +1,5 @@
-import { createError, defineEventHandler, getValidatedRouterParams } from 'h3'
+import { createError, defineEventHandler } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
 import { validateCategoryDetailParams } from '#server/utils/validation/schemas'
 import { getEquipmentPropertyDataType, type EquipmentPropertyDataType } from '#server/utils/equipment/property-values'
 
@@ -27,7 +28,7 @@ interface CategoryDetailResponse {
 }
 
 export default defineEventHandler(async (event) : Promise<CategoryDetailResponse> => {
-  const { slug } = await getValidatedRouterParams(event, validateCategoryDetailParams)
+  const { slug } = await getValidatedRouteParams(event, validateCategoryDetailParams)
 
   const category = await event.context.dbHttp.query.equipmentCategories.findFirst({
     columns: {

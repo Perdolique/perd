@@ -3,12 +3,13 @@
 </template>
 
 <script setup lang="ts">
+  import type { RouteLocationRaw } from 'vue-router'
   import { computed } from 'vue'
   import PerdActionMenu, { type ActionMenuItem } from '~/components/PerdActionMenu.vue'
 
   interface Props {
     categoryName: string;
-    propertiesPath: string;
+    propertiesLocation: RouteLocationRaw;
   }
 
   interface Emits {
@@ -16,7 +17,7 @@
     delete: [];
   }
 
-  const { categoryName, propertiesPath } = defineProps<Props>()
+  const { categoryName, propertiesLocation } = defineProps<Props>()
   const emit = defineEmits<Emits>()
   const triggerLabel = computed(() => `Actions for ${categoryName}`)
   const menuLabel = computed(() => `${categoryName} actions`)
@@ -26,7 +27,7 @@
       id: 'characteristics',
       label: 'Characteristics',
       icon: 'hugeicons:sliders-horizontal',
-      to: propertiesPath
+      to: propertiesLocation
     },
     {
       id: 'edit',

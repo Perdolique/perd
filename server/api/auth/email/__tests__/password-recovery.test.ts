@@ -1,4 +1,6 @@
-import { createApp, createError, toWebHandler } from 'h3'
+import { toTestRequestEvent } from '~~/test-utils/create-test-event'
+import { createApp, toWebHandler } from 'h3'
+import { createError } from 'nuxt/server'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import passwordRecoveryHandler from '#server/api/auth/email/password-recovery.post'
 import passwordRecoveryResetHandler from '#server/api/auth/email/password-recovery/reset.post'
@@ -109,7 +111,11 @@ async function request(
     })
   }
 
-  app.use(options.reset === true ? passwordRecoveryResetHandler : passwordRecoveryHandler)
+  app.use(async event => {
+    const portableEvent = toTestRequestEvent(event)
+
+    return options.reset === true ? passwordRecoveryResetHandler(portableEvent) : passwordRecoveryHandler(portableEvent)
+  })
 
   return toWebHandler(app)(new Request(origin, {
     method: 'POST',
@@ -138,7 +144,7 @@ describe('email password recovery API', () => {
     vi.mocked(runPasswordRecoveryIssuance).mockResolvedValue()
     vi.mocked(findPasswordRecoveryEmail).mockResolvedValue(normalizedEmail)
     vi.mocked(hashPassword).mockResolvedValue('new-password-hash')
-    vi.mocked(withPasswordRecoveryDatabase).mockImplementation(async (_event, _sensitive, action) => action(database))
+    vi.mocked(withPasswordRecoveryDatabase).mockImplementation(async (_sensitive, action) => action(database))
     limitMock.mockResolvedValue({ success: true })
 
     vi.spyOn(console, 'error').mockImplementation(() => {
@@ -162,7 +168,7 @@ describe('email password recovery API', () => {
     expect(response.status).toBe(202)
     expect(body).toStrictEqual({ accepted: true })
 
-    expect(verifyTurnstile).toHaveBeenCalledWith(expect.anything(), 'turnstile-token', {
+    expect(verifyTurnstile).toHaveBeenCalledWith('turnstile-token', {
       remoteIp: clientIp,
       expectedAction: 'password_recovery_request'
     })
@@ -340,7 +346,7 @@ describe('email password recovery API', () => {
       [{ key: `reset-email:${hashToken(normalizedEmail)}` }]
     ])
 
-    expect(verifyTurnstile).toHaveBeenCalledWith(expect.anything(), 'turnstile-token', {
+    expect(verifyTurnstile).toHaveBeenCalledWith('turnstile-token', {
       remoteIp: clientIp,
       expectedAction: 'password_recovery_reset'
     })

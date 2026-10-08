@@ -5,28 +5,28 @@
         icon="hugeicons:tag-01"
         subtitle="Add, rename, and remove brands used by the gear catalog."
         title="Manage brands"
-        :to="appRoutes.adminEquipmentBrands"
+        :to="appLocations.adminEquipmentBrands"
       />
 
       <ActionPanel
         icon="hugeicons:folder-01"
         subtitle="Add, rename, and remove categories used by the gear catalog."
         title="Manage categories"
-        :to="appRoutes.adminEquipmentCategories"
+        :to="appLocations.adminEquipmentCategories"
       />
 
       <ActionPanel
         icon="hugeicons:task-edit-01"
         subtitle="Check and correct pending gear before a publish decision."
         title="Review gear submissions"
-        :to="appRoutes.adminEquipmentSubmissions"
+        :to="appLocations.adminEquipmentSubmissions"
       />
 
       <ActionPanel
         icon="hugeicons:image-02"
         subtitle="Publish or reject private photos submitted for catalog items."
         title="Review photo submissions"
-        :to="appRoutes.adminEquipmentPhotoSubmissions"
+        :to="appLocations.adminEquipmentPhotoSubmissions"
       />
     </div>
   </PageContent>
@@ -36,7 +36,7 @@
   import { definePageMeta } from '#imports'
   import ActionPanel from '~/components/ActionPanel.vue'
   import PageContent from '~/components/layout/PageContent.vue'
-  import { appRoutes } from '~/utils/navigation'
+  import { appLocations } from '~/utils/navigation'
 
   definePageMeta({
     layout: 'page',

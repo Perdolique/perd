@@ -1,4 +1,5 @@
-import { defineEventHandler, getValidatedRouterParams } from 'h3'
+import { defineEventHandler } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
 import { validateAdminUser } from '#server/utils/admin'
 import { validateItemDetailParams } from '#server/utils/validation/schemas'
 
@@ -17,7 +18,7 @@ interface EquipmentItemImageRow {
 export default defineEventHandler(async (event) : Promise<EquipmentItemImageResponse[]> => {
   await validateAdminUser(event)
 
-  const { id: itemId } = await getValidatedRouterParams(event, validateItemDetailParams)
+  const { id: itemId } = await getValidatedRouteParams(event, validateItemDetailParams)
 
   const images: EquipmentItemImageRow[] = await event.context.dbHttp.query.equipmentItemImages.findMany({
     columns: {

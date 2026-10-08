@@ -24,9 +24,9 @@ concurrency:
 jobs:
   format:
     name: Format
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
-      - uses: Perdolique/automations/.github/actions/setup-pnpm@v3
+      - uses: Perdolique/automations/.github/actions/setup-pnpm@v4
         with:
           install-dependencies: true
       - run: pnpm run format:check
@@ -34,9 +34,9 @@ jobs:
   integration:
     name: Database integration
     needs: format
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
-      - uses: Perdolique/automations/.github/actions/setup-pnpm@v3
+      - uses: Perdolique/automations/.github/actions/setup-pnpm@v4
         with:
           install-dependencies: true
       - name: Start local database and Neon proxy
@@ -44,7 +44,7 @@ jobs:
       - name: Build test Worker
         run: pnpm run build:e2e
       - name: Test catalog, private gear, and packing lists in PostgreSQL and the Worker
-        run: pnpm run test:integration tests/integration/category-properties.test.ts tests/integration/category-properties-worker.test.ts tests/integration/equipment-item-edit.test.ts tests/integration/equipment-item-edit-worker.test.ts tests/integration/custom-gear-worker.test.ts tests/integration/packing-list-copy.test.ts
+        run: pnpm run test:integration tests/integration/category-properties.test.ts tests/integration/category-properties-worker.test.ts tests/integration/catalog-reference-lists-worker.test.ts tests/integration/equipment-item-edit.test.ts tests/integration/equipment-item-edit-worker.test.ts tests/integration/custom-gear-worker.test.ts tests/integration/packing-list-copy.test.ts
       - name: Remove local database and Neon proxy
         if: always()
         run: docker compose down --volumes
@@ -52,10 +52,10 @@ jobs:
   migration:
     name: Database migration
     needs: integration
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     environment: ${{ github.event_name == 'pull_request' && 'staging' || 'production' }}
     steps:
-      - uses: Perdolique/automations/.github/actions/setup-pnpm@v3
+      - uses: Perdolique/automations/.github/actions/setup-pnpm@v4
         with:
           install-dependencies: true
       - name: Run database migration
@@ -65,7 +65,7 @@ jobs:
 
   deploy:
     needs: migration
-    uses: Perdolique/automations/.github/workflows/deploy.yml@v3
+    uses: Perdolique/automations/.github/workflows/deploy.yml@v4
 
     with:
       test-typecheck-command: test:typecheck

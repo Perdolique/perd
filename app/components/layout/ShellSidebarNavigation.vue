@@ -1,7 +1,7 @@
 <template>
   <nav :class="$style.navigationGroup" aria-label="Workspace navigation">
     <NuxtLink
-      :to="appRoutes.home"
+      :to="appLocations.home"
       exact-active-class="active"
       :class="$style.navigationItem"
     >
@@ -14,7 +14,7 @@
     </NuxtLink>
 
     <NuxtLink
-      :to="appRoutes.gearLibrary"
+      :to="appLocations.gearLibrary"
       active-class="active"
       :class="$style.navigationItem"
     >
@@ -27,7 +27,7 @@
     </NuxtLink>
 
     <NuxtLink
-      :to="appRoutes.myGear"
+      :to="appLocations.myGear"
       active-class="active"
       :class="$style.navigationItem"
     >
@@ -40,7 +40,7 @@
     </NuxtLink>
 
     <NuxtLink
-      :to="appRoutes.packingLists"
+      :to="appLocations.packingLists"
       active-class="active"
       :class="$style.navigationItem"
     >
@@ -54,7 +54,7 @@
 
     <NuxtLink
       v-if="isAdmin"
-      :to="appRoutes.admin"
+      :to="appLocations.admin"
       active-class="active"
       :class="$style.navigationItem"
     >
@@ -71,7 +71,7 @@
 <script lang="ts" setup>
   import { computed } from 'vue'
   import { useUserStore } from '#imports'
-  import { appRoutes, navigationIcons, navigationLabels } from '~/utils/navigation'
+  import { appLocations, navigationIcons, navigationLabels } from '~/utils/navigation'
 
   const { user } = useUserStore()
   const isAdmin = computed(() => user.value.isAdmin)

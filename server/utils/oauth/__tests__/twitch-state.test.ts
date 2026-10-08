@@ -120,8 +120,12 @@ describe('twitch OAuth session binding', () => {
     expect(mocks.clear).toHaveBeenCalledTimes(1)
   })
 
-  it('rejects a missing browser identity', async () => {
-    mocks.session.mockResolvedValue({ data: {} })
+  it('rejects an empty browser identity', async () => {
+    mocks.session.mockResolvedValue({
+      id: '',
+      data: {}
+    })
+
     await expect(getTwitchOAuthContext(createTestEvent({}))).rejects.toMatchObject({ statusCode: 400 })
   })
 })

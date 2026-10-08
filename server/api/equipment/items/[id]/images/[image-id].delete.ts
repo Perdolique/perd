@@ -1,9 +1,11 @@
+import { scheduleBackgroundTask } from '#server/utils/request-runtime'
 import { and, eq, gt, sql } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedRouterParams, isError, setResponseStatus } from 'h3'
+import { createError, defineEventHandler, isNuxtError, setResponseStatus } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
 import { contributions, equipmentItemImages, equipmentItems } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
 import { getCloudflareImagesBinding } from '#server/utils/cloudflare'
-import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { createRuntimeWebSocketClient } from '#server/utils/config'
 import { validateItemImageParams } from '#server/utils/validation/schemas'
 
 interface EquipmentItemImageRow {
@@ -37,10 +39,10 @@ export default defineEventHandler(async (event) : Promise<void> => {
   const {
     id: itemId,
     'image-id': imageId
-  } = await getValidatedRouterParams(event, validateItemImageParams)
+  } = await getValidatedRouteParams(event, validateItemImageParams)
 
   const imagesBinding = getCloudflareImagesBinding(event)
-  const dbWebsocket = createWebSocketClientFromEvent(event)
+  const dbWebsocket = createRuntimeWebSocketClient()
 
   try {
     const deletedImage = await dbWebsocket.transaction(async (transaction) => {
@@ -58,7 +60,7 @@ export default defineEventHandler(async (event) : Promise<void> => {
       if (lockedItem === undefined) {
         throw createError({
           status: 404,
-          statusMessage: 'Equipment item not found'
+          statusText: 'Equipment item not found'
         })
       }
 
@@ -83,7 +85,7 @@ export default defineEventHandler(async (event) : Promise<void> => {
       if (image === undefined) {
         throw createError({
           status: 404,
-          statusMessage: 'Equipment image not found'
+          statusText: 'Equipment image not found'
         })
       }
 
@@ -105,7 +107,7 @@ export default defineEventHandler(async (event) : Promise<void> => {
       if (deletedImageRow === undefined) {
         throw createError({
           status: 500,
-          statusMessage: 'Failed to delete equipment image'
+          statusText: 'Failed to delete equipment image'
         })
       }
 
@@ -152,9 +154,9 @@ export default defineEventHandler(async (event) : Promise<void> => {
 
     const imageDeletionPromise = deleteCloudflareImage(imagesBinding, deletedImage, itemId)
 
-    event.waitUntil(imageDeletionPromise)
+    scheduleBackgroundTask(event, imageDeletionPromise)
   } catch (error) {
-    if (isError(error)) {
+    if (isNuxtError(error)) {
       throw error
     }
 
@@ -166,7 +168,7 @@ export default defineEventHandler(async (event) : Promise<void> => {
 
     throw createError({
       status: 500,
-      statusMessage: 'Failed to delete equipment image'
+      statusText: 'Failed to delete equipment image'
     })
   } finally {
     await dbWebsocket.$client.end()

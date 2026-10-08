@@ -1,4 +1,6 @@
-import { defineEventHandler } from 'h3'
+import type { InferInput } from 'valibot'
+import { defineEventHandler } from 'nuxt/server'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { readLimitedValidatedJsonBody } from '#server/utils/auth/email-authentication-request'
 import { consumePasskeyChallenge } from '#server/utils/auth/passkey-challenges'
 import { authenticatePasskey, withPasskeyDatabase } from '#server/utils/auth/passkey-persistence'
@@ -14,10 +16,10 @@ import {
 import { addPasskeySensitiveValues } from '#server/utils/auth/passkey-verification'
 import { updateAppSession } from '#server/utils/session'
 import type { SessionUser } from '#server/utils/user'
-import { validatePasskeyAuthentication } from '#server/utils/validation/schemas'
+import { validatePasskeyAuthentication, type passkeyAuthenticationSchema } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event): Promise<SessionUser> => handlePasskeyRequest(event, 'authentication', async (sensitiveValues) => {
-    const config = getPasskeyConfig(event)
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof passkeyAuthenticationSchema>; }>): Promise<SessionUser> => handlePasskeyRequest(event, 'authentication', async (sensitiveValues) => {
+    const config = getPasskeyConfig()
 
     validatePasskeyRequest(event, config)
     await limitPasskeyAuthentication(event, 'verify')
@@ -35,7 +37,7 @@ export default defineEventHandler(async (event): Promise<SessionUser> => handleP
       ceremonyId: body.ceremonyId
     })
 
-    const result = await withPasskeyDatabase(event, sensitiveValues, async database => authenticatePasskey(database, {
+    const result = await withPasskeyDatabase(sensitiveValues, async database => authenticatePasskey(database, {
       challenge,
       response: body.credential,
       sensitiveValues

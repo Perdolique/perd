@@ -1,7 +1,9 @@
 import { ilike, type SQL } from 'drizzle-orm'
-import { defineEventHandler, getValidatedQuery } from 'h3'
+import { defineEventHandler, getValidatedQuery } from 'nuxt/server'
+import type { InferInput } from 'valibot'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { brands } from '#server/database/schema'
-import { validateBrandsListQuery } from '#server/utils/validation/schemas'
+import { validateBrandsListQuery, type brandsListQuerySchema } from '#server/utils/validation/schemas'
 
 interface BrandListItem {
   id: number;
@@ -11,7 +13,7 @@ interface BrandListItem {
 
 type BrandsListResponse = BrandListItem[]
 
-export default defineEventHandler(async (event): Promise<BrandsListResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof brandsListQuerySchema>; }>): Promise<BrandsListResponse> => {
   const { dbHttp } = event.context
   const { search } = await getValidatedQuery(event, validateBrandsListQuery)
 

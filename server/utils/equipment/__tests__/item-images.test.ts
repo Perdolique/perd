@@ -117,6 +117,12 @@ async function createMultipartEvent(formData: FormData) {
   const body = new Uint8Array(await request.arrayBuffer())
   const event = createTestEvent({})
 
+  Object.defineProperty(event, 'req', {
+    get() {
+      throw new Error('Multipart limits must not start the buffered request reader')
+    }
+  })
+
   event.node.req.method = 'POST'
   event.node.req.headers['content-length'] = String(body.byteLength)
   event.node.req.headers['content-type'] = request.headers.get('content-type') ?? ''
@@ -155,6 +161,12 @@ function createRawMultipartEvent(
 
   const event = createTestEvent({})
   const chunkByteLength = 64 * 1024
+
+  Object.defineProperty(event, 'req', {
+    get() {
+      throw new Error('Multipart limits must not start the buffered request reader')
+    }
+  })
 
   event.node.req.method = 'POST'
   event.node.req.headers['content-type'] = `multipart/form-data; boundary=${boundary}`

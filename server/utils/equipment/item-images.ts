@@ -1,4 +1,5 @@
-import { createError, getRequestHeader, type H3Event } from 'h3'
+import { getRequestMetadataHeader } from '#server/utils/request-runtime'
+import { createError, type RequestEvent } from 'nuxt/server'
 import { limits } from '#shared/constants'
 
 import {
@@ -48,15 +49,15 @@ function validateImageMediaType(mediaType: string): string {
   if (supportedImageMediaTypes.has(normalizedMediaType) === false) {
     throw createError({
       status: 415,
-      statusMessage: 'Unsupported image content type'
+      statusText: 'Unsupported image content type'
     })
   }
 
   return normalizedMediaType
 }
 
-function validateEquipmentItemImageRequest(event: H3Event): string {
-  const contentType = getRequestHeader(event, 'content-type')
+function validateEquipmentItemImageRequest(event: RequestEvent): string {
+  const contentType = getRequestMetadataHeader(event, 'content-type')
   const mediaType = contentType?.split(';', 1)[0] ?? ''
   const normalizedMediaType = validateImageMediaType(mediaType)
 
@@ -192,7 +193,7 @@ async function uploadHostedEquipmentImage(
 
       throw createError({
         status: 413,
-        statusMessage: 'Image body is too large'
+        statusText: 'Image body is too large'
       })
     }
 
@@ -207,7 +208,7 @@ async function uploadHostedEquipmentImage(
       if (isInvalidImageError(imageInfoError)) {
         throw createError({
           status: 415,
-          statusMessage: 'Unsupported image format'
+          statusText: 'Unsupported image format'
         })
       }
 
@@ -219,7 +220,7 @@ async function uploadHostedEquipmentImage(
 
       throw createError({
         status: 502,
-        statusMessage: 'Image inspection failed'
+        statusText: 'Image inspection failed'
       })
     }
 
@@ -237,7 +238,7 @@ async function uploadHostedEquipmentImage(
 
       throw createError({
         status: 415,
-        statusMessage: 'Unsupported image format'
+        statusText: 'Unsupported image format'
       })
     }
 
@@ -249,7 +250,7 @@ async function uploadHostedEquipmentImage(
 
       throw createError({
         status: 502,
-        statusMessage: 'Image upload failed'
+        statusText: 'Image upload failed'
       })
     }
 

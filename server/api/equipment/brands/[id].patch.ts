@@ -1,17 +1,25 @@
+import type { InferInput } from 'valibot'
 import { eq } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedRouterParams, readValidatedBody } from 'h3'
+import { createError, defineEventHandler, readValidatedBody } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { brands, contributions } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
-import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { createRuntimeWebSocketClient } from '#server/utils/config'
 import { brandBaseSelection, type BrandBaseRecord } from '#server/utils/equipment/base-records'
 import { throwBrandWriteError } from '#server/utils/equipment/brand-write-errors'
-import { validateBrandIdParams, validateBrandMutationBody } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event): Promise<BrandBaseRecord> => {
+import {
+  validateBrandIdParams,
+  validateBrandMutationBody,
+  type brandMutationSchema
+} from '#server/utils/validation/schemas'
+
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof brandMutationSchema>; }>): Promise<BrandBaseRecord> => {
   const userId = await validateAdminUser(event)
-  const { id: brandId } = await getValidatedRouterParams(event, validateBrandIdParams)
+  const { id: brandId } = await getValidatedRouteParams(event, validateBrandIdParams)
   const { name, slug } = await readValidatedBody(event, validateBrandMutationBody)
-  const dbWebsocket = createWebSocketClientFromEvent(event)
+  const dbWebsocket = createRuntimeWebSocketClient()
 
   try {
     return await dbWebsocket.transaction(async (transaction) => {

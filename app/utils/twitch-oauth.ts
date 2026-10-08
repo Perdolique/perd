@@ -1,3 +1,7 @@
+import { createError, isError } from 'h3'
+import type { InferInput } from 'valibot'
+import type { LocationQuery } from 'vue-router'
+import type { twitchOAuthBodySchema } from '#server/utils/validation/schemas'
 import { twitchOAuthMessages } from '#shared/utils/twitch-oauth'
 import { getFetchErrorResponse } from './fetch-error'
 
@@ -10,8 +14,34 @@ const allowedDisconnectMessages = new Set<string>([
   twitchOAuthMessages.disconnectUnavailable
 ])
 
+/** Reads either a successful callback or a cancellation from URL query values. */
+function getTwitchCallbackBody(query: LocationQuery): InferInput<typeof twitchOAuthBodySchema> {
+  const { code, error, state } = query
+
+  if (typeof state === 'string') {
+    if (typeof code === 'string' && error === undefined) {
+      return {
+        code,
+        state
+      }
+    }
+
+    if (typeof error === 'string' && code === undefined) {
+      return {
+        error,
+        state
+      }
+    }
+  }
+
+  throw createError({
+    status: 400,
+    statusMessage: twitchOAuthMessages.invalid
+  })
+}
+
 function getTwitchCallbackError(error: unknown): string {
-  const { statusMessage } = getFetchErrorResponse(error)
+  const statusMessage = isError(error) ? error.statusMessage : getFetchErrorResponse(error).statusMessage
 
   if (statusMessage !== undefined && allowedMessages.has(statusMessage)) {
     return statusMessage
@@ -30,4 +60,4 @@ function getTwitchDisconnectError(error: unknown): string {
   return twitchOAuthMessages.disconnectUnavailable
 }
 
-export { getTwitchCallbackError, getTwitchDisconnectError }
+export { getTwitchCallbackBody, getTwitchCallbackError, getTwitchDisconnectError }

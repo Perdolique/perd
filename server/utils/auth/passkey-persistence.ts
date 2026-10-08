@@ -1,12 +1,12 @@
 import { and, eq } from 'drizzle-orm'
-import { createError, type H3Event } from 'h3'
+import { createError } from 'nuxt/server'
 import { isoBase64URL } from '@simplewebauthn/server/helpers'
 import type { AuthenticationResponseJSON, VerifiedRegistrationResponse } from '@simplewebauthn/server'
 import type { PasskeySummary } from '#shared/types/passkey'
 import { passkeyMessages } from '#shared/utils/passkey'
 import { oauthAccounts, oauthProviders, passkeyCredentials, users } from '#server/database/schema'
 import type { createWebSocketClient } from '#server/utils/database'
-import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { createRuntimeWebSocketClient } from '#server/utils/config'
 import type { SessionUser } from '#server/utils/user'
 import { getAuthErrorDetails } from './telemetry'
 import { createVerificationToken } from './password'
@@ -154,7 +154,7 @@ async function savePasskeyRegistration(
     if (saved === undefined) {
       throw createError({
         status: 409,
-        statusMessage: passkeyMessages.duplicate
+        statusText: passkeyMessages.duplicate
       })
     }
 
@@ -255,7 +255,7 @@ async function changePasskey(database: PasskeyWriteDatabase, actor: PasskeyActor
     if (changed === undefined) {
       throw createError({
         status: 404,
-        statusMessage: 'Passkey was not found'
+        statusText: 'Passkey was not found'
       })
     }
 
@@ -265,11 +265,10 @@ async function changePasskey(database: PasskeyWriteDatabase, actor: PasskeyActor
 
 /** Close request-owned connections without turning a committed write into an apparent failure. */
 async function withPasskeyDatabase<Result>(
-  event: H3Event,
   sensitiveValues: string[],
   action: (database: PasskeyWriteDatabase) => Promise<Result>
 ): Promise<Result> {
-  const database = createWebSocketClientFromEvent(event)
+  const database = createRuntimeWebSocketClient()
 
   try {
     return await action(database)

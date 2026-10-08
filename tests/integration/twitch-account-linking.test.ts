@@ -39,7 +39,7 @@ let isolatedPostgreSQL: Awaited<ReturnType<typeof createIsolatedPostgreSQL>> | n
 
 vi.mock(import('#server/utils/config'), () => {
   return {
-    createWebSocketClientFromEvent: () => database
+    createRuntimeWebSocketClient: () => database
   }
 })
 
@@ -48,7 +48,7 @@ async function createUser(isAdmin = false) {
 }
 
 async function link(accountId: string, userId: string, sessionVersion = 0) {
-  return linkOAuthAccount(createTestEvent(database), {
+  return linkOAuthAccount({
     accountId,
     provider: 'twitch',
     sessionVersion,

@@ -5,8 +5,13 @@ import { verifyPasskeyAuthentication, verifyPasskeyRegistration } from '#server/
 import { getAuthErrorDetails } from '#server/utils/auth/telemetry'
 import { createPasskeyFixture } from '~~/test-utils/passkey'
 
-vi.mock(import('nitropack/runtime'), () => {
-  return { useRuntimeConfig: vi.fn() }
+vi.mock(import('nuxt/server'), async (importOriginal) => {
+  const actual = await importOriginal()
+
+  return {
+    ...actual,
+    useRuntimeConfig: vi.fn()
+  }
 })
 
 const rawChallenge = createVerificationToken()

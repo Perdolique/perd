@@ -1,5 +1,7 @@
+import type { InferInput } from 'valibot'
 import { and, asc, eq, inArray } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedQuery } from 'h3'
+import { createError, defineEventHandler, getValidatedQuery } from 'nuxt/server'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 
 import {
   brands,
@@ -17,7 +19,7 @@ import {
   type EquipmentPropertyValue
 } from '#server/utils/equipment/property-values'
 
-import { validateEquipmentComparisonQuery } from '#server/utils/validation/schemas'
+import { validateEquipmentComparisonQuery, type equipmentComparisonQuerySchema } from '#server/utils/validation/schemas'
 import { getPrimaryEquipmentImageIds } from '#server/utils/equipment/primary-images'
 
 interface ComparisonCategory {
@@ -107,7 +109,7 @@ function groupEnumOptionNames(rows: PropertyEnumOptionRow[]) {
   return optionNamesByPropertyId
 }
 
-export default defineEventHandler(async (event) : Promise<ComparisonResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof equipmentComparisonQuerySchema>; }>) : Promise<ComparisonResponse> => {
   const { itemId: itemIds } = await getValidatedQuery(event, validateEquipmentComparisonQuery)
   const { dbHttp } = event.context
 

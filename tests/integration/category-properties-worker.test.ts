@@ -1,6 +1,4 @@
-import { IncomingMessage, ServerResponse } from 'node:http'
-import { Socket } from 'node:net'
-import { createEvent, updateSession } from 'h3'
+import { createAccountCookie } from '../../test-utils/create-account-cookie'
 import * as v from 'valibot'
 import { createTestHarness, type TestHarness } from 'wrangler'
 import { fetch as miniflareFetch } from 'miniflare'
@@ -28,30 +26,6 @@ const snapshotSchema = v.object({
 
 let isolated: Awaited<ReturnType<typeof createIsolatedPostgreSQL>> | null = null
 let harness: TestHarness | null = null
-
-async function accountCookie(userId: string) {
-  const socket = new Socket()
-  const request = new IncomingMessage(socket)
-  const response = new ServerResponse(request)
-  const event = createEvent(request, response)
-
-  await updateSession(event, {
-    name: 'perdSession',
-    password: sessionSecret
-  }, {
-    userId,
-    sessionVersion: 0
-  })
-
-  const cookies = response.getHeader('set-cookie')
-  const cookie = Array.isArray(cookies) ? cookies[0] : cookies
-
-  if (typeof cookie !== 'string') {
-    throw new TypeError('Expected an account session cookie')
-  }
-
-  return cookie.split(';')[0] ?? ''
-}
 
 function required<Value>(value: Value | null | undefined): Value {
   if (value === null || value === undefined) {
@@ -86,7 +60,7 @@ async function createCharacteristic() {
   }).returning()
 
   const category = required(createdCategory)
-  const cookie = await accountCookie(admin.id)
+  const cookie = await createAccountCookie(admin.id, sessionSecret)
   const path = `${origin}/api/equipment/categories/${category.id}/properties`
 
   const body = JSON.stringify({

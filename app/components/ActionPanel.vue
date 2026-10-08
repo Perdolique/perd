@@ -35,12 +35,13 @@
 
 <script lang="ts" setup>
   import { computed, useSlots } from 'vue'
+  import type { RouteLocationRaw } from 'vue-router'
 
   interface Props {
     icon?: string;
     subtitle?: string;
     title: string;
-    to: string;
+    to: RouteLocationRaw;
   }
 
   const { icon, subtitle } = defineProps<Props>()

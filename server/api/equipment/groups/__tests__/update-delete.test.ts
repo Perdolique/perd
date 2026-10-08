@@ -1,4 +1,5 @@
-import * as h3 from 'h3'
+import type { getValidatedRouteParams } from '#server/utils/request'
+import * as nuxtServer from 'nuxt/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import deleteGroupHandler from '#server/api/equipment/groups/[id].delete'
 import updateGroupHandler from '#server/api/equipment/groups/[id].patch'
@@ -22,7 +23,7 @@ interface MockWriteDb {
 
 const {
   createWebSocketClientMock,
-  getValidatedRouterParamsMock,
+  getValidatedRouteParamsMock,
   readValidatedBodyMock,
   setResponseStatusMock,
   validateAdminUserMock
@@ -32,29 +33,31 @@ const {
       throw new Error('createWebSocketClient mock is not configured')
     }),
 
-    getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
-    readValidatedBodyMock: vi.fn<typeof h3.readValidatedBody>(),
-    setResponseStatusMock: vi.fn<typeof h3.setResponseStatus>(),
+    getValidatedRouteParamsMock: vi.fn<typeof getValidatedRouteParams>(),
+    readValidatedBodyMock: vi.fn<typeof nuxtServer.readValidatedBody>(),
+    setResponseStatusMock: vi.fn<typeof nuxtServer.setResponseStatus>(),
     validateAdminUserMock: vi.fn()
   }
 })
 
-// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial h3 mock.
-vi.mock(import('h3'), async () => {
-  const actual = await vi.importActual<typeof h3>('h3')
+// @ts-expect-error -- The test mock specializes the validator's generic result.
+vi.mock(import('#server/utils/request'), () => {
+  return {
+    getValidatedRouteParams: getValidatedRouteParamsMock
+  }
+})
+
+vi.mock(import('nuxt/server'), async () => {
+  const actual = await vi.importActual<typeof nuxtServer>('nuxt/server')
 
   return {
     ...actual,
 
-    async getValidatedRouterParams(...args: Parameters<typeof h3.getValidatedRouterParams>) {
-      return getValidatedRouterParamsMock(...args)
-    },
-
-    async readValidatedBody(...args: Parameters<typeof h3.readValidatedBody>) {
+    async readValidatedBody(...args: Parameters<typeof nuxtServer.readValidatedBody>) {
       return readValidatedBodyMock(...args)
     },
 
-    setResponseStatus(...args: Parameters<typeof h3.setResponseStatus>) {
+    setResponseStatus(...args: Parameters<typeof nuxtServer.setResponseStatus>) {
       setResponseStatusMock(...args)
     }
   }
@@ -69,7 +72,7 @@ vi.mock(import('#server/utils/admin'), () => {
 // @ts-expect-error -- Vitest's import-based module mock typing rejects this partial config mock.
 vi.mock(import('#server/utils/config'), () => {
   return {
-    createWebSocketClientFromEvent: createWebSocketClientMock
+    createRuntimeWebSocketClient: createWebSocketClientMock
   }
 })
 
@@ -232,7 +235,7 @@ describe('patch /api/equipment/groups/[id]', () => {
       slug: 'sleep'
     })
 
-    getValidatedRouterParamsMock.mockResolvedValue({
+    getValidatedRouteParamsMock.mockResolvedValue({
       id: 7
     })
   })
@@ -279,10 +282,10 @@ describe('patch /api/equipment/groups/[id]', () => {
   })
 
   it('should return 400 when route id is invalid', async () => {
-    const routeError = h3.createError({ status: 400 })
+    const routeError = nuxtServer.createError({ status: 400 })
     const event = createTestEvent({})
 
-    getValidatedRouterParamsMock.mockRejectedValue(routeError)
+    getValidatedRouteParamsMock.mockRejectedValue(routeError)
 
     await expect(updateGroupHandler(event)).rejects.toMatchObject({
       statusCode: 400
@@ -292,10 +295,10 @@ describe('patch /api/equipment/groups/[id]', () => {
   })
 
   it('should return 400 when route id is missing', async () => {
-    const routeError = h3.createError({ status: 400 })
+    const routeError = nuxtServer.createError({ status: 400 })
     const event = createTestEvent({})
 
-    getValidatedRouterParamsMock.mockRejectedValue(routeError)
+    getValidatedRouteParamsMock.mockRejectedValue(routeError)
 
     await expect(updateGroupHandler(event)).rejects.toMatchObject({
       statusCode: 400
@@ -308,14 +311,14 @@ describe('patch /api/equipment/groups/[id]', () => {
     'sleep',
     '7-sleep'
   ])('should return 400 when route id has invalid format: %s', async (routeId) => {
-    const routeError = h3.createError({
+    const routeError = nuxtServer.createError({
       message: routeId,
       status: 400
     })
 
     const event = createTestEvent({})
 
-    getValidatedRouterParamsMock.mockRejectedValue(routeError)
+    getValidatedRouteParamsMock.mockRejectedValue(routeError)
 
     await expect(updateGroupHandler(event)).rejects.toMatchObject({
       statusCode: 400
@@ -400,7 +403,7 @@ describe('delete /api/equipment/groups/[id]', () => {
     vi.clearAllMocks()
     validateAdminUserMock.mockResolvedValue('user-1')
 
-    getValidatedRouterParamsMock.mockResolvedValue({
+    getValidatedRouteParamsMock.mockResolvedValue({
       id: 7
     })
   })
@@ -442,10 +445,10 @@ describe('delete /api/equipment/groups/[id]', () => {
   })
 
   it('should return 400 when route id is missing', async () => {
-    const routeError = h3.createError({ status: 400 })
+    const routeError = nuxtServer.createError({ status: 400 })
     const event = createTestEvent({})
 
-    getValidatedRouterParamsMock.mockRejectedValue(routeError)
+    getValidatedRouteParamsMock.mockRejectedValue(routeError)
 
     await expect(deleteGroupHandler(event)).rejects.toMatchObject({
       statusCode: 400
@@ -472,14 +475,14 @@ describe('delete /api/equipment/groups/[id]', () => {
     'sleep',
     '7-sleep'
   ])('should return 400 when route id has invalid format: %s', async (routeId) => {
-    const routeError = h3.createError({
+    const routeError = nuxtServer.createError({
       message: routeId,
       status: 400
     })
 
     const event = createTestEvent({})
 
-    getValidatedRouterParamsMock.mockRejectedValue(routeError)
+    getValidatedRouteParamsMock.mockRejectedValue(routeError)
 
     await expect(deleteGroupHandler(event)).rejects.toMatchObject({
       statusCode: 400

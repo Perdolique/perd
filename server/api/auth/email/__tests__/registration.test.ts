@@ -1,5 +1,7 @@
+import { toTestRequestEvent } from '~~/test-utils/create-test-event'
 import { createWebSocketClient } from '#server/utils/database'
-import { createApp, createError, toWebHandler } from 'h3'
+import { createApp, toWebHandler } from 'h3'
+import { createError } from 'nuxt/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import registrationHandler from '#server/api/auth/email/registration.post'
 import verificationHandler from '#server/api/auth/email/registration/verify.post'
@@ -77,7 +79,11 @@ const origin = 'https://metsik.app'
 async function request(body: unknown, verify = false, headers: Record<string, string> = {}) {
   const app = createApp()
 
-  app.use(verify ? verificationHandler : registrationHandler)
+  app.use(async event => {
+    const portableEvent = toTestRequestEvent(event)
+
+    return verify ? verificationHandler(portableEvent) : registrationHandler(portableEvent)
+  })
 
   const handler = toWebHandler(app)
   const encodedBody = JSON.stringify(body)
@@ -121,7 +127,7 @@ describe('email registration API', () => {
       sessionIdHash: null
     })
 
-    vi.mocked(withRegistrationDatabase).mockImplementation(async (_event, _sensitive, action) => action(database))
+    vi.mocked(withRegistrationDatabase).mockImplementation(async (_sensitive, action) => action(database))
 
     vi.spyOn(console, 'error').mockImplementation(() => {
  // Expected failure diagnostics are asserted at their owning layer.
@@ -144,7 +150,7 @@ describe('email registration API', () => {
     expect(response.status).toBe(202)
     expect(body).toStrictEqual({ accepted: true })
 
-    expect(verifyTurnstile).toHaveBeenCalledWith(expect.anything(), 'turnstile-test', {
+    expect(verifyTurnstile).toHaveBeenCalledWith('turnstile-test', {
       remoteIp: '203.0.113.1',
       expectedAction: 'email_registration'
     })

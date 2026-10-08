@@ -1,4 +1,4 @@
-import { createError } from 'h3'
+import { createError } from 'nuxt/server'
 import { localTurnstileHostnames, turnstileAlwaysPassSecret } from '#shared/utils/turnstile'
 
 interface TurnstileConfig {
@@ -12,7 +12,7 @@ const localHostnameSet = new Set<string>(localTurnstileHostnames)
 function createTurnstileConfigError() {
   return createError({
     status: 503,
-    statusMessage: 'Turnstile configuration unavailable'
+    statusText: 'Turnstile configuration unavailable'
   })
 }
 

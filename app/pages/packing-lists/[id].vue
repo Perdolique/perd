@@ -22,7 +22,7 @@
         This packing list is no longer available.
 
         <template #actions>
-          <PerdButton variant="secondary" :to="appRoutes.packingLists">
+          <PerdButton variant="secondary" :to="appLocations.packingLists">
             Back to packing lists
           </PerdButton>
         </template>
@@ -90,7 +90,7 @@
   } from '~/types/packing'
 
   import { formatPackingProgress, latestPackingListUpdatedAt } from '~/utils/packing'
-  import { appRoutes } from '~/utils/navigation'
+  import { appLocations, createPackingListLocation } from '~/utils/navigation'
   import { usePackingListsStore } from '~/stores/packing-lists'
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
@@ -104,7 +104,7 @@
     layout: 'page'
   })
 
-  const route = useRoute()
+  const route = useRoute('packing-lists-id')
   const nuxtApp = useNuxtApp()
   const router = useRouter()
   const packingListsStore = usePackingListsStore()
@@ -114,10 +114,7 @@
   const lastPackingEntryId = ref<string | null>(null)
   const packErrorEntryIds = reactive(new Set<string>())
   let copyRefreshController: AbortController | null = null
-
-  const packingListId = Array.isArray(route.params.id)
-    ? route.params.id[0] ?? ''
-    : route.params.id ?? ''
+  const packingListId = route.params.id
 
   function createDefaultPackingList(): PackingListDetail {
     return {
@@ -233,7 +230,8 @@
   })
 
   async function handleCopied(id: string) {
-    const path = `${appRoutes.packingLists}/${id}`
+    const location = createPackingListLocation(id)
+    const { path } = router.resolve(location)
 
     const removeHook = nuxtApp.hook('page:finish', () => {
       removeHook()
@@ -249,7 +247,7 @@
     })
 
     try {
-      await navigateTo(path)
+      await navigateTo(location)
     } catch (error) {
       removeHook()
 
@@ -258,7 +256,7 @@
   }
 
   async function handleDeleted() {
-    await navigateTo(appRoutes.packingLists, { replace: true })
+    await navigateTo(appLocations.packingLists, { replace: true })
     await nextTick()
 
     const heading = globalThis.document.querySelector('h1')

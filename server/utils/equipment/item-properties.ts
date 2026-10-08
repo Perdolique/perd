@@ -1,4 +1,4 @@
-import { createError } from 'h3'
+import { createError } from 'nuxt/server'
 import { isFiniteDecimalNumber, normalizeDecimalNumber } from '#shared/utils/decimal-number'
 
 interface EquipmentItemPropertyInput {

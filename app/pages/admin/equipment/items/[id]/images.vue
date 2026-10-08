@@ -136,14 +136,9 @@
     middleware: 'admin'
   })
 
-  const route = useRoute()
+  const route = useRoute('admin-equipment-items-id-images')
   const requestFetch = useRequestFetch()
-  const routeItemId = route.params.id
-
-  const itemId = Array.isArray(routeItemId)
-    ? routeItemId[0] ?? ''
-    : routeItemId ?? ''
-
+  const itemId = route.params.id
   const imagesPath = `/api/equipment/items/${itemId}/images` as const
   const imageOrderPath = `${imagesPath}/order` as const
 

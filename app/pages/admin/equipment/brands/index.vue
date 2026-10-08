@@ -1,7 +1,7 @@
 <template>
   <PageContent page-title="Manage brands">
     <template #actions>
-      <PerdLink :to="appRoutes.admin">Back to Admin</PerdLink>
+      <PerdLink :to="appLocations.admin">Back to Admin</PerdLink>
     </template>
 
     <main :class="$style.component">
@@ -149,7 +149,7 @@
   import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue'
   import ModalDialog from '~/components/dialogs/ModalDialog.vue'
   import { getFetchErrorResponse } from '~/utils/fetch-error'
-  import { appRoutes } from '~/utils/navigation'
+  import { appLocations } from '~/utils/navigation'
 
   type Brand = BrandsListResponse[number]
 

@@ -1,9 +1,8 @@
-import { createError, H3Error } from 'h3'
+import { createError, isNuxtError, type NuxtErrorLike } from 'nuxt/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { localTurnstileHostnames, turnstileAlwaysPassSecret } from '#shared/utils/turnstile'
 import { validateTurnstileConfig } from '#server/utils/turnstile-config'
 import { verifyTurnstile } from '#server/utils/turnstile'
-import { createTestEvent } from '~~/test-utils/create-test-event'
 
 const { getRuntimeTurnstileConfigMock } = vi.hoisted(() => {
   return {
@@ -51,18 +50,17 @@ function mockSiteverifyResponse(body: unknown, status = 200) {
 
 async function getVerificationError(
   options: { requestIp?: string; token?: unknown; } = {}
-): Promise<H3Error> {
-  const event = createTestEvent({})
+): Promise<NuxtErrorLike> {
   const submittedToken = Object.hasOwn(options, 'token') ? options.token : token
   const requestIp = options.requestIp ?? remoteIp
 
   try {
-    await verifyTurnstile(event, submittedToken, {
+    await verifyTurnstile(submittedToken, {
       remoteIp: requestIp,
       expectedAction: 'guest_session'
     })
   } catch (error) {
-    if (error instanceof H3Error) {
+    if (isNuxtError(error)) {
       return error
     }
 
@@ -171,7 +169,7 @@ describe(verifyTurnstile, () => {
   ])('should reject a $state token before calling Siteverify', async ({ value }) => {
     const error = await getVerificationError({ token: value })
 
-    expect(error.statusCode).toBe(403)
+    expect(error.status).toBe(403)
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
@@ -184,7 +182,7 @@ describe(verifyTurnstile, () => {
 
     setTurnstileConfig(encodedSecret)
 
-    await verifyTurnstile(createTestEvent({}), encodedToken, {
+    await verifyTurnstile(encodedToken, {
       remoteIp: ipv6Address,
       expectedAction: 'guest_session'
     })
@@ -214,7 +212,7 @@ describe(verifyTurnstile, () => {
 
   it('should accept the maximum supported token length', async () => {
     await expect(
-      verifyTurnstile(createTestEvent({}), 'a'.repeat(2048), {
+      verifyTurnstile('a'.repeat(2048), {
         remoteIp,
         expectedAction: 'guest_session'
       })
@@ -226,7 +224,7 @@ describe(verifyTurnstile, () => {
   it.each(['', '   '])('should fail closed for a missing remote IP', async (requestIp) => {
     const error = await getVerificationError({ requestIp })
 
-    expect(error.statusCode).toBe(503)
+    expect(error.status).toBe(503)
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
@@ -264,7 +262,7 @@ describe(verifyTurnstile, () => {
 
     const error = await getVerificationError()
 
-    expect(error.statusCode).toBe(403)
+    expect(error.status).toBe(403)
   })
 
   it('should reject an expired or replayed token', async () => {
@@ -275,7 +273,7 @@ describe(verifyTurnstile, () => {
 
     const error = await getVerificationError()
 
-    expect(error.statusCode).toBe(403)
+    expect(error.status).toBe(403)
   })
 
   it.each([
@@ -291,7 +289,7 @@ describe(verifyTurnstile, () => {
 
     const error = await getVerificationError()
 
-    expect(error.statusCode).toBe(503)
+    expect(error.status).toBe(503)
   })
 
   it.each([
@@ -330,7 +328,7 @@ describe(verifyTurnstile, () => {
 
     const error = await getVerificationError()
 
-    expect(error.statusCode).toBe(503)
+    expect(error.status).toBe(503)
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
@@ -345,7 +343,7 @@ describe(verifyTurnstile, () => {
     })
 
     await expect(
-      verifyTurnstile(createTestEvent({}), token, {
+      verifyTurnstile(token, {
         remoteIp,
         expectedAction: 'guest_session'
       })
@@ -370,7 +368,7 @@ describe(verifyTurnstile, () => {
 
     const error = await getVerificationError()
 
-    expect(error.statusCode).toBe(503)
+    expect(error.status).toBe(503)
     expect(console.error).toHaveBeenCalledTimes(1)
 
     const { details, message } = getConsoleErrorCall()
@@ -394,7 +392,7 @@ describe(verifyTurnstile, () => {
 
     const error = await getVerificationError()
 
-    expect(error.statusCode).toBe(503)
+    expect(error.status).toBe(503)
 
     expect(console.error).toHaveBeenCalledWith(
       'Turnstile Siteverify returned an unsuccessful status',
@@ -410,7 +408,7 @@ describe(verifyTurnstile, () => {
 
     const error = await getVerificationError()
 
-    expect(error.statusCode).toBe(503)
+    expect(error.status).toBe(503)
     expect(console.error).toHaveBeenCalledTimes(1)
 
     const { details, message } = getConsoleErrorCall()
@@ -433,7 +431,7 @@ describe(verifyTurnstile, () => {
 
     const error = await getVerificationError()
 
-    expect(error.statusCode).toBe(503)
+    expect(error.status).toBe(503)
     expect(console.error).toHaveBeenCalledTimes(1)
 
     const { details, message } = getConsoleErrorCall()

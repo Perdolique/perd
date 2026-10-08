@@ -2,11 +2,18 @@ import { readFile } from 'node:fs/promises'
 import { URL } from 'node:url'
 import { sql } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
-import { brands, equipmentCategories, equipmentItems } from '#server/database/schema'
 import { createIsolatedPostgreSQL } from '../../test-utils/isolated-postgresql'
 
 interface ItemRecord extends Record<string, unknown> {
   record: Record<string, unknown>;
+}
+
+interface IdRecord extends Record<string, unknown> {
+  id: number;
+}
+
+interface SourceRecord extends Record<string, unknown> {
+  sourceUrl: string | null;
 }
 
 function required<Value>(rows: Value[]): Value {
@@ -28,22 +35,19 @@ describe('item submission source migration', () => {
     try {
       const { database } = isolated
 
-      const brandRows = await database.insert(brands)
-        .values({
-          name: 'Source migration test',
-          slug: 'source-migration-test'
-        })
-        .returning({ id: brands.id })
+      // Use only columns present in this historical schema, before later revision migrations.
+      const brandRows = await database.execute<IdRecord>(sql`
+        INSERT INTO brands (name, slug)
+        VALUES ('Source migration test', 'source-migration-test') RETURNING id
+      `)
 
-      const categoryRows = await database.insert(equipmentCategories)
-        .values({
-          name: 'Source migration test',
-          slug: 'source-migration-test'
-        })
-        .returning({ id: equipmentCategories.id })
+      const categoryRows = await database.execute<IdRecord>(sql`
+        INSERT INTO equipment_categories (name, slug)
+        VALUES ('Source migration test', 'source-migration-test') RETURNING id
+      `)
 
-      const brand = required(brandRows)
-      const category = required(categoryRows)
+      const brand = required(brandRows.rows)
+      const category = required(categoryRows.rows)
 
       const legacyRows = await database.execute<ItemRecord>(sql`
         INSERT INTO equipment_items ("brandId", "categoryId", name, status)
@@ -74,46 +78,30 @@ describe('item submission source migration', () => {
         sourceUrl: null
       })
 
-      const item = {
-        brandId: brand.id,
-        categoryId: category.id,
-        name: 'New source test',
-        status: 'pending'
-      }
-
       const prefix = 'https://example.com/'
       const sourceUrl = `${prefix}${'a'.repeat(2048 - prefix.length)}`
 
-      await database.insert(equipmentItems).values([
-        {
-          ...item,
-          sourceUrl
-        },
-        {
-          ...item,
-          sourceUrl: null
-        }
-      ])
+      await database.execute(sql`
+        INSERT INTO equipment_items ("brandId", "categoryId", name, status, "sourceUrl")
+        VALUES (${brand.id}, ${category.id}, 'New source test', 'pending', ${sourceUrl}),
+          (${brand.id}, ${category.id}, 'New source test', 'pending', NULL)
+      `)
 
-      const storedItems = await database.query.equipmentItems.findMany({
-        columns: {
-          sourceUrl: true
-        },
+      const storedRows = await database.execute<SourceRecord>(sql`
+        SELECT "sourceUrl" FROM equipment_items WHERE name = 'New source test'
+      `)
 
-        where: {
-          name: item.name
-        }
-      })
+      const storedItems = storedRows.rows
 
       expect(storedItems).toHaveLength(2)
       expect(storedItems).toStrictEqual(expect.arrayContaining([{ sourceUrl }, { sourceUrl: null }]))
 
       const overlongSource = `${sourceUrl}b`
 
-      await expect(database.insert(equipmentItems).values({
-        ...item,
-        sourceUrl: overlongSource
-      })).rejects.toMatchObject({ cause: { code: '22001' } })
+      await expect(database.execute(sql`
+        INSERT INTO equipment_items ("brandId", "categoryId", name, status, "sourceUrl")
+        VALUES (${brand.id}, ${category.id}, 'New source test', 'pending', ${overlongSource})
+      `)).rejects.toMatchObject({ cause: { code: '22001' } })
     } finally {
       await isolated.dispose()
     }

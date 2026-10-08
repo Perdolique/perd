@@ -1,6 +1,8 @@
-import { createError, defineEventHandler, getValidatedQuery, sendRedirect, setResponseHeader, type H3Event } from 'h3'
+import type { InferInput } from 'valibot'
+import { createError, defineEventHandler, getValidatedQuery, sendRedirect, type RequestEvent } from 'nuxt/server'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { getTwitchRedirectUri, getRuntimeTwitchConfig } from '#server/utils/oauth/twitch'
-import { validateTwitchOAuthQuery } from '#server/utils/validation/schemas'
+import { validateTwitchOAuthQuery, type twitchOAuthQuerySchema } from '#server/utils/validation/schemas'
 import { createVerificationToken, hashToken } from '#server/utils/auth/password'
 import { getTwitchOAuthContext, getTwitchOAuthError } from '#server/utils/oauth/twitch-state'
 import { issueTwitchOAuthState } from '#server/utils/oauth/twitch-state-persistence'
@@ -11,29 +13,28 @@ interface TwitchOAuthAuthorizationResponse {
   authorizationUrl: string;
 }
 
-async function enforceTwitchOAuthRateLimit(event: H3Event, clientIp: string): Promise<void> {
+async function enforceTwitchOAuthRateLimit(event: RequestEvent, clientIp: string): Promise<void> {
   const binding = getTwitchOAuthRateLimiterBinding(event)
   const outcome = await binding.limit({ key: clientIp })
 
   if (outcome.success === false) {
-    setResponseHeader(event, 'Retry-After', 60)
+    event.res.headers.set('Retry-After', '60')
 
     throw createError({
       status: 429,
-      statusMessage: twitchOAuthMessages.tooManyAttempts
+      statusText: twitchOAuthMessages.tooManyAttempts
     })
   }
 }
 
-// oxlint-disable-next-line typescript/no-invalid-void-type -- Redirect mode sends the response directly.
-export default defineEventHandler(async (event): Promise<TwitchOAuthAuthorizationResponse | void> => {
-  setResponseHeader(event, 'Cache-Control', 'no-store')
+export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof twitchOAuthQuerySchema>; }>): Promise<TwitchOAuthAuthorizationResponse | string> => {
+  event.res.headers.set('Cache-Control', 'no-store')
 
   const sensitiveValues: string[] = []
 
   try {
     const { redirectTo, intent, responseMode } = await getValidatedQuery(event, validateTwitchOAuthQuery)
-    const twitchConfig = getRuntimeTwitchConfig(event)
+    const twitchConfig = getRuntimeTwitchConfig()
     const clientIp = getTrustedClientIp(event, import.meta.dev === true)
 
     sensitiveValues.push(clientIp)
@@ -44,21 +45,21 @@ export default defineEventHandler(async (event): Promise<TwitchOAuthAuthorizatio
     if (intent === 'link' && actor.userId === null) {
       throw createError({
         status: 401,
-        statusMessage: twitchOAuthMessages.signInRequired
+        statusText: twitchOAuthMessages.signInRequired
       })
     }
 
     if (intent === 'sign-in' && actor.userId !== null) {
       throw createError({
         status: 409,
-        statusMessage: twitchOAuthMessages.alreadySignedIn
+        statusText: twitchOAuthMessages.alreadySignedIn
       })
     }
 
     if (intent === 'link' && user.isTwitchLinked) {
       throw createError({
         status: 409,
-        statusMessage: twitchOAuthMessages.alreadyLinked
+        statusText: twitchOAuthMessages.alreadyLinked
       })
     }
 
@@ -92,7 +93,9 @@ export default defineEventHandler(async (event): Promise<TwitchOAuthAuthorizatio
       return { authorizationUrl: twitchAuthUrl }
     }
 
-    await sendRedirect(event, twitchAuthUrl)
+    const redirectResponse = sendRedirect(event, twitchAuthUrl)
+
+    return redirectResponse
   } catch (error) {
     throw getTwitchOAuthError(error, sensitiveValues)
   }

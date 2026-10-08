@@ -1,4 +1,5 @@
-import * as h3 from 'h3'
+import type { getValidatedRouteParams } from '#server/utils/request'
+import * as nuxtServer from 'nuxt/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import deleteImageHandler from '#server/api/equipment/items/[id]/images/[image-id].delete'
 import { createTestEvent } from '~~/test-utils/create-test-event'
@@ -44,7 +45,7 @@ const {
   deleteCloudflareImageMock,
   getCloudflareImageMock,
   getCloudflareImagesBindingMock,
-  getValidatedRouterParamsMock,
+  getValidatedRouteParamsMock,
   setResponseStatusMock,
   validateAdminUserMock
 } = vi.hoisted(() => {
@@ -56,24 +57,26 @@ const {
     deleteCloudflareImageMock: vi.fn<() => Promise<boolean>>(),
     getCloudflareImageMock: vi.fn(),
     getCloudflareImagesBindingMock: vi.fn(),
-    getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>(),
-    setResponseStatusMock: vi.fn<typeof h3.setResponseStatus>(),
+    getValidatedRouteParamsMock: vi.fn<typeof getValidatedRouteParams>(),
+    setResponseStatusMock: vi.fn<typeof nuxtServer.setResponseStatus>(),
     validateAdminUserMock: vi.fn()
   }
 })
 
-// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial h3 mock.
-vi.mock(import('h3'), async () => {
-  const actual = await vi.importActual<typeof h3>('h3')
+// @ts-expect-error -- The test mock specializes the validator's generic result.
+vi.mock(import('#server/utils/request'), () => {
+  return {
+    getValidatedRouteParams: getValidatedRouteParamsMock
+  }
+})
+
+vi.mock(import('nuxt/server'), async () => {
+  const actual = await vi.importActual<typeof nuxtServer>('nuxt/server')
 
   return {
     ...actual,
 
-    async getValidatedRouterParams(...args: Parameters<typeof h3.getValidatedRouterParams>) {
-      return getValidatedRouterParamsMock(...args)
-    },
-
-    setResponseStatus(...args: Parameters<typeof h3.setResponseStatus>) {
+    setResponseStatus(...args: Parameters<typeof nuxtServer.setResponseStatus>) {
       setResponseStatusMock(...args)
     }
   }
@@ -94,7 +97,7 @@ vi.mock(import('#server/utils/cloudflare'), () => {
 // @ts-expect-error -- Vitest's import-based module mock typing rejects this partial config mock.
 vi.mock(import('#server/utils/config'), () => {
   return {
-    createWebSocketClientFromEvent: createWebSocketClientMock
+    createRuntimeWebSocketClient: createWebSocketClientMock
   }
 })
 
@@ -225,7 +228,7 @@ describe('delete /api/equipment/items/[id]/images/[image-id]', () => {
     vi.clearAllMocks()
     validateAdminUserMock.mockResolvedValue('user-1')
 
-    getValidatedRouterParamsMock.mockResolvedValue({
+    getValidatedRouteParamsMock.mockResolvedValue({
       id: itemId,
       'image-id': imageId
     })
@@ -405,7 +408,7 @@ describe('delete /api/equipment/items/[id]/images/[image-id]', () => {
   })
 
   it('should reject unauthenticated deletion before accessing Cloudflare or the database', async () => {
-    const authError = h3.createError({ status: 401 })
+    const authError = nuxtServer.createError({ status: 401 })
 
     validateAdminUserMock.mockRejectedValue(authError)
 

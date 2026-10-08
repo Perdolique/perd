@@ -1,6 +1,8 @@
-import { defineEventHandler, createError, readValidatedBody, setResponseStatus } from 'h3'
+import type { InferInput } from 'valibot'
+import { defineEventHandler, createError, readValidatedBody, setResponseStatus } from 'nuxt/server'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { emailRegistrationTurnstileAction } from '#shared/utils/turnstile'
-import { validateEmailRegistration } from '#server/utils/validation/schemas'
+import { validateEmailRegistration, type emailRegistrationSchema } from '#server/utils/validation/schemas'
 import { getTrustedClientIp } from '#server/utils/cloudflare'
 import { verifyTurnstile } from '#server/utils/turnstile'
 import { getEmailRegistrationConfig } from '#server/utils/config'
@@ -20,15 +22,15 @@ interface EmailRegistrationResponse {
   accepted: true;
 }
 
-export default defineEventHandler(async (event): Promise<EmailRegistrationResponse> => {
-  const config = getEmailRegistrationConfig(event)
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof emailRegistrationSchema>; }>): Promise<EmailRegistrationResponse> => {
+  const config = getEmailRegistrationConfig()
 
   validateEmailAuthenticationRequest(event, config.origin)
 
   const body = await readValidatedBody(event, validateEmailRegistration)
   const clientIp = getTrustedClientIp(event, import.meta.dev === true)
 
-  await verifyTurnstile(event, body['cf-turnstile-response'], {
+  await verifyTurnstile(body['cf-turnstile-response'], {
     remoteIp: clientIp,
     expectedAction: emailRegistrationTurnstileAction
   })
@@ -56,7 +58,7 @@ export default defineEventHandler(async (event): Promise<EmailRegistrationRespon
   if (config.stagingRecipient !== null && body.email !== config.stagingRecipient) {
     throw createError({
       status: 400,
-      statusMessage: 'Use the configured staging email address'
+      statusText: 'Use the configured staging email address'
     })
   }
 
@@ -67,7 +69,7 @@ export default defineEventHandler(async (event): Promise<EmailRegistrationRespon
   const tokenHash = hashToken(token)
   const sensitiveValues = [body.password, body.email, passwordHash, token, tokenHash]
 
-  await withRegistrationDatabase(event, sensitiveValues, async (database) => {
+  await withRegistrationDatabase(sensitiveValues, async (database) => {
     const actor = await getRegistrationActor(event)
 
     await issueEmailRegistration(database, {

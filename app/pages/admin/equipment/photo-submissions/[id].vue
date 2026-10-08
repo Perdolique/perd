@@ -1,7 +1,7 @@
 <template>
   <PageContent page-title="Review photo submission">
     <template #actions>
-      <PerdLink :to="appRoutes.adminEquipmentPhotoSubmissions">
+      <PerdLink :to="appLocations.adminEquipmentPhotoSubmissions">
         Back to photo submissions
       </PerdLink>
     </template>
@@ -32,7 +32,7 @@
         Reload the photo review queue before making another decision.
 
         <template #actions>
-          <PerdLink :to="appRoutes.adminEquipmentPhotoSubmissions">
+          <PerdLink :to="appLocations.adminEquipmentPhotoSubmissions">
             Return to photo submissions
           </PerdLink>
         </template>
@@ -49,11 +49,11 @@
         {{ decisionStatus.message }}
 
         <template #actions>
-          <PerdLink :to="appRoutes.adminEquipmentPhotoSubmissions">
+          <PerdLink :to="appLocations.adminEquipmentPhotoSubmissions">
             Back to photo submissions
           </PerdLink>
 
-          <PerdLink :to="itemPath">
+          <PerdLink :to="itemLocation">
             View catalog item
           </PerdLink>
         </template>
@@ -87,7 +87,7 @@
       <PerdCard :class="$style.detailsCard">
         <div :class="$style.itemHeading">
           <PerdHeading :level="2">Catalog item</PerdHeading>
-          <PerdLink :to="itemPath">{{ itemName }}</PerdLink>
+          <PerdLink :to="itemLocation">{{ itemName }}</PerdLink>
           <p :class="$style.references">{{ brandAndCategory }}</p>
         </div>
 
@@ -206,19 +206,18 @@
   import PerdLink from '~/components/PerdLink.vue'
   import TextInput from '~/components/TextInput.vue'
   import PageContent from '~/components/layout/PageContent.vue'
-  import { appRoutes, createGearLibraryItemPath } from '~/utils/navigation'
+  import { appLocations, createGearLibraryItemLocation } from '~/utils/navigation'
 
   definePageMeta({
     layout: 'page',
     middleware: 'admin'
   })
 
-  const route = useRoute()
+  const route = useRoute('admin-equipment-photo-submissions-id')
   const requestFetch = useRequestFetch()
   const conflictStatus = useTemplateRef('conflictStatus')
   const decisionStatusElement = useTemplateRef('decisionStatusElement')
-  const routeId = route.params.id
-  const submissionId = Array.isArray(routeId) ? routeId[0] ?? '' : routeId ?? ''
+  const submissionId = route.params.id
   const detailPath = `/api/equipment/photo-submissions/${submissionId}` as const
   const maxRejectionReasonLength = limits.maxEquipmentItemRejectionReasonLength
   const previewAttempt = ref(0)
@@ -262,7 +261,7 @@
   const isPublishDisabled = computed(() => isPreviewReady.value === false || isSubmitting.value)
   const trimmedRejectionReason = computed(() => rejectionReason.value.trim())
   const isRejectConfirmDisabled = computed(() => isSubmitting.value || trimmedRejectionReason.value === '')
-  const itemPath = computed(() => createGearLibraryItemPath(submission.value?.item.id ?? ''))
+  const itemLocation = computed(() => createGearLibraryItemLocation(submission.value?.item.id ?? ''))
   const itemName = computed(() => submission.value?.item.name ?? '')
 
   const brandAndCategory = computed(() => {

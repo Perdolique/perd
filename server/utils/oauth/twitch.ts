@@ -1,7 +1,6 @@
-import { type H3Event, createError, getRequestURL } from 'h3'
+import { createError, getRequestURL, useRuntimeConfig, type RequestEvent } from 'nuxt/server'
 import { $fetch } from 'ofetch'
 import { joinURL } from 'ufo'
-import { useRuntimeConfig } from 'nitropack/runtime'
 import { getAuthErrorDetails } from '#server/utils/auth/telemetry'
 import { twitchOAuthMessages } from '#shared/utils/twitch-oauth'
 import { validateTwitchOAuthConfig } from './twitch-config'
@@ -38,21 +37,21 @@ interface TwitchOAuthConfig {
   clientSecret: string;
 }
 
-function getRuntimeTwitchConfig(event?: H3Event): TwitchOAuthConfig {
-  const config = useRuntimeConfig(event)
+function getRuntimeTwitchConfig(): TwitchOAuthConfig {
+  const config = useRuntimeConfig()
   const twitchConfig = validateTwitchOAuthConfig(config.oauth.twitch)
 
   return twitchConfig
 }
 
-function getTwitchRedirectUri(event: H3Event): string {
+function getTwitchRedirectUri(event: RequestEvent): string {
   const url = getRequestURL(event)
   const redirectUri = joinURL(url.origin, '/auth/twitch')
 
   return redirectUri
 }
 
-async function getTwitchOAuthToken(event: H3Event, code: string, config: TwitchOAuthConfig): Promise<string> {
+async function getTwitchOAuthToken(event: RequestEvent, code: string, config: TwitchOAuthConfig): Promise<string> {
   try {
     const redirectUri = getTwitchRedirectUri(event)
 
@@ -76,7 +75,7 @@ async function getTwitchOAuthToken(event: H3Event, code: string, config: TwitchO
 
     throw createError({
       status: 503,
-      statusMessage: twitchOAuthMessages.unavailable
+      statusText: twitchOAuthMessages.unavailable
     })
   }
 }
@@ -102,7 +101,7 @@ async function getTwitchUserInfo(accessToken: string, clientId: string): Promise
 
     throw createError({
       status: 503,
-      statusMessage: twitchOAuthMessages.unavailable
+      statusText: twitchOAuthMessages.unavailable
     })
   }
 }

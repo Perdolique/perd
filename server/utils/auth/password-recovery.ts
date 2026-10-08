@@ -1,4 +1,4 @@
-import { createError, isError, type H3Event } from 'h3'
+import { createError, isNuxtError } from 'nuxt/server'
 import type { DatabaseConfig } from '#server/utils/config-env'
 import { createWebSocketClient } from '#server/utils/database'
 import { getRuntimeDatabaseConfig } from '#server/utils/config'
@@ -87,14 +87,13 @@ async function runPasswordRecoveryIssuance(options: PasswordRecoveryBackgroundOp
 }
 
 async function withPasswordRecoveryDatabase<Result>(
-  event: H3Event,
   sensitiveValues: readonly string[],
   action: (database: PasswordRecoveryDatabase) => Promise<Result>
 ): Promise<Result> {
   let database: PasswordRecoveryDatabase | null = null
 
   try {
-    database = createWebSocketClient(getRuntimeDatabaseConfig(event))
+    database = createWebSocketClient(getRuntimeDatabaseConfig())
 
     return await action(database)
   } catch (error) {
@@ -102,17 +101,17 @@ async function withPasswordRecoveryDatabase<Result>(
 
     console.error('Password recovery reset failed', { error: details })
 
-    if (isError(error) && error.statusCode >= 400 && error.statusCode < 500) {
+    if (isNuxtError(error) && error.status >= 400 && error.status < 500) {
       throw createError({
-        status: error.statusCode,
-        statusMessage: error.statusMessage
+        status: error.status,
+        statusText: error.statusText
       })
     }
 
     throw createError({
       cause: details,
       status: 503,
-      statusMessage: 'Password recovery is temporarily unavailable. Try again'
+      statusText: 'Password recovery is temporarily unavailable. Try again'
     })
   } finally {
     if (database !== null) {

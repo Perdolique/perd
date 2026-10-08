@@ -1,6 +1,12 @@
-import { defineEventHandler, getValidatedQuery } from 'h3'
+import type { InferInput } from 'valibot'
+import { defineEventHandler, getValidatedQuery } from 'nuxt/server'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { validateAdminUser } from '#server/utils/admin'
-import { validatePhotoSubmissionAdminListQuery } from '#server/utils/validation/schemas'
+
+import {
+  validatePhotoSubmissionAdminListQuery,
+  type photoSubmissionAdminListQuerySchema
+} from '#server/utils/validation/schemas'
 
 interface PhotoSubmissionReferenceSummary {
   id: number;
@@ -52,7 +58,7 @@ interface PhotoSubmissionListQueryRow {
   item: PhotoSubmissionListQueryItem | null;
 }
 
-export default defineEventHandler(async (event): Promise<PhotoSubmissionListResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof photoSubmissionAdminListQuerySchema>; }>): Promise<PhotoSubmissionListResponse> => {
   await validateAdminUser(event)
 
   const {

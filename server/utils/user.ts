@@ -1,4 +1,4 @@
-import { createError, type H3Event } from 'h3'
+import { createError, type RequestEvent } from 'nuxt/server'
 import { and, eq } from 'drizzle-orm'
 import type { OAuthProvider } from '#shared/types/oauth'
 import { clearAppSession, useAppSession } from '#server/utils/session'
@@ -29,7 +29,7 @@ interface SessionOAuthAccount {
   provider: Pick<typeof oauthProviders.$inferSelect, 'type'> | null;
 }
 
-async function getSessionUser(event: H3Event) : Promise<SessionUser> {
+async function getSessionUser(event: RequestEvent) : Promise<SessionUser> {
   const session = await useAppSession(event)
   const { userId, sessionVersion = 0 } = session.data
 
@@ -94,7 +94,7 @@ async function getSessionUser(event: H3Event) : Promise<SessionUser> {
 async function getUserByOAuthAccount(
   provider: OAuthProvider,
   accountId: string,
-  event: H3Event
+  event: RequestEvent
 ) : Promise<SessionUser> {
   const [foundUser] = await event.context.dbHttp
     .select({
@@ -133,7 +133,7 @@ async function getUserByOAuthAccount(
   }
 }
 
-async function validateRegisteredUserAccess(event: H3Event): Promise<RegisteredUserAccess> {
+async function validateRegisteredUserAccess(event: RequestEvent): Promise<RegisteredUserAccess> {
   const user = await getSessionUser(event)
 
   if (user.userId === null) {
@@ -151,7 +151,7 @@ async function validateRegisteredUserAccess(event: H3Event): Promise<RegisteredU
 }
 
 /** Validates a registered user and returns only the user ID for callers that do not need access flags. */
-async function validateRegisteredUser(event: H3Event): Promise<string> {
+async function validateRegisteredUser(event: RequestEvent): Promise<string> {
   const { userId } = await validateRegisteredUserAccess(event)
 
   return userId

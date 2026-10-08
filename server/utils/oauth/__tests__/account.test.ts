@@ -12,7 +12,7 @@ const { createWebSocketClientMock } = vi.hoisted(() => {
 
 vi.mock(import('#server/utils/config'), () => {
   return {
-    createWebSocketClientFromEvent: createWebSocketClientMock
+    createRuntimeWebSocketClient: createWebSocketClientMock
   }
 })
 
@@ -32,7 +32,7 @@ describe(createOAuthUser, () => {
       // Expected database failure is asserted below.
     })
 
-    await expect(createOAuthUser('twitch', 'account-id', createTestEvent({}))).rejects.toMatchObject({
+    await expect(createOAuthUser('twitch', 'account-id')).rejects.toMatchObject({
       statusCode: 500,
       message: 'Failed to create user'
     })
@@ -58,7 +58,7 @@ describe(createOAuthUser, () => {
       // Both expected failures are asserted below.
     })
 
-    await expect(createOAuthUser('twitch', 'account-id', createTestEvent({}))).rejects.toMatchObject({
+    await expect(createOAuthUser('twitch', 'account-id')).rejects.toMatchObject({
       statusCode: 500,
       message: 'Failed to create user'
     })
@@ -95,7 +95,7 @@ describe(createOAuthUser, () => {
       // Expected cleanup failure is asserted below.
     })
 
-    await expect(createOAuthUser('twitch', 'account-id', createTestEvent({}))).resolves.toStrictEqual(createdUser)
+    await expect(createOAuthUser('twitch', 'account-id')).resolves.toStrictEqual(createdUser)
     expect(JSON.stringify(vi.mocked(console.error).mock.calls)).toContain('Connection cleanup failed')
   })
 
@@ -142,8 +142,7 @@ describe(createOAuthUser, () => {
 
     const result = await createOAuthUser(
       'twitch',
-      'twitch-account-1',
-      createTestEvent({})
+      'twitch-account-1'
     )
 
     expect(userValuesMock).toHaveBeenCalledWith({})
@@ -267,7 +266,7 @@ describe(linkOAuthAccount, () => {
   it('atomically inserts a new provider identity', async () => {
     const { database, lockForUpdateMock, onConflictDoNothingMock, selectMock, valuesMock } = createLinkDatabase(userId, true)
 
-    await expect(linkOAuthAccount(createTestEvent({}), {
+    await expect(linkOAuthAccount({
       accountId: 'twitch-account-1',
       provider: 'twitch',
       sessionVersion: 0,
@@ -299,7 +298,7 @@ describe(linkOAuthAccount, () => {
       }]
     })
 
-    await expect(linkOAuthAccount(createTestEvent({}), {
+    await expect(linkOAuthAccount({
       accountId: 'twitch-account-1',
       provider: 'twitch',
       sessionVersion: 0,
@@ -324,7 +323,7 @@ describe(linkOAuthAccount, () => {
   }])('rejects an ownership conflict for $accountId', async ({ accountId, conflicts }) => {
     createLinkDatabase(userId, false, { conflicts })
 
-    await expect(linkOAuthAccount(createTestEvent({}), {
+    await expect(linkOAuthAccount({
       accountId,
       provider: 'twitch',
       sessionVersion: 0,
@@ -338,7 +337,7 @@ describe(linkOAuthAccount, () => {
   it('rejects a revoked session before inserting a provider identity', async () => {
     const { database, insertMock } = createLinkDatabase(userId, true, { sessionVersion: 1 })
 
-    await expect(linkOAuthAccount(createTestEvent({}), {
+    await expect(linkOAuthAccount({
       accountId: 'twitch-account-1',
       provider: 'twitch',
       sessionVersion: 0,
@@ -362,7 +361,7 @@ describe(linkOAuthAccount, () => {
       // Expected cleanup failure is asserted below.
     })
 
-    await expect(linkOAuthAccount(createTestEvent({}), {
+    await expect(linkOAuthAccount({
       accountId: 'twitch-account-1',
       provider: 'twitch',
       sessionVersion: 0,

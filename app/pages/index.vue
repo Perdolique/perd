@@ -1,7 +1,7 @@
 <template>
   <PageContent page-title="Home">
     <div :class="$style.component">
-      <NuxtLink :to="appRoutes.packingLists" :class="$style.primaryAction">
+      <NuxtLink :to="appLocations.packingLists" :class="$style.primaryAction">
         <span :class="$style.primaryIcon" aria-hidden="true">
           <Icon :name="navigationIcons.packingLists" />
         </span>
@@ -16,13 +16,13 @@
 
       <div :class="$style.grid" aria-label="Quick actions">
         <QuickActionLink
-          :to="appRoutes.gearLibrary"
+          :to="appLocations.gearLibrary"
           :icon="navigationIcons.gearLibrary"
           :label="navigationLabels.gearLibrary"
         />
 
         <QuickActionLink
-          :to="appRoutes.myGear"
+          :to="appLocations.myGear"
           :icon="navigationIcons.myGear"
           :label="navigationLabels.myGear"
         />
@@ -35,7 +35,7 @@
   import { definePageMeta } from '#imports'
   import PageContent from '~/components/layout/PageContent.vue'
   import QuickActionLink from '~/components/QuickActionLink.vue'
-  import { appRoutes, navigationIcons, navigationLabels } from '~/utils/navigation'
+  import { appLocations, navigationIcons, navigationLabels } from '~/utils/navigation'
 
   definePageMeta({
     layout: 'page'

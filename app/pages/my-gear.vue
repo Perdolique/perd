@@ -7,7 +7,7 @@
         aria-haspopup="dialog"
         @click="openCreate"
       >Add custom gear</PerdButton>
-      <PerdLink :to="appRoutes.gearLibrary">
+      <PerdLink :to="appLocations.gearLibrary">
         Find gear
       </PerdLink>
     </template>
@@ -78,7 +78,7 @@
   import { computed, nextTick, onBeforeUnmount, ref, useTemplateRef } from 'vue'
   import { definePageMeta, useFetch, useRequestFetch } from '#imports'
   import { useGearLibraryStore } from '~/stores/gear-library'
-  import { appRoutes, navigationLabels } from '~/utils/navigation'
+  import { appLocations, navigationLabels } from '~/utils/navigation'
   import type { MyGearRecordView } from '~/types/equipment'
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'

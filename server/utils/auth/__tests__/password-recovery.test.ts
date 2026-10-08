@@ -1,11 +1,10 @@
-import { createError } from 'h3'
+import { createError } from 'nuxt/server'
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest'
 import { createWebSocketClient } from '#server/utils/database'
 import { getRuntimeDatabaseConfig } from '#server/utils/config'
 import { issuePasswordRecovery, revokePasswordRecoveryToken } from '#server/utils/auth/password-recovery-persistence'
 import { sendPasswordRecoveryEmail } from '#server/utils/auth/password-recovery-mail'
 import { runPasswordRecoveryIssuance, withPasswordRecoveryDatabase } from '#server/utils/auth/password-recovery'
-import { createTestEvent } from '~~/test-utils/create-test-event'
 
 vi.mock(import('#server/utils/database'), () => {
   return { createWebSocketClient: vi.fn() }
@@ -218,9 +217,7 @@ describe(withPasswordRecoveryDatabase, () => {
   })
 
   it('preserves safe client errors and closes the database', async () => {
-    const event = createTestEvent({})
-
-    const result = withPasswordRecoveryDatabase(event, ['secret-token'], async () => {
+    const result = withPasswordRecoveryDatabase(['secret-token'], async () => {
       await Promise.reject(createError({
         status: 400,
         statusMessage: 'The password reset link is invalid or expired'
@@ -236,10 +233,9 @@ describe(withPasswordRecoveryDatabase, () => {
   })
 
   it('redacts unexpected database failures, maps them to 503, and closes the database', async () => {
-    const event = createTestEvent({})
     const secret = 'secret-token'
 
-    const result = withPasswordRecoveryDatabase(event, [secret], async () => {
+    const result = withPasswordRecoveryDatabase([secret], async () => {
       await Promise.reject(new Error(`Query failed for ${secret}`))
     })
 

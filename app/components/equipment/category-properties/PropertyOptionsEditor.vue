@@ -247,9 +247,11 @@
     errorMessage.value = ''
 
     try {
+      const expectedPropertiesRevision = String(expectedRevision.value)
+
       const result = await requestFetch(`/api/equipment/categories/${categoryId}/properties/${property.id}/enum-options/${deleting.value.id}`, {
         method: 'DELETE',
-        query: { expectedPropertiesRevision: expectedRevision.value }
+        query: { expectedPropertiesRevision }
       })
 
       emit('saved', result)

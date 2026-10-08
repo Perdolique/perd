@@ -1,12 +1,13 @@
 import { and, eq } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedRouterParams, setResponseStatus } from 'h3'
+import { createError, defineEventHandler, setResponseStatus } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
 import { packingLists } from '#server/database/schema'
 import { validateSessionUser } from '#server/utils/session'
 import { validatePackingListIdParams } from '#server/utils/validation/schemas'
 
 export default defineEventHandler(async (event) : Promise<void> => {
   const userId = await validateSessionUser(event)
-  const { id } = await getValidatedRouterParams(event, validatePackingListIdParams)
+  const { id } = await getValidatedRouteParams(event, validatePackingListIdParams)
 
   const [deletedList] = await event.context.dbHttp
     .delete(packingLists)

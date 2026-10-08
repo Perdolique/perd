@@ -1,7 +1,6 @@
 import * as v from 'valibot'
-import { createError, type H3Event } from 'h3'
+import { createError, useRuntimeConfig } from 'nuxt/server'
 import { isEmailRegistrationEnabled } from '#shared/utils/email-registration'
-import { useRuntimeConfig } from 'nitropack/runtime'
 import { nonEmptyStringSchema } from '#server/utils/validation/schemas'
 import { createWebSocketClient } from './database'
 import { optionalBooleanSchema, type DatabaseConfig } from './config-env'
@@ -21,8 +20,8 @@ const sessionSecretSchema = v.pipe(
   v.minLength(32, 'Session secret must be at least 32 characters long')
 )
 
-function getRuntimeDatabaseConfig(event: H3Event): DatabaseConfig {
-  const config = useRuntimeConfig(event)
+function getRuntimeDatabaseConfig(): DatabaseConfig {
+  const config = useRuntimeConfig()
   const databaseUrl = v.parse(nonEmptyStringSchema, config.databaseUrl)
   const localFlag = v.parse(optionalBooleanSchema, config.localDatabase)
   const isLocalDatabase = import.meta.dev === true || localFlag
@@ -33,55 +32,55 @@ function getRuntimeDatabaseConfig(event: H3Event): DatabaseConfig {
   }
 }
 
-function getRuntimeSessionSecret(event: H3Event): string {
-  const config = useRuntimeConfig(event)
+function getRuntimeSessionSecret(): string {
+  const config = useRuntimeConfig()
   const secret = v.parse(sessionSecretSchema, config.sessionSecret)
 
   return secret
 }
 
-function getRuntimeTurnstileConfig(event: H3Event): TurnstileConfig {
-  const config = useRuntimeConfig(event)
+function getRuntimeTurnstileConfig(): TurnstileConfig {
+  const config = useRuntimeConfig()
 
   return validateTurnstileConfig(config.turnstile)
 }
 
-function createWebSocketClientFromEvent(event: H3Event) {
-  const config = getRuntimeDatabaseConfig(event)
+function createRuntimeWebSocketClient() {
+  const config = getRuntimeDatabaseConfig()
 
   return createWebSocketClient(config)
 }
 
-function requireEmailRegistrationEnabled(event: H3Event): void {
-  const config = useRuntimeConfig(event)
+function requireEmailRegistrationEnabled(): void {
+  const config = useRuntimeConfig()
 
   if (!isEmailRegistrationEnabled(config.public.emailRegistrationEnabled)) {
     throw createError({ status: 404 })
   }
 }
 
-function getEmailRegistrationConfig(event: H3Event): EmailRegistrationConfig {
-  requireEmailRegistrationEnabled(event)
+function getEmailRegistrationConfig(): EmailRegistrationConfig {
+  requireEmailRegistrationEnabled()
 
-  const config = useRuntimeConfig(event)
+  const config = useRuntimeConfig()
 
   return validateEmailRegistrationConfig(config.emailRegistration)
 }
 
-function getEmailAuthenticationOrigin(event: H3Event): string {
-  const config = useRuntimeConfig(event)
+function getEmailAuthenticationOrigin(): string {
+  const config = useRuntimeConfig()
 
   return validateEmailAuthenticationOrigin(config.emailRegistration)
 }
 
-function getEmailAuthenticationConfig(event: H3Event): EmailAuthenticationConfig {
-  const config = useRuntimeConfig(event)
+function getEmailAuthenticationConfig(): EmailAuthenticationConfig {
+  const config = useRuntimeConfig()
 
   return validateEmailAuthenticationConfig(config.emailRegistration)
 }
 
 export {
-  createWebSocketClientFromEvent,
+  createRuntimeWebSocketClient,
   getEmailAuthenticationConfig,
   getEmailAuthenticationOrigin,
   getEmailRegistrationConfig,

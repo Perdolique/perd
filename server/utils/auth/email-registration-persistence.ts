@@ -1,5 +1,5 @@
 import { and, eq, lte, sql } from 'drizzle-orm'
-import { createError } from 'h3'
+import { createError } from 'nuxt/server'
 import { emailCredentials, pendingEmailRegistrations, users } from '#server/database/schema'
 import type { createWebSocketClient } from '#server/utils/database'
 import { sanitizeRedirectPath } from '#shared/utils/redirect'
@@ -38,7 +38,7 @@ interface CompletedRegistration {
 function invalidRegistration() {
   return createError({
     status: 400,
-    statusMessage: 'The verification link or password is invalid or expired'
+    statusText: 'The verification link or password is invalid or expired'
   })
 }
 
@@ -56,7 +56,7 @@ async function lockRegistrationUser(transaction: RegistrationTransaction, userId
   if (user === undefined) {
     throw createError({
       status: 409,
-      statusMessage: 'Return to the browser where you started adding email'
+      statusText: 'Return to the browser where you started adding email'
     })
   }
 
@@ -68,7 +68,7 @@ async function lockRegistrationUser(transaction: RegistrationTransaction, userId
   if (credential !== undefined) {
     throw createError({
       status: 409,
-      statusMessage: 'This account already has a verified email'
+      statusText: 'This account already has a verified email'
     })
   }
 
@@ -138,7 +138,7 @@ function assertRegistrationActor(
     if (actor.userId !== null) {
       throw createError({
         status: 409,
-        statusMessage: 'Open this link in a signed-out browser to create a new account'
+        statusText: 'Open this link in a signed-out browser to create a new account'
       })
     }
 
@@ -148,7 +148,7 @@ function assertRegistrationActor(
   if (pending.userId !== actor.userId || pending.sessionIdHash !== actor.sessionIdHash) {
     throw createError({
       status: 409,
-      statusMessage: 'Return to the browser where you started adding email'
+      statusText: 'Return to the browser where you started adding email'
     })
   }
 }

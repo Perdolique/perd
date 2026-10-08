@@ -14,7 +14,7 @@ function createRequestEvent(path: string) {
   event.node.req.headers.host = 'metsik.app'
   event.node.req.url = path
 
-  return event
+  return event.h3
 }
 
 describe('passkey error response cache policy', () => {

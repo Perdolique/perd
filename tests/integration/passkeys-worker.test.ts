@@ -1,7 +1,5 @@
+import { createAccountCookie } from '../../test-utils/create-account-cookie'
 import { Buffer } from 'node:buffer'
-import { IncomingMessage, ServerResponse } from 'node:http'
-import { Socket } from 'node:net'
-import { createEvent, updateSession } from 'h3'
 import * as v from 'valibot'
 import { createTestHarness, type TestHarness } from 'wrangler'
 import { fetch as miniflareFetch } from 'miniflare'
@@ -144,29 +142,6 @@ function createClient(initialCookie = '') {
   }
 }
 
-async function accountCookie(userId: string) {
-  const request = new IncomingMessage(new Socket())
-  const response = new ServerResponse(request)
-  const event = createEvent(request, response)
-
-  await updateSession(event, {
-    name: 'perdSession',
-    password: sessionSecret
-  }, {
-    userId,
-    sessionVersion: 0
-  })
-
-  const cookies = response.getHeader('set-cookie')
-  const cookie = Array.isArray(cookies) ? cookies[0] : cookies
-
-  if (typeof cookie !== 'string') {
-    throw new TypeError('Expected an account session cookie')
-  }
-
-  return cookie.split(';')[0] ?? ''
-}
-
 describe('passkeys in the built Nuxt Worker', () => {
   beforeAll(async () => {
     clientNumber = 0
@@ -230,7 +205,7 @@ describe('passkeys in the built Nuxt Worker', () => {
       passwordHash: 'fixture'
     })
 
-    const cookie = await accountCookie(account.id)
+    const cookie = await createAccountCookie(account.id, sessionSecret)
     const owner = createClient(cookie)
     const fixture = createPasskeyFixture({ algorithm })
 
@@ -420,7 +395,7 @@ describe('passkeys in the built Nuxt Worker', () => {
       passwordHash: 'fixture'
     })
 
-    const otherAccountCookie = await accountCookie(otherAccount.id)
+    const otherAccountCookie = await createAccountCookie(otherAccount.id, sessionSecret)
     const otherOwner = createClient(otherAccountCookie)
 
     const unauthorizedRename = await otherOwner(`/api/account/passkeys/${savedPasskey.id}`, {

@@ -1,4 +1,4 @@
-import type * as h3 from 'h3'
+import type * as nuxtServer from 'nuxt/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import listUserPhotoSubmissionsHandler from '#server/api/user/photo-submissions/index.get'
 import { createTestEvent } from '~~/test-utils/create-test-event'
@@ -8,19 +8,18 @@ const {
   validateRegisteredUserMock
 } = vi.hoisted(() => {
   return {
-    getValidatedQueryMock: vi.fn<typeof h3.getValidatedQuery>(),
+    getValidatedQueryMock: vi.fn<typeof nuxtServer.getValidatedQuery>(),
     validateRegisteredUserMock: vi.fn<(event: unknown) => Promise<string>>()
   }
 })
 
-// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial h3 mock.
-vi.mock(import('h3'), async () => {
-  const actual = await vi.importActual<typeof h3>('h3')
+vi.mock(import('nuxt/server'), async () => {
+  const actual = await vi.importActual<typeof nuxtServer>('nuxt/server')
 
   return {
     ...actual,
 
-    async getValidatedQuery(...args: Parameters<typeof h3.getValidatedQuery>) {
+    async getValidatedQuery(...args: Parameters<typeof nuxtServer.getValidatedQuery>) {
       return getValidatedQueryMock(...args)
     }
   }

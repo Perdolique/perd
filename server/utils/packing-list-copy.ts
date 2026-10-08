@@ -1,5 +1,5 @@
 import { and, eq, sql } from 'drizzle-orm'
-import { createError } from 'h3'
+import { createError } from 'nuxt/server'
 import { packingListEntries, packingLists, userEquipment } from '#server/database/schema'
 import type { createWebSocketClient } from '#server/utils/database'
 

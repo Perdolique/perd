@@ -1,14 +1,23 @@
+import type { InferInput } from 'valibot'
 import { and, eq, isNull } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedRouterParams, readValidatedBody } from 'h3'
+import { createError, defineEventHandler, readValidatedBody } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { userEquipment } from '#server/database/schema'
 import { validateSessionUser } from '#server/utils/session'
-import { validateUserEquipmentIdParams, validateUserEquipmentRenameBody } from '#server/utils/validation/schemas'
+
+import {
+  validateUserEquipmentIdParams,
+  validateUserEquipmentRenameBody,
+  type userEquipmentRenameBodySchema
+} from '#server/utils/validation/schemas'
+
 import { throwMyGearError } from '#server/utils/my-gear-errors'
 import type { CustomMyGearRecord } from './index.get'
 
-export default defineEventHandler(async (event) : Promise<CustomMyGearRecord> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof userEquipmentRenameBodySchema>; }>) : Promise<CustomMyGearRecord> => {
   const userId = await validateSessionUser(event)
-  const { id } = await getValidatedRouterParams(event, validateUserEquipmentIdParams)
+  const { id } = await getValidatedRouteParams(event, validateUserEquipmentIdParams)
   const { customName } = await readValidatedBody(event, validateUserEquipmentRenameBody)
 
   try {

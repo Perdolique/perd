@@ -1,12 +1,6 @@
-import {
-  createError,
-  defineEventHandler,
-  getRequestHeader,
-  getValidatedRouterParams,
-  setResponseHeader,
-  setResponseStatus,
-  type H3Event
-} from 'h3'
+import { getRequestMetadataHeader } from '#server/utils/request-runtime'
+import { createError, defineEventHandler, setResponseStatus, type RequestEvent } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
 
 import {
   getCloudflareImagesBinding,
@@ -55,22 +49,22 @@ function getStringFormDataValue(formData: FormData, name: string): string | unde
   return typeof value === 'string' ? value : undefined
 }
 
-function readIdempotencyKey(event: H3Event): string {
+function readIdempotencyKey(event: RequestEvent): string {
   try {
     return validatePhotoSubmissionIdempotencyKey(
-      getRequestHeader(event, 'idempotency-key')
+      getRequestMetadataHeader(event, 'idempotency-key')
     )
   } catch (error) {
     throw createError({
       cause: error,
       status: 400,
-      statusMessage: 'Valid Idempotency-Key header is required'
+      statusText: 'Valid Idempotency-Key header is required'
     })
   }
 }
 
 async function validatePhotoSubmissionPreconditions(
-  event: H3Event,
+  event: RequestEvent,
   userId: string,
   itemId: string
 ): Promise<void> {
@@ -103,20 +97,20 @@ async function validatePhotoSubmissionPreconditions(
   if (item === undefined) {
     throw createError({
       status: 404,
-      statusMessage: 'Equipment item not found'
+      statusText: 'Equipment item not found'
     })
   }
 
   if (pendingSubmissions.length >= maximumPendingPhotoSubmissionCount) {
     throw createError({
       status: 409,
-      statusMessage: 'Three photos are already awaiting review for this item'
+      statusText: 'Three photos are already awaiting review for this item'
     })
   }
 }
 
 async function getPhotoSubmissionRateLimitOutcome(
-  event: H3Event,
+  event: RequestEvent,
   userId: string
 ): Promise<RateLimitOutcome> {
   try {
@@ -129,26 +123,26 @@ async function getPhotoSubmissionRateLimitOutcome(
 
     throw createError({
       status: 503,
-      statusMessage: 'Photo submission is temporarily unavailable'
+      statusText: 'Photo submission is temporarily unavailable'
     })
   }
 }
 
-async function enforcePhotoSubmissionRateLimit(event: H3Event, userId: string): Promise<void> {
+async function enforcePhotoSubmissionRateLimit(event: RequestEvent, userId: string): Promise<void> {
   const outcome = await getPhotoSubmissionRateLimitOutcome(event, userId)
 
   if (outcome.success === false) {
-    setResponseHeader(event, 'retry-after', 60)
+    event.res.headers.set('retry-after', '60')
 
     throw createError({
       status: 429,
-      statusMessage: 'Too many photo submission attempts'
+      statusText: 'Too many photo submission attempts'
     })
   }
 }
 
 async function getPhotoSubmissionTurnstileRateLimitOutcomes(
-  event: H3Event,
+  event: RequestEvent,
   userId: string,
   clientIp: string
 ): Promise<readonly [RateLimitOutcome, RateLimitOutcome]> {
@@ -166,30 +160,30 @@ async function getPhotoSubmissionTurnstileRateLimitOutcomes(
 
     throw createError({
       status: 503,
-      statusMessage: 'Photo submission is temporarily unavailable'
+      statusText: 'Photo submission is temporarily unavailable'
     })
   }
 }
 
 async function enforcePhotoSubmissionTurnstileRateLimit(
-  event: H3Event,
+  event: RequestEvent,
   userId: string,
   clientIp: string
 ): Promise<void> {
   const outcomes = await getPhotoSubmissionTurnstileRateLimitOutcomes(event, userId, clientIp)
 
   if (outcomes.some(({ success }) => success === false)) {
-    setResponseHeader(event, 'retry-after', 60)
+    event.res.headers.set('retry-after', '60')
 
     throw createError({
       status: 429,
-      statusMessage: 'Too many photo submission attempts'
+      statusText: 'Too many photo submission attempts'
     })
   }
 }
 
 function sendCreatedResponse(
-  event: H3Event,
+  event: RequestEvent,
   submission: PersistedPhotoSubmission
 ): PhotoSubmissionCreateResponse {
   setResponseStatus(event, 201)
@@ -202,14 +196,14 @@ function sendCreatedResponse(
 
 export default defineEventHandler(async (event): Promise<PhotoSubmissionCreateResponse> => {
   const userId = await validateRegisteredUser(event)
-  const { id: itemId } = await getValidatedRouterParams(event, validateItemDetailParams)
+  const { id: itemId } = await getValidatedRouteParams(event, validateItemDetailParams)
   const idempotencyKey = readIdempotencyKey(event)
-  const turnstileToken = getRequestHeader(event, turnstileTokenHeaderName)
+  const turnstileToken = getRequestMetadataHeader(event, turnstileTokenHeaderName)
   const clientIp = getTrustedClientIp(event, import.meta.dev === true)
 
   await enforcePhotoSubmissionTurnstileRateLimit(event, userId, clientIp)
 
-  await verifyTurnstile(event, turnstileToken, {
+  await verifyTurnstile(turnstileToken, {
     remoteIp: clientIp,
     expectedAction: photoSubmissionTurnstileAction
   })
@@ -232,7 +226,7 @@ export default defineEventHandler(async (event): Promise<PhotoSubmissionCreateRe
   if ((photo instanceof globalThis.File) === false) {
     throw createError({
       status: 400,
-      statusMessage: 'Photo file is required'
+      statusText: 'Photo file is required'
     })
   }
 

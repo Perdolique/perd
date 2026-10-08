@@ -150,7 +150,13 @@
     getGearLibraryRouteState
   } from '~/utils/gear-library'
 
-  import { appRoutes, createGearLibraryPhotoSubmissionPath } from '~/utils/navigation'
+  import {
+    appLocations,
+    createAdminEquipmentItemEditLocation,
+    createAdminEquipmentItemImagesLocation,
+    createGearLibraryPhotoSubmissionLocation
+  } from '~/utils/navigation'
+
   import EquipmentItemGallery from '~/components/equipment/EquipmentItemGallery.vue'
   import GearLibraryMyGearAction from '~/components/gear-library/GearLibraryMyGearAction.vue'
   import PageLoadingState from '~/components/PageLoadingState.vue'
@@ -168,21 +174,16 @@
 
   definePageMeta({ layout: 'page' })
 
-  const route = useRoute()
+  const route = useRoute('gear-library-id')
   const { user } = useUserStore()
   const gearLibraryStore = useGearLibraryStore()
   const myGear = useGearLibraryMyGear()
   const itemHeading = useTemplateRef('itemHeading')
   const specificationsHeadingId = useId()
   const isRetryingItem = ref(false)
-
-  const itemId = Array.isArray(route.params.id)
-    ? route.params.id[0] ?? ''
-    : route.params.id ?? ''
-
+  const itemId = route.params.id
   const showSavedNotice = ref(gearLibraryStore.takeItemEditNotice(itemId))
-  const photoSubmissionPath = createGearLibraryPhotoSubmissionPath(itemId)
-  const imagesManagementPath = `/admin/equipment/items/${itemId}/images`
+  const imagesManagementLocation = createAdminEquipmentItemImagesLocation(itemId)
 
   const {
     data: itemResponse,
@@ -196,20 +197,8 @@
 
   const catalogRouteState = computed(() => getGearLibraryRouteState(route.query))
   const catalogQuery = computed(() => buildGearLibraryRouteQuery(catalogRouteState.value))
-
-  const itemEditLocation = computed(() => {
-    return {
-      path: `/admin/equipment/items/${itemId}/edit`,
-      query: catalogQuery.value
-    }
-  })
-
-  const photoSubmissionLocation = computed(() => {
-    return {
-      path: photoSubmissionPath,
-      query: catalogQuery.value
-    }
-  })
+  const itemEditLocation = computed(() => createAdminEquipmentItemEditLocation(itemId, catalogQuery.value))
+  const photoSubmissionLocation = computed(() => createGearLibraryPhotoSubmissionLocation(itemId, catalogQuery.value))
 
   const itemActions = computed<ActionMenuItem[]>(() => {
     const items: ActionMenuItem[] = [{
@@ -229,7 +218,7 @@
         id: 'images',
         label: 'Manage images',
         icon: 'hugeicons:image-02',
-        to: imagesManagementPath
+        to: imagesManagementLocation
       })
     }
 
@@ -238,7 +227,7 @@
 
   const backToCatalogLocation = computed(() => {
     return {
-      path: appRoutes.gearLibrary,
+      name: appLocations.gearLibrary.name,
       query: catalogQuery.value
     }
   })
@@ -334,7 +323,7 @@
     const query = buildGearLibraryRouteQuery(nextState)
 
     return {
-      path: appRoutes.gearLibrary,
+      name: appLocations.gearLibrary.name,
       query
     }
   })
@@ -383,7 +372,7 @@
     const query = buildGearLibraryRouteQuery(action.nextState)
 
     await navigateTo({
-      path: appRoutes.gearLibrary,
+      name: appLocations.gearLibrary.name,
       query
     })
   }

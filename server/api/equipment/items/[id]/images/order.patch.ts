@@ -1,17 +1,25 @@
+import type { InferInput } from 'valibot'
 import { eq, sql } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedRouterParams, isError, readValidatedBody } from 'h3'
+import { createError, defineEventHandler, isNuxtError, readValidatedBody } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { contributions, equipmentItemImages, equipmentItems } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
-import { createWebSocketClientFromEvent } from '#server/utils/config'
-import { validateItemDetailParams, validateItemImageOrderBody } from '#server/utils/validation/schemas'
+import { createRuntimeWebSocketClient } from '#server/utils/config'
+
+import {
+  validateItemDetailParams,
+  validateItemImageOrderBody,
+  type itemImageOrderBodySchema
+} from '#server/utils/validation/schemas'
 
 interface EquipmentItemImageOrderResponse {
   imageIds: string[];
 }
 
-export default defineEventHandler(async (event) : Promise<EquipmentItemImageOrderResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof itemImageOrderBodySchema>; }>) : Promise<EquipmentItemImageOrderResponse> => {
   const userId = await validateAdminUser(event)
-  const { id: itemId } = await getValidatedRouterParams(event, validateItemDetailParams)
+  const { id: itemId } = await getValidatedRouteParams(event, validateItemDetailParams)
   const { imageIds } = await readValidatedBody(event, validateItemImageOrderBody)
   const requestedImageIds = new Set(imageIds)
   const hasDuplicateImageIds = requestedImageIds.size !== imageIds.length
@@ -19,11 +27,11 @@ export default defineEventHandler(async (event) : Promise<EquipmentItemImageOrde
   if (hasDuplicateImageIds) {
     throw createError({
       status: 400,
-      statusMessage: 'Image IDs must be unique'
+      statusText: 'Image IDs must be unique'
     })
   }
 
-  const dbWebsocket = createWebSocketClientFromEvent(event)
+  const dbWebsocket = createRuntimeWebSocketClient()
 
   try {
     return await dbWebsocket.transaction(async (transaction) => {
@@ -41,7 +49,7 @@ export default defineEventHandler(async (event) : Promise<EquipmentItemImageOrde
       if (lockedItem === undefined) {
         throw createError({
           status: 404,
-          statusMessage: 'Equipment item not found'
+          statusText: 'Equipment item not found'
         })
       }
 
@@ -65,7 +73,7 @@ export default defineEventHandler(async (event) : Promise<EquipmentItemImageOrde
       if (hasEveryImage === false) {
         throw createError({
           status: 400,
-          statusMessage: 'Image order must include every item image exactly once'
+          statusText: 'Image order must include every item image exactly once'
         })
       }
 
@@ -114,7 +122,7 @@ export default defineEventHandler(async (event) : Promise<EquipmentItemImageOrde
       }
     })
   } catch (error) {
-    if (isError(error)) {
+    if (isNuxtError(error)) {
       throw error
     }
 
@@ -125,7 +133,7 @@ export default defineEventHandler(async (event) : Promise<EquipmentItemImageOrde
 
     throw createError({
       status: 500,
-      statusMessage: 'Failed to reorder equipment images'
+      statusText: 'Failed to reorder equipment images'
     })
   } finally {
     await dbWebsocket.$client.end()

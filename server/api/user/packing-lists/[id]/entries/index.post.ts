@@ -1,13 +1,8 @@
+import type { InferInput } from 'valibot'
 import { and, eq, sql } from 'drizzle-orm'
-
-import {
-  createError,
-  defineEventHandler,
-  getValidatedRouterParams,
-  isError,
-  readValidatedBody,
-  setResponseStatus
-} from 'h3'
+import { createError, defineEventHandler, isNuxtError, readValidatedBody, setResponseStatus } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 
 import {
   brands,
@@ -18,7 +13,7 @@ import {
   userEquipment
 } from '#server/database/schema'
 
-import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { createRuntimeWebSocketClient } from '#server/utils/config'
 import { validateSessionUser } from '#server/utils/session'
 
 import {
@@ -29,13 +24,17 @@ import {
   type PackingListInventoryRow
 } from '#server/utils/packing-list-entry'
 
-import { validatePackingListEntryCreateBody, validatePackingListIdParams } from '#server/utils/validation/schemas'
+import {
+  validatePackingListEntryCreateBody,
+  validatePackingListIdParams,
+  type packingListEntryCreateBodySchema
+} from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event) : Promise<PackingListEntryMutationResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof packingListEntryCreateBodySchema>; }>) : Promise<PackingListEntryMutationResponse> => {
   const userId = await validateSessionUser(event)
-  const { id } = await getValidatedRouterParams(event, validatePackingListIdParams)
+  const { id } = await getValidatedRouteParams(event, validatePackingListIdParams)
   const { customName, inventoryId } = await readValidatedBody(event, validatePackingListEntryCreateBody)
-  const dbWebsocket = createWebSocketClientFromEvent(event)
+  const dbWebsocket = createRuntimeWebSocketClient()
 
   try {
     const response = await dbWebsocket.transaction(async (transaction) => {
@@ -142,7 +141,7 @@ export default defineEventHandler(async (event) : Promise<PackingListEntryMutati
 
     return response
   } catch (error) {
-    const isExpectedClientError = isError(error) && error.statusCode < 500
+    const isExpectedClientError = isNuxtError(error) && error.status < 500
 
     if (isExpectedClientError) {
       throw error

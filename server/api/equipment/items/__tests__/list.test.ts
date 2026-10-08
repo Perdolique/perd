@@ -1,4 +1,4 @@
-import * as h3 from 'h3'
+import * as nuxtServer from 'nuxt/server'
 import type { SQL } from 'drizzle-orm'
 import { PgDialect } from 'drizzle-orm/pg-core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -10,19 +10,18 @@ type ItemsListQuery = ReturnType<typeof validateItemsListQuery>
 
 const { getValidatedQueryMock, validateSessionUserMock } = vi.hoisted(() => {
   return {
-    getValidatedQueryMock: vi.fn<typeof h3.getValidatedQuery>(),
+    getValidatedQueryMock: vi.fn<typeof nuxtServer.getValidatedQuery>(),
     validateSessionUserMock: vi.fn<(event: unknown) => Promise<string>>()
   }
 })
 
-// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial h3 mock.
-vi.mock(import('h3'), async () => {
-  const actual = await vi.importActual<typeof h3>('h3')
+vi.mock(import('nuxt/server'), async () => {
+  const actual = await vi.importActual<typeof nuxtServer>('nuxt/server')
 
   return {
     ...actual,
 
-    async getValidatedQuery(...args: Parameters<typeof h3.getValidatedQuery>) {
+    async getValidatedQuery(...args: Parameters<typeof nuxtServer.getValidatedQuery>) {
       return getValidatedQueryMock(...args)
     }
   }
@@ -752,7 +751,7 @@ describe('get /api/equipment/items', () => {
     const db = createListDb()
     const event = createTestEvent(db.dbHttp)
 
-    getValidatedQueryMock.mockRejectedValue(h3.createError({ status: 400 }))
+    getValidatedQueryMock.mockRejectedValue(nuxtServer.createError({ status: 400 }))
     await expect(listItemsHandler(event)).rejects.toMatchObject({ statusCode: 400 })
     expect(db.selectMock).not.toHaveBeenCalled()
   })

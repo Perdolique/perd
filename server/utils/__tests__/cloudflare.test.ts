@@ -1,4 +1,4 @@
-import { H3Error } from 'h3'
+import { isNuxtError, type NuxtErrorLike } from 'nuxt/server'
 import * as v from 'valibot'
 import { describe, expect, it } from 'vitest'
 
@@ -27,7 +27,7 @@ function createEnvironmentEvent(environment: unknown) {
   return event
 }
 
-function getEnvironmentError(environment?: unknown): H3Error {
+function getEnvironmentError(environment?: unknown): NuxtErrorLike {
   const event = environment === undefined
     ? createTestEvent({})
     : createEnvironmentEvent(environment)
@@ -35,7 +35,7 @@ function getEnvironmentError(environment?: unknown): H3Error {
   try {
     getPhotoSubmissionEnvironment(event)
   } catch (error) {
-    if (error instanceof H3Error) {
+    if (isNuxtError(error)) {
       return error
     }
 
@@ -68,8 +68,8 @@ describe(getPhotoSubmissionEnvironment, () => {
   ])('should fail closed when the binding is $state', ({ environment }) => {
     const error = getEnvironmentError(environment)
 
-    expect(error.statusCode).toBe(503)
-    expect(error.statusMessage).toBe('Photo submission environment unavailable')
+    expect(error.status).toBe(503)
+    expect(error.statusText).toBe('Photo submission environment unavailable')
     expect(error.cause).toBeInstanceOf(v.ValiError)
   })
 })
@@ -218,6 +218,12 @@ describe(getTrustedClientIp, () => {
   it('should use the socket IP only during local development', () => {
     const event = createTestEvent({})
 
+    Object.defineProperty(event, 'req', {
+      get() {
+        throw new Error('Client address reads must not start the buffered request reader')
+      }
+    })
+
     Object.defineProperty(event.node.req.socket, 'remoteAddress', {
       configurable: true,
       value: '127.0.0.1'
@@ -243,6 +249,12 @@ describe(getTrustedClientIp, () => {
 
   it('should use the Nitro proxy IP only during local development', () => {
     const event = createTestEvent({})
+
+    Object.defineProperty(event, 'req', {
+      get() {
+        throw new Error('Client address reads must not start the buffered request reader')
+      }
+    })
 
     event.node.req.headers['x-forwarded-for'] = '127.0.0.1'
 

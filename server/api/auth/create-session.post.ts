@@ -1,10 +1,15 @@
-import { createError, defineEventHandler, readBody, setResponseHeader, setResponseStatus, type H3Event } from 'h3'
+import { createError, defineEventHandler, readBody, setResponseStatus, type RequestEvent } from 'nuxt/server'
+import type { ApiRequestEvent } from '#shared/types/api-request'
 import { guestSessionTurnstileAction, turnstileResponseFieldName } from '#shared/utils/turnstile'
 import { users } from '#server/database/schema'
 import { getGuestSessionRateLimiterBinding, getTrustedClientIp } from '#server/utils/cloudflare'
 import { useAppSession } from '#server/utils/session'
 import { verifyTurnstile } from '#server/utils/turnstile'
 import { getSessionUser } from '#server/utils/user'
+
+interface GuestSessionRequestBody {
+  [turnstileResponseFieldName]: string;
+}
 
 interface GuestSessionResponse {
   readonly isGuest: boolean;
@@ -26,7 +31,7 @@ function getTurnstileToken(body: unknown): unknown {
 }
 
 async function getGuestSessionRateLimitOutcome(
-  event: H3Event,
+  event: RequestEvent,
   clientIp: string
 ): Promise<RateLimitOutcome> {
   try {
@@ -39,26 +44,26 @@ async function getGuestSessionRateLimitOutcome(
     throw createError({
       cause: error,
       status: 503,
-      statusMessage: 'Guest access is temporarily unavailable'
+      statusText: 'Guest access is temporarily unavailable'
     })
   }
 }
 
-async function enforceGuestSessionRateLimit(event: H3Event, clientIp: string): Promise<void> {
+async function enforceGuestSessionRateLimit(event: RequestEvent, clientIp: string): Promise<void> {
   const outcome = await getGuestSessionRateLimitOutcome(event, clientIp)
 
   if (outcome.success === false) {
-    setResponseHeader(event, 'Retry-After', 60)
+    event.res.headers.set('Retry-After', '60')
 
     throw createError({
       status: 429,
-      statusMessage: 'Too many Guest attempts'
+      statusText: 'Too many Guest attempts'
     })
   }
 }
 
 async function createOrReuseGuestUser(
-  event: H3Event,
+  event: RequestEvent,
   guestSessionId: string
 ): Promise<GuestUserResult> {
   const { dbHttp } = event.context
@@ -105,12 +110,12 @@ async function createOrReuseGuestUser(
   }
 }
 
-export default defineEventHandler(async (event) : Promise<GuestSessionResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: GuestSessionRequestBody; }>) : Promise<GuestSessionResponse> => {
   const body: unknown = await readBody(event)
   const turnstileToken = getTurnstileToken(body)
   const clientIp = getTrustedClientIp(event, import.meta.dev)
 
-  await verifyTurnstile(event, turnstileToken, {
+  await verifyTurnstile(turnstileToken, {
     remoteIp: clientIp,
     expectedAction: guestSessionTurnstileAction
   })
@@ -130,10 +135,10 @@ export default defineEventHandler(async (event) : Promise<GuestSessionResponse> 
 
   const session = await useAppSession(event)
 
-  if (session.id === undefined || session.id === '') {
+  if (session.id === '') {
     throw createError({
       status: 503,
-      statusMessage: 'Guest access is temporarily unavailable'
+      statusText: 'Guest access is temporarily unavailable'
     })
   }
 

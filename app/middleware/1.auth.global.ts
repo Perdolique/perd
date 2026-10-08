@@ -1,8 +1,18 @@
+import { appLocations } from '~/utils/navigation'
 import { defineNuxtRouteMiddleware, navigateTo, shouldSkipAuth, useUserStore } from '#imports'
+import { useIsErrorRendering } from '~/composables/use-error-rendering'
 import { getRedirectNavigationTarget } from '~/utils/router'
 
 export default defineNuxtRouteMiddleware(async (to) => {
-  if (shouldSkipAuth(to)) {
+  const skipAuth = shouldSkipAuth(to)
+
+  if (skipAuth) {
+    return
+  }
+
+  const isErrorRendering = useIsErrorRendering(to.path)
+
+  if (isErrorRendering) {
     return
   }
 
@@ -21,7 +31,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   if (isAuthenticated.value === false && to.path !== '/login') {
     return navigateTo({
-      path: '/login',
+      name: appLocations.login.name,
       replace: true,
 
       query: {

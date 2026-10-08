@@ -1,26 +1,14 @@
-import * as h3 from 'h3'
+import type { getValidatedRouteParams } from '#server/utils/request'
+import * as nuxtServer from 'nuxt/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import categoryDetailHandler from '#server/api/equipment/categories/by-slug/[slug].get'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
 const {
-  getValidatedRouterParamsMock
+  getValidatedRouteParamsMock
 } = vi.hoisted(() => {
   return {
-    getValidatedRouterParamsMock: vi.fn<typeof h3.getValidatedRouterParams>()
-  }
-})
-
-// @ts-expect-error -- Vitest's import-based module mock typing rejects this partial h3 mock.
-vi.mock(import('h3'), async () => {
-  const actual = await vi.importActual<typeof h3>('h3')
-
-  return {
-    ...actual,
-
-    async getValidatedRouterParams(...args: Parameters<typeof h3.getValidatedRouterParams>) {
-      return getValidatedRouterParamsMock(...args)
-    }
+    getValidatedRouteParamsMock: vi.fn<typeof getValidatedRouteParams>()
   }
 })
 
@@ -99,7 +87,7 @@ describe('get /api/equipment/categories/by-slug/[slug]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
 
-    getValidatedRouterParamsMock.mockResolvedValue({
+    getValidatedRouteParamsMock.mockResolvedValue({
       slug: 'sleeping-bags'
     })
   })
@@ -212,11 +200,11 @@ describe('get /api/equipment/categories/by-slug/[slug]', () => {
   })
 
   it('should return 400 when route params validation fails', async () => {
-    const routeError = h3.createError({ status: 400 })
+    const routeError = nuxtServer.createError({ status: 400 })
     const { dbHttp } = createDetailDb()
     const event = createTestEvent(dbHttp)
 
-    getValidatedRouterParamsMock.mockRejectedValue(routeError)
+    getValidatedRouteParamsMock.mockRejectedValue(routeError)
 
     await expect(categoryDetailHandler(event)).rejects.toMatchObject({
       statusCode: 400
@@ -231,4 +219,11 @@ describe('get /api/equipment/categories/by-slug/[slug]', () => {
       statusCode: 404
     })
   })
+})
+
+// @ts-expect-error -- The test mock specializes the validator's generic result.
+vi.mock(import('#server/utils/request'), () => {
+  return {
+    getValidatedRouteParams: getValidatedRouteParamsMock
+  }
 })

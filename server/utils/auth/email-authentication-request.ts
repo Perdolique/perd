@@ -1,4 +1,5 @@
-import { createError, getRequestHeader, getRequestWebStream, isError, setResponseHeader, type H3Event } from 'h3'
+import { getRequestMetadataHeader, getRequestBodyStream } from '#server/utils/request-runtime'
+import { createError, isNuxtError, type RequestEvent } from 'nuxt/server'
 import { getAuthErrorDetails } from './telemetry'
 
 type EmailAuthenticationBodyValidator<Body> = (
@@ -13,29 +14,29 @@ interface EmailAuthenticationRateLimitOptions {
   unavailableStatusMessage: string;
 }
 
-function validateEmailAuthenticationRequest(event: H3Event, expectedOrigin: string): void {
-  const contentType = getRequestHeader(event, 'content-type')?.split(';')[0]?.trim().toLowerCase()
+function validateEmailAuthenticationRequest(event: RequestEvent, expectedOrigin: string): void {
+  const contentType = getRequestMetadataHeader(event, 'content-type')?.split(';')[0]?.trim().toLowerCase()
 
   if (contentType !== 'application/json') {
     throw createError({
       status: 415,
-      statusMessage: 'JSON is required'
+      statusText: 'JSON is required'
     })
   }
 
-  const origin = getRequestHeader(event, 'origin')
-  const fetchSite = getRequestHeader(event, 'sec-fetch-site')
+  const origin = getRequestMetadataHeader(event, 'origin')
+  const fetchSite = getRequestMetadataHeader(event, 'sec-fetch-site')
 
   if (origin !== expectedOrigin || fetchSite === 'cross-site') {
     throw createError({
       status: 403,
-      statusMessage: 'Request origin is not allowed'
+      statusText: 'Request origin is not allowed'
     })
   }
 }
 
-function getDeclaredBodyByteLength(event: H3Event): number | undefined {
-  const contentLength = getRequestHeader(event, 'content-length')
+function getDeclaredBodyByteLength(event: RequestEvent): number | undefined {
+  const contentLength = getRequestMetadataHeader(event, 'content-length')
 
   if (contentLength === undefined) {
     return
@@ -44,7 +45,7 @@ function getDeclaredBodyByteLength(event: H3Event): number | undefined {
   if (/^\d+$/u.test(contentLength) === false) {
     throw createError({
       status: 400,
-      statusMessage: 'Invalid Content-Length'
+      statusText: 'Invalid Content-Length'
     })
   }
 
@@ -58,7 +59,7 @@ async function readLimitedJsonText(
   if (stream === undefined) {
     throw createError({
       status: 400,
-      statusMessage: 'Request body is required'
+      statusText: 'Request body is required'
     })
   }
 
@@ -81,7 +82,7 @@ async function readLimitedJsonText(
       if ((result.value instanceof Uint8Array) === false) {
         throw createError({
           status: 400,
-          statusMessage: 'Request body must be binary'
+          statusText: 'Request body must be binary'
         })
       }
 
@@ -90,7 +91,7 @@ async function readLimitedJsonText(
       if (byteLength > maximumByteLength) {
         throw createError({
           status: 413,
-          statusMessage: 'Request body is too large'
+          statusText: 'Request body is too large'
         })
       }
 
@@ -103,14 +104,14 @@ async function readLimitedJsonText(
       // Cancelling a failed request body is best-effort cleanup.
     }
 
-    if (isError(error)) {
+    if (isNuxtError(error)) {
       throw error
     }
 
     throw createError({
       cause: error,
       status: 400,
-      statusMessage: 'Invalid JSON body'
+      statusText: 'Invalid JSON body'
     })
   } finally {
     reader.releaseLock()
@@ -124,7 +125,7 @@ function parseJsonBody(jsonText: string): unknown {
     throw createError({
       cause: error,
       status: 400,
-      statusMessage: 'Invalid JSON body'
+      statusText: 'Invalid JSON body'
     })
   }
 }
@@ -139,26 +140,26 @@ async function validateJsonBody<Body>(
     if (validated === false) {
       throw createError({
         status: 400,
-        statusMessage: 'Request body is invalid'
+        statusText: 'Request body is invalid'
       })
     }
 
     return validated
   } catch (error) {
-    if (isError(error)) {
+    if (isNuxtError(error)) {
       throw error
     }
 
     throw createError({
       cause: error,
       status: 400,
-      statusMessage: 'Request body is invalid'
+      statusText: 'Request body is invalid'
     })
   }
 }
 
 async function readLimitedValidatedJsonBody<Body>(
-  event: H3Event,
+  event: RequestEvent,
   maximumByteLength: number,
   validate: EmailAuthenticationBodyValidator<Body>
 ): Promise<Body> {
@@ -167,18 +168,18 @@ async function readLimitedValidatedJsonBody<Body>(
   if (declaredByteLength !== undefined && declaredByteLength > maximumByteLength) {
     throw createError({
       status: 413,
-      statusMessage: 'Request body is too large'
+      statusText: 'Request body is too large'
     })
   }
 
-  const jsonText = await readLimitedJsonText(getRequestWebStream(event), maximumByteLength)
+  const jsonText = await readLimitedJsonText(getRequestBodyStream(event), maximumByteLength)
   const value = parseJsonBody(jsonText)
 
   return validateJsonBody(value, validate)
 }
 
 async function enforceEmailAuthenticationRateLimit(
-  event: H3Event,
+  event: RequestEvent,
   options: EmailAuthenticationRateLimitOptions
 ): Promise<void> {
   const {
@@ -212,16 +213,16 @@ async function enforceEmailAuthenticationRateLimit(
     throw createError({
       cause: details,
       status: 503,
-      statusMessage: unavailableStatusMessage
+      statusText: unavailableStatusMessage
     })
   }
 
   if (isDenied) {
-    setResponseHeader(event, 'Retry-After', 60)
+    event.res.headers.set('Retry-After', '60')
 
     throw createError({
       status: 429,
-      statusMessage: deniedStatusMessage
+      statusText: deniedStatusMessage
     })
   }
 }

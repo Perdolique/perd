@@ -1,7 +1,7 @@
-import { defineEventHandler, sendNoContent } from 'h3'
+import { defineEventHandler, setResponseStatus } from 'nuxt/server'
 import { clearAppSession } from '#server/utils/session'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event): Promise<void> => {
   await clearAppSession(event)
-  sendNoContent(event)
+  setResponseStatus(event, 204)
 })

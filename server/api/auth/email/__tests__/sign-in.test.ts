@@ -1,5 +1,5 @@
 import { DrizzleQueryError } from 'drizzle-orm'
-import { createError, type H3Event, type ValidateFunction } from 'h3'
+import { createError, type RequestEvent } from 'nuxt/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type * as CloudflareModule from '#server/utils/cloudflare'
 import emailSignInHandler from '#server/api/auth/email/sign-in.post'
@@ -16,9 +16,9 @@ const {
   updateAppSessionMock
 } = vi.hoisted(() => {
   type ReadLimitedValidatedJsonBodyMock = (
-    event: H3Event,
+    event: RequestEvent,
     maximumByteLength: number,
-    validate: ValidateFunction<unknown>
+    validate: (value: unknown) => unknown
   ) => Promise<unknown>
 
   return {
@@ -206,7 +206,7 @@ describe('post /api/auth/email/sign-in', () => {
       expect.any(Function)
     )
 
-    expect(verifyTurnstile).toHaveBeenCalledWith(event, 'turnstile-token', {
+    expect(verifyTurnstile).toHaveBeenCalledWith('turnstile-token', {
       remoteIp: clientIp,
       expectedAction: 'email_sign_in'
     })
@@ -430,7 +430,7 @@ describe('post /api/auth/email/sign-in', () => {
 
     configureRateLimit()
     await expect(emailSignInHandler(event)).rejects.toMatchObject({ statusCode: 429 })
-    expect(event.node.res.getHeader('Retry-After')).toBe(60)
+    expect(event.node.res.getHeader('Retry-After')).toBe('60')
     expect(verifyTurnstile).toHaveBeenCalledTimes(turnstileCallCount)
     expect(rateLimitMock).toHaveBeenCalledWith({ key: deniedKey })
     expect(getSessionUserMock).not.toHaveBeenCalled()

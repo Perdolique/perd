@@ -1,4 +1,4 @@
-import { createError, defineEventHandler, setResponseHeader } from 'h3'
+import { createError, defineEventHandler } from 'nuxt/server'
 import { getSessionUser } from '#server/utils/user'
 import { unlinkOAuthAccount } from '#server/utils/oauth/account'
 import { getTwitchDisconnectError } from '#server/utils/oauth/twitch-state'
@@ -9,7 +9,7 @@ interface TwitchDisconnectResponse {
 }
 
 export default defineEventHandler(async (event): Promise<TwitchDisconnectResponse> => {
-  setResponseHeader(event, 'Cache-Control', 'no-store')
+  event.res.headers.set('Cache-Control', 'no-store')
 
   const sensitiveValues: string[] = []
 
@@ -19,7 +19,7 @@ export default defineEventHandler(async (event): Promise<TwitchDisconnectRespons
     if (user.userId === null) {
       throw createError({
         status: 401,
-        statusMessage: twitchOAuthMessages.disconnectSignInRequired
+        statusText: twitchOAuthMessages.disconnectSignInRequired
       })
     }
 
@@ -32,7 +32,7 @@ export default defineEventHandler(async (event): Promise<TwitchDisconnectRespons
     if (user.email === null) {
       throw createError({
         status: 409,
-        statusMessage: twitchOAuthMessages.disconnectEmailRequired
+        statusText: twitchOAuthMessages.disconnectEmailRequired
       })
     }
 

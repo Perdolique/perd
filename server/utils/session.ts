@@ -1,26 +1,27 @@
+import { getSessionEvent } from '#server/utils/request-runtime'
+
 import {
   useSession,
   getSession,
   updateSession,
   clearSession,
   createError,
-  type H3Event,
-  type EventHandlerRequest,
-  type SessionConfig
-} from 'h3'
+  type SessionConfig,
+  type RequestEvent
+} from 'nuxt/server'
 
 import { createHttpClient } from '#server/utils/database'
 import { getRuntimeDatabaseConfig, getRuntimeSessionSecret } from '#server/utils/config'
 
-declare module 'h3' {
-  interface H3EventContext {
+declare module 'nuxt/schema' {
+  interface RequestEventContext {
     validatedSessionUserId?: string;
   }
 }
 
 const sessionCookieName = 'perdSession'
 
-interface SessionData {
+interface SessionData extends Record<string, unknown> {
   userId?: string;
   sessionVersion?: number;
 }
@@ -30,8 +31,8 @@ interface SessionIdentity {
   sessionVersion?: number;
 }
 
-function getSessionConfig(event: H3Event) : SessionConfig {
-  const secret = getRuntimeSessionSecret(event)
+function getSessionConfig() : SessionConfig {
+  const secret = getRuntimeSessionSecret()
 
   return {
     password: secret,
@@ -45,31 +46,33 @@ function getSessionConfig(event: H3Event) : SessionConfig {
   }
 }
 
-async function useAppSession(event: H3Event<EventHandlerRequest>) {
-  const config = getSessionConfig(event)
+async function useAppSession(event: RequestEvent) {
+  const config = getSessionConfig()
+  const sessionEvent = getSessionEvent(event)
 
-  return useSession<SessionData>(event, config)
+  return useSession<SessionData>(sessionEvent, config)
 }
 
-async function getAppSession(event: H3Event<EventHandlerRequest>) {
-  const config = getSessionConfig(event)
+async function getAppSession(event: RequestEvent) {
+  const config = getSessionConfig()
+  const sessionEvent = getSessionEvent(event)
 
-  return getSession<SessionData>(event, config)
+  return getSession<SessionData>(sessionEvent, config)
 }
 
-function getSessionDatabase(event: H3Event<EventHandlerRequest>) {
+function getSessionDatabase(event: RequestEvent) {
   if (Reflect.has(event.context, 'dbHttp')) {
     return event.context.dbHttp
   }
 
-  const database = createHttpClient(getRuntimeDatabaseConfig(event))
+  const database = createHttpClient(getRuntimeDatabaseConfig())
 
   event.context.dbHttp = database
 
   return database
 }
 
-async function updateAppSession(event: H3Event<EventHandlerRequest>, data: SessionIdentity) {
+async function updateAppSession(event: RequestEvent, data: SessionIdentity) {
   const { userId } = data
   let { sessionVersion } = data
 
@@ -89,7 +92,7 @@ async function updateAppSession(event: H3Event<EventHandlerRequest>, data: Sessi
     if (user === undefined) {
       throw createError({
         status: 503,
-        statusMessage: 'Session is temporarily unavailable'
+        statusText: 'Session is temporarily unavailable'
       })
     }
 
@@ -98,21 +101,23 @@ async function updateAppSession(event: H3Event<EventHandlerRequest>, data: Sessi
     sessionVersion = currentSessionVersion
   }
 
-  const config = getSessionConfig(event)
+  const config = getSessionConfig()
+  const sessionEvent = getSessionEvent(event)
 
-  return updateSession(event, config, {
+  return updateSession(sessionEvent, config, {
     userId,
     sessionVersion
   } satisfies SessionIdentity)
 }
 
-async function clearAppSession(event: H3Event<EventHandlerRequest>) {
-  const config = getSessionConfig(event)
+async function clearAppSession(event: RequestEvent) {
+  const config = getSessionConfig()
+  const sessionEvent = getSessionEvent(event)
 
-  return clearSession(event, config)
+  return clearSession(sessionEvent, config)
 }
 
-async function validateSessionUser(event: H3Event<EventHandlerRequest>) {
+async function validateSessionUser(event: RequestEvent) {
   if (event.context.validatedSessionUserId !== undefined) {
     return event.context.validatedSessionUserId
   }

@@ -1,15 +1,16 @@
 import { eq } from 'drizzle-orm'
-import { createError, defineEventHandler, getValidatedRouterParams, isError, setResponseStatus } from 'h3'
+import { createError, defineEventHandler, isNuxtError, setResponseStatus } from 'nuxt/server'
+import { getValidatedRouteParams } from '#server/utils/request'
 import { contributions, equipmentGroups } from '#server/database/schema'
 import { validateAdminUser } from '#server/utils/admin'
-import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { createRuntimeWebSocketClient } from '#server/utils/config'
 import { groupBaseSelection } from '#server/utils/equipment/base-records'
 import { validateGroupIdParams } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event): Promise<void> => {
   const userId = await validateAdminUser(event)
-  const { id: groupId } = await getValidatedRouterParams(event, validateGroupIdParams)
-  const dbWebsocket = createWebSocketClientFromEvent(event)
+  const { id: groupId } = await getValidatedRouteParams(event, validateGroupIdParams)
+  const dbWebsocket = createRuntimeWebSocketClient()
 
   try {
     await dbWebsocket.transaction(async (transaction) => {
@@ -38,7 +39,7 @@ export default defineEventHandler(async (event) => {
         })
     })
   } catch (error) {
-    if (isError(error)) {
+    if (isNuxtError(error)) {
       throw error
     }
 

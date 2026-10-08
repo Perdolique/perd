@@ -320,9 +320,9 @@ describe(getGearLibraryItemsApiQuery, () => {
       categorySlug: 'stoves',
       direction: 'desc',
       enumFilter: ['fuel:gas'],
-      limit: 10,
+      limit: '10',
       numberFilter: ['weight:1:2'],
-      page: 3,
+      page: '3',
       search: 'pocket rocket',
       sort: 'property:weight'
     })
@@ -339,9 +339,9 @@ describe(getGearLibraryItemsApiQuery, () => {
       categorySlug: undefined,
       direction: 'asc',
       enumFilter: [],
-      limit: 10,
+      limit: '10',
       numberFilter: [],
-      page: 1,
+      page: '1',
       search: '',
       sort: 'name'
     })

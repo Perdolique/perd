@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm'
-import { createError, isError, type H3Event } from 'h3'
+import { createError, isNuxtError, type RequestEvent } from 'nuxt/server'
 import { contributions, equipmentItemPhotoSubmissions, equipmentItems } from '#server/database/schema'
-import { createWebSocketClientFromEvent } from '#server/utils/config'
+import { createRuntimeWebSocketClient } from '#server/utils/config'
 import { deleteUnattachedHostedEquipmentImage } from '#server/utils/equipment/item-images'
 
 import {
@@ -20,7 +20,7 @@ interface PhotoSubmissionTransactionResult {
 interface PersistUploadedPhotoSubmissionOptions {
   binding: Env['IMAGES'];
   cloudflareImageId: string;
-  event: H3Event;
+  event: RequestEvent;
   filename: string;
   idempotencyKey: string;
   itemId: string;
@@ -30,7 +30,7 @@ interface PersistUploadedPhotoSubmissionOptions {
 }
 
 async function findPersistedPhotoSubmission(
-  event: H3Event,
+  event: RequestEvent,
   userId: string,
   idempotencyKey: string
 ): Promise<PersistedPhotoSubmission | null> {
@@ -52,7 +52,7 @@ async function findPersistedPhotoSubmission(
 }
 
 async function closePhotoSubmissionDatabase(
-  database: ReturnType<typeof createWebSocketClientFromEvent> | null,
+  database: ReturnType<typeof createRuntimeWebSocketClient> | null,
   itemId: string
 ): Promise<void> {
   if (database === null) {
@@ -74,7 +74,7 @@ function throwPhotoSubmissionPersistenceError(
   cloudflareImageId: string,
   itemId: string
 ): never {
-  if (isError(error)) {
+  if (isNuxtError(error)) {
     throw error
   }
 
@@ -86,12 +86,12 @@ function throwPhotoSubmissionPersistenceError(
 
   throw createError({
     status: 500,
-    statusMessage: 'Failed to save photo submission'
+    statusText: 'Failed to save photo submission'
   })
 }
 
 async function findReconciledPhotoSubmission(options: {
-  event: H3Event;
+  event: RequestEvent;
   idempotencyKey: string;
   userId: string;
 }): Promise<{
@@ -137,7 +137,7 @@ async function reconcilePhotoSubmissionFailure(
 
     throw createError({
       status: 500,
-      statusMessage: 'Failed to save photo submission'
+      statusText: 'Failed to save photo submission'
     })
   }
 
@@ -165,7 +165,7 @@ async function reconcilePhotoSubmissionFailure(
 }
 
 async function executePhotoSubmissionTransaction(
-  database: ReturnType<typeof createWebSocketClientFromEvent>,
+  database: ReturnType<typeof createRuntimeWebSocketClient>,
   options: PersistUploadedPhotoSubmissionOptions
 ): Promise<PhotoSubmissionTransactionResult> {
   const { cloudflareImageId, filename, idempotencyKey, itemId, sourceType, sourceUrl, userId } = options
@@ -180,7 +180,7 @@ async function executePhotoSubmissionTransaction(
     if (lockedItem === undefined) {
       throw createError({
         status: 404,
-        statusMessage: 'Equipment item not found'
+        statusText: 'Equipment item not found'
       })
     }
 
@@ -273,13 +273,13 @@ async function executePhotoSubmissionTransaction(
 async function persistUploadedPhotoSubmission(
   options: PersistUploadedPhotoSubmissionOptions
 ): Promise<PersistedPhotoSubmission> {
-  const { binding, cloudflareImageId, event, itemId } = options
-  let database: ReturnType<typeof createWebSocketClientFromEvent> | null = null
+  const { binding, cloudflareImageId, itemId } = options
+  let database: ReturnType<typeof createRuntimeWebSocketClient> | null = null
   let transactionError: unknown = null
   let transactionResult: PhotoSubmissionTransactionResult | null = null
 
   try {
-    database = createWebSocketClientFromEvent(event)
+    database = createRuntimeWebSocketClient()
     transactionResult = await executePhotoSubmissionTransaction(database, options)
   } catch (error) {
     transactionError = error

@@ -1,15 +1,22 @@
 import { defineNuxtRouteMiddleware, shouldSkipAuth, useUserStore } from '#imports'
+import { useIsErrorRendering } from '~/composables/use-error-rendering'
 
 export default defineNuxtRouteMiddleware(async (to) => {
-  if (shouldSkipAuth(to)) {
+  const skipAuth = shouldSkipAuth(to)
+
+  if (skipAuth) {
     return
   }
 
-  if (import.meta.server) {
-    const { getUser, user } = useUserStore()
+  const isErrorRendering = useIsErrorRendering(to.path)
 
-    if (user.value.hasData === false) {
-      await getUser()
-    }
+  if (isErrorRendering) {
+    return
+  }
+
+  const { getUser, user } = useUserStore()
+
+  if (user.value.hasData === false) {
+    await getUser()
   }
 })
