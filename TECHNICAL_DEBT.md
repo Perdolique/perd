@@ -1,5 +1,11 @@
 # Technical debt
 
+## vue-tsc 3.3.12 URL code generation regression
+
+Keep `vue-tsc` at 3.3.11 until [upstream issue #6240](https://github.com/vuejs/language-tools/issues/6240) is fixed. Version 3.3.12 treats `//` inside inline URL strings as a line comment when it generates single-line component props. The `https://example.com/product` placeholder in `app/components/equipment/EquipmentItemEditor.vue` triggers this bug. The generated TypeScript becomes invalid and reports `TS2304` for existing template bindings and `TS6133` for their declarations. The same project passes with 3.3.11.
+
+This hold also delays the 3.3.12 security fix for inline compiler plugins. After upstream publishes a fixed release, update `vue-tsc` without changing the placeholder and run `vp run test:typecheck`. Remove this entry after that check passes.
+
 ## Nuxt DevTools 4 opt-in
 
 Nuxt 4.6 bundles Nuxt DevTools 3. The `@nuxt/devtools` override in `pnpm-workspace.yaml` uses the exact root dependency version so Nuxt and its modules use DevTools 4 together. The existing `devtools.enabled` setting stays enabled. Browser authorization stays enabled too.
