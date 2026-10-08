@@ -116,9 +116,10 @@ function useGearLibraryItemsData(options: UseGearLibraryItemsDataOptions) {
 
   function getAdditionalPageQuery(page: number): GearLibraryItemsApiQuery {
     const baseQuery = options.itemsApiQuery.value
+    const queryPage = String(page)
 
     return {
-      page: String(page),
+      page: queryPage,
       booleanFilter: baseQuery.booleanFilter,
       brandSlug: baseQuery.brandSlug,
       categorySlug: baseQuery.categorySlug,

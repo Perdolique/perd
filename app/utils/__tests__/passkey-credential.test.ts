@@ -33,7 +33,9 @@ const authentication: AuthenticationResponseJSON = {
 
 describe('native passkey credentials', () => {
   it('keeps registration fields required by the API', () => {
-    expect(getPasskeyRegistrationCredential(registration)).toStrictEqual({
+    const credential = getPasskeyRegistrationCredential(registration)
+
+    expect(credential).toStrictEqual({
       id: 'credential-id',
       rawId: 'credential-id',
       type: 'public-key',
@@ -49,7 +51,9 @@ describe('native passkey credentials', () => {
   })
 
   it('keeps the discoverable user handle when signing in', () => {
-    expect(getPasskeyAuthenticationCredential(authentication)).toStrictEqual({
+    const credential = getPasskeyAuthenticationCredential(authentication)
+
+    expect(credential).toStrictEqual({
       ...authentication,
       authenticatorAttachment: undefined
     })

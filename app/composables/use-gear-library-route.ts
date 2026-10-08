@@ -1,7 +1,7 @@
-import { appLocations } from '~/utils/navigation'
 import { computed, ref, shallowRef, watch } from 'vue'
 import { watchDebounced } from '@vueuse/core'
 import { navigateTo, useRoute } from '#imports'
+import { appLocations } from '~/utils/navigation'
 import type { GearLibraryAppliedFilters } from '~/utils/gear-library-filters'
 
 import {

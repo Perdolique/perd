@@ -468,8 +468,10 @@
     hasPhotoLoadMoreError.value = false
 
     try {
+      const queryPage = String(page)
+
       const response = await requestFetch('/api/user/photo-submissions', {
-        query: { page: String(page) },
+        query: { page: queryPage },
         retry: 0
       })
 

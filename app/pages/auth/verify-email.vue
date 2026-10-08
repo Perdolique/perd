@@ -23,7 +23,6 @@
 </template>
 
 <script lang="ts" setup>
-  import { appLocations } from '~/utils/navigation'
   import { computed, onMounted, ref, useTemplateRef } from 'vue'
 
   import {
@@ -38,6 +37,7 @@
 
   import { isEmailAuthenticationPasswordValid } from '#shared/utils/email-authentication'
   import { isEmailRegistrationEnabled } from '#shared/utils/email-registration'
+  import { appLocations } from '~/utils/navigation'
   import { getRedirectNavigationTarget } from '~/utils/router'
   import { getEmailRegistrationError } from '~/utils/email-registration'
   import AuthFormPanel from '~/components/auth/AuthFormPanel.vue'

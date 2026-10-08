@@ -196,15 +196,18 @@ function getGearLibraryItemsApiQuery(
   routeState: GearLibraryRouteState,
   page: number
 ): GearLibraryItemsApiQuery {
+  const queryLimit = String(gearLibraryPageSize)
+  const queryPage = String(page)
+
   return {
     booleanFilter: routeState.boolean,
     brandSlug: routeState.brand,
     categorySlug: routeState.category,
     direction: routeState.direction,
     enumFilter: routeState.enum,
-    limit: String(gearLibraryPageSize),
+    limit: queryLimit,
     numberFilter: routeState.number,
-    page: String(page),
+    page: queryPage,
     search: routeState.q,
     sort: routeState.sort
   }

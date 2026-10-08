@@ -1,8 +1,8 @@
-import { getPasskeyAuthenticationCredential } from '~/utils/passkey-credential'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRequestFetch } from '#imports'
 import type { SessionUser } from '#server/utils/user'
 import { passkeyMessages } from '#shared/utils/passkey'
+import { getPasskeyAuthenticationCredential } from '~/utils/passkey-credential'
 import { getPasskeyErrorMessage, getPasskeyRequestStatus, isPasskeyCancellation } from '~/utils/passkey'
 
 interface PasskeySignInOptions {

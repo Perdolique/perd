@@ -115,7 +115,6 @@
 </template>
 
 <script lang="ts" setup>
-  import { appLocations } from '~/utils/navigation'
   import { computed, nextTick, ref, useTemplateRef } from 'vue'
 
   import {
@@ -137,6 +136,7 @@
     turnstileResponseFieldName
   } from '#shared/utils/turnstile'
 
+  import { appLocations } from '~/utils/navigation'
   import { getRedirectNavigationTarget } from '~/utils/router'
   import { usePasskeySignIn } from '~/composables/use-passkey-sign-in'
   import AuthFormPanel from '~/components/auth/AuthFormPanel.vue'

@@ -48,7 +48,6 @@
 </template>
 
 <script lang="ts" setup>
-  import { appLocations } from '~/utils/navigation'
   import { FetchError } from 'ofetch'
   import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue'
 
@@ -71,6 +70,7 @@
   import PerdButton from '~/components/PerdButton.vue'
   import PerdLink from '~/components/PerdLink.vue'
   import TextInput from '~/components/TextInput.vue'
+  import { appLocations } from '~/utils/navigation'
   import { getEmailRegistrationError } from '~/utils/email-registration'
 
   definePageMeta({

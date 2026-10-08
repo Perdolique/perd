@@ -34,10 +34,10 @@
 
 <script lang="ts" setup>
   import type { RouteLocationAsRelative } from 'vue-router'
-  import { appLocations } from '~/utils/navigation'
   import { computed, onMounted, ref } from 'vue'
   import { definePageMeta, navigateTo, useHead, useRequestFetch, useRoute, useRouter, useUserStore } from '#imports'
   import { twitchOAuthMessages } from '#shared/utils/twitch-oauth'
+  import { appLocations } from '~/utils/navigation'
   import { getTwitchCallbackBody, getTwitchCallbackError } from '~/utils/twitch-oauth'
   import { getRedirectNavigationTarget } from '~/utils/router'
   import FidgetSpinner from '~/components/FidgetSpinner.vue'

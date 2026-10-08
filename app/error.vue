@@ -9,7 +9,7 @@
 <script lang="ts" setup>
   import { computed } from 'vue'
   import type { NuxtError } from '#app'
-  import { clearError, useHead, useRouter } from '#imports'
+  import { clearError, useHead, useNuxtApp, useRouter } from '#imports'
   import { appLocations } from '~/utils/navigation'
   import PerdButton from '~/components/PerdButton.vue'
   import PerdHeading from '~/components/PerdHeading.vue'
@@ -20,6 +20,7 @@
 
   const { error } = defineProps<Props>()
   const router = useRouter()
+  const nuxtApp = useNuxtApp()
   const statusCode = computed(() => error.statusCode)
 
   const message = computed(() => statusCode.value === 404
@@ -31,7 +32,22 @@
   async function returnHome() {
     const { fullPath } = router.resolve(appLocations.home)
 
-    await clearError({ redirect: fullPath })
+    const removeHook = nuxtApp.hook('page:finish', () => {
+      removeHook()
+
+      const heading = globalThis.document.querySelector('h1')
+
+      heading?.setAttribute('tabindex', '-1')
+      heading?.focus()
+    })
+
+    try {
+      await clearError({ redirect: fullPath })
+    } catch (navigationError) {
+      removeHook()
+
+      throw navigationError
+    }
   }
 </script>
 

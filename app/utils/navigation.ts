@@ -1,18 +1,8 @@
 import type { LocationQueryRaw, RouteLocationAsRelative } from 'vue-router'
 
 const appRoutes = {
-  account: '/account',
-  accountSubmissions: '/account/submissions',
-  admin: '/admin',
-  adminEquipmentBrands: '/admin/equipment/brands',
-  adminEquipmentCategories: '/admin/equipment/categories',
-  adminEquipmentPhotoSubmissions: '/admin/equipment/photo-submissions',
-  adminEquipmentSubmissions: '/admin/equipment/submissions',
   gearLibrary: '/gear-library',
-  gearLibraryNew: '/gear-library/new',
-  home: '/',
-  myGear: '/my-gear',
-  packingLists: '/packing-lists'
+  gearLibraryNew: '/gear-library/new'
 } as const
 
 const appLocations = {

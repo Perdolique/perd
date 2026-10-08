@@ -4,7 +4,15 @@ import { useIsErrorRendering } from '~/composables/use-error-rendering'
 import { getRedirectNavigationTarget } from '~/utils/router'
 
 export default defineNuxtRouteMiddleware(async (to) => {
-  if (shouldSkipAuth(to) || useIsErrorRendering(to.path)) {
+  const skipAuth = shouldSkipAuth(to)
+
+  if (skipAuth) {
+    return
+  }
+
+  const isErrorRendering = useIsErrorRendering(to.path)
+
+  if (isErrorRendering) {
     return
   }
 

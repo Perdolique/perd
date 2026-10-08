@@ -1,4 +1,7 @@
+import * as v from 'valibot'
 import { test, expect } from '../fixtures/global.fixtures'
+
+const errorResponseSchema = v.object({ statusCode: v.number() })
 
 function isPageHydrated(): boolean {
   let value: unknown = globalThis.document.querySelector('#__nuxt')
@@ -21,18 +24,67 @@ test.describe('early page 404 responses', () => {
     })
 
     const response = await page.goto('/missing-page-for-routing-test')
+    const status = response?.status()
 
-    expect(response?.status()).toBe(404)
+    expect(status).toBe(404)
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('404')
     await expect(page).toHaveURL(/\/missing-page-for-routing-test$/u)
     await page.waitForFunction(isPageHydrated)
-    await page.getByRole('button', { name: 'Go back home' }).click()
+
+    const returnHomeButton = page.getByRole('button', { name: 'Go back home' })
+
+    await returnHomeButton.focus()
+    await returnHomeButton.press('Enter')
     await expect(page).toHaveURL(/\/login\?redirectTo=\/$/u)
+
+    await expect(page.getByRole('heading', {
+      level: 1,
+      name: 'Sign in'
+    })).toBeFocused()
 
     await expect(page.getByRole('button', {
       name: 'Sign in',
       exact: true
     })).toBeVisible()
+  })
+
+  test('restores the signed-in user before returning home from an early 404', async ({ context, page }) => {
+    let userRequests = 0
+
+    await context.route('**/api/user', async (route) => {
+      userRequests += 1
+
+      await route.fulfill({ json: {
+        userId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
+        email: 'routing-test@example.com',
+        isAdmin: false,
+        isGuest: false,
+        isTwitchLinked: false
+      } })
+    })
+
+    await page.goto('/missing-page-for-routing-test')
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('404')
+    await page.waitForFunction(isPageHydrated)
+    expect(userRequests).toBe(0)
+
+    const returnHomeButton = page.getByRole('button', { name: 'Go back home' })
+
+    await returnHomeButton.focus()
+    await returnHomeButton.press('Enter')
+    await expect(page).toHaveURL('/')
+
+    await expect(page.getByRole('heading', {
+      level: 1,
+      name: 'Home'
+    })).toBeVisible()
+
+    expect(userRequests).toBe(1)
+
+    await expect(page.getByRole('heading', {
+      level: 1,
+      name: 'Home'
+    })).toBeFocused()
   })
 
   test('returns HTML 404 for a missing page before guest authentication', async ({ request }) => {
@@ -41,9 +93,12 @@ test.describe('early page 404 responses', () => {
       maxRedirects: 0
     })
 
-    expect(response.status()).toBe(404)
-    expect(response.headers()['content-type']).toContain('text/html')
-    expect(response.headers().location).toBeUndefined()
+    const status = response.status()
+    const headers = response.headers()
+
+    expect(status).toBe(404)
+    expect(headers['content-type']).toContain('text/html')
+    expect(headers.location).toBeUndefined()
 
     const html = await response.text()
 
@@ -57,10 +112,15 @@ test.describe('early page 404 responses', () => {
       maxRedirects: 0
     })
 
-    expect(response.status()).toBe(404)
-    expect(response.headers()['content-type']).toContain('application/json')
-    expect(response.headers().location).toBeUndefined()
-    expect(await response.json()).toMatchObject({ statusCode: 404 })
+    const status = response.status()
+    const headers = response.headers()
+    const rawBody: unknown = await response.json()
+    const body = v.parse(errorResponseSchema, rawBody)
+
+    expect(status).toBe(404)
+    expect(headers['content-type']).toContain('application/json')
+    expect(headers.location).toBeUndefined()
+    expect(body.statusCode).toBe(404)
   })
 
   test('preserves the login redirect and query for an existing protected page', async ({ request }) => {
@@ -69,8 +129,11 @@ test.describe('early page 404 responses', () => {
       maxRedirects: 0
     })
 
-    expect(response.status()).toBe(302)
-    expect(response.headers().location).toBe('/login?redirectTo=/gear-library?search=tent')
+    const status = response.status()
+    const headers = response.headers()
+
+    expect(status).toBe(302)
+    expect(headers.location).toBe('/login?redirectTo=/gear-library?search=tent')
   })
 
   test('preserves protected API document redirects and programmatic 401 responses', async ({ request }) => {
@@ -83,16 +146,24 @@ test.describe('early page 404 responses', () => {
       maxRedirects: 0
     })
 
-    expect(document.status()).toBe(302)
-    expect(document.headers().location).toBe('/login?redirectTo=%2Fapi%2Fequipment%2Fbrands%3Fsearch%3Dtent')
+    const documentStatus = document.status()
+    const documentHeaders = document.headers()
+
+    expect(documentStatus).toBe(302)
+    expect(documentHeaders.location).toBe('/login?redirectTo=%2Fapi%2Fequipment%2Fbrands%3Fsearch%3Dtent')
 
     const programmatic = await request.get('/api/equipment/brands?search=tent', {
       headers: { accept: 'application/json' },
       maxRedirects: 0
     })
 
-    expect(programmatic.status()).toBe(401)
-    expect(programmatic.headers().location).toBeUndefined()
-    expect(await programmatic.json()).toMatchObject({ statusCode: 401 })
+    const programmaticStatus = programmatic.status()
+    const programmaticHeaders = programmatic.headers()
+    const rawBody: unknown = await programmatic.json()
+    const body = v.parse(errorResponseSchema, rawBody)
+
+    expect(programmaticStatus).toBe(401)
+    expect(programmaticHeaders.location).toBeUndefined()
+    expect(body.statusCode).toBe(401)
   })
 })

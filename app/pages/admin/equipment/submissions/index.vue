@@ -84,6 +84,7 @@
   })
 
   const pageSize = 20
+  const queryLimit = String(pageSize)
   const requestFetch = useRequestFetch()
   const paginationStatus = useTemplateRef('paginationStatus')
   const currentPage = ref(1)
@@ -99,7 +100,7 @@
     status: initialStatus
   } = await useFetch('/api/equipment/item-submissions', {
     query: {
-      limit: String(pageSize),
+      limit: queryLimit,
       page: '1'
     }
   })
@@ -159,10 +160,12 @@
     hasLoadMoreError.value = false
 
     try {
+      const queryPage = String(nextPage)
+
       const response = await requestFetch('/api/equipment/item-submissions', {
         query: {
-          limit: String(pageSize),
-          page: String(nextPage)
+          limit: queryLimit,
+          page: queryPage
         }
       })
 

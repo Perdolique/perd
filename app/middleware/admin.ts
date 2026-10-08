@@ -3,7 +3,9 @@ import { defineNuxtRouteMiddleware, navigateTo, useUserStore } from '#imports'
 import { useIsErrorRendering } from '~/composables/use-error-rendering'
 
 export default defineNuxtRouteMiddleware(async (to) => {
-  if (useIsErrorRendering(to.path)) {
+  const isErrorRendering = useIsErrorRendering(to.path)
+
+  if (isErrorRendering) {
     return
   }
 

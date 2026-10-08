@@ -6,21 +6,25 @@ import { getTwitchCallbackBody, getTwitchCallbackError, getTwitchDisconnectError
 
 describe(getTwitchCallbackBody, () => {
   it('keeps a successful callback without unrelated URL parameters', () => {
-    expect(getTwitchCallbackBody({
+    const body = getTwitchCallbackBody({
       code: 'oauth-code',
       state: 'opaque-state',
       redirectTo: '/admin'
-    })).toStrictEqual({
+    })
+
+    expect(body).toStrictEqual({
       code: 'oauth-code',
       state: 'opaque-state'
     })
   })
 
   it('keeps a cancellation for server verification', () => {
-    expect(getTwitchCallbackBody({
+    const body = getTwitchCallbackBody({
       error: 'access_denied',
       state: 'opaque-state'
-    })).toStrictEqual({
+    })
+
+    expect(body).toStrictEqual({
       error: 'access_denied',
       state: 'opaque-state'
     })
@@ -68,7 +72,9 @@ describe(getTwitchCallbackBody, () => {
       statusMessage: twitchOAuthMessages.invalid
     })
 
-    expect(getTwitchCallbackError(error)).toBe(twitchOAuthMessages.invalid)
+    const message = getTwitchCallbackError(error)
+
+    expect(message).toBe(twitchOAuthMessages.invalid)
   })
 })
 

@@ -37,7 +37,7 @@
         icon="hugeicons:mail-01"
         title="Add email"
         subtitle="Keep access to your account with a verified email and password."
-        :to="{ name: appLocations.register.name, query: { redirectTo: '/account' } }"
+        :to="registrationLocation"
       />
 
       <AccountPasskeys />
@@ -108,6 +108,11 @@
   definePageMeta({
     layout: 'page'
   })
+
+  const registrationLocation = {
+    name: appLocations.register.name,
+    query: { redirectTo: '/account' }
+  }
 
   const { user, resetAuthentication } = useUserStore()
   const gearLibraryStore = useGearLibraryStore()

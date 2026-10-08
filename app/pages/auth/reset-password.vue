@@ -79,11 +79,11 @@
 </template>
 
 <script lang="ts" setup>
-  import { appLocations } from '~/utils/navigation'
   import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue'
   import { definePageMeta, useHead, useRequestFetch, useRoute, useRouter, useRuntimeConfig } from '#imports'
   import { isEmailAuthenticationPasswordValid } from '#shared/utils/email-authentication'
   import { passwordRecoveryResetTurnstileAction, turnstileResponseFieldName } from '#shared/utils/turnstile'
+  import { appLocations } from '~/utils/navigation'
   import { getPasswordRecoveryResetError } from '~/utils/password-recovery'
   import { getRedirectNavigationTarget } from '~/utils/router'
   import AuthFormPanel from '~/components/auth/AuthFormPanel.vue'

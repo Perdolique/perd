@@ -187,12 +187,15 @@
     deleteError.value = null
 
     try {
+      const expectedPropertiesRevision = String(deleteRevision.value)
+      const expectedAffectedItemCount = String(property.usedItemCount)
+
       const result = await requestFetch(`${path}/${property.id}`, {
         method: 'DELETE',
 
         query: {
-          expectedPropertiesRevision: String(deleteRevision.value),
-          expectedAffectedItemCount: String(property.usedItemCount)
+          expectedPropertiesRevision,
+          expectedAffectedItemCount
         }
       })
 

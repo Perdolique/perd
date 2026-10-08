@@ -92,6 +92,7 @@
   })
 
   const pageSize = 20
+  const queryLimit = String(pageSize)
   const requestFetch = useRequestFetch()
   const paginationStatus = useTemplateRef('paginationStatus')
   const paginationCursor = ref<PhotoSubmissionListCursor | null>(null)
@@ -109,7 +110,7 @@
     lazy: true,
 
     query: {
-      limit: String(pageSize)
+      limit: queryLimit
     }
   })
 
@@ -178,7 +179,7 @@
         query: {
           afterCreatedAt: cursor.createdAt,
           afterId: cursor.id,
-          limit: String(pageSize)
+          limit: queryLimit
         }
       })
 
