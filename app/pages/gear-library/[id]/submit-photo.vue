@@ -257,7 +257,7 @@
 
   definePageMeta({ layout: 'page' })
 
-  const route = useRoute()
+  const route = useRoute('gear-library-id-submit-photo')
   const runtimeConfig = useRuntimeConfig()
   const registrationEnabled = isEmailRegistrationEnabled(runtimeConfig.public.emailRegistrationEnabled)
 
@@ -265,10 +265,7 @@
     ? 'Add email access or connect Twitch in Account to continue.'
     : 'Connect Twitch in Account to continue.'
 
-  const itemId = Array.isArray(route.params.id)
-    ? route.params.id[0] ?? ''
-    : route.params.id ?? ''
-
+  const itemId = route.params.id
   const itemPath = createGearLibraryItemPath(itemId)
 
   const catalogQuery = computed(() => {

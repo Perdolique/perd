@@ -117,12 +117,11 @@
     middleware: 'admin'
   })
 
-  const route = useRoute()
+  const route = useRoute('admin-equipment-submissions-id')
   const requestFetch = useRequestFetch()
   const decisionStatusElement = useTemplateRef('decisionStatusElement')
   const saveStatus = useTemplateRef('saveStatus')
-  const routeId = route.params.id
-  const submissionId = Array.isArray(routeId) ? routeId[0] ?? '' : routeId ?? ''
+  const submissionId = route.params.id
   const detailPath = `/api/equipment/item-submissions/${submissionId}` as const
   const isSubmitting = ref(false)
   const isConflict = ref(false)

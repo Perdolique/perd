@@ -1,12 +1,12 @@
 # Technical debt
 
-## Nuxt 4.5 compatibility workarounds
+## Nuxt 4.6 compatibility workarounds
 
-### Nitro auto-imports
+### Nitro declaration resolution
 
-`experimental.nitroAutoImports` remains enabled because `@nuxt/icon` and other modules still rely on Nitro auto-imports. The underlying Nuxt migration is tracked in [nuxt/nuxt#34142](https://github.com/nuxt/nuxt/issues/34142).
+Nitro 2.13.4 re-exports extensionless paths from its declaration barrels. Nuxt 4.6 uses NodeNext resolution for its Node context, so the declarations fail to load and Nitro configuration types lose fields such as `errorHandler`, `moduleSideEffects`, and `cloudflare`. `typescript.nodeTsConfig` uses `module: 'preserve'` and `moduleResolution: 'bundler'` to resolve these declarations without a package patch.
 
-Remove the option after the installed modules stop relying on Nitro auto-imports, then run `vp run dev` and `vp run build` to verify server runtime imports.
+Remove the Node context override after the installed Nitro declarations use explicit extensions. Run `vp run test:typecheck` and focused lint for `nuxt.config.ts` before removing it.
 
 ### Nitro Cloudflare Node compatibility detection
 

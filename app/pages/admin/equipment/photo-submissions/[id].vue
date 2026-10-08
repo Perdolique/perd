@@ -213,12 +213,11 @@
     middleware: 'admin'
   })
 
-  const route = useRoute()
+  const route = useRoute('admin-equipment-photo-submissions-id')
   const requestFetch = useRequestFetch()
   const conflictStatus = useTemplateRef('conflictStatus')
   const decisionStatusElement = useTemplateRef('decisionStatusElement')
-  const routeId = route.params.id
-  const submissionId = Array.isArray(routeId) ? routeId[0] ?? '' : routeId ?? ''
+  const submissionId = route.params.id
   const detailPath = `/api/equipment/photo-submissions/${submissionId}` as const
   const maxRejectionReasonLength = limits.maxEquipmentItemRejectionReasonLength
   const previewAttempt = ref(0)

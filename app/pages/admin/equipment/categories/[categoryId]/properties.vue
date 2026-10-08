@@ -58,7 +58,7 @@
     middleware: 'admin'
   })
 
-  const route = useRoute()
+  const route = useRoute('admin-equipment-categories-categoryId-properties')
   const categoryId = Number(route.params.categoryId)
   const path = `/api/equipment/categories/${categoryId}/properties` as const
   const requestFetch = useRequestFetch()

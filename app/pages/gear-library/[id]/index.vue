@@ -168,18 +168,14 @@
 
   definePageMeta({ layout: 'page' })
 
-  const route = useRoute()
+  const route = useRoute('gear-library-id')
   const { user } = useUserStore()
   const gearLibraryStore = useGearLibraryStore()
   const myGear = useGearLibraryMyGear()
   const itemHeading = useTemplateRef('itemHeading')
   const specificationsHeadingId = useId()
   const isRetryingItem = ref(false)
-
-  const itemId = Array.isArray(route.params.id)
-    ? route.params.id[0] ?? ''
-    : route.params.id ?? ''
-
+  const itemId = route.params.id
   const showSavedNotice = ref(gearLibraryStore.takeItemEditNotice(itemId))
   const photoSubmissionPath = createGearLibraryPhotoSubmissionPath(itemId)
   const imagesManagementPath = `/admin/equipment/items/${itemId}/images`

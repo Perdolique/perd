@@ -104,7 +104,7 @@
     layout: 'page'
   })
 
-  const route = useRoute()
+  const route = useRoute('packing-lists-id')
   const nuxtApp = useNuxtApp()
   const router = useRouter()
   const packingListsStore = usePackingListsStore()
@@ -114,10 +114,7 @@
   const lastPackingEntryId = ref<string | null>(null)
   const packErrorEntryIds = reactive(new Set<string>())
   let copyRefreshController: AbortController | null = null
-
-  const packingListId = Array.isArray(route.params.id)
-    ? route.params.id[0] ?? ''
-    : route.params.id ?? ''
+  const packingListId = route.params.id
 
   function createDefaultPackingList(): PackingListDetail {
     return {

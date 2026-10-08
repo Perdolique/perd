@@ -125,14 +125,7 @@ export default defineNuxtConfig({
 
   experimental: {
     viewTransition: true,
-
-    /**
-     * FIXME: Disable once @nuxt/icon and other modules
-     * stop relying on Nitro auto-imports
-     *
-     * https://github.com/nuxt/nuxt/issues/34142
-     */
-    nitroAutoImports: true
+    strictRouteTypes: true
   },
 
   future: {
@@ -141,24 +134,20 @@ export default defineNuxtConfig({
 
   typescript: {
     tsConfig: {
-      files: [
-        '../server/types/worker-configuration.d.ts'
-      ],
-
-      compilerOptions: {
-        ...projectTypeScriptCompilerOptions
-      }
+      compilerOptions: projectTypeScriptCompilerOptions
     },
 
-    sharedTsConfig: {
-      compilerOptions: {
-        ...projectTypeScriptCompilerOptions
-      }
+    appTsConfig: {
+      files: [
+        '../server/types/worker-configuration.d.ts'
+      ]
     },
 
     nodeTsConfig: {
       compilerOptions: {
-        ...projectTypeScriptCompilerOptions
+        // Nitro 2's type entry points use extensionless imports that NodeNext cannot resolve.
+        module: 'preserve',
+        moduleResolution: 'bundler'
       }
     }
   },
@@ -242,14 +231,6 @@ export default defineNuxtConfig({
   nitro: {
     moduleSideEffects: ['reflect-metadata'],
     preset: 'cloudflare_module',
-
-    typescript: {
-      tsConfig: {
-        compilerOptions: {
-          ...projectTypeScriptCompilerOptions
-        }
-      }
-    },
 
     cloudflare: {
       deployConfig: false

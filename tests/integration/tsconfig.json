@@ -1,5 +1,10 @@
 {
   "extends": "../../.nuxt/tsconfig.node.json",
-  "compilerOptions": { "lib": ["ESNext", "DOM"], "noEmit": true },
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true
+  },
   "include": ["./**/*.ts"]
 }
