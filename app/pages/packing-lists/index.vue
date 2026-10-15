@@ -108,6 +108,7 @@
       createdAt: row.createdAt,
       entryCount: row.entryCount,
       id: row.id,
+      isPackedUnconfirmed: packingListsStore.isPackingListPackedUnconfirmed(row.id),
       name: row.name,
       packedCount: row.packedCount,
       updatedAt: row.updatedAt,

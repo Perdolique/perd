@@ -70,6 +70,11 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
   const summaryStates = reactive(new Map<string, PackingListSummaryState>())
   const entryOperations = reactive(new Map<string, PackingListEntryOperation>())
   const copyingListIds = reactive(new Set<string>())
+  const clearingPackedListIds = reactive(new Set<string>())
+  const refreshingPackedListIds = reactive(new Set<string>())
+  const unconfirmedPackedListIds = reactive(new Set<string>())
+  const packedResetVersions = new Map<string, string>()
+  const confirmedDetails = reactive(new Map<string, PackingListDetail>())
   const renamingListIds = reactive(new Set<string>())
   const deletingListIds = reactive(new Set<string>())
   const deletedListIds = reactive(new Set<string>())
@@ -224,11 +229,17 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
   }
 
   function getPackingListDetailView(packingList: PackingListDetail): PackingListDetail {
-    const entries: PackingListEntry[] = []
-    const name = confirmedNames.get(packingList.id)?.name ?? packingList.name
+    const confirmed = confirmedDetails.get(packingList.id)
 
-    for (const entry of packingList.entries) {
-      const currentEntry = applyEntryOperation(packingList.id, entry)
+    const detail = confirmed !== undefined && Date.parse(confirmed.updatedAt) > Date.parse(packingList.updatedAt)
+      ? confirmed
+      : packingList
+
+    const entries: PackingListEntry[] = []
+    const name = confirmedNames.get(detail.id)?.name ?? detail.name
+
+    for (const entry of detail.entries) {
+      const currentEntry = applyEntryOperation(detail.id, entry)
 
       if (currentEntry !== null) {
         entries.push(currentEntry)
@@ -236,7 +247,7 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     }
 
     return {
-      ...packingList,
+      ...detail,
       entries,
       name
     }
@@ -258,13 +269,36 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     return deletedListIds.has(packingListId)
   }
 
+  function isPackingListClearingPacked(packingListId: string) {
+    return clearingPackedListIds.has(packingListId)
+  }
+
+  function isPackingListRefreshingPacked(packingListId: string) {
+    return refreshingPackedListIds.has(packingListId)
+  }
+
+  function isPackingListPackedUnconfirmed(packingListId: string) {
+    return unconfirmedPackedListIds.has(packingListId)
+  }
+
   function isPackingListMutationPending(packingListId: string) {
     const pendingOperations = summaryStates.get(packingListId)?.pendingOperations ?? 0
 
-    return pendingOperations > 0 || deletingListIds.has(packingListId) || copyingListIds.has(packingListId)
+    return pendingOperations > 0
+      || deletingListIds.has(packingListId)
+      || copyingListIds.has(packingListId)
+      || renamingListIds.has(packingListId)
+      || isPackingListClearingPacked(packingListId)
+      || isPackingListRefreshingPacked(packingListId)
   }
 
   function assertPackingListWritable(packingListId: string) {
+    if (isPackingListClearingPacked(packingListId)
+      || isPackingListRefreshingPacked(packingListId)
+      || isPackingListPackedUnconfirmed(packingListId)) {
+      throw new Error('Packing list packed state is being cleared or needs refresh')
+    }
+
     if (deletingListIds.has(packingListId) || deletedListIds.has(packingListId) || copyingListIds.has(packingListId)) {
       throw new Error('Packing list is being copied, deleted, or is no longer available')
     }
@@ -323,7 +357,12 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     const nextIds = new Set(nextRows.map((row) => row.id))
 
     for (const row of nextRows) {
-      if (canApplyFetchedSummary(row.id, snapshots)) {
+      const existingSummary = summaryStates.get(row.id)?.summary
+
+      const isOlder = existingSummary !== undefined
+        && Date.parse(row.updatedAt) < Date.parse(existingSummary.updatedAt)
+
+      if (!isOlder && canApplyFetchedSummary(row.id, snapshots)) {
         const currentState = summaryStates.get(row.id)
 
         summaryStates.set(row.id, {
@@ -463,7 +502,7 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
   async function copyPackingList(packingListId: string, name: string) {
     assertPackingListWritable(packingListId)
 
-    if (isPackingListMutationPending(packingListId) || renamingListIds.has(packingListId)) {
+    if (isPackingListMutationPending(packingListId)) {
       throw new Error('Packing list changes are still pending')
     }
 
@@ -575,6 +614,8 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
 
     summaryStates.delete(packingListId)
     confirmedNames.delete(packingListId)
+    confirmedDetails.delete(packingListId)
+    unconfirmedPackedListIds.delete(packingListId)
     renamingListIds.delete(packingListId)
 
     for (const [key, operation] of entryOperations) {
@@ -633,6 +674,16 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
   function initializePackingListSummary(packingList: PackingListDetail) {
     if (packingList.id === '' || deletedListIds.has(packingList.id)) {
       return
+    }
+
+    const confirmed = confirmedDetails.get(packingList.id)
+
+    if (confirmed !== undefined) {
+      if (Date.parse(packingList.updatedAt) < Date.parse(confirmed.updatedAt)) {
+        return
+      }
+
+      confirmedDetails.delete(packingList.id)
     }
 
     reconcileEntryOperations(packingList)
@@ -805,6 +856,144 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     }
   }
 
+  function canClearPackingListPacked(packingListId: string) {
+    const packedCount = summaryStates.get(packingListId)?.summary.packedCount ?? 0
+
+    return packedCount > 0
+      && !isPackingListMutationPending(packingListId)
+      && !isPackingListPackedUnconfirmed(packingListId)
+      && !deletedListIds.has(packingListId)
+  }
+
+  function acceptPackedDetail(packingList: PackingListDetail) {
+    for (const [key, operation] of entryOperations) {
+      if (operation.packingListId === packingList.id) {
+        entryOperations.delete(key)
+      }
+    }
+
+    initializePackingListSummary(packingList)
+    confirmedDetails.set(packingList.id, packingList)
+    unconfirmedPackedListIds.delete(packingList.id)
+  }
+
+  async function resolvePackingListPacked(packingListId: string, expectedUpdatedAt: string, operationGeneration: number) {
+    const path = `/api/user/packing-lists/${packingListId}/clear-packed` as const
+
+    const response = await requestFetch(path, {
+      method: 'POST',
+      retry: 0,
+      body: { expectedUpdatedAt }
+    })
+
+    if (operationGeneration !== generation) {
+      return null
+    }
+
+    const confirmed = confirmedDetails.get(packingListId)
+    const minimumVersion = confirmed?.updatedAt ?? expectedUpdatedAt
+    const responseVersion = Date.parse(response.packingList.updatedAt)
+
+    if (responseVersion < Date.parse(minimumVersion)) {
+      throw new Error('Packing list reset returned an older version')
+    }
+
+    acceptPackedDetail(response.packingList)
+    packedResetVersions.delete(packingListId)
+
+    return response
+  }
+
+  async function refreshPackingListPacked(packingListId: string) {
+    if (isPackingListRefreshingPacked(packingListId)) {
+      throw new Error('Packing list refresh already pending')
+    }
+
+    const expectedUpdatedAt = packedResetVersions.get(packingListId)
+
+    if (expectedUpdatedAt === undefined) {
+      throw new Error('No packing list reset needs recovery')
+    }
+
+    const operationGeneration = generation
+
+    refreshingPackedListIds.add(packingListId)
+
+    try {
+      // Replay the original conditional reset; a GET cannot fence a delayed POST.
+      const response = await resolvePackingListPacked(packingListId, expectedUpdatedAt, operationGeneration)
+
+      return response?.packingList ?? null
+    } catch (error) {
+      if (operationGeneration !== generation) {
+        return null
+      }
+
+      globalThis.console.error('Failed to refresh packing list packed state:', error)
+      unconfirmedPackedListIds.add(packingListId)
+
+      throw error
+    } finally {
+      if (operationGeneration === generation) {
+        refreshingPackedListIds.delete(packingListId)
+      }
+    }
+  }
+
+  async function clearPackingListPacked(packingListId: string) {
+    assertPackingListWritable(packingListId)
+
+    const expectedUpdatedAt = summaryStates.get(packingListId)?.summary.updatedAt
+
+    if (!canClearPackingListPacked(packingListId) || expectedUpdatedAt === undefined) {
+      throw new Error('Packing list changes are pending or there are no packed marks')
+    }
+
+    const operationGeneration = generation
+
+    clearingPackedListIds.add(packingListId)
+    packedResetVersions.set(packingListId, expectedUpdatedAt)
+
+    let response: Awaited<ReturnType<typeof resolvePackingListPacked>> = null
+
+    try {
+      response = await resolvePackingListPacked(packingListId, expectedUpdatedAt, operationGeneration)
+    } catch (error) {
+      if (operationGeneration !== generation) {
+        return null
+      }
+
+      globalThis.console.error('Failed to clear packing list packed marks:', error)
+      unconfirmedPackedListIds.add(packingListId)
+
+      try {
+        await refreshPackingListPacked(packingListId)
+      } catch {
+        // Keep the original version and uncertain state for explicit recovery.
+      }
+
+      if (operationGeneration !== generation) {
+        return null
+      }
+
+      throw error
+    } finally {
+      if (operationGeneration === generation) {
+        clearingPackedListIds.delete(packingListId)
+      }
+    }
+
+    if (response === null) {
+      return null
+    }
+
+    if (response.outcome === 'conflict') {
+      throw new Error('Packing list changed before its packed marks could be cleared')
+    }
+
+    return response.packingList
+  }
+
   function clearPackingLists() {
     abortActiveFetch()
 
@@ -819,6 +1008,11 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     deletingListIds.clear()
     deletedListIds.clear()
     confirmedNames.clear()
+    confirmedDetails.clear()
+    clearingPackedListIds.clear()
+    refreshingPackedListIds.clear()
+    unconfirmedPackedListIds.clear()
+    packedResetVersions.clear()
 
     hasLoaded.value = false
     loading.value = false
@@ -826,6 +1020,8 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
   }
 
   return {
+    canClearPackingListPacked,
+    clearPackingListPacked,
     clearPackingLists,
     copyPackingList,
     createPackingList,
@@ -843,6 +1039,9 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     isEmpty,
     isInitialLoading,
     isRefreshing,
+    isPackingListClearingPacked,
+    isPackingListRefreshingPacked,
+    isPackingListPackedUnconfirmed,
     isPackingListCopying,
     isPackingListDeleted,
     isPackingListDeleting,
@@ -852,6 +1051,7 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     isPackingListMutationPending,
     isPackingListRenaming,
     loading,
+    refreshPackingListPacked,
     renamePackingList,
     rows,
     updatePackingListEntry

@@ -52,6 +52,7 @@ interface PackingListDetail {
 }
 
 interface PackingListView extends PackingListSummary {
+  isPackedUnconfirmed?: boolean;
   formattedUpdatedAt: string;
 }
 
