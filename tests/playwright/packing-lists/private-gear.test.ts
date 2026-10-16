@@ -298,7 +298,10 @@ async function mockPrivateGear(context: BrowserContext) {
       id: gearId,
       source: 'custom',
       customName: state.name,
-      createdAt: initialDate
+      createdAt: initialDate,
+      note: null,
+      measuredWeightGrams: null,
+      ownedQuantity: 1
     }
 
     const json = method === 'GET' ? [gear] : gear
@@ -355,7 +358,8 @@ test.describe('Private My gear in packing lists', () => {
 
       const checkbox = page.getByRole('checkbox', { name: /DIY Stove/u })
 
-      await checkbox.check()
+      // The failed request restores the unchecked state, so do not require check()'s checked postcondition.
+      await checkbox.click()
       await expect(page.getByRole('alert')).toContainText('Could not update DIY Stove. Try again.')
       await expect(checkbox).not.toBeChecked()
       await expect(page.getByRole('status')).toHaveText('0 of 1 packed')
@@ -401,16 +405,16 @@ test.describe('Private My gear in packing lists', () => {
       await card.getByRole('button', { name: /^Actions for /u }).click()
 
       await card.getByRole('menuitem', {
-        name: 'Rename',
+        name: 'Edit',
         exact: true
       }).click()
 
-      const rename = page.getByRole('dialog', { name: 'Rename custom gear' })
+      const rename = page.getByRole('dialog', { name: 'Edit gear' })
 
       await rename.getByRole('textbox', { name: 'Gear name' }).fill('Renamed Stove')
 
       await rename.getByRole('button', {
-        name: 'Save name',
+        name: 'Save changes',
         exact: true
       }).click()
 

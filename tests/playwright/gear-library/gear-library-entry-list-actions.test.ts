@@ -1,3 +1,4 @@
+import type { MyGearRecord } from '../../../app/types/equipment.ts'
 import type { Request } from '@playwright/test'
 import { mockAccountUser } from '../fixtures/account-user.fixtures.ts'
 import { expect, test } from '../fixtures/global.fixtures.ts'
@@ -16,9 +17,13 @@ import {
   stoveItem
 } from '../fixtures/gear-library-entry-list.fixtures.ts'
 
-function createMyGearRow(item = stoveItem) {
+function createMyGearRow(item = stoveItem): MyGearRecord {
   return {
     source: 'catalog',
+    personalName: null,
+    note: null,
+    measuredWeightGrams: null,
+    ownedQuantity: 1,
     createdAt: '2026-07-23T00:00:00.000Z',
     id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477ab',
 
@@ -26,7 +31,8 @@ function createMyGearRow(item = stoveItem) {
       brand: item.brand,
       category: item.category,
       id: item.id,
-      name: item.name
+      name: item.name,
+      weightGrams: null
     }
   }
 }
@@ -340,7 +346,7 @@ test.describe('Gear library item actions', () => {
     await expect(page.getByText('In My gear', { exact: true })).toBeVisible()
     await page.getByRole('link', { name: 'My gear' }).click()
     await page.getByRole('button', { name: `Actions for ${stoveItem.name}` }).click()
-    await expect(page.getByRole('menuitem')).toHaveCount(1)
+    await expect(page.getByRole('menuitem')).toHaveText(['Edit', 'Remove'])
 
     try {
       await page.getByRole('menuitem', {

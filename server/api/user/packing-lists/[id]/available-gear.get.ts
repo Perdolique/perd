@@ -43,7 +43,7 @@ export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferIn
     isNull(packingListEntries.id)
   ]
 
-  const itemName = sql<string>`coalesce(${userEquipment.customName}, ${equipmentItems.name})`
+  const itemName = sql<string>`coalesce(${userEquipment.customName}, ${userEquipment.personalName}, ${equipmentItems.name})`
   const orderBy: SQL[] = []
 
   if (search === '') {
@@ -58,6 +58,7 @@ export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferIn
 
     const searchCondition = or(
       ilike(itemName, containsPattern),
+      ilike(equipmentItems.name, containsPattern),
       ilike(brands.name, containsPattern),
       ilike(equipmentCategories.name, containsPattern)
     )
@@ -97,6 +98,7 @@ export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferIn
       brand: brands.name,
       category: equipmentCategories.name,
       customName: userEquipment.customName,
+      personalName: userEquipment.personalName,
       inventoryId: userEquipment.id,
       itemName: equipmentItems.name
     })

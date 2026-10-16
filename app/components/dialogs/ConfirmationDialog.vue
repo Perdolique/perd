@@ -36,6 +36,8 @@
 
         <PerdButton
           ref="confirmButton"
+          :form="confirmForm"
+          :type="confirmButtonType"
           :variant="confirmVariant"
           :class="$style.confirmButton"
           :loading="confirmLoading"
@@ -61,6 +63,7 @@
     closeOnConfirm?: boolean;
     confirmDisabled?: boolean;
     confirmLoading?: boolean;
+    confirmForm?: string;
     confirmVariant?: 'danger' | 'primary';
     error?: string | null;
     headerText: string;
@@ -79,6 +82,7 @@
     closeOnConfirm = true,
     confirmDisabled,
     confirmLoading,
+    confirmForm,
     confirmVariant = 'primary',
     error = null
   } = defineProps<Props>()
@@ -88,6 +92,7 @@
   const confirmButton = useTemplateRef('confirmButton')
   const cancelButton = useTemplateRef('cancelButton')
   const hasError = computed(() => error !== null)
+  const confirmButtonType = computed(() => confirmForm === undefined ? 'button' : 'submit')
 
   function focusConfirm() {
     if (isOpened.value && !confirmLoading && !confirmDisabled) {
@@ -115,6 +120,10 @@
   }
 
   function emitConfirm() {
+    if (confirmForm !== undefined) {
+      return
+    }
+
     emit('confirm')
 
     if (closeOnConfirm) {

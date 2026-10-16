@@ -21,6 +21,10 @@
       Unit: {{ unit }}
     </span>
 
+    <span v-if="hasHint" :id="hintId" :class="$style.hint">
+      {{ hint }}
+    </span>
+
     <span
       v-if="hasError"
       :id="errorId"
@@ -38,6 +42,7 @@
   interface Props {
     disabled?: boolean;
     error?: string;
+    hint?: string;
     label: string;
     name: string;
     unit?: string | null;
@@ -46,6 +51,7 @@
   const {
     disabled,
     error,
+    hint,
     label,
     name,
     unit
@@ -58,8 +64,10 @@
   const componentId = useId()
   const inputId = `${componentId}-input`
   const unitId = `${componentId}-unit`
+  const hintId = `${componentId}-hint`
   const errorId = `${componentId}-error`
   const hasUnit = computed(() => unit !== undefined && unit !== null)
+  const hasHint = computed(() => hint !== undefined)
   const hasError = computed(() => error !== undefined)
   const ariaInvalid = computed(() => hasError.value || undefined)
 
@@ -68,6 +76,10 @@
 
     if (hasUnit.value) {
       ids.push(unitId)
+    }
+
+    if (hasHint.value) {
+      ids.push(hintId)
     }
 
     if (hasError.value) {

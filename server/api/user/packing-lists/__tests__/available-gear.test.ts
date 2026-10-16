@@ -45,6 +45,7 @@ vi.mock(import('#server/utils/session'), () => {
 
 interface AvailableGearRow {
   customName: string | null;
+  personalName: string | null;
   brand: string;
   category: string;
   inventoryId: string;
@@ -128,6 +129,7 @@ function createAvailableGearRows(count: number): AvailableGearRow[] {
   return Array.from({ length: count }, (_unusedValue, itemIndex) => {
     return {
       customName: null,
+      personalName: null,
       brand: 'MSR',
       category: 'Stoves',
       inventoryId: `inventory-${itemIndex + 1}`,
@@ -234,7 +236,7 @@ describe('get /api/user/packing-lists/[id]/available-gear', () => {
     const escapedContainsPattern = String.raw`%MSR\\\%\_%`
 
     expect(whereQuery.params).toContain(escapedContainsPattern)
-    expect(whereQuery.sql).toContain('coalesce("user_equipment"."customName", "equipment_items"."name")')
+    expect(whereQuery.sql).toContain('coalesce("user_equipment"."customName", "user_equipment"."personalName", "equipment_items"."name")')
     expect(whereQuery.sql).toContain('"user_equipment"."userId" =')
     expect(whereQuery.sql).toContain('"packing_list_entries"."id" is null')
 

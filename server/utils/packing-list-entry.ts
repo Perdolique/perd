@@ -23,6 +23,7 @@ interface PackingListInventoryRow {
   customName: string | null;
   inventoryId: string;
   itemName: string | null;
+  personalName: string | null;
 }
 
 interface PackingListEntryBase {
@@ -75,7 +76,7 @@ function createPackingListInventory(row: PackingListInventoryRow): PackingListEn
     brand,
     category,
     inventoryId: row.inventoryId,
-    itemName,
+    itemName: row.personalName ?? itemName,
     source: 'catalog'
   }
 }

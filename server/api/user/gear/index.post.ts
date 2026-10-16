@@ -4,169 +4,87 @@ import type { ApiRequestEvent } from '#shared/types/api-request'
 import { userEquipment } from '#server/database/schema'
 import { validateSessionUser } from '#server/utils/session'
 import { validateUserEquipmentCreateBody, type userEquipmentCreateBodySchema } from '#server/utils/validation/schemas'
-import type { MyGearRecord } from './index.get'
+import { readMyGear, type MyGearRecord } from '#server/utils/my-gear'
 import { throwMyGearError } from '#server/utils/my-gear-errors'
+import { normalizeDecimalNumber } from '#shared/utils/decimal-number'
 
-interface MyGearItemBrand {
-  name: string;
-  slug: string;
-}
-
-interface MyGearItemCategory {
-  name: string;
-  slug: string;
-}
-
-interface MyGearQueryItem {
-  brand: MyGearItemBrand | null;
-  category: MyGearItemCategory | null;
-  id: string;
-  name: string;
-}
-
-interface MyGearQueryRow {
-  createdAt: Date | string;
-  id: string;
-  item: MyGearQueryItem | null;
-}
-
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof userEquipmentCreateBodySchema>; }>) : Promise<MyGearRecord> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof userEquipmentCreateBodySchema>; }>): Promise<MyGearRecord> => {
   const userId = await validateSessionUser(event)
   const body = await readValidatedBody(event, validateUserEquipmentCreateBody)
 
   try {
-    if ('customName' in body) {
-      const [created] = await event.context.dbHttp
-        .insert(userEquipment)
-        .values({
+    if ('itemId' in body) {
+      const approvedItem = await event.context.dbHttp.query.equipmentItems.findFirst({
+        columns: {
+          id: true
+        },
+
+        where: {
+          id: body.itemId,
+          status: 'approved'
+        }
+      })
+
+      if (approvedItem === undefined) {
+        throw createError({ status: 404 })
+      }
+    }
+
+    const values = 'customName' in body
+      ? {
+          userId,
           customName: body.customName,
-          userId
-        })
-        .returning({
-          id: userEquipment.id,
-          customName: userEquipment.customName,
-          createdAt: userEquipment.createdAt
-        })
-
-      if (created?.customName === undefined || created.customName === null) {
-        throw createError({
-          status: 500,
-          message: 'Failed to create my gear row'
-        })
+          note: body.note,
+          measuredWeightGrams: body.measuredWeightGrams,
+          ownedQuantity: body.ownedQuantity
+        }
+      : {
+        userId,
+        itemId: body.itemId
       }
 
-      setResponseStatus(event, 201)
-
-      return {
-        createdAt: created.createdAt,
-        customName: created.customName,
-        id: created.id,
-        source: 'custom'
-      }
-    }
-
-    const { itemId } = body
-
-    const approvedItem = await event.context.dbHttp.query.equipmentItems.findFirst({
-      columns: {
-        id: true
-      },
-
-      where: {
-        id: itemId,
-        status: 'approved'
-      }
-    })
-
-    if (approvedItem === undefined) {
-      throw createError({ status: 404 })
-    }
-
-    const existingMyGearRow = await event.context.dbHttp.query.userEquipment.findFirst({
-      columns: {
-        id: true
-      },
-
-      where: {
-        itemId,
-        userId
-      }
-    })
-
-    if (existingMyGearRow !== undefined) {
-      throw createError({
-        status: 409,
-        message: 'Item is already in my gear'
-      })
-    }
-
-    const [createdMyGearRow] = await event.context.dbHttp
+    const [created] = await event.context.dbHttp
       .insert(userEquipment)
-      .values({
-        itemId,
-        userId
-      })
+      .values(values)
       .returning({
-        id: userEquipment.id
+        id: userEquipment.id,
+        createdAt: userEquipment.createdAt,
+        customName: userEquipment.customName,
+        note: userEquipment.note,
+        measuredWeightGrams: userEquipment.measuredWeightGrams,
+        ownedQuantity: userEquipment.ownedQuantity
       })
 
-    if (createdMyGearRow === undefined) {
+    if (created === undefined) {
       throw createError({
         status: 500,
         message: 'Failed to create my gear row'
       })
     }
 
-    const myGearRow: MyGearQueryRow | undefined = await event.context.dbHttp.query.userEquipment.findFirst({
-      columns: {
-        createdAt: true,
-        id: true
-      },
+    if (created.customName !== null) {
+      const measuredWeightGrams = created.measuredWeightGrams === null
+        ? null
+        : normalizeDecimalNumber(created.measuredWeightGrams)
 
-      where: {
-        id: createdMyGearRow.id,
-        userId
-      },
-
-      with: {
-        item: {
-          columns: {
-            id: true,
-            name: true
-          },
-
-          with: {
-            brand: {
-              columns: {
-                name: true,
-                slug: true
-              }
-            },
-
-            category: {
-              columns: {
-                name: true,
-                slug: true
-              }
-            }
-          }
-        }
+      const record: MyGearRecord = {
+        id: created.id,
+        createdAt: created.createdAt,
+        customName: created.customName,
+        note: created.note,
+        measuredWeightGrams,
+        ownedQuantity: created.ownedQuantity,
+        source: 'custom'
       }
-    })
 
-    const myGearItem = myGearRow?.item
-    const myGearBrand = myGearItem?.brand
-    const myGearCategory = myGearItem?.category
+      setResponseStatus(event, 201)
 
-    if (
-      myGearRow === undefined ||
-      myGearItem === undefined ||
-      myGearItem === null ||
-      myGearBrand === undefined ||
-      myGearBrand === null ||
-      myGearCategory === undefined ||
-      myGearCategory === null
-    ) {
+      return record
+    }
+
+    const [record] = await readMyGear(event.context.dbHttp, userId, created.id)
+
+    if (record === undefined) {
       throw createError({
         status: 500,
         message: 'Failed to load created my gear row'
@@ -175,26 +93,7 @@ export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInp
 
     setResponseStatus(event, 201)
 
-    return {
-      source: 'catalog',
-      createdAt: myGearRow.createdAt,
-      id: myGearRow.id,
-
-      item: {
-        id: myGearItem.id,
-        name: myGearItem.name,
-
-        brand: {
-          name: myGearBrand.name,
-          slug: myGearBrand.slug
-        },
-
-        category: {
-          name: myGearCategory.name,
-          slug: myGearCategory.slug
-        }
-      }
-    }
+    return record
   } catch (error) {
     throwMyGearError(error, 'create')
   }
