@@ -117,6 +117,10 @@ export default defineNuxtConfig({
     '@pinia/nuxt'
   ],
 
+  fonts: {
+    processCSSVariables: 'font-family'
+  },
+
   image: {
     cloudflareimages: {
       accountHash: 'mCIRaHLLCfuPRvd-hC9t5g'
@@ -126,6 +130,7 @@ export default defineNuxtConfig({
   experimental: {
     early404: true,
     inlineErrorRendering: false,
+    nitroAutoImports: true,
     viewTransition: true,
     strictRouteTypes: true
   },
