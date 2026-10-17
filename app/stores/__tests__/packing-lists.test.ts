@@ -140,6 +140,9 @@ describe('packing list copy lifecycle', () => {
         customName: 'Jacket',
         source: 'custom',
         isPacked: true,
+        quantity: 1,
+        weightGrams: null,
+        weightSource: null,
         createdAt: copySummary.createdAt,
         updatedAt: copySummary.updatedAt
       },

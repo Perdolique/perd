@@ -66,6 +66,7 @@
               v-for="entry in entryViews"
               :key="entry.id"
               :entry="entry"
+              @edit="handleEditEntry"
               @pack-change="handlePackChange"
               @remove="handleRemoveEntry"
             />
@@ -89,21 +90,20 @@
         </div>
       </div>
     </div>
+    <PackingListEntryEditDialog
+      v-model="isEditDialogOpen"
+      :entry="editingEntry"
+      :packing-list-id="packingListId"
+      @saved="handleEntrySaved"
+    />
   </PageContent>
 </template>
 
 <script lang="ts" setup>
   import { computed, nextTick, onBeforeUnmount, reactive, ref, useTemplateRef } from 'vue'
   import { definePageMeta, navigateTo, useFetch, useNuxtApp, useRequestFetch, useRoute, useRouter } from '#imports'
-
-  import type {
-    PackingListDetail,
-    PackingListEntry,
-    PackingListEntryView,
-    PackingListInventoryEntry
-  } from '~/types/packing'
-
-  import { formatPackingProgress, latestPackingListUpdatedAt } from '~/utils/packing'
+  import type { PackingListDetail, PackingListEntry, PackingListEntryView } from '~/types/packing'
+  import { formatPackingEntryWeight, formatPackingProgress, latestPackingListUpdatedAt } from '~/utils/packing'
   import { appLocations, createPackingListLocation } from '~/utils/navigation'
   import { usePackingListsStore } from '~/stores/packing-lists'
   import PageLoadingState from '~/components/PageLoadingState.vue'
@@ -112,6 +112,7 @@
   import PageContent from '~/components/layout/PageContent.vue'
   import PackingListActions from '~/components/packing-lists/PackingListActions.vue'
   import PackingListEntryComposer from '~/components/packing-lists/PackingListEntryComposer.vue'
+  import PackingListEntryEditDialog from '~/components/packing-lists/PackingListEntryEditDialog.vue'
   import PackingListEntryCard from '~/components/packing-lists/PackingListEntryCard.vue'
 
   definePageMeta({
@@ -127,6 +128,8 @@
   const packingListActions = useTemplateRef('packingListActions')
   const entryRemoveErrorMessage = ref<string | null>(null)
   const packedRefreshErrorMessage = ref<string | null>(null)
+  const isEditDialogOpen = ref(false)
+  const editingEntryId = ref<string | null>(null)
   const lastPackingEntryId = ref<string | null>(null)
   const packErrorEntryIds = reactive(new Set<string>())
   let copyRefreshController: AbortController | null = null
@@ -158,6 +161,7 @@
   }
 
   const packingListView = computed(() => packingListsStore.getPackingListDetailView(packingListResponse.value))
+  const editingEntry = computed(() => packingListView.value.entries.find(entry => entry.id === editingEntryId.value) ?? null)
   const hasPackingListError = computed(() => packingListError.value !== undefined)
 
   const isPackingListNotFound = computed(() => packingListError.value?.statusCode === 404
@@ -202,52 +206,33 @@
     return removingEntryId !== null && removingEntryId !== entryId
   }
 
-  function createCustomEntryView(entry: PackingListEntry): PackingListEntryView {
+  function createPackingListEntryView(entry: PackingListEntry): PackingListEntryView {
     const isPacking = packingListsStore.isPackingListEntryUpdating(packingListId, entry.id)
     const isRemoving = packingListsStore.isPackingListEntryRemoving(packingListId, entry.id)
+    const isPending = packingListsStore.isPackingListEntryOperationPending(packingListId, entry.id)
+    let subtitle = ''
 
-    return {
-      hasPackError: packErrorEntryIds.has(entry.id),
-      id: entry.id,
-      isPacked: entry.isPacked,
-      isPackDisabled: isPacking || isRemoving,
-      isPackFocusTarget: lastPackingEntryId.value === entry.id,
-      isPacking,
-      isRemoveDisabled: isRemovingAnotherEntry(entry.id) || isPacking,
-      isRemoving,
-      subtitle: '',
-      title: entry.customName ?? 'Unnamed item'
+    if (entry.source === 'inventory') {
+      subtitle = entry.inventory.source === 'catalog'
+        ? `${entry.inventory.brand} / ${entry.inventory.category}`
+        : 'Custom gear · My gear'
     }
-  }
-
-  function createInventoryEntryView(entry: PackingListInventoryEntry): PackingListEntryView {
-    const isPacking = packingListsStore.isPackingListEntryUpdating(packingListId, entry.id)
-    const isRemoving = packingListsStore.isPackingListEntryRemoving(packingListId, entry.id)
-
-    const subtitle = entry.inventory.source === 'catalog'
-      ? `${entry.inventory.brand} / ${entry.inventory.category}`
-      : 'Custom gear · My gear'
 
     return {
+      quantity: entry.quantity,
+      weightText: formatPackingEntryWeight(entry),
+      isEditDisabled: isPending,
       hasPackError: packErrorEntryIds.has(entry.id),
       id: entry.id,
       isPacked: entry.isPacked,
-      isPackDisabled: isPacking || isRemoving,
+      isPackDisabled: isPending,
       isPackFocusTarget: lastPackingEntryId.value === entry.id,
       isPacking,
-      isRemoveDisabled: isRemovingAnotherEntry(entry.id) || isPacking,
+      isRemoveDisabled: isRemovingAnotherEntry(entry.id) || isPending,
       isRemoving,
       subtitle,
-      title: entry.inventory.itemName
+      title: entry.source === 'inventory' ? entry.inventory.itemName : entry.customName ?? 'Unnamed item'
     }
-  }
-
-  function createPackingListEntryView(entry: PackingListEntry): PackingListEntryView {
-    if (entry.source === 'inventory') {
-      return createInventoryEntryView(entry)
-    }
-
-    return createCustomEntryView(entry)
   }
 
   const entryViews = computed(() => packingListView.value.entries.map(createPackingListEntryView))
@@ -377,6 +362,25 @@
 
       id: currentList.id,
       name: currentList.name,
+      updatedAt: latestPackingListUpdatedAt(currentList.updatedAt, packingListUpdatedAt)
+    }
+  }
+
+  function handleEditEntry(entryId: string) {
+    if (isContentLocked.value || packingListsStore.isPackingListEntryOperationPending(packingListId, entryId)) {
+      return
+    }
+
+    editingEntryId.value = entryId
+    isEditDialogOpen.value = true
+  }
+
+  function handleEntrySaved(savedEntry: PackingListEntry, packingListUpdatedAt: string) {
+    const currentList = packingListView.value
+
+    packingListResponse.value = {
+      ...currentList,
+      entries: currentList.entries.map(entry => entry.id === savedEntry.id ? savedEntry : entry),
       updatedAt: latestPackingListUpdatedAt(currentList.updatedAt, packingListUpdatedAt)
     }
   }

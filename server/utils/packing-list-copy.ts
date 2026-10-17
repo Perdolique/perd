@@ -81,8 +81,8 @@ async function copyPackingList(database: CopyDatabase, options: PackingListCopyO
     // PostgreSQL evaluates volatile output functions after sorting the source rows.
     const inserted = await transaction.execute(sql`
       INSERT INTO ${packingListEntries}
-        ("id", "packingListId", "customName", "userEquipmentId", "isPacked", "createdAt", "updatedAt")
-      SELECT uuidv7(), ${created.id}, "customName", "userEquipmentId", false, now(), now()
+        ("id", "packingListId", "customName", "userEquipmentId", "quantity", "customWeightGrams", "isPacked", "createdAt", "updatedAt")
+      SELECT uuidv7(), ${created.id}, "customName", "userEquipmentId", "quantity", "customWeightGrams", false, now(), now()
       FROM ${packingListEntries}
       WHERE "packingListId" = ${id}
       ORDER BY "createdAt", "id"

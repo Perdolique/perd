@@ -102,10 +102,21 @@ describe('private gear reading', () => {
     }])
   })
 
-  it('scopes reads to the owner and optional gear ID in one query with stable ordering', async () => {
+  it.each([
+    {
+      id: 'saved-id',
+      operator: '=',
+      params: ['owner', 'saved-id']
+    },
+    {
+      id: ['saved-id', 'private-id'],
+      operator: 'in',
+      params: ['owner', 'saved-id', 'private-id']
+    }
+  ])('scopes reads to the owner and requested gear $id in one query with stable ordering', async ({ id, operator, params }) => {
     const { database, select, where, orderBy, chain } = createDatabase([])
 
-    await readMyGear(database, 'owner', 'saved-id')
+    await readMyGear(database, 'owner', id)
 
     const filter = query(where.mock.calls[0]?.[0])
     const order = orderBy.mock.calls[0]?.map(query)
@@ -113,8 +124,8 @@ describe('private gear reading', () => {
 
     expect(select).toHaveBeenCalledTimes(1)
     expect(filter.sql).toContain('"user_equipment"."userId" =')
-    expect(filter.sql).toContain('"user_equipment"."id" =')
-    expect(filter.params).toStrictEqual(['owner', 'saved-id'])
+    expect(filter.sql).toContain(`"user_equipment"."id" ${operator}`)
+    expect(filter.params).toStrictEqual(params)
 
     expect(order?.map((entry) => entry.sql)).toStrictEqual([
       '"user_equipment"."createdAt" desc',
