@@ -25,6 +25,7 @@ interface PackingListEntryItem {
 
 interface PackingListEntryUserEquipment {
   customName: string | null;
+  personalName: string | null;
   id: string;
   item: PackingListEntryItem | null;
 }
@@ -61,6 +62,7 @@ function createEntryResponse(entry: PackingListEntryRow): PackingListEntry {
     brand: gear.item?.brand?.name ?? null,
     category: gear.item?.category?.name ?? null,
     customName: gear.customName,
+    personalName: gear.personalName,
     inventoryId: gear.id,
     itemName: gear.item?.name ?? null
   })
@@ -101,6 +103,7 @@ async function readPackingListDetail(database: PackingListReadDatabase, id: stri
           userEquipment: {
             columns: {
               customName: true,
+              personalName: true,
               id: true
             },
 

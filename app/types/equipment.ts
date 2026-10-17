@@ -76,15 +76,20 @@ interface MyGearItem {
   category: GearLibraryEntitySummary;
   id: string;
   name: string;
+  weightGrams: string | null;
 }
 
 interface MyGearRecordBase {
   createdAt: string;
   id: string;
+  measuredWeightGrams: string | null;
+  note: string | null;
+  ownedQuantity: number;
 }
 
 interface CatalogMyGearRecord extends MyGearRecordBase {
   source: 'catalog';
+  personalName: string | null;
   item: MyGearItem;
 }
 

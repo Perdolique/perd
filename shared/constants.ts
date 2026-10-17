@@ -25,6 +25,9 @@ const limits = {
   maxPropertyEnumOptionNameLength: 64,
   maxPropertyEnumOptionSlugLength: 128,
   maxUserEquipmentCustomNameLength: 128,
+  maxUserEquipmentNoteLength: 2000,
+  maxUserEquipmentWeightLength: 64,
+  maxUserEquipmentOwnedQuantity: 2_147_483_647,
   maxUserNameLength: 32
 } as const
 

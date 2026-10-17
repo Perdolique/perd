@@ -687,6 +687,20 @@ const userEquipment = pgTable('user_equipment', {
   customName:
     varchar({ length: limits.maxUserEquipmentCustomNameLength }),
 
+  personalName:
+    varchar({ length: limits.maxUserEquipmentCustomNameLength }),
+
+  note:
+    varchar({ length: limits.maxUserEquipmentNoteLength }),
+
+  measuredWeightGrams:
+    numeric(),
+
+  ownedQuantity:
+    integer()
+    .notNull()
+    .default(1),
+
   itemId:
     uuid()
     .references(() => equipmentItems.id, {
@@ -702,6 +716,9 @@ const userEquipment = pgTable('user_equipment', {
     .defaultNow()
 }, (table) => [
   check('user_equipment_source_check', sql`(${table.itemId} IS NOT NULL) <> (${table.customName} IS NOT NULL)`),
+  check('user_equipment_personal_name_check', sql`${table.personalName} IS NULL OR ${table.itemId} IS NOT NULL`),
+  check('user_equipment_weight_check', sql`${table.measuredWeightGrams} IS NULL OR (${table.measuredWeightGrams} >= 0 AND ${table.measuredWeightGrams} < 'Infinity'::numeric)`),
+  check('user_equipment_quantity_check', sql`${table.ownedQuantity} >= 1`),
   unique().on(table.userId, table.itemId)
 ])
 

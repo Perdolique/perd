@@ -498,14 +498,62 @@ const userEquipmentCustomNameSchema = v.pipe(
   v.maxLength(limits.maxUserEquipmentCustomNameLength)
 )
 
+const userEquipmentPersonalNameSchema = v.nullable(v.pipe(
+  v.string(),
+  v.trim(),
+  v.maxLength(limits.maxUserEquipmentCustomNameLength),
+  v.transform((value) => value === '' ? null : value)
+))
+
+const userEquipmentNoteSchema = v.nullable(v.pipe(
+  v.string(),
+  v.trim(),
+  v.maxLength(limits.maxUserEquipmentNoteLength),
+  v.transform((value) => value === '' ? null : value)
+))
+
+const userEquipmentWeightSchema = v.nullable(v.pipe(
+  v.string(),
+  v.trim(),
+  v.maxLength(limits.maxUserEquipmentWeightLength),
+  v.regex(decimalNumberPattern),
+  v.check(isFiniteDecimalNumber),
+  v.transform(normalizeDecimalNumber),
+  v.check((value) => compareDecimalNumbers(value, '0') >= 0, 'Weight must not be negative')
+))
+
+const userEquipmentQuantitySchema = v.pipe(
+  v.number(),
+  v.integer(),
+  v.minValue(1),
+  v.maxValue(limits.maxUserEquipmentOwnedQuantity)
+)
+
 const userEquipmentCreateBodySchema = v.union([
   v.strictObject({ itemId: canonicalUuidV7Schema }),
-  v.strictObject({ customName: userEquipmentCustomNameSchema })
+  v.strictObject({
+    customName: userEquipmentCustomNameSchema,
+    note: v.optional(userEquipmentNoteSchema),
+    measuredWeightGrams: v.optional(userEquipmentWeightSchema),
+    ownedQuantity: v.optional(userEquipmentQuantitySchema)
+  })
 ])
 
-const userEquipmentRenameBodySchema = v.strictObject({
-  customName: userEquipmentCustomNameSchema
-})
+const userEquipmentUpdateBodySchema = v.pipe(
+  v.strictObject({
+    customName: v.optional(userEquipmentCustomNameSchema),
+    personalName: v.optional(userEquipmentPersonalNameSchema),
+    note: v.optional(userEquipmentNoteSchema),
+    measuredWeightGrams: v.optional(userEquipmentWeightSchema),
+    ownedQuantity: v.optional(userEquipmentQuantitySchema)
+  }),
+  v.check((body) => body.customName !== undefined
+    || body.personalName !== undefined
+    || body.note !== undefined
+    || body.measuredWeightGrams !== undefined
+    || body.ownedQuantity !== undefined, 'Provide at least one field'),
+  v.check((body) => body.customName === undefined || body.personalName === undefined, 'Provide only one name field')
+)
 
 const packingListIdParamsSchema = v.object({
   id: canonicalUuidV7Schema
@@ -1011,8 +1059,8 @@ function validateUserEquipmentIdParams(params: unknown) {
   return v.parse(userEquipmentIdParamsSchema, params)
 }
 
-function validateUserEquipmentRenameBody(body: unknown) {
-  return v.parse(userEquipmentRenameBodySchema, body)
+function validateUserEquipmentUpdateBody(body: unknown) {
+  return v.parse(userEquipmentUpdateBodySchema, body)
 }
 
 function validateUserEquipmentCreateBody(body: unknown) {
@@ -1221,7 +1269,7 @@ export {
   passwordRecoveryResetSchema,
   twitchOAuthBodySchema,
   twitchOAuthQuerySchema,
-  userEquipmentRenameBodySchema,
+  userEquipmentUpdateBodySchema,
   validateEquipmentItemUpdateBody,
   categoryPropertyUpdateSchema,
   categoryPropertyDeleteQuerySchema,
@@ -1330,7 +1378,7 @@ export {
   validateRedirectTargetQuery,
   validateTwitchOAuthBody,
   validateTwitchOAuthQuery,
-  validateUserEquipmentRenameBody,
+  validateUserEquipmentUpdateBody,
   validateUserEquipmentCreateBody,
   validateUserEquipmentIdParams
 }

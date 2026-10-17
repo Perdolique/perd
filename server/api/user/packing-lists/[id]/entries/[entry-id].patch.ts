@@ -81,6 +81,7 @@ export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInp
             brand: brands.name,
             category: equipmentCategories.name,
             customName: userEquipment.customName,
+            personalName: userEquipment.personalName,
             inventoryId: userEquipment.id,
             itemName: equipmentItems.name
           })

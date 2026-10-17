@@ -13,11 +13,12 @@
                 {{ catalogItem.brand.name }}
               </div>
 
+              <span v-if="hasPersonalName">{{ name }}</span>
               <PerdLink :to="gearLibraryLocation">
                 {{ catalogItem.name }}
               </PerdLink>
             </template>
-            <span v-else :class="$style.customName">{{ name }}</span>
+            <span v-else>{{ name }}</span>
           </div>
         </div>
 
@@ -49,6 +50,11 @@
         @action="handleAction"
       />
     </div>
+    <div :class="$style.details">
+      <span>Owned quantity: {{ myGearRow.ownedQuantity }}</span>
+      <span>{{ weightText }}</span>
+    </div>
+    <p v-if="myGearRow.note" :class="$style.note">{{ myGearRow.note }}</p>
   </PerdCard>
 </template>
 
@@ -65,38 +71,44 @@
     myGearRow: MyGearRecordView;
   }
 
-  type Emits = (event: 'remove' | 'rename', myGearId: string) => void
+  type Emits = (event: 'remove' | 'edit', myGearId: string) => void
 
   const { myGearRow } = defineProps<Props>()
   const emit = defineEmits<Emits>()
   const actionMenu = useTemplateRef('actionMenu')
   const id = computed(() => myGearRow.id)
   const catalogItem = computed(() => myGearRow.source === 'catalog' ? myGearRow.item : null)
-  const name = computed(() => myGearRow.source === 'custom' ? myGearRow.customName : myGearRow.item.name)
+  const name = computed(() => myGearRow.source === 'custom' ? myGearRow.customName : myGearRow.personalName ?? myGearRow.item.name)
   const actionsLabel = computed(() => `Actions for ${name.value}`)
   const menuLabel = computed(() => `${name.value} actions`)
+  const hasPersonalName = computed(() => myGearRow.source === 'catalog' && myGearRow.personalName !== null)
 
-  const actions = computed<ActionMenuItem[]>(() => {
-    const items: ActionMenuItem[] = []
-
-    if (myGearRow.source === 'custom') {
-      items.push({
-        id: 'rename',
-        label: 'Rename',
-        icon: 'hugeicons:pencil-edit-02'
-      })
+  const weightText = computed(() => {
+    if (myGearRow.measuredWeightGrams !== null) {
+      return `Measured weight: ${myGearRow.measuredWeightGrams} g per item`
     }
 
-    items.push({
+    const catalogWeight = catalogItem.value?.weightGrams
+
+    return catalogWeight === null || catalogWeight === undefined
+      ? 'Weight unknown'
+      : `Catalog weight: ${catalogWeight} g per item`
+  })
+
+  const actions: ActionMenuItem[] = [
+    {
+      id: 'edit',
+      label: 'Edit',
+      icon: 'hugeicons:pencil-edit-02'
+    },
+    {
       id: 'remove',
       label: 'Remove',
       icon: 'hugeicons:delete-02',
       danger: true,
-      separator: myGearRow.source === 'custom'
-    })
-
-    return items
-  })
+      separator: true
+    }
+  ]
 
   const gearLibraryLocation = computed(() => myGearRow.source === 'catalog'
     ? createGearLibraryItemLocation(myGearRow.item.id)
@@ -116,7 +128,7 @@
       return
     }
 
-    if (action === 'rename' || action === 'remove') {
+    if (action === 'edit' || action === 'remove') {
       emit(action, myGearRow.id)
     }
   }
@@ -125,6 +137,9 @@
 <style module>
   .component {
     display: grid;
+    gap: var(--spacing-16);
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
     background:
       linear-gradient(
         145deg,
@@ -158,10 +173,6 @@
     gap: 0.12rem;
   }
 
-  .customName {
-    overflow-wrap: anywhere;
-  }
-
   .brand {
     color: var(--color-text-muted);
     font-size: var(--font-size-12);
@@ -186,6 +197,19 @@
     flex-wrap: wrap;
     align-items: center;
     gap: var(--spacing-8) var(--spacing-12);
+  }
+
+  .details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-8) var(--spacing-16);
+    color: var(--color-text-secondary);
+  }
+
+  .note {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
   }
 
   .meta {

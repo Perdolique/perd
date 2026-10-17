@@ -16,6 +16,7 @@ const savedGearCases = [{
 
   row: {
     customName: null,
+    personalName: null,
     brand: 'MSR',
     category: 'Stoves',
     inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
@@ -34,6 +35,7 @@ const savedGearCases = [{
 
   row: {
     customName: 'My DIY Stove',
+    personalName: null,
     brand: null,
     category: null,
     inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
@@ -44,6 +46,25 @@ const savedGearCases = [{
     source: 'custom',
     inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
     itemName: 'My DIY Stove'
+  }
+}, {
+  source: 'catalog with personal name',
+
+  row: {
+    customName: null,
+    personalName: 'My trail stove',
+    brand: 'MSR',
+    category: 'Stoves',
+    inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
+    itemName: 'PocketRocket Deluxe'
+  },
+
+  inventory: {
+    source: 'catalog',
+    brand: 'MSR',
+    category: 'Stoves',
+    inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
+    itemName: 'My trail stove'
   }
 }] as const
 
@@ -645,6 +666,7 @@ describe('user packing list handlers', () => {
 
           userEquipment: {
             customName: null,
+            personalName: null,
             id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
 
             item: {
@@ -668,6 +690,7 @@ describe('user packing list handlers', () => {
 
           userEquipment: {
             customName: 'Renamed private stove',
+            personalName: null,
             id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477da',
             item: null
           }
@@ -759,6 +782,7 @@ describe('user packing list handlers', () => {
               userEquipment: {
                 columns: {
                   customName: true,
+                  personalName: true,
                   id: true
                 },
 

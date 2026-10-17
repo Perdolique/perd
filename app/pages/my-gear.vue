@@ -43,15 +43,14 @@
           ref="cards"
           :my-gear-row="myGearRow"
           @remove="requestRemove"
-          @rename="openRename"
+          @edit="openEdit"
         />
       </div>
     </div>
 
-    <CustomGearDialog
+    <GearDetailsDialog
       v-model="isEditOpen"
-      :initial-name="initialName"
-      :renaming="isRenaming"
+      :initial-gear="initialGear"
       :loading="isSaving"
       :error="saveError"
       @save="handleSave"
@@ -75,18 +74,18 @@
 </template>
 
 <script lang="ts" setup>
-  import { computed, nextTick, onBeforeUnmount, ref, useTemplateRef } from 'vue'
+  import { computed, nextTick, onBeforeUnmount, ref, useTemplateRef, watch } from 'vue'
   import { definePageMeta, useFetch, useRequestFetch } from '#imports'
   import { useGearLibraryStore } from '~/stores/gear-library'
   import { appLocations, navigationLabels } from '~/utils/navigation'
-  import type { MyGearRecordView } from '~/types/equipment'
+  import type { MyGearRecord, MyGearRecordView } from '~/types/equipment'
   import PageLoadingState from '~/components/PageLoadingState.vue'
   import PagePlaceholder from '~/components/PagePlaceholder.vue'
   import PageSummaryHeader from '~/components/PageSummaryHeader.vue'
   import PerdButton from '~/components/PerdButton.vue'
   import PerdLink from '~/components/PerdLink.vue'
   import MyGearItemCard from '~/components/my-gear/MyGearItemCard.vue'
-  import CustomGearDialog from '~/components/my-gear/CustomGearDialog.vue'
+  import GearDetailsDialog, { type GearDetailsInput } from '~/components/my-gear/GearDetailsDialog.vue'
   import ConfirmationDialog from '~/components/dialogs/ConfirmationDialog.vue'
   import PageContent from '~/components/layout/PageContent.vue'
 
@@ -96,9 +95,9 @@
   const removeDialogError = ref<string | null>(null)
   const saveError = ref<string | null>(null)
   const removingMyGearId = ref<string | null>(null)
-  const editingId = ref<string | null>(null)
+  const initialGear = ref<MyGearRecord | null>(null)
+  const editingId = computed(() => initialGear.value?.id ?? null)
   const removalId = ref<string | null>(null)
-  const initialName = ref('')
   const removalName = ref('')
   const announcement = ref('')
   const isEditOpen = ref(false)
@@ -125,12 +124,11 @@
   const isRemoving = computed(() => removingMyGearId.value !== null)
   const isBusy = computed(() => isSaving.value || isRemoving.value)
   const isAddDisabled = computed(() => myGearStatus.value !== 'success' || isBusy.value)
-  const isRenaming = computed(() => editingId.value !== null)
 
   const myGearSummaryText = computed(() => {
     const itemCount = myGearResponse.value.length
 
-    return `${itemCount} saved item${itemCount === 1 ? '' : 's'}`
+    return `${itemCount} saved entr${itemCount === 1 ? 'y' : 'ies'}`
   })
 
   const myGearItems = computed<MyGearRecordView[]>(() => myGearResponse.value.map((row) => {
@@ -144,6 +142,9 @@
         createdAt: row.createdAt,
         source: 'custom',
         customName: row.customName,
+        measuredWeightGrams: row.measuredWeightGrams,
+        note: row.note,
+        ownedQuantity: row.ownedQuantity,
         formattedCreatedAt,
         isRemoveDisabled: isBusy.value,
         isRemoving: isRemovingRow
@@ -155,11 +156,31 @@
       createdAt: row.createdAt,
       source: 'catalog',
       item: row.item,
+      personalName: row.personalName,
+      measuredWeightGrams: row.measuredWeightGrams,
+      note: row.note,
+      ownedQuantity: row.ownedQuantity,
       formattedCreatedAt,
       isRemoveDisabled: isBusy.value,
       isRemoving: isRemovingRow
     }
   }))
+
+  watch(isEditOpen, async (opened) => {
+    if (opened || !isActive) {
+      return
+    }
+
+    await nextTick()
+
+    const card = cards.value?.find(item => item?.id === editingId.value)
+
+    if (card) {
+      card.focus()
+    } else {
+      addButton.value?.focus()
+    }
+  })
 
   onBeforeUnmount(() => {
     isActive = false
@@ -174,34 +195,32 @@
       return
     }
 
-    editingId.value = null
-    initialName.value = ''
+    initialGear.value = null
     saveError.value = null
     announcement.value = ''
     isEditOpen.value = true
   }
 
-  function openRename(id: string) {
+  function openEdit(id: string) {
     if (isBusy.value) {
       return
     }
 
     const row = myGearResponse.value.find(item => item.id === id)
 
-    if (row?.source !== 'custom') {
+    if (row === undefined) {
 
       return
 
     }
 
-    editingId.value = id
-    initialName.value = row.customName
+    initialGear.value = row
     saveError.value = null
     announcement.value = ''
     isEditOpen.value = true
   }
 
-  async function handleSave(customName: string) {
+  async function handleSave(input: GearDetailsInput) {
     if (isBusy.value) {
       return
     }
@@ -212,15 +231,31 @@
     const id = editingId.value
     const gearPath = `/api/user/gear/${id}` as const
 
+    const customBody = {
+      customName: input.name,
+      note: input.note,
+      measuredWeightGrams: input.measuredWeightGrams,
+      ownedQuantity: input.ownedQuantity
+    }
+
+    const body = initialGear.value?.source === 'catalog'
+      ? {
+          personalName: input.name === '' ? null : input.name,
+          note: input.note,
+          measuredWeightGrams: input.measuredWeightGrams,
+          ownedQuantity: input.ownedQuantity
+        }
+      : customBody
+
     try {
       const saved = id === null
         ? await requestFetch('/api/user/gear', {
           method: 'POST',
-          body: { customName }
+          body: customBody
         })
         : await requestFetch(gearPath, {
           method: 'PATCH',
-          body: { customName }
+          body
         })
 
       if (!isActive) {
@@ -234,9 +269,9 @@
         : myGearResponse.value.map(row => row.id === id ? saved : row)
 
       isEditOpen.value = false
-      announcement.value = id === null ? 'Custom gear added.' : 'Custom gear renamed.'
+      announcement.value = id === null ? 'Custom gear added.' : 'Gear saved.'
     } catch (error) {
-      globalThis.console.error('Failed to save custom gear:', error)
+      globalThis.console.error('Failed to save gear:', error)
 
       if (isActive) {
         saveError.value = 'Could not save your gear. Try again.'
