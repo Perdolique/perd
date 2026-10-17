@@ -1,5 +1,6 @@
 import type { BrowserContext, Locator, Page, Request, Response, Route } from '@playwright/test'
-import type { StoreGeneric } from 'pinia'
+import { getStores, type StoreGeneric } from 'pinia'
+import type { App } from 'vue'
 import * as v from 'valibot'
 import { mockAccountUser } from '../fixtures/account-user.fixtures.ts'
 import { expect, test, waitForInitialEmailSignInTurnstile } from '../fixtures/global.fixtures.ts'
@@ -840,47 +841,46 @@ async function observeListDeletionCompletion(page: Page) {
 
   await page.exposeFunction('onListDeletionFinished', completion.resolve)
 
-  await page.evaluate(() => {
-    // oxlint-disable-next-line unicorn/consistent-function-scoping -- page.evaluate callbacks must be self-contained.
-    function getRequiredProperty(value: unknown, key: string): unknown {
-      if (typeof value !== 'object' || value === null) {
-        throw new Error(`Expected an object containing ${key}`)
-      }
+  const pinia = await page.evaluateHandle(() => {
+    const root = globalThis.document.querySelector<HTMLElement & {
+      __vue_app__: App;
+    }>('#__nuxt')
 
-      return Reflect.get(value, key)
+    if (root === null) {
+      throw new Error('Expected the Nuxt application root')
     }
 
-    const root = globalThis.document.querySelector('#__nuxt')
-    const app = getRequiredProperty(root, '__vue_app__')
-    const config = getRequiredProperty(app, 'config')
-    const globals = getRequiredProperty(config, 'globalProperties')
-    const pinia = getRequiredProperty(globals, '$pinia')
-    const stores = getRequiredProperty(pinia, '_s')
-
-    if (!(stores instanceof Map)) {
-      throw new Error('Expected the Pinia store registry')
-    }
-
-    const store: unknown = stores.get('packing-lists')
-    const subscribe = getRequiredProperty(store, '$onAction')
-    const notify: unknown = Reflect.get(globalThis, 'onListDeletionFinished')
-
-    if (typeof subscribe !== 'function' || typeof notify !== 'function') {
-      throw new TypeError('Expected a store action subscription and completion callback')
-    }
-
-    const onAction: Parameters<StoreGeneric['$onAction']>[0] = ({ name, after, onError }) => {
-      if (name === 'deletePackingList') {
-        const finish = () => { Reflect.apply(notify, globalThis, []) }
-
-        after(finish)
-        onError(finish)
-      }
-    }
-
-    // Observe the real action across route unmounts and session resets.
-    Reflect.apply(subscribe, store, [onAction, true])
+    // oxlint-disable-next-line no-underscore-dangle -- Vue exposes its mounted app through this runtime property.
+    return root.__vue_app__.config.globalProperties.$pinia
   })
+
+  // Playwright evaluates Pinia's self-contained public helper in the browser.
+  const stores = await pinia.evaluateHandle(getStores)
+
+  try {
+    await stores.evaluate((registeredStores) => {
+      const store = registeredStores.find((registeredStore) => registeredStore.$id === 'packing-lists')
+      const notify: unknown = Reflect.get(globalThis, 'onListDeletionFinished')
+
+      if (store === undefined || typeof notify !== 'function') {
+        throw new TypeError('Expected a store action subscription and completion callback')
+      }
+
+      const onAction: Parameters<StoreGeneric['$onAction']>[0] = ({ name, after, onError }) => {
+        if (name === 'deletePackingList') {
+          const finish = () => { Reflect.apply(notify, globalThis, []) }
+
+          after(finish)
+          onError(finish)
+        }
+      }
+
+      // Observe the real action across route unmounts and session resets.
+      store.$onAction(onAction, true)
+    })
+  } finally {
+    await Promise.all([stores.dispose(), pinia.dispose()])
+  }
 
   return completion
 }
