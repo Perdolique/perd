@@ -1,4 +1,6 @@
 import { createError } from 'nuxt/server'
+import type { MyGearRecord } from '#server/utils/my-gear'
+import { normalizeDecimalNumber } from '#shared/utils/decimal-number'
 
 interface PackingListInventoryBase {
   inventoryId: string;
@@ -26,19 +28,28 @@ interface PackingListInventoryRow {
   personalName: string | null;
 }
 
+interface PackingListEntryWeight {
+  weightGrams: string | null;
+  weightSource: 'measured' | 'catalog' | 'custom' | null;
+}
+
 interface PackingListEntryBase {
   createdAt: Date | string;
   customName: string | null;
   id: string;
   isPacked: boolean;
+  quantity: number;
+  customWeightGrams: string | null;
   updatedAt: Date | string;
 }
 
-interface PackingListCustomEntry extends PackingListEntryBase {
+type PackingListEntryResponseBase = Omit<PackingListEntryBase, 'customWeightGrams'> & PackingListEntryWeight
+
+interface PackingListCustomEntry extends PackingListEntryResponseBase {
   source: 'custom';
 }
 
-interface PackingListInventoryEntry extends PackingListEntryBase {
+interface PackingListInventoryEntry extends PackingListEntryResponseBase {
   inventory: PackingListEntryInventory;
   source: 'inventory';
 }
@@ -81,15 +92,47 @@ function createPackingListInventory(row: PackingListInventoryRow): PackingListEn
   }
 }
 
+/** Resolves live saved-gear weight or the weight owned by a free-text entry. */
+function resolvePackingListWeight(customWeightGrams: string | null, gear: MyGearRecord | null): PackingListEntryWeight {
+  if (gear === null) {
+    return {
+      weightGrams: customWeightGrams === null ? null : normalizeDecimalNumber(customWeightGrams),
+      weightSource: customWeightGrams === null ? null : 'custom'
+    }
+  }
+
+  if (gear.measuredWeightGrams !== null) {
+    return {
+      weightGrams: gear.measuredWeightGrams,
+      weightSource: 'measured'
+    }
+  }
+
+  if (gear.source === 'catalog' && gear.item.weightGrams !== null) {
+    return {
+      weightGrams: gear.item.weightGrams,
+      weightSource: 'catalog'
+    }
+  }
+
+  return {
+    weightGrams: null,
+    weightSource: null
+  }
+}
+
 function createPackingListEntry(
   entry: PackingListEntryBase,
-  inventory: PackingListEntryInventory | null
+  inventory: PackingListEntryInventory | null,
+  gear: MyGearRecord | null
 ): PackingListEntry {
-  const base: PackingListEntryBase = {
+  const base: PackingListEntryResponseBase = {
     createdAt: entry.createdAt,
     customName: entry.customName,
     id: entry.id,
     isPacked: entry.isPacked,
+    quantity: entry.quantity,
+    ...resolvePackingListWeight(entry.customWeightGrams, gear),
     updatedAt: entry.updatedAt
   }
 

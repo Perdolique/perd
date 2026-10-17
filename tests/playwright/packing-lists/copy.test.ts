@@ -33,6 +33,9 @@ function createEntries(): PackingListEntry[] {
     customName: 'Rain jacket',
     source: 'custom',
     isPacked: true,
+    quantity: 1,
+    weightGrams: null,
+    weightSource: null,
     createdAt: date,
     updatedAt: date
   }, {
@@ -40,6 +43,9 @@ function createEntries(): PackingListEntry[] {
     customName: null,
     source: 'inventory',
     isPacked: true,
+    quantity: 1,
+    weightGrams: null,
+    weightSource: null,
     createdAt: date,
     updatedAt: date,
 
@@ -784,6 +790,9 @@ test.describe('Copy packing list', () => {
         customName: 'Fresh sleeping bag',
         source: 'custom',
         isPacked: false,
+        quantity: 1,
+        weightGrams: null,
+        weightSource: null,
         createdAt: date,
         updatedAt: date
       }

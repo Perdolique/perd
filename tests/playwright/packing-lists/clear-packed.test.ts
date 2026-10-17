@@ -52,6 +52,9 @@ const initialEntries = [{
   customName: 'Rain jacket',
   source: 'custom',
   isPacked: true,
+  quantity: 1,
+  weightGrams: null,
+  weightSource: null,
   createdAt: initialDate,
   updatedAt: initialDate
 }, {
@@ -59,6 +62,9 @@ const initialEntries = [{
   customName: null,
   source: 'inventory',
   isPacked: true,
+  quantity: 1,
+  weightGrams: null,
+  weightSource: null,
   createdAt: initialDate,
   updatedAt: initialDate,
 
@@ -74,6 +80,9 @@ const initialEntries = [{
   customName: null,
   source: 'inventory',
   isPacked: true,
+  quantity: 1,
+  weightGrams: null,
+  weightSource: null,
   createdAt: initialDate,
   updatedAt: initialDate,
 

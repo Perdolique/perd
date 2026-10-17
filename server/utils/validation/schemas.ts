@@ -616,9 +616,14 @@ const packingListEntryCreateBodySchema = v.pipe(
   }, 'Exactly one of customName or inventoryId is required')
 )
 
-const packingListEntryUpdateBodySchema = v.object({
-  isPacked: v.boolean()
-})
+const packingListEntryUpdateBodySchema = v.pipe(
+  v.strictObject({
+    isPacked: v.optional(v.boolean()),
+    quantity: v.optional(userEquipmentQuantitySchema),
+    weightGrams: v.optional(userEquipmentWeightSchema)
+  }),
+  v.check((body) => body.isPacked !== undefined || body.quantity !== undefined || body.weightGrams !== undefined, 'Provide at least one field')
+)
 
 const packingListAvailableGearQuerySchema = v.object({
   page: pageQuerySchema,

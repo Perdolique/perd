@@ -151,6 +151,7 @@
   }
 
   .header {
+    overflow-wrap: anywhere;
     text-wrap: balance;
   }
 

@@ -790,6 +790,14 @@ const packingListEntries = pgTable('packing_list_entries', {
       onUpdate: 'cascade'
     }),
 
+  quantity:
+    integer()
+    .notNull()
+    .default(1),
+
+  customWeightGrams:
+    numeric(),
+
   isPacked:
     boolean()
     .notNull()
@@ -814,6 +822,9 @@ const packingListEntries = pgTable('packing_list_entries', {
     'packing_list_entries_source_check',
     sql`(("packing_list_entries"."customName" IS NOT NULL) <> ("packing_list_entries"."userEquipmentId" IS NOT NULL))`
   ),
+  check('packing_list_entries_quantity_check', sql`${table.quantity} >= 1`),
+  check('packing_list_entries_weight_check', sql`${table.customWeightGrams} IS NULL OR (${table.customWeightGrams} >= 0 AND ${table.customWeightGrams} < 'Infinity'::numeric)`),
+  check('packing_list_entries_custom_weight_source_check', sql`${table.userEquipmentId} IS NULL OR ${table.customWeightGrams} IS NULL`),
   unique().on(table.packingListId, table.userEquipmentId)
 ])
 

@@ -18,6 +18,8 @@
         </span>
       </label>
 
+      <p :class="$style.measurements">Quantity: {{ entry.quantity }} · {{ entry.weightText }}</p>
+
       <span v-if="entry.isPacking" :class="$style.status">Saving {{ entry.title }}…</span>
 
       <p v-if="entry.hasPackError" :id="packErrorId" :class="$style.error" role="alert">
@@ -25,14 +27,22 @@
       </p>
     </div>
 
-    <PerdIconButton
-      icon="hugeicons:delete-02"
-      :label="removeLabel"
-      :loading="entry.isRemoving"
-      :disabled="entry.isRemoveDisabled"
-      variant="danger"
-      @click="emitRemove"
-    />
+    <div :class="$style.actions">
+      <PerdIconButton
+        icon="hugeicons:pencil-edit-02"
+        :label="editLabel"
+        :disabled="entry.isEditDisabled"
+        @click="emitEdit"
+      />
+      <PerdIconButton
+        icon="hugeicons:delete-02"
+        :label="removeLabel"
+        :loading="entry.isRemoving"
+        :disabled="entry.isRemoveDisabled"
+        variant="danger"
+        @click="emitRemove"
+      />
+    </div>
   </li>
 </template>
 
@@ -46,6 +56,7 @@
   }
 
   interface Emits {
+    edit: [entryId: string];
     packChange: [entryId: string, isPacked: boolean];
     remove: [entryId: string];
   }
@@ -57,6 +68,7 @@
   let shouldRestorePackFocus = false
   const hasSubtitle = computed(() => entry.subtitle !== '')
   const packErrorDescriptionId = computed(() => entry.hasPackError ? packErrorId : undefined)
+  const editLabel = computed(() => `Edit ${entry.title}`)
   const removeLabel = computed(() => `Remove ${entry.title}`)
 
   function handlePackChange(event: Event) {
@@ -71,6 +83,10 @@
     shouldRestorePackFocus = globalThis.document.activeElement === checkbox
 
     emit('packChange', entry.id, checkbox.checked)
+  }
+
+  function emitEdit() {
+    emit('edit', entry.id)
   }
 
   function emitRemove() {
@@ -105,7 +121,20 @@
     list-style: none;
   }
 
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-4);
+  }
+
+  .measurements {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-14);
+    overflow-wrap: anywhere;
+  }
+
   .content {
+    min-inline-size: 0;
     display: grid;
     gap: var(--spacing-4);
   }

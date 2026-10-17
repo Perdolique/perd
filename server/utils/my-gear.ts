@@ -1,4 +1,4 @@
-import { and, desc, eq } from 'drizzle-orm'
+import { and, desc, eq, inArray } from 'drizzle-orm'
 import { createError } from 'nuxt/server'
 
 import {
@@ -46,14 +46,14 @@ interface CustomMyGearRecord extends MyGearRecordBase {
 }
 
 type MyGearRecord = CatalogMyGearRecord | CustomMyGearRecord
-type MyGearReadDatabase = ReturnType<typeof createHttpClient>
+type MyGearReadDatabase = Pick<ReturnType<typeof createHttpClient>, 'select'>
 
 /** Reads complete private gear records, including live catalog weight, for all gear endpoints. */
-async function readMyGear(database: MyGearReadDatabase, userId: string, id?: string): Promise<MyGearRecord[]> {
+async function readMyGear(database: MyGearReadDatabase, userId: string, id?: string | string[]): Promise<MyGearRecord[]> {
   const conditions = [eq(userEquipment.userId, userId)]
 
   if (id !== undefined) {
-    conditions.push(eq(userEquipment.id, id))
+    conditions.push(Array.isArray(id) ? inArray(userEquipment.id, id) : eq(userEquipment.id, id))
   }
 
   const rows = await database

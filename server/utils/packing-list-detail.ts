@@ -1,4 +1,5 @@
 import { createError } from 'nuxt/server'
+import { readMyGear, type MyGearRecord } from '#server/utils/my-gear'
 import type { createHttpClient } from '#server/utils/database'
 
 import {
@@ -7,7 +8,7 @@ import {
   type PackingListEntry
 } from '#server/utils/packing-list-entry'
 
-type PackingListReadDatabase = Pick<ReturnType<typeof createHttpClient>, 'query'>
+type PackingListReadDatabase = Pick<ReturnType<typeof createHttpClient>, 'query' | 'select'>
 
 interface PackingListEntryItemBrand {
   name: string;
@@ -35,6 +36,8 @@ interface PackingListEntryRow {
   customName: string | null;
   id: string;
   isPacked: boolean;
+  quantity: number;
+  customWeightGrams: string | null;
   updatedAt: Date | string;
   userEquipment: PackingListEntryUserEquipment | null;
 }
@@ -55,7 +58,7 @@ interface PackingListQueryDetail {
   updatedAt: Date | string;
 }
 
-function createEntryResponse(entry: PackingListEntryRow): PackingListEntry {
+function createEntryResponse(entry: PackingListEntryRow, weights: Map<string, MyGearRecord>): PackingListEntry {
   const gear = entry.userEquipment
 
   const inventory = gear === null ? null : createPackingListInventory({
@@ -67,7 +70,13 @@ function createEntryResponse(entry: PackingListEntryRow): PackingListEntry {
     itemName: gear.item?.name ?? null
   })
 
-  return createPackingListEntry(entry, inventory)
+  const savedGear = gear === null ? null : weights.get(gear.id)
+
+  if (savedGear === undefined) {
+    throw createError({ status: 404 })
+  }
+
+  return createPackingListEntry(entry, inventory, savedGear)
 }
 
 async function readPackingListDetail(database: PackingListReadDatabase, id: string, userId: string): Promise<PackingListDetail> {
@@ -91,6 +100,8 @@ async function readPackingListDetail(database: PackingListReadDatabase, id: stri
           customName: true,
           id: true,
           isPacked: true,
+          quantity: true,
+          customWeightGrams: true,
           updatedAt: true
         },
 
@@ -138,7 +149,10 @@ async function readPackingListDetail(database: PackingListReadDatabase, id: stri
     throw createError({ status: 404 })
   }
 
-  const entries = packingList.entries.map(createEntryResponse)
+  const inventoryIds = packingList.entries.flatMap(entry => entry.userEquipment === null ? [] : [entry.userEquipment.id])
+  const gear = inventoryIds.length === 0 ? [] : await readMyGear(database, userId, inventoryIds)
+  const weights = new Map(gear.map(record => [record.id, record]))
+  const entries = packingList.entries.map(entry => createEntryResponse(entry, weights))
 
   return {
     createdAt: packingList.createdAt,

@@ -13,6 +13,7 @@ import {
   userEquipment
 } from '#server/database/schema'
 
+import { readMyGear } from '#server/utils/my-gear'
 import { createRuntimeWebSocketClient } from '#server/utils/config'
 
 import {
@@ -92,6 +93,8 @@ export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInp
           customName: packingListEntries.customName,
           id: packingListEntries.id,
           isPacked: packingListEntries.isPacked,
+          quantity: packingListEntries.quantity,
+          customWeightGrams: packingListEntries.customWeightGrams,
           updatedAt: packingListEntries.updatedAt
         })
 
@@ -102,7 +105,13 @@ export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInp
         })
       }
 
-      const entryResponse = createPackingListEntry(createdEntry, inventory)
+      const [gear] = inventoryId === undefined ? [] : await readMyGear(transaction, userId, inventoryId)
+
+      if (inventoryId !== undefined && gear === undefined) {
+        throw createError({ status: 404 })
+      }
+
+      const entryResponse = createPackingListEntry(createdEntry, inventory, gear ?? null)
 
       const [updatedList] = await transaction
         .update(packingLists)

@@ -33,6 +33,9 @@ interface PackingListEntryBase {
   customName: string | null;
   id: string;
   isPacked: boolean;
+  quantity: number;
+  weightGrams: string | null;
+  weightSource: 'measured' | 'catalog' | 'custom' | null;
   updatedAt: string;
 }
 
@@ -174,6 +177,9 @@ function createPackingListEntries(): [PackingListCustomEntry, PackingListInvento
     customName: 'Rain jacket',
     id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
     isPacked: false,
+    quantity: 1,
+    weightGrams: null,
+    weightSource: null,
     source: 'custom',
     updatedAt: '2026-04-03T09:01:00.000Z'
   }, {
@@ -190,6 +196,9 @@ function createPackingListEntries(): [PackingListCustomEntry, PackingListInvento
     },
 
     isPacked: true,
+    quantity: 1,
+    weightGrams: null,
+    weightSource: null,
     source: 'inventory',
     updatedAt: '2026-04-03T09:02:00.000Z'
   }]
@@ -225,6 +234,9 @@ function createInventoryEntryMutation(
       },
 
       isPacked: false,
+      quantity: 1,
+      weightGrams: null,
+      weightSource: null,
       source: 'inventory',
       updatedAt: '2026-04-03T09:03:00.000Z'
     },
@@ -240,6 +252,9 @@ function createCustomEntryMutation(customName: string): PackingListEntryMutation
       customName,
       id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e4',
       isPacked: false,
+      quantity: 1,
+      weightGrams: null,
+      weightSource: null,
       source: 'custom',
       updatedAt: '2026-04-03T09:04:00.000Z'
     },
@@ -2629,6 +2644,9 @@ test.describe('Packing list shell', () => {
       },
 
       isPacked: true,
+      quantity: 1,
+      weightGrams: null,
+      weightSource: null,
       source: 'inventory',
       updatedAt: '2026-04-03T09:02:00.000Z'
     }
