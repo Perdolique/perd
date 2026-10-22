@@ -168,6 +168,15 @@ test.describe('Packing entry quantity and per-item weight', () => {
 
     await signIn(page)
 
+    const summary = page.getByRole('region', {
+      name: 'All planned gear weight',
+      includeHidden: true
+    })
+
+    await expect(summary).toContainText('Total weight: Unknown')
+    await expect(summary).toContainText('Unknown weight: 1 entry')
+    await expect(summary.getByText('No items', { exact: true })).toHaveCount(0)
+
     const edit = page.getByRole('button', {
       name: `Edit ${textName}`,
       exact: true
@@ -193,8 +202,10 @@ test.describe('Packing entry quantity and per-item weight', () => {
       await expect(quantity).toBeFocused()
       await quantity.fill('5')
       await weight.fill('1.25')
+      await expect(summary).toContainText('Total weight: Unknown')
       await dialog.getByRole('button', { name: 'Cancel' }).click()
       await expect(edit).toBeFocused()
+      await expect(summary).toContainText('Total weight: Unknown')
       expect(state.bodies).toStrictEqual([])
     })
 
@@ -233,6 +244,8 @@ test.describe('Packing entry quantity and per-item weight', () => {
       await expect(dialog.getByRole('alert')).toHaveText('Could not save changes. Try again.')
       await expect(quantity).toHaveValue('3')
       await expect(weight).toHaveValue('123.456789012345678901')
+      await expect(summary).toContainText('Total weight: Unknown')
+      await expect(summary).toContainText('Unknown weight: 1 entry')
     })
 
     await test.step('Locks pending actions and confirms saved values', async () => {
@@ -246,6 +259,7 @@ test.describe('Packing entry quantity and per-item weight', () => {
       await page.keyboard.press('Escape')
       await expect(dialog).toBeVisible()
       await expect(page.getByText('Quantity: 1 · Weight unknown')).toBeVisible()
+      await expect(summary).toContainText('Total weight: Unknown')
       expect(state.bodies).toHaveLength(2)
       gate.resolve()
       await expect(dialog).not.toBeVisible()
@@ -253,6 +267,8 @@ test.describe('Packing entry quantity and per-item weight', () => {
       await expect(page.getByText('Quantity: 3 · 123.456789012345678901 g per item · Custom')).toBeVisible()
       await expect(page.getByRole('checkbox', { name: textName })).toBeChecked()
       await expect(page.getByText('1 of 1 packed · All packed')).toBeVisible()
+      await expect(summary).toContainText('Total weight: 370.37 g')
+      await expect(summary).toContainText('Unknown weight: 0 entries')
 
       expect(state.bodies).toStrictEqual([{
         quantity: 3,
@@ -275,6 +291,7 @@ test.describe('Packing entry quantity and per-item weight', () => {
       }).click()
 
       await expect(page.getByText('Quantity: 3 · 123.456789012345678901 g per item · Custom')).toBeVisible()
+      await expect(summary).toContainText('Total weight: 370.37 g')
     })
 
     await test.step('Keeps known zero distinct from unknown weight', async () => {
@@ -282,19 +299,34 @@ test.describe('Packing entry quantity and per-item weight', () => {
       await weight.fill('0')
       await save.click()
       await expect(page.getByText('Quantity: 3 · 0 g per item · Custom')).toBeVisible()
+      await expect(summary).toContainText('Total weight: 0 g')
+      await expect(summary).toContainText('Unknown weight: 0 entries')
+      await expect(summary.getByText('No items', { exact: true })).toHaveCount(0)
+      await edit.click()
+      await weight.fill('1000.5')
+      await save.click()
+      await expect(summary).toContainText('Total weight: 3.002 kg')
       await edit.click()
       await weight.fill('')
       await save.click()
       await expect(page.getByText('Quantity: 3 · Weight unknown')).toBeVisible()
+      await expect(summary).toContainText('Total weight: Unknown')
+      await expect(summary).toContainText('Unknown weight: 1 entry')
     })
   })
 
   test('shows catalog and private measured sources and reloads live weight without pinning it to a quantity edit', async ({ context, page }) => {
-    const state = await setup(context, [inventoryEntry('catalog'), inventoryEntry('custom')])
+    const state = await setup(context, [inventoryEntry('catalog'), inventoryEntry('custom'), textEntry()])
 
     await signIn(page)
+
+    const summary = page.getByRole('region', { name: 'All planned gear weight' })
+
     await expect(page.getByText('Quantity: 1 · 123.456 g per item · Catalog')).toBeVisible()
     await expect(page.getByText('Quantity: 1 · 0 g per item · Measured')).toBeVisible()
+    await expect(summary).toContainText('Known weight: 123.456 g')
+    await expect(summary).toContainText('Total is incomplete')
+    await expect(summary).toContainText('Unknown weight: 1 entry')
 
     await page.getByRole('button', {
       name: 'Edit Private stove',
@@ -317,6 +349,7 @@ test.describe('Packing entry quantity and per-item weight', () => {
 
     await dialog.getByRole('button', { name: 'Save changes' }).click()
     await expect(page.getByText('Quantity: 8 · 0 g per item · Measured')).toBeVisible()
+    await expect(summary).toContainText('Known weight: 123.456 g')
     expect(state.bodies).toStrictEqual([{ quantity: 8 }])
 
     const privateEntry = required(state.detail.entries.find(entry => entry.id === 'custom'))
@@ -330,6 +363,17 @@ test.describe('Packing entry quantity and per-item weight', () => {
 
     await page.getByRole('link', { name: /Trip/u }).click()
     await expect(page.getByText('Quantity: 8 · 45.1234 g per item · Measured')).toBeVisible()
+    await expect(summary).toContainText('Known weight: 484.443 g')
+    await expect(summary).toContainText('Unknown weight: 1 entry')
+
+    const checkbox = page.getByRole('checkbox', { name: 'Private stove' })
+
+    await checkbox.focus()
+    await page.keyboard.press('Space')
+    await expect(checkbox).toBeChecked()
+    await expect(checkbox).toBeEnabled()
+    await expect(summary).toContainText('Known weight: 484.443 g')
+    await expect(summary).toContainText('Unknown weight: 1 entry')
   })
 
   test('keeps long names, exact weights and row actions within a narrow viewport', async ({ context, page }) => {
@@ -365,6 +409,31 @@ test.describe('Packing entry quantity and per-item weight', () => {
     await dialog.getByRole('button', { name: 'Save changes' }).click()
     await expect(dialog).not.toBeVisible()
     await expect(page.getByText(/Quantity: 2147483647/u)).toBeVisible()
+
+    const summary = page.getByRole('region', { name: 'All planned gear weight' })
+
+    await expect(summary).toContainText('Total weight: 265121435515141626551514162655151416.266 kg')
+    await expect(summary).toContainText('Unknown weight: 0 entries')
+    await expect(summary).toHaveAttribute('aria-live', 'polite')
+    await expect(summary).toHaveAttribute('aria-atomic', 'true')
+
+    const summaryBounds = await summary.locator('p').evaluateAll(elements => {
+      const paragraphBounds = elements.map(element => {
+        const rect = element.getBoundingClientRect()
+
+        return {
+          left: rect.left,
+          right: rect.right
+        }
+      })
+
+      return paragraphBounds
+    })
+
+    for (const rect of summaryBounds) {
+      expect(rect.left).toBeGreaterThanOrEqual(0)
+      expect(rect.right).toBeLessThanOrEqual(320)
+    }
 
     const row = page.getByRole('listitem').filter({ has: edit })
 

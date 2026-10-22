@@ -59,6 +59,12 @@ interface PackingListDetail {
   updatedAt: string;
 }
 
+interface PackingListWeightSummary {
+  knownWeightGrams: string;
+  knownEntryCount: number;
+  unknownEntryCount: number;
+}
+
 interface PackingListView extends PackingListSummary {
   isPackedUnconfirmed?: boolean;
   formattedUpdatedAt: string;
@@ -91,7 +97,8 @@ export type {
   PackingListInventoryEntry,
   PackingListEntryView,
   PackingListSummary,
-  PackingListView
+  PackingListView,
+  PackingListWeightSummary
 }
 
 export type { PackingListEntryInventory } from '#server/utils/packing-list-entry'
