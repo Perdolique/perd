@@ -190,45 +190,53 @@ function savedGearEntry(detail: Awaited<ReturnType<typeof readPackingListDetail>
 
 describe('packing quantities and weight persistence', () => {
   beforeAll(async () => {
-    isolated = await createIsolatedPostgreSQL('packing_measurements', { beforeMigration: migrationName })
+    isolated = await createIsolatedPostgreSQL('packing_measurements')
   })
 
   afterAll(async () => { await isolated?.dispose() })
 
   it('migrates existing text and saved-gear rows with defaults and keeps references and packed marks', async () => {
-    const { database } = resources()
-    const [ownerRow] = await database.insert(users).values({}).returning()
-    const owner = required(ownerRow)
+    const previous = await createIsolatedPostgreSQL('packing_measurements_migration', { beforeMigration: migrationName })
 
-    const [listRow] = await database.insert(packingLists).values({
-      name: 'Legacy',
-      userId: owner.id
-    }).returning()
+    try {
+      const { database } = previous
+      const [ownerRow] = await database.insert(users).values({}).returning()
+      const owner = required(ownerRow)
 
-    const list = required(listRow)
+      const [listRow] = await database.insert(packingLists).values({
+        name: 'Legacy',
+        userId: owner.id
+      }).returning()
 
-    const [gearRow] = await database.insert(userEquipment).values({
-      userId: owner.id,
-      customName: 'Legacy private'
-    }).returning()
+      const list = required(listRow)
 
-    const gear = required(gearRow)
+      const [gearRow] = await database.insert(userEquipment).values({
+        userId: owner.id,
+        customName: 'Legacy private'
+      }).returning()
 
-    await database.execute(sql`INSERT INTO packing_list_entries ("packingListId", "customName", "isPacked") VALUES (${list.id}, 'Legacy text', true)`)
-    await database.execute(sql`INSERT INTO packing_list_entries ("packingListId", "userEquipmentId", "isPacked") VALUES (${list.id}, ${gear.id}, true)`)
+      const gear = required(gearRow)
 
-    const before = await database.execute(sql`SELECT id, "userEquipmentId", "isPacked", "createdAt", "updatedAt" FROM packing_list_entries ORDER BY id`)
-    const migration = await readFile(new globalThis.URL(`../../server/database/migrations/${migrationName}/migration.sql`, import.meta.url), 'utf8')
+      await database.execute(sql`INSERT INTO packing_list_entries ("packingListId", "customName", "isPacked") VALUES (${list.id}, 'Legacy text', true)`)
+      await database.execute(sql`INSERT INTO packing_list_entries ("packingListId", "userEquipmentId", "isPacked") VALUES (${list.id}, ${gear.id}, true)`)
 
-    await database.execute(sql.raw(migration))
+      const before = await database.execute(sql`SELECT id, "userEquipmentId", "isPacked", "createdAt", "updatedAt" FROM packing_list_entries ORDER BY id`)
+      const migrationPath = new globalThis.URL(`../../server/database/migrations/${migrationName}/migration.sql`, import.meta.url)
+      const migration = await readFile(migrationPath, 'utf8')
 
-    const after = await database.execute(sql`SELECT id, "userEquipmentId", "isPacked", "createdAt", "updatedAt" FROM packing_list_entries ORDER BY id`)
+      await database.execute(sql.raw(migration))
 
-    expect(after.rows).toStrictEqual(before.rows)
+      const after = await database.execute(sql`SELECT id, "userEquipmentId", "isPacked", "createdAt", "updatedAt" FROM packing_list_entries ORDER BY id`)
 
-    const rows = await database.select().from(packingListEntries)
+      expect(after.rows).toStrictEqual(before.rows)
 
-    expect(rows.map(row => [row.quantity, row.customWeightGrams])).toStrictEqual([[1, null], [1, null]])
+      const rows = await database.select().from(packingListEntries)
+      const measurements = rows.map(row => [row.quantity, row.customWeightGrams])
+
+      expect(measurements).toStrictEqual([[1, null], [1, null]])
+    } finally {
+      await previous.dispose()
+    }
   })
 
   it('preserves exact custom weight, partial fields, packed marks and list versions, then copies them independently', async () => {
@@ -381,7 +389,10 @@ describe('packing quantities and weight persistence', () => {
     const retainedQuantity = await readPackingListDetail(database, data.list.id, data.owner.id)
 
     expect(retainedQuantity.entries.find(entry => entry.id === catalog.entry.id)?.quantity).toBe(8)
-    await database.update(userEquipment).set({ measuredWeightGrams: null }).where(eq(userEquipment.userId, data.owner.id))
+
+    await database.update(userEquipment).set({ measuredWeightGrams: null }).where(
+      eq(userEquipment.userId, data.owner.id)
+    )
 
     const detail = await readPackingListDetail(database, data.list.id, data.owner.id)
 
@@ -395,7 +406,9 @@ describe('packing quantities and weight persistence', () => {
       weightSource: null
     })
 
-    await database.update(itemPropertyValues).set({ valueNumber: '321.00001' }).where(eq(itemPropertyValues.itemId, data.item.id))
+    await database.update(itemPropertyValues).set({ valueNumber: '321.00001' }).where(
+      eq(itemPropertyValues.itemId, data.item.id)
+    )
 
     const liveCatalog = await editEntry(eventFor(data, { isPacked: true }, catalog.entry.id))
 
@@ -414,7 +427,9 @@ describe('packing quantities and weight persistence', () => {
       isPacked: false
     })
 
-    await database.update(categoryProperties).set({ unit: 'kg' }).where(eq(categoryProperties.id, data.property.id))
+    await database.update(categoryProperties).set({ unit: 'kg' }).where(
+      eq(categoryProperties.id, data.property.id)
+    )
 
     const unsupportedUnit = await readPackingListDetail(database, data.list.id, data.owner.id)
 

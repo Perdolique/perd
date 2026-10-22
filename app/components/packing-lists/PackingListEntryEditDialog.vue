@@ -188,7 +188,6 @@
   .component {
     display: grid;
     gap: var(--spacing-16);
-    min-inline-size: 0;
   }
 
   .field {
@@ -205,7 +204,6 @@
     border-radius: var(--layout-button-radius-small);
     background: var(--color-background-elevated);
     color: var(--color-text-primary);
-    font: inherit;
 
     &:focus-visible {
       outline: 2px solid var(--color-accent-primary);

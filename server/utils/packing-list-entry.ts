@@ -95,9 +95,12 @@ function createPackingListInventory(row: PackingListInventoryRow): PackingListEn
 /** Resolves live saved-gear weight or the weight owned by a free-text entry. */
 function resolvePackingListWeight(customWeightGrams: string | null, gear: MyGearRecord | null): PackingListEntryWeight {
   if (gear === null) {
+    const weightGrams = customWeightGrams === null ? null : normalizeDecimalNumber(customWeightGrams)
+    const weightSource = customWeightGrams === null ? null : 'custom'
+
     return {
-      weightGrams: customWeightGrams === null ? null : normalizeDecimalNumber(customWeightGrams),
-      weightSource: customWeightGrams === null ? null : 'custom'
+      weightGrams,
+      weightSource
     }
   }
 
@@ -123,25 +126,41 @@ function resolvePackingListWeight(customWeightGrams: string | null, gear: MyGear
 
 function createPackingListEntry(
   entry: PackingListEntryBase,
-  inventory: PackingListEntryInventory | null,
   gear: MyGearRecord | null
 ): PackingListEntry {
+  const { weightGrams, weightSource } = resolvePackingListWeight(entry.customWeightGrams, gear)
+
   const base: PackingListEntryResponseBase = {
     createdAt: entry.createdAt,
     customName: entry.customName,
     id: entry.id,
     isPacked: entry.isPacked,
     quantity: entry.quantity,
-    ...resolvePackingListWeight(entry.customWeightGrams, gear),
+    weightGrams,
+    weightSource,
     updatedAt: entry.updatedAt
   }
 
-  if (inventory === null) {
+  if (gear === null) {
     return {
       ...base,
       source: 'custom'
     }
   }
+
+  const inventory: PackingListEntryInventory = gear.source === 'custom'
+    ? {
+      inventoryId: gear.id,
+      itemName: gear.customName,
+      source: 'custom'
+    }
+    : {
+      brand: gear.item.brand.name,
+      category: gear.item.category.name,
+      inventoryId: gear.id,
+      itemName: gear.personalName ?? gear.item.name,
+      source: 'catalog'
+    }
 
   return {
     ...base,

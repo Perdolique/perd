@@ -134,7 +134,6 @@
   }
 
   .content {
-    min-inline-size: 0;
     display: grid;
     gap: var(--spacing-4);
   }

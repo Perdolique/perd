@@ -228,12 +228,14 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
       entry = {
         ...entry,
         quantity: confirmed.quantity,
-        updatedAt: confirmed.updatedAt,
+        updatedAt: confirmed.updatedAt
+      }
 
-        ...(entry.source === 'custom' ? {
-          weightGrams: confirmed.weightGrams,
-          weightSource: confirmed.weightGrams === null ? null : 'custom'
-        } : {})
+      if (entry.source === 'custom') {
+        const weightSource = confirmed.weightGrams === null ? null : 'custom'
+
+        entry.weightGrams = confirmed.weightGrams
+        entry.weightSource = weightSource
       }
     }
 
@@ -867,16 +869,21 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
         return null
       }
 
-      confirmedEntryFields.set(createEntryOperationKey(packingListId, entryId), {
+      const operationKey = createEntryOperationKey(packingListId, entryId)
+      const weightGrams = response.entry.source === 'custom' ? response.entry.weightGrams : null
+
+      confirmedEntryFields.set(operationKey, {
         quantity: response.entry.quantity,
-        weightGrams: response.entry.source === 'custom' ? response.entry.weightGrams : null,
+        weightGrams,
         updatedAt: response.entry.updatedAt
       })
 
       finishSummaryOperation(operation, (summary) => {
+        const updatedAt = latestPackingListUpdatedAt(summary.updatedAt, response.packingListUpdatedAt)
+
         return {
           ...summary,
-          updatedAt: latestPackingListUpdatedAt(summary.updatedAt, response.packingListUpdatedAt)
+          updatedAt
         }
       })
 

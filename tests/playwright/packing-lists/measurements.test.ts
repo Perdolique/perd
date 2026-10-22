@@ -187,89 +187,106 @@ test.describe('Packing entry quantity and per-item weight', () => {
 
     const save = dialog.getByRole('button', { name: 'Save changes' })
 
-    await edit.focus()
-    await page.keyboard.press('Enter')
-    await expect(quantity).toBeFocused()
-    await quantity.fill('5')
-    await weight.fill('1.25')
-    await dialog.getByRole('button', { name: 'Cancel' }).click()
-    await expect(edit).toBeFocused()
-    expect(state.bodies).toStrictEqual([])
-    await edit.click()
-    await expect(quantity).toHaveValue('1')
-    await expect(weight).toHaveValue('')
-    await save.click()
-    await expect(dialog).not.toBeVisible()
-    expect(state.bodies).toStrictEqual([])
-    await edit.click()
-    await quantity.fill('1.5')
-    await weight.fill('-1')
-    await save.click()
-    await expect(quantity).toBeFocused()
-    await expect(quantity).toHaveAttribute('aria-invalid', 'true')
-    await quantity.fill('3')
-    await save.click()
-    await expect(weight).toBeFocused()
-    await expect(weight).toHaveAttribute('aria-invalid', 'true')
-    await weight.fill('123.456789012345678901')
+    await test.step('Cancels a draft and restores the trigger focus', async () => {
+      await edit.focus()
+      await page.keyboard.press('Enter')
+      await expect(quantity).toBeFocused()
+      await quantity.fill('5')
+      await weight.fill('1.25')
+      await dialog.getByRole('button', { name: 'Cancel' }).click()
+      await expect(edit).toBeFocused()
+      expect(state.bodies).toStrictEqual([])
+    })
 
-    state.fail = true
+    await test.step('Skips unchanged values and resets the draft', async () => {
+      await edit.click()
+      await expect(quantity).toHaveValue('1')
+      await expect(weight).toHaveValue('')
+      await save.click()
+      await expect(dialog).not.toBeVisible()
+      expect(state.bodies).toStrictEqual([])
+    })
 
-    const expectedError = expectConsoleError(/Failed to edit packing list entry/u)
+    await test.step('Validates quantity and weight without a request', async () => {
+      await edit.click()
+      await quantity.fill('1.5')
+      await weight.fill('-1')
+      await save.click()
+      await expect(quantity).toBeFocused()
+      await expect(quantity).toHaveAttribute('aria-invalid', 'true')
+      await quantity.fill('3')
+      await save.click()
+      await expect(weight).toBeFocused()
+      await expect(weight).toHaveAttribute('aria-invalid', 'true')
+      await weight.fill('123.456789012345678901')
+    })
 
-    await save.click()
+    await test.step('Preserves the draft after a failed save', async () => {
+      state.fail = true
 
-    await expectedError
+      const expectedError = expectConsoleError(/Failed to edit packing list entry/u)
 
-    await expect(dialog.getByRole('alert')).toHaveText('Could not save changes. Try again.')
-    await expect(quantity).toHaveValue('3')
-    await expect(weight).toHaveValue('123.456789012345678901')
+      await save.click()
 
-    const gate = createDeferred()
+      await expectedError
 
-    state.gate = gate.promise
+      await expect(dialog.getByRole('alert')).toHaveText('Could not save changes. Try again.')
+      await expect(quantity).toHaveValue('3')
+      await expect(weight).toHaveValue('123.456789012345678901')
+    })
 
-    await save.click()
-    await expect(save).toBeDisabled()
-    await expect(dialog.getByRole('button', { name: 'Cancel' })).toBeDisabled()
-    await page.keyboard.press('Escape')
-    await expect(dialog).toBeVisible()
-    await expect(page.getByText('Quantity: 1 · Weight unknown')).toBeVisible()
-    expect(state.bodies).toHaveLength(2)
-    gate.resolve()
-    await expect(dialog).not.toBeVisible()
-    await expect(edit).toBeFocused()
-    await expect(page.getByText('Quantity: 3 · 123.456789012345678901 g per item · Custom')).toBeVisible()
-    await expect(page.getByRole('checkbox', { name: textName })).toBeChecked()
-    await expect(page.getByText('1 of 1 packed · All packed')).toBeVisible()
+    await test.step('Locks pending actions and confirms saved values', async () => {
+      const gate = createDeferred()
 
-    expect(state.bodies).toStrictEqual([{
-      quantity: 3,
-      weightGrams: '123.456789012345678901'
-    }, {
-      quantity: 3,
-      weightGrams: '123.456789012345678901'
-    }])
+      state.gate = gate.promise
 
-    await page.reload()
+      await save.click()
+      await expect(save).toBeDisabled()
+      await expect(dialog.getByRole('button', { name: 'Cancel' })).toBeDisabled()
+      await page.keyboard.press('Escape')
+      await expect(dialog).toBeVisible()
+      await expect(page.getByText('Quantity: 1 · Weight unknown')).toBeVisible()
+      expect(state.bodies).toHaveLength(2)
+      gate.resolve()
+      await expect(dialog).not.toBeVisible()
+      await expect(edit).toBeFocused()
+      await expect(page.getByText('Quantity: 3 · 123.456789012345678901 g per item · Custom')).toBeVisible()
+      await expect(page.getByRole('checkbox', { name: textName })).toBeChecked()
+      await expect(page.getByText('1 of 1 packed · All packed')).toBeVisible()
 
-    // Mocked guest creation does not create an SSR session cookie.
-    await waitForInitialEmailSignInTurnstile(page)
+      expect(state.bodies).toStrictEqual([{
+        quantity: 3,
+        weightGrams: '123.456789012345678901'
+      }, {
+        quantity: 3,
+        weightGrams: '123.456789012345678901'
+      }])
+    })
 
-    await page.getByRole('button', {
-      name: 'Continue as guest',
-      exact: true
-    }).click()
+    await test.step('Reloads the exact saved measurements', async () => {
+      await page.reload()
 
-    await expect(page.getByText('Quantity: 3 · 123.456789012345678901 g per item · Custom')).toBeVisible()
-    await edit.click()
-    await weight.fill('0')
-    await save.click()
-    await expect(page.getByText('Quantity: 3 · 0 g per item · Custom')).toBeVisible()
-    await edit.click()
-    await weight.fill('')
-    await save.click()
-    await expect(page.getByText('Quantity: 3 · Weight unknown')).toBeVisible()
+      // Mocked guest creation does not create an SSR session cookie.
+      await waitForInitialEmailSignInTurnstile(page)
+
+      await page.getByRole('button', {
+        name: 'Continue as guest',
+        exact: true
+      }).click()
+
+      await expect(page.getByText('Quantity: 3 · 123.456789012345678901 g per item · Custom')).toBeVisible()
+    })
+
+    await test.step('Keeps known zero distinct from unknown weight', async () => {
+      await edit.click()
+      await weight.fill('0')
+      await save.click()
+      await expect(page.getByText('Quantity: 3 · 0 g per item · Custom')).toBeVisible()
+      await edit.click()
+      await weight.fill('')
+      await save.click()
+      await expect(page.getByText('Quantity: 3 · Weight unknown')).toBeVisible()
+    })
   })
 
   test('shows catalog and private measured sources and reloads live weight without pinning it to a quantity edit', async ({ context, page }) => {

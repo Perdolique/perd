@@ -3,16 +3,7 @@ import { and, eq } from 'drizzle-orm'
 import { createError, defineEventHandler, isNuxtError, readValidatedBody, setResponseStatus } from 'nuxt/server'
 import { getValidatedRouteParams } from '#server/utils/request'
 import type { ApiRequestEvent } from '#shared/types/api-request'
-
-import {
-  brands,
-  equipmentCategories,
-  equipmentItems,
-  packingListEntries,
-  packingLists,
-  userEquipment
-} from '#server/database/schema'
-
+import { packingListEntries, packingLists } from '#server/database/schema'
 import { readMyGear } from '#server/utils/my-gear'
 import { createRuntimeWebSocketClient } from '#server/utils/config'
 
@@ -23,14 +14,7 @@ import {
 } from '#server/utils/packing-list-write'
 
 import { validateSessionUser } from '#server/utils/session'
-
-import {
-  createPackingListEntry,
-  createPackingListInventory,
-  type PackingListEntryInventory,
-  type PackingListEntryMutationResponse,
-  type PackingListInventoryRow
-} from '#server/utils/packing-list-entry'
+import { createPackingListEntry, type PackingListEntryMutationResponse } from '#server/utils/packing-list-entry'
 
 import {
   validatePackingListEntryCreateBody,
@@ -48,35 +32,10 @@ export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInp
     const response = await dbWebsocket.transaction(async (transaction) => {
       const ownedList = await lockPackingList(transaction, id, userId)
       const updatedAt = nextPackingListUpdatedAt(ownedList.updatedAt)
-      let inventory: PackingListEntryInventory | null = null
+      const [gear] = inventoryId === undefined ? [] : await readMyGear(transaction, userId, inventoryId)
 
-      if (inventoryId !== undefined) {
-        const [ownedInventoryRow]: PackingListInventoryRow[] = await transaction
-          .select({
-            brand: brands.name,
-            category: equipmentCategories.name,
-            customName: userEquipment.customName,
-            personalName: userEquipment.personalName,
-            inventoryId: userEquipment.id,
-            itemName: equipmentItems.name
-          })
-          .from(userEquipment)
-          .leftJoin(equipmentItems, eq(userEquipment.itemId, equipmentItems.id))
-          .leftJoin(brands, eq(equipmentItems.brandId, brands.id))
-          .leftJoin(equipmentCategories, eq(equipmentItems.categoryId, equipmentCategories.id))
-          .where(
-            and(
-              eq(userEquipment.id, inventoryId),
-              eq(userEquipment.userId, userId)
-            )
-          )
-          .limit(1)
-
-        if (ownedInventoryRow === undefined) {
-          throw createError({ status: 404 })
-        }
-
-        inventory = createPackingListInventory(ownedInventoryRow)
+      if (inventoryId !== undefined && gear === undefined) {
+        throw createError({ status: 404 })
       }
 
       const [createdEntry] = await transaction
@@ -105,13 +64,7 @@ export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInp
         })
       }
 
-      const [gear] = inventoryId === undefined ? [] : await readMyGear(transaction, userId, inventoryId)
-
-      if (inventoryId !== undefined && gear === undefined) {
-        throw createError({ status: 404 })
-      }
-
-      const entryResponse = createPackingListEntry(createdEntry, inventory, gear ?? null)
+      const entryResponse = createPackingListEntry(createdEntry, gear ?? null)
 
       const [updatedList] = await transaction
         .update(packingLists)
