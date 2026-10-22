@@ -52,7 +52,7 @@
           </PerdButton>
         </div>
         <div :class="$style.content" :inert="isContentLocked" :aria-busy="isContentBusy">
-          <div :class="$style.summary">
+          <div :class="[$style.summary, { isEmpty: isPackingListEmpty }]">
             <p
               :class="[$style.progress, { isEmpty: isPackingListEmpty }]"
               role="status"
@@ -505,7 +505,8 @@
 
   .progress {
     color: var(--color-text-secondary);
-    font-size: var(--font-size-16);
+    font-size: var(--font-size-14);
+    font-variant-numeric: tabular-nums;
     line-height: var(--line-height-snug);
     overflow-wrap: anywhere;
 
@@ -520,8 +521,14 @@
   }
 
   .summary {
-    display: grid;
-    gap: var(--spacing-12);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--spacing-8) var(--spacing-16);
+
+    &:global(.isEmpty) {
+      display: contents;
+    }
   }
 
   .entryList {

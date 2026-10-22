@@ -1,14 +1,16 @@
 <template>
   <section
+    v-if="hasEntries"
     :class="$style.component"
-    aria-label="All planned gear weight"
+    aria-label="List weight"
     aria-live="polite"
     aria-atomic="true"
   >
-    <p>All planned gear</p>
-    <p :class="$style.value">{{ weightSummaryText }}</p>
-    <p v-if="weightSummaryHint">{{ weightSummaryHint }}</p>
-    <p>{{ unknownWeightText }}</p>
+    <p :class="$style.value">
+      {{ weightDisplay.value }}
+      <span v-if="weightDisplay.unit" :class="$style.unit">{{ weightDisplay.unit }}</span>
+    </p>
+    <p v-if="unknownWeightText" :class="$style.note">{{ unknownWeightText }}</p>
   </section>
 </template>
 
@@ -22,34 +24,36 @@
   }
 
   const { entries } = defineProps<Props>()
-  const isEmpty = computed(() => entries.length === 0)
+  const hasEntries = computed(() => entries.length > 0)
   const packingWeight = computed(() => calculatePackingListWeight(entries))
-  const isWeightIncomplete = computed(() => packingWeight.value.knownEntryCount > 0 && packingWeight.value.unknownEntryCount > 0)
 
-  const weightSummaryText = computed(() => {
-    if (packingWeight.value.knownEntryCount === 0 && !isEmpty.value) {
-      return 'Total weight: Unknown'
+  const weightDisplay = computed(() => {
+    if (packingWeight.value.knownEntryCount === 0) {
+      return {
+        value: 'Weight unknown',
+        unit: null
+      }
     }
 
-    const label = isWeightIncomplete.value ? 'Known weight' : 'Total weight'
-    const weight = formatPackingListWeight(packingWeight.value.knownWeightGrams)
+    const formattedWeight = formatPackingListWeight(packingWeight.value.knownWeightGrams)
+    const [value, unit] = formattedWeight.split(' ')
 
-    return `${label}: ${weight}`
-  })
-
-  const weightSummaryHint = computed(() => {
-    if (isEmpty.value) {
-      return 'No items'
+    return {
+      value,
+      unit
     }
-
-    return isWeightIncomplete.value ? 'Total is incomplete' : null
   })
 
   const unknownWeightText = computed(() => {
     const count = packingWeight.value.unknownEntryCount
-    const entryLabel = count === 1 ? 'entry' : 'entries'
 
-    return `Unknown weight: ${count} ${entryLabel}`
+    if (count === 0) {
+      return null
+    }
+
+    const itemLabel = count === 1 ? 'item' : 'items'
+
+    return `${count} ${itemLabel} without weight`
   })
 </script>
 
@@ -57,15 +61,28 @@
   .component {
     display: grid;
     gap: var(--spacing-4);
-    color: var(--color-text-secondary);
-    font-size: var(--font-size-14);
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    margin-inline-start: auto;
     line-height: var(--line-height-snug);
+    text-align: end;
   }
 
   .value {
-    color: var(--color-text-primary);
-    font-size: var(--font-size-16);
+    font-size: var(--font-size-20);
     font-weight: var(--font-weight-semibold);
+    font-variant-numeric: tabular-nums;
     overflow-wrap: anywhere;
+  }
+
+  .unit {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-14);
+    font-weight: var(--font-weight-regular);
+  }
+
+  .note {
+    color: var(--color-text-tertiary);
+    font-size: var(--font-size-12);
   }
 </style>

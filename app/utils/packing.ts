@@ -83,7 +83,8 @@ function formatPackingEntryWeight(entry: Pick<PackingListEntry, 'weightGrams' | 
 }
 
 function formatScaledDecimal(value: bigint, scale: number) {
-  const digits = value.toString().padStart(scale + 1, '0')
+  const valueDigits = value.toString()
+  const digits = valueDigits.padStart(scale + 1, '0')
 
   if (scale === 0) {
     return digits

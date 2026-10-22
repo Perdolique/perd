@@ -2721,9 +2721,9 @@ test.describe('Packing list shell', () => {
     await page.getByRole('link', { name: /Removal trail/iu }).click()
     await expect(getPackingProgress(page, '1 of 2 packed')).toHaveText('1 of 2 packed')
 
-    const weightSummary = page.getByRole('region', { name: 'All planned gear weight' })
+    const weightSummary = page.getByRole('region', { name: 'List weight' })
 
-    await expect(weightSummary).toContainText('Total weight: 600.5 g')
+    await expect(weightSummary).toContainText('600.5 g')
 
     const deleteRoute = `**/api/user/packing-lists/${packingListId}/entries/${customEntry.id}`
 
@@ -2736,7 +2736,7 @@ test.describe('Packing list shell', () => {
 
     await page.getByRole('button', { name: 'Remove Rain jacket' }).click()
     await expect(page.getByText('Could not remove item.', { exact: true })).toBeVisible()
-    await expect(weightSummary).toContainText('Total weight: 600.5 g')
+    await expect(weightSummary).toContainText('600.5 g')
     await context.unroute(deleteRoute)
 
     try {
@@ -2744,13 +2744,13 @@ test.describe('Packing list shell', () => {
 
       await page.getByRole('button', { name: 'Remove Rain jacket' }).click()
       await expect(page.getByRole('button', { name: 'Remove Rain jacket' })).toBeDisabled()
-      await expect(weightSummary).toContainText('Total weight: 600.5 g')
+      await expect(weightSummary).toContainText('600.5 g')
       deleteGate.resolve()
 
       await unpackedDeleteResponsePromise
 
       await expect(getPackingProgress(page, '1 of 1 packed · All packed')).toHaveText('1 of 1 packed · All packed')
-      await expect(weightSummary).toContainText('Total weight: 300 g')
+      await expect(weightSummary).toContainText('300 g')
       state.getGates.push(firstCollectionGate.promise)
 
       const firstCollectionResponsePromise = page.waitForResponse(isPackingListCollectionGetResponse)
@@ -2763,7 +2763,7 @@ test.describe('Packing list shell', () => {
       await firstCollectionResponsePromise
 
       await page.getByRole('link', { name: /Removal trail/iu }).click()
-      await expect(weightSummary).toContainText('Total weight: 300 g')
+      await expect(weightSummary).toContainText('300 g')
 
       const packedDeleteResponsePromise = page.waitForResponse(isPackingListEntryDeleteResponse)
 
@@ -2772,9 +2772,7 @@ test.describe('Packing list shell', () => {
       await packedDeleteResponsePromise
 
       await expect(getPackingProgress(page, '0 items')).toHaveText('0 items')
-      await expect(weightSummary).toContainText('Total weight: 0 g')
-      await expect(weightSummary).toContainText('No items')
-      await expect(weightSummary).toContainText('Unknown weight: 0 entries')
+      await expect(weightSummary).toHaveCount(0)
       state.getGates.push(secondCollectionGate.promise)
 
       const secondCollectionResponsePromise = page.waitForResponse(isPackingListCollectionGetResponse)
@@ -2863,9 +2861,9 @@ test.describe('Packing list shell', () => {
     await page.getByRole('link', { name: /Alpine weekend/iu }).click()
     await expect(getPackingProgress(page, '1 of 1 packed · All packed')).toHaveText('1 of 1 packed · All packed')
 
-    const weightSummary = page.getByRole('region', { name: 'All planned gear weight' })
+    const weightSummary = page.getByRole('region', { name: 'List weight' })
 
-    await expect(weightSummary).toContainText('Total weight: Unknown')
+    await expect(weightSummary).toContainText('Weight unknown')
     await expect(page.getByText('Add item', { exact: true })).toBeVisible()
     expect(state.availableGearRequests).toHaveLength(0)
     await page.getByText('Add item', { exact: true }).click()
@@ -2890,24 +2888,27 @@ test.describe('Packing list shell', () => {
 
     await page.getByRole('button', { name: /WhisperLite Universal/iu }).click()
     await expect(page.getByRole('alert')).toHaveText('Could not add item.')
-    await expect(weightSummary).toContainText('Total weight: Unknown')
-    await expect(weightSummary).toContainText('Unknown weight: 1 entry')
+    await expect(weightSummary).toContainText('Weight unknown')
+    await expect(weightSummary).toContainText('1 item without weight')
     await context.unroute(createRoute)
 
     const createRequestPromise = page.waitForRequest(isPackingListEntryCreateRequest)
 
-    await page.getByRole('button', { name: /WhisperLite Universal/iu }).click()
+    try {
+      await page.getByRole('button', { name: /WhisperLite Universal/iu }).click()
 
-    await createRequestPromise
+      await createRequestPromise
 
-    await expect(page.getByLabel('Find an item')).toBeDisabled()
-    await expect(weightSummary).toContainText('Total weight: Unknown')
-    createGate.resolve()
+      await expect(page.getByLabel('Find an item')).toBeDisabled()
+      await expect(weightSummary).toContainText('Weight unknown')
+    } finally {
+      createGate.resolve()
+    }
+
     await expect(page.getByText('WhisperLite Universal', { exact: true }).first()).toBeVisible()
     await expect(getPackingProgress(page, '1 of 2 packed')).toHaveText('1 of 2 packed')
-    await expect(weightSummary).toContainText('Known weight: 250.25 g')
-    await expect(weightSummary).toContainText('Total is incomplete')
-    await expect(weightSummary).toContainText('Unknown weight: 1 entry')
+    await expect(weightSummary).toContainText('250.25 g')
+    await expect(weightSummary).toContainText('1 item without weight')
     await expect(page.getByText('All packed', { exact: true })).toHaveCount(0)
     await expect(page.getByText('WhisperLite Universal added.', { exact: true })).toHaveCount(0)
     await expect(page.getByLabel('Find an item')).toBeFocused()
@@ -3011,11 +3012,9 @@ test.describe('Packing list shell', () => {
     await expect(page.getByLabel('Find an item')).toBeVisible()
     await expect(getPackingProgress(page, '0 items')).toHaveText('0 items')
 
-    const weightSummary = page.getByRole('region', { name: 'All planned gear weight' })
+    const weightSummary = page.getByRole('region', { name: 'List weight' })
 
-    await expect(weightSummary).toContainText('Total weight: 0 g')
-    await expect(weightSummary).toContainText('No items')
-    await expect(weightSummary).toContainText('Unknown weight: 0 entries')
+    await expect(weightSummary).toHaveCount(0)
     await expect(page.getByRole('status')).toHaveCount(1)
     await expect(page.getByRole('heading', { name: 'Planning' })).toHaveCount(0)
     await expect(page.getByRole('heading', { name: 'Checklist' })).toHaveCount(0)
@@ -3029,9 +3028,8 @@ test.describe('Packing list shell', () => {
     await page.getByLabel('Find an item').fill(customName)
     await page.getByRole('button', { name: `Add "${customName}" as custom item` }).click()
     await expect(getPackingProgress(page, '0 of 1 packed')).toHaveText('0 of 1 packed')
-    await expect(weightSummary).toContainText('Total weight: Unknown')
-    await expect(weightSummary).toContainText('Unknown weight: 1 entry')
-    await expect(weightSummary.getByText('No items', { exact: true })).toHaveCount(0)
+    await expect(weightSummary).toContainText('Weight unknown')
+    await expect(weightSummary).toContainText('1 item without weight')
     await expect(page.getByRole('status')).toHaveCount(1)
   })
 
