@@ -388,6 +388,8 @@ async function runRace(change: 'pack' | 'add' | 'remove', resetFirst: boolean) {
       return {
         id: entry.id,
         packingListId: entry.packingListId,
+        quantity: entry.quantity,
+        customWeightGrams: entry.customWeightGrams,
         customName: entry.customName,
         userEquipmentId: entry.userEquipmentId,
         isPacked: packedByMutation || (!resetFirst && entry.isPacked),

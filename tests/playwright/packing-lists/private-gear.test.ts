@@ -162,6 +162,9 @@ async function handleListRoute(route: Route, state: PrivateGearState) {
       updatedAt: initialDate,
       customName: null,
       isPacked: false,
+      quantity: 1,
+      weightGrams: null,
+      weightSource: null,
       source: 'inventory',
 
       inventory: {

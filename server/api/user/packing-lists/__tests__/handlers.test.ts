@@ -9,19 +9,52 @@ import getPackingListHandler from '#server/api/user/packing-lists/[id].get'
 import updatePackingListHandler from '#server/api/user/packing-lists/[id].patch'
 import listPackingListsHandler from '#server/api/user/packing-lists/index.get'
 import createPackingListHandler from '#server/api/user/packing-lists/index.post'
+import { readMyGear, type MyGearRecord } from '#server/utils/my-gear'
 import { createTestEvent } from '~~/test-utils/create-test-event'
+
+vi.mock(import('#server/utils/my-gear'), () => {
+  return { readMyGear: vi.fn() }
+})
+
+const catalogGear = {
+  id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
+  createdAt: '2026-04-03T09:00:00.000Z',
+  source: 'catalog',
+  personalName: null,
+  measuredWeightGrams: null,
+  note: null,
+  ownedQuantity: 1,
+
+  item: {
+    id: 'catalog-item',
+    name: 'PocketRocket Deluxe',
+    weightGrams: null,
+
+    brand: {
+      name: 'MSR',
+      slug: 'msr'
+    },
+
+    category: {
+      name: 'Stoves',
+      slug: 'stoves'
+    }
+  }
+} as const satisfies MyGearRecord
+
+const customGear = {
+  id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
+  createdAt: '2026-04-03T09:00:00.000Z',
+  source: 'custom',
+  customName: 'My DIY Stove',
+  measuredWeightGrams: null,
+  note: null,
+  ownedQuantity: 1
+} as const satisfies MyGearRecord
 
 const savedGearCases = [{
   source: 'catalog',
-
-  row: {
-    customName: null,
-    personalName: null,
-    brand: 'MSR',
-    category: 'Stoves',
-    inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
-    itemName: 'PocketRocket Deluxe'
-  },
+  gear: catalogGear,
 
   inventory: {
     source: 'catalog',
@@ -32,15 +65,7 @@ const savedGearCases = [{
   }
 }, {
   source: 'custom',
-
-  row: {
-    customName: 'My DIY Stove',
-    personalName: null,
-    brand: null,
-    category: null,
-    inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
-    itemName: null
-  },
+  gear: customGear,
 
   inventory: {
     source: 'custom',
@@ -50,13 +75,9 @@ const savedGearCases = [{
 }, {
   source: 'catalog with personal name',
 
-  row: {
-    customName: null,
-    personalName: 'My trail stove',
-    brand: 'MSR',
-    category: 'Stoves',
-    inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
-    itemName: 'PocketRocket Deluxe'
+  gear: {
+    ...catalogGear,
+    personalName: 'My trail stove'
   },
 
   inventory: {
@@ -497,6 +518,7 @@ function createDeleteDb(deletedRow?: unknown) {
 describe('user packing list handlers', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(readMyGear).mockReset().mockResolvedValue([])
 
     createWebSocketClientMock.mockImplementation(() => {
       throw new Error('createWebSocketClient mock is not configured')
@@ -655,45 +677,28 @@ describe('user packing list handlers', () => {
           customName: 'Rain jacket',
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
           isPacked: false,
+          quantity: 1,
+          customWeightGrams: null,
           updatedAt: '2026-04-03T09:01:00.000Z',
-          userEquipment: null
+          userEquipmentId: null
         }, {
           createdAt: '2026-04-03T09:02:00.000Z',
           customName: null,
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e2',
           isPacked: true,
+          quantity: 1,
+          customWeightGrams: null,
           updatedAt: '2026-04-03T09:02:00.000Z',
-
-          userEquipment: {
-            customName: null,
-            personalName: null,
-            id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
-
-            item: {
-              brand: {
-                name: 'MSR'
-              },
-
-              category: {
-                name: 'Stoves'
-              },
-
-              name: 'PocketRocket Deluxe'
-            }
-          }
+          userEquipmentId: catalogGear.id
         }, {
           createdAt: '2026-04-03T09:03:00.000Z',
           customName: null,
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e3',
           isPacked: false,
+          quantity: 1,
+          customWeightGrams: null,
           updatedAt: '2026-04-03T09:03:00.000Z',
-
-          userEquipment: {
-            customName: 'Renamed private stove',
-            personalName: null,
-            id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477da',
-            item: null
-          }
+          userEquipmentId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477da'
         }],
 
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7',
@@ -709,6 +714,9 @@ describe('user packing list handlers', () => {
           customName: 'Rain jacket',
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
           isPacked: false,
+          quantity: 1,
+          weightGrams: null,
+          weightSource: null,
           source: 'custom',
           updatedAt: '2026-04-03T09:01:00.000Z'
         }, {
@@ -725,6 +733,9 @@ describe('user packing list handlers', () => {
           },
 
           isPacked: true,
+          quantity: 1,
+          weightGrams: null,
+          weightSource: null,
           source: 'inventory',
           updatedAt: '2026-04-03T09:02:00.000Z'
         }, {
@@ -733,6 +744,9 @@ describe('user packing list handlers', () => {
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e3',
           isPacked: false,
           updatedAt: '2026-04-03T09:03:00.000Z',
+          quantity: 1,
+          weightGrams: null,
+          weightSource: null,
           source: 'inventory',
 
           inventory: {
@@ -747,11 +761,25 @@ describe('user packing list handlers', () => {
         updatedAt: '2026-04-03T09:00:00.000Z'
       }
 
+      vi.mocked(readMyGear).mockResolvedValueOnce([
+        catalogGear,
+        {
+          ...customGear,
+          id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477da',
+          customName: 'Renamed private stove'
+        }
+      ])
+
       const dbHttp = createDetailDb(row)
       const event = createTestEvent(dbHttp)
       const result = await getPackingListHandler(event)
 
       expect(result).toStrictEqual(expectedRow)
+
+      expect(readMyGear).toHaveBeenCalledExactlyOnceWith(dbHttp, 'user-1', [
+        '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
+        '0195f6e8-8f44-74f6-bc9a-5c8f7df477da'
+      ])
 
       const findFirstConfig = dbHttp.getLastFindFirstConfig()
 
@@ -775,39 +803,10 @@ describe('user packing list handlers', () => {
               customName: true,
               id: true,
               isPacked: true,
-              updatedAt: true
-            },
-
-            with: {
-              userEquipment: {
-                columns: {
-                  customName: true,
-                  personalName: true,
-                  id: true
-                },
-
-                with: {
-                  item: {
-                    columns: {
-                      name: true
-                    },
-
-                    with: {
-                      brand: {
-                        columns: {
-                          name: true
-                        }
-                      },
-
-                      category: {
-                        columns: {
-                          name: true
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+              quantity: true,
+              customWeightGrams: true,
+              updatedAt: true,
+              userEquipmentId: true
             }
           }
         }
@@ -817,6 +816,8 @@ describe('user packing list handlers', () => {
         createdAt: 'asc',
         id: 'asc'
       })
+
+      expect(findFirstConfig.with.entries).not.toHaveProperty('with')
     })
 
     it('should return 404 when the packing list is missing or unowned', async () => {
@@ -996,6 +997,8 @@ describe('user packing list handlers', () => {
         customName: 'Rain jacket',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
         isPacked: false,
+        quantity: 1,
+        customWeightGrams: null,
         updatedAt: '2026-04-03T09:01:00.000Z'
       }
 
@@ -1032,7 +1035,14 @@ describe('user packing list handlers', () => {
 
       expect(result).toStrictEqual({
         entry: {
-          ...createdEntry,
+          createdAt: createdEntry.createdAt,
+          customName: createdEntry.customName,
+          id: createdEntry.id,
+          isPacked: createdEntry.isPacked,
+          updatedAt: createdEntry.updatedAt,
+          quantity: 1,
+          weightGrams: null,
+          weightSource: null,
           source: 'custom'
         },
 
@@ -1054,12 +1064,16 @@ describe('user packing list handlers', () => {
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
 
-    it.each(savedGearCases)('should create a my gear entry and touch the parent packing list ($source)', async ({ row, inventory }) => {
+    it.each(savedGearCases)('should create a my gear entry and touch the parent packing list ($source)', async ({ gear, inventory }) => {
+      vi.mocked(readMyGear).mockResolvedValueOnce([gear])
+
       const createdEntry = {
         createdAt: '2026-04-03T09:01:00.000Z',
         customName: null,
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e2',
         isPacked: false,
+        quantity: 1,
+        customWeightGrams: null,
         updatedAt: '2026-04-03T09:01:00.000Z'
       }
 
@@ -1071,8 +1085,6 @@ describe('user packing list handlers', () => {
         rows: [{
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
         }]
-      }, {
-        rows: [row]
       }])
 
       const { insertMock, valuesMock } = createInsertMock({
@@ -1098,8 +1110,15 @@ describe('user packing list handlers', () => {
 
       expect(result).toStrictEqual({
         entry: {
-          ...createdEntry,
+          createdAt: createdEntry.createdAt,
+          customName: createdEntry.customName,
+          id: createdEntry.id,
+          isPacked: createdEntry.isPacked,
+          updatedAt: createdEntry.updatedAt,
           inventory,
+          quantity: 1,
+          weightGrams: null,
+          weightSource: null,
           source: 'inventory'
         },
 
@@ -1114,7 +1133,8 @@ describe('user packing list handlers', () => {
         userEquipmentId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9'
       })
 
-      expect(selectMock).toHaveBeenCalledTimes(2)
+      expect(selectMock).toHaveBeenCalledTimes(1)
+      expect(readMyGear).toHaveBeenCalledExactlyOnceWith(expect.anything(), 'user-1', gear.id)
       expect(setMocks[0]).toHaveBeenCalledTimes(1)
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
@@ -1128,8 +1148,6 @@ describe('user packing list handlers', () => {
         rows: [{
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
         }]
-      }, {
-        rows: []
       }])
 
       const { insertMock } = createInsertMock({
@@ -1163,6 +1181,8 @@ describe('user packing list handlers', () => {
       code: '23503',
       status: 404
     }])('should return $status for a wrapped insert conflict ($code)', async ({ code, status }) => {
+      vi.mocked(readMyGear).mockResolvedValueOnce([catalogGear])
+
       readValidatedBodyMock.mockResolvedValue({
         inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9'
       })
@@ -1170,14 +1190,6 @@ describe('user packing list handlers', () => {
       const { selectMock } = createSelectMock([{
         rows: [{
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
-        }]
-      }, {
-        rows: [{
-          customName: null,
-          brand: 'MSR',
-          category: 'Stoves',
-          inventoryId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9',
-          itemName: 'PocketRocket Deluxe'
         }]
       }])
 
@@ -1304,6 +1316,8 @@ describe('user packing list handlers', () => {
         customName: 'Rain jacket',
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
         isPacked: true,
+        quantity: 1,
+        customWeightGrams: null,
         updatedAt: '2026-04-03T09:03:00.000Z',
         userEquipmentId: null
       }
@@ -1314,7 +1328,9 @@ describe('user packing list handlers', () => {
       })
 
       readValidatedBodyMock.mockResolvedValue({
-        isPacked: true
+        isPacked: true,
+        quantity: undefined,
+        customWeightGrams: undefined
       })
 
       const { selectMock } = createSelectMock([{
@@ -1347,6 +1363,9 @@ describe('user packing list handlers', () => {
           customName: 'Rain jacket',
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
           isPacked: true,
+          quantity: 1,
+          weightGrams: null,
+          weightSource: null,
           source: 'custom',
           updatedAt: '2026-04-03T09:03:00.000Z'
         },
@@ -1356,19 +1375,25 @@ describe('user packing list handlers', () => {
 
       expect(setMocks[0]).toHaveBeenCalledWith({
         updatedAt: expect.any(Date) as unknown,
-        isPacked: true
+        isPacked: true,
+        quantity: undefined,
+        customWeightGrams: undefined
       })
 
       expect(setMocks[1]).toHaveBeenCalledTimes(1)
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
 
-    it.each(savedGearCases)('should toggle an inventory entry and keep its inventory metadata ($source)', async ({ row, inventory }) => {
+    it.each(savedGearCases)('should toggle an inventory entry and keep its inventory metadata ($source)', async ({ gear, inventory }) => {
+      vi.mocked(readMyGear).mockResolvedValueOnce([gear])
+
       const updatedEntry = {
         createdAt: '2026-04-03T09:01:00.000Z',
         customName: null,
         id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e2',
         isPacked: true,
+        quantity: 1,
+        customWeightGrams: null,
         updatedAt: '2026-04-03T09:03:00.000Z',
         userEquipmentId: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d9'
       }
@@ -1379,15 +1404,15 @@ describe('user packing list handlers', () => {
       })
 
       readValidatedBodyMock.mockResolvedValue({
-        isPacked: true
+        isPacked: true,
+        quantity: undefined,
+        customWeightGrams: undefined
       })
 
       const { selectMock } = createSelectMock([{
         rows: [{
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
         }]
-      }, {
-        rows: [row]
       }])
 
       const { setMocks, updateMock } = createUpdateMock([{
@@ -1415,6 +1440,9 @@ describe('user packing list handlers', () => {
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e2',
           inventory,
           isPacked: true,
+          quantity: 1,
+          weightGrams: null,
+          weightSource: null,
           source: 'inventory',
           updatedAt: '2026-04-03T09:03:00.000Z'
         },
@@ -1424,9 +1452,13 @@ describe('user packing list handlers', () => {
 
       expect(setMocks[0]).toHaveBeenCalledWith({
         updatedAt: expect.any(Date) as unknown,
-        isPacked: true
+        isPacked: true,
+        quantity: undefined,
+        customWeightGrams: undefined
       })
 
+      expect(selectMock).toHaveBeenCalledTimes(1)
+      expect(readMyGear).toHaveBeenCalledExactlyOnceWith(expect.anything(), 'user-1', gear.id)
       expect(dbWrite.$client.end).toHaveBeenCalledTimes(1)
     })
 
@@ -1437,7 +1469,9 @@ describe('user packing list handlers', () => {
       })
 
       readValidatedBodyMock.mockResolvedValue({
-        isPacked: true
+        isPacked: true,
+        quantity: undefined,
+        customWeightGrams: undefined
       })
 
       const { selectMock } = createSelectMock([{
@@ -1479,7 +1513,9 @@ describe('user packing list handlers', () => {
       })
 
       readValidatedBodyMock.mockResolvedValue({
-        isPacked: true
+        isPacked: true,
+        quantity: undefined,
+        customWeightGrams: undefined
       })
 
       const { selectMock } = createSelectMock([{
@@ -1533,6 +1569,8 @@ describe('user packing list handlers', () => {
           customName: 'Rain jacket',
           id: '0195f6e8-8f44-74f6-bc9a-5c8f7df477e1',
           isPacked: true,
+          quantity: 1,
+          customWeightGrams: null,
           updatedAt: '2026-04-03T09:03:00.000Z',
           userEquipmentId: null
         }]

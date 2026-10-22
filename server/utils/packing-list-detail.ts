@@ -1,42 +1,19 @@
 import { createError } from 'nuxt/server'
+import { readMyGear, type MyGearRecord } from '#server/utils/my-gear'
 import type { createHttpClient } from '#server/utils/database'
+import { createPackingListEntry, type PackingListEntry } from '#server/utils/packing-list-entry'
 
-import {
-  createPackingListEntry,
-  createPackingListInventory,
-  type PackingListEntry
-} from '#server/utils/packing-list-entry'
-
-type PackingListReadDatabase = Pick<ReturnType<typeof createHttpClient>, 'query'>
-
-interface PackingListEntryItemBrand {
-  name: string;
-}
-
-interface PackingListEntryItemCategory {
-  name: string;
-}
-
-interface PackingListEntryItem {
-  brand: PackingListEntryItemBrand | null;
-  category: PackingListEntryItemCategory | null;
-  name: string;
-}
-
-interface PackingListEntryUserEquipment {
-  customName: string | null;
-  personalName: string | null;
-  id: string;
-  item: PackingListEntryItem | null;
-}
+type PackingListReadDatabase = Pick<ReturnType<typeof createHttpClient>, 'query' | 'select'>
 
 interface PackingListEntryRow {
   createdAt: Date | string;
   customName: string | null;
   id: string;
   isPacked: boolean;
+  quantity: number;
+  customWeightGrams: string | null;
   updatedAt: Date | string;
-  userEquipment: PackingListEntryUserEquipment | null;
+  userEquipmentId: string | null;
 }
 
 interface PackingListDetail {
@@ -55,19 +32,14 @@ interface PackingListQueryDetail {
   updatedAt: Date | string;
 }
 
-function createEntryResponse(entry: PackingListEntryRow): PackingListEntry {
-  const gear = entry.userEquipment
+function createEntryResponse(entry: PackingListEntryRow, gearById: Map<string, MyGearRecord>): PackingListEntry {
+  const savedGear = entry.userEquipmentId === null ? null : gearById.get(entry.userEquipmentId)
 
-  const inventory = gear === null ? null : createPackingListInventory({
-    brand: gear.item?.brand?.name ?? null,
-    category: gear.item?.category?.name ?? null,
-    customName: gear.customName,
-    personalName: gear.personalName,
-    inventoryId: gear.id,
-    itemName: gear.item?.name ?? null
-  })
+  if (savedGear === undefined) {
+    throw createError({ status: 404 })
+  }
 
-  return createPackingListEntry(entry, inventory)
+  return createPackingListEntry(entry, savedGear)
 }
 
 async function readPackingListDetail(database: PackingListReadDatabase, id: string, userId: string): Promise<PackingListDetail> {
@@ -91,44 +63,15 @@ async function readPackingListDetail(database: PackingListReadDatabase, id: stri
           customName: true,
           id: true,
           isPacked: true,
-          updatedAt: true
+          quantity: true,
+          customWeightGrams: true,
+          updatedAt: true,
+          userEquipmentId: true
         },
 
         orderBy: {
           createdAt: 'asc',
           id: 'asc'
-        },
-
-        with: {
-          userEquipment: {
-            columns: {
-              customName: true,
-              personalName: true,
-              id: true
-            },
-
-            with: {
-              item: {
-                columns: {
-                  name: true
-                },
-
-                with: {
-                  brand: {
-                    columns: {
-                      name: true
-                    }
-                  },
-
-                  category: {
-                    columns: {
-                      name: true
-                    }
-                  }
-                }
-              }
-            }
-          }
         }
       }
     }
@@ -138,7 +81,11 @@ async function readPackingListDetail(database: PackingListReadDatabase, id: stri
     throw createError({ status: 404 })
   }
 
-  const entries = packingList.entries.map(createEntryResponse)
+  const inventoryIds = packingList.entries.flatMap(entry => entry.userEquipmentId === null ? [] : [entry.userEquipmentId])
+  const gear = inventoryIds.length === 0 ? [] : await readMyGear(database, userId, inventoryIds)
+  const gearEntries = gear.map((record): [string, MyGearRecord] => [record.id, record])
+  const gearById = new Map(gearEntries)
+  const entries = packingList.entries.map(entry => createEntryResponse(entry, gearById))
 
   return {
     createdAt: packingList.createdAt,

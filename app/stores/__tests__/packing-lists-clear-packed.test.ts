@@ -18,6 +18,9 @@ const originalEntry = {
   source: 'custom',
   customName: 'Jacket',
   isPacked: true,
+  quantity: 1,
+  weightGrams: null,
+  weightSource: null,
   createdAt: '2026-10-08T10:00:00.000Z',
   updatedAt: '2026-10-08T10:00:00.000Z'
 } as const

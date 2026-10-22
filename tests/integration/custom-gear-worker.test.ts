@@ -94,7 +94,10 @@ const entryFields = {
   createdAt: v.string(),
   updatedAt: v.string(),
   customName: v.nullable(v.string()),
-  isPacked: v.boolean()
+  isPacked: v.boolean(),
+  quantity: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(2_147_483_647)),
+  weightGrams: v.nullable(v.string()),
+  weightSource: v.nullable(v.picklist(['measured', 'catalog', 'custom']))
 }
 
 const entrySchema = v.variant('source', [
@@ -480,6 +483,19 @@ describe('private custom gear in PostgreSQL and the built Worker', () => {
     expect(detailNames).toStrictEqual(['My green stove', 'My green stove'])
     expect(packedStates).toStrictEqual([true, false])
 
+    expect(details.map(detail => detail.entries[0])).toMatchObject([
+      {
+        quantity: 1,
+        weightGrams: '0',
+        weightSource: 'measured'
+      },
+      {
+        quantity: 1,
+        weightGrams: '0',
+        weightSource: 'measured'
+      }
+    ])
+
     const afterEntries = await database.query.packingListEntries.findMany({
       where: {
         userEquipmentId: saved.id
@@ -847,6 +863,9 @@ describe('private custom gear in PostgreSQL and the built Worker', () => {
     const firstEntry = await readEntry(privateEntry)
 
     expect(firstEntry).toMatchObject({
+      quantity: 1,
+      weightGrams: null,
+      weightSource: null,
       customName: null,
       isPacked: false,
       source: 'inventory',

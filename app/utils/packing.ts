@@ -64,7 +64,25 @@ function packingListCopyName(name: string) {
   return copyName
 }
 
+/** Labels per-item weight without rounding the saved decimal string. */
+function formatPackingEntryWeight(entry: Pick<PackingListEntry, 'weightGrams' | 'weightSource'>) {
+  if (entry.weightGrams === null) {
+    return 'Weight unknown'
+  }
+
+  const sources = {
+    measured: 'Measured',
+    catalog: 'Catalog',
+    custom: 'Custom'
+  }
+
+  const source = entry.weightSource === null ? '' : ` · ${sources[entry.weightSource]}`
+
+  return `${entry.weightGrams} g per item${source}`
+}
+
 export {
+  formatPackingEntryWeight,
   packingListCopyName,
   countPackedEntries,
   formatPackingProgress,

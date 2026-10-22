@@ -17,6 +17,11 @@ type PackingListEntryCreateBody = {
   inventoryId: string;
 }
 
+interface PackingListEntryEditBody {
+  quantity?: number;
+  weightGrams?: string | null;
+}
+
 interface PackingListEntryUpdateOptions {
   entryId: string;
   isPacked: boolean;
@@ -29,6 +34,9 @@ interface PackingListEntryBase {
   customName: string | null;
   id: string;
   isPacked: boolean;
+  quantity: number;
+  weightGrams: string | null;
+  weightSource: 'measured' | 'catalog' | 'custom' | null;
   updatedAt: string;
 }
 
@@ -57,6 +65,9 @@ interface PackingListView extends PackingListSummary {
 }
 
 interface PackingListEntryView {
+  quantity: number;
+  weightText: string;
+  isEditDisabled: boolean;
   hasPackError: boolean;
   id: string;
   isPacked: boolean;
@@ -74,6 +85,7 @@ export type {
   PackingListDetail,
   PackingListEntry,
   PackingListEntryCreateBody,
+  PackingListEntryEditBody,
   PackingListCustomEntry,
   PackingListEntryUpdateOptions,
   PackingListInventoryEntry,

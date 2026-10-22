@@ -7,6 +7,7 @@ import type {
   PackingListDetail,
   PackingListEntry,
   PackingListEntryCreateBody,
+  PackingListEntryEditBody,
   PackingListEntryUpdateOptions,
   PackingListSummary
 } from '~/types/packing'
@@ -35,7 +36,7 @@ interface PackingListEntryOperation {
   generation: number;
   isPacked: boolean | null;
   isPending: boolean;
-  kind: 'delete' | 'update';
+  kind: 'delete' | 'update' | 'edit';
   operationId: number;
   packingListId: string;
   rollbackState: PackingListEntryRollbackState | null;
@@ -44,6 +45,12 @@ interface PackingListEntryOperation {
 
 interface PackingListEntryRollbackState {
   isPacked: boolean;
+  updatedAt: string;
+}
+
+interface PackingListConfirmedFields {
+  quantity: number;
+  weightGrams: string | null;
   updatedAt: string;
 }
 
@@ -69,6 +76,7 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
   const serverRows = ref<PackingListSummary[]>([])
   const summaryStates = reactive(new Map<string, PackingListSummaryState>())
   const entryOperations = reactive(new Map<string, PackingListEntryOperation>())
+  const confirmedEntryFields = reactive(new Map<string, PackingListConfirmedFields>())
   const copyingListIds = reactive(new Set<string>())
   const clearingPackedListIds = reactive(new Set<string>())
   const refreshingPackedListIds = reactive(new Set<string>())
@@ -118,7 +126,7 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
       throw new Error('Packing list entry operation already pending')
     }
 
-    const rollbackState = currentOperation?.kind === 'update'
+    const rollbackState = (currentOperation?.kind === 'update' || currentOperation?.kind === 'edit')
       && currentOperation.isPacked !== null
       && currentOperation.updatedAt !== null
       ? {
@@ -132,7 +140,7 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     const operation: PackingListEntryOperation = {
       entryId,
       generation: operationGeneration,
-      isPacked,
+      isPacked: kind === 'edit' ? currentOperation?.isPacked ?? null : isPacked,
       isPending: true,
       kind,
       operationId: nextEntryOperationId,
@@ -195,7 +203,7 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
         const entry = packingList.entries.find((currentEntry) => currentEntry.id === operation.entryId)
         const operationUpdatedAt = operation.updatedAt
 
-        if (operation.kind === 'update'
+        if ((operation.kind === 'update' || operation.kind === 'edit')
           && entry !== undefined
           && Date.parse(entry.updatedAt) >= Date.parse(operationUpdatedAt)) {
           entryOperations.delete(operationKey)
@@ -210,14 +218,32 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     }
   }
 
-  function applyEntryOperation(packingListId: string, entry: PackingListEntry): PackingListEntry | null {
+  function applyEntryOperation(packingListId: string, incomingEntry: PackingListEntry): PackingListEntry | null {
+    let entry = incomingEntry
     const operation = getEntryOperation(packingListId, entry.id)
+    const key = createEntryOperationKey(packingListId, entry.id)
+    const confirmed = confirmedEntryFields.get(key)
+
+    if (confirmed !== undefined && Date.parse(entry.updatedAt) < Date.parse(confirmed.updatedAt)) {
+      entry = {
+        ...entry,
+        quantity: confirmed.quantity,
+        updatedAt: confirmed.updatedAt
+      }
+
+      if (entry.source === 'custom') {
+        const weightSource = confirmed.weightGrams === null ? null : 'custom'
+
+        entry.weightGrams = confirmed.weightGrams
+        entry.weightSource = weightSource
+      }
+    }
 
     if (operation?.kind === 'delete' && operation.isPending === false) {
       return null
     }
 
-    if (operation?.kind !== 'update' || operation.isPacked === null) {
+    if ((operation?.kind !== 'update' && operation?.kind !== 'edit') || operation.isPacked === null) {
       return entry
     }
 
@@ -285,6 +311,7 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     const pendingOperations = summaryStates.get(packingListId)?.pendingOperations ?? 0
 
     return pendingOperations > 0
+      || [...entryOperations.values()].some(operation => operation.packingListId === packingListId && operation.isPending)
       || deletingListIds.has(packingListId)
       || copyingListIds.has(packingListId)
       || renamingListIds.has(packingListId)
@@ -816,6 +843,68 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     }
   }
 
+  async function editPackingListEntry(packingListId: string, entryId: string, body: PackingListEntryEditBody) {
+    assertPackingListWritable(packingListId)
+
+    const entryOperation = beginEntryOperation({
+      entryId,
+      generation,
+      isPacked: null,
+      kind: 'edit',
+      packingListId
+    })
+
+    const operation = beginSummaryOperation(packingListId)
+
+    try {
+      const path = `/api/user/packing-lists/${packingListId}/entries/${entryId}` as const
+
+      const response = await requestFetch(path, {
+        method: 'PATCH',
+        body,
+        retry: 0
+      })
+
+      if (operation.generation !== generation) {
+        return null
+      }
+
+      const operationKey = createEntryOperationKey(packingListId, entryId)
+      const weightGrams = response.entry.source === 'custom' ? response.entry.weightGrams : null
+
+      confirmedEntryFields.set(operationKey, {
+        quantity: response.entry.quantity,
+        weightGrams,
+        updatedAt: response.entry.updatedAt
+      })
+
+      finishSummaryOperation(operation, (summary) => {
+        const updatedAt = latestPackingListUpdatedAt(summary.updatedAt, response.packingListUpdatedAt)
+
+        return {
+          ...summary,
+          updatedAt
+        }
+      })
+
+      completeEntryOperation({
+        ...entryOperation,
+        isPacked: response.entry.isPacked
+      }, response.entry.updatedAt)
+
+      return response
+    } catch (error) {
+      if (operation.generation !== generation) {
+        return null
+      }
+
+      finishSummaryOperation(operation)
+      discardEntryOperation(entryOperation)
+
+      throw error
+    }
+  }
+
   async function deletePackingListEntry(packingListId: string, entryId: string, isPacked: boolean) {
     assertPackingListWritable(packingListId)
 
@@ -1003,6 +1092,7 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
 
     summaryStates.clear()
     entryOperations.clear()
+    confirmedEntryFields.clear()
     copyingListIds.clear()
     renamingListIds.clear()
     deletingListIds.clear()
@@ -1029,6 +1119,7 @@ export const usePackingListsStore = defineStore('packing-lists', () => {
     deletePackingList,
     deletePackingListEntry,
     errorMessage,
+    editPackingListEntry,
     fetchPackingLists,
     getPackingListDetailView,
     getRemovingPackingListEntryId,
