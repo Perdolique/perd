@@ -1,6 +1,6 @@
 <template>
   <nav
-    :class="$style.dock"
+    :class="$style.component"
     data-testid="shell-dock"
     aria-label="Primary navigation"
   >
@@ -56,13 +56,13 @@
 </script>
 
 <style module>
-  .dock {
-    position: fixed;
-    inset-inline: 0;
+  .component {
+    /* Its grid row reserves the full height when navigation labels wrap. */
+    position: sticky;
     inset-block-end: 0;
     z-index: var(--z-index-shell-dock);
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     min-block-size: calc(var(--layout-dock-height) + var(--layout-safe-bottom));
     padding: var(--spacing-12) var(--spacing-16) calc(var(--spacing-12) + var(--layout-safe-bottom));
     background: var(--color-background-elevated);
@@ -74,6 +74,7 @@
   }
 
   .dockItem {
+    container-type: inline-size;
     display: grid;
     grid-template-rows: 2.25rem auto;
     justify-items: center;
@@ -87,6 +88,8 @@
     font-size: var(--font-size-14);
     font-weight: var(--font-weight-medium);
     line-height: var(--line-height-tight);
+    overflow-wrap: anywhere;
+    text-align: center;
     transition: color var(--transition-duration-normal) var(--transition-easing-standard);
 
     &:hover {
@@ -105,6 +108,6 @@
 
   .dockIcon {
     display: grid;
-    font-size: 1.75rem;
+    font-size: min(1.75rem, 100cqi);
   }
 </style>

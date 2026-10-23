@@ -35,39 +35,46 @@ function useContributionFilters() {
   const statusQuery = computed(() => filters.value.status || undefined)
   const filterSignature = computed(() => JSON.stringify(filters.value))
 
-  const statusOptions = [
+  const statusOptions = computed(() => [
     {
       value: '',
-      label: 'All statuses'
+      label: 'All',
+      selected: filters.value.status === ''
     },
     {
       value: 'pending',
-      label: 'Pending'
+      label: 'Pending',
+      selected: filters.value.status === 'pending'
     },
     {
       value: 'approved',
-      label: 'Published'
+      label: 'Published',
+      selected: filters.value.status === 'approved'
     },
     {
       value: 'rejected',
-      label: 'Rejected'
+      label: 'Rejected',
+      selected: filters.value.status === 'rejected'
     }
-  ]
+  ])
 
-  const typeOptions = [
+  const typeOptions = computed(() => [
     {
       value: '',
-      label: 'All types'
+      label: 'All',
+      selected: filters.value.type === ''
     },
     {
       value: 'gear',
-      label: 'Gear'
+      label: 'Gear',
+      selected: filters.value.type === 'gear'
     },
     {
       value: 'photos',
-      label: 'Photos'
+      label: 'Photos',
+      selected: filters.value.type === 'photos'
     }
-  ]
+  ])
 
   async function changeStatus(value: string) {
     const nextFilters = parseContributionFilters({

@@ -5,19 +5,24 @@ interface ContributionFeedbackOptions {
   hasError: Ref<boolean>;
   hasFilters: Ref<boolean>;
   hasNoContributions: Ref<boolean>;
+  hasResults: Ref<boolean>;
   isLoading: Ref<boolean>;
   resetFilters: () => Promise<void>;
 }
 
-/** Owns first-page announcements and focus after a filter reset removes its button. */
+/** Owns first-page announcements and focus after a filter reset hides or removes its button. */
 function useContributionFeedback(options: ContributionFeedbackOptions) {
   const announcement = computed(() => {
-    if (options.isLoading.value) {
-      return 'Loading contributions.'
+    if (options.hasError.value) {
+      if (options.hasResults.value || options.isLoading.value) {
+        return 'Some contributions could not be loaded. Retry the affected section.'
+      }
+
+      return 'Could not load contributions. Try again.'
     }
 
-    if (options.hasError.value) {
-      return 'Could not load contributions. Try again.'
+    if (options.isLoading.value) {
+      return 'Loading contributions.'
     }
 
     if (options.hasNoContributions.value) {
@@ -38,11 +43,14 @@ function useContributionFeedback(options: ContributionFeedbackOptions) {
     await options.resetFilters()
     await nextTick()
 
-    // Do not move focus if another action has already placed it elsewhere.
-    if (ownedFocus && globalThis.document.activeElement === globalThis.document.body) {
-      const statusControl = options.filtersPanel.value?.querySelector<HTMLButtonElement>('[role="combobox"]')
+    const { activeElement } = globalThis.document
+    const focusHasNotMoved = activeElement === resetButton || activeElement === globalThis.document.body
 
-      statusControl?.focus()
+    // A reset hidden with CSS can still own focus until the next browser paint.
+    if (ownedFocus && focusHasNotMoved) {
+      const typeControl = options.filtersPanel.value?.querySelector<HTMLInputElement>('input:checked')
+
+      typeControl?.focus()
     }
   }
 
