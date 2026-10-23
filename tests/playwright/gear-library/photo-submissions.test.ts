@@ -1107,6 +1107,7 @@ test.describe('Photo submissions', () => {
               name: item.name
             },
 
+            rejectionReason: null,
             sourceType: 'manufacturer',
             sourceUrl,
             status: 'pending',
@@ -1118,14 +1119,13 @@ test.describe('Photo submissions', () => {
 
     await authenticateRegisteredUser(context, page, '/account/submissions')
 
-    const photoSection = page.locator('section').filter({
-      has: page.getByRole('heading', { name: 'Photo submissions' })
-    })
+    const photoSection = page.getByRole('region', { name: 'Photo contributions' })
 
     await expect(photoSection.getByRole('link', { name: item.name })).toHaveAttribute('href', itemPath)
-    await expect(photoSection.getByText('PocketRocket official.webp')).toBeVisible()
+    await expect(photoSection.getByText('PocketRocket official.webp', { exact: true })).toBeVisible()
     await expect(photoSection.getByText('Official manufacturer photo')).toBeVisible()
     await expect(photoSection.getByText('Pending', { exact: true })).toBeVisible()
+    await photoSection.getByText('Submission details for PocketRocket official.webp', { exact: true }).click()
 
     await expect(photoSection.getByRole('link', { name: 'Manufacturer source' })).toHaveAttribute(
       'href',

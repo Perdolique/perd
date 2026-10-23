@@ -1,5 +1,5 @@
 <template>
-  <div :class="$style.layout">
+  <div :class="$style.component">
     <aside :class="$style.sidebar" data-testid="shell-sidebar">
       <ShellBrandLink :class="$style.brand" />
 
@@ -50,10 +50,11 @@
 </script>
 
 <style module>
-  .layout {
+  .component {
     min-block-size: 100dvh;
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 1fr auto;
     background:
       linear-gradient(180deg, var(--color-background-page), var(--color-background-muted));
 
@@ -94,7 +95,7 @@
 
   .main {
     min-inline-size: 0;
-    padding-block-end: calc(var(--layout-dock-height) + var(--spacing-24));
+    padding-block-end: var(--spacing-24);
 
     @media (width >= 900px) {
       padding-block-end: var(--spacing-32);

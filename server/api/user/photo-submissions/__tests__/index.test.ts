@@ -1,6 +1,7 @@
 import type * as nuxtServer from 'nuxt/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import listUserPhotoSubmissionsHandler from '#server/api/user/photo-submissions/index.get'
+import { validatePhotoSubmissionListQuery } from '#server/utils/validation/schemas'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
 const {
@@ -114,6 +115,40 @@ describe('get /api/user/photo-submissions', () => {
     expect(result.items).toHaveLength(20)
     expect(result.nextPage).toBe(3)
     expect(JSON.stringify(result)).not.toContain('cloudflareImageId')
+  })
+
+  it.each(['pending', 'approved', 'rejected'])('should filter %s before applying the owner page boundary', async (status) => {
+    getValidatedQueryMock.mockResolvedValue({
+      page: 2,
+      status
+    })
+
+    const findMany = vi.fn(() => [])
+    const event = createTestEvent({ query: { equipmentItemPhotoSubmissions: { findMany } } })
+
+    await listUserPhotoSubmissionsHandler(event)
+
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        createdBy: 'user-1',
+        status,
+        item: { status: 'approved' }
+      },
+
+      limit: 21,
+      offset: 20
+    }))
+  })
+
+  it('should validate photo statuses and reject an unknown status', () => {
+    const query = validatePhotoSubmissionListQuery({ status: 'rejected' })
+
+    expect(query).toStrictEqual({
+      page: 1,
+      status: 'rejected'
+    })
+
+    expect(() => validatePhotoSubmissionListQuery({ status: 'published' })).toThrow(/./u)
   })
 
   it('should return a null next page for the final page', async () => {

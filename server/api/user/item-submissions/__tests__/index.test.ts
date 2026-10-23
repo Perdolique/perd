@@ -125,6 +125,34 @@ describe('get /api/user/item-submissions', () => {
     })
   })
 
+  it.each(['pending', 'approved', 'rejected'])('should filter the owner query by %s', async (status) => {
+    const findMany = vi.fn(() => [])
+    const event = createTestEvent({ query: { equipmentItems: { findMany } } })
+
+    event.node.req.url = `/api/user/item-submissions?status=${status}`
+
+    await listUserItemSubmissionsHandler(event)
+
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        createdBy: 'user-1',
+        status: { in: [status] }
+      }
+    }))
+  })
+
+  it('should reject an invalid status before database access', async () => {
+    const findMany = vi.fn(() => [])
+    const event = createTestEvent({ query: { equipmentItems: { findMany } } })
+
+    event.node.req.url = '/api/user/item-submissions?status=published'
+
+    const response = listUserItemSubmissionsHandler(event)
+
+    await expect(response).rejects.toMatchObject({ statusCode: 400 })
+    expect(findMany).not.toHaveBeenCalled()
+  })
+
   it('should stop before querying when registered user validation fails', async () => {
     const authError = new Error('registered account required')
     const findManyMock = vi.fn()

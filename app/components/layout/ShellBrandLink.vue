@@ -18,6 +18,7 @@
 <style module>
   .component {
     display: inline-flex;
+    max-inline-size: 100%;
     align-items: center;
     color: var(--color-accent-primary);
     text-decoration: none;
@@ -36,6 +37,7 @@
 
   .logoLockup {
     display: inline-flex;
+    min-inline-size: 0;
     align-items: center;
     gap: var(--spacing-12);
   }
@@ -43,7 +45,6 @@
   .icon {
     inline-size: 2.5rem;
     aspect-ratio: 1;
-    flex-shrink: 0;
     background: currentColor;
     mask: url("/images/logo.svg") center / contain no-repeat;
   }
@@ -51,7 +52,6 @@
   .logo {
     inline-size: 7.5rem;
     aspect-ratio: 1563 / 295;
-    flex-shrink: 0;
     background: currentColor;
     mask: url("/images/metsik-app.svg") center / contain no-repeat;
   }
