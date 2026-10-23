@@ -52,14 +52,18 @@
           </PerdButton>
         </div>
         <div :class="$style.content" :inert="isContentLocked" :aria-busy="isContentBusy">
-          <p
-            :class="[$style.progress, { isEmpty: isPackingListEmpty }]"
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {{ packingProgressText }}
-          </p>
+          <div :class="[$style.summary, { isEmpty: isPackingListEmpty }]">
+            <p
+              :class="[$style.progress, { isEmpty: isPackingListEmpty }]"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {{ packingProgressText }}
+            </p>
+
+            <PackingListWeightSummary :entries="packingListView.entries" />
+          </div>
 
           <ul :class="$style.entryList">
             <PackingListEntryCard
@@ -114,6 +118,7 @@
   import PackingListEntryComposer from '~/components/packing-lists/PackingListEntryComposer.vue'
   import PackingListEntryEditDialog from '~/components/packing-lists/PackingListEntryEditDialog.vue'
   import PackingListEntryCard from '~/components/packing-lists/PackingListEntryCard.vue'
+  import PackingListWeightSummary from '~/components/packing-lists/PackingListWeightSummary.vue'
 
   definePageMeta({
     layout: 'page'
@@ -500,7 +505,8 @@
 
   .progress {
     color: var(--color-text-secondary);
-    font-size: var(--font-size-16);
+    font-size: var(--font-size-14);
+    font-variant-numeric: tabular-nums;
     line-height: var(--line-height-snug);
     overflow-wrap: anywhere;
 
@@ -511,6 +517,17 @@
       block-size: 1px;
       clip-path: inset(50%);
       white-space: nowrap;
+    }
+  }
+
+  .summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--spacing-8) var(--spacing-16);
+
+    &:global(.isEmpty) {
+      display: contents;
     }
   }
 

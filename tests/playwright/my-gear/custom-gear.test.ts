@@ -1,6 +1,7 @@
 import type { BrowserContext, Locator, Page } from '@playwright/test'
 import * as v from 'valibot'
 import type { MyGearRecord } from '../../../app/types/equipment.ts'
+import type { PackingListEntry, PackingListEntryInventory } from '../../../app/types/packing.ts'
 import { expect, test, waitForInitialEmailSignInTurnstile } from '../fixtures/global.fixtures.ts'
 import { createDeferred, getElementBox, mockGuestLogin } from '../fixtures/gear-library-entry-list.fixtures.ts'
 
@@ -705,7 +706,7 @@ async function mockCatalogPackingLists(context: BrowserContext, state: GearState
       itemName: alias,
       brand: 'MSR',
       category: 'Stoves'
-    }
+    } as const satisfies PackingListEntryInventory
 
     if (parts.at(-1) === 'available-gear') {
       await route.fulfill({ json: {
@@ -743,9 +744,12 @@ async function mockCatalogPackingLists(context: BrowserContext, state: GearState
       source: 'inventory',
       inventory,
       isPacked: false,
+      quantity: 1,
+      weightGrams: catalogRow.item.weightGrams,
+      weightSource: 'catalog',
       createdAt: date,
       updatedAt: date
-    }]
+    }] satisfies PackingListEntry[]
 
     await route.fulfill({ json: {
       id: listId,
