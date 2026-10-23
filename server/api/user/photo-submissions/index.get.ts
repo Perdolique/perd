@@ -58,7 +58,7 @@ function mapStatus(status: string): UserPhotoSubmission['status'] {
 
 export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof photoSubmissionListQuerySchema>; }>): Promise<UserPhotoSubmissionsResponse> => {
   const userId = await validateRegisteredUser(event)
-  const { page } = await getValidatedQuery(event, validatePhotoSubmissionListQuery)
+  const { page, status } = await getValidatedQuery(event, validatePhotoSubmissionListQuery)
   const offset = (page - 1) * photoSubmissionPageSize
 
   const submissions = await event.context.dbHttp.query.equipmentItemPhotoSubmissions.findMany({
@@ -75,6 +75,7 @@ export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferIn
 
     where: {
       createdBy: userId,
+      status,
 
       item: {
         status: 'approved'

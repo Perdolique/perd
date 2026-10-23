@@ -1,4 +1,12 @@
-import { defineEventHandler } from 'nuxt/server'
+import type { InferInput } from 'valibot'
+import type { ApiRequestEvent } from '#shared/types/api-request'
+
+import {
+  validateUserItemSubmissionListQuery,
+  type userItemSubmissionListQuerySchema
+} from '#server/utils/validation/schemas'
+
+import { defineEventHandler, getValidatedQuery } from 'nuxt/server'
 import { validateRegisteredUser } from '#server/utils/user'
 
 interface UserItemSubmissionReference {
@@ -81,8 +89,10 @@ function mapSubmissionStatus(status: string): UserItemSubmission['status'] {
   throw new Error(`Unexpected equipment item submission status: ${status}`)
 }
 
-export default defineEventHandler(async (event): Promise<UserItemSubmissionsResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof userItemSubmissionListQuerySchema>; }>): Promise<UserItemSubmissionsResponse> => {
   const userId = await validateRegisteredUser(event)
+  const { status } = await getValidatedQuery(event, validateUserItemSubmissionListQuery)
+  const statuses = status === undefined ? ['approved', 'pending', 'rejected'] : [status]
 
   const items = await event.context.dbHttp.query.equipmentItems.findMany({
     columns: {
@@ -98,7 +108,7 @@ export default defineEventHandler(async (event): Promise<UserItemSubmissionsResp
       createdBy: userId,
 
       status: {
-        in: ['approved', 'pending', 'rejected']
+        in: statuses
       }
     },
 

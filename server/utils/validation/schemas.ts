@@ -436,7 +436,12 @@ const photoSubmissionCreateBodySchema = v.pipe(
   }, 'sourceUrl is required only for manufacturer photos')
 )
 
+const userItemSubmissionListQuerySchema = v.object({
+  status: v.optional(v.picklist(['pending', 'approved', 'rejected']))
+})
+
 const photoSubmissionListQuerySchema = v.object({
+  ...userItemSubmissionListQuerySchema.entries,
   page: pageQuerySchema
 })
 
@@ -1040,6 +1045,10 @@ function validatePhotoSubmissionIdempotencyKey(value: unknown) {
   return v.parse(idempotencyKeySchema, value)
 }
 
+function validateUserItemSubmissionListQuery(query: unknown) {
+  return v.parse(userItemSubmissionListQuerySchema, query)
+}
+
 function validatePhotoSubmissionListQuery(query: unknown) {
   return v.parse(photoSubmissionListQuerySchema, query)
 }
@@ -1321,6 +1330,7 @@ export {
   photoSubmissionDecisionBodySchema,
   photoSubmissionAdminListQuerySchema,
   photoSubmissionListQuerySchema,
+  userItemSubmissionListQuerySchema,
   photoSubmissionParamsSchema,
   equipmentImageDeliveryParamsSchema,
   equipmentComparisonQuerySchema,
@@ -1368,6 +1378,7 @@ export {
   validatePhotoSubmissionAdminListQuery,
   validatePhotoSubmissionIdempotencyKey,
   validatePhotoSubmissionListQuery,
+  validateUserItemSubmissionListQuery,
   validatePhotoSubmissionParams,
   validateEquipmentImageDeliveryParams,
   validateEquipmentComparisonQuery,
