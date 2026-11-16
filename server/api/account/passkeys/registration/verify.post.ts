@@ -17,7 +17,7 @@ import {
 import { addPasskeySensitiveValues, verifyPasskeyRegistration } from '#server/utils/auth/passkey-verification'
 import { validatePasskeyRegistration, type passkeyRegistrationSchema } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof passkeyRegistrationSchema>; }>): Promise<PasskeySummary> => handlePasskeyRequest(event, 'registration', async (sensitiveValues) => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof passkeyRegistrationSchema> }>): Promise<PasskeySummary> => handlePasskeyRequest(event, 'registration', async (sensitiveValues) => {
     const config = getPasskeyConfig()
 
     validatePasskeyRequest(event, config)

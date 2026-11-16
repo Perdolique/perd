@@ -110,7 +110,7 @@ async function createOrReuseGuestUser(
   }
 }
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: GuestSessionRequestBody; }>) : Promise<GuestSessionResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: GuestSessionRequestBody }>) : Promise<GuestSessionResponse> => {
   const body: unknown = await readBody(event)
   const turnstileToken = getTurnstileToken(body)
   const clientIp = getTrustedClientIp(event, import.meta.dev)

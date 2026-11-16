@@ -20,7 +20,7 @@ interface TwitchOAuthResponse {
   redirectTo: string;
 }
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof twitchOAuthBodySchema>; }>): Promise<TwitchOAuthResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof twitchOAuthBodySchema> }>): Promise<TwitchOAuthResponse> => {
   event.res.headers.set('Cache-Control', 'no-store')
 
   const sensitiveValues: string[] = []

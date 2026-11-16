@@ -278,7 +278,7 @@
       })
 
       if (!(credential instanceof globalThis.PublicKeyCredential)) {
-        throw new Error('Passkey registration returned no credential')
+        throw new TypeError('Passkey registration returned no credential')
       }
 
       const browserCredential = credential.toJSON()

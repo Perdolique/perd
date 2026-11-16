@@ -155,7 +155,7 @@ function createPersistedSubmission(options: {
 
 function createReadDb(options: {
   earlySubmission?: PersistedSubmissionRow;
-  item?: { id: string; } | null;
+  item?: { id: string } | null;
   pendingCount?: number;
   reconciliationError?: Error;
   reconciledSubmission?: PersistedSubmissionRow;
@@ -229,7 +229,7 @@ function createWriteDb(options: {
   endError?: Error;
   existingSubmission?: PersistedSubmissionRow;
   insertError?: Error;
-  lockedItem?: { id: string; } | null;
+  lockedItem?: { id: string } | null;
   pendingCount?: number;
   transactionErrorAfterCallback?: Error;
 } = {}) {

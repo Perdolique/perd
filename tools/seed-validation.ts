@@ -68,6 +68,4 @@ function assertSampleItemCoverage() {
   }
 }
 
-export {
-  assertSampleItemCoverage
-}
+export { assertSampleItemCoverage }

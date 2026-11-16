@@ -349,14 +349,6 @@ async function buildCatalogListSql(dbHttp: DbHttp, query: ItemsListQuery) : Prom
   }
 }
 
-export {
-  buildCatalogListSql,
-  catalogPropertySortValues
-}
+export { buildCatalogListSql, catalogPropertySortValues }
 
-export type {
-  CatalogListBrand,
-  CatalogListCategory,
-  CatalogListItemRow,
-  CatalogListSql
-}
+export type { CatalogListBrand, CatalogListCategory, CatalogListItemRow, CatalogListSql }

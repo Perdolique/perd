@@ -1,4 +1,3 @@
-/* oxlint-disable vitest/no-conditional-in-test -- Browser callbacks validate DOM types and mocked routes branch across stateful responses. */
 import type { BrowserContext, Locator, Page, Request } from '@playwright/test'
 import { expect, test, waitForInitialEmailSignInTurnstile } from '../fixtures/global.fixtures.ts'
 import { createDeferred } from '../fixtures/gear-library-entry-list.fixtures.ts'
@@ -68,7 +67,7 @@ async function parseMultipartRequest(request: Request): Promise<FormData> {
   const body: unknown = request.postDataBuffer()
 
   if (!(body instanceof globalThis.Uint8Array)) {
-    throw new Error('Expected a multipart request body')
+    throw new TypeError('Expected a multipart request body')
   }
 
   const response = new globalThis.Response(new Uint8Array(body), {
@@ -141,7 +140,7 @@ async function dropReplacementPhoto(page: Page): Promise<void> {
 
 async function dropTestFiles(
   page: Page,
-  files: { name: string; type: string; }[]
+  files: { name: string; type: string }[]
 ): Promise<void> {
   const photoInput = page.getByLabel('Photo', { exact: true })
 

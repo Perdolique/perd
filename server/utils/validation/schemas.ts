@@ -1388,9 +1388,4 @@ export {
   validateUserEquipmentIdParams
 }
 
-export type {
-  ItemsListBooleanFilter,
-  ItemsListEnumFilter,
-  ItemsListNumberFilter,
-  ItemsListSort
-}
+export type { ItemsListBooleanFilter, ItemsListEnumFilter, ItemsListNumberFilter, ItemsListSort }

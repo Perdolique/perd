@@ -388,7 +388,7 @@ test.describe('Gear library item detail', () => {
 
     let saveAttempts = 0
 
-    let saveResponse: { status: number; json: unknown; } = {
+    let saveResponse: { status: number; json: unknown } = {
       status: 500,
       json: { message: 'Private failure' }
     }
@@ -536,7 +536,7 @@ test.describe('Gear library item detail', () => {
     const retryGate = createDeferred()
     let itemRequests = 0
 
-    let itemRouteResponse: { status: number; json: unknown; } = {
+    let itemRouteResponse: { status: number; json: unknown } = {
       status: 500,
       json: { message: 'Private failure' }
     }
@@ -634,7 +634,7 @@ test.describe('Gear library item detail', () => {
     const retryGate = createDeferred()
     let responseGate = Promise.resolve()
 
-    let itemRouteResponse: { status: number; json: unknown; } = {
+    let itemRouteResponse: { status: number; json: unknown } = {
       status: 500,
       json: { message: 'Private failure' }
     }

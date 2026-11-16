@@ -13,7 +13,7 @@ import {
   type categoryPropertiesOrderSchema
 } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof categoryPropertiesOrderSchema>; }>): Promise<AdminCategoryPropertiesSnapshot> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof categoryPropertiesOrderSchema> }>): Promise<AdminCategoryPropertiesSnapshot> => {
   const userId = await validateAdminUser(event)
   const params = await getValidatedRouteParams(event, validateCategoryScopedParams)
   const body = await readValidatedBody(event, validateCategoryPropertiesOrderBody)

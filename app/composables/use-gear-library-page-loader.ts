@@ -132,7 +132,4 @@ function useGearLibraryPageLoader(options: UseGearLibraryPageLoaderOptions) {
   }
 }
 
-export {
-  useGearLibraryPageLoader,
-  type FetchGearLibraryPage
-}
+export { useGearLibraryPageLoader, type FetchGearLibraryPage }

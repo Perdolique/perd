@@ -17,7 +17,7 @@ interface EquipmentItemImageOrderResponse {
   imageIds: string[];
 }
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof itemImageOrderBodySchema>; }>) : Promise<EquipmentItemImageOrderResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof itemImageOrderBodySchema> }>) : Promise<EquipmentItemImageOrderResponse> => {
   const userId = await validateAdminUser(event)
   const { id: itemId } = await getValidatedRouteParams(event, validateItemDetailParams)
   const { imageIds } = await readValidatedBody(event, validateItemImageOrderBody)

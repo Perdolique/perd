@@ -72,7 +72,7 @@ async function complete(token: string, password = newPassword) {
 }
 
 async function countWaitingAdvisoryLocks() {
-  const result = await rootDatabase.execute<{ count: number; }>(sql`
+  const result = await rootDatabase.execute<{ count: number }>(sql`
     SELECT count(*)::int AS count
     FROM pg_locks
     WHERE locktype = 'advisory' AND granted = false

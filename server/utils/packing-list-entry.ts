@@ -171,9 +171,4 @@ function createPackingListEntry(
 
 export { createPackingListEntry, createPackingListInventory }
 
-export type {
-  PackingListEntry,
-  PackingListEntryInventory,
-  PackingListEntryMutationResponse,
-  PackingListInventoryRow
-}
+export type { PackingListEntry, PackingListEntryInventory, PackingListEntryMutationResponse, PackingListInventoryRow }

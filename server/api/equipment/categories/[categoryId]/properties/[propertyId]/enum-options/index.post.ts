@@ -13,7 +13,7 @@ import {
   type propertyEnumOptionRevisionMutationSchema
 } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof propertyEnumOptionRevisionMutationSchema>; }>): Promise<AdminCategoryPropertiesSnapshot> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof propertyEnumOptionRevisionMutationSchema> }>): Promise<AdminCategoryPropertiesSnapshot> => {
   const userId = await validateAdminUser(event)
   const params = await getValidatedRouteParams(event, validateCategoryPropertyParams)
   const body = await readValidatedBody(event, validatePropertyEnumOptionRevisionMutationBody)

@@ -83,7 +83,9 @@ interface CreateReviewDbOptions {
 
 interface UpdateCall {
   table: unknown;
-  values: Record<string, unknown> & { displayOrder?: SQL; };
+  values: Record<string, unknown> & {
+    displayOrder?: SQL;
+  };
   where: SQL | null;
 }
 
@@ -123,7 +125,7 @@ function createReviewDb(options: CreateReviewDbOptions = {}) {
     status: options.preflightSubmissionStatus ?? 'pending'
   }
 
-  const submissionFindFirstMock = vi.fn((query: { with?: unknown; }) => {
+  const submissionFindFirstMock = vi.fn((query: { with?: unknown }) => {
     if (query.with !== undefined) {
       return preflightSubmission
     }

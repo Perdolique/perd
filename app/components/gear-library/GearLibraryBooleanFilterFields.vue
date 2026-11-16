@@ -43,7 +43,7 @@
     properties: GearLibraryFilterProperty[];
   }
 
-  const booleanOptions: { label: string; value: GearLibraryBooleanDraftValue; }[] = [{
+  const booleanOptions: { label: string; value: GearLibraryBooleanDraftValue }[] = [{
     label: 'Any',
     value: 'any'
   }, {

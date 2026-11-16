@@ -376,7 +376,7 @@
   }
 
   async function applyDecision(
-    body: { decision: 'publish'; makePrimary: boolean; } | { decision: 'reject'; rejectionReason: string; }
+    body: { decision: 'publish'; makePrimary: boolean } | { decision: 'reject'; rejectionReason: string }
   ) {
     mutationError.value = null
     isSubmitting.value = true

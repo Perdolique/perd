@@ -27,7 +27,7 @@ interface EmailVerificationResponse {
   redirectTo: string;
 }
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof emailVerificationSchema>; }>): Promise<EmailVerificationResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof emailVerificationSchema> }>): Promise<EmailVerificationResponse> => {
   const config = getEmailRegistrationConfig()
 
   validateEmailAuthenticationRequest(event, config.origin)

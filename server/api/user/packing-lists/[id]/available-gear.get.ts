@@ -32,7 +32,7 @@ function escapeLikePattern(value: string) {
     .replaceAll('_', String.raw`\_`)
 }
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof packingListAvailableGearQuerySchema>; }>) : Promise<AvailableGearResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof packingListAvailableGearQuerySchema> }>) : Promise<AvailableGearResponse> => {
   const userId = await validateSessionUser(event)
   const { id } = await getValidatedRouteParams(event, validatePackingListIdParams)
   const { page, search } = await getValidatedQuery(event, validatePackingListAvailableGearQuery)

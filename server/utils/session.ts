@@ -158,10 +158,4 @@ async function validateSessionUser(event: RequestEvent) {
 
 export type { SessionData }
 
-export {
-  useAppSession,
-  getAppSession,
-  updateAppSession,
-  clearAppSession,
-  validateSessionUser
-}
+export { useAppSession, getAppSession, updateAppSession, clearAppSession, validateSessionUser }

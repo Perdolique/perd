@@ -267,6 +267,4 @@ export {
   validateEquipmentItemImageRequest
 }
 
-export type {
-  EquipmentItemImageBody
-}
+export type { EquipmentItemImageBody }

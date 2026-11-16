@@ -248,7 +248,7 @@ function updateVersion(value: Date | string) {
   return new Date(value).getTime()
 }
 
-function clearedEntry<Entry extends { isPacked: boolean; updatedAt: Date | string; }>(entry: Entry): Entry {
+function clearedEntry<Entry extends { isPacked: boolean; updatedAt: Date | string }>(entry: Entry): Entry {
   if (!entry.isPacked) {
     return entry
   }
@@ -280,7 +280,7 @@ async function runRace(change: 'pack' | 'add' | 'remove', resetFirst: boolean) {
   const data = await fixture()
   const { database, rootDatabase } = resources()
   const before = await entries(data.list.id)
-  const schema = await database.execute<{ name: string; }>(sql`SELECT current_schema() AS name`)
+  const schema = await database.execute<{ name: string }>(sql`SELECT current_schema() AS name`)
   const schemaName = required(schema.rows[0]).name
   const locked = Promise.withResolvers<boolean>()
   const release = Promise.withResolvers<boolean>()
@@ -360,7 +360,7 @@ async function runRace(change: 'pack' | 'add' | 'remove', resetFirst: boolean) {
     const mutationVersion = resetFirst ? secondResult : firstResult
 
     if (reset instanceof Date || typeof reset === 'string' || (typeof mutationVersion !== 'string' && !(mutationVersion instanceof Date))) {
-      throw new Error('Unexpected concurrency result')
+      throw new TypeError('Unexpected concurrency result')
     }
 
     const detail = reset.packingList

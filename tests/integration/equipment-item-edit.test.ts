@@ -722,7 +722,7 @@ describe('published equipment edits on PostgreSQL', () => {
 
     try {
       await expect.poll(async () => {
-        const result = await rootDatabase.execute<{ total: number; }>(sql`select count(*)::integer as total from pg_stat_activity where wait_event_type = 'Lock' and query like '%equipment_categories%' and pid <> pg_backend_pid()`)
+        const result = await rootDatabase.execute<{ total: number }>(sql`select count(*)::integer as total from pg_stat_activity where wait_event_type = 'Lock' and query like '%equipment_categories%' and pid <> pg_backend_pid()`)
 
         return required(result.rows[0]).total
       }, { timeout: 8000 }).toBeGreaterThan(0)
@@ -835,7 +835,7 @@ describe('equipment revision migration', () => {
 
       const brandId = required(brand).id
       const categoryId = required(category).id
-      const inserted = await legacy.database.execute<{ id: string; }>(sql`insert into equipment_items ("brandId", "categoryId", name) values (${brandId}, ${categoryId}, 'Existing item') returning id`)
+      const inserted = await legacy.database.execute<{ id: string }>(sql`insert into equipment_items ("brandId", "categoryId", name) values (${brandId}, ${categoryId}, 'Existing item') returning id`)
       const item = required(inserted.rows[0])
       const path = new URL(`../../server/database/migrations/${migrationName}/migration.sql`, import.meta.url)
       const migration = await readFile(path, 'utf8')

@@ -115,6 +115,7 @@
 </template>
 
 <script lang="ts" setup>
+  /* oxlint-disable max-lines -- Temporarily allow the reformatted page; remove when it fits the 300-line limit. */
   import { computed, nextTick, ref, useTemplateRef } from 'vue'
 
   import {
@@ -147,9 +148,13 @@
 
   type TurnstileAuthenticationMethod = 'email' | 'guest'
 
-  type ActiveAuthentication =
-    | { method: TurnstileAuthenticationMethod; phase: 'request' | 'turnstile'; }
-    | { method: 'twitch'; phase: 'redirect'; }
+  type ActiveAuthentication = {
+    method: TurnstileAuthenticationMethod;
+    phase: 'request' | 'turnstile';
+  } | {
+    method: 'twitch';
+    phase: 'redirect';
+  }
 
   definePageMeta({
     layout: 'auth'

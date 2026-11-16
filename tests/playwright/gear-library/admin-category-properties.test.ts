@@ -1246,7 +1246,6 @@ test('rejects a non-admin before requesting characteristics', async ({ context, 
   const requests: Request[] = []
 
   page.on('request', (request) => {
-    // oxlint-disable-next-line vitest/no-conditional-in-test -- The listener records only protected characteristic requests.
     if (request.url().includes(apiPath)) { requests.push(request) }
   })
 

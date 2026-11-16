@@ -82,7 +82,7 @@ function createInsertDb(
     sessionVersion: 0,
     userId
   }],
-  existingGuestResult?: { id: string; sessionVersion: number; }
+  existingGuestResult?: { id: string; sessionVersion: number }
 ) {
   const returningMock = vi.fn().mockResolvedValue(insertResult)
 

@@ -15,7 +15,7 @@ import {
   type categoryMutationSchema
 } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof categoryMutationSchema>; }>): Promise<CategoryBaseRecord> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof categoryMutationSchema> }>): Promise<CategoryBaseRecord> => {
   const userId = await validateAdminUser(event)
   const { categoryId } = await getValidatedRouteParams(event, validateCategoryScopedParams)
   const { name, slug } = await readValidatedBody(event, validateCategoryMutationBody)

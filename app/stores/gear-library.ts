@@ -131,8 +131,4 @@ const useGearLibraryStore = defineStore('gear-library', () => {
   }
 })
 
-export {
-  gearLibraryItemsAsyncDataKey,
-  useGearLibraryStore,
-  type GearLibraryItemsSnapshot
-}
+export { gearLibraryItemsAsyncDataKey, useGearLibraryStore, type GearLibraryItemsSnapshot }

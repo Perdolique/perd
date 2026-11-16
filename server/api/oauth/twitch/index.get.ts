@@ -27,7 +27,7 @@ async function enforceTwitchOAuthRateLimit(event: RequestEvent, clientIp: string
   }
 }
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof twitchOAuthQuerySchema>; }>): Promise<TwitchOAuthAuthorizationResponse | string> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof twitchOAuthQuerySchema> }>): Promise<TwitchOAuthAuthorizationResponse | string> => {
   event.res.headers.set('Cache-Control', 'no-store')
 
   const sensitiveValues: string[] = []

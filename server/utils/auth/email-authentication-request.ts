@@ -227,8 +227,4 @@ async function enforceEmailAuthenticationRateLimit(
   }
 }
 
-export {
-  enforceEmailAuthenticationRateLimit,
-  readLimitedValidatedJsonBody,
-  validateEmailAuthenticationRequest
-}
+export { enforceEmailAuthenticationRateLimit, readLimitedValidatedJsonBody, validateEmailAuthenticationRequest }

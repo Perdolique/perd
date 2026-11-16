@@ -318,7 +318,7 @@ function submissionEvent(data: Awaited<ReturnType<typeof fixture>>, body: unknow
 
 async function waitForBlockedQueries(fragment: string, count = 1): Promise<void> {
   await expect.poll(async () => {
-    const result = await resources().rootDatabase.execute<{ total: number; }>(sql`
+    const result = await resources().rootDatabase.execute<{ total: number }>(sql`
       select count(*)::integer as total from pg_stat_activity
       where wait_event_type = 'Lock' and query like ${`%${fragment}%`}
       and pid <> pg_backend_pid()
@@ -1252,7 +1252,7 @@ describe('properties revision migration', () => {
 
     try {
       const { database } = legacy
-      const legacyCategories = await database.execute<{ id: number; }>(sql`insert into equipment_categories (name, slug) values ('Legacy', 'legacy') returning id`)
+      const legacyCategories = await database.execute<{ id: number }>(sql`insert into equipment_categories (name, slug) values ('Legacy', 'legacy') returning id`)
       const [category] = legacyCategories.rows
 
       requireRow(category)
@@ -1282,7 +1282,7 @@ describe('properties revision migration', () => {
 
       requireRow(option)
 
-      const legacyItems = await database.execute<{ id: string; }>(sql`insert into equipment_items ("categoryId", "brandId", name) values (${category.id}, ${brand.id}, 'Legacy') returning id`)
+      const legacyItems = await database.execute<{ id: string }>(sql`insert into equipment_items ("categoryId", "brandId", name) values (${category.id}, ${brand.id}, 'Legacy') returning id`)
       const [item] = legacyItems.rows
 
       requireRow(item)

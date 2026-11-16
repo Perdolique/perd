@@ -19,7 +19,7 @@ import {
 import { passkeyAlgorithms } from '#server/utils/auth/passkey-verification'
 import { validatePasskeyName, type passkeyNameSchema } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof passkeyNameSchema>; }>): Promise<PasskeyRegistrationOptions> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof passkeyNameSchema> }>): Promise<PasskeyRegistrationOptions> => {
   const createdAt = new Date()
 
   return handlePasskeyRequest(event, 'registration', async (sensitiveValues) => {

@@ -294,7 +294,7 @@ describe('post /api/auth/email/sign-in', () => {
 
     expect(encodedHash).toBeTypeOf('string')
 
-    const actualPasswordModule = await vi.importActual<{ verifyPassword: typeof verifyPassword; }>(
+    const actualPasswordModule = await vi.importActual<{ verifyPassword: typeof verifyPassword }>(
       '#server/utils/auth/password'
     )
 

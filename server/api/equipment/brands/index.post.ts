@@ -8,7 +8,7 @@ import { brandBaseSelection, type BrandBaseRecord } from '#server/utils/equipmen
 import { throwBrandWriteError } from '#server/utils/equipment/brand-write-errors'
 import { validateBrandMutationBody, type brandMutationSchema } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof brandMutationSchema>; }>): Promise<BrandBaseRecord> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof brandMutationSchema> }>): Promise<BrandBaseRecord> => {
   const userId = await validateAdminUser(event)
   const { name, slug } = await readValidatedBody(event, validateBrandMutationBody)
   const dbWebsocket = createRuntimeWebSocketClient()

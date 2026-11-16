@@ -304,7 +304,4 @@ async function persistUploadedPhotoSubmission(
   return transactionResult.submission
 }
 
-export {
-  findPersistedPhotoSubmission,
-  persistUploadedPhotoSubmission
-}
+export { findPersistedPhotoSubmission, persistUploadedPhotoSubmission }

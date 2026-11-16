@@ -149,7 +149,7 @@ async function createIsolatedPostgreSQL(
       isLocalDatabase: true
     })
 
-    const schema = await resources.database.execute<{ name: string; }>(sql`SELECT current_schema() AS name`)
+    const schema = await resources.database.execute<{ name: string }>(sql`SELECT current_schema() AS name`)
 
     if (schema.rows[0]?.name !== schemaName) {
       throw new Error('Isolated schema was not selected; refusing to run migrations')

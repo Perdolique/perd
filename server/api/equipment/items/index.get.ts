@@ -21,7 +21,7 @@ interface ReturnData {
   total: number;
 }
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof itemsListQuerySchema>; }>) : Promise<ReturnData> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof itemsListQuerySchema> }>) : Promise<ReturnData> => {
   const { dbHttp } = event.context
   const validatedQuery = await getValidatedQuery(event, validateItemsListQuery)
   const userId = await validateSessionUser(event)

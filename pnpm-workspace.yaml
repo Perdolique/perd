@@ -4,17 +4,14 @@ allowBuilds:
   sharp: false
   workerd: false
 overrides:
-  '@nuxt/devtools': 4.0.0-beta.5
-  markdownlint-cli>markdownlint: 0.42.0
+  '@nuxt/devtools': 4.2.0
 minimumReleaseAgeExcludePrune: true
 minimumReleaseAgeExclude:
   - '@clack/core@1.5.1'
   - '@clack/prompts@1.8.1'
-  - '@nuxt/icon@2.5.1'
   - '@tybys/wasm-util@0.10.4'
   - tsx@4.23.15
   - valibot@1.5.0
-  - vue-router@5.4.0
   - '@img/sharp-darwin-arm64@0.35.5'
   - '@img/sharp-darwin-x64@0.35.5'
   - '@img/sharp-freebsd-wasm32@0.35.5'
@@ -43,6 +40,34 @@ minimumReleaseAgeExclude:
   - '@img/sharp-win32-x64@0.35.5'
   - ansi-regex@6.4.0
   - sharp@0.35.5
-  - vite@8.3.4
+  - '@cloudflare/workerd-darwin-64@1.20261116.1'
+  - '@cloudflare/workerd-darwin-arm64@1.20261116.1'
+  - '@cloudflare/workerd-linux-64@1.20261116.1'
+  - '@cloudflare/workerd-linux-arm64@1.20261116.1'
+  - '@cloudflare/workerd-windows-64@1.20261116.1'
+  - '@oxlint/binding-android-arm-eabi@1.94.0'
+  - '@oxlint/binding-android-arm64@1.94.0'
+  - '@oxlint/binding-darwin-arm64@1.94.0'
+  - '@oxlint/binding-darwin-x64@1.94.0'
+  - '@oxlint/binding-freebsd-x64@1.94.0'
+  - '@oxlint/binding-linux-arm-gnueabihf@1.94.0'
+  - '@oxlint/binding-linux-arm-musleabihf@1.94.0'
+  - '@oxlint/binding-linux-arm64-gnu@1.94.0'
+  - '@oxlint/binding-linux-arm64-musl@1.94.0'
+  - '@oxlint/binding-linux-ppc64-gnu@1.94.0'
+  - '@oxlint/binding-linux-riscv64-gnu@1.94.0'
+  - '@oxlint/binding-linux-riscv64-musl@1.94.0'
+  - '@oxlint/binding-linux-s390x-gnu@1.94.0'
+  - '@oxlint/binding-linux-x64-gnu@1.94.0'
+  - '@oxlint/binding-linux-x64-musl@1.94.0'
+  - '@oxlint/binding-openharmony-arm64@1.94.0'
+  - '@oxlint/binding-win32-arm64-msvc@1.94.0'
+  - '@oxlint/binding-win32-ia32-msvc@1.94.0'
+  - '@oxlint/binding-win32-x64-msvc@1.94.0'
+  - eslint-config-greenpie@17.21.0
+  - miniflare@5.20261116.0-beta
+  - oxlint@1.94.0
+  - workerd@1.20261116.1
+  - wrangler@4.163.0
 publicHoistPattern:
   - h3

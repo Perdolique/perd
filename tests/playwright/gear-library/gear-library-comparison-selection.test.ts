@@ -90,7 +90,7 @@ async function expectTraySpaceReserved(tray: Locator) {
 }
 
 function createSleepingPadsItemsResponder(waitFor: Promise<void>) {
-  return (request: { url: InstanceType<typeof globalThis.URL>; }) => {
+  return (request: { url: InstanceType<typeof globalThis.URL> }) => {
     if (request.url.searchParams.get('categorySlug') === 'sleeping-pads') {
       return {
         json: {

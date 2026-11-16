@@ -167,8 +167,4 @@ export default defineEventHandler(async (event): Promise<UserItemSubmissionsResp
   return { items: mappedItems }
 })
 
-export type {
-  UserItemSubmission,
-  UserItemSubmissionProperty,
-  UserItemSubmissionsResponse
-}
+export type { UserItemSubmission, UserItemSubmissionProperty, UserItemSubmissionsResponse }

@@ -23,7 +23,7 @@ interface PasswordRecoveryResponse {
 
 const maximumPasswordRecoveryBodyByteLength = 4096
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof passwordRecoveryRequestSchema>; }>): Promise<PasswordRecoveryResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof passwordRecoveryRequestSchema> }>): Promise<PasswordRecoveryResponse> => {
   const config = getEmailAuthenticationConfig()
 
   validateEmailAuthenticationRequest(event, config.origin)

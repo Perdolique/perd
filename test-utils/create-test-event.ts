@@ -7,8 +7,8 @@ import { createEvent, getRequestURL, toWebRequest, type H3Event } from 'h3'
 import type { RequestEvent } from '../shared/types/request-event'
 
 /** Bridges Node fixtures to portable events while keeping their request and response observable. */
-function toTestRequestEvent(event: H3Event): RequestEvent & { node: H3Event['node']; waitUntil: H3Event['waitUntil']; h3: H3Event; } {
-  let request: Request | undefined = undefined
+function toTestRequestEvent(event: H3Event): RequestEvent & { node: H3Event['node']; waitUntil: H3Event['waitUntil']; h3: H3Event } {
+  let request: Request | null = null
 
   // @ts-expect-error -- Raw fixtures provide only the database methods each test needs.
   const context: RequestEvent['context'] = event.context
@@ -121,7 +121,4 @@ function createTestEvent(dbHttp: unknown) {
   return portableEvent
 }
 
-export {
-  createTestEvent,
-  toTestRequestEvent
-}
+export { createTestEvent, toTestRequestEvent }

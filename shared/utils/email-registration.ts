@@ -4,7 +4,4 @@ function isEmailRegistrationEnabled(value: unknown): boolean {
   return value === true || value === 'true'
 }
 
-export {
-  emailRegistrationApiPaths,
-  isEmailRegistrationEnabled
-}
+export { emailRegistrationApiPaths, isEmailRegistrationEnabled }

@@ -8,7 +8,7 @@ import { readMyGear, type MyGearRecord } from '#server/utils/my-gear'
 import { throwMyGearError } from '#server/utils/my-gear-errors'
 import { normalizeDecimalNumber } from '#shared/utils/decimal-number'
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof userEquipmentCreateBodySchema>; }>): Promise<MyGearRecord> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof userEquipmentCreateBodySchema> }>): Promise<MyGearRecord> => {
   const userId = await validateSessionUser(event)
   const body = await readValidatedBody(event, validateUserEquipmentCreateBody)
 

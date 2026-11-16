@@ -25,7 +25,7 @@ const email = 'person@example.com'
 const token = 'secret-reset-token'
 const tokenHash = 'secret-token-hash'
 const emailSendMock = vi.fn<(message: EmailMessage | EmailMessageBuilder) => Promise<EmailSendResult>>()
-const actualDatabaseModule = await vi.importActual<{ createWebSocketClient: typeof createWebSocketClient; }>('#server/utils/database')
+const actualDatabaseModule = await vi.importActual<{ createWebSocketClient: typeof createWebSocketClient }>('#server/utils/database')
 
 const databaseConfig = {
   databaseUrl: 'postgresql://test:test@localhost/test',

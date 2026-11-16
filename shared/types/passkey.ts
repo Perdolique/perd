@@ -31,7 +31,12 @@ interface PasskeyRegistrationOptions {
 
 interface PasskeyAuthenticationOptions {
   ceremonyId: string;
-  options: Pick<PublicKeyCredentialRequestOptionsJSON, 'challenge' | 'timeout' | 'rpId' | 'allowCredentials' | 'userVerification'>;
+  options: Pick<PublicKeyCredentialRequestOptionsJSON,
+    | 'challenge'
+    | 'timeout'
+    | 'rpId'
+    | 'allowCredentials'
+    | 'userVerification'>;
 }
 
 export type { PasskeySummary, PasskeyListResponse, PasskeyRegistrationOptions, PasskeyAuthenticationOptions }

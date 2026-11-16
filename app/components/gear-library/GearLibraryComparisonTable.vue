@@ -110,11 +110,7 @@
     rows: GearLibraryComparisonRow[];
   }
 
-  export type {
-    GearLibraryComparisonTableItem,
-    GearLibraryComparisonTableItemBrand,
-    GearLibraryComparisonTableProps
-  }
+  export type { GearLibraryComparisonTableItem, GearLibraryComparisonTableItemBrand, GearLibraryComparisonTableProps }
 </script>
 
 <script lang="ts" setup>

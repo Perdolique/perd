@@ -182,6 +182,4 @@ const sampleItems: SampleItemDefinition[] = [
   ...generatedSampleItems
 ]
 
-export {
-  sampleItems
-}
+export { sampleItems }

@@ -135,7 +135,7 @@ function usePasskeySignIn(options: PasskeySignInOptions) {
       })
 
       if (!(credential instanceof globalThis.PublicKeyCredential)) {
-        throw new Error('Passkey authentication returned no credential')
+        throw new TypeError('Passkey authentication returned no credential')
       }
 
       const browserCredential = credential.toJSON()

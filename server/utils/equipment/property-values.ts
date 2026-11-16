@@ -39,13 +39,6 @@ function normalizeEquipmentPropertyValue(input: EquipmentPropertyValueColumns): 
   return input.valueText
 }
 
-export {
-  getEquipmentPropertyDataType,
-  normalizeEquipmentPropertyValue
-}
+export { getEquipmentPropertyDataType, normalizeEquipmentPropertyValue }
 
-export type {
-  EquipmentPropertyDataType,
-  EquipmentPropertyValue,
-  EquipmentPropertyValueColumns
-}
+export type { EquipmentPropertyDataType, EquipmentPropertyValue, EquipmentPropertyValueColumns }

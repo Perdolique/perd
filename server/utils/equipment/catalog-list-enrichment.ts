@@ -233,11 +233,6 @@ async function enrichCatalogItemRows(
   })
 }
 
-export {
-  enrichCatalogItemRows
-}
+export { enrichCatalogItemRows }
 
-export type {
-  CatalogListItem,
-  CatalogListProperty
-}
+export type { CatalogListItem, CatalogListProperty }

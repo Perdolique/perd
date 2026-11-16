@@ -25,6 +25,4 @@ function validateTwitchOAuthConfig(config: unknown): TwitchOAuthConfig {
   })
 }
 
-export {
-  validateTwitchOAuthConfig
-}
+export { validateTwitchOAuthConfig }

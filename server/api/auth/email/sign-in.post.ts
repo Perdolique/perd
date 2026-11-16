@@ -71,7 +71,7 @@ async function findEmailCredential(
   }
 }
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof emailSignInSchema>; }>): Promise<EmailSignInResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof emailSignInSchema> }>): Promise<EmailSignInResponse> => {
   const expectedOrigin = getEmailAuthenticationOrigin()
 
   validateEmailAuthenticationRequest(event, expectedOrigin)

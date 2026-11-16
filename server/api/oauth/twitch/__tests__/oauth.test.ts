@@ -7,7 +7,7 @@ import { hashToken } from '#server/utils/auth/password'
 import { twitchOAuthMessages } from '#shared/utils/twitch-oauth'
 import { createTestEvent } from '~~/test-utils/create-test-event'
 
-function assertAuthorizationResponse(result: unknown): asserts result is { authorizationUrl: string; } {
+function assertAuthorizationResponse(result: unknown): asserts result is { authorizationUrl: string } {
   if (typeof result !== 'object' || result === null || !('authorizationUrl' in result) || typeof result.authorizationUrl !== 'string') {
     throw new TypeError('Expected a JSON authorization response')
   }

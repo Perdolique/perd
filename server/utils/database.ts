@@ -56,7 +56,4 @@ function createWebSocketClient(config: DatabaseConfig) {
   })
 }
 
-export {
-  createHttpClient,
-  createWebSocketClient
-}
+export { createHttpClient, createWebSocketClient }

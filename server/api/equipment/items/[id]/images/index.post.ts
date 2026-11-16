@@ -28,7 +28,7 @@ interface EquipmentItemImageResponse {
   id: string;
 }
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof itemImageUploadQuerySchema>; }>) : Promise<EquipmentItemImageResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof itemImageUploadQuerySchema> }>) : Promise<EquipmentItemImageResponse> => {
   const userId = await validateAdminUser(event)
   const { id: itemId } = await getValidatedRouteParams(event, validateItemDetailParams)
   const { filename } = await getValidatedQuery(event, validateItemImageUploadQuery)

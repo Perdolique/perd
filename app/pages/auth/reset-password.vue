@@ -97,11 +97,16 @@
     skipAuth: true
   })
 
-  type ResetPageState =
-    | { phase: 'checking'; }
-    | { phase: 'ready'; token: string; }
-    | { phase: 'invalid'; }
-    | { phase: 'complete'; }
+  type ResetPageState = {
+    phase: 'checking';
+  } | {
+    phase: 'ready';
+    token: string;
+  } | {
+    phase: 'invalid';
+  } | {
+    phase: 'complete';
+  }
 
   useHead({
     meta: [{

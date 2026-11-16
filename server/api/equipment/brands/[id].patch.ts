@@ -15,7 +15,7 @@ import {
   type brandMutationSchema
 } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof brandMutationSchema>; }>): Promise<BrandBaseRecord> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof brandMutationSchema> }>): Promise<BrandBaseRecord> => {
   const userId = await validateAdminUser(event)
   const { id: brandId } = await getValidatedRouteParams(event, validateBrandIdParams)
   const { name, slug } = await readValidatedBody(event, validateBrandMutationBody)

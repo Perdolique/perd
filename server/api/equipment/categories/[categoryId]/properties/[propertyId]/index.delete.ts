@@ -13,7 +13,7 @@ import {
   type categoryPropertyDeleteQuerySchema
 } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof categoryPropertyDeleteQuerySchema>; }>): Promise<AdminCategoryPropertiesSnapshot> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof categoryPropertyDeleteQuerySchema> }>): Promise<AdminCategoryPropertiesSnapshot> => {
   const userId = await validateAdminUser(event)
   const params = await getValidatedRouteParams(event, validateCategoryPropertyParams)
   const query = await getValidatedQuery(event, validateCategoryPropertyDeleteQuery)

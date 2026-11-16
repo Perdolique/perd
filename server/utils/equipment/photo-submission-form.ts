@@ -72,7 +72,4 @@ async function readLimitedMultipartFormData(
   }
 }
 
-export {
-  readLimitedMultipartFormData,
-  validatePhotoSubmissionMultipartRequest
-}
+export { readLimitedMultipartFormData, validatePhotoSubmissionMultipartRequest }

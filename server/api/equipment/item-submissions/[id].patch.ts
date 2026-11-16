@@ -48,7 +48,7 @@ function mapNormalizedProperty(value: {
   }
 }
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof itemSubmissionUpdateBodySchema>; }>): Promise<ItemSubmissionDetailResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof itemSubmissionUpdateBodySchema> }>): Promise<ItemSubmissionDetailResponse> => {
   const userId = await validateAdminUser(event)
   const { id } = await getValidatedRouteParams(event, validateItemSubmissionParams)
   const body = await readValidatedBody(event, validateItemSubmissionUpdateBody)

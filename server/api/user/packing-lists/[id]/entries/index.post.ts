@@ -22,7 +22,7 @@ import {
   type packingListEntryCreateBodySchema
 } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof packingListEntryCreateBodySchema>; }>) : Promise<PackingListEntryMutationResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof packingListEntryCreateBodySchema> }>) : Promise<PackingListEntryMutationResponse> => {
   const userId = await validateSessionUser(event)
   const { id } = await getValidatedRouteParams(event, validatePackingListIdParams)
   const { customName, inventoryId } = await readValidatedBody(event, validatePackingListEntryCreateBody)
