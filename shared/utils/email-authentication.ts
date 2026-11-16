@@ -20,8 +20,4 @@ function isEmailAuthenticationPasswordValid(password: string): boolean {
   return length >= minimumPasswordLength && length <= maximumPasswordLength
 }
 
-export {
-  isEmailAuthenticationPasswordValid,
-  normalizeEmail,
-  passwordRecoveryApiPaths
-}
+export { isEmailAuthenticationPasswordValid, normalizeEmail, passwordRecoveryApiPaths }

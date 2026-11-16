@@ -56,7 +56,7 @@ function mapStatus(status: string): UserPhotoSubmission['status'] {
   throw new Error(`Unexpected photo submission status: ${status}`)
 }
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof photoSubmissionListQuerySchema>; }>): Promise<UserPhotoSubmissionsResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof photoSubmissionListQuerySchema> }>): Promise<UserPhotoSubmissionsResponse> => {
   const userId = await validateRegisteredUser(event)
   const { page } = await getValidatedQuery(event, validatePhotoSubmissionListQuery)
   const offset = (page - 1) * photoSubmissionPageSize
@@ -126,7 +126,4 @@ export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferIn
   }
 })
 
-export type {
-  UserPhotoSubmission,
-  UserPhotoSubmissionsResponse
-}
+export type { UserPhotoSubmission, UserPhotoSubmissionsResponse }

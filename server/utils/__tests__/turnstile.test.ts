@@ -49,7 +49,7 @@ function mockSiteverifyResponse(body: unknown, status = 200) {
 }
 
 async function getVerificationError(
-  options: { requestIp?: string; token?: unknown; } = {}
+  options: { requestIp?: string; token?: unknown } = {}
 ): Promise<NuxtErrorLike> {
   const submittedToken = Object.hasOwn(options, 'token') ? options.token : token
   const requestIp = options.requestIp ?? remoteIp

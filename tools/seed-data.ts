@@ -343,12 +343,6 @@ const propertyDefinitionsByCategorySlug: Record<string, PropertyDefinition[]> = 
   ]
 }
 
-export {
-  brandDefinitions,
-  categoryDefinitions,
-  groupDefinitions,
-  propertyDefinitionsByCategorySlug,
-  referenceSeed
-}
+export { brandDefinitions, categoryDefinitions, groupDefinitions, propertyDefinitionsByCategorySlug, referenceSeed }
 
 export { sampleItems } from './seed-sample-items'

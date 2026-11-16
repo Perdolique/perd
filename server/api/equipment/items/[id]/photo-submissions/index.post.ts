@@ -276,6 +276,4 @@ export default defineEventHandler(async (event): Promise<PhotoSubmissionCreateRe
   return sendCreatedResponse(event, submission)
 })
 
-export type {
-  PhotoSubmissionCreateResponse
-}
+export type { PhotoSubmissionCreateResponse }

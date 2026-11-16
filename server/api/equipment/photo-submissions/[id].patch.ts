@@ -61,7 +61,7 @@ function throwPhotoSubmissionReviewError(error: unknown, submissionId: string): 
   })
 }
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof photoSubmissionDecisionBodySchema>; }>): Promise<PhotoSubmissionDecisionResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof photoSubmissionDecisionBodySchema> }>): Promise<PhotoSubmissionDecisionResponse> => {
   const userId = await validateAdminUser(event)
   const { id } = await getValidatedRouteParams(event, validatePhotoSubmissionParams)
   const body = await readValidatedBody(event, validatePhotoSubmissionDecisionBody)

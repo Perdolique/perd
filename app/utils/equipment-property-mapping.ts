@@ -105,5 +105,10 @@ function applyEquipmentPropertyAssignments(sources: EquipmentPropertySource[], t
   return values
 }
 
-export { getEquipmentPropertySources, canTransferEquipmentProperty, suggestEquipmentPropertyAssignments, applyEquipmentPropertyAssignments }
+export {
+  getEquipmentPropertySources,
+  canTransferEquipmentProperty,
+  suggestEquipmentPropertyAssignments,
+  applyEquipmentPropertyAssignments
+}
 export type { EquipmentPropertyAssignments }

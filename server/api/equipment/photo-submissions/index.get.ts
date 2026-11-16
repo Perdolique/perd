@@ -58,7 +58,7 @@ interface PhotoSubmissionListQueryRow {
   item: PhotoSubmissionListQueryItem | null;
 }
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof photoSubmissionAdminListQuerySchema>; }>): Promise<PhotoSubmissionListResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof photoSubmissionAdminListQuerySchema> }>): Promise<PhotoSubmissionListResponse> => {
   await validateAdminUser(event)
 
   const {

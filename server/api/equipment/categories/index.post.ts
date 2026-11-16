@@ -8,7 +8,7 @@ import { categoryBaseSelection, type CategoryBaseRecord } from '#server/utils/eq
 import { logCategoryWriteError, throwCategoryWriteError } from '#server/utils/equipment/category-write-errors'
 import { validateCategoryMutationBody, type categoryMutationSchema } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof categoryMutationSchema>; }>): Promise<CategoryBaseRecord> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof categoryMutationSchema> }>): Promise<CategoryBaseRecord> => {
   const userId = await validateAdminUser(event)
   const { name, slug } = await readValidatedBody(event, validateCategoryMutationBody)
   const dbWebsocket = createRuntimeWebSocketClient()

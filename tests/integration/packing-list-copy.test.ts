@@ -74,7 +74,7 @@ async function fixture() {
 
   const catalog = required(catalogRow)
   const privateGear = required(privateRow)
-  const entryIds = await database.execute<{ id: string; }>(sql`SELECT uuidv7() AS id FROM generate_series(1, 2) ORDER BY id`)
+  const entryIds = await database.execute<{ id: string }>(sql`SELECT uuidv7() AS id FROM generate_series(1, 2) ORDER BY id`)
   const earlierEntryId = required(entryIds.rows[0]).id
   const laterEntryId = required(entryIds.rows[1]).id
 
@@ -333,7 +333,7 @@ describe('packing list copy persistence', () => {
     const data = await fixture()
     const { database, rootDatabase } = required(isolated)
     const originalEntries = await entries(data.list.id)
-    const schemaResult = await database.execute<{ name: string; }>(sql`SELECT current_schema() AS name`)
+    const schemaResult = await database.execute<{ name: string }>(sql`SELECT current_schema() AS name`)
     const schemaName = required(schemaResult.rows[0]).name
     const { promise: release, resolve: releaseLock } = Promise.withResolvers<null>()
     const { promise: locked, resolve: signalLock } = Promise.withResolvers<null>()

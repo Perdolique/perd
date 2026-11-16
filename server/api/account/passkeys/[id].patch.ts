@@ -15,7 +15,7 @@ import {
 
 import { validatePasskeyIdParams, validatePasskeyName, type passkeyNameSchema } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof passkeyNameSchema>; }>): Promise<PasskeySummary> => handlePasskeyRequest(event, 'management', async (sensitiveValues) => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof passkeyNameSchema> }>): Promise<PasskeySummary> => handlePasskeyRequest(event, 'management', async (sensitiveValues) => {
     const config = getPasskeyConfig()
 
     validatePasskeyRequest(event, config)

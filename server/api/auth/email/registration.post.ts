@@ -22,7 +22,7 @@ interface EmailRegistrationResponse {
   accepted: true;
 }
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof emailRegistrationSchema>; }>): Promise<EmailRegistrationResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof emailRegistrationSchema> }>): Promise<EmailRegistrationResponse> => {
   const config = getEmailRegistrationConfig()
 
   validateEmailAuthenticationRequest(event, config.origin)

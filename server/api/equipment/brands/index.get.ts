@@ -13,7 +13,7 @@ interface BrandListItem {
 
 type BrandsListResponse = BrandListItem[]
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof brandsListQuerySchema>; }>): Promise<BrandsListResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof brandsListQuerySchema> }>): Promise<BrandsListResponse> => {
   const { dbHttp } = event.context
   const { search } = await getValidatedQuery(event, validateBrandsListQuery)
 

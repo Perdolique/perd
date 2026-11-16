@@ -13,7 +13,7 @@ import {
   type propertiesRevisionQuerySchema
 } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof propertiesRevisionQuerySchema>; }>): Promise<AdminCategoryPropertiesSnapshot> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof propertiesRevisionQuerySchema> }>): Promise<AdminCategoryPropertiesSnapshot> => {
   const userId = await validateAdminUser(event)
   const params = await getValidatedRouteParams(event, validatePropertyEnumOptionParams)
   const query = await getValidatedQuery(event, validatePropertiesRevisionQuery)

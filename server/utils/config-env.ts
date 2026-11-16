@@ -31,7 +31,4 @@ function getEnvDatabaseConfig(): DatabaseConfig {
 
 export type { DatabaseConfig }
 
-export {
-  getEnvDatabaseConfig,
-  optionalBooleanSchema
-}
+export { getEnvDatabaseConfig, optionalBooleanSchema }

@@ -461,7 +461,6 @@ test.describe('passkeys', () => {
     await page.route('**/api/account/passkeys', async (route) => {
       listRequestCount += 1
 
-      // oxlint-disable-next-line vitest/no-conditional-in-test -- The retry must get a successful response after failed reconciliation.
       if (listRequestCount === 1) {
         await route.fulfill({
           status: 503,

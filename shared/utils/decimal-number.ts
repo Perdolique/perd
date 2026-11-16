@@ -90,9 +90,4 @@ function compareDecimalNumbers(leftValue: string, rightValue: string) {
   return left.isNegative ? -absoluteComparison : absoluteComparison
 }
 
-export {
-  compareDecimalNumbers,
-  decimalNumberPattern,
-  isFiniteDecimalNumber,
-  normalizeDecimalNumber
-}
+export { compareDecimalNumbers, decimalNumberPattern, isFiniteDecimalNumber, normalizeDecimalNumber }

@@ -70,7 +70,7 @@ async function verifyPasskeyRegistration(
 async function verifyPasskeyAuthentication(
   response: AuthenticationResponseJSON,
   credential: WebAuthnCredential,
-  context: { challenge: PasskeyChallenge; sensitiveValues: string[]; }
+  context: { challenge: PasskeyChallenge; sensitiveValues: string[] }
 ) {
   const { challenge, sensitiveValues } = context
 

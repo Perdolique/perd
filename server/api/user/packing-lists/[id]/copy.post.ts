@@ -12,7 +12,7 @@ import {
   type packingListMutationBodySchema
 } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof packingListMutationBodySchema>; }>): Promise<PackingListCopySummary> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof packingListMutationBodySchema> }>): Promise<PackingListCopySummary> => {
   const userId = await validateSessionUser(event)
   const { id } = await getValidatedRouteParams(event, validatePackingListIdParams)
   const { name } = await readValidatedBody(event, validatePackingListMutationBody)

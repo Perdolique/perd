@@ -18,7 +18,7 @@ import { updateAppSession } from '#server/utils/session'
 import type { SessionUser } from '#server/utils/user'
 import { validatePasskeyAuthentication, type passkeyAuthenticationSchema } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof passkeyAuthenticationSchema>; }>): Promise<SessionUser> => handlePasskeyRequest(event, 'authentication', async (sensitiveValues) => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof passkeyAuthenticationSchema> }>): Promise<SessionUser> => handlePasskeyRequest(event, 'authentication', async (sensitiveValues) => {
     const config = getPasskeyConfig()
 
     validatePasskeyRequest(event, config)

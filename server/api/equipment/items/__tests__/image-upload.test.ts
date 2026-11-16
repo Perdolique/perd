@@ -109,7 +109,7 @@ function createUploadDb() {
   }
 }
 
-function createWriteDb(options: { insertError?: Error; } = {}) {
+function createWriteDb(options: { insertError?: Error } = {}) {
   const lockedItemFromMock = vi.fn(() => {
     return {
       where: vi.fn(() => {

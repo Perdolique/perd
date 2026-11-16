@@ -130,7 +130,6 @@ export default defineNuxtConfig({
   experimental: {
     early404: true,
     inlineErrorRendering: false,
-    nitroAutoImports: true,
     viewTransition: true,
     strictRouteTypes: true
   },
@@ -148,14 +147,6 @@ export default defineNuxtConfig({
       files: [
         '../server/types/worker-configuration.d.ts'
       ]
-    },
-
-    nodeTsConfig: {
-      compilerOptions: {
-        // Nitro 2's type entry points use extensionless imports that NodeNext cannot resolve.
-        module: 'preserve',
-        moduleResolution: 'bundler'
-      }
     }
   },
 
@@ -167,6 +158,11 @@ export default defineNuxtConfig({
 
   devtools: {
     enabled: true
+  },
+
+  devServer: {
+    // Nuxt 4.6.4 resolves an unset host to an object, which breaks the CLI host check.
+    host: 'localhost'
   },
 
   imports: {

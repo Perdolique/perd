@@ -41,6 +41,4 @@ async function getPrimaryEquipmentImageIds(
   return imageIdsByItemId
 }
 
-export {
-  getPrimaryEquipmentImageIds
-}
+export { getPrimaryEquipmentImageIds }

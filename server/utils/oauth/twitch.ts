@@ -106,9 +106,4 @@ async function getTwitchUserInfo(accessToken: string, clientId: string): Promise
   }
 }
 
-export {
-  getRuntimeTwitchConfig,
-  getTwitchRedirectUri,
-  getTwitchOAuthToken,
-  getTwitchUserInfo
-}
+export { getRuntimeTwitchConfig, getTwitchRedirectUri, getTwitchOAuthToken, getTwitchUserInfo }

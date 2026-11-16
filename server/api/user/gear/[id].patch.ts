@@ -14,7 +14,7 @@ import {
   type userEquipmentUpdateBodySchema
 } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof userEquipmentUpdateBodySchema>; }>): Promise<MyGearRecord> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof userEquipmentUpdateBodySchema> }>): Promise<MyGearRecord> => {
   const userId = await validateSessionUser(event)
   const { id } = await getValidatedRouteParams(event, validateUserEquipmentIdParams)
   const body = await readValidatedBody(event, validateUserEquipmentUpdateBody)

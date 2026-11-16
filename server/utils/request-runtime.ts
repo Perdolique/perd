@@ -9,7 +9,7 @@ import { getRequestHeader, getRequestIP, type RequestEvent, type SessionEvent } 
 
 const sessionEvents = new WeakMap<RequestEvent, SessionEvent>()
 
-/** Reads headers without starting Nitro 2's buffered Node body reader. */
+/** Reads headers without constructing Nuxt's replayable Node request body. */
 function getRequestMetadataHeader(event: RequestEvent, name: string): string | undefined {
   if (event instanceof H3Event) {
     const requestHeader = getH3RequestHeader(event, name)
@@ -22,14 +22,14 @@ function getRequestMetadataHeader(event: RequestEvent, name: string): string | u
   return requestHeader
 }
 
-/** Reads metadata without starting Nitro 2's buffered Node body reader. */
+/** Reads metadata without constructing Nuxt's replayable Node request body. */
 function getRequestMethod(event: RequestEvent): string {
   const requestMethod = event instanceof H3Event ? event.method : event.req.method
 
   return requestMethod
 }
 
-/** Gives cookie-only session helpers a stable event without starting the Node body reader. */
+/** Gives cookie-only session helpers a stable event without constructing a replayable body. */
 function getSessionEvent(event: RequestEvent): SessionEvent {
   const response = event.res
 
@@ -55,7 +55,7 @@ function getSessionEvent(event: RequestEvent): SessionEvent {
   return sessionEvent
 }
 
-/** Keeps bounded reads incremental on Nitro 2, whose portable Node request buffers the body. */
+/** Keeps bounded H3 reads from retaining chunks in Nuxt's replay buffer. */
 function getRequestBodyStream(event: RequestEvent): ReadableStream<unknown> | undefined {
   if (event instanceof H3Event) {
     const bodyStream = getRequestWebStream(event)
@@ -90,4 +90,11 @@ function scheduleBackgroundTask(event: RequestEvent, task: Promise<unknown>): vo
   throw new Error('The server runtime does not provide background tasks')
 }
 
-export { getRequestBodyStream, getDevelopmentClientIP, getRequestMetadataHeader, getRequestMethod, getSessionEvent, scheduleBackgroundTask }
+export {
+  getRequestBodyStream,
+  getDevelopmentClientIP,
+  getRequestMetadataHeader,
+  getRequestMethod,
+  getSessionEvent,
+  scheduleBackgroundTask
+}

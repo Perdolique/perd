@@ -41,7 +41,7 @@ interface ItemSubmissionQueryRow {
   name: string;
 }
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof itemSubmissionListQuerySchema>; }>): Promise<ItemSubmissionListResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof itemSubmissionListQuerySchema> }>): Promise<ItemSubmissionListResponse> => {
   await validateAdminUser(event)
 
   const { limit, page } = await getValidatedQuery(event, validateItemSubmissionListQuery)

@@ -350,7 +350,4 @@ async function resetAndSeedCatalog(db: Database) {
   })
 }
 
-export {
-  buildCategoryPropertySeedRows,
-  resetAndSeedCatalog
-}
+export { buildCategoryPropertySeedRows, resetAndSeedCatalog }

@@ -12,12 +12,7 @@ interface SampleItemDefinition {
   properties: SampleItemPropertyValue[];
 }
 
-type SampleCategorySlug =
-  | 'sleeping-bags'
-  | 'sleeping-pads'
-  | 'stoves'
-  | 'tents'
-  | 'water-filters'
+type SampleCategorySlug = 'sleeping-bags' | 'sleeping-pads' | 'stoves' | 'tents' | 'water-filters'
 
 interface GeneratedSampleCategoryDefinition {
   brandSlugs: readonly [string, ...string[]];
@@ -199,10 +194,6 @@ const generatedSampleItems = generatedSampleCategoryDefinitions.flatMap((definit
   })
 )
 
-export {
-  generatedSampleItems
-}
+export { generatedSampleItems }
 
-export type {
-  SampleItemDefinition
-}
+export type { SampleItemDefinition }

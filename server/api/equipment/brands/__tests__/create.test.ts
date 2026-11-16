@@ -234,7 +234,7 @@ describe('post /api/equipment/brands', () => {
     dbWrite.transaction.mockRejectedValue(queryError)
     createWebSocketClientMock.mockReturnValue(dbWrite)
 
-    const errorLog = vi.spyOn(console, 'error').mockImplementation((message, details: { error: unknown; }) => {
+    const errorLog = vi.spyOn(console, 'error').mockImplementation((message, details: { error: unknown }) => {
       expect(message).toBe('Failed to create brand')
       expect(details.error).toBe(queryError)
     })

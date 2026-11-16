@@ -19,10 +19,20 @@ interface PropertyContribution {
 
 type OptionSettings = v.InferOutput<typeof propertyEnumOptionMutationSchema>
 
-type EnumMutation =
-  | { action: 'create_option'; propertyId: number; settings: OptionSettings; }
-  | { action: 'update_option'; propertyId: number; optionId: number; settings: OptionSettings; }
-  | { action: 'delete_option'; propertyId: number; optionId: number; }
+type EnumMutation = {
+  action: 'create_option';
+  propertyId: number;
+  settings: OptionSettings;
+} | {
+  action: 'update_option';
+  propertyId: number;
+  optionId: number;
+  settings: OptionSettings;
+} | {
+  action: 'delete_option';
+  propertyId: number;
+  optionId: number;
+}
 
 async function mutatePropertyEnumOption(transaction: PropertiesTransaction, property: AdminCategoryProperty, mutation: EnumMutation): Promise<PropertyContribution | null> {
 

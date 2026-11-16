@@ -203,12 +203,6 @@ async function createLimitedRequestBody(
   }
 }
 
-export {
-  createLimitedRequestBody,
-  getContentLength,
-  validateDeclaredByteLength
-}
+export { createLimitedRequestBody, getContentLength, validateDeclaredByteLength }
 
-export type {
-  LimitedRequestBody
-}
+export type { LimitedRequestBody }

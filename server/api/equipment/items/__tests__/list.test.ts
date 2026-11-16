@@ -155,7 +155,7 @@ function createListDb({
   const findImagesMock = vi.fn(() => images)
   const findFirstMock = vi.fn(() => categoryMetadata)
 
-  const selectMock = vi.fn((selection: Record<string, unknown> & { isInMyGear?: SQL; }) => {
+  const selectMock = vi.fn((selection: Record<string, unknown> & { isInMyGear?: SQL }) => {
     if ('total' in selection) {
       return { from: countFromMock }
     }

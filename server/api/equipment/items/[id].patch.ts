@@ -42,7 +42,7 @@ async function lockItemCategories(transaction: PropertiesTransaction, categoryId
   }
 }
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof equipmentItemUpdateBodySchema>; }>): Promise<EquipmentItemEditResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof equipmentItemUpdateBodySchema> }>): Promise<EquipmentItemEditResponse> => {
   const userId = await validateAdminUser(event)
   const { id } = await getValidatedRouteParams(event, validateItemDetailParams)
   const body = await readValidatedBody(event, validateEquipmentItemUpdateBody)

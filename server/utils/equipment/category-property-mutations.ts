@@ -23,11 +23,26 @@ import type { categoryPropertyUpdateSchema } from '#server/utils/validation/sche
 
 type PropertySettings = v.InferOutput<typeof categoryPropertyUpdateSchema>
 
-type PropertiesMutation = EnumMutation
-  | { action: 'create'; settings: PropertySettings; }
-  | { action: 'update'; propertyId: number; settings: PropertySettings; }
-  | { action: 'delete'; propertyId: number; expectedAffectedItemCount: number; }
-  | { action: 'order'; propertyIds: number[]; }
+type PropertiesMutation =
+  | EnumMutation
+  | {
+    action: 'create';
+    settings: PropertySettings;
+  }
+  | {
+    action: 'update';
+    propertyId: number;
+    settings: PropertySettings;
+  }
+  | {
+    action: 'delete';
+    propertyId: number;
+    expectedAffectedItemCount: number;
+  }
+  | {
+    action: 'order';
+    propertyIds: number[];
+  }
 
 interface PropertyUpdateInput {
   settings: PropertySettings;

@@ -3,7 +3,6 @@ import { expect, test } from '../fixtures/global.fixtures.ts'
 import { createDeferred } from '../fixtures/gear-library-entry-list.fixtures.ts'
 import { mockTwitchSignIn } from '../fixtures/twitch-auth.fixtures.ts'
 
-/* oxlint-disable vitest/no-conditional-in-test -- Playwright route handlers branch across mocked pages and retries. */
 const adminId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
 const submissionId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d7'
 const secondSubmissionId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477d8'

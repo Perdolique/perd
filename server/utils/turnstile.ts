@@ -171,7 +171,7 @@ async function readSiteverifyResponse(
 
 async function verifyTurnstile(
   token: unknown,
-  { remoteIp, expectedAction }: { remoteIp: string; expectedAction: string; }
+  { remoteIp, expectedAction }: { remoteIp: string; expectedAction: string }
 ): Promise<void> {
   if (
     typeof token !== 'string'

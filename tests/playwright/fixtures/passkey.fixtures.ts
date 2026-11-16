@@ -39,8 +39,8 @@ async function mockPasskeyAccount(page: Page) {
   const credentials = new Map<string, WebAuthnCredential>()
   const randomHandle = globalThis.crypto.getRandomValues(new Uint8Array(32))
   const userHandle = isoBase64URL.fromBuffer(randomHandle)
-  let activeRegistration: { id: string; challenge: string; name: string; } | null = null
-  let activeAuthentication: { id: string; challenge: string; } | null = null
+  let activeRegistration: { id: string; challenge: string; name: string } | null = null
+  let activeAuthentication: { id: string; challenge: string } | null = null
   let signedIn = true
   let loseRegistrationResponse = false
   let invalidateNextAuthentication = false

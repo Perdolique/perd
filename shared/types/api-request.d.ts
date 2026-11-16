@@ -11,16 +11,22 @@ type ApiRequestEvent<Request> = RequestEvent & {
 }
 
 type RequestOf<Handler> = Handler extends (event: infer Event) => unknown
-  ? Event extends { readonly __requestType?: infer Request; } ? NonNullable<Request> : never
+  ? Event extends {
+    readonly __requestType?: infer Request;
+  } ? NonNullable<Request> : never
   : never
 
 type RequestBodyOf<Handler> = [RequestOf<Handler>] extends [never]
   ? NitroRequestBodyOf<Handler>
-  : RequestOf<Handler> extends { body: infer Body; } ? Body : never
+  : RequestOf<Handler> extends {
+    body: infer Body;
+  } ? Body : never
 
 type RequestQueryOf<Handler> = [RequestOf<Handler>] extends [never]
   ? NitroRequestQueryOf<Handler>
-  : RequestOf<Handler> extends { query: infer Query; } ? Query : never
+  : RequestOf<Handler> extends {
+    query: infer Query;
+  } ? Query : never
 
 declare module 'nuxt/server' {
   /** Preserve the callback type, including its declared request input. */

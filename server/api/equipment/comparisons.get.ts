@@ -109,7 +109,7 @@ function groupEnumOptionNames(rows: PropertyEnumOptionRow[]) {
   return optionNamesByPropertyId
 }
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof equipmentComparisonQuerySchema>; }>) : Promise<ComparisonResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferInput<typeof equipmentComparisonQuerySchema> }>) : Promise<ComparisonResponse> => {
   const { itemId: itemIds } = await getValidatedQuery(event, validateEquipmentComparisonQuery)
   const { dbHttp } = event.context
 
@@ -320,6 +320,4 @@ export default defineEventHandler(async (event: ApiRequestEvent<{ query: InferIn
   }
 })
 
-export type {
-  ComparisonResponse
-}
+export type { ComparisonResponse }

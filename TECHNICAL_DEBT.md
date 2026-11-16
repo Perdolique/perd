@@ -6,27 +6,27 @@ Keep `typescript` at 6.0.3 while the toolchain relies on its JavaScript compiler
 
 Remove this hold after the installed toolchain supports the replacement compiler API or a verified side-by-side setup. Run `vp run test:typecheck` and focused TypeScript lint checks before removing it.
 
-## vue-tsc 3.3.12 URL code generation regression
+## vue-tsc code generation regressions
 
-Keep `vue-tsc` at 3.3.11 until [upstream issue #6240](https://github.com/vuejs/language-tools/issues/6240) is fixed. Version 3.3.12 treats `//` inside inline URL strings as a line comment when it generates single-line component props. The `https://example.com/product` placeholder in `app/components/equipment/EquipmentItemEditor.vue` triggers this bug. The generated TypeScript becomes invalid and reports `TS2304` for existing template bindings and `TS6133` for their declarations. The same project passes with 3.3.11.
+Keep `vue-tsc` at 3.3.11 until the code generation regressions are fixed. [Upstream issue #6240](https://github.com/vuejs/language-tools/issues/6240) remains open. Version 3.3.12 treats `//` inside inline URL strings as a line comment when it generates single-line component props. The `https://example.com/product` placeholder in `app/components/equipment/EquipmentItemEditor.vue` triggers this bug. The generated TypeScript becomes invalid and reports `TS2304` for existing template bindings and `TS6133` for their declarations. Version 3.3.14 also crashes this project's type check with `Debug Failure. Expected -12426 >= 0` in TypeScript's diagnostic location check. The same project passes with 3.3.11.
 
 This hold also delays the 3.3.12 security fix for inline compiler plugins. After upstream publishes a fixed release, update `vue-tsc` without changing the placeholder and run `vp run test:typecheck`. Remove this entry after that check passes.
-
-## Markdownlint CLI engine alignment
-
-`markdownlint-cli` 0.49.1 declares `markdownlint ~0.41.1`, while the project uses markdownlint 0.42.0 for its regular expression denial of service protection and updated diagnostics. The targeted `markdownlint-cli>markdownlint` override keeps the CLI engine and the root configuration schema on 0.42.0 together. The 0.42.0 changelog lists no breaking API changes.
-
-Remove the override when the installed CLI supports markdownlint 0.42 or newer. Verify that valid Markdown passes, invalid Markdown fails, and `vp run lint:markdown` passes.
 
 ## Nuxt DevTools 4 opt-in
 
 Nuxt 4.6 bundles Nuxt DevTools 3. The `@nuxt/devtools` override in `pnpm-workspace.yaml` uses the exact root dependency version so Nuxt and its modules use DevTools 4 together. The existing `devtools.enabled` setting stays enabled. Browser authorization stays enabled too.
 
-Nuxt Hints 1.1.5 still calls the deprecated `extendServerRpc` bridge and emits `NDT_DEP_0003` with DevTools 4. The current Devframe plugins also emit `DF0066` for a repeated service installation. Nuxt, Fonts, and Storage panels remain accessible; keep these upstream diagnostics visible rather than suppressing them.
+Nuxt Hints 1.1.5 still calls the deprecated `extendServerRpc` bridge and emits `NDT_DEP_0003` with DevTools 4. `vite-plugin-vue-devtools` 9.0.0-rc.3 still declares a `@vitejs/devtools ^0.7.6` peer while Nuxt DevTools 4.2.0 uses 0.8.3. The authorized Nuxt panel loads with that peer warning. Keep these upstream diagnostics visible rather than suppressing them.
 
 Remove the override when the installed Nuxt version bundles DevTools 4. Start the dev server and verify the Nuxt group opens in the Vite DevTools panel.
 
 ## Nuxt 4.6 compatibility workarounds
+
+### Development server hostname
+
+Nuxt 4.6.4 resolves an unset `devServer.host` to an empty object. Nuxt CLI 4.0.1 stores that value in `node_modules/.cache/nuxt/dev-server.json`, then calls `.toLowerCase()` on it during the next eager server startup. `devServer.host: 'localhost'` keeps the local default address explicit and prevents that crash. CLI host flags and the supported host environment variables still take precedence.
+
+Remove the explicit host after the installed Nuxt schema and CLI handle an unset hostname. Verify two consecutive starts of `vp run dev` without a host flag or host environment variable. If an older run left an object-valued hostname in the generated hint file, remove that invalid cache file before starting the server.
 
 ### Portable request type inference
 
@@ -36,9 +36,9 @@ Remove the declaration bridge and route hook after Nuxt preserves portable body 
 
 ### Nitro 2 request transport
 
-The Nitro 2 adapter can buffer a Node request before exposing its portable Web Stream. `server/utils/request-runtime.ts` uses the H3 transport stream for bounded JSON and multipart reads, so an oversized request is rejected before its whole body is read. It gives cookie-only session helpers a stable header-only event and reads request headers and the method without starting that buffer. It also reads the local connection address when the portable request has no client address, and schedules background work with Nitro's request lifetime API. Application handlers use `nuxt/server`; the passkey error handler still uses Nitro's H3 error interface.
+Nuxt 4.6.4 reads Node request bodies incrementally, but retains the chunks for repeated portable body reads. `server/utils/request-runtime.ts` uses the H3 transport stream for bounded JSON and multipart reads, so these reads do not keep a second replay buffer. It gives cookie-only session helpers a stable header-only event and reads request headers and the method without constructing the replayable request body. It also reads the local connection address when the portable request has no client address, and schedules background work with Nitro's request lifetime API. Application handlers use `nuxt/server`; the passkey error handler still uses Nitro's H3 error interface.
 
-Remove these transport helpers when the installed server builder provides incremental Web Streams, the local client address, and a portable background-task API. Verify header reads do not start body consumption, body limits without Content-Length, request cancellation, password recovery background work, and image cleanup in the built Worker. Keep the standalone database CLI independent from the request runtime.
+Remove these transport helpers when the installed server builder provides bounded reads without a replay buffer, the local client address, and a portable background-task API. Verify header reads do not start body consumption, body limits without Content-Length, request cancellation, password recovery background work, and image cleanup in the built Worker. Keep the standalone database CLI independent from the request runtime.
 
 The application now uses Nuxt's sealed sessions with the existing secret, cookie name, and cookie policy. H3 cookies cannot be read in the new format; this migration resets existing sessions. Session-version checks still revoke stale sessions after password recovery.
 
@@ -49,24 +49,6 @@ Nuxt 4.6 enables `inlineErrorRendering` with compatibility version 5. Its render
 The default Nuxt error page also renders an empty server placeholder in this build and causes a hydration mismatch. `app/error.vue` renders the error markup directly, shows safe messages, and clears the error before returning home.
 
 Remove the `inlineErrorRendering` override after the installed Nuxt renderer returns JSON for non-HTML early 404 requests. Keep the error-aware middleware and run `vp run test:e2e tests/playwright/routing/early-404.test.ts` against the built Worker. Verify unknown pages return HTML or JSON 404, error-page recovery still requires authentication, and existing page and API authentication responses stay unchanged.
-
-### Nitro 2 development import presets
-
-Nuxt 4.6.2 correctly removes Nitro's default import presets when compatibility version 5 disables `nitroAutoImports`. Nuxt Image 2.1.0 still imports `useRuntimeConfig` from `#imports`, and Nitro 2.13.4's Cloudflare development plugin imports both `useRuntimeConfig` and `getRequestURL` from it. The development server cannot bundle these integrations without the presets. `experimental.nitroAutoImports: true` preserves the module and preset behavior that earlier Nuxt versions enabled implicitly. Application code keeps explicit imports and portable handler contracts.
-
-Remove this flag when the installed Nuxt Image module and Nitro Cloudflare development plugin use explicit runtime imports or register their own helpers. Start `vp run dev` and verify the login page, image module, and DevTools load without missing-export errors, then build the Worker and run `vp run test:typecheck`.
-
-### Nitro declaration resolution
-
-Nitro 2.13.4 re-exports extensionless paths from its declaration barrels. Nuxt 4.6.2 still loses the `cloudflare` configuration type without the override, despite its new declaration-path resolution fix. Nuxt 4.6 uses NodeNext resolution for its Node context, so the declarations fail to load and Nitro configuration types lose fields such as `errorHandler`, `moduleSideEffects`, and `cloudflare`. `typescript.nodeTsConfig` uses `module: 'preserve'` and `moduleResolution: 'bundler'` to resolve these declarations without a package patch.
-
-Remove the Node context override after the installed Nitro declarations use explicit extensions. Run `vp run test:typecheck` and focused lint for `nuxt.config.ts` before removing it.
-
-### Nitro Cloudflare Node compatibility detection
-
-`wrangler.jsonc` explicitly includes `nodejs_compat` even though the configured compatibility date enables it by default in the Workers runtime. Nitro 2.13.4 only preserves native Node imports when it sees the explicit flag or generates the Wrangler configuration itself; without the flag, it replaces supported APIs such as `node:crypto` with non-functional `unenv` stubs during the build.
-
-Remove the explicit flag after the installed Nitro version detects date-enabled Node compatibility while respecting `cloudflare.deployConfig: false`. Then build the Worker and verify email registration, email sign-in, and Twitch OAuth in a Workers runtime before deploying.
 
 ### SimpleWebAuthn reflection metadata
 

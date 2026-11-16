@@ -37,7 +37,8 @@ const environmentSchema = v.object({
 })
 
 const wranglerConfigSchema = v.object({
-  compatibility_flags: v.optional(v.array(v.string())),
+  compatibility_date: v.string(),
+  compatibility_flags: v.optional(v.array(v.string()), []),
 
   env: v.object({
     production: environmentSchema,
@@ -99,10 +100,15 @@ async function readWranglerConfig() {
 }
 
 describe('wrangler Cloudflare configuration', () => {
-  it('should explicitly enable Node compatibility for Nitro', async () => {
+  it('should keep date-enabled Node compatibility available to Nitro', async () => {
     const { config } = await readWranglerConfig()
 
-    expect(config.compatibility_flags).toStrictEqual(['nodejs_compat'])
+    // Workers enables Node compatibility by default from this compatibility date.
+    const enablesNodeCompatibility = config.compatibility_date >= '2026-08-04'
+
+    expect(enablesNodeCompatibility).toBe(true)
+    expect(config.compatibility_flags).not.toContain('no_nodejs_compat')
+    expect(config.compatibility_flags).not.toContain('no_nodejs_compat_v2')
   })
 
   it('should keep the root worker private and separate from production', async () => {

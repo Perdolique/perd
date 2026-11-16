@@ -28,7 +28,7 @@ vi.mock(import('#server/utils/cloudflare'), () => {
   return { getCloudflareImagesBinding: getCloudflareImagesBindingMock }
 })
 
-function createImageEvent(image?: { id: string; }) {
+function createImageEvent(image?: { id: string }) {
   const findFirstMock = vi.fn(() => image)
 
   const event = createTestEvent({

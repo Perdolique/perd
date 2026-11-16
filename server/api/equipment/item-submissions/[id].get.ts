@@ -131,7 +131,4 @@ export default defineEventHandler(async (event): Promise<ItemSubmissionDetailRes
   }
 })
 
-export type {
-  ItemSubmissionDetailResponse,
-  ItemSubmissionPropertyValue
-}
+export type { ItemSubmissionDetailResponse, ItemSubmissionPropertyValue }

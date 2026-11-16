@@ -358,7 +358,7 @@ describe('patch /api/equipment/brands/[id]', () => {
     dbWrite.transaction.mockRejectedValue(queryError)
     createWebSocketClientMock.mockReturnValue(dbWrite)
 
-    const errorLog = vi.spyOn(console, 'error').mockImplementation((message, details: { error: unknown; }) => {
+    const errorLog = vi.spyOn(console, 'error').mockImplementation((message, details: { error: unknown }) => {
       expect(message).toBe('Failed to update brand')
       expect(details.error).toBe(queryError)
     })
@@ -506,7 +506,7 @@ describe('delete /api/equipment/brands/[id]', () => {
     dbWrite.transaction.mockRejectedValue(queryError)
     createWebSocketClientMock.mockReturnValue(dbWrite)
 
-    const errorLog = vi.spyOn(console, 'error').mockImplementation((message, details: { error: unknown; }) => {
+    const errorLog = vi.spyOn(console, 'error').mockImplementation((message, details: { error: unknown }) => {
       expect(message).toBe('Failed to delete brand')
       expect(details.error).toBe(queryError)
     })

@@ -65,6 +65,4 @@ export {
   validatePhotoSubmissionIdempotencyItem
 }
 
-export type {
-  PersistedPhotoSubmission
-}
+export type { PersistedPhotoSubmission }

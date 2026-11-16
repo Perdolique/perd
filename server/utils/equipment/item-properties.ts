@@ -149,8 +149,4 @@ function normalizeEquipmentItemProperties(
 
 export { normalizeEquipmentItemProperties }
 
-export type {
-  EquipmentItemPropertyDefinition,
-  EquipmentItemPropertyInput,
-  EquipmentItemPropertyValue
-}
+export type { EquipmentItemPropertyDefinition, EquipmentItemPropertyInput, EquipmentItemPropertyValue }

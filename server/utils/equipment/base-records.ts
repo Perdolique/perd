@@ -29,14 +29,17 @@ const brandBaseSelection = {
 }
 
 type BrandBaseRecord = Pick<typeof brands.$inferSelect, 'id' | 'name' | 'slug'>
-type CategoryPropertyBaseRecord = Pick<typeof categoryProperties.$inferSelect, 'id' | 'name' | 'slug' | 'dataType' | 'unit'>
+
+type CategoryPropertyBaseRecord = Pick<typeof categoryProperties.$inferSelect,
+  | 'id'
+  | 'name'
+  | 'slug'
+  | 'dataType'
+  | 'unit'>
+
 type PropertyEnumOptionBaseRecord = Pick<typeof propertyEnumOptions.$inferSelect, 'id' | 'name' | 'slug'>
 
-export {
-  brandBaseSelection,
-  categoryBaseSelection,
-  groupBaseSelection
-}
+export { brandBaseSelection, categoryBaseSelection, groupBaseSelection }
 
 export type {
   BrandBaseRecord,

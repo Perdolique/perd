@@ -512,7 +512,7 @@ describe('passkeys on isolated PostgreSQL', () => {
 
     try {
       await expect.poll(async () => {
-        const result = await database.execute<{ credentialLockCount: number; }>(sql`
+        const result = await database.execute<{ credentialLockCount: number }>(sql`
           SELECT (
             SELECT count(*)::int
             FROM pg_locks AS credential_locks

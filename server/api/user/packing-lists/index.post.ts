@@ -12,7 +12,7 @@ interface PackingListSummary {
   updatedAt: Date | string;
 }
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof packingListMutationBodySchema>; }>) : Promise<PackingListSummary> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof packingListMutationBodySchema> }>) : Promise<PackingListSummary> => {
   const userId = await validateSessionUser(event)
   const { name } = await readValidatedBody(event, validatePackingListMutationBody)
 

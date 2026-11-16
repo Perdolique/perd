@@ -14,7 +14,7 @@ import {
   type groupMutationSchema
 } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof groupMutationSchema>; }>): Promise<EquipmentGroupBaseRecord> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof groupMutationSchema> }>): Promise<EquipmentGroupBaseRecord> => {
   const userId = await validateAdminUser(event)
   const { id: groupId } = await getValidatedRouteParams(event, validateGroupIdParams)
   const { name, slug } = await readValidatedBody(event, validateGroupMutationBody)

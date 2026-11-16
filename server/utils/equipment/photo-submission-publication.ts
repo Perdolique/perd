@@ -10,7 +10,11 @@ interface PhotoSubmissionPublicationCandidate {
   cloudflareImageId: string;
   createdBy: string | null;
   filename: string;
-  item: { status: string; } | null;
+  item:
+    | {
+      status: string;
+    }
+    | null;
   itemId: string;
   rightsConfirmed: boolean;
   status: string;

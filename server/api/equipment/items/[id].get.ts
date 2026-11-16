@@ -189,7 +189,7 @@ export default defineEventHandler(async (event) : Promise<ItemDetailResponse> =>
       }
 
       if (dataType === 'enum' && typeof value === 'string') {
-        const enumOption = property.enumOptions.find((option: { name: string; slug: string; }) => option.slug === value)
+        const enumOption = property.enumOptions.find((option: { name: string; slug: string }) => option.slug === value)
 
         if (enumOption !== undefined) {
           itemProperty.enumOptionName = enumOption.name

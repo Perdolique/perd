@@ -15,7 +15,7 @@ import {
 
 import { validatePasskeyOptions } from '#server/utils/validation/schemas'
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: Record<string, never>; }>): Promise<PasskeyAuthenticationOptions> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: Record<string, never> }>): Promise<PasskeyAuthenticationOptions> => {
   const createdAt = new Date()
 
   return handlePasskeyRequest(event, 'authentication', async (sensitiveValues) => {

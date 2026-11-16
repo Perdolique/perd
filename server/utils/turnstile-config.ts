@@ -62,6 +62,4 @@ function validateTurnstileConfig(config: unknown): TurnstileConfig {
 
 export type { TurnstileConfig }
 
-export {
-  validateTurnstileConfig
-}
+export { validateTurnstileConfig }

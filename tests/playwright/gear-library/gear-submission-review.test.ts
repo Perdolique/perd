@@ -4,7 +4,6 @@ import { expect, test } from '../fixtures/global.fixtures.ts'
 import { mockTwitchSignIn } from '../fixtures/twitch-auth.fixtures.ts'
 import { createDeferred, selectPerdOption } from '../fixtures/gear-library-entry-list.fixtures.ts'
 
-/* oxlint-disable vitest/no-conditional-in-test -- Playwright route handlers branch on mocked request paths and methods. */
 const adminId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477aa'
 const submissionId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477ee'
 const secondSubmissionId = '0195f6e8-8f44-74f6-bc9a-5c8f7df477ef'

@@ -70,7 +70,7 @@ async function enforceItemSubmissionRateLimit(event: RequestEvent, userId: strin
   }
 }
 
-export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof itemSubmissionCreateBodySchema>; }>): Promise<ItemSubmissionCreateResponse> => {
+export default defineEventHandler(async (event: ApiRequestEvent<{ body: InferInput<typeof itemSubmissionCreateBodySchema> }>): Promise<ItemSubmissionCreateResponse> => {
   const { isAdmin, userId } = await validateRegisteredUserAccess(event)
   const body = await readValidatedBody(event, validateItemSubmissionCreateBody)
 

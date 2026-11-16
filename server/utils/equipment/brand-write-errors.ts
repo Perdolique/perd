@@ -2,7 +2,7 @@ import { createError, isNuxtError } from 'nuxt/server'
 
 type BrandWriteAction = 'create' | 'update' | 'delete'
 
-function getDatabaseError(error: unknown): { code: string; constraint: string; } | null {
+function getDatabaseError(error: unknown): { code: string; constraint: string } | null {
   let current = error
 
   for (let depth = 0; depth < 4; depth += 1) {

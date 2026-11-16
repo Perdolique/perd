@@ -28,7 +28,14 @@ interface PasskeySessionResult {
   sessionVersion: number;
 }
 
-type PasskeyChange = { action: 'remove'; id: string; } | { action: 'rename'; id: string; name: string; }
+type PasskeyChange = {
+  action: 'remove';
+  id: string;
+} | {
+  action: 'rename';
+  id: string;
+  name: string;
+}
 
 const passkeySummaryColumns = {
   id: passkeyCredentials.id,
@@ -123,7 +130,7 @@ async function preparePasskeyEnrollment(database: PasskeyWriteDatabase, actor: P
 
 async function savePasskeyRegistration(
   database: PasskeyWriteDatabase,
-  options: { challenge: PasskeyChallenge; registration: RegistrationInfo; sensitiveValues: string[]; }
+  options: { challenge: PasskeyChallenge; registration: RegistrationInfo; sensitiveValues: string[] }
 ): Promise<PasskeySummary> {
   const { challenge, registration, sensitiveValues } = options
   const { userId, sessionVersion, name } = challenge
@@ -164,7 +171,7 @@ async function savePasskeyRegistration(
 
 async function authenticatePasskey(
   database: PasskeyWriteDatabase,
-  options: { challenge: PasskeyChallenge; response: AuthenticationResponseJSON; sensitiveValues: string[]; }
+  options: { challenge: PasskeyChallenge; response: AuthenticationResponseJSON; sensitiveValues: string[] }
 ): Promise<PasskeySessionResult> {
   const { challenge, response, sensitiveValues } = options
 
@@ -283,4 +290,11 @@ async function withPasskeyDatabase<Result>(
   }
 }
 
-export { authenticatePasskey, changePasskey, listPasskeys, preparePasskeyEnrollment, savePasskeyRegistration, withPasskeyDatabase }
+export {
+  authenticatePasskey,
+  changePasskey,
+  listPasskeys,
+  preparePasskeyEnrollment,
+  savePasskeyRegistration,
+  withPasskeyDatabase
+}
