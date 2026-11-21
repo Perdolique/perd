@@ -1,6 +1,6 @@
 <template>
   <div
-    :class="$style.layout"
+    :class="$style.component"
     data-testid="page-content"
   >
     <div
@@ -43,8 +43,9 @@
 </script>
 
 <style module>
-  .layout {
+  .component {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     row-gap: var(--spacing-24);
     container-type: inline-size;
   }
